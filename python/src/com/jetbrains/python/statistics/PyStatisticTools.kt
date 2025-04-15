@@ -23,6 +23,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
@@ -112,6 +113,7 @@ enum class InterpreterType(val value: String) {
   POETRY("poetry"),
   PYENV("pyenv"),
   UV("uv"),
+  HATCH("hatch"),
 }
 
 enum class InterpreterCreationMode(val value: String) {
@@ -141,6 +143,7 @@ val Sdk.interpreterType: InterpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> PIPENV
+    isUv -> UV
     isPoetry -> POETRY
     PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV

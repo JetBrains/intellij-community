@@ -141,9 +141,9 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirClassifierCompletionContributor(parameters, sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                FirPackageCompletionContributor(parameters, sink, priority = 2)
+                FirCallableCompletionContributor(parameters, sink, priority = 2)
                     .complete(positionContext, weighingContext)
-                FirCallableCompletionContributor(parameters, sink, priority = 3)
+                FirPackageCompletionContributor(parameters, sink, priority = 3)
                     .complete(positionContext, weighingContext)
             }
 
@@ -164,7 +164,6 @@ internal object Completions {
             }
 
             is KotlinOperatorCallPositionContext,
-            is KotlinPropertyDelegatePositionContext,
             is KotlinIncorrectPositionContext -> {
                 // do nothing, completion is not supposed to be called here
             }
@@ -199,6 +198,8 @@ internal object Completions {
             }
 
             is KDocLinkNamePositionContext -> {
+                FirKDocParameterNameContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
                 FirKDocCallableCompletionContributor(parameters, sink)
                     .complete(positionContext, weighingContext)
                 FirClassifierCompletionContributor(parameters, sink)

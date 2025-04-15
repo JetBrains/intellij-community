@@ -4,7 +4,13 @@
 package org.jetbrains.intellij.build.impl
 
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
@@ -142,12 +148,7 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String, jarName: String, reason: String? = null) {
-    includedProjectLibraries.add(ProjectLibraryData(
-      libraryName = libraryName,
-      packMode = LibraryPackMode.STANDALONE_MERGED,
-      outPath = jarName,
-      reason = reason,
-    ))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = jarName, reason = reason))
   }
 
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
@@ -163,21 +164,12 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(
-      ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
-    )
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, reason = "withProjectLibrary"))
   }
 
   internal fun withProjectLibraries(libraryNames: Sequence<String>, outPath: String? = null) {
     for (libraryName in libraryNames) {
-      includedProjectLibraries.add(
-        ProjectLibraryData(
-          libraryName = libraryName,
-          packMode = LibraryPackMode.MERGED,
-          reason = "withProjectLibrary",
-          outPath = outPath,
-        )
-      )
+      includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, reason = "withProjectLibrary", outPath = outPath))
     }
   }
 

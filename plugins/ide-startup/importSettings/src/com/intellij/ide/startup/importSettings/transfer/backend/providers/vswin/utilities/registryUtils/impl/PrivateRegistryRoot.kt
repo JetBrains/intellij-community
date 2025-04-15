@@ -1,19 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.registryUtils.impl
 
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.WindowsRegistryErrorTypes
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.WindowsRegistryException
+import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl.RegistryRoot
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.sun.jna.platform.win32.*
-import com.sun.jna.platform.win32.W32Errors
-import com.sun.jna.platform.win32.WinNT
-import com.sun.jna.platform.win32.WinReg
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
-class PrivateRegistryRoot private constructor(private val file: File, lifetime: Lifetime) : RegistryRoot(openPrivateRegistry(file), lifetime) {
+class PrivateRegistryRoot private constructor(private val file: Path, lifetime: Lifetime) : RegistryRoot(openPrivateRegistry(file), lifetime) {
     companion object {
-        private val openedRegFiles = mutableMapOf<File, PrivateRegistryRoot>()
-        fun getOrCreate(file: File, lifetime: Lifetime): PrivateRegistryRoot {
+        private val openedRegFiles = mutableMapOf<Path, PrivateRegistryRoot>()
+        fun getOrCreate(file: Path, lifetime: Lifetime): PrivateRegistryRoot {
             return openedRegFiles.getOrPut(file) {
                 PrivateRegistryRoot(file, lifetime)
             }
@@ -30,9 +29,9 @@ class PrivateRegistryRoot private constructor(private val file: File, lifetime: 
             }
         }
 
-        private fun openPrivateRegistry(file: File): WinReg.HKEY {
+        private fun openPrivateRegistry(file: Path): WinReg.HKEY {
             val phKey = try {
-                Advapi32Util.registryLoadAppKey(file.absolutePath, WinNT.KEY_ALL_ACCESS, 0)
+                Advapi32Util.registryLoadAppKey(file.absolutePathString(), WinNT.KEY_ALL_ACCESS, 0)
             }
             catch (t: Win32Exception) {
                 throw WindowsRegistryException(getWindowsErrorText(t.errorCode), WindowsRegistryErrorTypes.CORRUPTED)

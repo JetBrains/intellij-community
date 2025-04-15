@@ -6,8 +6,7 @@ intellij.completionMlRanking
 intellij.completionMlRankingModels
 intellij.configurationScript
 intellij.copyright
-intellij.editorconfig
-intellij.emojipicker
+intellij.editorconfig.plugin
 intellij.featuresTrainer
 intellij.grazie
 intellij.markdown

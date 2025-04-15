@@ -384,7 +384,6 @@ f:com.intellij.execution.util.ExecUtil
 - sf:execAndReadLine(com.intellij.execution.configurations.GeneralCommandLine):java.lang.String
 - sf:getOpenCommandPath():java.lang.String
 - sf:getOsascriptPath():java.lang.String
-- sf:getWindowsShellName():java.lang.String
 f:com.intellij.util.LocalFileUrl
 - com.intellij.util.Url
 - addParameters(java.util.Map):com.intellij.util.Url

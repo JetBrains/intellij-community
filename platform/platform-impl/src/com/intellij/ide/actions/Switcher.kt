@@ -213,7 +213,7 @@ object Switcher : BaseSwitcherAction(null) {
         cbShowOnlyEditedFiles.addItemListener(ItemListener(::updateFilesByCheckBox))
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles)
         WindowMoveListener(header).installTo(header)
-        val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBox")
+        val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBoxFallback")
         if (shortcuts.shortcuts.isNotEmpty()) {
           val label = JLabel(KeymapUtil.getShortcutsText(shortcuts.shortcuts))
           label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND

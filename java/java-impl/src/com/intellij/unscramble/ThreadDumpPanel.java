@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private final JBList<DumpItem> myThreadList;
   private final List<DumpItem> myThreadDump;
   private final List<DumpItem> myMergedThreadDump;
+  private Comparator<DumpItem> currentComparator = DumpItem.BY_INTEREST;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
   private final ExporterToTextFile myExporterToTextFile;
@@ -63,6 +65,13 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   @ApiStatus.Internal
   public static ThreadDumpPanel createFromDumpItems(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems) {
     return new ThreadDumpPanel(project, consoleView, toolbarActions, dumpItems, true);
+  }
+
+  @ApiStatus.Internal
+  public void addDumpItems(List<DumpItem> threads) {
+    myThreadDump.addAll(threads);
+    myMergedThreadDump.addAll(CompoundDumpItem.Companion.mergeThreadDumpItems(threads));
+    sortAndUpdateThreadDumpItemList();
   }
 
   private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems, boolean fromDumpItems) {
@@ -134,7 +143,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
         threadList.repaint();
       }
     });
-    ListSpeedSearch.installOn(threadList).setComparator(new SpeedSearchComparator(false, true));
+    ListSpeedSearch
+      .installOn(threadList, DumpItem::getName)
+      .setComparator(new SpeedSearchComparator(false, true));
     return threadList;
   }
 
@@ -166,23 +177,33 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myExporterToTextFile);
   }
 
+  private void sortAndUpdateThreadDumpItemList() {
+    myThreadDump.sort(currentComparator);
+    myMergedThreadDump.sort(currentComparator);
+    updateThreadDumpItemList();
+  }
+
   private void updateThreadDumpItemList() {
     String text = myFilterPanel.isVisible() ? myFilterField.getText() : "";
     Object selection = myThreadList.getSelectedValue();
-    DefaultListModel<DumpItem> model = (DefaultListModel<DumpItem>)myThreadList.getModel();
-    model.clear();
     int selectedIndex = 0;
     int index = 0;
+    ArrayList<DumpItem> filteredThreadStates = new ArrayList<>();
     List<DumpItem> threadStates = UISettings.getInstance().getState().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (DumpItem state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
-        model.addElement(state);
+        filteredThreadStates.add(state);
         if (selection == state) {
           selectedIndex = index;
         }
         index++;
       }
     }
+
+    // Add all of them in a single call, otherwise it works too slow recalculating UI layout.
+    DefaultListModel<DumpItem> model = (DefaultListModel<DumpItem>)myThreadList.getModel();
+    model.clear();
+    model.addAll(filteredThreadStates);
     if (!model.isEmpty()) {
       myThreadList.setSelectedIndex(selectedIndex);
     }
@@ -224,7 +245,6 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   }
 
   private final class SortThreadsAction extends DumbAwareAction {
-    private Comparator<DumpItem> comparator = DumpItem.BY_INTEREST;
 
     private SortThreadsAction() {
       super(JavaBundle.message("sort.threads.by.interest.level"));
@@ -232,11 +252,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myThreadDump.sort(comparator);
-      myMergedThreadDump.sort(comparator);
-      updateThreadDumpItemList();
-      comparator = comparator == DumpItem.BY_INTEREST ? DumpItem.BY_NAME : DumpItem.BY_INTEREST;
+      currentComparator = currentComparator == DumpItem.BY_INTEREST ? DumpItem.BY_NAME : DumpItem.BY_INTEREST;
       update(e);
+      sortAndUpdateThreadDumpItemList();
     }
 
     @Override
@@ -246,9 +264,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setIcon(comparator == DumpItem.BY_INTEREST ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
-      e.getPresentation().setText(comparator == DumpItem.BY_INTEREST ? JavaBundle.message("sort.threads.by.interest.level") :
-                                  JavaBundle.message("sort.threads.by.name"));
+      e.getPresentation().setIcon(currentComparator == DumpItem.BY_INTEREST ? AllIcons.ObjectBrowser.Sorted : AllIcons.ObjectBrowser.SortByType);
+      e.getPresentation().setText(currentComparator == DumpItem.BY_INTEREST ? JavaBundle.message("sort.threads.by.name") :
+                                  JavaBundle.message("sort.threads.by.interest.level")                                  );
     }
   }
   private static final class CopyToClipboardAction extends DumbAwareAction {

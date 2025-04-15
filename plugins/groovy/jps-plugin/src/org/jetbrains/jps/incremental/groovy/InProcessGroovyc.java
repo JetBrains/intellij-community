@@ -7,11 +7,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -219,7 +216,7 @@ public final class InProcessGroovyc implements GroovycFlavor {
   }
 
   private static @Nullable ClassLoader getPlatformLoaderParentIfOnJdk9() {
-    if (JavaVersion.current().feature >= 9) {
+    if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
       // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
       try {
         return (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);

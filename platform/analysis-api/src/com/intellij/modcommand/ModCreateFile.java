@@ -4,8 +4,8 @@ package com.intellij.modcommand;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @param file file to create
- * @param text file content
+ * @param file file or directory to create
+ * @param content file content
  */
 public record ModCreateFile(@NotNull FutureVirtualFile file, @NotNull Content content) implements ModCommand {
 
@@ -13,6 +13,11 @@ public record ModCreateFile(@NotNull FutureVirtualFile file, @NotNull Content co
    * New file content
    */
   public sealed interface Content {}
+
+  /**
+   * A marker content informing that a directory is about to be created
+   */
+  public record Directory() implements Content {}
 
   /**
    * Text content

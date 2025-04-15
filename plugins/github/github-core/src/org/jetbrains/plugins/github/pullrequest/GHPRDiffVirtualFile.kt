@@ -2,18 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
-import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
 import com.intellij.diff.impl.DiffEditorViewer
-import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffService
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal data class GHPRDiffVirtualFile(override val fileManagerId: String,
                                         private val project: Project,
@@ -31,18 +29,11 @@ internal data class GHPRDiffVirtualFile(override val fileManagerId: String,
   override fun isValid(): Boolean = findProjectVm() != null
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
-      project.service<GHPRDiffService>().createCombinedDiffProcessor(repository, pullRequest)
-    }
-    else {
-      project.service<GHPRDiffService>().createDiffRequestProcessor(repository, pullRequest)
-    }
-    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
-    return processor
+    return project.service<GHPRDiffService>().createGHPRDiffProcessor(repository, pullRequest)
   }
 
-  private fun findProjectVm(): GHPRToolWindowProjectViewModel? =
-    project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
+  private fun findProjectVm(): GHPRConnectedProjectViewModel? =
+    project.service<GHPRProjectViewModel>().connectedProjectVm.value?.takeIf { it.repository == repository }
 }
 
 private fun getPresentablePath(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier) =

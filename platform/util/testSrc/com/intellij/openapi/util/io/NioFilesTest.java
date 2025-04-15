@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -15,6 +16,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -135,6 +137,31 @@ public class NioFilesTest {
     NioFiles.deleteRecursively(file, p -> visited.add(p.toString()));
     NioFiles.deleteRecursively(dir, p -> visited.add(p.toString()));
     assertThat(visited).containsExactly("/file", "/d1/d2/f", "/d1/d2", "/d1");
+  }
+
+  @Test
+  public void deleteQuietly() throws IOException {
+    var exception = Ref.<IOException>create();
+    var handler = (Consumer<IOException>)(e -> exception.set(e));
+
+    NioFiles.deleteQuietly(null, handler);
+    assertThat(exception.get()).isNull();
+
+    var file = memoryFs.getFs().getPath("/missing/file");
+    NioFiles.deleteQuietly(file, handler);
+    assertThat(exception.get()).isNull();
+
+    file = Files.createFile(memoryFs.getFs().getPath("/file"));
+    NioFiles.deleteQuietly(file, handler);
+    assertThat(exception.get()).isNull();
+
+    file = Files.createDirectory(memoryFs.getFs().getPath("/empty"));
+    NioFiles.deleteQuietly(file, handler);
+    assertThat(exception.get()).isNull();
+
+    file = Files.createDirectories(memoryFs.getFs().getPath("/dir/sub")).getParent();
+    NioFiles.deleteQuietly(file, handler);
+    assertThat(exception.get()).isInstanceOf(DirectoryNotEmptyException.class);
   }
 
   @Test

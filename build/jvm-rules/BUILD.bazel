@@ -46,16 +46,27 @@ _kt_kotlinc_options(
 # java_import(
 #     name = "jps",
 #     jars = ["jps-build-standalone.jar"],
-#     visibility = ["//src/jps-builder:__subpackages__"],
+#     visibility = [
+#       "//src/jps-builder:__subpackages__",
+#       "//src/jps-shadow:__subpackages__",
+#     ],
 # )
 jvm_import(
     name = "jps",
     jar = "@jps-standalone_http//file",
     source_jar = "@jps-standalone_http//file",
     visibility = [
-      "//src/jps-builder:__subpackages__",
+      "//src/jvm-builder:__subpackages__",
+      "//src/jvm-builder-core:__subpackages__",
       "//src/jps-shadow:__subpackages__",
+      "//src/kotlin/kotlin-builder:__subpackages__",
     ],
+)
+
+jvm_import(
+    name = "jps-javac-extension",
+    jar = "@jps-javac-extension//file",
+    visibility = ["//visibility:public"],
 )
 
 # jvm_import(
@@ -156,6 +167,44 @@ jvm_import(
 )
 
 jvm_import(
+    name = "hash4j",
+    jar = "@hash4j//file",
+    source_jar = "@hash4j-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "jackson-core",
+    jar = "@jackson-core//file",
+    source_jar = "@jackson-core-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "jackson-annotations",
+    jar = "@jackson-annotations//file",
+    source_jar = "@jackson-annotations-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "jackson-databind",
+    jar = "@jackson-databind//file",
+    source_jar = "@jackson-databind-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":jackson-annotations"
+    ],
+)
+
+jvm_import(
+    name = "caffeine",
+    jar = "@caffeine//file",
+    source_jar = "@caffeine-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "flatbuffers-java",
     jar = "@flatbuffers-java//file",
     source_jar = "@flatbuffers-java-sources//file",
@@ -163,16 +212,23 @@ jvm_import(
 )
 
 jvm_import(
-    name = "arrow-format",
-    jar = "@arrow-format//file",
-    source_jar = "@arrow-format-sources//file",
+    name = "h2-mvstore",
+    jar = "@h2-mvstore//file",
+    source_jar = "@h2-mvstore-sources//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "arrow-algorithm",
-    jar = "@arrow-algorithm//file",
-    source_jar = "@arrow-algorithm-sources//file",
+    name = "qdox",
+    jar = "@qdox//file",
+    source_jar = "@qdox-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "arrow-format",
+    jar = "@arrow-format//file",
+    source_jar = "@arrow-format-sources//file",
     visibility = ["//visibility:public"],
 )
 
@@ -212,9 +268,102 @@ jvm_import(
 )
 
 jvm_import(
-    name = "opentelemetry-exporter-logging-otlp",
-    jar = "@opentelemetry-exporter-logging-otlp//file",
-    source_jar = "@opentelemetry-exporter-logging-otlp-sources//file",
+    name = "assertj-core",
+    jar = "@assertj-core//file",
+    source_jar = "@assertj-core-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "annotations",
+    jar = "@annotations//file",
+    source_jar = "@annotations-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlin-stdlib",
+    jar = "@kotlin-stdlib//file",
+    source_jar = "@kotlin-stdlib-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-collections-immutable",
+    jar = "@kotlinx-collections-immutable-jvm//file",
+    source_jar = "@kotlinx-collections-immutable-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "slf4j-api",
+    jar = "@slf4j-api//file",
+    source_jar = "@slf4j-api-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "log4j-over-slf4j",
+    jar = "@log4j-over-slf4j//file",
+    source_jar = "@log4j-over-slf4j-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-api",
+    jar = "@opentelemetry-api//file",
+    source_jar = "@opentelemetry-api-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":opentelemetry-sdk",
+        ":opentelemetry-sdk-common",
+        ":opentelemetry-context",
+        ":opentelemetry-sdk-trace",
+        ":opentelemetry-sdk-metrics",
+        ":opentelemetry-sdk-logs",
+        ":opentelemetry-sdk-extension-autoconfigure-spi"
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk",
+    jar = "@opentelemetry-sdk//file",
+    source_jar = "@opentelemetry-sdk-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-common",
+    jar = "@opentelemetry-sdk-common//file",
+    source_jar = "@opentelemetry-sdk-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-context",
+    jar = "@opentelemetry-context//file",
+    source_jar = "@opentelemetry-context-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-trace",
+    jar = "@opentelemetry-sdk-trace//file",
+    source_jar = "@opentelemetry-sdk-trace-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-metrics",
+    jar = "@opentelemetry-sdk-metrics//file",
+    source_jar = "@opentelemetry-sdk-metrics-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-sdk-logs",
+    jar = "@opentelemetry-sdk-logs//file",
+    source_jar = "@opentelemetry-sdk-logs-sources//file",
     visibility = ["//visibility:public"],
 )
 
@@ -226,12 +375,42 @@ jvm_import(
 )
 
 jvm_import(
+    name = "opentelemetry-semconv",
+    jar = "@opentelemetry-semconv//file",
+    source_jar = "@opentelemetry-semconv-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-logging-otlp",
+    jar = "@opentelemetry-exporter-logging-otlp//file",
+    source_jar = "@opentelemetry-exporter-logging-otlp-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-common",
+    jar = "@opentelemetry-exporter-common//file",
+    source_jar = "@opentelemetry-exporter-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-otlp-common",
+    jar = "@opentelemetry-exporter-otlp-common//file",
+    source_jar = "@opentelemetry-exporter-otlp-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "opentelemetry-exporter-otlp",
     jar = "@opentelemetry-exporter-otlp//file",
     source_jar = "@opentelemetry-exporter-otlp-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
         ":opentelemetry-exporter-sender-jdk",
+        ":opentelemetry-exporter-common",
+        ":opentelemetry-exporter-otlp-common",
         ":opentelemetry-sdk-extension-autoconfigure-spi"
     ],
 )
@@ -244,9 +423,54 @@ jvm_import(
 )
 
 jvm_import(
-    name = "fury-core",
-    jar = "@fury-core//file",
-    source_jar = "@fury-core-sources//file",
+    name = "netty-common",
+    jar = "@netty-common//file",
+    source_jar = "@netty-common-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "netty-buffer",
+    jar = "@netty-buffer//file",
+    source_jar = "@netty-buffer-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":netty-common"
+    ],
+)
+
+jvm_import(
+    name = "collection",
+    jar = "@collection-jvm//file",
+    source_jar = "@collection-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-coroutines-core",
+    jar = "@kotlinx-coroutines-core-jvm//file",
+    source_jar = "@kotlinx-coroutines-core-jvm-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "expects-compiler-plugin",
+    jar = "@expects-compiler-plugin//file",
+    source_jar = "@expects-compiler-plugin-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "asm-all",
+    jar = "@asm-all//file",
+    source_jar = "@asm-all-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "intellij-deps-fastutil",
+    jar = "@intellij-deps-fastutil//file",
+    source_jar = "@intellij-deps-fastutil-sources//file",
     visibility = ["//visibility:public"],
 )
 

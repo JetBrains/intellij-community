@@ -33,6 +33,12 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   protected fun getCurrentScope(): WebSymbolsPsiScope? =
     getRootScope()
       ?.let { findBestMatchingScope(it) }
+      ?.let {
+        val structuredScopePtr = this@WebSymbolsStructuredScope.createPointer()
+        WebSymbolsPsiScopeWithPointer(it) {
+          structuredScopePtr.dereference()?.getCurrentScope()
+        }
+      }
 
   protected fun getRootScope(): WebSymbolsPsiScope? {
     val manager = CachedValuesManager.getManager(location.project)
@@ -46,6 +52,8 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
         CachedValueProvider.Result.create(holder.topLevelScope, rootPsiElement, PsiModificationTracker.MODIFICATION_COUNT)
       }, false)
   }
+
+  abstract override fun createPointer(): Pointer<out WebSymbolsStructuredScope<T, R>>
 
   override fun equals(other: Any?): Boolean =
     other === this || (
@@ -130,6 +138,23 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbol>
   }
 
+  private class WebSymbolsPsiScopeWithPointer(
+    private val delegate: WebSymbolsPsiScope,
+    private val pointer: Pointer<out WebSymbolsPsiScope>,
+  ) : WebSymbolsPsiScope by delegate {
+
+    override fun createPointer(): Pointer<out WebSymbolsPsiScope> =
+      pointer
+
+    override fun equals(other: Any?): Boolean =
+      other === this || delegate == other ||
+      other is WebSymbolsPsiScopeWithPointer
+      && other.delegate == delegate
+
+    override fun hashCode(): Int =
+      delegate.hashCode()
+  }
+
   private class WebSymbolsPsiScopeImpl(
     override val source: PsiElement,
     override val properties: Map<String, Any>,
@@ -207,7 +232,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       source.hashCode()
 
     override fun createPointer(): Pointer<out WebSymbolsScope> =
-      throw IllegalStateException("WebSymbolsPsiScopeImpl cannot be pointed to.")
+      throw IllegalStateException("WebSymbolsPsiScopeImpl cannot be pointed to. It should be wrapped with WebSymbolsPsiScopeWithPointer.")
 
     override fun getModificationCount(): Long = 0
   }

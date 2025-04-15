@@ -159,11 +159,12 @@ c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
 - javax.swing.JButton
 - com.intellij.ui.UserActivityProviderComponent
 - *p:doShiftClick():V
+f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
+- *sf:getOwner():com.intellij.platform.ide.core.permissions.Permission
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
 - *:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:createFileEditor$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.observable.util.ListenerUiUtil
 - *sf:whenItemChangedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - *bs:whenItemChangedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
@@ -181,9 +182,6 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - *sf:backwardFilter(com.intellij.openapi.observable.properties.ObservableMutableProperty,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.properties.ObservableMutableProperty
 *:com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - a:getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
-*:com.intellij.openapi.options.ObservableOptionEditor
-- com.intellij.openapi.options.OptionEditor
-- a:getResultFlow():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.openapi.options.OptionEditor
 - a:getComponent():javax.swing.JComponent
 - a:result():java.lang.Object
@@ -293,6 +291,9 @@ c:com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 - *:<init>(javax.swing.table.TableCellRenderer):V
 - *:bindToEditorSize(java.util.function.Supplier):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 - *:withCellValidator(com.intellij.openapi.ui.cellvalidators.TableCellValidator):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+f:com.intellij.openapi.wm.PermissionsKt
+- *sf:getFullToolWindowAccess():com.intellij.platform.ide.core.permissions.Permission
+- *sf:getToolWindowViewAccess():com.intellij.platform.ide.core.permissions.Permission
 *:com.intellij.openapi.wm.WelcomeScreenCustomization
 - sf:WELCOME_SCREEN_CUSTOMIZATION:com.intellij.openapi.extensions.ExtensionPointName
 - createMainPanelToolbar(com.intellij.openapi.Disposable):javax.swing.JComponent

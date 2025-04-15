@@ -14,17 +14,23 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
 import com.intellij.rt.debugger.MethodInvoker
 import com.intellij.util.BitUtil.isSet
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 import com.jetbrains.jdi.ArrayReferenceImpl
 import com.sun.jdi.*
 import com.sun.jdi.ObjectReference.INVOKE_NONVIRTUAL
 import org.jetbrains.annotations.ApiStatus
+import java.util.EnumSet
 
 @ApiStatus.Internal
 object MethodInvokeUtils {
+  @JvmStatic
+  internal val INVOKE_WITH_HELPER_KEY: Key<Boolean> = Key<Boolean>("invoke.with.helper")
+
   fun getHelperExceptionStackTrace(evaluationContext: EvaluationContextImpl, e: Exception): String? {
     if (e !is EvaluateException) return null
     val exceptionFromTargetVM = e.exceptionFromTargetVM ?: return null
@@ -73,6 +79,16 @@ object MethodInvokeUtils {
   }
 }
 
+private val ORIGINS_FOR_USE_WITH_HELPER = EnumSet.of(XEvaluationOrigin.DIALOG, XEvaluationOrigin.INLINE, XEvaluationOrigin.EDITOR)
+
+private fun EvaluationContextImpl.shouldUseHelper(): Boolean {
+  return when (Registry.get("debugger.evaluate.method.helper").selectedOption) {
+    "off" -> false
+    "always" -> true
+    else -> ORIGINS_FOR_USE_WITH_HELPER.contains(XEvaluationOrigin.getOrigin(this)) || getUserData(MethodInvokeUtils.INVOKE_WITH_HELPER_KEY) == true
+  }
+}
+
 @Throws(EvaluateException::class)
 internal fun tryInvokeWithHelper(
   type: ReferenceType,
@@ -84,12 +100,12 @@ internal fun tryInvokeWithHelper(
   internalEvaluate: Boolean,
 ): InvocationResult {
   if (internalEvaluate ||
-      !Registry.`is`("debugger.evaluate.method.helper") ||
+      !evaluationContext.shouldUseHelper() ||
       isSet(invocationOptions, INVOKE_NONVIRTUAL) || //TODO: support
       isPrimitiveType(method.returnTypeName()) ||
       (isVoid(method) && !method.isConstructor) ||
       "clone" == method.name()) {
-    return InvocationResult(false, null)
+    return INVOCATION_FAILED
   }
 
   val methodDeclaringType = method.declaringType()
@@ -100,7 +116,7 @@ internal fun tryInvokeWithHelper(
 
   // Class.forName may check getCallerClass which is different if helper is used
   if (method.name().equals("forName") && methodDeclaringType.name() == CommonClassNames.JAVA_LANG_CLASS) {
-    return InvocationResult(false, null)
+    return INVOCATION_FAILED
   }
 
   val debugProcess = evaluationContext.debugProcess
@@ -109,7 +125,7 @@ internal fun tryInvokeWithHelper(
   val implLookup = MethodInvokeUtils.getMethodHandlesImplLookup(evaluationContext)
   if (implLookup == null) {
     logger<MethodInvokeUtils>().error("Cannot get MethodHandles.Lookup.IMPL_LOOKUP, java version " + evaluationContext.virtualMachineProxy.version())
-    return InvocationResult(false, null)
+    return INVOCATION_FAILED
   }
 
   invokerArgs.add(implLookup) // lookup
@@ -140,13 +156,15 @@ internal fun tryInvokeWithHelper(
     if (value is ArrayReference) { // wrapped
       val wrapper = value
       value = value.getValue(0)
-      DebuggerUtilsAsync.disableCollection(value)
-      // clear the reference
-      if (DebuggerUtilsAsync.isAsyncEnabled() && wrapper is ArrayReferenceImpl) {
-        wrapper.setFirstElementToNull()
-      }
-      else {
-        wrapper.setValue(0, null)
+      if (value is ObjectReference) {
+        evaluationContext.suspendContext.keepAsync(value)
+        // clear the reference
+        if (DebuggerUtilsAsync.isAsyncEnabled() && wrapper is ArrayReferenceImpl) {
+          wrapper.setFirstElementToNull()
+        }
+        else {
+          wrapper.setValue(0, null)
+        }
       }
     }
     return InvocationResult(true, value)
@@ -165,7 +183,7 @@ internal fun tryInvokeWithHelper(
       DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${methodDeclaringType.name() + "." + method.name()}): ${e.message}",
                                  RuntimeExceptionWithAttachments(e, *attachments)) // log helper exception if available
     }
-    return InvocationResult(false, null)
+    return INVOCATION_FAILED
   }
 }
 
@@ -173,4 +191,6 @@ private val HELPER_FRAMES = setOf(MethodInvoker::class.qualifiedName + ".invoke"
 private fun isHelperFrame(frame: String): Boolean = HELPER_FRAMES.any { frame.contains(it) }
 
 internal data class InvocationResult(@get:JvmName("isSuccess") val success: Boolean, val value: Value?)
+
+private val INVOCATION_FAILED = InvocationResult(false, null)
 

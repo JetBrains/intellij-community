@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -273,7 +274,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
           if (!(element instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
               String message = JavaRefactoringBundle.message("parameter.initializer.contains.0.but.not.all.calls.to.method.are.in.its.class",
-                                                         CommonRefactoringUtil.htmlEmphasize(PsiKeyword.SUPER));
+                                                         CommonRefactoringUtil.htmlEmphasize(JavaKeywords.SUPER));
               conflicts.putValue(myParameterInitializer, message);
               break;
             }

@@ -1,0 +1,16 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/dataframe_fake_plugin.jar
+// FILE: main.kt
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+package test
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.*
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.jetbrains.kotlinx.dataframe.api.*
+
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>main<!>() {
+    val <!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df<!> = <!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>dataFrameOf<!>("a" <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>to<!> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>listOf<!>("1"), "b" <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>to<!> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>listOf<!>(52))
+    <!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>a<!>
+
+    val <!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int newCol: String'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df1<!> = <!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df<!>.<!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int newCol: String'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>add<!>("newCol") { <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>a<!> + <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>b<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>toString<!>() }
+    <!HIGHLIGHTING("descr='[SCHEMA]  a: String b: Int newCol: String'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>df1<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>newCol<!>
+}

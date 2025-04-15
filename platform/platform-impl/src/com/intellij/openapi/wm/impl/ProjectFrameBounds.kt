@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Frame
 import java.awt.Rectangle
 import javax.swing.JFrame
@@ -34,9 +35,10 @@ internal class ProjectFrameBounds {
   }
 }
 
+@ApiStatus.Internal
 @Tag("frame")
 @Property(style = Property.Style.ATTRIBUTE)
-internal class FrameInfo : BaseState() {
+class FrameInfo : BaseState() {
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
   var bounds: Rectangle? by property(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 

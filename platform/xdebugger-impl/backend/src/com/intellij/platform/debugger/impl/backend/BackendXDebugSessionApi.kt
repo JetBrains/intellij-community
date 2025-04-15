@@ -4,57 +4,58 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
+import com.intellij.ide.ui.colors.rpcId
+import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.project.asProject
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.ColoredTextContainer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
-import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
+import com.intellij.xdebugger.impl.frame.ColorState
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
-import com.jetbrains.rhizomedb.entity
-import fleet.kernel.rete.collect
-import fleet.kernel.rete.query
-import fleet.kernel.withEntities
+import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
+import com.intellij.xdebugger.impl.rpc.models.storeGlobally
+import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
+import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.rpc.core.toRpc
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.await
+import javax.swing.Icon
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
-  override suspend fun currentEvaluator(sessionId: XDebugSessionId): Flow<XDebuggerEvaluatorDto?> {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
-    return channelFlow {
-      withEntities(sessionEntity) {
-        query { sessionEntity.evaluator }.collect { entity ->
-          if (entity == null) {
-            send(null)
-            return@collect
-          }
-          val canEvaluateInDocument = entity.evaluator is XDebuggerDocumentOffsetEvaluator
-          send(XDebuggerEvaluatorDto(entity.evaluatorId, canEvaluateInDocument))
-        }
-      }
+  override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return session.getCurrentPositionFlow().map { sourcePosition ->
+      sourcePosition?.toRpc()
     }
   }
 
-  override suspend fun currentSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
-    return channelFlow {
-      withEntities(sessionEntity) {
-        query { sessionEntity.currentSourcePosition }.collect { sourcePosition ->
-          if (sourcePosition == null) {
-            send(null)
-            return@collect
-          }
-          send(sourcePosition.toRpc())
-        }
-      }
+  override suspend fun topSourcePosition(sessionId: XDebugSessionId): Flow<XSourcePositionDto?> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return session.topFrameFlow.map {
+      session.topFramePosition?.toRpc()
     }
   }
 
   override suspend fun currentSessionState(sessionId: XDebugSessionId): Flow<XDebugSessionState> {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
-    val session = sessionEntity.session as XDebugSessionImpl
+    val session = sessionId.findValue() ?: return emptyFlow()
 
     return combine(
       session.isPausedState, session.isStoppedState, session.isReadOnlyState, session.isPauseActionSupportedState, session.isSuspendedState
@@ -64,9 +65,9 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 
   override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId? {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return null
-    val project = sessionEntity.projectEntity.asProject()
-    val editorsProvider = sessionEntity.session.debugProcess.editorsProvider
+    val session = sessionId.findValue() ?: return null
+    val project = session.project
+    val editorsProvider = session.debugProcess.editorsProvider
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
       backendDocument.bindToFrontend(frontendDocumentId)
@@ -74,8 +75,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 
   override suspend fun sessionTabInfo(sessionId: XDebugSessionId): Flow<XDebuggerSessionTabDto?> {
-    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
-    val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
+    val session = sessionId.findValue() ?: return emptyFlow()
     return session.tabInitDataFlow.map {
       if (it == null) return@map null
       XDebuggerSessionTabDto(it, session.getPausedFlow().toRpc())
@@ -83,35 +83,113 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   }
 
   override suspend fun resume(sessionId: XDebugSessionId) {
-    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.resume()
     }
   }
 
   override suspend fun pause(sessionId: XDebugSessionId) {
-    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.pause()
     }
   }
 
   override suspend fun stepOver(sessionId: XDebugSessionId, ignoreBreakpoints: Boolean) {
-    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.stepOver(ignoreBreakpoints)
     }
   }
 
+  override suspend fun stepOut(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.stepOut()
+    }
+  }
+
+  override suspend fun stepInto(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.stepInto()
+    }
+  }
+
+  override suspend fun smartStepIntoEmpty(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.debugProcess.smartStepIntoHandler?.stepIntoEmpty(session)
+    }
+  }
+
+  override suspend fun smartStepInto(smartStepTargetId: XSmartStepIntoTargetId) {
+    val targetModel = smartStepTargetId.findValue() ?: return
+    val session = targetModel.session
+    val handler = session.debugProcess.smartStepIntoHandler ?: return
+    withContext(Dispatchers.EDT) {
+      @Suppress("UNCHECKED_CAST")
+      session.smartStepInto(handler as XSmartStepIntoHandler<XSmartStepIntoVariant?>, targetModel.target)
+    }
+  }
+
+  override suspend fun computeSmartStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto> {
+    return computeTargets(sessionId, sourcePositionDto) { handler, position ->
+      withContext(Dispatchers.EDT) {
+        handler.computeSmartStepVariantsAsync(position).await()
+      }
+    }
+  }
+
+  override suspend fun computeStepTargets(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto): List<XSmartStepIntoTargetDto> {
+    return computeTargets(sessionId, sourcePositionDto) { handler, position ->
+      withContext(Dispatchers.EDT) {
+        handler.computeStepIntoVariants(position).await()
+      }
+    }
+  }
+
+  private suspend fun computeTargets(
+    sessionId: XDebugSessionId,
+    sourcePositionDto: XSourcePositionDto,
+    computeVariants: suspend (XSmartStepIntoHandler<*>, XSourcePosition) -> List<XSmartStepIntoVariant>,
+  ): List<XSmartStepIntoTargetDto> {
+    val session = sessionId.findValue() ?: return emptyList()
+    val scope = session.currentSuspendCoroutineScope ?: return emptyList()
+    val handler = session.debugProcess.smartStepIntoHandler ?: return emptyList()
+    val sourcePosition = sourcePositionDto.sourcePosition()
+    return computeVariants(handler, sourcePosition).map { variant ->
+      val id = variant.storeGlobally(scope, session)
+      val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+      val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
+      XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+    }
+  }
+
+  override suspend fun forceStepInto(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.forceStepInto()
+    }
+  }
+
+  override suspend fun runToPosition(sessionId: XDebugSessionId, sourcePositionDto: XSourcePositionDto, ignoreBreakpoints: Boolean) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.runToPosition(sourcePositionDto.sourcePosition(), ignoreBreakpoints)
+    }
+  }
+
   override suspend fun triggerUpdate(sessionId: XDebugSessionId) {
-    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.rebuildViews()
     }
   }
 
   override suspend fun updateExecutionPosition(sessionId: XDebugSessionId) {
-    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session ?: return
+    val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.updateExecutionPosition()
     }
@@ -119,9 +197,125 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
 
   override suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback) {
     val tab = tabInfo.tab ?: return
-    val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session as? XDebugSessionImpl ?: return
+    val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
       session.tabInitialized(tab)
     }
   }
+
+  override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean) {
+    val session = sessionId.findValue() ?: return
+    val executionStackModel = executionStackId.findValue() ?: return
+    val stackFrameModel = frameId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.setCurrentStackFrame(executionStackModel.executionStack, stackFrameModel.stackFrame, isTopFrame)
+    }
+  }
+
+  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
+    val suspendContextModel = suspendContextId.findValue() ?: return emptyFlow()
+    return channelFlow {
+      suspendContextModel.suspendContext.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
+        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+          val session = suspendContextModel.session
+          val stacks = executionStacks.map { stack ->
+            val id = stack.getOrStoreGlobally(suspendContextModel.coroutineScope, session)
+            XExecutionStackDto(id, stack.displayName, stack.icon?.rpcId())
+          }
+          trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
+          if (last) {
+            this@channelFlow.close()
+          }
+        }
+
+        override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+          trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
+        }
+      })
+      awaitClose()
+    }.buffer(Channel.UNLIMITED)
+  }
+
+  override suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return channelFlow {
+      session.fileColorsComputer.fileColors.collect { (virtualFile, colorState) ->
+        val serializedState = when (colorState) {
+          is ColorState.Computed -> SerializedColorState.Computed(colorState.color.rpcId())
+          ColorState.Computing -> SerializedColorState.Computing
+          ColorState.NoColor -> SerializedColorState.NoColor
+        }
+        // TODO[IJPL-177087]: send in batches to optimize throughput?
+        send(XFileColorDto(virtualFile.rpcId(), serializedState))
+      }
+    }
+  }
+
+  override suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId) {
+    val session = sessionId.findValue() ?: return
+    val file = virtualFileId.virtualFile() ?: return
+    // TODO[IJPL-177087]: collect in batches to optimize throughput?
+    session.fileColorsComputer.sendRequest(file)
+  }
+
+  override suspend fun showExecutionPoint(sessionId: XDebugSessionId) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.showExecutionPoint()
+    }
+  }
 }
+
+internal fun createXStackFrameDto(frame: XStackFrame, coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {
+  val id = frame.getOrStoreGlobally(coroutineScope, session)
+  val equalityObject = frame.equalityObject
+  val serializedEqualityObject = when (equalityObject) {
+    is String -> XStackFrameStringEqualityObject(equalityObject)
+    else -> null // TODO support other types
+  }
+  val canEvaluateInDocument = frame.isDocumentEvaluator
+  val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
+  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.initialPresentation(),
+                        frame.captionInfo(), frame.customBackgroundInfo())
+}
+
+private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
+  return if (this is XDebuggerFramesList.ItemWithSeparatorAbove) {
+    XStackFrameCaptionInfo(hasSeparatorAbove(), captionAboveOf)
+  }
+  else {
+    XStackFrameCaptionInfo.noInfo
+  }
+}
+
+private fun XStackFrame.customBackgroundInfo(): XStackFrameCustomBackgroundInfo? {
+  if (this !is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
+    return null
+  }
+  return XStackFrameCustomBackgroundInfo(backgroundColor?.rpcId())
+}
+
+private fun XStackFrame.initialPresentation(): XStackFramePresentation {
+  val parts = mutableListOf<XStackFramePresentationFragment>()
+  var iconId: IconId? = null
+  var tooltip: String? = null
+  customizePresentation(object : ColoredTextContainer {
+    override fun append(fragment: @NlsContexts.Label String, attributes: SimpleTextAttributes) {
+      parts += XStackFramePresentationFragment(fragment, attributes.toRpc())
+    }
+
+    override fun setIcon(icon: Icon?) {
+      iconId = icon?.rpcId()
+    }
+
+    override fun setToolTipText(text: @NlsContexts.Tooltip String?) {
+      tooltip = text
+    }
+  })
+  return XStackFramePresentation(parts, iconId, tooltip)
+}
+
+private fun SimpleTextAttributes.toRpc() = SerializableSimpleTextAttributes(bgColor?.rpcId(),
+                                                                            fgColor?.rpcId(),
+                                                                            waveColor?.rpcId(),
+                                                                            style)

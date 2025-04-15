@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.structureView.StructureViewClickEvent
 import com.intellij.ide.structureView.StructureViewEventsCollector
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
@@ -14,7 +15,6 @@ import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvide
 import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
 import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
-import com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
 import com.intellij.ide.structureView.logical.model.LogicalContainer
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.structureView.logical.model.ProvidedLogicalContainer
@@ -26,13 +26,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 @ApiStatus.Internal
 class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
   : StructureViewModelBase(psiFile, editor, elementBuilder.createViewTreeElement(assembledModel)),
-    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ActionHandler {
+    StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ClickHandler {
 
   constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>):
     this(psiFile, editor, assembledModel, ElementsBuilder())
@@ -53,13 +54,18 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
 
   override fun isSmartExpand(): Boolean = false
 
-  override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int): Boolean {
-    val model = getModel(element) ?: return false
-    val handled = LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
-    if (handled) {
-      StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+  override fun handleClick(event: StructureViewClickEvent): CompletableFuture<Boolean> {
+    val model = getModel(event.element)
+    val presentation = model?.let { LogicalModelPresentationProvider.getForObject(it) }
+    if (model == null || presentation == null) {
+      return CompletableFuture.completedFuture(false)
     }
-    return handled
+    return presentation.handleClick(model, event.fragmentIndex).thenApply { handled ->
+      if (handled) {
+        StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+      }
+      handled
+    }
   }
 
   private fun getModel(element: StructureViewTreeElement): Any? {

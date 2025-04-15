@@ -1,0 +1,17 @@
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME}
+
+#end
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+
+#parse("File Header.java")
+@Service
+internal class ${NAME}() {
+    companion object {
+        fun getInstance(): ${NAME} = service()
+    }
+
+    fun doWork() {
+        TODO()
+    }
+}

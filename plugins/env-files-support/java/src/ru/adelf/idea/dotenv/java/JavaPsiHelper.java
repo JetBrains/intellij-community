@@ -54,9 +54,9 @@ final class JavaPsiHelper {
             return false;
         }
 
-        for (ResolveResult result : methodCallExpression.getMethodExpression().multiResolve(true)) {
-            if (result.getElement() instanceof PsiMethod) {
-                PsiClass psiClass = ((PsiMethod) result.getElement()).getContainingClass();
+        for (ResolveResult result : methodCallExpression.multiResolve(true)) {
+            if (result.getElement() instanceof PsiMethod method) {
+                PsiClass psiClass = method.getContainingClass();
 
                 if (psiClass != null && classNames.contains(psiClass.getName())) {
                     return true;

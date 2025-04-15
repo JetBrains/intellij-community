@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -39,7 +40,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
 
   @Override
   public @NotNull String getFamilyName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.SWITCH, JavaKeywords.IF);
   }
 
   @Override

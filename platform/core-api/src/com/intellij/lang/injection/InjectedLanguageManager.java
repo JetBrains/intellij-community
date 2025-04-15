@@ -63,7 +63,7 @@ public abstract class InjectedLanguageManager {
     throw new UnsupportedOperationException();
   }
 
-  public abstract @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
+  public abstract @NotNull @Unmodifiable List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 
   public boolean isInjectedFragment(@NotNull PsiFile injectedFile) {
     return isInjectedViewProvider(injectedFile.getViewProvider());
@@ -79,7 +79,7 @@ public abstract class InjectedLanguageManager {
    */
   public abstract @Nullable PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
 
-  public abstract @Nullable List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host);
+  public abstract @Nullable @Unmodifiable List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host);
 
   public boolean hasInjections(@NotNull PsiElement host) {
     return getInjectedPsiFiles(host) != null;
@@ -97,7 +97,7 @@ public abstract class InjectedLanguageManager {
   /**
    * @return the ranges in this document window that correspond to prefix/suffix injected text fragments and thus can't be edited and are not visible in the editor.
    */
-  public abstract @NotNull List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window);
+  public abstract @NotNull @Unmodifiable List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window);
 
   /**
    * This method can be invoked on an uncommitted document, before performing commit and using other methods here

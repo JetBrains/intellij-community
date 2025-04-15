@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -136,13 +137,13 @@ fun runProcessBlocking(
   }
 
   val scope = @OptIn(DelicateCoroutinesApi::class) (wslIjentManager.processAdapterScope)
-  when (val processResult = ijentApi.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(exePath)
+  when (val processResult = ijentApi.exec.execute(exePath)
                                                     .args(args)
                                                     .env(explicitEnvironmentVariables)
                                                     .ptyOrStdErrSettings(ptyOrStdErrSettings)
                                                     .workingDirectory(workingDirectory?.let { EelPath.parse(it, ijentApi.descriptor) })
-                                                    .build()
-  )) {
+                                                    .eelIt()
+  ) {
     is EelResult.Ok ->
       (processResult.value as IjentChildProcess).toProcess(
         coroutineScope = scope,

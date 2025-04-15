@@ -344,6 +344,7 @@
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
+      <separator/>
       <reference ref="Vcs.RevertSelectedChanges"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>

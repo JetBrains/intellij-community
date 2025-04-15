@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.bugs.PrimitiveArrayArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.format.FormatDecode;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -89,15 +90,22 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(cast.getParent());
     if (parent instanceof PsiExpressionList)  {
       final PsiElement gParent = parent.getParent();
-      if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
+      if (gParent instanceof PsiMethodCallExpression call && IGNORE_SUSPICIOUS_METHOD_CALLS) {
         PsiType operandType = operand.getType();
-        final String message = SuspiciousMethodCallUtil
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operandType, true, new ArrayList<>(), 0);
+        final String message =
+          SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(call, operand, operandType, true, new ArrayList<>(), 0);
         if (message != null) {
           return null;
         }
-        
-        if (FormatDecode.isSuspiciousFormatCall((PsiMethodCallExpression)gParent, cast)) {
+        PsiExpression[] arguments = call.getArgumentList().getExpressions();
+        if (arguments.length > 0) {
+          PsiExpression lastArgument = arguments[arguments.length - 1];
+          if (lastArgument == cast
+              && PrimitiveArrayArgumentToVariableArgMethodInspection.isConfusingArgument(call, operand, arguments)) {
+            return null;
+          }
+        }
+        if (FormatDecode.isSuspiciousFormatCall(call, cast)) {
           return null;
         }
         

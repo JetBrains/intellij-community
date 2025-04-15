@@ -70,6 +70,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/functionCall.test");
     }
 
+    @TestMetadata("genericTypeInParameter.test")
+    public void testGenericTypeInParameter() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/genericTypeInParameter.test");
+    }
+
     @TestMetadata("itExtensionLambda.test")
     public void testItExtensionLambda() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/itExtensionLambda.test");

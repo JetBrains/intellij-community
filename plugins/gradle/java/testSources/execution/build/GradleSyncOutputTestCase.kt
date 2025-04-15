@@ -28,7 +28,7 @@ abstract class GradleSyncOutputTestCase {
   private val projectFixture = projectFixture(testRootFixture, openAfterCreation = true)
   val project by projectFixture
 
-  val gradleFixture by gradleFixture(testRootFixture)
+  val gradleFixture by gradleFixture()
 
   val buildViewFixture by buildViewFixture(projectFixture)
 
@@ -46,7 +46,7 @@ abstract class GradleSyncOutputTestCase {
     testRoot.createBuildFile(gradleVersion, configure = configure)
 
   suspend fun reloadProject() {
-    gradleFixture.reloadProject(project)
+    gradleFixture.reloadProject(project, testRoot)
   }
 
   fun assertSyncViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {

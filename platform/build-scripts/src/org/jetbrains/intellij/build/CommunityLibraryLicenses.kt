@@ -626,11 +626,11 @@ object CommunityLibraryLicenses {
     LibraryLicense("JetBrains Annotations for Java 5", libraryName = "jetbrains-annotations-java5", url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
 
-    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-ide-laf-bridge")
+    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-ide-laf-bridge-243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-242")
+    LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
@@ -757,6 +757,10 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/kosi-libs/Kodein/blob/master/LICENSE.txt"),
 
     LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
+      .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense(libraryName = "kotlin-metadata-bcv", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
@@ -1072,10 +1076,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("qdox-java-parser", libraryName = "qdox-java-parser", url = "https://github.com/paul-hammant/qdox")
       .apache("https://github.com/paul-hammant/qdox/blob/master/LICENSE.txt"),
 
-    LibraryLicense("R8 DEX shrinker", libraryName = "jb-r8", url = "https://r8.googlesource.com/r8")
-      .newBsd("https://r8.googlesource.com/r8/+/refs/heads/main/LICENSE")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-
     LibraryLicense("rd core", libraryName = "rd-core", url = "https://github.com/JetBrains/rd/tree/master/rd-kt/rd-core")
       .apache("https://github.com/JetBrains/rd/blob/master/LICENSE"),
 
@@ -1129,7 +1129,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(
       name = "Skiko Runtime",
       libraryName = "jetbrains.skiko.awt.runtime.all",
-      additionalLibraryNames = listOf("jetbrains.skiko.awt.runtime.all.0.8.9"),
+      additionalLibraryNames = listOf("jetbrains.skiko.awt.runtime.all.0.8.18"),
       url = "https://github.com/JetBrains/skiko/"
     ).apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
 
@@ -1397,6 +1397,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-compiler-fir"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-ir"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-tests"),
+    jetbrainsLibrary("kotlinc.kotlin-dataframe-compiler-plugin"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
     // TODO: KTIJ-32993
@@ -1409,6 +1410,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-dependencies"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
+    jetbrainsLibrary("kotlinc.kotlin-swift-export"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
     jetbrainsLibrary("kotlinc.lombok-compiler-plugin"),
     jetbrainsLibrary("kotlinc.low-level-api-fir"),

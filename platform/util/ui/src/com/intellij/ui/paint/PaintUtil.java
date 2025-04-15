@@ -7,10 +7,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
+import com.intellij.util.ui.AATextInfo;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -418,19 +421,25 @@ public final class PaintUtil {
   /**
    * Calculates the width of the specified text string when drawn using the provided Graphics context and FontMetrics.
    * This method provides a more accurate measurement compared to the metrics.stringWidth(...) method, as it takes into account the Graphics context.
+   * <p/>
+   * Note: this method ignores aliasing hints stored in the JComponent and shall NOT be used
+   * in pair with {@link SwingUtilities2#drawString(JComponent, Graphics, String, int, int)}, see {@link AATextInfo}.
    *
    * @param text    The text string whose width needs to be calculated.
    * @param g       The Graphics context used for rendering the text.
    * @param metrics The FontMetrics object associated with the font used for rendering the text.
    * @return The width of the text string in pixels when drawn using the specified Graphics context and FontMetrics.
+
+   * @deprecated Prefer using {@link UIUtil#computeStringWidth(JComponent, String)} instead
    */
+  @Deprecated(forRemoval = true)
   public static int getStringWidth(String text, Graphics g, FontMetrics metrics) {
     return metrics.getStringBounds(text, g).getBounds().width;
   }
-  
+
   @ApiStatus.Internal
   @Contract("!null, _, _ -> !null")
-  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
+  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, @NotNull JComponent component) {
     if (text == null) return null;
 
     if (text.startsWith("(") && text.endsWith(")")) {
@@ -439,12 +448,13 @@ public final class PaintUtil {
 
     if (maxWidth < 0) return text;
 
+    FontMetrics fontMetrics = component.getFontMetrics(component.getFont());
     boolean in = text.startsWith("in ");
     if (in) text = text.substring(3);
     String left = in ? "in " : "";
     String adjustedText = left + text;
 
-    int fullWidth = fm.stringWidth(adjustedText);
+    int fullWidth = UIUtil.computeStringWidth(component, fontMetrics, adjustedText);
     if (fullWidth < maxWidth) return adjustedText;
 
     String separator = text.contains("/") ? "/" :
@@ -456,7 +466,7 @@ public final class PaintUtil {
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
       parts.remove(index);
-      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
+      if (UIUtil.computeStringWidth(component, fontMetrics, left + StringUtil.join(parts, separator) + "...") < maxWidth) {
         parts.add(index, "...");
         return left + StringUtil.join(parts, separator);
       }

@@ -3,6 +3,7 @@ package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.notification.Notification;
@@ -21,6 +22,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -47,8 +49,31 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
     ExternalDependenciesManager.getInstance(project);
   }
 
+  private static List<DependencyOnPlugin> getRequiredPlugins(@NotNull ExternalDependenciesManager dependencyManager) {
+    List<DependencyOnPlugin> dependencies = new ArrayList<>(dependencyManager.getDependencies(DependencyOnPlugin.class));
+    if (!PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) {
+      return dependencies;
+    }
+    // Free mode
+    List<DependencyOnPlugin> result = new ArrayList<>();
+    for (DependencyOnPlugin plugin : dependencies) {
+      String pluginId = plugin.getPluginId();
+      IdeaPluginDescriptorImpl descriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId));
+      if (descriptor == null) {
+        continue;
+      }
+      var canBeEnabled =
+        !ContainerUtil.exists(descriptor.getDependencies(), it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
+      if (canBeEnabled) {
+        result.add(plugin);
+      }
+    }
+    return result;
+  }
+
   public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager dependencyManager) {
-    List<DependencyOnPlugin> dependencies = dependencyManager.getDependencies(DependencyOnPlugin.class);
+    List<DependencyOnPlugin> dependencies = getRequiredPlugins(dependencyManager);
+
     if (dependencies.isEmpty()) {
       return;
     }
@@ -91,13 +116,17 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       String pluginVersion = descriptor.getVersion();
 
       BuildNumber currentIdeVersion = applicationInfo.getBuild();
-      if (descriptor.isBundled() && !descriptor.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
+      if (descriptor.isBundled() &&
+          !descriptor.allowBundledUpdate() &&
+          currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
         String pluginFromString = PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ? "" : "plugin '" + pluginName + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
-          errorMessages.add(IdeBundle.message("error.project.requires.newer.ide", projectName, pluginFromString, minVersion, pluginVersion));
+          errorMessages.add(
+            IdeBundle.message("error.project.requires.newer.ide", projectName, pluginFromString, minVersion, pluginVersion));
         }
         if (maxVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(maxVersion)) > 0) {
-          errorMessages.add(IdeBundle.message("error.project.requires.older.ide", projectName, pluginFromString, maxVersion, pluginVersion));
+          errorMessages.add(
+            IdeBundle.message("error.project.requires.older.ide", projectName, pluginFromString, maxVersion, pluginVersion));
         }
       }
       else {
@@ -122,7 +151,8 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
     Notification notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)
       .createNotification(IdeBundle.message("notification.title.required.plugins.not.loaded"), StringUtil.join(errorMessages, "<br>"),
-                          NotificationType.ERROR);
+                          NotificationType.ERROR)
+      .setIcon(AllIcons.Ide.Notification.IdeUpdate);
 
     if (!disabled.isEmpty()) {
       notification.addAction(new NotificationAction(disabled.size() == 1 ?

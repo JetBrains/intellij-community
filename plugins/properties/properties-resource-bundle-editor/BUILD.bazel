@@ -15,8 +15,8 @@ jvm_library(
   deps = [
     "//platform/util",
     "//platform/lang-impl",
-    "//plugins/properties/properties-psi-impl:psi-impl",
-    "//plugins/properties",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/properties:properties-backend",
     "//xml/xml-psi-api:psi",
     "//platform/ide-core-impl",
     "//platform/usageView",
@@ -26,7 +26,10 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":resource-bundle-editor_resources"]
+  runtime_deps = [
+    ":resource-bundle-editor_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(
@@ -37,8 +40,8 @@ jvm_library(
   deps = [
     "//platform/util",
     "//platform/lang-impl",
-    "//plugins/properties/properties-psi-impl:psi-impl",
-    "//plugins/properties",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/properties:properties-backend",
     "//xml/xml-psi-api:psi",
     "//platform/ide-core-impl",
     "//platform/usageView",

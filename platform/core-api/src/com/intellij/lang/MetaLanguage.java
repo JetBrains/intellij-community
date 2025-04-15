@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +35,7 @@ public abstract class MetaLanguage extends Language {
     }, null);
   }
 
-  public static @NotNull List<MetaLanguage> all() {
+  public static @NotNull @Unmodifiable List<MetaLanguage> all() {
     return EP_NAME.getExtensionList();
   }
 
@@ -46,7 +47,7 @@ public abstract class MetaLanguage extends Language {
   /**
    * Returns the list of all languages matching this meta-language.
    */
-  public @NotNull Collection<Language> getMatchingLanguages() {
+  public @NotNull @Unmodifiable Collection<Language> getMatchingLanguages() {
     List<Language> result = new ArrayList<>();
     for (Language t : Language.getRegisteredLanguages()) {
       if (matchesLanguage(t)) {

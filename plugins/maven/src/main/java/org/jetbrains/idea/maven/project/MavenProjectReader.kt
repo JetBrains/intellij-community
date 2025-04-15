@@ -18,16 +18,19 @@ import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticV
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
-import org.jetbrains.idea.maven.utils.*
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildrenValuesByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.hasChildByPath
-import java.io.File
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 
@@ -48,9 +51,7 @@ class MavenProjectReader(
   suspend fun readProjectAsync(file: VirtualFile): MavenProjectReaderResult {
     val recursionGuard: MutableSet<VirtualFile> = HashSet()
     val readResult = readProjectModel(file, recursionGuard)
-    val baseDir = MavenUtil.getBaseDir(file)
-    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-    val model = myReadHelper.interpolate(embedder, file, readResult.first.model)
+    val model = readResult.first.model
 
     val modelMap: MutableMap<String, String> = HashMap()
     val mavenId = model.mavenId
@@ -89,18 +90,9 @@ class MavenProjectReader(
 
     addSettingsProfiles(file, modelWithInheritance, alwaysOnProfiles, problems)
 
-    val baseDir = MavenUtil.getBaseDir(file)
-    val baseDirString = baseDir.toString()
-    val transformer = RemotePathTransformerFactory.createForProject(myProject)
-    val baseDirFile = File(transformer.toRemotePathOrSelf(baseDirString))
-    val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-    val profileApplicationResult = embedder.applyProfiles(modelWithInheritance, baseDirFile, explicitProfiles, HashSet(alwaysOnProfiles), MavenRemoteObjectWrapper.ourToken)
+    repairModelBody(modelWithInheritance)
 
-    val modelWithProfiles = profileApplicationResult.model
-
-    repairModelBody(modelWithProfiles)
-
-    return Pair.create(RawModelReadResult(modelWithProfiles, problems, alwaysOnProfiles), profileApplicationResult.activatedProfiles)
+    return Pair.create(RawModelReadResult(modelWithInheritance, problems, alwaysOnProfiles), MavenExplicitProfiles.NONE)
   }
 
   private suspend fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
@@ -302,12 +294,8 @@ class MavenProjectReader(
           true))
       }
 
-      val baseDir = MavenUtil.getBaseDir(file)
-      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
-      val modelWithInheritance = myReadHelper.assembleInheritance(embedder, parentModel, model, file)
-
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
-      val profiles = modelWithInheritance.profiles
+      val profiles = model.profiles
       for (each in parentModel.profiles) {
         val copyProfile = MavenProfile(each.id, each.source)
         if (each.activation != null) {
@@ -316,7 +304,7 @@ class MavenProjectReader(
 
         addProfileIfDoesNotExist(copyProfile, profiles)
       }
-      return modelWithInheritance
+      return model
     }
     finally {
       recursionGuard.remove(file)
@@ -329,7 +317,7 @@ class MavenProjectReader(
   }
 
   private suspend fun findInLocalRepository(parentDesc: MavenParentDesc, recursionGuard: MutableSet<VirtualFile>): Pair<VirtualFile, RawModelReadResult>? {
-    val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
+    val parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(), parentDesc.parentId, "pom")
     val parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
     if (parentFile != null) {
       return doProcessParent(parentFile, recursionGuard)
@@ -393,7 +381,7 @@ class MavenProjectReader(
       val settingsProblems = LinkedHashSet<MavenProjectProblem>()
       val settingsAlwaysOnProfiles: MutableSet<String> = HashSet()
 
-      for (each in generalSettings.effectiveSettingsFiles) {
+      for (each in MavenSettingsCache.getInstance(myProject).getEffectiveVirtualSettingsFiles()) {
         collectProfilesFromSettingsXml(each,
                                        projectFile,
                                        "settings",

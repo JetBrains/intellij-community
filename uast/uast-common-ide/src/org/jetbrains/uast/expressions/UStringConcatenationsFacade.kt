@@ -23,7 +23,6 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
   @ApiStatus.Experimental
   constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext, false) ?: emptySequence())
 
-  @get:ApiStatus.Experimental
   val rootUExpression: UExpression
     get() = uContext
 
@@ -82,7 +81,6 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
     }
   }
 
-  @ApiStatus.Experimental
   fun asPartiallyKnownString() : PartiallyKnownString = PartiallyKnownString(segments.map { segment ->
     segment.value?.let { value ->
       StringEntry.Known(value, segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
@@ -99,7 +97,6 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
   }
 
   companion object {
-
     private fun buildLazyUastOperands(uContext: UExpression?, flatten: Boolean): Sequence<UExpression>? = when {
       uContext is UPolyadicExpression && isConcatenation(uContext) -> {
         val concatenationOperands = uContext.operands.asSequence()
@@ -150,5 +147,4 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
       return if (uElement is UInjectionHost) createFromUExpression(uElement, false) else createFromUExpression(uElement, true)
     }
   }
-
 }

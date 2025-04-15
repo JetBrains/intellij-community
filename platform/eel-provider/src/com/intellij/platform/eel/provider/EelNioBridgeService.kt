@@ -56,8 +56,11 @@ interface EelNioBridgeService {
 
   /**
    * Removes the registered NIO File System associated with [descriptor]
+   * Returns `true` if [descriptor] was successfully unregistered.
+   * Returns `false` if [descriptor] had already been removed earlier
+   * or have never been registered.
    */
-  fun deregister(descriptor: EelDescriptor)
+  fun unregister(descriptor: EelDescriptor): Boolean
 }
 
 /**

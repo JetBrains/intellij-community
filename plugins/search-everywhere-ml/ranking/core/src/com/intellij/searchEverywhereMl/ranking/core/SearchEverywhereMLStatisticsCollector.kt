@@ -12,9 +12,9 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.SE_TABS
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.core.features.*
 import com.intellij.searchEverywhereMl.ranking.core.id.SearchEverywhereMlItemIdProvider
@@ -135,7 +135,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
     eventId.log(project) {
-      val tabId = cache.tabId
+      val tabId = cache.tab.tabId
       addAll(additionalEvents)
 
       addAll(
@@ -294,7 +294,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 112, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 113, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
@@ -306,7 +306,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   // context fields
   private val PROJECT_OPENED_KEY = EventFields.Boolean("projectOpened")
   private val IS_PROJECT_DISPOSED_KEY = EventFields.Boolean("projectDisposed")
-  private val SE_TAB_ID_KEY = EventFields.String("seTabId", SE_TABS)
+  private val SE_TAB_ID_KEY = EventFields.String("seTabId", SearchEverywhereTab.allTabs.map { it.tabId })
   private val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
   private val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
   val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")

@@ -5,4 +5,4 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @Actual("ConcurrentHashSet")
-internal fun <K> ConcurrentHashSetWasm(): MutableSet<K> = mutableSetOf<K>()
+internal fun <K> ConcurrentHashSetWasmJs(): MutableSet<K> = mutableSetOf<K>()

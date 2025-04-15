@@ -1,9 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
+import com.intellij.terminal.TerminalFontSizeProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.model.TerminalTypeAheadSettings;
@@ -15,6 +19,10 @@ import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
 public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
+  @Override
+  protected @NotNull TerminalFontSizeProvider createFontSizeProvider() {
+    return TerminalFontSizeProviderImpl.getInstance();
+  }
 
   @Override
   public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {
@@ -29,17 +37,17 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
   }
 
   @Override
+  public FontPreferences getFontPreferences() {
+    return TerminalFontOptions.getInstance().getFontPreferences();
+  }
+
+  @Override
   public Font getTerminalFont() {
     return new Font(getFontFamily(), super.getTerminalFont().getStyle(), Math.round(getTerminalFontSize()));
   }
 
   private static @NotNull String getFontFamily() {
     return TerminalFontOptions.getInstance().getSettings().getFontFamily();
-  }
-
-  @Override
-  public float getTerminalFontSize() {
-    return TerminalFontOptions.getInstance().getSettings().getFontSize();
   }
 
   @Override
@@ -64,7 +72,9 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.getInstance().getCopyOnSelection();
+    return (CopyPasteManager.getInstance().isSystemSelectionSupported()
+            || TerminalOptionsProvider.getInstance().getCopyOnSelection())
+           && Registry.is("editor.caret.update.primary.selection");
   }
 
   @Override

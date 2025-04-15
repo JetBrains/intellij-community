@@ -1,18 +1,32 @@
 <component name="libraryTable">
   <library name="devkit.runtime.module.repository.jps" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:251.16369">
+    <properties jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:251.16369">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369.jar">
           <sha256sum>bb46909020abfc29fb6480b261ab1a887d19d0af83777ac8fb0cb950f45e7005</sha256sum>
         </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369.jar">
+          <sha256sum>9c89ef9858148e9f8063adfee151c3e7e99523c2ce5650b2351dcc5a1a01580d</sha256sum>
+        </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="com.jetbrains.intellij.platform:jps-model" />
+        <dependency maven-id="com.jetbrains.intellij.platform:util" />
+        <dependency maven-id="com.jetbrains.intellij.platform:jps-build" />
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="com.jetbrains.intellij.platform:jps-model-serialization" />
+        <dependency maven-id="com.dynatrace.hash4j:hash4j" />
+      </exclude>
     </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

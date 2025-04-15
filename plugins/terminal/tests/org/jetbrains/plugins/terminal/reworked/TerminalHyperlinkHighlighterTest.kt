@@ -96,7 +96,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     val allLines = (1..10).flatMap { patternLines }
     withContext(Dispatchers.EDT) {
       model.update(0, (allLines + listOf("extra trailing output")).joinLines())
-      model.update(allLines.size - 1, allLines.last())
+      model.update((allLines.size - 1).toLong(), allLines.last())
       assertEquals(allLines.joinLines(), editor.document.text)
       assertHyperlinks(linkText, 3 * 10)
     }
@@ -124,7 +124,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
       model.update(0, fooLines.joinLines())
 
       for (i in 0..barLines.size - 2) {
-        model.update(fooLines.size - 1 + i, listOf(barLines[i], barLines[i + 1]).joinLines())
+        model.update((fooLines.size - 1 + i).toLong(), listOf(barLines[i], barLines[i + 1]).joinLines())
       }
 
       assertEquals(barLines.joinLines(), editor.document.text)
@@ -144,7 +144,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
       model.update(0, lines.joinLines() + " some trailing output")
 
       for (startLine in listOf(50, 100, 200)) {
-        model.update(startLine, lines.subList(startLine, lines.size).joinLines())
+        model.update(startLine.toLong(), lines.subList(startLine, lines.size).joinLines())
       }
 
       assertEquals(lines.joinLines().takeLast(100), editor.document.text)
@@ -162,7 +162,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
 
     withContext(Dispatchers.EDT) {
       for (startLine in listOf(0, 10, 20, 30)) {
-        model.update(startLine, lines.subList(startLine, lines.size).joinLines())
+        model.update(startLine.toLong(), lines.subList(startLine, lines.size).joinLines())
       }
 
       assertEquals(lines.joinLines().takeLast(50), editor.document.text)
@@ -241,7 +241,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     withContext(Dispatchers.EDT) {
       for (i in 3..lines.size - 1) {
         val overlappingBottomLines = i % 3
-        model.update(i - overlappingBottomLines, lines.subList(i - overlappingBottomLines, i + 1).joinLines())
+        model.update((i - overlappingBottomLines).toLong(), lines.subList(i - overlappingBottomLines, i + 1).joinLines())
         if (i % 20 == 0) {
           assertEquals(lines.subList(0, i + 1).joinLines().takeLast(maxCapacity), editor.document.text)
           assertHyperlinks(linkText, 3 * 3)

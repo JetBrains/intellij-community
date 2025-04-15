@@ -7,4 +7,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @ApiStatus.Internal
 @Serializable
-data class SeProviderId(val value: String)
+data class SeProviderId(val value: String) {
+  val isWildcard: Boolean
+    get() = value == WILDCARD_ID
+
+  companion object {
+    const val WILDCARD_ID: String = "com.intellij.WildcardProviderId"
+  }
+}

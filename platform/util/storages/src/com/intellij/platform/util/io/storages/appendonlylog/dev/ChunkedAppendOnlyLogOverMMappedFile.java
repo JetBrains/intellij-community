@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.appendonlylog.dev;
 
 import com.intellij.openapi.util.IntRef;
@@ -945,7 +945,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
                                        && chunkId <= aroundChunkId + chunksAround);
 
       if (insideQuestionableRecord || insideNeighbourRegion) {
-        String bufferAsHex = IOUtil.toHexString(buffer);
+        String bufferAsHex = IOUtil.toHexString(buffer.slice());
         sb.append(insideQuestionableRecord ? "*" : "")
           .append("[id: ").append(chunkId).append("][offset: ").append(chunkIdToOffset(chunkId)).append("][hex: ")
           .append(bufferAsHex).append("]\n");

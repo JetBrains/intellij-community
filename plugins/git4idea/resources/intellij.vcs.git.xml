@@ -123,6 +123,9 @@
       <action id="Git.Rebase" class="git4idea.actions.GitRebase"/>
       <reference ref="Git.MainMenu.RebaseActions"/>
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction"/>
+      <action id="Git.RevertResolved" class="git4idea.actions.GitRevertResolvedAction" icon="AllIcons.Actions.Rollback">
+        <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
+      </action>
       <separator/>
       <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default"/>
@@ -222,8 +225,10 @@
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <separator/>
-      <action class="git4idea.actions.branch.GitCompareWithBranchAction"/>
-      <action class="git4idea.actions.ref.GitShowDiffWithRefAction"/>
+      <action id="Git.Ref.Compare.With"
+              class="git4idea.actions.branch.GitCompareWithBranchAction"/>
+      <action id="Git.Ref.Diff.With.Local"
+              class="git4idea.actions.ref.GitShowDiffWithRefAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
       <action class="git4idea.actions.ref.GitMergeRefAction"/>
@@ -257,6 +262,7 @@
       <reference ref="ChangesView.RevertFiles"/>
       <separator/>
       <reference ref="Git.ResolveConflicts"/>
+      <reference ref="Git.RevertResolved"/>
       <separator/>
       <reference ref="GitRepositoryActions"/>
       <add-to-group group-id="VcsGroup" anchor="last"/>
@@ -496,16 +502,12 @@
 
     <group id="GitMergeRebaseWidgetGroup">
       <reference ref="Git.ResolveConflicts"/>
+      <reference ref="Git.RevertResolved"/>
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
       <reference ref="Git.Revert.Abort"/>
-    </group>
-
-    <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
-      <add-to-group group-id="MainToolbarQuickActionsRaw" relative-to-action="MainToolbarQuickActions.Run" anchor="before"/>
-      <group id="MainToolbarQuickActions.VCS" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
     </group>
 
     <group id="Git.Hosting.Open.In.Browser.Group" popup="false">
@@ -644,7 +646,7 @@
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitUserNameCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCRLFCheckinHandlerFactory"/>
-    <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitLargeFileCheckinHandlerFactory"/>
+    <vcsCheckinHandlerFactory id="GitLargeFileCheckinHandlerFactory" implementation="git4idea.checkin.GitLargeFileCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitDetachedRootCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitFileNameCheckinHandlerFactory"/>
     <vcsCheckinHandlerFactory implementation="git4idea.rebase.GitRebaseCheckinHandlerFactory"/>
@@ -672,6 +674,8 @@
       implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
     <vcs.ignoredFilesHolder implementation="git4idea.repo.GitIgnoredFilesHolder$Provider"/>
     <vcs.unversionedFilesHolder implementation="git4idea.repo.GitUnversionedFilesHolder$Provider"/>
+    <vcs.resolvedConflictsFilesHolder implementation="git4idea.merge.GitResolvedConflictsFilesHolder$Provider"/>
+    <vcs.pathsToRefreshProvider implementation="git4idea.merge.GitPathsToRefreshProvider"/>
     <projectConfigurable id="vcs.Git" key="settings.git.option.group" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
@@ -745,7 +749,7 @@
     <vcsSharedChecker implementation="git4idea.ignore.GitIgnoreInStoreDirSharedChecker"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig"/>
     <backgroundPostStartupActivity implementation="git4idea.repo.GitShallowRepositoryCheck"/>
-    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitSettingMigrator"/>
+    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitDeprecationNotifier"/>
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
@@ -761,6 +765,10 @@
 
     <registryKey key="git.push.upto.commit.with.head.reference" defaultValue="false"
                  description="Detect HEAD relative reference while pushing up to selected commit to the current branch"
+                 restartRequired="false"/>
+
+    <registryKey key="git.modal.commit.deprecation.removed.in" defaultValue=""
+                 description="Show notification about modal commit deprecation if the version is specified"
                  restartRequired="false"/>
 
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
@@ -821,7 +829,9 @@
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
-    <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
+    <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
+                    serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
+    <vcs.consoleFolding implementation="git4idea.console.GitConsoleFoldingImpl"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 
     <advancedSetting default="false" id="git.search.everywhere.tab.enabled" groupKey="advanced.settings.git"/>
@@ -837,11 +847,6 @@
 
     <postStartupActivity implementation="git4idea.commit.GitMergeCommitMessageActivity"/>
     <vcs.defaultCommitMessagePolicy implementation="git4idea.commit.GitMergeCommitMessagePolicy"/>
-
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdatePushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
-    <toolbarQuickAction implementationClass="git4idea.ui.toolbar.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
 
     <changesViewContent tabName="Git Conflicts"
                         className="git4idea.conflicts.GitConflictsToolWindowManager$ContentProvider"
@@ -922,5 +927,7 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
+    <listener class="git4idea.remoteApi.rhizome.GitRepositoryEntitiesStorage$VcsMappingListener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
   </projectListeners>
 </idea-plugin>

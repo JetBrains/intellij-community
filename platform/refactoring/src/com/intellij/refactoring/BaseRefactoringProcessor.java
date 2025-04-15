@@ -57,6 +57,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -170,11 +172,19 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   /**
    * Is called in a command and inside atomic action.
+   * <p>
+   * It is called by {@link #doRefactoring}.
    */
   protected abstract void performRefactoring(UsageInfo @NotNull [] usages);
 
   protected abstract @NotNull @Command String getCommandName();
 
+  /**
+   * Called as part of run {@link #run}
+   * 
+   * Must be called on EDT and outside a write action.
+   */
+  @RequiresEdt
   protected void doRun() {
     if (!PsiDocumentManager.getInstance(myProject).commitAllDocumentsUnderProgress()) {
       return;
@@ -278,7 +288,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
     final UsageViewDescriptor viewDescriptor = createUsageViewDescriptor(usages);
     final PsiElement[] elements = viewDescriptor.getElements();
-    final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
+    final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements, true);
     Factory<UsageSearcher> factory = () -> new UsageInfoSearcherAdapter() {
       @Override
       public void generate(final @NotNull Processor<? super Usage> processor) {
@@ -433,7 +443,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     UsageViewManager viewManager = UsageViewManager.getInstance(myProject);
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
-    final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
+    final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements, true);
     final Ref<Usage[]> convertUsagesRef = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ApplicationManager.getApplication().runReadAction(
@@ -515,7 +525,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         PsiElement[] elements = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY) : null;
         PsiElement primaryElement = data != null ? data.getUserData(RefactoringEventData.PSI_ELEMENT_KEY) : null;
         PsiElement[] allElements = elements != null ? ArrayUtil.append(elements, primaryElement) : new PsiElement[]{primaryElement};
-        for (final RefactoringHelper helper : RefactoringHelper.EP_NAME.getExtensionList()) {
+        for (final RefactoringHelper<?> helper : RefactoringHelper.EP_NAME.getExtensionList()) {
           Object operation = ReadAction.compute(() -> {
             return helper.prepareOperation(writableUsageInfos, ContainerUtil.filter(allElements, e -> e != null));
           });
@@ -543,9 +553,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
-      for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
+      // Execute refactoring helpers (for example, optimizing imports)
+      for (Map.Entry<RefactoringHelper, Object> e : preparedData.entrySet()) {
+        final RefactoringHelper refactoringHelper = e.getKey();
+        final Object operation = e.getValue();
         //noinspection unchecked
-        e.getKey().performOperation(myProject, e.getValue());
+        refactoringHelper.performOperation(myProject, operation);
       }
       myTransaction.commit();
       if (Registry.is("run.refactorings.under.progress")) {
@@ -614,7 +627,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
                         () -> NonProjectFileWritingAccessProvider.disableChecksDuring(baseRunnable) :
                         baseRunnable;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+      ThreadingAssertions.assertWriteIntentReadAccess();
       runnable.run();
       return;
     }
@@ -632,11 +645,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   public static final class ConflictsInTestsException extends RuntimeException {
-    private final Collection<? extends String> messages;
+    private final Collection<String> messages;
 
     private static boolean myTestIgnore;
 
-    public ConflictsInTestsException(@NotNull Collection<? extends String> messages) {
+    public ConflictsInTestsException(@NotNull Collection<String> messages) {
       this.messages = messages;
     }
 

@@ -2635,6 +2635,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/singleArgumentVarargs.kt");
             }
 
+            @TestMetadata("smartCastInThis.kt")
+            public void testSmartCastInThis() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/smartCastInThis.kt");
+            }
+
             @TestMetadata("thisAsArgument.kt")
             public void testThisAsArgument() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsArgument.kt");

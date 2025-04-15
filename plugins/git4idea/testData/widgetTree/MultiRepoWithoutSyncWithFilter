@@ -1,0 +1,14 @@
+------
+-Local Branches in project
+ -another [nodes/folder.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]
+ -group [nodes/folder.svg]
+  test [vcs/branchNode.svg]
+-Remote Branches in project
+ -origin [nodes/folder.svg]
+  -another [nodes/folder.svg]
+   -group [nodes/folder.svg]
+    test [vcs/branchNode.svg]
+  -group [nodes/folder.svg]
+   test [vcs/branchNode.svg]

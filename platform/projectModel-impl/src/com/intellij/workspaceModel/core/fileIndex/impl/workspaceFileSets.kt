@@ -99,7 +99,7 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val entityPointer: EntityPointer<WorkspaceEntity>,
                                     override val entityStorageKind: EntityStorageKind,
                                     override val data: WorkspaceFileSetData,
-                                    val recursive: Boolean = true)
+                                    override val recursive: Boolean = true)
   : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
 
   override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)

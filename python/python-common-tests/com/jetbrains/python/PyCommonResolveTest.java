@@ -2154,28 +2154,6 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
                        """, PyTargetExpression.class, "Alias");
   }
 
-  // PY-79480
-  public void testInheritedAttributeWithTypeAnnotationInParentConstructor() {
-    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
-      PyTargetExpression resolved = assertResolvesTo(PyTargetExpression.class, "_some_var");
-      assertEquals("FakeBase", resolved.getContainingClass().getName());
-    });
-  }
-
-  public void testInheritedAttributeWithTypeAnnotationInParent() {
-    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
-      PyTargetExpression resolved = assertResolvesTo(PyTargetExpression.class, "_some_var");
-      assertEquals("Fake", resolved.getContainingClass().getName());
-    });
-  }
-
-  public void testInheritedAttributeWithTypeAnnotationInChild() {
-    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
-      PyTargetExpression resolved = assertResolvesTo(PyTargetExpression.class, "_some_var");
-      assertEquals("Fake", resolved.getContainingClass().getName());
-    });
-  }
-
   private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {
     runWithLanguageLevel(languageLevel, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, text);

@@ -12,12 +12,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    val terminalWidget = getTerminalWidget(e)
-    if (terminalWidget != null) {
-      val newFontSize = terminalWidget.fontSize2D + myStep
-      if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
-        terminalWidget.setFontSize(newFontSize)
-      }
+    val settingsProvider = getTerminalWidget(e)?.settingsProvider ?: return
+    val newFontSize = settingsProvider.terminalFontSize2D + myStep
+    if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
+      settingsProvider.terminalFontSize = newFontSize
     }
   }
 
@@ -25,9 +23,7 @@ sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAware
     e.presentation.isEnabled = getTerminalWidget(e) != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   class IncreaseEditorFontSize : TerminalChangeFontSizeAction(1f)
 

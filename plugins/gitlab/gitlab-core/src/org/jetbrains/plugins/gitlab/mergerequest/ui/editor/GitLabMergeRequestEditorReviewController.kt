@@ -24,7 +24,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,7 +48,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }
 
     cs.launchNow(Dispatchers.Main) {
-      project.service<GitLabToolWindowViewModel>().projectVm
+      project.service<GitLabProjectViewModel>().connectedProjectVm
         .flatMapLatest {
           it?.currentMergeRequestReviewVm ?: flowOf(null)
         }.collectLatest { reviewVm ->

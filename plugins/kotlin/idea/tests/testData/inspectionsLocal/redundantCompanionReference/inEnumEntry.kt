@@ -1,4 +1,3 @@
-// PROBLEM: none
 // DISABLE_ERRORS
 
 enum class E(val value: String) {
@@ -8,3 +7,5 @@ enum class E(val value: String) {
         const val foo = ""
     }
 }
+
+// IGNORE_K1

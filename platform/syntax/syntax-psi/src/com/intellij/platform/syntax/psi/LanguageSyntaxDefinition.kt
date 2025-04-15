@@ -2,11 +2,13 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.lang.LanguageExtension
-import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
 import org.jetbrains.annotations.ApiStatus
-
+import kotlin.jvm.JvmStatic
 
 /**
  * Extension point providing syntax implementation for a given [com.intellij.lang.Language]
@@ -24,14 +26,15 @@ interface LanguageSyntaxDefinition {
   /**
    * The set of whitespace token types of the language
    */
-  fun getWhitespaceTokens(): Set<SyntaxElementType> = setOf(SyntaxTokenTypes.WHITE_SPACE)
+  fun getWhitespaceTokens(): SyntaxElementTypeSet = syntaxElementTypeSetOf(SyntaxTokenTypes.WHITE_SPACE)
 
   /**
    * The set of comment token types of the language
    */
-  fun getCommentTokens(): Set<SyntaxElementType>
+  fun getCommentTokens(): SyntaxElementTypeSet
 
   // todo add necessary methods when required
+  fun getPairedBraces(): Collection<SyntaxGeneratedParserRuntime.BracePair> = emptyList()
 }
 
 /**

@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
+    "//platform/syntax/syntax-psi:psi",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",

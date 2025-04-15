@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import com.intellij.psi.PsiTypes;
 
 final class ShiftUtils {
 
-  private ShiftUtils() {
-    super();
-  }
+  private ShiftUtils() {}
 
   public static boolean isPowerOfTwo(PsiExpression rhs) {
     if (!(rhs instanceof PsiLiteralExpression literal)) {
@@ -37,40 +35,16 @@ final class ShiftUtils {
     if (value instanceof Double || value instanceof Float) {
       return false;
     }
-    int intValue = ((Number)value).intValue();
-    if (intValue <= 0) {
-      return false;
-    }
-    while (intValue % 2 == 0) {
-      intValue >>= 1;
-    }
-    return intValue == 1;
+    long v = ((Number)value).longValue();
+    return v > 0 && (v & (v - 1)) == 0; // https://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
   }
 
-  public static int getLogBase2(PsiExpression rhs) {
+  public static long getLogBase2(PsiExpression rhs) {
     final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
     final Object value = literal.getValue();
-    int intValue = ((Number)value).intValue();
-    int log = 0;
-    while (intValue % 2 == 0) {
-      intValue >>= 1;
-      log++;
-    }
-    return log;
-  }
-
-  public static int getExpBase2(PsiExpression rhs) {
-    final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
-    final Object value = literal.getValue();
-    if (value == null) {
-      return 0;
-    }
-    final int intValue = ((Number)value).intValue() & 31;
-    int exp = 1;
-    for (int i = 0; i < intValue; i++) {
-      exp <<= 1;
-    }
-    return exp;
+    assert value != null;
+    long v = ((Number)value).longValue();
+    return 63 - Long.numberOfLeadingZeros(v);
   }
 
   public static boolean isIntegral(PsiType lhsType) {

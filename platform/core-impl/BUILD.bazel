@@ -31,6 +31,8 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/util/coroutines",
+    "//platform/plugins/parser/impl:plugins-parser-impl",
+    "//platform/syntax/syntax-api:syntax",
   ],
   exports = [
     "//platform/core-api:core",

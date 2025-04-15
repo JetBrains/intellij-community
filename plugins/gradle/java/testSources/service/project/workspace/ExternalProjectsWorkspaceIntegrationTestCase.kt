@@ -37,14 +37,13 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
   private val gradleVersion = GradleVersion.current()
   private val javaVersion = JavaVersionRestriction.NO
 
-  private val testRootFixture = tempPathFixture()
-  val testRoot by testRootFixture
+  val testRoot by tempPathFixture()
 
   private val testDisposable by disposableFixture()
 
   private val gradleJvmFixture by gradleJvmFixture(gradleVersion, javaVersion)
 
-  private val multiProjectFixture by multiProjectFixture(testRootFixture)
+  private val multiProjectFixture by multiProjectFixture()
 
   @BeforeEach
   fun setUp() {
@@ -55,13 +54,13 @@ abstract class ExternalProjectsWorkspaceIntegrationTestCase {
   }
 
   suspend fun openProject(relativePath: String): Project =
-    multiProjectFixture.openProject(relativePath)
+    multiProjectFixture.openProject(testRoot.resolve(relativePath))
 
   suspend fun linkProject(project: Project, relativePath: String, systemId: ProjectSystemId) =
-    multiProjectFixture.linkProject(project, relativePath, systemId)
+    multiProjectFixture.linkProject(project, testRoot.resolve(relativePath), systemId)
 
   suspend fun unlinkProject(project: Project, relativePath: String, systemId: ProjectSystemId) =
-    multiProjectFixture.unlinkProject(project, relativePath, systemId)
+    multiProjectFixture.unlinkProject(project, testRoot.resolve(relativePath), systemId)
 
   suspend fun createMavenLibrary(relativePath: String, coordinates: String, configure: MavenPomBuilder.() -> Unit = {}) {
     withContext(Dispatchers.IO) {

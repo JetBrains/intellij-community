@@ -20,6 +20,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//platform/vcs-impl",
+    "//platform/ide-core",
+    "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [":vcs-git-commit-modal_resources"]
 )

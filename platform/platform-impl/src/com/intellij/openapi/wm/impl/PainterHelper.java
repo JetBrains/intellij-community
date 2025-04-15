@@ -164,18 +164,8 @@ final class PainterHelper implements Painter.Listener {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  void addFallbackBackgroundPainter(@NotNull FallbackBackgroundPainterFactory factory) {
-    Optional<Painter> first = painters.stream().filter(it -> it instanceof MyImagePainter).findFirst();
-    Function0<@NotNull Boolean> availabilityChecker = () -> { return true; };
-    if(first.isPresent()) {
-      Painter painter = first.get();
-      if(painter instanceof MyImagePainter imagePainter) {
-        availabilityChecker = () -> {
-          return imagePainter.ensureImageLoaded();
-        };
-      }
-    }
-    addPainter(factory.create(availabilityChecker), null);
+  void addFallbackBackgroundPainter(@NotNull Painter fallbackBackgroundPainter) {
+    addPainter(fallbackBackgroundPainter, null);
   }
 
   static void initWallpaperPainter(@NotNull String propertyName, @NotNull PainterHelper painters) {

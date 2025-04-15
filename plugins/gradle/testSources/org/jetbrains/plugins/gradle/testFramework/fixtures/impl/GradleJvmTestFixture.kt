@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
@@ -59,7 +58,7 @@ class GradleJvmTestFixture(
     }
   }
 
-  fun installProjectSettingsConfigurator(parentDisposable: Disposable) {
+  fun installProjectSettingsConfigurator(parentDisposable: Disposable): GradleJvmTestFixture = apply {
     val listener = object : ExternalSystemSettingsListenerEx {
       override fun onProjectsLinked(
         project: Project,
@@ -76,19 +75,5 @@ class GradleJvmTestFixture(
     }
     ExternalSystemSettingsListenerEx.EP_NAME.point
       .registerExtension(listener, parentDisposable)
-  }
-
-  companion object {
-
-    fun installProjectSettingsConfigurator(
-      gradleVersion: GradleVersion,
-      javaVersion: JavaVersionRestriction,
-      parentDisposable: Disposable,
-    ) {
-      val fixture = GradleJvmTestFixture(gradleVersion, javaVersion)
-      fixture.setUp()
-      fixture.installProjectSettingsConfigurator(parentDisposable)
-      parentDisposable.whenDisposed { fixture.tearDown() }
-    }
   }
 }

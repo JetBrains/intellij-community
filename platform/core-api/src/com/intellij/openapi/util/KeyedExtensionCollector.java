@@ -101,7 +101,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   /**
    * @see #findSingle(Object)
    */
-  public final @NotNull List<T> forKey(@NotNull KeyT key) {
+  public final @NotNull @Unmodifiable List<T> forKey(@NotNull KeyT key) {
     String stringKey = keyToString(key);
 
     List<T> cached = cache.get(stringKey);
@@ -127,7 +127,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     return list.isEmpty() ? null : list.get(0);
   }
 
-  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
+  protected @NotNull @Unmodifiable List<T> buildExtensions(@NotNull String stringKey, @NotNull KeyT key) {
     // compute out of our lock (https://youtrack.jetbrains.com/issue/IDEA-208060)
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
@@ -138,7 +138,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   // must be called not under our lock
-  protected final @NotNull List<KeyedLazyInstance<T>> getExtensions() {
+  protected final @NotNull @Unmodifiable List<KeyedLazyInstance<T>> getExtensions() {
     ExtensionPoint<@NotNull KeyedLazyInstance<T>> point = getPoint();
     if (point == null) {
       return Java11Shim.Companion.getINSTANCE().listOf();
@@ -149,7 +149,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  final @NotNull List<T> buildExtensionsFromExtensionPoint(@NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
+  final @NotNull @Unmodifiable List<T> buildExtensionsFromExtensionPoint(@NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
                                                            @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
     List<T> result = null;
     T r1 = null;
@@ -211,7 +211,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  protected final @NotNull List<T> buildExtensions(@NotNull Set<String> keys) {
+  protected final @NotNull @Unmodifiable List<T> buildExtensions(@NotNull @Unmodifiable Set<String> keys) {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
       List<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
@@ -231,7 +231,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  protected final @NotNull List<T> buildExtensionsFromExplicitRegistration(@NotNull Predicate<? super String> isMyBean) {
+  protected final @NotNull @Unmodifiable List<T> buildExtensionsFromExplicitRegistration(@NotNull Predicate<? super String> isMyBean) {
     PersistentList<T> result = persistentListOf();
     for (Map.Entry<String, PersistentList<T>> entry : explicitExtensions.entrySet()) {
       String key = entry.getKey();

@@ -58,142 +58,214 @@ archive_override(
 )
 
 http_file(
+    name = "jps-javac-extension",
+    url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/jps/jps-javac-extension/10/jps-javac-extension-10.jar",
+    downloaded_file_path = "jps-javac-extension-10.jar",
+    integrity = "sha256-hrnSojeM/5UfO9B1DVb/TO9k9427M+n3q9nH5uFNmd4=",
+)
+
+http_file(
     name = "jps-standalone_http",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-27.02.25.jar",
-    downloaded_file_path = "jps-27.02.25.jar",
-    integrity = "sha256-8hrPGgo0axQRJXTdCoCiowLHWqKraqJYkmoNqeIuVSc=",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-19.03.25.jar",
+    downloaded_file_path = "jps-19.03.25.jar",
+    integrity = "sha256-OxZUIKODRy53k+bgUjUfgg5m2QO5HWesv81F42AIw68=",
 )
 
 http_archive(
     name = "kotlin-compiler_http",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/kotlin-compiler-24.02.25-2.tar.zst",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/kotlin-compiler-2.1.20-jb.1.tar.zst",
     build_file = "//:BUILD.kotlinc.bazel",
-    sha256 = "f446f7307ef9c89ec2ef390fa258e1e1aed603103f5c2c93a60c01bf208f5619",
+    sha256 = "221269adce1d6bbfe9281e15a3226718742a6634dec89f96bff8ba17def51bdc",
 )
 
 http_file(
     name = "kotlin-compiler-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/2.1.20-RC/kotlin-compiler-2.1.20-RC-sources.jar",
-    sha256 = "9fa30c1c02212f9e6849f22f91b62946edab2a59c1c36e1b89a53650de01baff",
-    downloaded_file_path = "kotlin-compiler-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/2.1.20/kotlin-compiler-2.1.20-sources.jar",
+    sha256 = "1a682b5f992b641456a7b9bf03f2bd60731e47cdc297dd825db0683e6367dbe4",
+    downloaded_file_path = "kotlin-compiler-2.1.20-sources.jar",
 )
 
 ### auto-generated section `libraries` start
 http_file(
     name = "protobuf-java",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.29.3/protobuf-java-4.29.3.jar",
-    sha256 = "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",
-    downloaded_file_path = "protobuf-java-4.29.3.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.2/protobuf-java-4.30.2.jar",
+    sha256 = "0f3a4e9264db07cec429f2a68a66030e9b7487277b76863cdd0e9238cece249b",
+    downloaded_file_path = "protobuf-java-4.30.2.jar",
 )
 http_file(
     name = "protobuf-java-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.29.3/protobuf-java-4.29.3-sources.jar",
-    sha256 = "6a755c09e0e5112a39c9e0910e07021d8700294666cd22c431fcf572acb4eb77",
-    downloaded_file_path = "protobuf-java-4.29.3-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/protobuf/protobuf-java/4.30.2/protobuf-java-4.30.2-sources.jar",
+    sha256 = "250fca364649ed76febb83baedf565e3f8e3060356d62ff35b09d8b190597e4c",
+    downloaded_file_path = "protobuf-java-4.30.2-sources.jar",
 )
 
 http_file(
     name = "kotlin-build-tools-api",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-api/2.1.20-RC/kotlin-build-tools-api-2.1.20-RC.jar",
-    sha256 = "118441448d33e940092a58016155d31fd80b8da996b355b9a2b1da8a9b8425fb",
-    downloaded_file_path = "kotlin-build-tools-api-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-api/2.1.20/kotlin-build-tools-api-2.1.20.jar",
+    sha256 = "533c36cb362e6ed2d15f58732e7f4c6d2bed5c9d5179b897bc4b09d16d605377",
+    downloaded_file_path = "kotlin-build-tools-api-2.1.20.jar",
 )
 http_file(
     name = "kotlin-build-tools-api-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-api/2.1.20-RC/kotlin-build-tools-api-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-api/2.1.20/kotlin-build-tools-api-2.1.20-sources.jar",
     sha256 = "fe86558db8dc6b7712ef376b92de40f3573dd844f2529424fb8162309b97d7f6",
-    downloaded_file_path = "kotlin-build-tools-api-2.1.20-RC-sources.jar",
+    downloaded_file_path = "kotlin-build-tools-api-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-util-klib",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib/2.1.20-RC/kotlin-util-klib-2.1.20-RC.jar",
-    sha256 = "bb570c94680829055b3005c35c788719c9c5272b3773bf8b9713146fae434bf6",
-    downloaded_file_path = "kotlin-util-klib-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib/2.1.20/kotlin-util-klib-2.1.20.jar",
+    sha256 = "ff79c5b0e6e42d920ebb1c76ba10cc2ddbf224e805645a8eeacade4916e2aace",
+    downloaded_file_path = "kotlin-util-klib-2.1.20.jar",
 )
 http_file(
     name = "kotlin-util-klib-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib/2.1.20-RC/kotlin-util-klib-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib/2.1.20/kotlin-util-klib-2.1.20-sources.jar",
     sha256 = "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b",
-    downloaded_file_path = "kotlin-util-klib-2.1.20-RC-sources.jar",
+    downloaded_file_path = "kotlin-util-klib-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-util-klib-metadata",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib-metadata/2.1.20-RC/kotlin-util-klib-metadata-2.1.20-RC.jar",
-    sha256 = "66b5da2b68bafc5c3672cc99de00e2ac73304943d295c9bb3b6b7f1f2a3dcd62",
-    downloaded_file_path = "kotlin-util-klib-metadata-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib-metadata/2.1.20/kotlin-util-klib-metadata-2.1.20.jar",
+    sha256 = "f2d5e684715b920b6084968e6c33c8bb05b0b6b97919800e2f221d9418240c7d",
+    downloaded_file_path = "kotlin-util-klib-metadata-2.1.20.jar",
 )
 http_file(
     name = "kotlin-util-klib-metadata-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib-metadata/2.1.20-RC/kotlin-util-klib-metadata-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-util-klib-metadata/2.1.20/kotlin-util-klib-metadata-2.1.20-sources.jar",
     sha256 = "8c09123a01414e2e8b7b691aecb3e96b36d993f0101de8566f62f5ff6a1e8d3f",
-    downloaded_file_path = "kotlin-util-klib-metadata-2.1.20-RC-sources.jar",
+    downloaded_file_path = "kotlin-util-klib-metadata-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-build-tools-impl",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/2.1.20-RC/kotlin-build-tools-impl-2.1.20-RC.jar",
-    sha256 = "d7771b92b96e8f7ad609513889c7ba988ec8a1d41b0b740d95fbe4240328e4d9",
-    downloaded_file_path = "kotlin-build-tools-impl-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/2.1.20/kotlin-build-tools-impl-2.1.20.jar",
+    sha256 = "6e94896e321603e3bfe89fef02478e44d1d64a3d25d49d0694892ffc01c60acf",
+    downloaded_file_path = "kotlin-build-tools-impl-2.1.20.jar",
 )
 http_file(
     name = "kotlin-build-tools-impl-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/2.1.20-RC/kotlin-build-tools-impl-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-build-tools-impl/2.1.20/kotlin-build-tools-impl-2.1.20-sources.jar",
     sha256 = "8f8f11d1078d1a4ee7c5c3a61c3df74e0b3c1820e97a95b9e3a81ea4f70f6101",
-    downloaded_file_path = "kotlin-build-tools-impl-2.1.20-RC-sources.jar",
+    downloaded_file_path = "kotlin-build-tools-impl-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-metadata-jvm",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-RC/kotlin-metadata-jvm-2.1.20-RC.jar",
-    sha256 = "03db3529317cf0d6b6b61ee092f4c8ab57ab2543931696fba13ed3c53a566033",
-    downloaded_file_path = "kotlin-metadata-jvm-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20/kotlin-metadata-jvm-2.1.20.jar",
+    sha256 = "bc1c21410ec79513915db05746dded6cb4d205920814f894ff5c46e36caac51b",
+    downloaded_file_path = "kotlin-metadata-jvm-2.1.20.jar",
 )
 http_file(
     name = "kotlin-metadata-jvm-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-RC/kotlin-metadata-jvm-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20/kotlin-metadata-jvm-2.1.20-sources.jar",
     sha256 = "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18",
-    downloaded_file_path = "kotlin-metadata-jvm-2.1.20-RC-sources.jar",
+    downloaded_file_path = "kotlin-metadata-jvm-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-jps-plugin",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-jps-plugin/2.1.20-RC/kotlin-jps-plugin-2.1.20-RC.jar",
-    sha256 = "e3749924e737f1bdda10b4e561c30b8f38cfee3a2768440adada76fae56fe77c",
-    downloaded_file_path = "kotlin-jps-plugin-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-jps-plugin/2.1.20/kotlin-jps-plugin-2.1.20.jar",
+    sha256 = "5643bff0038180e747948025cf9df59b9827d333396f8c4443bea24a6fc6ceb4",
+    downloaded_file_path = "kotlin-jps-plugin-2.1.20.jar",
 )
 http_file(
     name = "kotlin-jps-plugin-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-jps-plugin/2.1.20-RC/kotlin-jps-plugin-2.1.20-RC-sources.jar",
-    sha256 = "9050fd365fa139a4aa0c5c1383d177474eacf151495b577987ffc86bc78cecbc",
-    downloaded_file_path = "kotlin-jps-plugin-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-jps-plugin/2.1.20/kotlin-jps-plugin-2.1.20-sources.jar",
+    sha256 = "436e0321408b8e8558d410c2ce13799797e668e78caa11fd9d154e0a11455199",
+    downloaded_file_path = "kotlin-jps-plugin-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-serialization-compiler-plugin",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.1.20-RC/kotlin-serialization-compiler-plugin-2.1.20-RC.jar",
-    sha256 = "16169c023df40506ccf2ccf241fa3989e0fa17ddbc25980b8571612e4dc2d5cc",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.1.20/kotlin-serialization-compiler-plugin-2.1.20.jar",
+    sha256 = "777ccc24b6b0c79527ac642cbe292d2c7bbd86d9ca5150237a4f86ac1c3cc449",
+    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.1.20.jar",
 )
 http_file(
     name = "kotlin-serialization-compiler-plugin-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.1.20-RC/kotlin-serialization-compiler-plugin-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.1.20/kotlin-serialization-compiler-plugin-2.1.20-sources.jar",
     sha256 = "941b3bf2b6b366f6b6d066b8d17daf4ec974ec9a419888aa3448716b15fde8e9",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.1.20-RC-sources.jar",
+    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.1.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-compose-compiler-plugin",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20-RC/kotlin-compose-compiler-plugin-2.1.20-RC.jar",
-    sha256 = "fd1af831cb66d6192bb0f4eea8b720de989882276e0e9967ca9f16348c2dbac3",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.20-RC.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20/kotlin-compose-compiler-plugin-2.1.20.jar",
+    sha256 = "88d98aed9ae9facb1eb3591a263b2273ece23af699438c8fb4f63cc428bfc479",
+    downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.20.jar",
 )
 http_file(
     name = "kotlin-compose-compiler-plugin-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20-RC/kotlin-compose-compiler-plugin-2.1.20-RC-sources.jar",
-    sha256 = "81ba4e543ada3cb231ef6890f6817e835c20a070e633d59cd7a2fd30a987bf99",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.20-RC-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20/kotlin-compose-compiler-plugin-2.1.20-sources.jar",
+    sha256 = "b1cc37d9883f388e1e5abfa6405c9d524baf0408262bc63e1d0592c2c876d747",
+    downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.20-sources.jar",
+)
+
+http_file(
+    name = "hash4j",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.21.0/hash4j-0.21.0.jar",
+    sha256 = "77290461b41542171cc8d1e1a33b54c98358e3124fdbd49bd2222555df1281f3",
+    downloaded_file_path = "hash4j-0.21.0.jar",
+)
+http_file(
+    name = "hash4j-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.21.0/hash4j-0.21.0-sources.jar",
+    sha256 = "c6c18138cd9754fbc75c59e79e44b26d0afd721fd90b4701d5b46efa459288bc",
+    downloaded_file_path = "hash4j-0.21.0-sources.jar",
+)
+
+http_file(
+    name = "jackson-core",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.17.0/jackson-core-2.17.0.jar",
+    sha256 = "55be130f6a68038088a261856c4e383ce79957a0fc1a29ecb213a9efd6ef4389",
+    downloaded_file_path = "jackson-core-2.17.0.jar",
+)
+http_file(
+    name = "jackson-core-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.17.0/jackson-core-2.17.0-sources.jar",
+    sha256 = "97f4f4a85bf4da59174dde187130bddb927ac31320b385ed8ef1439c00df00f2",
+    downloaded_file_path = "jackson-core-2.17.0-sources.jar",
+)
+
+http_file(
+    name = "jackson-annotations",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar",
+    sha256 = "873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1",
+    downloaded_file_path = "jackson-annotations-2.17.2.jar",
+)
+http_file(
+    name = "jackson-annotations-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2-sources.jar",
+    sha256 = "c647697c578c4126e0ccae72924b641a824dddfce6db9935e4a4daefd59d06f2",
+    downloaded_file_path = "jackson-annotations-2.17.2-sources.jar",
+)
+
+http_file(
+    name = "jackson-databind",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar",
+    sha256 = "c04993f33c0f845342653784f14f38373d005280e6359db5f808701cfae73c0c",
+    downloaded_file_path = "jackson-databind-2.17.2.jar",
+)
+http_file(
+    name = "jackson-databind-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2-sources.jar",
+    sha256 = "09fb0d67d3c9fc3c03adef0ca87df3dee7e7a7db8ffd331dcdf09f62b6b66342",
+    downloaded_file_path = "jackson-databind-2.17.2-sources.jar",
+)
+
+http_file(
+    name = "caffeine",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.0/caffeine-3.2.0.jar",
+    sha256 = "ec411dfdf0c03f25218648ce89861630b71680e5858a9a7278ebac8e55cab3d7",
+    downloaded_file_path = "caffeine-3.2.0.jar",
+)
+http_file(
+    name = "caffeine-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.0/caffeine-3.2.0-sources.jar",
+    sha256 = "67e14ef5c04c193a7fcafa788b55b89a079fd584b202469721ce6d2d6c753090",
+    downloaded_file_path = "caffeine-3.2.0-sources.jar",
 )
 
 http_file(
@@ -210,6 +282,32 @@ http_file(
 )
 
 http_file(
+    name = "h2-mvstore",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232.jar",
+    sha256 = "2c8225cd73b2394382b9d0016d9278a00291562224a594eef00c00a6ac50bc04",
+    downloaded_file_path = "h2-mvstore-2.3.232.jar",
+)
+http_file(
+    name = "h2-mvstore-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232-sources.jar",
+    sha256 = "48642b96b9fcb08f22326e10edad49fde210ae5884febeb06a0b107bba3f9478",
+    downloaded_file_path = "h2-mvstore-2.3.232-sources.jar",
+)
+
+http_file(
+    name = "qdox",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0.jar",
+    sha256 = "c260c3230b2340af97d54bf01f7f67ebc57c901922736c881bb11cb981302be2",
+    downloaded_file_path = "qdox-2.2.0.jar",
+)
+http_file(
+    name = "qdox-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/qdox/qdox/2.2.0/qdox-2.2.0-sources.jar",
+    sha256 = "614806dd73810c80a4751daf28bffc5eb641d6026ee58c71f4a28354e06a7dc8",
+    downloaded_file_path = "qdox-2.2.0-sources.jar",
+)
+
+http_file(
     name = "arrow-format",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.2.0/arrow-format-18.2.0.jar",
     sha256 = "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
@@ -220,19 +318,6 @@ http_file(
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.2.0/arrow-format-18.2.0-sources.jar",
     sha256 = "6b0e19b1d0270a5fd51182d815738e7b2aba4f00b6cf9a3a41d13aebb4e12d0a",
     downloaded_file_path = "arrow-format-18.2.0-sources.jar",
-)
-
-http_file(
-    name = "arrow-algorithm",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.2.0/arrow-algorithm-18.2.0.jar",
-    sha256 = "0c4089bde0ce62f00720d64dc0b7f08a6cb23e96c424ec7e061b4c4e6e4bba82",
-    downloaded_file_path = "arrow-algorithm-18.2.0.jar",
-)
-http_file(
-    name = "arrow-algorithm-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.2.0/arrow-algorithm-18.2.0-sources.jar",
-    sha256 = "c596851108722c8a5165e24d0fb8775fc5768305623f2b91d23e7b9b903055ec",
-    downloaded_file_path = "arrow-algorithm-18.2.0-sources.jar",
 )
 
 http_file(
@@ -288,68 +373,354 @@ http_file(
 )
 
 http_file(
-    name = "opentelemetry-exporter-logging-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.47.0/opentelemetry-exporter-logging-otlp-1.47.0.jar",
-    sha256 = "aa49634f2f46bd8fa13ec952c35a264295324aaedc1a585958529953861e9269",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.47.0.jar",
+    name = "assertj-core",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3.jar",
+    sha256 = "5b8a26205f6d5ea60ad9ce65ce4a40a2afe4c48abeec61bd0740a088c24e89f5",
+    downloaded_file_path = "assertj-core-3.27.3.jar",
 )
 http_file(
-    name = "opentelemetry-exporter-logging-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.47.0/opentelemetry-exporter-logging-otlp-1.47.0-sources.jar",
-    sha256 = "2ae0bff948fd5a1f4f4f47e83a50546fd8e335927e2e6576d173c9172045afde",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.47.0-sources.jar",
+    name = "assertj-core-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3-sources.jar",
+    sha256 = "1851ae5e28dee185df2fe27ee5c663ebe9700b8a228c790d3863521d2f0a6607",
+    downloaded_file_path = "assertj-core-3.27.3-sources.jar",
+)
+
+http_file(
+    name = "annotations",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar",
+    sha256 = "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297",
+    downloaded_file_path = "annotations-26.0.2.jar",
+)
+http_file(
+    name = "annotations-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations/26.0.2/annotations-26.0.2-sources.jar",
+    sha256 = "a3bea3ada0af186437f8f3a089e6b0f52ac5aa068c1cb829058fb8a5069f6b0f",
+    downloaded_file_path = "annotations-26.0.2-sources.jar",
+)
+
+http_file(
+    name = "kotlin-stdlib",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20.jar",
+    sha256 = "1bcc74e8ce84e2c25eaafde10f1248349cce3062b6e36978cbeec610db1e930a",
+    downloaded_file_path = "kotlin-stdlib-2.1.20.jar",
+)
+http_file(
+    name = "kotlin-stdlib-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.20/kotlin-stdlib-2.1.20-sources.jar",
+    sha256 = "6f0c26b17398e3e4be3b82d9ef1e92d941a755d16faf9703109f208f9aac7480",
+    downloaded_file_path = "kotlin-stdlib-2.1.20-sources.jar",
+)
+
+http_file(
+    name = "kotlinx-collections-immutable-jvm",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8.jar",
+    sha256 = "72e9a9b0003ec5254b638186f7ca1675b08006bdde4c9c4c589970342ccd2e77",
+    downloaded_file_path = "kotlinx-collections-immutable-jvm-0.3.8.jar",
+)
+http_file(
+    name = "kotlinx-collections-immutable-jvm-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8-sources.jar",
+    sha256 = "80219b91c78709f696305970895d27481c78bda7cae0c180c7c8202240f47d34",
+    downloaded_file_path = "kotlinx-collections-immutable-jvm-0.3.8-sources.jar",
+)
+
+http_file(
+    name = "slf4j-api",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar",
+    sha256 = "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832",
+    downloaded_file_path = "slf4j-api-2.0.17.jar",
+)
+http_file(
+    name = "slf4j-api-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17-sources.jar",
+    sha256 = "db0d08d8efa05ad19d174d747bd9d8e68dbb02b596812fe7b3a681656e346694",
+    downloaded_file_path = "slf4j-api-2.0.17-sources.jar",
+)
+
+http_file(
+    name = "log4j-over-slf4j",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/log4j-over-slf4j/1.7.36/log4j-over-slf4j-1.7.36.jar",
+    sha256 = "0a7e032bf5bcdd5b2bf8bf2e5cf02c5646f2aa6fee66933b8150dbe84e651e8a",
+    downloaded_file_path = "log4j-over-slf4j-1.7.36.jar",
+)
+http_file(
+    name = "log4j-over-slf4j-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/slf4j/log4j-over-slf4j/1.7.36/log4j-over-slf4j-1.7.36-sources.jar",
+    sha256 = "10ab6331a4802934a02b4d22e81d5006c67d5923c1c88d4f63077e4f02b6ed7c",
+    downloaded_file_path = "log4j-over-slf4j-1.7.36-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-api",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.49.0/opentelemetry-api-1.49.0.jar",
+    sha256 = "a813c9a92b82a4ffa3a62e88216a9e9ef9a407fcd41614fe596b2895167ed638",
+    downloaded_file_path = "opentelemetry-api-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-api-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-api/1.49.0/opentelemetry-api-1.49.0-sources.jar",
+    sha256 = "45ce4df9b8157e57e07dbd68784d3877474bd2fc2291954ef32b5666845d5c7f",
+    downloaded_file_path = "opentelemetry-api-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk/1.49.0/opentelemetry-sdk-1.49.0.jar",
+    sha256 = "d6fdaf0f04724d5c9362db2f809fd21f36e95c9c039d22fe695692d606107bff",
+    downloaded_file_path = "opentelemetry-sdk-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk/1.49.0/opentelemetry-sdk-1.49.0-sources.jar",
+    sha256 = "dd827c172d20f046d5bf6a9df772290b0eaafb59589b6b98fd742c6bc78c2d37",
+    downloaded_file_path = "opentelemetry-sdk-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-common/1.49.0/opentelemetry-sdk-common-1.49.0.jar",
+    sha256 = "b06214ccf3cda749edcd426c1492483e201e1fcfadb9f9cba8ecb439ff5c5d0f",
+    downloaded_file_path = "opentelemetry-sdk-common-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-common/1.49.0/opentelemetry-sdk-common-1.49.0-sources.jar",
+    sha256 = "dec98f91b60152b5c17c46aa30f0d763ee78fc672e3f006ce731077c7ba563bb",
+    downloaded_file_path = "opentelemetry-sdk-common-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-context",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.49.0/opentelemetry-context-1.49.0.jar",
+    sha256 = "17de3c85b341240b3b216c43adbd244c9fbd39c9e5448306d56460f80599a76b",
+    downloaded_file_path = "opentelemetry-context-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-context-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-context/1.49.0/opentelemetry-context-1.49.0-sources.jar",
+    sha256 = "d51f02535781654be13ca245bc09d1ddddf54c19788be8b3f8d833701c292a8b",
+    downloaded_file_path = "opentelemetry-context-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-trace",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-trace/1.49.0/opentelemetry-sdk-trace-1.49.0.jar",
+    sha256 = "483bf21dde1df1a2c9875ba7dff1e3c8c1a63789cd45ad58223ec64b5951318e",
+    downloaded_file_path = "opentelemetry-sdk-trace-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-trace-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-trace/1.49.0/opentelemetry-sdk-trace-1.49.0-sources.jar",
+    sha256 = "f370df177c08982ca20e0525adc94f995503e74d611c1240cd2cc616624277be",
+    downloaded_file_path = "opentelemetry-sdk-trace-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-metrics",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-metrics/1.49.0/opentelemetry-sdk-metrics-1.49.0.jar",
+    sha256 = "cf28ea29fcfd4577a4a3bda388ac08cbbb86e4b1b534822848ea5c5554bfd603",
+    downloaded_file_path = "opentelemetry-sdk-metrics-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-metrics-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-metrics/1.49.0/opentelemetry-sdk-metrics-1.49.0-sources.jar",
+    sha256 = "08868596a4e0cce486df12b09dcfd5dd13a7582f98bee75bdecbf7432df20f3e",
+    downloaded_file_path = "opentelemetry-sdk-metrics-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-sdk-logs",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-logs/1.49.0/opentelemetry-sdk-logs-1.49.0.jar",
+    sha256 = "edf7f2411d5180099efebc5a5e2f01378f647897671aa9819f2064e24b6f7e9f",
+    downloaded_file_path = "opentelemetry-sdk-logs-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-sdk-logs-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-logs/1.49.0/opentelemetry-sdk-logs-1.49.0-sources.jar",
+    sha256 = "0d6d296d7380257727935c9235a5619dc9c981700d6f18e840cc0b72ca12d906",
+    downloaded_file_path = "opentelemetry-sdk-logs-1.49.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-sdk-extension-autoconfigure-spi",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
-    sha256 = "94348d4263e2c59c7039630cad379d969b62644ed09b6178fa952988559b396a",
-    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.49.0/opentelemetry-sdk-extension-autoconfigure-spi-1.49.0.jar",
+    sha256 = "b3091033e5b4b4b49334709707858d993afb92fe5c32d4a0b27e02d2e956c5b7",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.49.0.jar",
 )
 http_file(
     name = "opentelemetry-sdk-extension-autoconfigure-spi-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0-sources.jar",
-    sha256 = "e2eea857013276cb59d4b3ad6463901a8bce5cb324e071f6b3996d2f8e53a262",
-    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.49.0/opentelemetry-sdk-extension-autoconfigure-spi-1.49.0-sources.jar",
+    sha256 = "7dd3b2e3ed4d2e91839c3f957b3a57d727284f2f1cfb6d51fbeb5e4e4db1aed0",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-semconv",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.30.0/opentelemetry-semconv-1.30.0.jar",
+    sha256 = "99c2478a9b803b7d385d1624d5c1ab6f9a64cac5a2dc00f44a350744a1d858ac",
+    downloaded_file_path = "opentelemetry-semconv-1.30.0.jar",
+)
+http_file(
+    name = "opentelemetry-semconv-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/semconv/opentelemetry-semconv/1.30.0/opentelemetry-semconv-1.30.0-sources.jar",
+    sha256 = "96bf3ea26a26276d3d877782a0f5c00f7b4d133cea409d08f04b31bbc38ec872",
+    downloaded_file_path = "opentelemetry-semconv-1.30.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-logging-otlp",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.49.0/opentelemetry-exporter-logging-otlp-1.49.0.jar",
+    sha256 = "032a9e66f767fa1b978222c794de4c6d2c98313606e707d3eef01b80a95bc186",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-logging-otlp-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.49.0/opentelemetry-exporter-logging-otlp-1.49.0-sources.jar",
+    sha256 = "a09e34dd625268d3e3123b5a18e89e4444dbacc954d6556701f6dfef810a8bc0",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-common/1.49.0/opentelemetry-exporter-common-1.49.0.jar",
+    sha256 = "06d08af00b9fec8e99b6a4fda2eb201facbe2fe38a89eb11cbbfbe4183b73141",
+    downloaded_file_path = "opentelemetry-exporter-common-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-common/1.49.0/opentelemetry-exporter-common-1.49.0-sources.jar",
+    sha256 = "fc6b8455e51702a007008b05eb3570a13aaefb5775704bf1c101044297b85444",
+    downloaded_file_path = "opentelemetry-exporter-common-1.49.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-otlp-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp-common/1.49.0/opentelemetry-exporter-otlp-common-1.49.0.jar",
+    sha256 = "be16d6802be0eb2d08389fc9af1e801fc98f96061fe6bcda2562dcb7e2e0dd5b",
+    downloaded_file_path = "opentelemetry-exporter-otlp-common-1.49.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-otlp-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp-common/1.49.0/opentelemetry-exporter-otlp-common-1.49.0-sources.jar",
+    sha256 = "6de2fa295ad8c362d40b6590888a7ee35d59fc8e82dd094b92e2d5cec45376c5",
+    downloaded_file_path = "opentelemetry-exporter-otlp-common-1.49.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0.jar",
-    sha256 = "0bf93192631d8d069f865707abf456432bb8fca316d5a7fd0ff5d1302414c651",
-    downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.49.0/opentelemetry-exporter-otlp-1.49.0.jar",
+    sha256 = "b69c1664dbd75e7a4c5ab2e187766e7e4fcdb208c94dc569f1453c388d595812",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.49.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0-sources.jar",
-    sha256 = "aafc09eaaa3cf90a02f1c9670cb1c00ba73f86ed13e6ad91cc47efb1f3cabe62",
-    downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.49.0/opentelemetry-exporter-otlp-1.49.0-sources.jar",
+    sha256 = "6d32e29962e51677931393b668ba7972572a48dd802854d13900d8337f81a4ca",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.49.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-sender-jdk",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.47.0/opentelemetry-exporter-sender-jdk-1.47.0.jar",
-    sha256 = "17c8e65e017e506ba520811009a37a64eceb2ceb0d15cd1d0e0cb074e54821cc",
-    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.49.0/opentelemetry-exporter-sender-jdk-1.49.0.jar",
+    sha256 = "e1753890e33406de0d4d100f43ceba1666db0b0f82f440fa2b42a6d132614aa0",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.49.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-sender-jdk-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.47.0/opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
-    sha256 = "cf54580e7cc05a59cfbb14ecf673fdd82e2ed014717653434cb99cf093193450",
-    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.49.0/opentelemetry-exporter-sender-jdk-1.49.0-sources.jar",
+    sha256 = "a2bdb8901e2b6f8b2a27e03f65e04bd194b3558cce940a3ee08c1016e8ac9ceb",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.49.0-sources.jar",
 )
 
 http_file(
-    name = "fury-core",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/fury/fury-core/0.10.0/fury-core-0.10.0.jar",
-    sha256 = "3ad12c4356029ba4adddc2f95dc1dc99bc0603347f536992c73183c821268615",
-    downloaded_file_path = "fury-core-0.10.0.jar",
+    name = "netty-common",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.0.Final/netty-common-4.2.0.Final.jar",
+    sha256 = "52370b6c131f536b60c9b1e643e9a9b6e7ffecf787d5d3453b1689afbd894886",
+    downloaded_file_path = "netty-common-4.2.0.Final.jar",
 )
 http_file(
-    name = "fury-core-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/fury/fury-core/0.10.0/fury-core-0.10.0-sources.jar",
-    sha256 = "0082671d3e190b25b720bbb783a0eb6d50d83048f008828b67aee30d05754b88",
-    downloaded_file_path = "fury-core-0.10.0-sources.jar",
+    name = "netty-common-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-common/4.2.0.Final/netty-common-4.2.0.Final-sources.jar",
+    sha256 = "49c34b8bb551c0df48342dea94429568b1be4b65fd35f7d28bdef043fa08540f",
+    downloaded_file_path = "netty-common-4.2.0.Final-sources.jar",
+)
+
+http_file(
+    name = "netty-buffer",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.0.Final/netty-buffer-4.2.0.Final.jar",
+    sha256 = "c01926017be0d96711845852a2646de4bf00a92542b02ed915f5bee54822fe0d",
+    downloaded_file_path = "netty-buffer-4.2.0.Final.jar",
+)
+http_file(
+    name = "netty-buffer-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-buffer/4.2.0.Final/netty-buffer-4.2.0.Final-sources.jar",
+    sha256 = "ff1e9f04410a8ad6e1c1200f93b4f3093131cc6c4e8846acaee1ae051309c863",
+    downloaded_file_path = "netty-buffer-4.2.0.Final-sources.jar",
+)
+
+http_file(
+    name = "collection-jvm",
+    url = "https://dl.google.com/android/maven2/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0.jar",
+    sha256 = "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341",
+    downloaded_file_path = "collection-jvm-1.5.0.jar",
+)
+http_file(
+    name = "collection-jvm-sources",
+    url = "https://dl.google.com/android/maven2/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0-sources.jar",
+    sha256 = "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3",
+    downloaded_file_path = "collection-jvm-1.5.0-sources.jar",
+)
+
+http_file(
+    name = "kotlinx-coroutines-core-jvm",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/platform/kotlinx-coroutines-core-jvm/1.10.1-intellij-4/kotlinx-coroutines-core-jvm-1.10.1-intellij-4.jar",
+    sha256 = "e4861dd9812c08a8f82b597dc04110d81ecd0dd952e3f3f12a053f388bdeaea2",
+    downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-intellij-4.jar",
+)
+http_file(
+    name = "kotlinx-coroutines-core-jvm-sources",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/intellij/platform/kotlinx-coroutines-core-jvm/1.10.1-intellij-4/kotlinx-coroutines-core-jvm-1.10.1-intellij-4-sources.jar",
+    sha256 = "3a4f4c13f6b7ea5175786fe07a4712def5fef4a8eb8505ace6f7f9ba364e1830",
+    downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-intellij-4-sources.jar",
+)
+
+http_file(
+    name = "expects-compiler-plugin",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.1/expects-compiler-plugin-2.1.20-0.1.jar",
+    sha256 = "577642d0d6dbfa29305a97421c95157dcc62183044d312666979c3888dc43ec7",
+    downloaded_file_path = "expects-compiler-plugin-2.1.20-0.1.jar",
+)
+http_file(
+    name = "expects-compiler-plugin-sources",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.1/expects-compiler-plugin-2.1.20-0.1-sources.jar",
+    sha256 = "8a6573bf3f41894a7011d3394402e658d35e6a6962994642c06dcdd59257fd05",
+    downloaded_file_path = "expects-compiler-plugin-2.1.20-0.1-sources.jar",
+)
+
+http_file(
+    name = "asm-all",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1.jar",
+    sha256 = "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",
+    downloaded_file_path = "asm-all-9.6.1.jar",
+)
+http_file(
+    name = "asm-all-sources",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1-sources.jar",
+    sha256 = "a880ed438e15111a8ef4cdd450fa529cf80541da515261d24241520dbc4b220b",
+    downloaded_file_path = "asm-all-9.6.1-sources.jar",
+)
+
+http_file(
+    name = "intellij-deps-fastutil",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1.jar",
+    sha256 = "5a0d7557d494732a6165e4188eb11f10faca196350cad04d9950abd83e6dd148",
+    downloaded_file_path = "intellij-deps-fastutil-8.5.15-jb1.jar",
+)
+http_file(
+    name = "intellij-deps-fastutil-sources",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.15-jb1/intellij-deps-fastutil-8.5.15-jb1-sources.jar",
+    sha256 = "57d0e59cd6f6bd931d893ab0089bdcb13aee0ed78f1f8e85d88bc55b89815211",
+    downloaded_file_path = "intellij-deps-fastutil-8.5.15-jb1-sources.jar",
 )
 
 ### auto-generated section `libraries` end

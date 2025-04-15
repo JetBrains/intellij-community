@@ -2,12 +2,12 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.IElementType;
@@ -23,8 +23,13 @@ import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
-//suppress to be clear, what type is used
-@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
+
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
+@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")  //suppress to be clear, what type is used
 @ApiStatus.Experimental
 public class BasicDeclarationParser {
   public enum BaseContext {
@@ -117,7 +122,7 @@ public class BasicDeclarationParser {
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, myJavaElementTypeContainer.IMPLEMENTS_LIST,
                                  JavaTokenType.COMMA);
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
-        PsiKeyword.PERMITS.equals(builder.getTokenText())) {
+        JavaKeywords.PERMITS.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.PERMITS_KEYWORD);
     }
     if (builder.getTokenType() == JavaTokenType.PERMITS_KEYWORD) {
@@ -411,7 +416,7 @@ public class BasicDeclarationParser {
   }
 
   static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText())) {
+    if (tokenType == JavaTokenType.IDENTIFIER && JavaKeywords.RECORD.equals(builder.getTokenText())) {
       IElementType nextToken = builder.lookAhead(1);
       if (nextToken == JavaTokenType.IDENTIFIER || 
           // The following tokens cannot be part of a valid record declaration, 
@@ -427,13 +432,13 @@ public class BasicDeclarationParser {
   private static boolean isSealedToken(PsiBuilder builder, IElementType tokenType) {
     return JavaFeature.SEALED_CLASSES.isSufficient(getLanguageLevel(builder)) &&
            tokenType == JavaTokenType.IDENTIFIER &&
-           PsiKeyword.SEALED.equals(builder.getTokenText());
+           JavaKeywords.SEALED.equals(builder.getTokenText());
   }
 
   private static boolean isValueToken(PsiBuilder builder, IElementType tokenType) {
     return JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(getLanguageLevel(builder)) &&
            tokenType == JavaTokenType.IDENTIFIER &&
-           PsiKeyword.VALUE.equals(builder.getTokenText());
+           JavaKeywords.VALUE.equals(builder.getTokenText());
   }
 
    static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
@@ -446,7 +451,7 @@ public class BasicDeclarationParser {
     }
     PsiBuilder.Marker maybeNonSealed = builder.mark();
     PsiBuilderUtil.advance(builder, 2);
-    boolean isNonSealed = PsiKeyword.SEALED.equals(builder.getTokenText());
+    boolean isNonSealed = JavaKeywords.SEALED.equals(builder.getTokenText());
     maybeNonSealed.rollbackTo();
     return isNonSealed;
   }

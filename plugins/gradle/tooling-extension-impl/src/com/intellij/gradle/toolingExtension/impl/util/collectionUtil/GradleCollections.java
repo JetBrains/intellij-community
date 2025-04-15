@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.util.collectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,5 +14,13 @@ public final class GradleCollections {
   public static <T> @NotNull List<T> createMaybeSingletonList(@Nullable T element) {
     //noinspection SSBasedInspection
     return element == null ? Collections.emptyList() : Collections.singletonList(element);
+  }
+
+  public static List<String> mapToString(Iterable<?> collection) {
+    List<String> result = new ArrayList<>();
+    for (Object item : collection) {
+      result.add(String.valueOf(item));
+    }
+    return result;
   }
 }

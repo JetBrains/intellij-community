@@ -87,6 +87,12 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           lastUpdateTime = if (oldDependencies != null) System.currentTimeMillis() else 0L,
         ))
       }
+
+      // update information about file handlers when forced
+      if (includeIgnored && PluginAdvertiserExtensionsStateService.getInstance().updateCompatibleFileHandlers()) {
+        EditorNotifications.getInstance(project).updateAllNotifications()
+      }
+
       coroutineContext.ensureActive()
 
       if (unknownFeatures.isNotEmpty()) {

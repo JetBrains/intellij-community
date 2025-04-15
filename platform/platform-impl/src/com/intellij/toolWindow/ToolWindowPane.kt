@@ -8,9 +8,9 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
@@ -617,7 +617,8 @@ class ToolWindowPane private constructor(
       }
 
       override fun createDivider(): Divider {
-        return InternalUICustomization.getInstance()?.createCustomDivider(isVisible, this) ?: super.createDivider()
+        return InternalUICustomization.getInstance()?.createCustomDivider(isVisible, this)
+               ?: super.createDivider().also { it.background = JBUI.CurrentTheme.ToolWindow.mainBorderColor() }
       }
 
       override fun toString() = "[$firstComponent|$secondComponent]"

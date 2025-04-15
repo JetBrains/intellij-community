@@ -5,12 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import org.jetbrains.jewel.bridge.JewelComposePanel
+import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 
 @Suppress("FunctionName")
 @Composable
 internal fun ComponentDataProviderBridge(
-    component: JewelComposePanel,
+    component: JewelComposePanelWrapper,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {

@@ -84,6 +84,8 @@ com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotification
 - a:notificationNotify(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware):V
 f:com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
+- f:isNotificationVisible(com.intellij.openapi.project.Project):Z
+- f:isNotificationVisible(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - f:isNotificationVisibleProperty(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.observable.properties.ObservableProperty
 - f:whenNotificationChanged(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 - f:whenNotificationChanged(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):V
@@ -142,10 +144,8 @@ com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - a:isLinkedProject(com.intellij.openapi.project.Project,java.lang.String):Z
 - linkAndLoadProject(com.intellij.openapi.project.Project,java.lang.String):V
 - linkAndLoadProjectAsync(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:linkAndLoadProjectAsync$suspendImpl(com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware,com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - a:subscribe(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener,com.intellij.openapi.Disposable):V
 - unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:unlinkProject$suspendImpl(com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware,com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
@@ -782,6 +782,7 @@ f:com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 - findProject():com.intellij.openapi.project.Project
 - getId():J
 - getIdeProjectId():java.lang.String
+- getProject():com.intellij.openapi.project.Project
 - s:getProjectId(com.intellij.openapi.project.Project):java.lang.String
 - getProjectSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getType():com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType

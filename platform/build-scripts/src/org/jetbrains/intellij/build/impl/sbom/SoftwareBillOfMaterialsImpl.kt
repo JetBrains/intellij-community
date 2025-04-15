@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.sbom
@@ -12,17 +12,42 @@ import io.ktor.client.plugins.ClientRequestException
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LibraryLicense
+import org.jetbrains.intellij.build.LibraryUpstream
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.downloadAsText
+import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.impl.BundledRuntime
+import org.jetbrains.intellij.build.impl.Checksums
+import org.jetbrains.intellij.build.impl.DistributionForOsTaskResult
+import org.jetbrains.intellij.build.impl.Docker
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.getLibraryFilename
+import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
-import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -35,12 +60,25 @@ import org.spdx.jacksonstore.MultiFormatStore
 import org.spdx.library.ModelCopyManager
 import org.spdx.library.SpdxConstants
 import org.spdx.library.Version
-import org.spdx.library.model.*
+import org.spdx.library.model.Checksum
+import org.spdx.library.model.ExternalRef
+import org.spdx.library.model.ExternalSpdxElement
+import org.spdx.library.model.ModelObject
+import org.spdx.library.model.ReferenceType
+import org.spdx.library.model.SpdxDocument
+import org.spdx.library.model.SpdxElement
+import org.spdx.library.model.SpdxFile
+import org.spdx.library.model.SpdxModelFactory
+import org.spdx.library.model.SpdxPackage
 import org.spdx.library.model.SpdxPackage.SpdxPackageBuilder
 import org.spdx.library.model.enumerations.ChecksumAlgorithm
 import org.spdx.library.model.enumerations.ReferenceCategory
 import org.spdx.library.model.enumerations.RelationshipType
-import org.spdx.library.model.license.*
+import org.spdx.library.model.license.AnyLicenseInfo
+import org.spdx.library.model.license.ExtractedLicenseInfo
+import org.spdx.library.model.license.InvalidLicenseStringException
+import org.spdx.library.model.license.LicenseInfoFactory
+import org.spdx.library.model.license.SpdxNoAssertionLicense
 import org.spdx.storage.IModelStore.IdType
 import org.spdx.storage.ISerializableModelStore
 import org.spdx.storage.simple.InMemSpdxStore
@@ -52,7 +90,8 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import java.util.*
+import java.util.Date
+import java.util.Properties
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.name
@@ -534,7 +573,7 @@ class SoftwareBillOfMaterialsImpl(
       // FIXME IJI-1882: this logic is not correct since multiple pom.xml and pom.properties may be present
       readZipFile(jarFile) { name, data ->
         when {
-          !name.startsWith("META-INF/") -> return@readZipFile
+          !name.startsWith("META-INF/") -> {}
           name.endsWith("/pom.xml") -> getReader(data()).use {
             pomFile = "$jarFile!$name"
             pomModel = MavenXpp3Reader().read(it, false)
@@ -549,6 +588,7 @@ class SoftwareBillOfMaterialsImpl(
             )
           }
         }
+        ZipEntryProcessorResult.CONTINUE
       }
     }
   }

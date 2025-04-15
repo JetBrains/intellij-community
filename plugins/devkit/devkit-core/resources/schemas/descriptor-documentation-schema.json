@@ -44,6 +44,10 @@
             "type": "string"
           }
         },
+        "namespace": {
+          "type": "string",
+          "description": "Element namespace."
+        },
         "since": {
           "type": "string",
           "description": "Version since the element is available."
@@ -223,6 +227,9 @@
           "type": "string",
           "description": "Default value for the attribute, if applicable. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
+        },
+        "renderContexts": {
+          "$ref": "#/definitions/RenderContexts"
         }
       },
       "required": ["name"],

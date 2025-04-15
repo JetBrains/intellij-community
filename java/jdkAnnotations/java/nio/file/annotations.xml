@@ -34,6 +34,9 @@
   <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -629,6 +632,10 @@
   <item name='java.nio.file.Files java.util.List&lt;java.lang.String&gt; readAllLines(java.nio.file.Path, java.nio.charset.Charset) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.util.Map&lt;java.lang.String,java.lang.Object&gt; readAttributes(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.util.Map&lt;java.lang.String,java.lang.Object&gt; readAttributes(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -1038,7 +1045,6 @@
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

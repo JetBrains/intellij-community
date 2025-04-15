@@ -1,6 +1,8 @@
+- name: lib/change-reminder-prediction-model.jar
+  library: change-reminder-prediction-model
+  module: intellij.vcs.changeReminder
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0/randomForestRegressor-0.jar
 - name: lib/vcs-changeReminder.jar
   modules:
   - name: intellij.vcs.changeReminder
-    libraries:
-      change-reminder-prediction-model:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0/randomForestRegressor-0.jar

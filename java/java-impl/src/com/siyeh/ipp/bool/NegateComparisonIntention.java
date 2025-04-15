@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.bool;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -27,7 +28,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public final class NegateComparisonIntention extends MCIntention {
+public final class NegateComparisonIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -41,13 +42,10 @@ public final class NegateComparisonIntention extends MCIntention {
     String operatorText = sign.getText();
     String negatedOperatorText = ComparisonUtils.getNegatedComparison(sign.getTokenType());
     if (operatorText.equals(negatedOperatorText)) {
-      return IntentionPowerPackBundle.message(
-        "negate.comparison.intention.name", operatorText);
+      return IntentionPowerPackBundle.message("negate.comparison.intention.name", operatorText);
     }
     else {
-      return IntentionPowerPackBundle.message(
-        "negate.comparison.intention.name1", operatorText,
-        negatedOperatorText);
+      return IntentionPowerPackBundle.message("negate.comparison.intention.name1", operatorText, negatedOperatorText);
     }
   }
 

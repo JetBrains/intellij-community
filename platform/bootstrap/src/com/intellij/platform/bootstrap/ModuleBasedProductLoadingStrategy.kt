@@ -259,7 +259,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
       loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
     }
-    val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { it.requireDescriptor().jarFiles ?: emptyList() }
+    val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { moduleItem ->
+      val jarFiles = moduleItem.requireDescriptor().jarFiles
+      if (moduleItem.loadingRule != ModuleLoadingRule.EMBEDDED && jarFiles != null) jarFiles else emptyList()
+    }
     descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
     return descriptor
   }

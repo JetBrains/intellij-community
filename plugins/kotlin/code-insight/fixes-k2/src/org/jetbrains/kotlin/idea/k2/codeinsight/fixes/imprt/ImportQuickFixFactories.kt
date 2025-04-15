@@ -45,6 +45,25 @@ object ImportQuickFixFactories {
 
     val newInferenceNoInformationForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NewInferenceNoInformationForParameter> =
         ImportQuickFixProvider.upcast()
+
+    val noGetMethodFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoGetMethod> =
+        ImportQuickFixProvider.upcast()
+
+    val noSetMethodFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoSetMethod> =
+        ImportQuickFixProvider.upcast()
+
+    val componentFunctionMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionMissing> =
+        ImportQuickFixProvider.upcast()
+    
+    // TODO: Reconsider this factory after KT-76253 is fixed
+    val componentFunctionAmbiguityFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionAmbiguity> =
+        ImportQuickFixProvider.upcast()
+
+    val iteratorMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorMissing> =
+        ImportQuickFixProvider.upcast()
+
+    val iteratorAmbiguityFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorAmbiguity> =
+        ImportQuickFixProvider.upcast()
 }
 
 /**
@@ -58,4 +77,4 @@ object ImportQuickFixFactories {
  */
 @Suppress("UNCHECKED_CAST")
 private fun <BASE : KaDiagnosticWithPsi<*>, DERIVED : BASE> KotlinQuickFixFactory.IntentionBased<BASE>.upcast(): KotlinQuickFixFactory.IntentionBased<DERIVED> =
-    this as KotlinQuickFixFactory.IntentionBased<DERIVED> 
+    this as KotlinQuickFixFactory.IntentionBased<DERIVED>

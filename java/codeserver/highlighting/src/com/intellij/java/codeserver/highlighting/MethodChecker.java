@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
@@ -59,7 +58,7 @@ final class MethodChecker {
       PsiClassType type = factory.createType(aClass);
       PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
       if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return;
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
+      myVisitor.reportIncompatibleType(throwable, type, context);
     }
   }
 

@@ -60,7 +60,7 @@ public abstract class TextFragment implements LineFragment {
   }
 
   boolean isGridCellAlignmentEnabled() {
-    return myView != null && myView.getEditor().getSettings().getCharacterGridWidthMultiplier() != null;
+    return myView != null && myView.getEditor().getCharacterGrid() != null;
   }
 
   @Nullable Float adjustedWidthOrNull(int codePoint,  float width) {

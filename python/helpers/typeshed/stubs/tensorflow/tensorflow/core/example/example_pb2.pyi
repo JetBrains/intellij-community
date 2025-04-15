@@ -4,20 +4,17 @@ isort:skip_file
 Protocol messages for describing input data Examples for machine learning
 model training or inference.
 """
+
 import builtins
+import typing
+
 import google.protobuf.descriptor
 import google.protobuf.message
-import sys
 import tensorflow.core.example.feature_pb2
-
-if sys.version_info >= (3, 8):
-    import typing as typing_extensions
-else:
-    import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-@typing_extensions.final
+@typing.final
 class Example(google.protobuf.message.Message):
     """An Example is a mostly-normalized data format for storing data for
     training and inference.  It contains a key-value store (features); where
@@ -103,12 +100,12 @@ class Example(google.protobuf.message.Message):
         *,
         features: tensorflow.core.example.feature_pb2.Features | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["features", b"features"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["features", b"features"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["features", b"features"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["features", b"features"]) -> None: ...
 
 global___Example = Example
 
-@typing_extensions.final
+@typing.final
 class SequenceExample(google.protobuf.message.Message):
     """A SequenceExample is an Example representing one or more sequences, and
     some context.  The context contains features which apply to the entire
@@ -331,7 +328,7 @@ class SequenceExample(google.protobuf.message.Message):
         context: tensorflow.core.example.feature_pb2.Features | None = ...,
         feature_lists: tensorflow.core.example.feature_pb2.FeatureLists | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["context", b"context", "feature_lists", b"feature_lists"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["context", b"context", "feature_lists", b"feature_lists"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["context", b"context", "feature_lists", b"feature_lists"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["context", b"context", "feature_lists", b"feature_lists"]) -> None: ...
 
 global___SequenceExample = SequenceExample

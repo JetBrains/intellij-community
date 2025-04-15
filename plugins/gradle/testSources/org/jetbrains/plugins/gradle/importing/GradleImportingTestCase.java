@@ -42,8 +42,8 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.SmartList;
-import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.PathAssembler;
@@ -291,8 +291,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     @NotNull GradleVersion gradleVersion,
     @NotNull JavaVersionRestriction javaVersionRestriction
   ) {
-    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
-        !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, CurrentJavaVersion.currentJavaVersion()) &&
+        !javaVersionRestriction.isRestricted(gradleVersion, CurrentJavaVersion.currentJavaVersion())) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>

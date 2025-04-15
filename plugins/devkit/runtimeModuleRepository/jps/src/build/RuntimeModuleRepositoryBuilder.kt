@@ -143,7 +143,7 @@ internal class RuntimeModuleRepositoryBuilder
 
     for (module in project.modules) {
       //if a module doesn't have production sources, it still makes sense to generate a descriptor for it, because it may be used from code
-      if (!module.isTestOnly || module.hasProductionSources) {
+      if (!module.name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) || module.hasProductionSources) {
         descriptors.add(createProductionPartDescriptor(module, ::getRuntimeModuleName))
       }
       if (GENERATE_DESCRIPTORS_FOR_TEST_MODULES && module.hasTestSources) {
@@ -151,15 +151,6 @@ internal class RuntimeModuleRepositoryBuilder
       }
     }
   }
-
-  private val JpsModule.isTestOnly
-    get() = name.endsWith(RuntimeModuleId.TESTS_NAME_SUFFIX) ||
-            //todo align module names to get rid of these conditions
-            name.endsWith("all-tests") || name.endsWith(".test") || name.endsWith(".tests.main") || name.contains(".tests.") ||
-            name.endsWith("Tests") ||
-            name in setOf("kotlin.jvm-debugger.test.k2", "intellij.devkit.testFramework", "intellij.jupyter.testFramework",
-                          "kotlin-ultimate.spring-tests", "intellij.goland.tools", "intellij.kotlin.testsWithAndroidPlugin", "fleet")
-   
 
   private val JpsModule.hasTestSources
     get() = sourceRoots.any { it.rootType in JavaModuleSourceRootTypes.TESTS }

@@ -1,10 +1,12 @@
 0(1) element: null
 1(2) element: PyMatchStatement
-2(5) element: PyWildcardPattern
-3(4,7) refutable pattern: 42
-4(5) matched pattern: 42
-5(6) element: PyExpressionStatement
-6(7) READ ACCESS: y
+2(3) refutable pattern: _ | 42
+3(6) element: PyWildcardPattern
+4(5,9) refutable pattern: 42
+5(6) matched pattern: 42
+6(7) matched pattern: _ | 42
 7(8) element: PyExpressionStatement
-8(9) READ ACCESS: z
-9() element: null
+8(9) READ ACCESS: y
+9(10) element: PyExpressionStatement
+10(11) READ ACCESS: z
+11() element: null

@@ -7,7 +7,7 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereRankingModelTest
 import com.intellij.testFramework.VfsTestUtil
 import org.junit.Assert
@@ -17,7 +17,7 @@ internal class ExactMatchSearchEverywhereRankingModelTest : SearchEverywhereRank
   private val exactMatchValue = 0.99
   private val exactMatchWithExtensionValue = 1.0
 
-  override val tab: SearchEverywhereTabWithMlRanking
+  override val tab: SearchEverywhereTab.TabWithMlRanking
     get() = throw NotImplementedError() // Not needed.
 
   override fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>> {

@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,14 @@ public abstract class XStackFrame extends XValueContainer {
    */
   public @Nullable XDebuggerEvaluator getEvaluator() {
     return null;
+  }
+
+  /**
+   * @return whether {@link #getEvaluator()} returns instance of XDebuggerDocumentOffsetEvaluator
+   */
+  @ApiStatus.Internal
+  public boolean isDocumentEvaluator() {
+    return false;
   }
 
   /**

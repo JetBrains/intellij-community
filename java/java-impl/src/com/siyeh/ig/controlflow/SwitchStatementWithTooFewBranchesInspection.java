@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -205,12 +206,12 @@ public final class SwitchStatementWithTooFewBranchesInspection extends BaseInspe
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
-      return myBranchCount == 0 ? getFamilyName() : CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
+      return myBranchCount == 0 ? getFamilyName() : CommonQuickFixBundle.message("fix.replace.x.with.y", JavaKeywords.SWITCH, JavaKeywords.IF);
     }
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.unwrap", PsiKeyword.SWITCH);
+      return CommonQuickFixBundle.message("fix.unwrap", JavaKeywords.SWITCH);
     }
 
     @Override

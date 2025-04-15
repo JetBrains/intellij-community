@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
@@ -11,8 +11,8 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -366,7 +366,7 @@ public final class PreviewFormAction extends AnAction {
         public @NotNull ExecutionResult execute(final @NotNull Executor executor, final @NotNull ProgramRunner<?> runner) throws ExecutionException {
           try {
             ExecutionResult executionResult = super.execute(executor, runner);
-            executionResult.getProcessHandler().addProcessListener(new ProcessAdapter() {
+            executionResult.getProcessHandler().addProcessListener(new ProcessListener() {
               @Override
               public void processTerminated(@NotNull ProcessEvent event) {
                 FileUtil.asyncDelete(new File(myTempPath));

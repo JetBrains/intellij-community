@@ -107,7 +107,7 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
         final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
         DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
         if (managerThread != null) { // if there is an active debug session
-          final SourcePosition sourcePosition = getSourcePositionNow(managerThread, debuggerContext, descriptor);
+          final SourcePosition sourcePosition = getSourcePositionNow(debuggerContext, descriptor);
           if (sourcePosition != null) {
             return sourcePosition;
           }

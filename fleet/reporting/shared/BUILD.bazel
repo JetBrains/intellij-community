@@ -11,10 +11,9 @@ jvm_library(
   name = "fleet-reporting-shared",
   module_name = "fleet.reporting.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
   deps = [
-    "//fleet/preferences",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
@@ -22,6 +21,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/multiplatform.shims:multiplatform-shims",
   ]
 )
 ### auto-generated section `build fleet.reporting.shared` end

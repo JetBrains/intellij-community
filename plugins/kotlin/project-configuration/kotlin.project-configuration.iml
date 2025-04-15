@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" name="maven-resolver-provider" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

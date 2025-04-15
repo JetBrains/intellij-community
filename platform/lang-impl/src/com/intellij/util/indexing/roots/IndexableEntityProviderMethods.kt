@@ -5,7 +5,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,8 +15,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.util.indexing.IndexableFilesIndex
-import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.IndexingIteratorsProvider
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -43,7 +41,7 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
-    return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
+    return IndexingIteratorsProvider.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
   }
 
   fun createIterators(sdk: Sdk): List<IndexableFilesIterator> {
@@ -72,44 +70,23 @@ object IndexableEntityProviderMethods {
   }
 
   fun createExternalEntityIterators(pointer: EntityPointer<*>,
-                                    urlRoots: IndexingUrlSourceRootHolder,
-                                    presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
+                                    urlRoots: IndexingUrlSourceRootHolder): Collection<IndexableFilesIterator> {
     val roots = urlRoots.toSourceRootHolder()
     if (roots.isEmpty()) return emptyList()
-    return listOf(ExternalEntityIndexableIteratorImpl(pointer, roots, presentation))
+    return listOf(ExternalEntityIndexableIteratorImpl(pointer, roots))
   }
 
   fun createCustomKindEntityIterators(pointer: EntityPointer<*>,
-                                      urlRootHolder: IndexingUrlRootHolder,
-                                      presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
+                                      urlRootHolder: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
     val rootHolder = urlRootHolder.toRootHolder()
     if (rootHolder.isEmpty()) return emptyList()
-    return listOf(CustomKindEntityIteratorImpl(pointer, rootHolder, presentation))
+    return listOf(CustomKindEntityIteratorImpl(pointer, rootHolder))
   }
 
   fun createGenericContentEntityIterators(pointer: EntityPointer<*>,
-                                          urlRootHolder: IndexingUrlRootHolder,
-                                          presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
+                                          urlRootHolder: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
     val rootHolder = urlRootHolder.toRootHolder()
     if (rootHolder.isEmpty()) return emptyList()
-    return listOf(GenericContentEntityIteratorImpl(pointer, rootHolder, presentation))
+    return listOf(GenericContentEntityIteratorImpl(pointer, rootHolder))
   }
-
-  fun createModuleAwareContentEntityIterators(module: Module,
-                                              pointer: EntityPointer<*>,
-                                              rootUrls: IndexingUrlRootHolder,
-                                              presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
-    val roots = rootUrls.toRootHolder()
-    if (roots.isEmpty()) return emptyList()
-    return listOf(ModuleAwareContentEntityIteratorImpl(module, pointer, roots, presentation))
-  }
-
-  fun createForIndexableSetContributor(contributor: IndexableSetContributor,
-                                       isProjectAware: Boolean,
-                                       roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> =
-    listOf(IndexableSetContributorFilesIterator(contributor, roots, isProjectAware))
-
-  fun createForSyntheticLibrary(library: SyntheticLibrary,
-                                roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> =
-    listOf(SyntheticLibraryIndexableFilesIteratorImpl(SyntheticLibraryIndexableFilesIteratorImpl.getName(library), library, roots))
 }

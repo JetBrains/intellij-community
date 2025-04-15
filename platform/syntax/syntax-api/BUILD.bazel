@@ -10,6 +10,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/syntax/syntax-i18n:i18n",
+    "//platform/util/multiplatform",
   ]
 )
 
@@ -23,6 +26,10 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "@lib//:junit5",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "//platform/syntax/syntax-i18n:i18n",
+    "//platform/util/multiplatform",
   ]
 )
 

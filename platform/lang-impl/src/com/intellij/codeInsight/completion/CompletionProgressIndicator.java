@@ -768,7 +768,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     return myCaret;
   }
 
-  boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
+  @ApiStatus.Internal
+  public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
     if (completionType != myCompletionType || editor != myEditor) {
       return false;
     }

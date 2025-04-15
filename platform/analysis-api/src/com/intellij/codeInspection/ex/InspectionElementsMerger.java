@@ -67,7 +67,7 @@ public abstract class InspectionElementsMerger {
    * @return new merged tool name
    *         null if merger is not found
    */
-  public static List<String> getMergedToolNames(@NotNull String id) {
+  public static @Unmodifiable List<String> getMergedToolNames(@NotNull String id) {
     return EP_NAME.getExtensionList().stream()
       .filter(merger -> ArrayUtil.contains(id, merger.getSourceToolNames()) || ArrayUtil.contains(id, merger.getSuppressIds()))
       .map(InspectionElementsMerger::getMergedToolName).toList();

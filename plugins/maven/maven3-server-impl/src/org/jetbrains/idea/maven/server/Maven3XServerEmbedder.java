@@ -23,11 +23,19 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
-import org.apache.maven.execution.*;
+import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionRequestPopulationException;
+import org.apache.maven.execution.MavenExecutionRequestPopulator;
+import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.building.*;
+import org.apache.maven.model.building.DefaultModelBuilder;
+import org.apache.maven.model.building.FileModelSource;
+import org.apache.maven.model.building.ModelBuilder;
+import org.apache.maven.model.building.ModelProblem;
+import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
@@ -66,8 +74,20 @@ import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.embedder.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactFactory;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
+import org.jetbrains.idea.maven.server.embedder.CustomMaven3RepositoryMetadataManager;
+import org.jetbrains.idea.maven.server.embedder.CustomModelValidator385;
+import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 import org.jetbrains.idea.maven.server.utils.Maven3SettingsBuilder;
 import org.jetbrains.idea.maven.server.utils.Maven3XProjectResolver;
@@ -78,7 +98,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * Overridden maven components:
@@ -415,7 +446,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
 
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap);
-      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap, mySystemProperties);
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -494,45 +525,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull File dir, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
-    return Maven3XProfileUtil.interpolateAndAlignModel(model, baseDir, dir);
-  }
-
-  @Override
-  public @NotNull ProfileApplicationResult applyProfiles(@NotNull MavenModel model,
-                                                         @NotNull File basedir,
-                                                         @NotNull MavenExplicitProfiles explicitProfiles,
-                                                         @NotNull HashSet<@NotNull String> alwaysOnProfiles,
-                                                         @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public @NotNull MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven3ModelInheritanceAssembler.assembleInheritance(model, parentModel);
-    }
-    catch (Throwable e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
   public @NotNull MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                                              @NotNull ProjectResolutionRequest request,
                                                                                              MavenToken token) {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
+    @NotNull List<@NotNull File> filesToResolve = request.getFilesToResolve();
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -540,7 +539,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     boolean updateSnapshots = myAlwaysUpdateSnapshots || request.updateSnapshots();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pomHashMap.size(), myConsoleWrapper)) {
       Maven3XProjectResolver projectResolver =
-        createProjectResolver(request, telemetry, updateSnapshots, task, pomHashMap, activeProfiles, inactiveProfiles, workspaceMap);
+        createProjectResolver(filesToResolve, request, telemetry, updateSnapshots, task, pomHashMap, activeProfiles, inactiveProfiles, workspaceMap);
       try {
         customizeComponents(workspaceMap);
         ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
@@ -554,7 +553,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  protected @NotNull Maven3XProjectResolver createProjectResolver(@NotNull ProjectResolutionRequest request,
+  protected @NotNull Maven3XProjectResolver createProjectResolver(@NotNull List<@NotNull File> filesToResolve,
+                                                                  @NotNull ProjectResolutionRequest request,
                                                                   MavenServerOpenTelemetry telemetry,
                                                                   boolean updateSnapshots,
                                                                   LongRunningTask task,
@@ -568,6 +568,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       updateSnapshots,
       myImporterSpy,
       task,
+      filesToResolve,
       pomHashMap,
       activeProfiles,
       inactiveProfiles,
@@ -1254,6 +1255,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Override
   protected ArtifactRepository getLocalRepository() {
     return myLocalRepository;
+  }
+
+  public Properties getSystemProperties() {
+    return mySystemProperties;
   }
 }
 

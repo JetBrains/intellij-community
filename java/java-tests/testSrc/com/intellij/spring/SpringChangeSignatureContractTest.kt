@@ -2,6 +2,7 @@
 package com.intellij.spring
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog
 
@@ -19,7 +20,9 @@ class SpringChangeSignatureContractTest : SpringJSpecifyLightHighlightingTestCas
       }
     """.trimIndent())
     val psiMethod = myFixture.elementAtCaret as PsiMethod
-    val actualSignature = JavaChangeSignatureDialog(myFixture.project, psiMethod, false, psiMethod).calculateSignature()
+    val changeSignatureDialog = JavaChangeSignatureDialog(myFixture.project, psiMethod, false, psiMethod)
+    Disposer.register(testRootDisposable, changeSignatureDialog.disposable)
+    val actualSignature = changeSignatureDialog.calculateSignature()
     assertEquals("""
       @Contract("null -> false")
       boolean foo(@Nullable String name)

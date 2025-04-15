@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -33,7 +34,7 @@ public final class ReferenceExpressionCompletionContributor {
     if (psiElement().inside(StandardPatterns.or(psiElement(PsiAnnotationParameterList.class), JavaCompletionContributor.IN_SWITCH_LABEL)).accepts(element)) {
       return new ElementExtractorFilter(new AndFilter(
           new ClassFilter(PsiField.class),
-          new ModifierFilter(PsiKeyword.STATIC, PsiKeyword.FINAL)
+          new ModifierFilter(JavaKeywords.STATIC, JavaKeywords.FINAL)
       ));
     }
 

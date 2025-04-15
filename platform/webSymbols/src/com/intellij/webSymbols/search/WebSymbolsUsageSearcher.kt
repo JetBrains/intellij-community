@@ -5,7 +5,9 @@ import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.Usage
 import com.intellij.find.usages.api.UsageSearchParameters
 import com.intellij.find.usages.api.UsageSearcher
+import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
+import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.model.search.LeafOccurrence
@@ -71,10 +73,9 @@ object WebSymbolUsageQueries {
         }
 
         if (element is PsiExternalReferenceHost) {
-          val declarations = WebSymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
+          val declarations = WebSymbolDeclarationProvider.getAllEquivalentDeclarations(element, offsetInElement, symbol)
           if (declarations.isNotEmpty()) {
             return declarations
-              .filter { it.symbol.isEquivalentTo(symbol) }
               .map {
                 WebSymbolPsiUsage(it.declaringElement.containingFile,
                                   it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
@@ -82,7 +83,7 @@ object WebSymbolUsageQueries {
               }
           }
 
-          val foundReferences = getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement))
+          val foundReferences = getReferences(element, WebSymbolReferenceHints(symbol, offsetInElement))
             .asSequence()
             .filterIsInstance<WebSymbolReference>()
             .filter { it.rangeInElement.containsOffset(offsetInElement) }
@@ -109,4 +110,22 @@ object WebSymbolUsageQueries {
       }
       emptyList()
     }
+}
+
+internal class WebSymbolReferenceHints(private val symbol: Symbol, private val offsetInElement: Int) : PsiSymbolReferenceHints {
+  override fun getOffsetInElement(): Int {
+    return offsetInElement
+  }
+
+  override fun getReferenceClass(): Class<out PsiSymbolReference> {
+    return WebSymbolReference::class.java
+  }
+
+  override fun getTarget(): Symbol {
+    return symbol
+  }
+
+  companion object {
+    val NO_HINTS: PsiSymbolReferenceHints = object : PsiSymbolReferenceHints {}
+  }
 }

@@ -28,7 +28,9 @@ internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContr
     for (info in artifactsInfo) {
       val mavenArtifact = tree.findProject(MavenId(info.groupId, info.artifactId, info.version))
       if (mavenArtifact == null) {
-        externalArtifacts.add(info)
+        if (!externalArtifacts.contains(info)) {
+          externalArtifacts.add(info)
+        }
       }
     }
 

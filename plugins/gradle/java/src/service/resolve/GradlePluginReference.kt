@@ -97,7 +97,7 @@ class GradlePluginReference(
     return file.path.matches(Regex(pathPattern))
   }
 
-  override fun getCompletionVariants(): MutableCollection<LookupElement> {
+  override fun getCompletionVariants(): Collection<LookupElement> {
     TODO("Not yet implemented")
   }
 }

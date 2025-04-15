@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.json.backend" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.ObjectUtils;
@@ -35,6 +36,7 @@ public final class PreviewHandler<T> {
   private final IntentionPreviewPopupUpdateProcessor myProcessor;
   private final ListPopup myListPopup;
   private final Class<T> myClass;
+  private final IntentionPreviewComponentHolder myPopup;
 
   /**
    * Construct and install the helper to the listPopup.
@@ -51,6 +53,23 @@ public final class PreviewHandler<T> {
     myListPopup = listPopup;
     myClass = allowedClass;
     myProcessor = new IntentionPreviewPopupUpdateProcessor(project, obj -> previewGenerator.apply(myClass.cast(obj)));
+    myPopup = new IntentionPreviewComponentHolder() {
+      @Override
+      public @NotNull JComponent jComponent() {
+        return listPopup.getContent();
+      }
+
+      @Override
+      public boolean isDisposed() {
+        return listPopup.isDisposed();
+      }
+
+      @Override
+      public void dispose() {
+        Disposer.dispose(listPopup);
+      }
+    };
+    Disposer.register(listPopup, myPopup);
     registerShowPreviewAction();
     registerListeners();
   }
@@ -122,7 +141,7 @@ public final class PreviewHandler<T> {
   @RequiresEdt
   private void update(T action) {
     if (myListPopup instanceof ListPopupImpl listPopup) {
-      myProcessor.setup(myListPopup, listPopup.getOriginalSelectedIndex());
+      myProcessor.setup(myPopup, listPopup.getOriginalSelectedIndex());
       myProcessor.updatePopup(action);
     }
   }

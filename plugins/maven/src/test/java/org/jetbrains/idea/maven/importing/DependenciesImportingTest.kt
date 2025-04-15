@@ -5,7 +5,15 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ModuleSourceOrderEntry
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
@@ -23,7 +31,7 @@ import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Arrays
 import kotlin.io.path.exists
 
 class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
@@ -2695,5 +2703,56 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project1", "project2")
     assertModuleLibDeps("project1", "Maven: test:test:1")
     assertModuleLibDeps("project2", "Maven: test:test:2")
+  }
+
+  @Test
+  fun testInterpolatePomVersion() = runBlocking {
+    assumeMaven3()
+
+    createModulePom("m1", """
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>2</version>
+        </dependency>
+      </dependencies>
+      """.trimIndent())
+
+    createModulePom("m2", """
+      <artifactId>m2</artifactId>
+      <version>${'$'}{ver}</version>
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      """.trimIndent())
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                      <module>m1</module>
+                      <module>m2</module>
+                    </modules>
+                    <properties>
+                      <ver>2</ver>
+                    </properties>
+                      """.trimIndent())
+
+    val module = projectsManager.findProject(getModule(mn("project", "m1")))
+    assertNotNull(module)
+    assertModuleModuleDeps("m1", "m2")
+    assertEmpty(module!!.problems)
   }
 }

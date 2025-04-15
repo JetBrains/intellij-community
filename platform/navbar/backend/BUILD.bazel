@@ -24,6 +24,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
     "//platform/navbar/shared:navbar",
+    "//platform/platform-impl:ide-impl",
   ],
   exports = ["//platform/navbar/shared:navbar"],
   runtime_deps = [":backend_resources"]

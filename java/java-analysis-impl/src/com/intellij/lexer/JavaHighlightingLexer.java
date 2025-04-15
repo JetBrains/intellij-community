@@ -1,20 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
-import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.lexer.BasicJavaLexer;
+import com.intellij.java.syntax.JavaSyntaxDefinition;
+import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.lang.java.syntax.JavaElementTypeConverterKt.getJavaElementTypeConverter;
+
 public class JavaHighlightingLexer extends AbstractBasicJavaHighlightingLexer {
   public JavaHighlightingLexer(@NotNull LanguageLevel languageLevel) {
-    super(
-      languageLevel,
-      (BasicJavaLexer)JavaParserDefinition.createLexer(languageLevel)
-    );
+    super(languageLevel, (JavaLexer)JavaSyntaxDefinition.createLexer(languageLevel), getJavaElementTypeConverter());
   }
 
   @Override

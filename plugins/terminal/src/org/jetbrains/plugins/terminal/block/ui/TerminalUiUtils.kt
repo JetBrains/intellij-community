@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.undo.UndoUtil
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -20,17 +21,19 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.components.JBLayeredPane
@@ -53,8 +56,6 @@ import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalFontOptions
-import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -62,6 +63,8 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
@@ -114,8 +117,10 @@ object TerminalUiUtils {
 
     editor.applyFontSettings(settings)
 
-    editor.view.setDoubleWidthCharacterStrategy { codePoint ->
-      CharUtils.isDoubleWidthCharacter(codePoint, false)
+    val editorGrid = checkNotNull(editor.characterGrid) { "The editor did not switch into the grid mode" }
+
+    editorGrid.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy {
+      codePoint -> CharUtils.isDoubleWidthCharacter(codePoint, false)
     }
 
     if (installContextMenu) {
@@ -159,10 +164,6 @@ object TerminalUiUtils {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
     return ensureTermMinimumSize(TermSize(width.toInt(), height.toInt()))
-  }
-
-  private fun ensureTermMinimumSize(size: TermSize): TermSize {
-    return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
   }
 
   @RequiresEdt
@@ -318,13 +319,16 @@ internal fun Editor.getCharSize(): Dimension2D {
 }
 
 fun Editor.calculateTerminalSize(): TermSize? {
-  val contentSize = scrollingModel.visibleArea.size
-  val charSize = getCharSize()
-
-  return if (contentSize.width > 0 && contentSize.height > 0) {
-    TerminalUiUtils.calculateTerminalSize(contentSize, charSize)
+  val grid = (this as? EditorImpl)?.characterGrid ?: return null
+  return if (grid.rows > 0 && grid.columns > 0) {
+    ensureTermMinimumSize(TermSize(grid.columns, grid.rows))
+  } else {
+    null
   }
-  else null
+}
+
+private fun ensureTermMinimumSize(size: TermSize): TermSize {
+  return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
 }
 
 private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {
@@ -496,4 +500,47 @@ inline fun <T> TerminalTextBuffer.withLock(callable: (TerminalTextBuffer) -> T):
 
 fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
   add(component, layer as Any) // Any is needed to resolve to the correct overload.
+}
+
+@ApiStatus.Internal
+fun getClipboardText(useSystemSelectionClipboardIfAvailable: Boolean = false): String? {
+  if (useSystemSelectionClipboardIfAvailable) {
+    val text = getTextContent(CopyPasteManager.getInstance().systemSelectionContents)
+    if (text != null) {
+      return text
+    }
+  }
+  return getTextContent(CopyPasteManager.getInstance().contents)
+}
+
+private fun getTextContent(content: Transferable?): String? {
+  if (content == null) return null
+
+  return try {
+    if (content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+      content.getTransferData(DataFlavor.stringFlavor) as String
+    }
+    else null
+  }
+  catch (t: Throwable) {
+    logger<TerminalUiUtils>().error("Failed to get text from clipboard", t)
+    return null
+  }
+}
+
+/**
+ * The following logic was borrowed from JediTerm.
+ * Sanitize clipboard text to use CR as the line separator.
+ * See https://github.com/JetBrains/jediterm/issues/136.
+ */
+@ApiStatus.Internal
+fun sanitizeLineSeparators(text: String): String {
+  // On Windows, Java automatically does this CRLF->LF sanitization, but
+  // other terminals on Unix typically also do this sanitization.
+  var t = text
+  if (!SystemInfoRt.isWindows) {
+    t = text.replace("\r\n", "\n")
+  }
+  // Now convert this into what the terminal typically expects.
+  return t.replace("\n", "\r")
 }

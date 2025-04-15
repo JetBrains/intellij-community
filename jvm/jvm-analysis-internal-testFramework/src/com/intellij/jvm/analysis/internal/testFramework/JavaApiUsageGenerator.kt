@@ -5,7 +5,7 @@ import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Co
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.PREVIEW_JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.SINCE_VERSION
-import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.module.JdkApiCompatabilityCache
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentIterator
@@ -173,7 +173,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
               member.hasAnnotation(JavaPreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
             }
             .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
-            .mapNotNull { LanguageLevelUtil.getSignature(it) }
+            .mapNotNull { JdkApiCompatabilityCache.getInstance().getSignature(it) }
         )
         return true
       }
@@ -195,7 +195,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         override fun visitElement(element: PsiElement) {
           super.visitElement(element)
           if (element is PsiMember && element.isPublicApi()) {
-            val signature = LanguageLevelUtil.getSignature(element) ?: return
+            val signature = JdkApiCompatabilityCache.getInstance().getSignature(element) ?: return
             val className = signature.substringBefore("#")
             if (JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) == null) {
               return // If the class is not in all scope, don't generate

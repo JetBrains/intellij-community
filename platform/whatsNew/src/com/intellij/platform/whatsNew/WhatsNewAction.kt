@@ -23,22 +23,15 @@ import org.jetbrains.concurrency.await
 
 internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAware {
   companion object {
-    private val LOG = logger<WhatsNewAction>()
     internal const val PLACE = "WhatsNew"
-    private const val REACTIONS_STATE = "whatsnew.reactions.state"
-    private val reactionChecker = FUSReactionChecker(REACTIONS_STATE)
-
-    fun refresh() {
-      reactionChecker.clearLikenessState()
-      if (LOG.isTraceEnabled) {
-        LOG.trace("EapWhatsNew reaction refresh")
-      }
-    }
   }
 
-  private val contentAsync by lazy {
+  private val REACTIONS_STATE = "whatsnew.reactions.state"
+  private val reactionChecker = FUSReactionChecker(REACTIONS_STATE)
+
+  private val hasWhatsNewContent by lazy {
     appScope.async {
-      WhatsNewContent.getWhatsNewContent()
+      WhatsNewContent.hasWhatsNewContent()
     }
   }
 
@@ -49,7 +42,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
   }
 
   private suspend fun openWhatsNewPage(project: Project, dataContext: DataContext?, triggeredByUser: Boolean = false) {
-    val content = contentAsync.await()
+    val content = WhatsNewContent.getWhatsNewContent()
     if (content != null && content.isAvailable()) {
       content.show(project, dataContext, triggeredByUser, reactionChecker)
     }
@@ -64,9 +57,9 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = if (contentAsync.isCompleted) contentAsync.getCompleted() != null else false
-      e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
-      e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
+    e.presentation.isEnabledAndVisible = if (hasWhatsNewContent.isCompleted) hasWhatsNewContent.getCompleted() else false
+    e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
+    e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -89,3 +82,5 @@ private fun Project.getScope() = this.service<ScopeProvider>().scope
 private class AppScopeProvider(val scope: CoroutineScope)
 private val appScope: CoroutineScope
   get() = service<AppScopeProvider>().scope
+
+private val LOG = logger<WhatsNewAction>()

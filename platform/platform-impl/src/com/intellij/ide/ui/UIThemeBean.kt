@@ -168,6 +168,7 @@ private fun customize(bean: UIThemeBean) {
     val iconCustomizer = uiThemeCustomizer?.createIconCustomizer(themeName)
     val colorsCustomizer = uiThemeCustomizer?.createColorCustomizer(themeName)
     val namedColorCustomizer = uiThemeCustomizer?.createNamedColorCustomizer(themeName)
+    val editorSchemeCustomizer = uiThemeCustomizer?.createEditorThemeCustomizer(themeName)
     if (iconCustomizer?.isNotEmpty() == true) {
       val newIcons = LinkedHashMap<String, Any?>(iconCustomizer)
       val originIcons = bean.icons
@@ -207,6 +208,15 @@ private fun customize(bean: UIThemeBean) {
         }
       }
       bean.colorMap.rawMap = newRawColorMap
+    }
+    if (editorSchemeCustomizer?.isNotEmpty() == true) {
+      val currentScheme = bean.editorScheme
+      if (currentScheme != null) {
+        val newTheme = editorSchemeCustomizer.get(currentScheme)
+        if (newTheme != null) {
+          bean.editorScheme = newTheme
+        }
+      }
     }
   }
 }

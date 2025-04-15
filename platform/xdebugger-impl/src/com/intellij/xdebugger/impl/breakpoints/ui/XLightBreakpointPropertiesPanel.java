@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -26,9 +26,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.ApiStatus;
@@ -105,7 +103,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   private @Nullable XDebuggerExpressionComboBox myConditionComboBox;
 
-  private final XBreakpointBase myBreakpoint;
+  private final XBreakpointProxy myBreakpoint;
 
   private final boolean myShowAllOptions;
   private final boolean myIsEditorBalloon;
@@ -114,28 +112,26 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myMasterBreakpointPanel.setDetailView(detailView);
   }
 
-  /**
-   * @deprecated use {@link XLightBreakpointPropertiesPanel#XLightBreakpointPropertiesPanel(Project, XBreakpointManager, XBreakpointBase, boolean, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint, boolean showAllOptions) {
-    this(project, breakpointManager, breakpoint, showAllOptions, false);
-  }
-
-  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
+  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManagerProxy breakpointManager, XBreakpointProxy breakpoint,
                                          boolean showAllOptions, boolean isEditorBalloon) {
     this(project, breakpointManager, breakpoint, showAllOptions, showAllOptions, isEditorBalloon);
   }
 
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
                                          boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
+    this(project, new XBreakpointManagerProxy.Monolith((XBreakpointManagerImpl)breakpointManager),
+         new XBreakpointProxy.Monolith(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
+  }
+
+  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManagerProxy breakpointManager, XBreakpointProxy breakpoint,
+                                         boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
     myBreakpoint = breakpoint;
     myShowAllOptions = showAllOptions;
     myIsEditorBalloon = isEditorBalloon;
-    XBreakpointType breakpointType = breakpoint.getType();
+    XBreakpointTypeProxy breakpointType = breakpoint.getType();
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.SUSPEND_POLICY)) {
-      mySuspendPolicyPanel.init(project, breakpointManager, breakpoint);
+      mySuspendPolicyPanel.init(project, breakpoint);
       mySuspendPolicyPanel.setDelegate(this);
       mySubPanels.add(mySuspendPolicyPanel);
     }
@@ -144,17 +140,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.DEPENDENCY)) {
-      myMasterBreakpointPanel.init(project, breakpointManager, breakpoint);
+      myMasterBreakpointPanel.init(project, breakpoint);
       mySubPanels.add(myMasterBreakpointPanel);
     }
     else {
       myMasterBreakpointPanel.hide();
     }
 
-    XDebuggerEditorsProvider debuggerEditorsProvider = breakpointType.getEditorsProvider(breakpoint, project);
+    XDebuggerEditorsProvider debuggerEditorsProvider = breakpoint.getEditorsProvider();
 
     if (breakpointType.getVisibleStandardPanels().contains(XBreakpointType.StandardPanels.ACTIONS)) {
-      myActionsPanel.init(project, breakpointManager, breakpoint, debuggerEditorsProvider);
+      myActionsPanel.init(project, breakpoint, debuggerEditorsProvider);
       mySubPanels.add(myActionsPanel);
     }
     else {
@@ -204,7 +200,11 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
 
     XBreakpointCustomPropertiesPanel customRightConditionPanel = breakpointType.createCustomRightPropertiesPanel(project);
-    if (customRightConditionPanel != null && (myShowAllOptions || customRightConditionPanel.isVisibleOnPopup(breakpoint))) {
+    boolean isVisibleOnPopup = false;
+    if (myBreakpoint instanceof XBreakpointProxy.Monolith) {
+      isVisibleOnPopup = customRightConditionPanel.isVisibleOnPopup(((XBreakpointProxy.Monolith)breakpoint).getBreakpoint());
+    }
+    if (customRightConditionPanel != null && (myShowAllOptions || isVisibleOnPopup)) {
       myCustomRightPropertiesPanelWrapper.add(customRightConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customRightConditionPanel);
     }
@@ -243,11 +243,11 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myRestoreLink.setVisible(false);
     ReadAction.nonBlocking(() -> {
         XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
-        XBreakpointBase lastRemovedBreakpoint = ((XBreakpointManagerImpl)breakpointManager).getLastRemovedBreakpoint();
+        XBreakpointProxy lastRemovedBreakpoint = breakpointManager.getLastRemovedBreakpoint();
         boolean restore = lastRemovedBreakpoint != null &&
                     breakpointType.equals(lastRemovedBreakpoint.getType()) &&
                     XSourcePosition.isOnTheSameLine(sourcePosition, lastRemovedBreakpoint.getSourcePosition()) &&
-                    XBreakpointManagerImpl.statesAreDifferent(lastRemovedBreakpoint.getState(), breakpoint.getState(), true);
+                          !lastRemovedBreakpoint.haveSameState(breakpoint, true);
         return Pair.create(sourcePosition, restore);
       })
       .finishOnUiThread(ModalityState.defaultModalityState(), pair -> {
@@ -278,8 +278,10 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionComboBox.saveTextInHistory();
     }
 
-    for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
-      customPanel.saveTo(myBreakpoint);
+    if (myBreakpoint instanceof XBreakpointProxy.Monolith) {
+      for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
+        customPanel.saveTo(((XBreakpointProxy.Monolith)myBreakpoint).getBreakpoint());
+      }
     }
     myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
   }
@@ -307,22 +309,24 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
       onCheckboxChanged();
     }
-    
-    for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
-      customPanel.loadFrom(myBreakpoint);
+
+    if (myBreakpoint instanceof XBreakpointProxy.Monolith) {
+      for (XBreakpointCustomPropertiesPanel customPanel : myCustomPanels) {
+        customPanel.loadFrom(((XBreakpointProxy.Monolith)myBreakpoint).getBreakpoint());
+      }
     }
     myEnabledCheckbox.setSelected(myBreakpoint.isEnabled());
     myBreakpointNameLabel.setText(getBreakpointNameLabel());
   }
 
   private @Nls String getBreakpointNameLabel() {
-    var description = XBreakpointUtil.getGeneralDescription(myBreakpoint);
+    var description = myBreakpoint.getGeneralDescription();
     if (myIsEditorBalloon) {
       // Use tooltip-like description in this case.
       return description;
     }
 
-    var itemTitleText = XBreakpointUtil.getShortText(myBreakpoint);
+    var itemTitleText = myBreakpoint.getShortText();
 
     // By default, historically, XLineBreakpointType implements above methods as "path/name:line" and "name:line"
     // (XLineBreakpointType.getDisplayText & XLineBreakpointType.getShortText).

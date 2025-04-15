@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.openapi.util.NlsSafe
@@ -58,7 +59,7 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     g.color = if (c.isEnabled) c.getForeground() else UIUtil.getLabelDisabledForeground()
 
     val baseline = c.getBaseline(c.width, c.height)
-    val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width, g)
+    val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width, c)
     val strBounds = metrics.getStringBounds(text, g).getBounds()
     strBounds.setLocation((textRect.centerX - strBounds.centerX).toInt().coerceAtLeast(textRect.x), baseline)
 
@@ -137,8 +138,8 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     if (c !is AbstractToolbarCombo) return Dimension()
     val preferredSize = c.preferredSize
     val metrics = c.getFontMetrics(c.getFont())
-    val currentTextWidth = metrics.stringWidth(c.text ?: "")
-    val minTextWidth = c.textCutStrategy.calcMinTextWidth(c.text ?: "", metrics)
+    val currentTextWidth = UIUtil.computeStringWidth(c, c.text ?: "")
+    val minTextWidth = c.textCutStrategy.calcMinTextWidth(c.text ?: "", metrics, c)
     return Dimension(preferredSize.width - currentTextWidth + minTextWidth, preferredSize.height)
   }
 }

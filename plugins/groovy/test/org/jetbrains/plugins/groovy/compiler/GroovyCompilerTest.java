@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -7,9 +7,9 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.PathManager;
@@ -980,7 +980,7 @@ public void test_multiline_strings() {
     assertEmpty("Expected zero compilation errors", make());
 
     final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE);
-    ProcessHandler process = runProcess("Bar", getModule(), DefaultRunExecutor.class, new ProcessAdapter() {
+    ProcessHandler process = runProcess("Bar", getModule(), DefaultRunExecutor.class, new ProcessListener() {
                                           @Override
                                           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                                             DefaultGroovyMethods.println(this, "stdout: " + event.getText());

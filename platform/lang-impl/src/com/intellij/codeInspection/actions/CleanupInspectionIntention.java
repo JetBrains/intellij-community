@@ -103,9 +103,8 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
   }
 
   private List<ProblemDescriptor> getDescriptors(@NotNull Project project, PsiFile targetFile) {
-    List<ProblemDescriptor> descriptions;
     try {
-      descriptions = ReadAction.nonBlocking(() -> ProgressManager.getInstance().runProcess(() -> {
+      return ReadAction.nonBlocking(() -> ProgressManager.getInstance().runProcess(() -> {
         InspectionManager inspectionManager = InspectionManager.getInstance(project);
         return InspectionEngine.runInspectionOnFile(targetFile, myToolWrapper, inspectionManager.createNewGlobalContext());
       }, new DaemonProgressIndicator())).submit(AppExecutorUtil.getAppExecutorService()).get();
@@ -113,7 +112,6 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-    return descriptions;
   }
 
   @Override

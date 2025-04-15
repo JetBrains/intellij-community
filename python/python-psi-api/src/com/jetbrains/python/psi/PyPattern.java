@@ -3,5 +3,5 @@ package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstPattern;
 
-public interface PyPattern extends PyAstPattern, PyElement {
+public interface PyPattern extends PyAstPattern, PyTypedElement {
 }

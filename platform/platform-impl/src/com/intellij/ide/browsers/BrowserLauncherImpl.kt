@@ -3,8 +3,7 @@ package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.isTrusted
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -25,7 +24,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun canBrowse(project: Project?, uri: String): Boolean {
-    if (project == null || project.isTrusted()) {
+    if (project == null || TrustedProjects.isProjectTrusted(project)) {
       return true
     }
     val yesLabel = IdeBundle.message("external.link.confirmation.yes.label")
@@ -40,7 +39,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
       .show(project)
     when (answer) {
       yesLabel -> return true
-      trustLabel -> { project.setTrusted(true); return true }
+      trustLabel -> { TrustedProjects.setProjectTrusted(project, true); return true }
       else -> return false
     }
   }

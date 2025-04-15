@@ -4,7 +4,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -266,14 +265,6 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     GenerateMembersUtil.sortModifiers(method, overridden);
   }
 
-  public static void annotate(@NotNull PsiMethod result, @NotNull String fqn, String @NotNull ... annosToRemove) throws IncorrectOperationException {
-    Project project = result.getProject();
-    AddAnnotationFix fix = new AddAnnotationFix(fqn, result, annosToRemove);
-    if (fix.isAvailable(project, null, result.getContainingFile())) {
-      fix.invoke(project, null, result.getContainingFile());
-    }
-  }
-
   public static @Unmodifiable @NotNull List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(@NotNull PsiClass aClass,
                                                                                                      @NotNull Collection<? extends PsiMethodMember> candidates,
                                                                                                      boolean toCopyJavaDoc,
@@ -447,7 +438,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
     NonBlockingReadAction<JavaOverrideImplementMemberChooserContainer> prepareChooserTask = ReadAction.nonBlocking(() -> {
-        return prepareChooser(aClass, toImplement);
+        return DumbService.getInstance(project).withAlternativeResolveEnabled(() -> prepareChooser(aClass, toImplement));
       })
       .expireWhen(() -> !aClass.isValid());
 

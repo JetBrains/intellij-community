@@ -16,6 +16,7 @@ java_library(
     "//platform/bookmarks/backend",
     "//platform/recentFiles/backend",
     "//platform/editor/backend",
+    "//platform/execution-impl/backend:execution-impl-backend",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end

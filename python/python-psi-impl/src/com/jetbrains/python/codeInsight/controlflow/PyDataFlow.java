@@ -45,6 +45,7 @@ public class PyDataFlow {
   }
 
   public boolean isUnreachable(@NotNull Instruction instruction) {
+    if (instruction.num() >= myReachability.length) return false;
     return !myReachability[instruction.num()];
   }
 

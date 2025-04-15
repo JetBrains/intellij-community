@@ -145,17 +145,19 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
       myDetectorsToProcess.clear();
     }
 
-    String names = StringUtil.join(frameworkNames, ", ");
-    String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
-    NotificationGroupManager.getInstance().getNotificationGroup("Framework Detection")
-      .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION)
-      .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          showSetupFrameworksDialog(notification);
-        }
-      })
-      .notify(myProject);
+    if (!frameworkNames.isEmpty()) {
+      String names = StringUtil.join(frameworkNames, ", ");
+      String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
+      NotificationGroupManager.getInstance().getNotificationGroup("Framework Detection")
+        .createNotification(ProjectBundle.message("notification.title.frameworks.detected"), text, NotificationType.INFORMATION)
+        .addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.configure")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            showSetupFrameworksDialog(notification);
+          }
+        })
+        .notify(myProject);
+    }
   }
 
   private void showSetupFrameworksDialog(Notification notification) {

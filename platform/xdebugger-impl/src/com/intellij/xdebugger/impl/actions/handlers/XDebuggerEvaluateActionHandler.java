@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -28,6 +27,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
@@ -54,10 +54,10 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    final XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
     final XStackFrame stackFrame = session.getCurrentStackFrame();
-    final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+    final XDebuggerEvaluator evaluator = session.getCurrentEvaluator();
     if (evaluator == null) {
       return;
     }
@@ -138,7 +138,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     return expressionTextPromise.then(expression -> Pair.create(expression, finalMode));
   }
 
-  public static void showDialog(@NotNull XDebugSession session,
+  private static void showDialog(@NotNull XDebugSessionProxy session,
                                  VirtualFile file,
                                  XDebuggerEditorsProvider editorsProvider,
                                  XStackFrame stackFrame,
@@ -204,7 +204,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    return session.getDebugProcess().getEvaluator() != null;
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    return session.getCurrentEvaluator() != null;
   }
 }

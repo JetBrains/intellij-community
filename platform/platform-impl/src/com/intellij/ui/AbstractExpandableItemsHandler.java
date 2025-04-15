@@ -19,10 +19,7 @@ import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -225,7 +222,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   @Override
-  public @NotNull Collection<KeyType> getExpandedItems() {
+  public @NotNull @Unmodifiable Collection<KeyType> getExpandedItems() {
     return myKey == null ? Collections.emptyList() : Collections.singleton(myKey);
   }
 

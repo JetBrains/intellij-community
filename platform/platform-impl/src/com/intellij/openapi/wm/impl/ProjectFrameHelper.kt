@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
@@ -26,7 +27,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -43,7 +44,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -76,6 +76,8 @@ abstract class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
 ) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
+  @Internal
+  constructor(frame: IdeFrameImpl) : this(frame, null)
 
   @Suppress("SSBasedInspection")
   @Internal
@@ -382,7 +384,8 @@ abstract class ProjectFrameHelper internal constructor(
   override fun getProject(): Project? = project
 
   // any activities that will not access a workspace model
-  internal suspend fun setRawProject(project: Project) {
+  @Internal
+  suspend fun setRawProject(project: Project) {
     LOG.info("Setting project frame to $project")
 
     if (this.project === project) {
@@ -405,7 +408,8 @@ abstract class ProjectFrameHelper internal constructor(
     LOG.info("Project frame set to $project")
   }
 
-  internal open suspend fun setProject(project: Project) {
+  @Internal
+  open suspend fun setProject(project: Project) {
     frameHeaderHelper.setProject(project)
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
@@ -415,8 +419,9 @@ abstract class ProjectFrameHelper internal constructor(
     }
   }
 
+  @Internal
   @RequiresEdt
-  internal fun setInitBounds(bounds: Rectangle?) {
+  fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
       checkForNonsenseBounds("ProjectFrameHelper.setInitBounds.bounds", bounds)
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
@@ -555,6 +560,13 @@ abstract class ProjectFrameHelper internal constructor(
   }
 }
 
+@Internal
+fun ProjectFrameHelper.updateFullScreenState(isFullScreen: Boolean) {
+  if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+    toggleFullScreen(true)
+  }
+}
+
 private fun isTemporaryDisposed(frame: RootPaneContainer?): Boolean {
   return ClientProperty.isTrue(frame?.rootPane, ScreenUtil.DISPOSE_TEMPORARY)
 }
@@ -590,7 +602,7 @@ private object WindowCloseListener : WindowAdapter() {
     if (app != null && !app.isDisposed) {
       // Project closing process is also subject to cancellation checks.
       // Here we run the closing process in the scope of applicaiton, so that the user gets the chance to abort project closing process.
-      installThreadContext((app as ComponentManagerImpl).getCoroutineScope().coroutineContext).use {
+      installThreadContext((app as ComponentManagerEx).getCoroutineScope().coroutineContext).use {
         frameHelper.windowClosing(project)
       }
     }

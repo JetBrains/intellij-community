@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.google.common.util.concurrent.Futures
@@ -40,7 +40,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
   private var tabContent: Content? = null
   var ui: MainVcsLogUi? = null
     private set
-  private var logCreationCallback: SettableFuture<MainVcsLogUi>? = null
+  private var logCreationCallback: SettableFuture<MainVcsLogUi?>? = null
 
   init {
     projectLog.logManager?.let { addMainUi(it) }
@@ -73,12 +73,13 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
     if (ui == null) {
       thisLogger<VcsLogContentProvider>().debug("Creating main Log ui for ${project.name}")
 
-      ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
-      val panel = VcsLogPanel(logManager, ui!!)
+      val ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
+      this.ui = ui
+      val panel = VcsLogPanel(logManager, ui)
       container.add(panel, BorderLayout.CENTER)
 
       updateDisplayName()
-      ui!!.onDisplayNameChange { updateDisplayName() }
+      ui.onDisplayNameChange { updateDisplayName() }
 
       if (logCreationCallback != null) {
         logCreationCallback!!.set(ui)
@@ -109,8 +110,9 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
   }
 
   /**
-   * Executes a consumer when a main log ui is created. If main log ui already exists, executes it immediately.
-   * Overwrites any consumer that was added previously: only the last one gets executed.
+   * Executes a consumer when a main log ui is created.
+   * If the main log ui already exists, execute it immediately.
+   * Overwrites any consumer added previously: only the last one gets executed.
    *
    * @param consumer consumer to execute.
    */
@@ -123,29 +125,29 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
                            val result = future.get()
                            if (result != null) consumer.consume(result)
                          }
-                         catch (ignore: InterruptedException) {
+                         catch (_: InterruptedException) {
                          }
-                         catch (ignore: ExecutionException) {
+                         catch (_: ExecutionException) {
                          }
                        }, MoreExecutors.directExecutor())
   }
 
   @RequiresEdt
-  fun waitMainUiCreation(): ListenableFuture<MainVcsLogUi> {
+  fun waitMainUiCreation(): ListenableFuture<MainVcsLogUi?> {
     ThreadingAssertions.assertEventDispatchThread()
-    if (ui != null) {
-      return Futures.immediateFuture(ui)
+    ui?.let {
+      return Futures.immediateFuture(it)
     }
 
-    if (logCreationCallback != null) {
-      logCreationCallback!!.set(null)
-    }
-    val settableFuture = SettableFuture.create<MainVcsLogUi>()
+    logCreationCallback?.set(null)
+    val settableFuture = SettableFuture.create<MainVcsLogUi?>()
     logCreationCallback = settableFuture
     return settableFuture
   }
 
-  override fun disposeContent() = disposeMainUi()
+  override fun disposeContent() {
+    disposeMainUi()
+  }
 
   internal class VcsLogVisibilityPredicate : Predicate<Project> {
     override fun test(project: Project): Boolean {

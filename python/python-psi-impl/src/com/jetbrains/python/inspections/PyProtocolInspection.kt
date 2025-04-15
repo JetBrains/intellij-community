@@ -12,7 +12,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.*
+import com.jetbrains.python.psi.PyKnownDecorator.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.RatedResolveResult

@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
@@ -59,7 +61,7 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   @Test
   fun `test retainAll() of standard collection`() {
-    val set = (0 until 10).map { createFile() }.toHashSet()
+    val set = WriteAction.computeAndWait<Set<VirtualFile>, Throwable> { (0 until 10).map { createFile() }.toHashSet() }
     doTestRetainAll(set)
   }
 
@@ -133,8 +135,10 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     assertEquals(10, set.size)
     set.clear()
     assertEquals(0, set.size)
-    repeat(10) {
-      set.add(createFile())
+    WriteAction.runAndWait<Throwable> {
+      repeat(10) {
+        set.add(createFile())
+      }
     }
     assertEquals(10, set.size)
   }
@@ -195,9 +199,9 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     val set1 = VfsUtilCore.createCompactVirtualFileSet()
     val set2 = VfsUtilCore.createCompactVirtualFileSet()
 
-    val fileList1 = (0 until sliceSize).map { createFile() }
-    val fileList2 = (0 until sliceSize).map { createFile() }
-    val fileList3 = (0 until sliceSize).map { createFile() }
+    val fileList1 = WriteAction.computeAndWait<List<VirtualFile>, Throwable> { (0 until sliceSize).map { createFile() } }
+    val fileList2 = WriteAction.computeAndWait<List<VirtualFile>, Throwable> { (0 until sliceSize).map { createFile() } }
+    val fileList3 = WriteAction.computeAndWait<List<VirtualFile>, Throwable> { (0 until sliceSize).map { createFile() } }
 
     for (virtualFile in fileList1) {
       set1.add(virtualFile)
@@ -223,7 +227,9 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   private fun doSimpleAddTest(size: Int) {
     val set = VfsUtilCore.createCompactVirtualFileSet()
 
-    val fileList = (0 until size).map { createFile() }
+    val fileList = WriteAction.computeAndWait<List<VirtualFile>, Throwable> {
+      (0 until size).map { createFile() }
+    }
 
     for (virtualFile in fileList) {
       set.add(virtualFile)
@@ -241,7 +247,7 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   private fun doTestProcess(size: Int) {
-    val set = (0 until 10).map { createFile() }.toHashSet()
+    val set = WriteAction.computeAndWait<Set<VirtualFile>, Throwable> { (0 until 10).map { createFile() }.toHashSet() }
     val source = VfsUtilCore.createCompactVirtualFileSet(set)
     assertEquals(set, source.toHashSet())
     val target = CompactVirtualFileSet()
@@ -278,18 +284,20 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   private val veryBigSetSize: Int
     get() {
-      val size = 5500
+      val size = 20100
       assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
       assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
-      assertTrue(size * 5 > CompactVirtualFileSet.PARTITION_BIT_SET_LIMIT)
+      assertTrue(size > CompactVirtualFileSet.PARTITION_BIT_SET_LIMIT)
       return size
     }
 
   private fun generateCVFSet(size: Int): CompactVirtualFileSet {
     val set = VfsUtilCore.createCompactVirtualFileSet()
-    repeat(size) {
-      repeat(4) { createFile() } // ensure ids are spread
-      set.add(createFile())
+    WriteAction.runAndWait<RuntimeException> {
+      repeat(size) {
+        repeat((Math.random() * 10).toInt()) { createFile() } // ensure ids are spread randomly
+        set.add(createFile())
+      }
     }
     return set as CompactVirtualFileSet
   }
@@ -298,17 +306,32 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   private val tempDir = LightTempDirTestFixtureImpl()
 
   private fun createFile(): VirtualFile {
-    val fileName = "file${counter.incrementAndGet()}.txt"
-    return tempDir.getFile(fileName) ?: tempDir.createFile(fileName)
+    ThreadingAssertions.assertWriteAccess()
+    val id = counter.incrementAndGet()
+    tempDir.getFile("dir_l1_${id % 100}")
+      ?.let {
+        // For some reason, directories may be retrieved incorrectly from
+        // persistent storage. In such a case, simply delete the file.
+        if (!it.isDirectory) it.delete(this)
+      }
+
+    tempDir.getFile("dir_l1_${id % 100}/dir_l2_${id % 10000}")
+      ?.let { if (!it.isDirectory) it.delete(this) }
+
+    // Create hierarchical structure to speed up file creation process
+    val dir = tempDir.findOrCreateDir("dir_l1_${id % 100}/dir_l2_${id % 10000}")
+    return dir.findOrCreateFile("file${id}.txt")
   }
 
   @Test
   fun testFrozenMustNotBeModifiable() {
     val set = VfsUtilCore.createCompactVirtualFileSet().freezed()
-    assertThrows(IllegalStateException::class.java) { set.clear() }
-    assertThrows(IllegalStateException::class.java) { set.add(createFile()) }
-    assertThrows(IllegalStateException::class.java) { set.remove(createFile()) }
-    assertThrows(IllegalStateException::class.java) { set.addAll(listOf(createFile(), createFile())) }
-    assertThrows(IllegalStateException::class.java) { set.retainAll(listOf(createFile(), createFile())) }
+    WriteAction.runAndWait<Throwable> {
+      assertThrows(IllegalStateException::class.java) { set.clear() }
+      assertThrows(IllegalStateException::class.java) { set.add(createFile()) }
+      assertThrows(IllegalStateException::class.java) { set.remove(createFile()) }
+      assertThrows(IllegalStateException::class.java) { set.addAll(listOf(createFile(), createFile())) }
+      assertThrows(IllegalStateException::class.java) { set.retainAll(listOf(createFile(), createFile())) }
+    }
   }
 }

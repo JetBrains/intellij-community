@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nls;
@@ -245,6 +246,12 @@ public class ChooseExtractorAction extends ActionGroup implements GridAction, Du
       Project project = e.getProject();
       File scriptsDir = ExtractorScripts.getExtractorScriptsDirectory();
       if (project == null || scriptsDir == null) return;
+
+      var toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Project");
+      if (toolWindow != null) {
+        toolWindow.activate(null);
+      }
+
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(scriptsDir);
         if (virtualFile == null) return;

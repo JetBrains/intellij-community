@@ -182,7 +182,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   public static class MatchedValue implements MergeableElement, UiInspectorContextProvider {
     public final @NotNull Object value;
     final @NotNull MatchedValueType type;
-    final @NotNull String pattern;
+    @ApiStatus.Internal
+    public final @NotNull String pattern;
     final int matchingDegree;
 
     public @Nullable Double similarityScore = null;

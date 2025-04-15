@@ -4,10 +4,17 @@ package com.intellij.ide.actions;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class PasteAction extends AnAction implements DumbAware, LightEditCompatible {
+import java.util.Collection;
+import java.util.Collections;
+
+import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
+
+public class PasteAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions {
   public PasteAction() {
     setEnabledInModalContext(true);
   }
@@ -34,5 +41,10 @@ public class PasteAction extends AnAction implements DumbAware, LightEditCompati
     if (provider != null && provider.isPasteEnabled(dataContext)) {
       provider.performPaste(dataContext);
     }
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return Collections.singletonList(getProjectFilesWrite());
   }
 }

@@ -23,6 +23,9 @@ jvm_library(
     "//platform/util",
     "//platform/platform-impl/rpc:ide-rpc",
     "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/usageView",
+    "//platform/util/text-matching",
   ],
   runtime_deps = [
     ":backend_resources",

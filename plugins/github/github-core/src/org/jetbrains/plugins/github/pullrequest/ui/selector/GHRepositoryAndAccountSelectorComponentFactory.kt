@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
@@ -21,9 +22,12 @@ import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent
 
-class GHRepositoryAndAccountSelectorComponentFactory internal constructor(private val project: Project,
-                                                                          private val vm: GHRepositoryAndAccountSelectorViewModel,
-                                                                          private val accountManager: GHAccountManager) {
+@ApiStatus.Internal
+class GHRepositoryAndAccountSelectorComponentFactory(
+  private val project: Project,
+  private val vm: GHRepositoryAndAccountSelectorViewModel,
+  private val accountManager: GHAccountManager,
+) {
 
   fun create(scope: CoroutineScope): JComponent {
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)

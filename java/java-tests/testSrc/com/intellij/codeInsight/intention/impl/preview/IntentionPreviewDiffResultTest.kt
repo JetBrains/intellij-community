@@ -127,6 +127,26 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
       ---------------------
       4 : println(#!y!#);""".trimIndent(), diffs)
   }
+  
+  @Test
+  fun testResultIsSubstring() {
+    val diffs = createDiffs("""
+      non changed
+      prefix
+      preserved
+      suffix
+    """.trimIndent(), """
+      non changed
+      preserved
+    """.trimIndent(), "Test.txt")
+    assertEquals("""
+      // Test.txt
+      ---------------------
+      1 : #-prefix-#
+      2 : preserved
+      3 : #-suffix-#
+    """.trimIndent(), diffs)
+  }
 
   @Test
   fun testRemoveEscapes() {
@@ -136,6 +156,17 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
     assertEquals("""1 : String s = "#-\-#'Scare#-\-#' quotes";""", diffs)
   }
 
+  /**
+   * Returns a textual representation of diffs from created and modified text, how they will look
+   * in the intention preview window. Each diff chunk is separated via a horizontal dashed line.
+   * Line numbers with colons are prepended (the same line numbers which will be displayed to the user).
+   * The highlighted parts of code are rendered using a special syntax: #+highlighted as added+#,
+   * #!highlighted as updated!#, and #-highlighted as deleted-#.
+   * 
+   * @param origText original file text
+   * @param modifiedText file text after the changes are applied
+   * @param fileName (optional) name of the file to be used; it creates a separate chunk with a comment
+   */
   private fun createDiffs(origText: String, modifiedText: String, fileName: String? = null): String {
     return fromCustomDiff(CustomDiff(JavaFileType.INSTANCE, fileName, origText, modifiedText, true)).diffs.joinToString(
       separator = "\n---------------------\n") { diffInfo ->

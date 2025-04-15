@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescriptor
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
@@ -60,6 +61,17 @@ class KtVariableDescriptor(
             is KtElement -> !getVariablesChangedInNestedFunctions(result).contains(this@KtVariableDescriptor)
             else -> false
         }
+    }
+
+    override fun createValue(
+        factory: DfaValueFactory,
+        qualifier: DfaValue?
+    ): DfaValue {
+        if (qualifier is DfaVariableValue) {
+            if (qualifier.dfType is DfPrimitiveType) return factory.unknown
+            return factory.varFactory.createVariableValue(this, qualifier)
+        }
+        return factory.unknown
     }
 
     override fun isInlineClassReference(): Boolean = inline

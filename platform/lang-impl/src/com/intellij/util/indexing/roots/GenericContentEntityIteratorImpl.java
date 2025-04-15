@@ -8,20 +8,16 @@ import com.intellij.util.indexing.roots.origin.GenericContentEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBase {
 
   public GenericContentEntityIteratorImpl(@NotNull EntityPointer<?> entityPointer,
-                                          @NotNull IndexingRootHolder roots,
-                                          @Nullable IndexableIteratorPresentation presentation) {
-    super(entityPointer, roots, presentation != null
-                                  ? presentation
-                                  : IndexableIteratorPresentation.create(
-                                    "Module unaware content roots from entity (" + roots.getDebugDescription() + ")",
-                                    IndexingBundle.message("indexable.files.provider.indexing.content"),
-                                    IndexingBundle.message("indexable.files.provider.scanning.content")));
+                                          @NotNull IndexingRootHolder roots) {
+    super(entityPointer, roots, IndexableIteratorPresentation.create(
+      "Module unaware content roots from entity (" + roots.getDebugDescription() + ")",
+      IndexingBundle.message("indexable.files.provider.indexing.content"),
+      IndexingBundle.message("indexable.files.provider.scanning.content")));
   }
 
   @Override

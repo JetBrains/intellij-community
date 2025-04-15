@@ -3,28 +3,23 @@
 
 package com.intellij.platform.syntax.i18n
 
-import com.intellij.AbstractBundle
 import fleet.util.multiplatform.Actual
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
 /**
  * see expect function [com.intellij.platform.syntax.i18n.ResourceBundle]
  */
-@Suppress("FunctionName")
+@Suppress("FunctionName", "unused")
 @Actual("ResourceBundle")
-fun JvmResourceBundle(
+internal fun ResourceBundleJvm(
   bundleClass: String,
   pathToBundle: String,
   self: Any,
+  defaultMapping: Map<String, String>,
 ): ResourceBundle {
+  val dynamicBundleClass = tryLoadDynamicBundle() ?: return BaseResourceBundle(defaultMapping)
   val bundleClazz = self.javaClass.classLoader.loadClass(bundleClass)
-  val dynamicBundleClass = tryLoadDynamicBundle() ?: run {
-    // IntelliJ Core is missing, falling back to com.intellij.AbstractBundle.AbstractBundle
-    return createAbstractBundle(bundleClazz, pathToBundle)
-  }
-
   return createDynamicBundle(dynamicBundleClass, bundleClazz, pathToBundle)
 }
 
@@ -34,22 +29,6 @@ private fun tryLoadDynamicBundle(): Class<*>? {
   }
   catch (_: ClassNotFoundException) {
     null
-  }
-}
-
-private fun createAbstractBundle(
-  bundleClazz: Class<*>,
-  pathToBundle: String,
-): ResourceBundle {
-  val abstractBundle = AbstractBundle(bundleClazz, pathToBundle)
-  return object : ResourceBundle {
-    override fun message(key: String, vararg params: Any): @Nls String {
-      return abstractBundle.getMessage(key, *params)
-    }
-
-    override fun messagePointer(key: String, vararg params: Any): () -> @Nls String {
-      return abstractBundle.getLazyMessage(key, *params)::get
-    }
   }
 }
 

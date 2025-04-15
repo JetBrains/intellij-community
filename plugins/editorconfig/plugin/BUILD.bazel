@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.editorconfig.plugin` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "plugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "plugin",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":plugin_resources"]
+)
+### auto-generated section `build intellij.editorconfig.plugin` end
+
+### auto-generated section `build intellij.editorconfig.plugin.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "plugin-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//plugins/editorconfig/plugin",
+    "//plugins/editorconfig:editorconfig-backend",
+  ]
+)
+### auto-generated section `build intellij.editorconfig.plugin.main` end

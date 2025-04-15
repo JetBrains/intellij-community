@@ -2,13 +2,20 @@
 package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
+import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -16,7 +23,9 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
 @TestOnly
@@ -82,14 +91,22 @@ internal fun TestFixture<Path>.subDirFixture(name: String): TestFixture<Path> = 
 }
 
 @TestOnly
-internal fun TestFixture<Path>.fileFixture(fileName: String, content: CharSequence): TestFixture<Path> = testFixture("fileFixture") {
+internal fun TestFixture<Path>.fileFixture(fileName: String, content: CharSequence): TestFixture<Path> =
+  fileFixture(fileName) { it.writeText(content) }
+
+@TestOnly
+internal fun TestFixture<Path>.fileFixture(fileName: String, content: ByteArray): TestFixture<Path> =
+  fileFixture(fileName) { it.write(content) }
+
+@TestOnly
+private fun TestFixture<Path>.fileFixture(fileName: String, content: (file: Path) -> Unit): TestFixture<Path> = testFixture("fileFixture") {
   val file = withContext(Dispatchers.IO) {
     val dir = this@fileFixture.init()
     if (!dir.exists()) {
       dir.createDirectories()
     }
     val file = dir.resolve(fileName)
-    file.writeText(content)
+    content(file)
     file
   }
   initialized(file) {
@@ -97,6 +114,28 @@ internal fun TestFixture<Path>.fileFixture(fileName: String, content: CharSequen
       if (file.exists()) {
         file.delete()
       }
+    }
+  }
+}
+
+
+@TestOnly
+internal fun TestFixture<Project>.sdkFixture(name: String, type: SdkTypeId, pathFixture: TestFixture<Path>): TestFixture<Sdk> = testFixture("sdkFixture $name") {
+  val project = this@sdkFixture.init()
+  val jdkTable = ProjectJdkTable.getInstance(project)
+  val homePath = pathFixture.init().pathString
+  val sdk = jdkTable.createSdk(name, type)
+  val root = requireNotNull(VfsUtil.findFile(Path(homePath), true))
+  edtWriteAction {
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.homePath = homePath
+    sdkModificator.addRoot(root, OrderRootType.CLASSES)
+    sdkModificator.commitChanges()
+    jdkTable.addJdk(sdk)
+  }
+  initialized(sdk) {
+    writeAction {
+      ProjectJdkTable.getInstance(project).removeJdk(sdk)
     }
   }
 }

@@ -51,7 +51,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * }
  * </pre>
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
  * @see AnActionEvent
  * @see ActionPlaces
  * @see Presentation
@@ -439,7 +439,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         LOG.warn(PluginException.createByClass(
           "ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
           "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-          "using `use-shortcut-of` or wrapping with EmptyAction.wrap(). Action: " + this,
+          "using `use-shortcut-of` or wrapping with ActionUtil.wrap(). Action: " + this,
           null,
           getClass())
         );

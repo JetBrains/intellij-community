@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.browsers.actions.WebPreviewFileType
@@ -15,21 +15,9 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
+import org.jetbrains.annotations.ApiStatus
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  override fun createEditor(project: Project, file: VirtualFile): FileEditor =
-    file.getUserData(EDITOR_KEY) ?:
-    HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
-
-  override fun accept(project: Project, file: VirtualFile): Boolean =
-    JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
-
-  override fun acceptRequiresReadAction(): Boolean = false
-
-  override fun getEditorTypeId(): String = "html-editor"
-
-  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
-
   @Suppress("CompanionObjectInExtension")
   companion object {
     private val REQUEST_KEY: Key<Request> = Key.create("html.editor.request.key")
@@ -39,17 +27,17 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, html: String) {
-      openEditor(project, title, Request.html(html))
+      openEditor(project = project, title = title, request = Request.html(html))
     }
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, url: String, timeoutHtml: String? = null) {
-      openEditor(project, title, Request.url(url).withTimeoutHtml(timeoutHtml))
+      openEditor(project = project, title = title, request = Request.url(url).withTimeoutHtml(timeoutHtml))
     }
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
-      logger<HTMLEditorProvider>().info(if (request.url != null) "URL=${request.url}" else "HTML (${request.html!!.length} chars)")
+      logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
       val file = LightVirtualFile(title, WebPreviewFileType.INSTANCE, "")
       REQUEST_KEY.set(file, request)
       return FileEditorManager.getInstance(project)
@@ -58,9 +46,46 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  class Request private constructor(internal val html: String?, internal val url: String?) {
-    internal var timeoutHtml: String? = null; private set
-    internal var queryHandler: JsQueryHandler? = null; private set
+  @ApiStatus.Internal
+  override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+    return file.getUserData(EDITOR_KEY)
+           ?: HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
+  }
+
+  @ApiStatus.Internal
+  override fun disposeEditor(editor: FileEditor) {
+    try {
+      editor.file?.let { file ->
+        file.putUserData(EDITOR_KEY, null)
+        file.putUserData(REQUEST_KEY, null)
+      }
+    }
+    finally {
+      super.disposeEditor(editor)
+    }
+  }
+
+  override fun accept(project: Project, file: VirtualFile): Boolean = JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
+
+  override fun acceptRequiresReadAction(): Boolean = false
+
+  override fun getEditorTypeId(): String = "html-editor"
+
+  override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+  class Request private constructor(@JvmField internal val html: String?, @JvmField internal val url: String?) {
+    internal var timeoutHtml: String? = null
+      private set
+    internal var queryHandler: JsQueryHandler? = null
+      private set
+
+    companion object {
+      @JvmStatic
+      fun html(html: String): Request = Request(html = html, url = null)
+
+      @JvmStatic
+      fun url(url: String): Request = Request(html = null, url = url)
+    }
 
     fun withTimeoutHtml(timeoutHtml: String?): Request {
       this.timeoutHtml = timeoutHtml
@@ -70,11 +95,6 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     fun withQueryHandler(queryHandler: JsQueryHandler?): Request {
       this.queryHandler = queryHandler
       return this
-    }
-
-    companion object {
-      @JvmStatic fun html(html: String): Request = Request(html, null)
-      @JvmStatic fun url(url: String): Request = Request(null, url)
     }
   }
 

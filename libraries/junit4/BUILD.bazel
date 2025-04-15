@@ -12,6 +12,9 @@ java_library(
   name = "junit4",
   visibility = ["//visibility:public"],
   exports = ["@lib//:junit4"],
-  runtime_deps = [":junit4_resources"]
+  runtime_deps = [
+    ":junit4_resources",
+    "@lib//:junit4",
+  ]
 )
 ### auto-generated section `build intellij.libraries.junit4` end

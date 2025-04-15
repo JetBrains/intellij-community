@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/eel-impl",
     "//platform/core-api:core",
+    "//platform/eel",
   ],
   runtime_deps = [":community-execService_resources"]
 )
@@ -50,6 +51,7 @@ jvm_library(
     "@lib//:hamcrest",
     "@lib//:junit5Params",
     "//platform/core-api:core",
+    "//platform/eel",
   ],
   runtime_deps = [":community-execService_resources"]
 )

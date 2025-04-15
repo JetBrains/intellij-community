@@ -72,8 +72,8 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     g as Graphics2D
 
     if (ExperimentalUI.isNewUI()) {
-      g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE,
-                    thickness.toDouble(), JBUI.CurrentTheme.EditorTabs.borderColor())
+      g.paint2DLine(Point(x, y), Point(x + width, y), LinePainter2D.StrokeType.INSIDE, thickness.toDouble(),
+                    JBUI.CurrentTheme.MainToolbar.borderColor())
     }
     else {
       tabs.tabPainter.paintBorderLine(g, thickness, Point(x, y), Point(x + width, y))
@@ -125,7 +125,6 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       tabs.tabPainter.paintUnderline(tabs.tabsPosition, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     }
   }
-
 
   private fun calcRectangle(): Rectangle? {
     val selectedLabel = tabs.selectedLabel ?: return null

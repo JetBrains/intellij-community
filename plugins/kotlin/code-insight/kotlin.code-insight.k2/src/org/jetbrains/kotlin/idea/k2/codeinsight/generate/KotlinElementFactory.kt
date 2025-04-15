@@ -39,6 +39,8 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.types.Variance
 
+private const val _NO_NAME_PROVIDED_ = "`<no name provided>`"
+
 /**
  * Kotlin factory for creating [FieldElement] or [ClassElement] objects.
  */
@@ -50,7 +52,7 @@ object KotlinElementFactory {
 
         // name
         val fqName = clazz.getFqName()
-        ce.name = clazz.nameIdentifier?.text
+        ce.name = clazz.nameIdentifier?.text ?: fqName?.shortName()?.asString() ?: _NO_NAME_PROVIDED_
 
         ce.qualifiedName = fqName?.asString()
         ce.isEnum = (clazz as? KtClass)?.isEnum() == true
@@ -84,7 +86,7 @@ object KotlinElementFactory {
     context(KaSession)
     fun newFieldElement(property: KtProperty): FieldElement {
         val fe = FieldElement()
-        fe.name = property.nameIdentifier?.text
+        fe.name = property.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
         if (property.hasModifier(KtTokens.CONST_KEYWORD)) fe.isConstant = true
 
         val propertySymbol = property.symbol as? KaPropertySymbol ?: return fe
@@ -102,7 +104,7 @@ object KotlinElementFactory {
     context(KaSession)
     fun newFieldElement(parameter: KtParameter): FieldElement {
         val fe = FieldElement()
-        fe.name = parameter.nameIdentifier?.text
+        fe.name = parameter.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
         setElementInfo(fe, parameter.returnType, parameter.modifierList)
         return fe
     }
@@ -110,7 +112,7 @@ object KotlinElementFactory {
     context(KaSession)
     fun newMethodElement(method: KtNamedFunction): MethodElement {
         val me = MethodElement()
-        me.name = method.nameIdentifier?.text
+        me.name = method.nameIdentifier?.text ?: _NO_NAME_PROVIDED_
 
         val type = method.returnType
         val modifiers = method.modifierList

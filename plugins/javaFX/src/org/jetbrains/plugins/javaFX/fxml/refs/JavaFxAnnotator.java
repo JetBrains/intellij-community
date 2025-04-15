@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationBuilder;
@@ -52,15 +52,15 @@ public final class JavaFxAnnotator implements Annotator {
             continue;
           }
           final PsiElement resolve = reference.resolve();
-          if (resolve instanceof PsiMember) {
-            if (!JavaFxPsiUtil.isVisibleInFxml((PsiMember)resolve)) {
+          if (resolve instanceof PsiMember member) {
+            if (!JavaFxPsiUtil.isVisibleInFxml(member)) {
               final String symbolPresentation = "'" + SymbolPresentationUtil.getSymbolPresentableText(resolve) + "'";
               AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, symbolPresentation +
                                                                                         (resolve instanceof PsiClass
                                                                                          ? JavaFXBundle.message("javafx.annotator.should.be.public")
                                                                                          : JavaFXBundle.message("javafx.annotator.should.be.public.or.fxml.annotated")));
               if (!(resolve instanceof PsiClass)) {
-                AddAnnotationFix fix = new AddAnnotationFix(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, (PsiMember)resolve,
+                var fix = new AddAnnotationModCommandAction(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, member,
                                                             ArrayUtilRt.EMPTY_STRING_ARRAY);
                 builder = builder.withFix(fix)
                   .newFix(fix).batch()

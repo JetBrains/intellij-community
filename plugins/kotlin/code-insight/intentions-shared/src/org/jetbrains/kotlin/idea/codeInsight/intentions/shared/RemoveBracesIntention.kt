@@ -6,10 +6,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.getControlFlowElementDescription
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -102,10 +105,8 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
         }
 
         private fun KtExpression.handleComments(block: KtBlockExpression, factory: KtPsiFactory) {
-            val nextComments = comments(forward = true).dropLastWhile { it is PsiWhiteSpace }
-            val prevComments = comments(forward = false).reversed().ifEmpty {
-                if (nextComments.hasLineBreak()) listOf(factory.createNewLine()) else emptyList()
-            }
+            val nextComments = comments(forward = true)
+            val prevComments = comments(forward = false).reversed()
             val blockParent = block.parent
             if (prevComments.isNotEmpty()) {
                 blockParent.addRangeBefore(prevComments.first(), prevComments.last(), block)

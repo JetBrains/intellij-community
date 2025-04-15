@@ -39,7 +39,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
+open class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()

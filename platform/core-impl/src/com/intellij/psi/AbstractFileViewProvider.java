@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -180,7 +180,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (!isPhysical()) {
       FileManager fileManager = getManager().getFileManager();
       VirtualFile virtualFile = getVirtualFile();
-      // todo ijpl-339 check no real context is used here???
+      // todo IJPL-339 check no real context is used here???
       if (fileManager.findCachedViewProvider(virtualFile) == null && getCachedPsiFiles().isEmpty()) {
         fileManager.setViewProvider(virtualFile, this);
       }

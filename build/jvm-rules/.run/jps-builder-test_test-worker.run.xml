@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="jps-builder-test:test-worker" type="BazelRunConfigurationType">
     <bsp-state handler-provider-id="JvmBspRunHandlerProvider">
-      <bsp-target>@//src/jps-builder-test:test-worker</bsp-target>
+      <bsp-target>//src/jps-builder-test:test-worker</bsp-target>
       <handler-state />
     </bsp-state>
     <method v="2" />

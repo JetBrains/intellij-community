@@ -2,12 +2,15 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.codePointAt
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.CharacterGrid
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -21,6 +24,7 @@ import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -47,14 +51,14 @@ internal class TerminalCursorPainter private constructor(
   init {
     updateCursor(curCursorState)
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
         curCursorState = curCursorState.copy(offset = offset)
         updateCursor(curCursorState)
       }
     }
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       sessionModel.terminalState.collect { state ->
         var stateChanged = false
 
@@ -107,7 +111,7 @@ internal class TerminalCursorPainter private constructor(
   @RequiresEdt
   private fun updateCursor(state: CursorState) {
     cursorPaintingJob?.cancel()
-    cursorPaintingJob = coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
+    cursorPaintingJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement(), CoroutineStart.UNDISPATCHED) {
       paintCursor(state)
     }
   }
@@ -176,7 +180,7 @@ internal class TerminalCursorPainter private constructor(
 
   private fun getDefaultCursorShape(): CursorShape {
     val editorSettings = editor.settings
-    val shapeFromSettings = TerminalUiSettingsManager.getInstance().cursorShape
+    val shapeFromSettings = TerminalOptionsProvider.instance.cursorShape
     when (shapeFromSettings) {
       TerminalUiSettingsManager.CursorShape.BLOCK -> {
         return if (editorSettings.isBlinkCaret) CursorShape.BLINK_BLOCK else CursorShape.STEADY_BLOCK
@@ -201,6 +205,8 @@ internal class TerminalCursorPainter private constructor(
   }
 
   private sealed class CursorRendererBase(private val editor: EditorEx) : CursorRenderer {
+    private val grid: CharacterGrid = requireNotNull((editor as? EditorImpl)?.characterGrid) { "The editor is not in the grid mode" }
+
     val editorCursorColor: Color
       get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CURSOR_DARK, CURSOR_LIGHT)
 
@@ -231,7 +237,7 @@ internal class TerminalCursorPainter private constructor(
         val point = editor.offsetToPoint2D(offset)
         val text = editor.document.immutableCharSequence
         val codePoint = if (offset in text.indices) text.codePointAt(offset) else 'W'.code
-        val cursorWidth = (editor as EditorImpl).view.getCodePointWidth(codePoint)
+        val cursorWidth = grid.codePointWidth(codePoint)
         val cursorHeight = editor.lineHeight
         val rect = Rectangle2D.Double(point.x, point.y, cursorWidth.toDouble(), cursorHeight.toDouble())
         g as Graphics2D

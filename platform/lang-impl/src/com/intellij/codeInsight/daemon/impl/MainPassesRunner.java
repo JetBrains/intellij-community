@@ -177,7 +177,7 @@ public final class MainPassesRunner {
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
     ProgressManager.getInstance().runProcess(() -> {
-      // todo ijpl-339 figure out what is the correct context here
+      // todo IJPL-339 figure out what is the correct context here
       CodeInsightContext context;
       if (CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
         context = ReadAction.compute(() -> {

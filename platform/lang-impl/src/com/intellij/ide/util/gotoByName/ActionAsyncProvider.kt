@@ -74,16 +74,41 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val actionIds = (actionManager as ActionManagerImpl).actionIds
 
     scope.launch {
-      val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
-
-      val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
-      val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, consumer, nonMatchedIdsChannel, abbreviationsJob)
-      val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
-
-      val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
-      val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
-      processOptions(pattern, presentationProvider, consumer, intentionsJob)
+      runFilterJobs(presentationProvider, pattern, consumer, actionIds)
     }
+  }
+
+  suspend fun filterElementsSuspend(
+    scope: CoroutineScope,
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+  ) {
+    if (pattern.isEmpty()) return
+
+    LOG.debug { "Start actions searching ($pattern) from suspend function" }
+
+    val actionIds = (actionManager as ActionManagerImpl).actionIds
+
+    scope.runFilterJobs(presentationProvider, pattern, consumer, actionIds).forEach { it.join() }
+  }
+
+  private fun CoroutineScope.runFilterJobs(
+    presentationProvider: suspend (AnAction) -> Presentation,
+    pattern: String,
+    consumer: suspend (MatchedValue) -> Boolean,
+    actionIds: Set<String>
+  ): List<Job> {
+    val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
+
+    val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
+    val matchedStubsJob = processMatchedActionsAndStubs(pattern, actionIds, presentationProvider, consumer, nonMatchedIdsChannel, abbreviationsJob)
+    val unmatchedStubsJob = processUnmatchedStubs(nonMatchedIdsChannel, pattern, presentationProvider, consumer, matchedStubsJob)
+
+    val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
+    val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
+    val processOptionsJob = processOptions(pattern, presentationProvider, consumer, intentionsJob)
+    return listOf(abbreviationsJob, matchedStubsJob, unmatchedStubsJob, topHitsJob, intentionsJob, processOptionsJob)
   }
 
   private fun CoroutineScope.processAbbreviations(pattern: String,

@@ -74,6 +74,7 @@ jvm_library(
     "//platform/todo",
     "//java/codeserver/highlighting:java-codeserver-highlighting",
     "//java/codeserver/core:java-codeserver-core",
+    "//java/java-syntax:syntax",
   ],
   exports = [
     "//platform/lang-impl",

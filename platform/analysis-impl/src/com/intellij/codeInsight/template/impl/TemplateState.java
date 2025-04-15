@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
@@ -961,7 +962,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     if (isDisposed()) return;
     Editor editor = getEditor();
     LookupManager instance = LookupManager.getInstance(myProject);
-    if (instance != null) {
+    if (instance != null && !isPreviewEditor(editor)) {
       instance.hideActiveLookup();
     }
 
@@ -982,6 +983,11 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         Disposer.dispose(this);
       }
     }
+  }
+
+  private static boolean isPreviewEditor(@Nullable Editor editor) {
+    if (!(editor instanceof ImaginaryEditor)) return false;
+    return IntentionPreviewUtils.getPreviewEditor() == editor;
   }
 
   private void setFinalEditorState(boolean brokenOff) {

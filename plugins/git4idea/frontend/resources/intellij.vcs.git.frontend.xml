@@ -11,9 +11,19 @@
     <action id="GitRdToolbarWidgetAction" class="com.intellij.vcs.git.frontend.widget.GitRdToolbarWidgetAction">
       <add-to-group group-id="MainToolbarVCSGroup" anchor="first"/>
     </action>
+
+    <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
+      <add-to-group group-id="MainToolbarQuickActionsRaw" relative-to-action="MainToolbarQuickActions.Run" anchor="before"/>
+      <group id="MainToolbarQuickActions.VCS" class="com.intellij.ide.ui.customization.ToolbarQuickActionsGroup" searchable="false" popup="false"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.vcs.git.frontend.widget.GitWidgetStateHolder$Activator"/>
+    <postStartupActivity implementation="com.intellij.vcs.git.frontend.GitFrontendListenersActivator"/>
+
+    <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.UpdatePushQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.HistoryQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
+    <toolbarQuickAction implementationClass="com.intellij.vcs.git.frontend.RollbackQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
   </extensions>
 </idea-plugin>

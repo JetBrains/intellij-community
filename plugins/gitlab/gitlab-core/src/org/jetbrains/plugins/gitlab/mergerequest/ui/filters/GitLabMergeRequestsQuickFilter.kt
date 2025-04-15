@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 
-internal sealed class GitLabMergeRequestsQuickFilter : ReviewListQuickFilter<GitLabMergeRequestsFiltersValue> {
+@ApiStatus.Internal
+sealed class GitLabMergeRequestsQuickFilter : ReviewListQuickFilter<GitLabMergeRequestsFiltersValue> {
   class Open : GitLabMergeRequestsQuickFilter() {
     override val filter = GitLabMergeRequestsFiltersValue(state = MergeRequestStateFilterValue.OPENED)
   }

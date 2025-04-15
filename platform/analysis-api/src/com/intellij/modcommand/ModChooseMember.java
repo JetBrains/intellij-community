@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,11 +20,16 @@ import java.util.function.Function;
  */
 @ApiStatus.Experimental
 public record ModChooseMember(@NotNull @NlsContexts.PopupTitle String title,
-                              @NotNull List<? extends @NotNull MemberChooserElement> elements,
-                              @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,
+                              @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                              @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
                               @NotNull SelectionMode mode,
-                              @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand)
+                              @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand)
   implements ModCommand {
+
+  @Override
+  public @NotNull ModCommand andThen(@NotNull ModCommand next) {
+    return next.isEmpty() ? this : new ModChooseMember(title, elements, defaultSelection, mode, nextCommand.andThen(mc -> mc.andThen(next)));
+  }
 
   /**
    * Selection mode

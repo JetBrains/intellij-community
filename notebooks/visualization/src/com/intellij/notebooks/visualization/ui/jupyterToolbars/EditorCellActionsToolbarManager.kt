@@ -3,17 +3,20 @@ package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.util.Alarm.ThreadToUse
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
-import com.intellij.util.ui.update.queueTracked
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
@@ -26,35 +29,29 @@ class EditorCellActionsToolbarManager(
   private val cell: EditorCell,
 ) : Disposable {
   private var toolbar: JupyterCellActionsToolbar? = null
-
-  private val updateQueue = MergingUpdateQueue(
-    "Jupyter.EditorCellActionsToolbarManager",
-    100,
-    true,
-    editor.component,
-    this,
-    editor.component,
-    ThreadToUse.SWING_THREAD
-  ).apply {
-    setRestartTimerOnAdd(true)
-  }
-
-  init {
-    JupyterBoundsChangeHandler.get(editor).subscribe(this) {
-      updateQueue.queueTracked(Update.create(this@EditorCellActionsToolbarManager) {
-        updateToolbarPosition(toolbar?.targetComponent ?: return@create)
-      })
-    }
-  }
+  private var showToolbarJob: Job? = null
+  private val coroutineScope = NotebookVisualizationCoroutine.Utils.scope.childScope("EditorCellActionsToolbarManager")
 
   fun showToolbar(targetComponent: JComponent) {
     if (toolbar != null) return
     val actionGroup = getActionGroup(cell.interval.type) ?: return
 
     toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
-    editor.contentComponent.add(toolbar, 0)
-    updateToolbarPosition(targetComponent)
-    refreshUI()
+    showToolbarJob?.cancel()
+
+    showToolbarJob = coroutineScope.launch {
+      delay(SHOW_TOOLBAR_DELAY_MS)
+      withContext(Dispatchers.Main) {
+        editor.contentComponent.add(toolbar, 0)
+        updateToolbarPosition(targetComponent)
+        refreshUI()
+      }
+    }
+  }
+
+
+  fun updateToolbarPosition() {
+    updateToolbarPosition(toolbar?.targetComponent ?: return)
   }
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
@@ -65,6 +62,8 @@ class EditorCellActionsToolbarManager(
   }
 
   fun hideToolbar() {
+    showToolbarJob?.cancel()
+    showToolbarJob = null
     removeToolbar()
     refreshUI()
   }
@@ -80,6 +79,8 @@ class EditorCellActionsToolbarManager(
   }
 
   override fun dispose() {
+    showToolbarJob?.cancel()
+    coroutineScope.cancel()
     hideToolbar()
   }
 
@@ -132,6 +133,8 @@ class EditorCellActionsToolbarManager(
   }
 
   companion object {
+    private const val SHOW_TOOLBAR_DELAY_MS = 35L
+
     private const val RELATIVE_Y_OFFSET_RATIO = 0.05
 
     @Language("devkit-action-id")

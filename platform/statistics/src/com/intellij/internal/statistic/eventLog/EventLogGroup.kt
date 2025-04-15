@@ -6,19 +6,37 @@ import com.intellij.internal.statistic.eventLog.events.*
 import org.jetbrains.annotations.NonNls
 
 /**
+ * Represents a group of events used for feature usage statistics.
+ *
+ * This class is responsible for registering events within a specific group context.
+ *
  * Best practices:
- * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
- * - Prefer shorter group names; avoid common prefixes (such as "statistics.")
+ *  - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
+ *  - Prefer shorter group names; avoid common prefixes (such as "statistics.")
+ *
+ * @property id The unique identifier for this group of events.
+ * @property version The version of the event group. Has to be incremented when changes are made to the group and/or events
+ * @property recorder The recorder name associated with this event group.
+ * @property description A description of the event group.
+ * @property groupData EventFields in groupData are going to be appended to every event in the group. To provide the data, a supplier
+ *  function is passed along with each EventField. See [com.intellij.internal.statistic.eventLog.events.EventId] for appending logic.
  */
-class EventLogGroup(@NonNls @EventIdName val id: String,
+open class EventLogGroup(@NonNls @EventIdName val id: String,
                     val version: Int,
                     val recorder: String,
-                    val description: String?) {
+                    val description: String?,
+                    val groupData: List<Pair<EventField<*>, FeatureUsageData.() -> Unit>> = emptyList()) {
   // for binary compatibility
   @JvmOverloads
   constructor(@NonNls @EventIdName id: String,
               version: Int,
-              recorder: String = "FUS") : this(id, version, recorder, null)
+              recorder: String = "FUS") : this(id, version, recorder, null, emptyList())
+
+  // for binary compatibility
+  constructor(@NonNls @EventIdName id: String,
+              version: Int,
+              recorder: String,
+              description: String?) : this(id, version, recorder, description, emptyList())
 
   private val registeredEventIds = mutableSetOf<String>()
   private val registeredEvents = mutableListOf<BaseEventId>()

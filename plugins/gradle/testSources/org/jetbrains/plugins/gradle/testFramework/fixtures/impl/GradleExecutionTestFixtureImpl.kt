@@ -105,14 +105,28 @@ class GradleExecutionTestFixtureImpl(
     executeAsync(environment)
   }
 
+  override fun <R> assertAnyGradleTaskExecution(numExec: Int, action: () -> R): R {
+    return taskExecutionLeakTracker.withAllowedOperation(numExec) {
+      executionLeakTracker.withAllowedOperation(numExec) {
+        action()
+      }
+    }
+  }
+
+  override suspend fun <R> assertAnyGradleTaskExecutionAsync(numExec: Int, action: suspend () -> R): R {
+    return taskExecutionLeakTracker.withAllowedOperationAsync(numExec) {
+      executionLeakTracker.withAllowedOperationAsync(numExec) {
+        action()
+      }
+    }
+  }
+
   override fun <R> waitForAnyGradleTaskExecution(action: () -> R): R {
-    return taskExecutionLeakTracker.withAllowedOperation(1) {
-      executionLeakTracker.withAllowedOperation(1) {
-        waitForGradleEventDispatcherClosing {
-          waitForAnyExecution(project) {
-            org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
-              action()
-            }
+    return assertAnyGradleTaskExecution(numExec = 1) {
+      waitForGradleEventDispatcherClosing {
+        waitForAnyExecution(project) {
+          org.jetbrains.plugins.gradle.testFramework.util.waitForAnyGradleTaskExecution {
+            action()
           }
         }
       }
@@ -120,13 +134,11 @@ class GradleExecutionTestFixtureImpl(
   }
 
   override suspend fun <R> awaitAnyGradleTaskExecution(action: suspend () -> R): R {
-    return taskExecutionLeakTracker.withAllowedOperationAsync(1) {
-      executionLeakTracker.withAllowedOperationAsync(1) {
-        awaitGradleEventDispatcherClosing {
-          awaitAnyExecution(project) {
-            org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleTaskExecution {
-              action()
-            }
+    return assertAnyGradleTaskExecutionAsync(numExec = 1) {
+      awaitGradleEventDispatcherClosing {
+        awaitAnyExecution(project) {
+          org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleTaskExecution {
+            action()
           }
         }
       }

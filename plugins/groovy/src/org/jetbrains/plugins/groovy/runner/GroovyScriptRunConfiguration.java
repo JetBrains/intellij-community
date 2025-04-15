@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -7,8 +7,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ScriptFileUtil;
@@ -180,7 +180,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
         final OSProcessHandler handler = super.startProcess();
         handler.setShouldDestroyProcessRecursively(true);
         if (scriptRunner.shouldRefreshAfterFinish()) {
-          handler.addProcessListener(new ProcessAdapter() {
+          handler.addProcessListener(new ProcessListener() {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
               if (!ApplicationManager.getApplication().isDisposed()) {

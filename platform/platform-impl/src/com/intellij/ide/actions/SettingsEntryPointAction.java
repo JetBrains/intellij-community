@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManagementPolicy;
 import com.intellij.ide.ui.NewUiUtilKt;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -142,6 +144,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     List<AnAction> result = new ArrayList<>();
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
+    boolean showPluginsUpdates = isShowPluginsUpdates();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
       try {
@@ -152,6 +155,9 @@ public final class SettingsEntryPointAction extends ActionGroup
             appActions.add(action);
           }
           else {
+            if (!showPluginsUpdates && action.isPluginUpdate()) {
+              continue;
+            }
             presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
             pluginActions.add(action);
           }
@@ -351,6 +357,8 @@ public final class SettingsEntryPointAction extends ActionGroup
 
     ourNewUiIcon = calculateOurNewUiIcon();
 
+    boolean showPluginsUpdates = isShowPluginsUpdates();
+
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
       try {
@@ -360,6 +368,9 @@ public final class SettingsEntryPointAction extends ActionGroup
               ourShowPlatformUpdateIcon = true;
             }
             else {
+              if (!showPluginsUpdates && action.isPluginUpdate()) {
+                continue;
+              }
               ourShowPluginsUpdateIcon = true;
             }
             if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
@@ -378,6 +389,11 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
   }
 
+  private static boolean isShowPluginsUpdates() {
+    return !PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() ||
+           !UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled();
+  }
+
   private static boolean calculateOurNewUiIcon() {
     return !ExperimentalUI.isNewUI() && !ExperimentalUI.Companion.isNewUiUsedOnce() && NewUiUtilKt.getNewUiPromotionDaysCount() < 14;
   }
@@ -385,9 +401,15 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static @NotNull @Nls String getActionTooltip() {
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
+      boolean showPluginsUpdates = isShowPluginsUpdates();
+
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
         try {
-          if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+          Collection<UpdateAction> actions = provider.getUpdateActions(DataContext.EMPTY_CONTEXT);
+          if (!showPluginsUpdates) {
+            actions = actions.stream().filter(action -> !action.isPluginUpdate()).toList();
+          }
+          if (!actions.isEmpty()) {
             updates = true;
             break;
           }
@@ -703,6 +725,10 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
 
     public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isPluginUpdate() {
       return false;
     }
 

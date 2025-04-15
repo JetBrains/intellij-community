@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.telemetry
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
@@ -51,6 +51,18 @@ suspend inline fun <T> SpanBuilder.use(
       withContext(Context.current().with(span).asContextElement() + context) {
         operation(span)
       }
+    }
+  }
+}
+
+/**
+ * See [com.intellij.platform.diagnostic.telemetry.helpers.use]
+ */
+@Internal
+inline fun <T> SpanBuilder.blockingUse(crossinline operation: (Span) -> T, ): T {
+  return startSpan().useWithoutActiveScope { span ->
+    TeamCityBuildMessageLogger.withFlow(span) {
+      operation(span)
     }
   }
 }

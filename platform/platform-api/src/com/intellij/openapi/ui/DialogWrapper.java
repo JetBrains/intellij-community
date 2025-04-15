@@ -1379,6 +1379,7 @@ public abstract class DialogWrapper {
     }
 
     JComponent centerSection = new JPanel(new BorderLayout());
+    centerSection.setName("centerSection");
     myRoot.add(centerSection, BorderLayout.CENTER);
 
     JComponent n = createNorthPanel();

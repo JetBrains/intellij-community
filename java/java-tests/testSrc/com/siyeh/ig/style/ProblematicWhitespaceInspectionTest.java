@@ -46,6 +46,32 @@ public class ProblematicWhitespaceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  public void testTextBlock() {
+    CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);
+    indentOptions.USE_TAB_CHARACTER = true;
+    doTest("""
+             class X {
+             \tString s = \"""
+             \t\t{
+             \t\t  indented
+             \t\t}
+             \t\t\""";
+             }
+             """);
+
+    // warn about tabs because they should be escaped
+    indentOptions.USE_TAB_CHARACTER = false;
+    doTest("""
+             /*File 'X.java' uses tabs for indentation*/class X {
+               String s = \"""
+                 {
+                 \tindented
+                 }
+                 \""";
+             }
+             /**/""");
+  }
+
   public void testDocComments() {
     final CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     settings.getIndentOptions(JavaFileType.INSTANCE).USE_TAB_CHARACTER = true;
@@ -60,6 +86,17 @@ public class ProblematicWhitespaceInspectionTest extends LightJavaInspectionTest
              \tString s;
              }
              """);
+    myFixture.testHighlighting(true, false, false);
+
+    myFixture.configureByText("Main.java", """
+      public class Main {
+      \t/**
+      \t * something
+      \t */
+      \tpublic static void main(String[] args) {
+      \t\tSystem.out.print("Hello and welcome!");
+      \t}
+      }""");
     myFixture.testHighlighting(true, false, false);
   }
 

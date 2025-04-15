@@ -600,8 +600,7 @@ public final class PassExecutorService implements Disposable {
         String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
                          + " " + (pass == null ? "" : pass + " ")
                          + StringUtil.join(info, Functions.TO_STRING(), " ")
-                         + "; progress=" + (progressIndicator == null ? null : System.identityHashCode(progressIndicator))
-                         + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
+                         + "; progress=" + progressIndicator
                          + (docText.isEmpty() ? "": " " + docText);
         LOG.debug(message);
       }
@@ -612,7 +611,7 @@ public final class PassExecutorService implements Disposable {
   boolean waitFor(long millis) {
     return waitFor(millis, mySubmittedPasses.get());
   }
-  private boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job> map) {
+  private static boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job> map) {
     long deadline = System.currentTimeMillis() + millis;
     try {
       for (Job job : map.values()) {

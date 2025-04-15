@@ -17,12 +17,12 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//platform/indexing-api:indexing",
-    "//xml/xml-psi-api:psi",
     "//platform/projectModel-api:projectModel",
     "//platform/lang-api:lang",
     "//platform/boot",
     "//platform/util/jdom",
     "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
   ],
   exports = ["//platform/boot"],
   runtime_deps = [":psi_resources"]

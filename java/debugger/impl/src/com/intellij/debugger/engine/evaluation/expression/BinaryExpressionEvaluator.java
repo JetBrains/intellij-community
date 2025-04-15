@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BinaryExpressionEvaluator
@@ -14,6 +14,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.sun.jdi.*;
@@ -75,7 +76,8 @@ class BinaryExpressionEvaluator implements Evaluator {
         char v2 = ((CharValue)rightResult).charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 + v2);
       }
-      if (leftResult instanceof StringReference || rightResult instanceof StringReference) {
+      if ((leftResult instanceof StringReference) || (rightResult instanceof StringReference) ||
+          (leftResult == null && rightResult == null && CommonClassNames.JAVA_LANG_STRING.equals(expectedType))) {
         String v1 = DebuggerUtils.getValueAsString(context, leftResult);
         String v2 = DebuggerUtils.getValueAsString(context, rightResult);
         return DebuggerUtilsEx.mirrorOfString(v1 + v2, context);

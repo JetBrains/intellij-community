@@ -18,8 +18,8 @@ import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListen
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.tracked
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
-import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
@@ -31,7 +31,6 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.observation.trackActivityBlocking
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -367,12 +366,11 @@ class ProjectSettingsTracker(
     private val supplier = BackgroundAsyncSupplier.Builder(::getOrCollectSettingsFiles)
       .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
       .build(backgroundExecutor)
+      .tracked(project)
 
     override fun supply(parentDisposable: Disposable, consumer: (Set<String>) -> Unit) {
-      project.trackActivityBlocking(ExternalSystemActivityKey) {
-        supplier.supply(parentDisposable) {
-          consumer(it + settingsFilesStatus.get().oldCRC.keys)
-        }
+      supplier.supply(parentDisposable) {
+        consumer(it + settingsFilesStatus.get().oldCRC.keys)
       }
     }
 

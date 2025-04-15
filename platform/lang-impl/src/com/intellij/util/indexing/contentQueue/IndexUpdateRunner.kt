@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 import com.intellij.openapi.vfs.VfsUtil
@@ -25,6 +27,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
@@ -37,6 +40,7 @@ import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
@@ -264,7 +268,7 @@ class IndexUpdateRunner(
     private val fileBasedIndex: FileBasedIndexImpl,
     private val indexingRequest: IndexingRequestToken,
   ) {
-
+    private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", false)
     private val indexingAttemptCount = AtomicInteger()
     private val indexingSuccessfulCount = AtomicInteger()
 
@@ -281,6 +285,18 @@ class IndexUpdateRunner(
         //  here with an invalid file, but in a (badly isolated) tests it could happen
         LOG.warn("Invalid (alien?) file: #${(file as VirtualFileWithId).id}")
         return
+      }
+
+      // This does not work for every language. JS, for example, expects that IDE is indexing files outside the project.
+      // See com.intellij.flex.completion.ActionScriptCompletionTest.testSOE
+      // which indexes file out/classes/production/intellij.flex/com/intellij/lang/javascript/flex/library/ECMAScript.js2
+      if (doubleCheckFilesAreStillInProject && !fileIndexingRequest.isDeleteRequest) {
+        // we check workspace, not content, because content does not contain libraries
+        val stillInWorkspace = readAction { WorkspaceFileIndex.getInstance(project).isInWorkspace(file) }
+        if (!stillInWorkspace) {
+          LOG.debug { "File is not in workspace anymore: #${(file as VirtualFileWithId).id}" }
+          return
+        }
       }
 
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
@@ -414,7 +430,10 @@ class IndexUpdateRunner(
      * Single file may be bigger, but until memory is freed indexing is suspended.
      * @see UsedMemorySoftLimiter
      */
-    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
+    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY: Long = SystemProperties.getLongProperty(
+      "idea.indexing.total-loaded-file-content-soft-limit-bytes",        
+      INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
+    )
 
     private val loadedFileContentLimiter = UsedMemorySoftLimiter(SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY)
 

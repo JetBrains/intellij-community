@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -137,7 +137,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
         if (request.modifier == JvmModifier.FINAL && !request.shouldBePresent()) {
             return listOf(
-                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD)
+                AddModifierFix(kModifierOwner, KtTokens.OPEN_KEYWORD).asIntention()
             )
         }
         return emptyList()

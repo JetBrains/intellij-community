@@ -258,7 +258,7 @@ internal class BrowserSettingsPanel {
         return PathUtil.toSystemDependentName(item.path)
       }
 
-      override fun setValue(item: ConfigurableWebBrowser, value: String) {
+      override fun setValue(item: ConfigurableWebBrowser, value: String?) {
         item.path = value
       }
 

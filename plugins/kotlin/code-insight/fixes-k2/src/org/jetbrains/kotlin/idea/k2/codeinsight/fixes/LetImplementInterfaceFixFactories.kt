@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -22,10 +23,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInterface
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.types.Variance
 
 internal object LetImplementInterfaceFixFactories {
@@ -144,7 +147,25 @@ internal object LetImplementInterfaceFixFactories {
             }
 
             val newElement = point.element ?: return
+
             val implementMembersHandler = KtImplementMembersHandler()
+
+            val membersToAddOverride = ActionUtil.underModalProgress(project, KotlinBundle.message("progress.title.collect.members.to.generate")) {
+                implementMembersHandler.collectMembersToAddOverride(newElement)
+            }
+
+            if (membersToAddOverride.isNotEmpty()) {
+                application.runWriteAction {
+                    membersToAddOverride.forEach {
+                        it.addModifier(KtTokens.OVERRIDE_KEYWORD)
+                        val visibility = element.visibilityModifierType()
+                        if (visibility != null && visibility != KtTokens.PUBLIC_KEYWORD) {
+                            element.removeModifier(visibility)
+                        }
+                    }
+                }
+            }
+
             if (implementMembersHandler.collectMembersToGenerateUnderProgress(newElement).isEmpty()) return
 
             if (editor != null) {

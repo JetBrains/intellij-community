@@ -3,7 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
@@ -593,7 +593,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       .message("dataflow.message.return.notnull.from.nullable", NullableStuffInspectionBase.getPresentableAnnoName(annotation),
                method.getName());
     holder.problem(annoName, msg)
-      .maybeFix(AddAnnotationPsiFix.createAddNotNullFix(method))
+      .maybeFix(AddAnnotationModCommandAction.createAddNotNullFix(method))
       .fix(new UpdateInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
                                          JavaAnalysisBundle.message(
                                            "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
@@ -658,7 +658,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiParameter parameter = parameters[0];
     if (!BaseIntentionAction.canModify(parameter) || !AnnotationUtil.isAnnotatingApplicable(parameter)) return;
     reporter.registerProblem(methodRef, problem.getMessage(IGNORE_ASSERT_STATEMENTS),
-                             LocalQuickFix.notNullElements(parameters.length == 1 ? AddAnnotationPsiFix.createAddNullableFix(parameter) : null));
+                             LocalQuickFix.notNullElements(
+                               parameters.length == 1
+                               ? LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(parameter))
+                               : null));
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(ProblemReporter reporter,
@@ -670,7 +673,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiModifierListOwner target = Objects.requireNonNullElse(JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter), parameter);
     if (BaseIntentionAction.canModify(target) && AnnotationUtil.isAnnotatingApplicable(target)) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
-      fixes.add(AddAnnotationPsiFix.createAddNullableFix(target));
+      fixes.add(LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(target)));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
@@ -683,7 +686,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     PsiField field = getAssignedField(top);
     if (field != null) {
       List<LocalQuickFix> fixes = createNPEFixes(expression, top, reporter.isOnTheFly(), alwaysNull);
-      fixes.add(AddAnnotationPsiFix.createAddNullableFix(field));
+      fixes.add(LocalQuickFix.from(AddAnnotationModCommandAction.createAddNullableFix(field)));
       reporter.registerProblem(expression, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
@@ -806,8 +809,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                             : JavaAnalysisBundle.message("dataflow.message.return.nullable.from.notnullable", presentableNullable);
         PsiMethod surroundingMethod = PsiTreeUtil.getParentOfType(anchor, PsiMethod.class, true, PsiLambdaExpression.class);
         final LocalQuickFix fix = surroundingMethod == null ? null :
-                                  new AddAnnotationPsiFix(defaultNullable, surroundingMethod,
-                                                          ArrayUtilRt.toStringArray(manager.getNotNulls()));
+                                  LocalQuickFix.from(new AddAnnotationModCommandAction(defaultNullable, surroundingMethod,
+                                                                                       ArrayUtilRt.toStringArray(manager.getNotNulls())));
         reporter.registerProblem(expr, text, LocalQuickFix.notNullElements(fix));
       }
     }

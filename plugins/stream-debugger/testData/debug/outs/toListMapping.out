@@ -3,11 +3,11 @@ LineBreakpoint created at ToListMapping.java:8
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 ToListMapping.java:8
 Stream.of(new Object(), new Object(), new Object())
-.collect(Collectors.toList())
-collect
+.toList()
+toList
     before: 1,2,3
     after: 4,5,6
-mappings for collect
+mappings for toList
   direct:
     1 -> 4
     2 -> 5

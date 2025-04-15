@@ -2,6 +2,9 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.options.OptMultiSelector;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.injected.editor.DocumentWindow;
@@ -34,8 +37,8 @@ import java.util.function.Function;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModHighlight, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename, ModStartTemplate, ModUpdateFileText,
-          ModUpdateReferences, ModUpdateSystemOptions {
+          ModEditOptions, ModHighlight, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename,
+          ModStartTemplate, ModUpdateFileText, ModUpdateReferences, ModUpdateSystemOptions {
 
   /**
    * @return true if the command does nothing
@@ -348,6 +351,9 @@ public sealed interface ModCommand
         // Navigation is useless: we are removing the target file
         return command;
       }
+      if (sub instanceof ModMoveFile moveFile && moveFile.file().equals(virtualFile)) {
+        virtualFile = moveFile.targetFile();
+      }
       if (!(sub instanceof ModNavigate)) {
         finalCommand = finalCommand.andThen(sub);
       }
@@ -365,8 +371,8 @@ public sealed interface ModCommand
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
-                                                   @NotNull List<? extends @NotNull MemberChooserElement> elements,
-                                                   @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
     return chooseMultipleMembers(title, elements, elements, nextCommand);
   }
 
@@ -381,10 +387,32 @@ public sealed interface ModCommand
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
-                                                   @NotNull List<? extends @NotNull MemberChooserElement> elements,
-                                                   @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,
-                                                   @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
+                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
     return new ModChooseMember(title, elements, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE, nextCommand);
+  }
+
+  /**
+   * A replacement for chooseMultipleMembers; not working yet
+   */
+  @ApiStatus.Internal
+  static @NotNull ModCommand chooseMultipleMembersNew(@NotNull @NlsContexts.PopupTitle String title,
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
+                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
+                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
+    class MemberHolder implements OptionContainer {
+      @SuppressWarnings("FieldMayBeFinal") 
+      @NotNull List<? extends OptMultiSelector.@NotNull OptElement> myElements = new ArrayList<>(defaultSelection);
+      
+      @Override
+      public @NotNull OptPane getOptionsPane() {
+        return OptPane.pane(
+          new OptMultiSelector("myElements", elements, OptMultiSelector.SelectionMode.MULTIPLE)
+        );
+      }
+    }
+    return new ModEditOptions<>(title, MemberHolder::new, true, mh -> nextCommand.apply(mh.myElements));
   }
 
   /**
@@ -424,4 +452,16 @@ public sealed interface ModCommand
                                           @NotNull ModCommandAction @NotNull ... actions) {
     return new ModChooseAction(title, List.of(actions));
   }
+
+  /**
+   * Creates a command to move a file to a specified directory
+   * 
+   * @param file file to move
+   * @param target target directory
+   * @return a command that moves the file to a specified directory
+   */
+  static @NotNull ModCommand moveFile(@NotNull VirtualFile file, @NotNull VirtualFile target) {
+    return new ModMoveFile(file, new FutureVirtualFile(target, file.getName(), file.getFileType()));
+  }
+
 }

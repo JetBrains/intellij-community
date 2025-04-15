@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.*
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
@@ -34,7 +34,9 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.deprecatedParentTargetMap
+import org.jetbrains.kotlin.resolve.possibleParentTargetPredicateMap
+import org.jetbrains.kotlin.resolve.possibleTargetMap
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -49,12 +51,7 @@ open class KeywordLookupObject {
 }
 
 
-class KeywordCompletion(private val languageVersionSettingProvider: LanguageVersionSettingProvider) {
-    interface LanguageVersionSettingProvider {
-        fun getLanguageVersionSetting(element: PsiElement): LanguageVersionSettings
-        fun getLanguageVersionSetting(module: Module): LanguageVersionSettings
-    }
-
+class KeywordCompletion() {
     companion object {
         private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
             .map { it as KtKeywordToken }
@@ -129,7 +126,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
     fun complete(position: PsiElement, prefixMatcher: PrefixMatcher, isJvmModule: Boolean, consumer: (LookupElement) -> Unit) {
         if (!GENERAL_FILTER.isAcceptable(position, position)) return
-        val sealedInterfacesEnabled = languageVersionSettingProvider.getLanguageVersionSetting(position).supportsFeature(LanguageFeature.SealedInterfaces)
+        val sealedInterfacesEnabled = position.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)
 
         val parserFilter = buildFilter(position)
         for (keywordToken in ALL_KEYWORDS) {
@@ -144,7 +141,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
     private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken>? {
         return when {
             this == SUSPEND_KEYWORD && position.isInsideKtTypeReference -> null
-            else -> getCompoundKeywords(this, languageVersionSettingProvider.getLanguageVersionSetting(position))
+            else -> getCompoundKeywords(this, position.languageVersionSettings)
         }
     }
 
@@ -525,9 +522,8 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
 
-            val languageVersionSettings =
-                ModuleUtilCore.findModuleForPsiElement(position)?.let(languageVersionSettingProvider::getLanguageVersionSetting)
-                    ?: LanguageVersionSettingsImpl.DEFAULT
+            val languageVersionSettings = ModuleUtilCore.findModuleForPsiElement(position)?.languageVersionSettings
+                ?: LanguageVersionSettingsImpl.DEFAULT
             when {
                 !elementAt.node!!.elementType.matchesKeyword(keywordTokenType) -> return false
 
@@ -672,7 +668,13 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
                 LanguageFeature.ExplicitBackingFields
             }
-            CONTEXT_KEYWORD -> LanguageFeature.ContextReceivers
+            CONTEXT_KEYWORD -> {
+                // Because there are two feature flags for this keyword, we need to check them separately
+                if (languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
+                    return true
+                }
+                LanguageFeature.ContextReceivers
+            }
             else -> return true
         }
         return languageVersionSettings.supportsFeature(feature)

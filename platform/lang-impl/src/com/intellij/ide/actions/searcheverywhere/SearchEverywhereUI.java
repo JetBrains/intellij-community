@@ -34,6 +34,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -92,12 +93,14 @@ import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -106,7 +109,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -121,7 +123,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
  * @author Konstantin Bulenkov
  * @author Mikhail.Sokolov
  */
-public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
+public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent, SearchEverywherePopupInstance {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
   @ApiStatus.Internal
@@ -157,6 +159,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private UsagePreviewPanel myUsagePreviewPanel;
   private UsageViewPresentation myUsageViewPresentation;
   private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
+
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
 
   private int prevSelectedIndex = -1;
 
@@ -267,7 +271,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                                                                           startMoment));
   }
 
-  public void addSearchListener(SearchListener listener) {
+  @Override
+  public void addSearchListener(@NotNull SearchListener listener) {
     myExternalSearchListeners.add(listener);
   }
 
@@ -335,8 +340,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     myHeader.toggleEverywhere();
   }
 
+  @Override
   @ApiStatus.Internal
-  public void changeScope(@NotNull BiFunction<? super ScopeDescriptor, ? super List<ScopeDescriptor>, @Nullable ScopeDescriptor> processor) {
+  public void changeScope(@NotNull Function2<? super @NotNull ScopeDescriptor, ? super @NotNull List<? extends @NotNull ScopeDescriptor>, ? extends @Nullable ScopeDescriptor> processor) {
     myHeader.changeScope(processor);
   }
 
@@ -434,6 +440,21 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return isDumb
            ? IdeBundle.message("dumb.mode.results.might.be.incomplete")
            : IdeBundle.message("incomplete.mode.results.might.be.incomplete");
+  }
+
+  @Override
+  public @Nullable String getSearchText() {
+    return getSearchField().getText();
+  }
+
+  @Override
+  public void setSearchText(@Nullable String searchText) {
+    getSearchField().setText(searchText);
+  }
+
+  @Override
+  public @NotNull Document getSearchFieldDocument() {
+    return getSearchField().getDocument();
   }
 
   private static @Nls @Nullable String getAdvertisement(List<? extends SearchEverywhereContributor<?>> contributors) {
@@ -1255,7 +1276,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   @ApiStatus.Experimental
-  public void selectFirst() {
+  @Override
+  public void selectFirstItem() {
     elementsSelected(new int[]{0}, 0);
   }
 
@@ -1386,6 +1408,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     closePopup();
   }
 
+  @Override
   public void closePopup() {
     ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
     stopSearching();
@@ -1408,8 +1431,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return future;
   }
 
+  @Override
   @TestOnly
-  public Future<List<Object>> findElementsForPattern(String pattern) {
+  public @NotNull Future<List<Object>> findElementsForPattern(String pattern) {
     return findElementsForPatternMapping(pattern, it -> it);
   }
 
@@ -1499,6 +1523,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                 fetch(contributor, foundElements, alreadyFoundCount, tooManyUsagesStatus);
               }
               catch (ProcessCanceledException ignore) {
+              }
+              catch (Throwable e) {
+                LOG.warn("ShowInFindToolWindowAction: Contributor " + contributor.getSearchProviderId() +" threw and exception during search:", e);
               }
             }
             fillUsages(foundElements, usages, targets);

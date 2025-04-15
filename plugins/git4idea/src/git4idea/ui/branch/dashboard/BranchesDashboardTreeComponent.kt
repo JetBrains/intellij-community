@@ -28,13 +28,15 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal object BranchesDashboardTreeComponent {
+@ApiStatus.Internal
+object BranchesDashboardTreeComponent {
   fun create(
     parentDisposable: Disposable,
     project: Project,
@@ -163,7 +165,8 @@ internal object BranchesDashboardTreeComponent {
   }
 }
 
-internal interface BranchesDashboardTreeSelectionHandler {
+@ApiStatus.Internal
+interface BranchesDashboardTreeSelectionHandler {
   @get:RequiresEdt
   @set:RequiresEdt
   var selectionAction: SelectionAction?

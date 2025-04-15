@@ -85,7 +85,18 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     ProgressManager.checkCanceled();
     myFinished = false;
     try {
-      collectInformationWithProgress(progress);
+      HighlightingSession session = getHighlightingSession();
+      if (session.getProgressIndicator() == progress) {
+        collectInformationWithProgress(progress);
+      }
+      else {
+        // It seems we're running the second copy of this pass - there must be several file editors opened for the same document.
+        // Just skip all the work, to avoid doing it twice and step on each other toes, that would cause stuck/leaking highlighters.
+        // When the first copy is finished, all other editors will be repainted with the corresponding highlighters.
+        // Do not wait for the first copy to complete, to avoid thread starvation and deadlocks,
+        // when the first copy decides to paralellize stuff and FJP tries to steal other tasks and invokes this method
+        // and blocks waiting for the first copy to complete, which it'll never do because it's waiting.
+      }
     }
     finally {
       if (myFile != null) {
@@ -127,6 +138,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
+  @SuppressWarnings("NullableProblems")
   public @Nullable("null means do not show progress") @Nls String getPresentableName() {
     return myPresentableName;
   }

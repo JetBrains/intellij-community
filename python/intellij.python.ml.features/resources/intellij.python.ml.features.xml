@@ -3,7 +3,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.ml.features.imports.PyCharmImportsRankingLogs"/>
     <registryKey
       key="quickfix.ranking.ml"
-      defaultValue="[IN_EXPERIMENT*|ENABLED|DISABLED]"
+      defaultValue="[IN_EXPERIMENT|ENABLED|DISABLED*]"
       description="Enable ML ranking in quick fix for missing imports"/>
     <postStartupActivity implementation="com.intellij.python.ml.features.imports.QuickfixRankingModelLoading"/>
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser"

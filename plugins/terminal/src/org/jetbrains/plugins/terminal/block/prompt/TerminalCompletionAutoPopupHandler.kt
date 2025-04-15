@@ -10,8 +10,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import java.io.File
 
 /**
@@ -34,7 +34,7 @@ internal class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
     }
 
     if (Character.isLetterOrDigit(charTyped) || charTyped == '-' || charTyped == File.separatorChar) {
-      if (editor.getUserData(TerminalCommandCompletionAction.SUPPRESS_COMPLETION) != true) {
+      if (!editor.isSuppressCompletion) {
         AutoPopupController.getInstance(project).scheduleAutoPopup(editor)
       }
       return Result.STOP

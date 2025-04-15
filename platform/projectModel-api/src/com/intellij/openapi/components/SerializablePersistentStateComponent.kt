@@ -1,11 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
 /**
- * Use the updateState() method to atomically change the persistent state
+ * Use the [updateState] method to atomically change the persistent state.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components
+ *  (IntelliJ Platform Docs)</a>
  */
 abstract class SerializablePersistentStateComponent<T : Any>(private var state: T) : PersistentStateComponentWithModificationTracker<T> {
   companion object {

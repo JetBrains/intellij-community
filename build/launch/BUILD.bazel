@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.idea.tools.launch` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "idea-tools-launch_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "idea-tools-launch",
@@ -15,7 +21,8 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/build-scripts/downloader:buildScripts-downloader",
     "//platform/ijent/buildConstants:community-buildConstants",
-  ]
+  ],
+  runtime_deps = [":idea-tools-launch_resources"]
 )
 
 jvm_library(
@@ -35,7 +42,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/ijent/buildConstants:community-buildConstants",
-  ]
+  ],
+  runtime_deps = [":idea-tools-launch_resources"]
 )
 
 jvm_test(

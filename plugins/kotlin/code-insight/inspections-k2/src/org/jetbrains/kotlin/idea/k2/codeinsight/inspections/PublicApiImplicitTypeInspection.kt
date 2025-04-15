@@ -52,7 +52,7 @@ class PublicApiImplicitTypeInspection(
 
                 analyze(declaration) {
                     if (shouldReportDeclarationVisibility(declaration)) {
-                        val typeInfo = CallableReturnTypeUpdaterUtils.getTypeInfo(declaration)
+                        val typeInfo = CallableReturnTypeUpdaterUtils.getTypeInfo(declaration, useTemplate = holder.isOnTheFly)
                         val fix = SpecifyExplicitTypeQuickFix(declaration, typeInfo).asQuickFix()
                         holder.registerProblem(nameIdentifier, problemText, fix)
                     }

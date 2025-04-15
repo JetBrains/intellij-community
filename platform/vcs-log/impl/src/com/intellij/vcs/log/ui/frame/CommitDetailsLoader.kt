@@ -11,13 +11,15 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.DataGetter
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * A common commit selection intended to be shared between multiple selection subscribers
  */
-internal class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads constructor(
+@ApiStatus.Internal
+class CommitDetailsLoader<D : VcsCommitMetadata> @JvmOverloads constructor(
   private val commitDetailsGetter: DataGetter<D>,
   parentDisposable: Disposable,
   private val limit: Int? = null,

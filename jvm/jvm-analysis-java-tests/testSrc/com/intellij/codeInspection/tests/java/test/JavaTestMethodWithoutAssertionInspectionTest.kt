@@ -22,6 +22,24 @@ class JavaTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionI
     """.trimIndent(), "TestMethodWithoutAssertion")
   }
 
+  fun `test no highlighting for AssertJ`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import junit.framework.TestCase;
+      
+      import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+      public class TestMethodWithAssertion extends TestCase {
+        public void testExceptionOfType() {
+            assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(this::methodThatThrowsException);
+        }
+        
+        private void methodThatThrowsException() {
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
+      }
+    """.trimIndent(), "TestMethodWithAssertion")
+  }
+
   fun `test no highlighting when assertion is present`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import junit.framework.TestCase;

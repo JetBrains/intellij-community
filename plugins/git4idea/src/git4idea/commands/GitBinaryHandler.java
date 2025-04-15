@@ -45,6 +45,7 @@ public class GitBinaryHandler extends GitHandler {
 
   @Override
   protected Process startProcess() throws ExecutionException {
+    listeners().processStarted();
     return myCommandLine.createProcess();
   }
 

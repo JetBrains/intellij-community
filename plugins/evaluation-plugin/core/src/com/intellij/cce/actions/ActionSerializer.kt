@@ -4,12 +4,15 @@ package com.intellij.cce.actions
 import com.google.gson.GsonBuilder
 import com.intellij.cce.core.TokenProperties
 
+private fun defaultGson() = GsonBuilder()
+  .registerTypeAdapter(Action::class.java, Action.JsonAdapter)
+  .registerTypeAdapter(TokenProperties::class.java, TokenProperties.JsonAdapter)
+  .registerTypeAdapter(SessionId::class.java, SessionIdJsonAdapter())
+  .setPrettyPrinting()
+  .create()
+
 object ActionSerializer {
-  private val gson = GsonBuilder()
-    .registerTypeAdapter(Action::class.java, Action.JsonAdapter)
-    .registerTypeAdapter(TokenProperties::class.java, TokenProperties.JsonAdapter)
-    .setPrettyPrinting()
-    .create()
+  private val gson = defaultGson()
 
   fun serialize(actions: List<Action>): String = gson.toJson(actions)
 
@@ -27,11 +30,7 @@ object ActionSerializer {
 }
 
 object ActionArraySerializer {
-  private val gson = GsonBuilder()
-    .registerTypeAdapter(Action::class.java, Action.JsonAdapter)
-    .registerTypeAdapter(TokenProperties::class.java, TokenProperties.JsonAdapter)
-    .setPrettyPrinting()
-    .create()
+  private val gson = defaultGson()
 
   fun serialize(actions: Array<FileActions>): String = gson.toJson(actions)
 

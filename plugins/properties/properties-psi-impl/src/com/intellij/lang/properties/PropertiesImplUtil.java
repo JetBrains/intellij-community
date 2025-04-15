@@ -157,21 +157,6 @@ public final class PropertiesImplUtil extends PropertiesUtil {
     return null;
   }
 
-  public static boolean isAlphaSorted(final @NotNull Collection<? extends IProperty> properties) {
-    String previousKey = null;
-    for (IProperty property : properties) {
-      final String key = property.getKey();
-      if (key == null) {
-        return false;
-      }
-      if (previousKey != null && String.CASE_INSENSITIVE_ORDER.compare(previousKey, key) > 0) {
-        return false;
-      }
-      previousKey = key;
-    }
-    return true;
-  }
-
   public static @Nullable IProperty getProperty(@Nullable PsiElement element) {
     if (element instanceof IProperty) {
       return (IProperty)element;

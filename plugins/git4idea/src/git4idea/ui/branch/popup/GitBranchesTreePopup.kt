@@ -24,12 +24,13 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSI
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-class GitBranchesTreePopup(
+internal class GitBranchesTreePopup(
   project: Project,
   step: GitBranchesTreePopupStep,
   parent: JBPopup? = null,
@@ -37,7 +38,7 @@ class GitBranchesTreePopup(
 ) : GitBranchesTreePopupBase<GitBranchesTreePopupStep>(project, step, parent, parentValue, DIMENSION_SERVICE_KEY) {
   init {
     installGeneralShortcutActions()
-    if (!isChild()) {
+    if (!isNestedPopup()) {
       warnThatBranchesDivergedIfNeeded()
     }
   }
@@ -108,7 +109,7 @@ class GitBranchesTreePopup(
     if (nextStep is GitBranchesTreePopupStep) GitBranchesTreePopup(project, nextStep, this, parentValue)
     else super.createPopup(this, nextStep, parentValue)
 
-  override fun createRenderer(treeStep: GitBranchesTreePopupStep): GitBranchesTreeRenderer {
+  override fun createRenderer(): GitBranchesTreeRenderer {
     return GitBranchesTreePopupRenderer(treeStep)
   }
 
@@ -116,7 +117,7 @@ class GitBranchesTreePopup(
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
-  override fun getShortcutActionPlace(): String = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
+  override fun getShortcutActionPlace(): String = if (isNestedPopup()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
@@ -138,9 +139,15 @@ class GitBranchesTreePopup(
      */
     @JvmStatic
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
+      return GitBranchesTreePopup(project, createBranchesTreePopupStep(project, selectedRepository))
+        .apply { setIsMovable(true) }
+    }
+
+    @VisibleForTesting
+    internal fun createBranchesTreePopupStep(project: Project, selectedRepository: GitRepository?): GitBranchesTreePopupStep {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
       val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
+      return GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true)
     }
   }
 }

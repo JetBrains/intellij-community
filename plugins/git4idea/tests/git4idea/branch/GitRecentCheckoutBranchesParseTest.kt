@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
@@ -15,7 +15,7 @@ class GitRecentCheckoutBranchesParseTest : GitSingleRepoTest() {
     expected.reversed().forEach { branch -> repo.checkoutNew(branch) }
     waitForRepoUpdate()
 
-    val branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::getName)
+    val branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
     assertOrderedEquals(branchNames, expected)
   }
 
@@ -29,7 +29,7 @@ class GitRecentCheckoutBranchesParseTest : GitSingleRepoTest() {
     expected += initialBranch // previously initialBranch was explicitly checkout with reflog entry
     waitForRepoUpdate()
 
-    val branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::getName)
+    val branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
     assertOrderedEquals(branchNames, expected)
   }
 
@@ -38,13 +38,13 @@ class GitRecentCheckoutBranchesParseTest : GitSingleRepoTest() {
     expected.reversed().forEach { branch -> repo.checkoutNew(branch) }
     waitForRepoUpdate()
 
-    var branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::getName)
+    var branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
     assertOrderedEquals(branchNames, expected)
 
     repo.deleteBranch("feature1")
     waitForRepoUpdate()
 
-    branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::getName)
+    branchNames = repo.branches.recentCheckoutBranches.map(GitLocalBranch::name)
     assertOrderedEquals(branchNames, expected.dropLast(1))
   }
 

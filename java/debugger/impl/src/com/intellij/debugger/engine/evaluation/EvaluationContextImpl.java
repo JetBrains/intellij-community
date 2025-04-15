@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.EvaluatingComputable;
@@ -92,6 +92,7 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
   public EvaluationContextImpl createEvaluationContext(Value value) {
     final EvaluationContextImpl copy = new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
     copy.setAutoLoadClasses(myAutoLoadClasses);
+    copyUserDataTo(copy);
     return copy;
   }
 
@@ -149,6 +150,7 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     }
     EvaluationContextImpl copy = new EvaluationContextImpl(mySuspendContext, myFrameProxy, myThisObject);
     copy.setAutoLoadClasses(autoLoadClasses);
+    copyUserDataTo(copy);
     return copy;
   }
 

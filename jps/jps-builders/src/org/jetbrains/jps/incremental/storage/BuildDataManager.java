@@ -748,10 +748,10 @@ public final class BuildDataManager {
       }
 
       @Override
-      public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
+      public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params, Iterable<Graph> extParts) {
         lock.readLock().lock();
         try {
-          return delegate.differentiate(delta, params);
+          return delegate.differentiate(delta, params, extParts);
         }
         finally {
           lock.readLock().unlock();

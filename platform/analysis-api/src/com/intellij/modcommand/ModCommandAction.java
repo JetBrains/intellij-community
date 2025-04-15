@@ -66,7 +66,7 @@ public interface ModCommandAction extends CommonIntentionAction, PossiblyDumbAwa
    * @param presentationModifier a {@link UnaryOperator} that modifies the presentation of the action
    * @return a new {@link ModCommandAction} with the modified presentation
    */
-  default @NotNull ModCommandAction withPresentation(@NotNull UnaryOperator<Presentation> presentationModifier) {
+  default @NotNull ModCommandAction withPresentation(@NotNull UnaryOperator<@NotNull Presentation> presentationModifier) {
     return new ModCommandActionPresentationDelegate(this, presentationModifier);
   }
 

@@ -4,11 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
 import com.intellij.debugger.actions.SmartStepTarget
-import com.intellij.debugger.engine.BasicStepMethodFilter
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.MethodFilter
-import com.intellij.debugger.engine.NamedMethodFilter
-import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
@@ -42,10 +38,7 @@ import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandPro
 import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
-import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
-import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
-import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
-import org.jetbrains.kotlin.idea.debugger.test.util.render
+import org.jetbrains.kotlin.idea.debugger.test.util.*
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
@@ -121,7 +114,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         instructions.forEach(this::process)
     }
 
-    protected fun doOnBreakpoint(action: SuspendContextImpl.() -> Unit) {
+    protected open fun doOnBreakpoint(action: SuspendContextImpl.() -> Unit) {
         super.onBreakpoint {
             try {
                 initContexts(it)
@@ -461,5 +454,29 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             project, description, setOf(ArtifactKind.ARTIFACT, ArtifactKind.SOURCES),
             jarRepositories(), null
         ) ?: throw AssertionError("Maven Dependency not found: $description")
+    }
+
+    /*
+     * Prints stack traces with variables on a current breakpoint.
+     *
+     * Internally the function computes children of `com.intellij.debugger.engine.JavaStackFrame`,
+     * which is a non-blocking operation that is scheduled as a separate action on the debugger thread.
+     * If a debug process is resumed before the children of a stack frame are computed, an exception will
+     * occur and nothing will be printed.
+     */
+    protected fun printFrame(suspendContext: SuspendContextImpl, completion: SuspendContextImpl.() -> Unit) {
+        processStackFramesOnPooledThread {
+            for (stackFrame in this) {
+                val result = FramePrinter(suspendContext).print(stackFrame)
+                print(result, ProcessOutputTypes.SYSTEM)
+            }
+            assert(debugProcess.isAttached)
+            suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+                override fun contextAction(suspendContext: SuspendContextImpl) {
+                    completion(suspendContext)
+                }
+                override fun commandCancelled() = error(message = "Test was cancelled")
+            })
+        }
     }
 }

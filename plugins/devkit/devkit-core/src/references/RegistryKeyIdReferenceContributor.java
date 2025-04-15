@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
@@ -52,11 +51,6 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                          )))),
                                      new UastInjectionHostReferenceProvider() {
                                        @Override
-                                       public boolean acceptsTarget(@NotNull PsiElement target) {
-                                         return PropertyReferenceBase.isPropertyPsi(target);
-                                       }
-
-                                       @Override
                                        public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
                                                                                                      @NotNull PsiLanguageInjectionHost host,
                                                                                                      @NotNull ProcessingContext context) {
@@ -65,10 +59,9 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                      }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
+  static final class RegistryKeyIdReference extends ExtensionReferenceBase {
 
-  private static final class RegistryKeyIdReference extends ExtensionReferenceBase {
-
-    private RegistryKeyIdReference(@NotNull PsiElement element) {
+    RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);
     }
 

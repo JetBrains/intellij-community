@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.Disposable
@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -22,11 +22,11 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
 
-private const val COMMIT_TOOL_WINDOW = "vcs.commit.tool.window"
 
 internal val Project.isCommitToolWindowShown: Boolean
   get() = ChangesViewContentManager.isCommitToolWindowShown(this)
@@ -65,7 +65,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     ApplicationManager.getApplication().messageBus.connect(project)
       .subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
         override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          if (id == COMMIT_TOOL_WINDOW) {
+          if (id == CommitMode.NonModalCommitMode.COMMIT_TOOL_WINDOW_SETTINGS_KEY) {
             updateToolWindowMappings()
           }
         }
@@ -87,8 +87,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   private fun shouldUseCommitToolWindow(): Boolean {
-    return AdvancedSettings.getBoolean(COMMIT_TOOL_WINDOW) &&
-           CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow()
+    return CommitModeManager.getInstance(project).getCurrentCommitMode().useCommitToolWindow()
   }
 
   private fun remapContents() {
@@ -313,6 +312,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     fun isToolWindowTabVertical(project: Project, tabName: String): Boolean {
       val toolWindow = getToolWindowFor(project, tabName)
       return toolWindow != null && !toolWindow.anchor.isHorizontal
+             && toolWindow.type != ToolWindowType.FLOATING
+             && toolWindow.type != ToolWindowType.WINDOWED
     }
 
     @JvmStatic

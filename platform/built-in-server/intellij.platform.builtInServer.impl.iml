@@ -26,12 +26,14 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-compression" level="project" />
   </component>

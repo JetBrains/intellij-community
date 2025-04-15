@@ -4,7 +4,7 @@ KaLibraryModule:
   libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305)
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -40,7 +40,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -52,7 +52,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -64,7 +64,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -76,7 +76,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -88,7 +88,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -100,7 +100,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -112,7 +112,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -124,7 +124,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -136,7 +136,7 @@ KaLibraryModule:
   libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -148,7 +148,7 @@ KaLibraryModule:
   libraryName: org.jetbrains:annotations-java5:24.0.0
   isSdk: false
   regularDependencies:
-    <empty>
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains:annotations-java5:24.0.0)
   friendDependencies:
     <empty>
   dependsOnDependencies:

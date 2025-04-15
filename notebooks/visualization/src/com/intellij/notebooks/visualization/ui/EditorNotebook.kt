@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import kotlin.reflect.KClass
 
-class EditorNotebook(private val editor: EditorImpl) : Disposable {
+class EditorNotebook(val editor: EditorImpl) : Disposable {
 
   private var _cells = mutableListOf<EditorCell>()
 
@@ -80,6 +80,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
       }
     }
     EDITOR_NOTEBOOK_KEY.set(editor, null)
+    clear()
   }
 
   fun clear() {
@@ -94,7 +95,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
     cell.onBeforeRemove()
     val removed = _cells.removeAt(index)
     Disposer.dispose(removed)
-    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed)))
+    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed, index)))
   }
 
   fun <T : EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {

@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components.common
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -37,8 +38,7 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun closeAllTabs() {
-    xx("//div[@class='EditorTabLabel']//div[@myicon='closeSmall.svg']")
-      .list().forEach { it.click() }
+    driver.invokeAction("CloseAllEditors")
   }
 
   fun isTabOpened(text: String) = getTabs().any { it.text == text }

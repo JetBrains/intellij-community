@@ -18,11 +18,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -312,7 +312,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   @ReviseWhenPortedToJDK(value = "21", description = "drop normalization")
   private final class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
-    private final boolean myNormalizePaths = SystemInfo.isMac && !JavaVersion.current().isAtLeast(21);
+    private final boolean myNormalizePaths = SystemInfo.isMac && !CurrentJavaVersion.currentJavaVersion().isAtLeast(21);
     private WatcherOp myLastOp;
     private final List<String> myLines = new ArrayList<>();
 

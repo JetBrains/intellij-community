@@ -838,9 +838,9 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        pass
                       \s
                    A1: TypeAlias = <error descr="Generics should be specified through square brackets">Union(int, str)</error>
-                   A2: TypeAlias = '<error descr="Generics should be specified through square brackets">Union(int, str)</error>'
+                   A2: TypeAlias = <warning descr="Assigned value of type alias must be a correct type">'<error descr="Generics should be specified through square brackets">Union(int, str)</error>'</warning>
                    A3 = <error descr="Generics should be specified through square brackets">Union(int, str)</error>  # type: TypeAlias
-                   A3 = '<error descr="Generics should be specified through square brackets">Union(int, str)</error>'  # type: TypeAlias""");
+                   A3 = <warning descr="Assigned value of type alias must be a correct type">'<error descr="Generics should be specified through square brackets">Union(int, str)</error>'</warning>  # type: TypeAlias""");
   }
 
   // PY-57155
@@ -892,14 +892,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        def __init__(self, v):
                            pass
 
-                   def a(b: <warning descr="Generics should be specified through square brackets">A(int)</warning>):
+                   def a(b: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">A(int)</warning></warning>):
                        pass
 
                    def c(d):
                        # type: (<warning descr="Generics should be specified through square brackets">A(int)</warning>) -> None
                        pass
 
-                   def e(f: <warning descr="Generics should be specified through square brackets">A()</warning>):
+                   def e(f: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">A()</warning></warning>):
                        pass
 
                    def g(h):
@@ -910,15 +910,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    v2 = None  # type: <warning descr="Generics should be specified through square brackets">A(int)</warning>
 
                    U = A
-                   def i(j: <warning descr="Generics should be specified through square brackets">U(int)</warning>):
+                   def i(j: <warning descr="Generics should be specified through square brackets"><warning descr="Type hint is invalid or refers to the expression which is not a correct type">U(int)</warning></warning>):
                        pass
                       \s
                    v3 = None  # type: <warning descr="Generics should be specified through square brackets">U(int)</warning>
 
-                   A1: TypeAlias = <warning descr="Generics should be specified through square brackets">A(int)</warning>
-                   A2: TypeAlias = '<warning descr="Generics should be specified through square brackets">A(int)</warning>'
-                   A3 = <warning descr="Generics should be specified through square brackets">A(int)</warning>  # type: TypeAlias
-                   A4 = '<warning descr="Generics should be specified through square brackets">A(int)</warning>'  # type: TypeAlias""");
+                   A1: TypeAlias = <warning descr="Assigned value of type alias must be a correct type"><warning descr="Generics should be specified through square brackets">A(int)</warning></warning>
+                   A2: TypeAlias = <warning descr="Assigned value of type alias must be a correct type">'<warning descr="Generics should be specified through square brackets">A(int)</warning>'</warning>
+                   A3 = <warning descr="Assigned value of type alias must be a correct type"><warning descr="Generics should be specified through square brackets">A(int)</warning></warning>  # type: TypeAlias
+                   A4 = <warning descr="Assigned value of type alias must be a correct type">'<warning descr="Generics should be specified through square brackets">A(int)</warning>'</warning>  # type: TypeAlias""");
   }
 
   // PY-20530
@@ -1236,7 +1236,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testEnumLiteral() {
     doTestByText("""
                    from enum import Enum, member, nonmember
-                   from typing import Literal
+                   from typing import Literal, Any
                    
                    class Color(Enum):
                        R = 1
@@ -1251,6 +1251,25 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class A:
                        X = Color.R
                    
+                   class SuperEnum(Enum):
+                       PINK = "PINK", "hot"
+                       FLOSS = "FLOSS", "sweet"
+                   
+                   tuple = 1, "ab"
+                   o = object()
+                   def get_object() -> object: ...
+                   def get_any() -> Any: ...
+                   
+                   class E(Enum):
+                       FOO = tuple
+                       BAR = o
+                       BUZ = get_object()
+                       QUX = get_any()
+                   
+                       def meth(self): ...
+                   
+                       meth2 = meth
+                   
                    v1: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A.X</warning>]
                    
                    X = Color.R
@@ -1259,7 +1278,20 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    v3: Literal[Color.G]
                    v4: Literal[Color.RED]
                    v5: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">Color.foo</warning>]
-                   v6: Literal[Color.bar]""");
+                   v6: Literal[Color.bar]
+                   
+                   v7: Literal[SuperEnum.PINK]
+                   
+                   v8: Literal[E.FOO]
+                   v9: Literal[E.BAR]
+                   v10: Literal[E.BUZ]
+                   v11: Literal[E.QUX]
+                   v12: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">E.meth2</warning>]""");
+  }
+
+  // PY-79227
+  public void testEnumLiteralMultiFile() {
+    doMultiFileTest();
   }
 
   // PY-35235
@@ -1465,7 +1497,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import Self
 
-                   something: <warning descr="Cannot use 'Self' outside class">Self</warning> | None = None
+                   something: <warning descr="Type hint is invalid or refers to the expression which is not a correct type"><warning descr="Cannot use 'Self' outside class">Self</warning> | None</warning> = None
                    """);
   }
 
@@ -2217,16 +2249,372 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-  // TODO remove when PY-77059 is supported
-  public void testParameterizedImplicitTypeAlias() {
+  // PY-79693
+  public void testNeverAndNoReturnNotReportedAsInvalidTypeArgs() {
     doTestByText("""
-                   from typing import TypeVar, Coroutine, Any
-                   T = TypeVar("T")
-                   Co = Coroutine[Any, Any, T]
-                   MyCo = Co[T]
+                   from typing import Never, NoReturn
+                   
+                   class ClassA:
+                      a: NoReturn
+                      b: list[NoReturn]
+                      c: Never
+                      d: list[Never]
                    """);
   }
 
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersOneTypeVar() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar
+                   
+                   T = TypeVar("T")
+                   
+                   alias: TypeAlias = list[T]
+                   alias2: TypeAlias = list[T] | set[T] | T
+                   
+                   a1: alias[int]
+                   a2: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str</warning>]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   
+                   a21: alias2[int]
+                   a22: alias2[<warning descr="Passed type arguments do not match type parameters of type alias 'alias2'">int, str</warning>]
+                   a23: alias2[<warning descr="Passed type arguments do not match type parameters of type alias 'alias2'">int, str, bool</warning>]
+                   a24: alias2[<warning descr="Passed type arguments do not match type parameters of type alias 'alias2'">int, str, bool, int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersTwoTypeVars() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar
+                   
+                   T = TypeVar("T")
+                   U = TypeVar("U")
+                   
+                   alias: TypeAlias = dict[T, U]
+                   a1: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int</warning>]
+                   a2: alias[int, str]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersMultipleTypeVars() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar, Generic
+                   
+                   T = TypeVar("T")
+                   T1 = TypeVar("T1")
+                   T2 = TypeVar("T2")
+                   T3 = TypeVar("T3")
+                   
+                   class Clazz(Generic[T3]): ...
+                   
+                   alias: TypeAlias = dict[T, list[T1]] | T2 | Clazz[T3]
+                   
+                   a1: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int</warning>]
+                   a2: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str</warning>]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[int, str, bool, int]
+                   a5: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int, float</warning>]
+                   a5: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int, float, str</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitGenericTypeAliasParameterizationNumberOfTypeParametersTwoTypeVarsOneHasDefault() {
+    doTestByText("""
+                   from typing import TypeAlias, TypeVar
+                   
+                   T = TypeVar("T")
+                   U = TypeVar("U", default=str)
+                   
+                   alias: TypeAlias = dict[T, U]
+                   a1: alias[int]
+                   a2: alias[int, str]
+                   a3: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool</warning>]
+                   a4: alias[<warning descr="Passed type arguments do not match type parameters of type alias 'alias'">int, str, bool, int</warning>]
+                   
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitTypeAliasParameterizationConformanceTests() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   from typing import TypeVar, Callable
+                   T = TypeVar("T")
+                   
+                   GoodTypeAlias2: TA = int | None
+                   GoodTypeAlias3: TA = list[GoodTypeAlias2]
+                   GoodTypeAlias4: TA = list[T]
+                   GoodTypeAlias8: TA = Callable[[int, T], T]
+                   
+                   p1: GoodTypeAlias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p2: GoodTypeAlias3[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p3: GoodTypeAlias4[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias4'">int, int</warning>]
+                   p4: GoodTypeAlias8[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias8'">int, int</warning>]
+                   
+                   ListAlias: TA = list
+                   ListOrSetAlias: TA = list | set
+                   
+                   x2: ListAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   x4: ListOrSetAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasAlreadyParameterized() {
+    doTestByText("""
+                   alias = list
+                   alias2 = list[int]
+                   a1: alias[int]  # OK
+                   a2: alias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  // The behaviour for the explicit type aliases differs, see the test above
+  public void testExplicitTypeAliasAlreadyParameterized() {
+    doTestByText("""
+                   from typing import TypeAlias
+                   
+                   alias: TypeAlias = list
+                   alias2: TypeAlias = list[int]
+                   a1: alias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   a2: alias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasParameterizationUnion() {
+    doTestByText("""
+                   ListOrSetAlias = list | set
+                   x: ListOrSetAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasParameterizationConformanceTests() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   from typing import TypeVar, Callable
+                   
+                   T = TypeVar("T")
+                   
+                   GoodTypeAlias2 = int | None
+                   GoodTypeAlias3 = list[GoodTypeAlias2]
+                   GoodTypeAlias4 = list[T]
+                   GoodTypeAlias8 = Callable[[int, T], T]
+                   
+                   p1: GoodTypeAlias2[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p2: GoodTypeAlias3[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   p3: GoodTypeAlias4[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias4'">int, int</warning>]
+                   p4: GoodTypeAlias8[<warning descr="Passed type arguments do not match type parameters of type alias 'GoodTypeAlias8'">int, int</warning>]
+                   
+                   ListAlias = list
+                   ListOrSetAlias = list | set
+                   x1: list[str] = ListAlias()
+                   x2 = ListAlias[int]()
+                   x4: ListOrSetAlias[<warning descr="Type alias is not generic or already specialized">int</warning>]
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitTypeAliasInvalidValuesConformanceTests() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   
+                   var1 = 3
+                   
+                   def foo(): ...
+                   
+                   BadTypeAlias1: TA = <warning descr="Assigned value of type alias must be a correct type">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
+                   BadTypeAlias2: TA = <warning descr="Assigned value of type alias must be a correct type">[int, str]</warning>
+                   BadTypeAlias3: TA = <warning descr="Assigned value of type alias must be a correct type">((int, str),)</warning>
+                   BadTypeAlias4: TA = <warning descr="Assigned value of type alias must be a correct type">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
+                   BadTypeAlias5: TA = <warning descr="Assigned value of type alias must be a correct type">{"a": "b"}</warning>
+                   BadTypeAlias6: TA = <warning descr="Assigned value of type alias must be a correct type">(lambda: int)()</warning>
+                   BadTypeAlias7: TA = <warning descr="Assigned value of type alias must be a correct type">[int][0]</warning>
+                   BadTypeAlias8: TA = <warning descr="Assigned value of type alias must be a correct type">int if 1 < 3 else str</warning>
+                   BadTypeAlias9: TA = <warning descr="Assigned value of type alias must be a correct type">var1</warning>
+                   BadTypeAlias10: TA = <warning descr="Assigned value of type alias must be a correct type">True</warning>
+                   BadTypeAlias11: TA = <warning descr="Assigned value of type alias must be a correct type">1</warning>
+                   BadTypeAlias12: TA = <warning descr="Assigned value of type alias must be a correct type">list or set</warning>
+                   BadTypeAlias13: TA = <warning descr="Assigned value of type alias must be a correct type">f"{'int'}"</warning>
+                   BadTypeAlias14: TA = <warning descr="Assigned value of type alias must be a correct type">f"int"</warning>
+                   BadTypeAlias15: TA = <warning descr="Assigned value of type alias must be a correct type">u"int"</warning>
+                   BadTypeAlias16: TA = <warning descr="Assigned value of type alias must be a correct type">b"int"</warning>
+                   BadTypeAlias17: TA = <warning descr="Assigned value of type alias must be a correct type">"foo()"</warning>
+                   """);
+  }
+
+  // PY-76820
+  public void testExplicitTypeAliasValidValuesConformanceTests() {
+    doTestByText("""
+                   from typing import TypeAlias as TA
+                   from typing import Any, Callable, Concatenate, Literal, ParamSpec, TypeVar, Union
+                   
+                   S = TypeVar("S")
+                   T = TypeVar("T")
+                   P = ParamSpec("P")
+                   R = TypeVar("R")
+                   
+                   GoodTypeAlias1: TA = Union[int, str]
+                   GoodTypeAlias2: TA = int | None
+                   GoodTypeAlias3: TA = list[GoodTypeAlias2]
+                   GoodTypeAlias4: TA = list[T]
+                   GoodTypeAlias5: TA = tuple[T, ...] | list[T]
+                   GoodTypeAlias6: TA = tuple[int, int, S, T]
+                   GoodTypeAlias7: TA = Callable[..., int]
+                   GoodTypeAlias8: TA = Callable[[int, T], T]
+                   GoodTypeAlias9: TA = Callable[Concatenate[int, P], R]
+                   GoodTypeAlias10: TA = Any
+                   GoodTypeAlias11: TA = GoodTypeAlias1 | GoodTypeAlias2 | list[GoodTypeAlias4[int]]
+                   GoodTypeAlias12: TA = Callable[P, None]
+                   GoodTypeAlias13: TA = "int | str"
+                   GoodTypeAlias14: TA = list["int | str"]
+                   GoodTypeAlias15: TA = Literal[3, 4, 5, None]
+                   GoodTypeAlias16: TA = "Callable[Concatenate[int, P], R]"
+                   """);
+  }
+
+  // PY-76820 Duplicates the test from conformance test suite but in multi-file context
+  public void testExplicitTypeAliasesMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-76839 Duplicates the test from conformance test suite but in multi-file context
+  public void testImplicitTypeAliasesMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-76839
+  public void testImplicitTypeAliasAssignmentChain() {
+    doTestByText("""
+                 a1 = 3
+                 a2 = a1
+                 a3 = a2
+                 def foo(p: <warning descr="Type hint is invalid or refers to the expression which is not a correct type">a3</warning>): ...
+                 """);
+  }
+
+  public void testMultiLineTypeHint() {
+    doTestByText("""
+                 value: ""\"
+                     int |
+                     str |
+                     list[int]
+                 ""\"
+                 """);
+  }
+
+  public void testParamSpecArgsKwargsIsValid() {
+    doTestByText("""
+                   from typing import ParamSpec, Protocol
+                   P = ParamSpec("P")
+                   class Proto4(Protocol[P]):
+                       def __call__(self, a: int, *args: P.args, **kwargs: P.kwargs) -> None: ...
+                   """);
+  }
+
+  // PY-76834
+  public void testTypeExprValidAnnotationsConformanceTestsSuite() {
+    doTest();
+  }
+
+  // PY-76834
+  public void testTypeExprInvalidAnnotationsConformanceTestsSuite() {
+    doTest();
+  }
+
+  // PY-61787
+  public void testConcatenateNotReportedInCallableArguments() {
+    doTestByText("""
+                   from typing import ParamSpec, Concatenate, Any, TypeVar, Callable
+                   
+                   P = ParamSpec('P')
+                   T = TypeVar('T')
+                   
+                   def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]:  # no warnings expected
+                       ...
+                   """);
+  }
+
+  public void testClassIsAlreadyParameterized() {
+    doTestByText("""
+                   from typing import Generic, TypeVar
+                   
+                   DefaultStrT = TypeVar("DefaultStrT", default=str)
+                   T = TypeVar("T")
+                   T1 = TypeVar("T1")
+                   
+                   class Base(Generic[T, T1, DefaultStrT]): ...
+                   class Foo(Base[int, float]): ...
+                   foo = Foo[<warning descr="Class 'Foo' is already parameterized">int</warning>]()
+                   
+                   class Bar(Generic[T]): ...
+                   class Baz(Bar[int]): ...
+                   baz = Baz[<warning descr="Class 'Baz' is already parameterized">int</warning>]()
+                   
+                   class NoErr(Bar[int]):
+                        def __class_getitem__(cls, item) -> str:
+                            return "str"
+                   
+                   n = NoErr[int]()
+                   """);
+  }
+
+  //PY-76894
+  public void testRawConcatenateUsage() {
+    doTestByText("""
+                   from typing import ParamSpec, Concatenate, Any, TypeVar, Callable, TypeAlias
+
+                   P = ParamSpec('P')
+                   T = TypeVar('T')
+
+                   # Raw Concatenate in function parameters is not allowed
+                   def func1(x: <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, P]</warning>) -> int:
+                       ...
+                   
+                   var: <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, <warning descr="Unbound type variable">P</warning>]</warning>
+                   
+                   def return_concat() -> <warning descr="'Concatenate' can only be used as the first argument to 'Callable' in this context">Concatenate[int, P]</warning>:
+                      ...
+
+                   # Concatenate in type alias is allowed
+                   ConcatenateAlias = Concatenate[int, P]
+                   ConcatenateAlias2: TypeAlias = Concatenate[int, P]
+                   type ConcatenateAlias3[**P] = Concatenate[int, P]
+
+                   # Concatenate in Callable is allowed
+                   def changing_signature(f: Callable[P, T]) -> Callable[Concatenate[Any, P], T]:
+                       ...
+                   """);
+  }
+
+  // PY-80248
+  public void testReferenceToTypeStatementIsValidTypeHint() {
+    doTestByText("""
+                type my_type = str
+                
+                def func1(x: my_type) -> str: ...
+                """);
+  }
+
+  // PY-80278
+  public void testReferenceToNamedTupleIsValidTypeHint() {
+    doTestByText("""
+               from collections import namedtuple
+               
+               Instruction = namedtuple("Instruction", ["register", "op", "value", "base", "check", "limit"])
+               
+               def foo() -> Instruction:  # No warning expected
+                   return Instruction(1, 2, 3, 4, 5, 6)
+               """);
+  }
 
   @NotNull
   @Override

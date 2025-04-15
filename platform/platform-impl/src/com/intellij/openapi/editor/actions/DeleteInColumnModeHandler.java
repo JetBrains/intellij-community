@@ -30,7 +30,7 @@ public final class DeleteInColumnModeHandler extends EditorWriteActionHandler {
       editor.getCaretModel().runForEachCaret(c -> {
         int offset = c.getOffset();
         int lineEndOffset = DocumentUtil.getLineEndOffset(offset, editor.getDocument());
-        if (offset < lineEndOffset) myOriginalHandler.execute(editor, c, dataContext);
+        if (offset < lineEndOffset || c.hasSelection()) myOriginalHandler.execute(editor, c, dataContext);
       });
     }
     else {

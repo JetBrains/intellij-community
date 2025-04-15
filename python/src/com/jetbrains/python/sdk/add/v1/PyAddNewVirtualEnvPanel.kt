@@ -22,7 +22,7 @@ import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import org.jetbrains.annotations.SystemIndependent
@@ -78,8 +78,8 @@ open class PyAddNewVirtualEnvPanel(private val project: Project?,
                   validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    return createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text, newProjectPath, project, module, context,
-                                         inheritSitePackagesField.isSelected, makeSharedField.isSelected)
+    return createVirtualEnvAndSdkSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text, newProjectPath, project, module, context,
+                                               inheritSitePackagesField.isSelected, makeSharedField.isSelected)
   }
 
   override fun getStatisticInfo(): InterpreterStatisticsInfo? {

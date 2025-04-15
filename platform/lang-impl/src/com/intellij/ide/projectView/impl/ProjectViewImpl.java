@@ -1898,13 +1898,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public @NotNull Collection<String> getPaneIds() {
+  public @NotNull @Unmodifiable Collection<String> getPaneIds() {
     return Collections.unmodifiableCollection(idToPane.keySet());
   }
 
   @Override
   @CalledInAny
-  public @NotNull Collection<SelectInTarget> getSelectInTargets() {
+  public @NotNull @Unmodifiable Collection<SelectInTarget> getSelectInTargets() {
     ensurePanesLoaded();
     return mySelectInTargets.values().stream().sorted(TARGET_WEIGHT_COMPARATOR).map(MySelectInTarget::target).toList();
   }

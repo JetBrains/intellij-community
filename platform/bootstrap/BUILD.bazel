@@ -21,6 +21,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/runtime/repository",
     "//platform/diagnostic/telemetry-impl",
+    "//platform/plugins/parser/impl:plugins-parser-impl",
   ],
   runtime_deps = ["//platform/bootstrap/coroutine"]
 )

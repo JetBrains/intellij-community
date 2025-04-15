@@ -1,0 +1,34 @@
+build --nobuild_runfile_links
+common --nolegacy_external_runfiles --experimental_sibling_repository_layout
+
+# https://bazel.build/docs/bazel-and-java#hermetic-testing
+# The code is compiled for, executed, and tested on this JVM.
+build --java_language_version=21
+build --java_runtime_version=remotejdk_21
+
+# https://bazel.build/docs/bazel-and-java#config-build-tools-java
+# A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
+# That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
+build --tool_java_language_version=21
+# Java runtime the tools should use
+build --tool_java_runtime_version=remotejdk_21
+
+# make sure you don't need to open file to read compilation errors
+common --experimental_ui_max_stdouterr_bytes=-1
+
+# disable deprecated WORKSPACE support
+common --noenable_workspace
+test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
+
+# https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
+common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
+
+common --symlink_prefix=out/bazel-
+
+common --incompatible_strict_action_env=true
+
+common --enable_platform_specific_config
+common --incompatible_enable_proto_toolchain_resolution
+
+build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+

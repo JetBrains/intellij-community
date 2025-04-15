@@ -2,6 +2,7 @@
 package com.intellij.patterns;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +46,7 @@ public final class ElementPatternCondition<T> {
     }
   }
 
-  public List<PatternCondition<? super T>> getConditions() {
+  public @Unmodifiable List<PatternCondition<? super T>> getConditions() {
     return conditions;
   }
 

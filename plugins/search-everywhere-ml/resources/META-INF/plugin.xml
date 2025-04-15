@@ -14,7 +14,7 @@
   ]]></description>
 
   <dependencies>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
   <content>
     <module name="intellij.searchEverywhereMl.typos"/>
@@ -28,6 +28,7 @@
   <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!-- Please add the appropriate getter in the SearchEverywhereMlRegistry after adding a new key here -->
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
                  key="search.everywhere.ml.experiment.group"/>
@@ -65,9 +66,7 @@
                      bundle="messages.searchEverywhereMlCoreBundle"/>
     <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlCoreBundle"
-                     service="com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettingsStorage"
-                     property="enableMlRankingInAll"/>
+                     bundle="messages.searchEverywhereMlCoreBundle"/>
 
     <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider

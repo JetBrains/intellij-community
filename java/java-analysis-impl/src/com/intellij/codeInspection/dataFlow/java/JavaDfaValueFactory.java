@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.PsiFieldImpl;
@@ -291,7 +292,7 @@ public final class JavaDfaValueFactory {
       }
       PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(JavaKeywords.NULL)) {
         return factory.fromDfType(DfTypes.NULL);
       }
       if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {

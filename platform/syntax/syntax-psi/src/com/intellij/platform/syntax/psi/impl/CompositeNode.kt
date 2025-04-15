@@ -61,7 +61,7 @@ internal class CompositeNode(
     val startOffset = startOffset - nodeData.offset
     val endOffset = endOffset - nodeData.offset
     val text = originalText.subSequence(startOffset, endOffset)
-    assert(text.length == getEndOffset() - getStartOffset())
+    check(text.length == getEndOffset() - getStartOffset())
     return text
   }
 }

@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -58,6 +59,8 @@ import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorCompositeKt;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -216,6 +219,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private boolean myHovered = false;
   private final @NotNull EventDispatcher<EditorGutterListener> myEditorGutterListeners = EventDispatcher.create(EditorGutterListener.class);
   private int myHoveredFreeMarkersLine = -1;
+  private int myHoveredFreeMarkersY = -1;
   private @Nullable GutterIconRenderer myCurrentHoveringGutterRenderer;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
@@ -665,7 +669,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private void paintLineMarkers(Graphics2D g, int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
     if (isLineMarkersShown()) {
-      paintGutterRenderers(g, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
+      InternalUICustomization service = InternalUICustomization.getInstance();
+      Graphics graphics = g.create();
+      Graphics2D g2 = (Graphics2D) ((service != null) ? service.preserveGraphics(graphics) : graphics);
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      try {
+        paintGutterRenderers(g2, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
+      } finally {
+        g2.dispose();
+      }
     }
   }
 
@@ -2080,16 +2092,20 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     int x = convertX(point.x);
 
     int hoveredLine;
+    int hoveredY;
     if (x >= getExtraLineMarkerFreePaintersAreaOffset() &&
         x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraRightFreePaintersAreaWidth()) {
       hoveredLine = getEditor().xyToLogicalPosition(point).line;
+      hoveredY = point.y;
     }
     else {
       hoveredLine = -1;
+      hoveredY = -1;
     }
 
-    if (myHoveredFreeMarkersLine != hoveredLine) {
+    if (myHoveredFreeMarkersLine != hoveredLine || myHoveredFreeMarkersY != hoveredY) {
       myHoveredFreeMarkersLine = hoveredLine;
+      myHoveredFreeMarkersY = hoveredY;
       repaint();
     }
   }
@@ -2422,7 +2438,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.getX() > getWhitespaceSeparatorOffset()) {
+    int offset = ExperimentalUI.isNewUI() ? getWidth() : getWhitespaceSeparatorOffset();
+    if (e.getX() > offset) {
       return null;
     }
     ActiveGutterRenderer[] gutterRenderer = {null};
@@ -2481,7 +2498,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.BackendOnly,
+                                                                                RequiresPermissions {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2489,6 +2507,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       closeAllAnnotations();
+    }
+
+    @Override
+    public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+      return List.of();
     }
   }
 
@@ -2963,6 +2986,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   @Override
   public int getHoveredFreeMarkersLine() {
     return myHoveredFreeMarkersLine;
+  }
+
+  @Override
+  public int getHoveredFreeMarkersY() {
+    return myHoveredFreeMarkersY;
   }
 
   @Override

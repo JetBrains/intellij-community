@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -54,6 +55,11 @@ public final class ExtractLightMethodObjectHandler {
 
     final PsiFile copy = PsiFileFactory.getInstance(project)
       .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
+
+    if (copy instanceof PsiJavaFile copyJavaFile && file instanceof PsiJavaFile originalJavaFile) {
+      LanguageLevel level = PsiUtil.getLanguageLevel(originalJavaFile);
+      PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(copyJavaFile, level);
+    }
 
     if (originalContext instanceof PsiKeyword && PsiModifier.PRIVATE.equals(originalContext.getText())) {
       final PsiNameIdentifierOwner identifierOwner = PsiTreeUtil.getParentOfType(originalContext, PsiNameIdentifierOwner.class);

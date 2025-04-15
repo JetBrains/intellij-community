@@ -5,6 +5,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
+@ApiStatus.Internal
 public final class PyDescriptorTypeUtil {
 
   private PyDescriptorTypeUtil() { }

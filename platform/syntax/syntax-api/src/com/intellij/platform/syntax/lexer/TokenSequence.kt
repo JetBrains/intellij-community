@@ -2,8 +2,12 @@
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.util.CancellationProvider
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
+import org.jetbrains.annotations.NonNls
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.time.measureTime
 
 internal class TokenSequence(
   internal val lexStarts: IntArray,
@@ -12,16 +16,21 @@ internal class TokenSequence(
   override val tokenizedText: CharSequence,
 ) : TokenList {
   init {
-    assert(tokenCount < lexStarts.size)
-    assert(tokenCount < lexTypes.size)
+    require(tokenCount < lexStarts.size)
+    require(tokenCount < lexTypes.size)
   }
 
-  fun assertMatches(text: CharSequence, lexer: Lexer, cancellationProvider: CancellationProvider?) {
-    val sequence = Builder(text, lexer, cancellationProvider).performLexing()
-    assert(tokenCount == sequence.tokenCount)
+  fun assertMatches(
+    text: CharSequence,
+    lexer: Lexer,
+    cancellationProvider: CancellationProvider?,
+    logger: Logger?,
+  ) {
+    val sequence = Builder(text, lexer, cancellationProvider, logger).performLexing()
+    check(tokenCount == sequence.tokenCount)
     for (j in 0..tokenCount) {
       if (sequence.lexStarts[j] != lexStarts[j] || sequence.lexTypes[j] !== lexTypes[j]) {
-        assert(false)
+        check(false)
       }
     }
   }
@@ -46,6 +55,7 @@ internal class TokenSequence(
  */
 internal class TokenListLexerImpl(
   val tokens: TokenList,
+  val logger: Logger?,
 ) : Lexer {
 
   private var state: Int = 0
@@ -53,20 +63,17 @@ internal class TokenListLexerImpl(
   override fun getState(): Int = state
 
   fun startMeasured(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-    // todo find a way to perform lexing with logging
-    //if (!LOG.isDebugEnabled()) {
-    start(buffer, startOffset, endOffset, initialState)
-    //return
-    //}
-    //val start = System.currentTimeMillis()
-    //start(buffer, startOffset, endOffset, initialState)
-    //val startDuration = System.currentTimeMillis() - start
-    //if (startDuration > LEXER_START_THRESHOLD) {
-    //  LOG.debug("Starting lexer took: ", startDuration,
-    //            "; at ", startOffset, " - ", endOffset, "; state: ", initialState,
-    //            "; text: ", StringUtil.shortenTextWithEllipsis(buffer.toString(), 1024, 500)
-    //  )
-    //}
+    if (logger?.isDebugEnabled() != true) {
+      start(buffer, startOffset, endOffset, initialState)
+      return
+    }
+
+    val startDuration = measureTime {
+      start(buffer, startOffset, endOffset, initialState)
+    }
+    if (startDuration.inWholeMilliseconds > LEXER_START_THRESHOLD) {
+      logger.debug("Starting lexer took: $startDuration; at $startOffset - $endOffset; state: $initialState; text: ${buffer.shortenTextWithEllipsis(1024, 500)}")
+    }
   }
 
   override fun start(buf: CharSequence, start: Int, end: Int) {
@@ -78,10 +85,10 @@ internal class TokenListLexerImpl(
   }
 
   override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
-    assert(equal(buffer, tokens.tokenizedText))
-    assert(startOffset == 0)
-    assert(endOffset == buffer.length)
-    assert(initialState == 0)
+    require(equal(buffer, tokens.tokenizedText))
+    require(startOffset == 0)
+    require(endOffset == buffer.length)
+    require(initialState == 0)
     state = 0
   }
 
@@ -124,6 +131,7 @@ internal class Builder(
   val text: CharSequence,
   val lexer: Lexer,
   val cancellationProvider: CancellationProvider?,
+  val logger: Logger?,
 ) {
   private var lexStarts: IntArray
   private var lexTypes: Array<SyntaxElementType?>
@@ -150,8 +158,7 @@ internal class Builder(
       }
       val tokenStart = lexer.getTokenStart()
       if (tokenStart < offset) {
-        // todo add logging here!!!
-        //reportDescendingOffsets(i, offset, tokenStart)
+        reportDescendingOffsets(i, offset, tokenStart)
       }
       offset = tokenStart
       lexStarts[i] = offset
@@ -165,26 +172,24 @@ internal class Builder(
     return TokenSequence(lexStarts, lexTypes as Array<SyntaxElementType>, i, text)
   }
 
-  /*
-  fun reportDescendingOffsets(tokenIndex: Int, offset: Int, tokenStart: Int) {
+  private fun reportDescendingOffsets(tokenIndex: Int, offset: Int, tokenStart: Int) {
+    if (logger == null) return
+
     val sb: @NonNls StringBuilder = StringBuilder()
-    val tokenType = myLexer.getTokenType()
+    val tokenType = lexer.getTokenType()
     sb.append("Token sequence broken")
-      .append("\n  this: '").append(myLexer.getTokenText()).append("' (").append(tokenType).append(
-        ':') //.append(tokenType != null ? tokenType.getLanguage() : null).append(") ").append(tokenStart).append(":") todo
-      .append(myLexer.getTokenEnd())
+      .append("\n  this: '").append(lexer.getTokenText()).append("' (").append(tokenType).append(") ").append(tokenStart).append(":")
+      .append(lexer.getTokenEnd())
+
     if (tokenIndex > 0) {
-      val prevStart = myLexStarts[tokenIndex - 1]
-      sb.append("\n  prev: '").append(myText.subSequence(prevStart, offset)).append("' (").append(myLexTypes[tokenIndex - 1]).append(':')
-      //.append(myLexTypes[tokenIndex - 1].getLanguage()).append(") ").append(prevStart).append(":").append(offset) todo
+      val prevStart = lexStarts[tokenIndex - 1]
+      sb.append("\n  prev: '").append(text.subSequence(prevStart, offset)).append("' (").append(lexTypes[tokenIndex - 1]).append(") ").append(prevStart).append(":").append(offset)
     }
-    val quoteStart = max((tokenStart - 256).toDouble(), 0.0).toInt()
-    val quoteEnd = min((tokenStart + 256).toDouble(), myText.length.toDouble()).toInt()
-    sb.append("\n  quote: [").append(quoteStart).append(':').append(quoteEnd)
-      .append("] '").append(myText.subSequence(quoteStart, quoteEnd)).append('\'')
-    LOG.error(sb.toString())
+    val quoteStart = max(tokenStart - 256, 0)
+    val quoteEnd = min(tokenStart + 256, text.length)
+    sb.append("\n  quote: [").append(quoteStart).append(':').append(quoteEnd).append("] '").append(text.subSequence(quoteStart, quoteEnd)).append('\'')
+    logger.error(sb.toString())
   }
-  */
 
   fun resizeLexemes(newSize: Int) {
     lexStarts = lexStarts.copyOf(newSize)
@@ -207,3 +212,19 @@ internal fun equal(s1: CharSequence, s2: CharSequence): Boolean {
     s1[i] == s2[i]
   }
 }
+
+private fun CharSequence.shortenTextWithEllipsis(
+  maxLength: Int,
+  suffixLength: Int,
+): CharSequence {
+  val symbol = "..."
+  val textLength = length
+  if (textLength <= maxLength) {
+    return this
+  }
+
+  val prefixLength = maxLength - suffixLength - symbol.length
+  check(prefixLength >= 0)
+  return substring(0, prefixLength) + symbol + substring(textLength - suffixLength)
+}
+

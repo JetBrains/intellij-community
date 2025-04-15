@@ -1,9 +1,10 @@
 // "Terminate preceding call with semicolon" "true"
 
 fun foo() {
-    15.toString();
+    15.hashCode();
     // comment and formatting
     {}
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSemicolonBeforeLambdaExpressionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSemicolonBeforeLambdaExpressionFix

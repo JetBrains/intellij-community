@@ -7,8 +7,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:tools-api_dump-kotlin-metadata-bcv",
+    "@lib//:asm-tools",
     "@lib//:tools-api_dump-kotlinx-bcv",
     "@lib//:kotlinx-collections-immutable",
   ]

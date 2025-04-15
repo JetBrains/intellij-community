@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
@@ -9,20 +10,20 @@ import com.intellij.platform.syntax.lexer.TokenSequence
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
-import com.intellij.platform.syntax.util.CancellationProvider
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.Logger.Attachment
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
+import com.intellij.platform.syntax.Logger.Attachment
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.time.measureTimedValue
 
 internal class ParsingTreeBuilder(
   val lexer: Lexer,
   override val text: CharSequence,
-  val myWhitespaces: Set<SyntaxElementType>,
-  private var myComments: Set<SyntaxElementType>,
+  val myWhitespaces: SyntaxElementTypeSet,
+  private var myComments: SyntaxElementTypeSet,
   val startOffset: Int,
   private var myWhitespaceSkippedCallback: WhitespaceSkippedCallback?,
   cachedLexemes: TokenList?,
@@ -60,7 +61,7 @@ internal class ParsingTreeBuilder(
   override val lexingTimeNs: Long
 
   init {
-    val (tokens, _lexingTimeNs) = performLexing(cachedLexemes, text, lexer, cancellationProvider)
+    val (tokens, _lexingTimeNs) = performLexing(cachedLexemes, text, lexer, cancellationProvider, logger)
     lexingTimeNs = _lexingTimeNs
     myLexStarts = tokens.lexStarts
     myLexTypes = tokens.lexTypes
@@ -80,7 +81,7 @@ internal class ParsingTreeBuilder(
     }
 
   internal fun precede(marker: ProductionMarker): SyntaxTreeBuilder.Marker {
-    assert(marker.getStartTokenIndex() >= 0) { "Preceding disposed marker" }
+    require(marker.getStartTokenIndex() >= 0) { "Preceding disposed marker" }
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker)
     }
@@ -136,7 +137,7 @@ internal class ParsingTreeBuilder(
     myWhitespaceSkippedCallback = callback
   }
 
-  override fun enforceCommentTokens(tokens: Set<SyntaxElementType>) {
+  override fun enforceCommentTokens(tokens: SyntaxElementTypeSet) {
     myComments = tokens
   }
 
@@ -273,7 +274,7 @@ internal class ParsingTreeBuilder(
   }
 
   internal fun rollbackTo(marker: CompositeMarker) {
-    assert(marker.getStartTokenIndex() >= 0) { "The marker is already disposed" }
+    require(marker.getStartTokenIndex() >= 0) { "The marker is already disposed" }
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker)
     }
@@ -322,7 +323,7 @@ internal class ParsingTreeBuilder(
     }
   }
 
-  override fun error(messageText: String) {
+  override fun error(messageText: @Nls String) {
     val lastMarker = myProduction.getStartMarkerAt(myProduction.size - 1)
     if (lastMarker is ErrorMarker && lastMarker.getStartTokenIndex() == myCurrentLexeme) {
       return
@@ -378,17 +379,42 @@ internal class ParsingTreeBuilder(
 
       override val size: Int
         get() = myProduction.size
+
+      override val collapsedMarkerSize: Int
+        get() = myOptionalData.collapsedMarkerSize
+
+      override val collapsedMarkers: IntArray
+        get() {
+          if (collapsedMarkerSize == 0) return IntArray(0)
+
+          // collapsed marker ids are different from production marker ids!!!
+          // production marker ids are defined by [myProduction]
+          // marker ids are defined by [pool]
+          val markerId2productionId = IntArray(pool.size)
+          for (i in 0 until myProduction.size) {
+            myProduction.getStartMarkerAt(i)?.let { m ->
+              markerId2productionId[m.markerId] = i
+            }
+          }
+
+          // replacing marker ids with production marker ids
+          val collapsedMarkers = myOptionalData.collapsedMarkerIds
+          for (i in 0 until collapsedMarkers.size) {
+            collapsedMarkers[i] = markerId2productionId[collapsedMarkers[i]]
+          }
+          return collapsedMarkers
+        }
     }
 
     override val tokenSequence: TokenList
       get() = tokens
 
     override fun copyTokenStartsToArray(dest: IntArray, srcStart: Int, destStart: Int, length: Int) {
-      System.arraycopy(myLexStarts, srcStart, dest, destStart, length)
+      myLexStarts.copyInto(dest, destStart, srcStart, srcStart + length)
     }
 
     override fun copyTokenTypesToArray(dest: Array<in SyntaxElementType>, srcStart: Int, destStart: Int, length: Int) {
-      System.arraycopy(myLexTypes, srcStart, dest, destStart, length)
+      myLexTypes.copyInto(dest, destStart, srcStart, srcStart + length)
     }
   }
 
@@ -409,7 +435,7 @@ internal class ParsingTreeBuilder(
       val item = starting ?: pool.get(-id)
 
       val binder = if (item is ErrorMarker) {
-        assert(!done)
+        check(!done)
         WhitespacesBinders.defaultRightBinder()
       }
       else {
@@ -493,30 +519,26 @@ internal class ParsingTreeBuilder(
 private const val UNBALANCED_MESSAGE: @NonNls String = "Unbalanced tree. Most probably caused by unbalanced markers. " +
                                                        "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem"
 
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
-var DIAGNOSTICS: PsiBuilderDiagnostics? = null
-
 private fun performLexing(
   cachedLexemes: TokenList?,
   text: CharSequence,
   lexer: Lexer,
-  cancellationProvider: CancellationProvider?
+  cancellationProvider: CancellationProvider?,
+  logger: Logger?,
 ): LexingResult {
   if (cachedLexemes is TokenSequence) {
-    assert(cachedLexemes.lexStarts[cachedLexemes.tokenCount] == text.length)
+    require(cachedLexemes.lexStarts[cachedLexemes.tokenCount] == text.length)
 
     if (doLexingOptimizationCorrectionCheck()) {
-      cachedLexemes.assertMatches(text, lexer, cancellationProvider)
+      cachedLexemes.assertMatches(text, lexer, cancellationProvider, logger)
     }
     return LexingResult(cachedLexemes, 0)
   }
   // todo do we need to cover a raw TokenList?
-
-  val startTime = System.nanoTime()
-  val sequence = performLexing(text, lexer) as TokenSequence
-  val endTime = System.nanoTime()
-  return LexingResult(sequence, endTime - startTime)
+  val (sequence, duration) = measureTimedValue {
+    performLexing(text, lexer, cancellationProvider, logger) as TokenSequence
+  }
+  return LexingResult(sequence, duration.inWholeNanoseconds)
 }
 
 private data class LexingResult(val tokens: TokenSequence, val lexingTimeNs: Long)

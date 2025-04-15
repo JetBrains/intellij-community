@@ -10,10 +10,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -87,7 +88,7 @@ open class AttachProjectAction : AnAction(), DumbAware {
         baseDir = virtualFile.parent
         while (baseDir != null) {
           val isProjectDirectory = try {
-            ProjectCoreUtil.isKnownProjectDirectory(baseDir.toNioPath())
+            service<ProjectStorePathManager>().testStoreDirectoryExistsForProjectRoot(baseDir.toNioPath())
           }
           catch (e: InvalidPathException) {
             false

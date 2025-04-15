@@ -892,6 +892,7 @@ public class StringUtilTest {
   @Test
   public void testCollapseWhiteSpace() {
     assertEquals("one two three four five", StringUtil.collapseWhiteSpace("\t one\ttwo     three\nfour five   "));
+    assertEquals("one two three four five", StringUtil.collapseWhiteSpace(" one \ttwo  \t  three\n\tfour five "));
   }
 
   @Test

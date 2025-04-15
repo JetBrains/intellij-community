@@ -565,6 +565,7 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
+  override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
 }
 
 private val TEST_ROOT_USER_SET by lazy { Key.create<Boolean>("TEST_ROOT_USER_SET") }

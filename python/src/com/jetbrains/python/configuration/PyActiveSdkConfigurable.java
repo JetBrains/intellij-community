@@ -329,11 +329,18 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected @Nullable Sdk getSdk() {
+    Sdk sdk = null;
     if (myModule == null) {
-      return ProjectRootManager.getInstance(myProject).getProjectSdk();
+      sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    } else {
+      sdk =  ModuleRootManager.getInstance(myModule).getSdk();
     }
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-    return rootManager.getSdk();
+
+    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
+      return sdk;
+    }
+
+    return null;
   }
 
   @Override

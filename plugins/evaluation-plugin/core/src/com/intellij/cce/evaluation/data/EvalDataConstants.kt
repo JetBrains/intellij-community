@@ -20,11 +20,23 @@ object Result {
   val FILE_UPDATES: EvalDataDescription<List<FileUpdate>, FileUpdate> = EvalDataDescription(
     name = "File updates",
     description = "Bind with all updated files",
-    DataPlacement.FileUpdates,
+    DataPlacement.FileUpdates("file_updates"),
     presentation = EvalDataPresentation(
       PresentationCategory.RESULT,
       DataRenderer.TextDiff,
       DynamicName.FileName,
+      ignoreMissingData = true
+    )
+  )
+
+  val EXPECTED_FILE_UPDATES: EvalDataDescription<List<FileUpdate>, FileUpdate> = EvalDataDescription(
+    name = "Expected file updates",
+    description = "Bind with all expected updated files",
+    DataPlacement.FileUpdates("expected_file_updates"),
+    presentation = EvalDataPresentation(
+      PresentationCategory.RESULT,
+      DataRenderer.TextDiff,
+      DynamicName.Formatted("Expected ", DynamicName.FileName),
       ignoreMissingData = true
     )
   )
@@ -69,6 +81,32 @@ object Execution {
       PresentationCategory.EXECUTION,
       DataRenderer.Text
     )
+  )
+
+  val LLM_SYSTEM_CONTEXT: TrivialEvalData<String> = EvalDataDescription(
+    name = "LLM system context",
+    description = "Result system prompt used for LLM",
+    DataPlacement.AdditionalText(AIA_SYSTEM_CONTEXT),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text
+    )
+  )
+
+  val LLM_CHAT_DUMP: TrivialEvalData<String> = EvalDataDescription(
+    name = "LLM chat dump",
+    description = "Full dump of the chat session including system context, messages, and metadata",
+    placement = DataPlacement.AdditionalText(AIA_CHAT_DUMP),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text
+    )
+  )
+
+  val NAME: TrivialEvalData<String> = EvalDataDescription(
+    name = "Name",
+    description = "Some description of an evaluation case",
+    DataPlacement.AdditionalText(AIA_NAME),
   )
 
   val DESCRIPTION: TrivialEvalData<String> = EvalDataDescription(
@@ -176,6 +214,32 @@ object Analysis {
       ProblemIndicator.FromValue { it }
     )
   )
+
+  val EXACT_MATCH: TrivialEvalData<Double> = EvalDataDescription(
+    name = "Exact match",
+    description = "Bind with `true` if result matches expected one",
+    DataPlacement.AdditionalDouble(AIA_EXACT_MATCH),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      DataRenderer.InlineDouble,
+    ),
+    problemIndicators = listOf(
+      ProblemIndicator.FromMetric { Metrics.EXACT_MATCH }
+    )
+  )
+
+  val AST_MATCH: TrivialEvalData<Double> = EvalDataDescription(
+    name = "Ast match",
+    description = "Bind with `true` if result AST matches expected one",
+    DataPlacement.AdditionalDouble(AIA_AST_MATCH),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      DataRenderer.InlineDouble,
+    ),
+    problemIndicators = listOf(
+      ProblemIndicator.FromMetric { Metrics.AST_MATCH }
+    )
+  )
 }
 
 object Metrics {
@@ -233,4 +297,14 @@ object Metrics {
     threshold = 1.0,
     dependencies = MetricDependencies(Analysis.FAILED_RELATED_FILE_VALIDATIONS)
   ) { RelatedFileValidationSuccess() }
+
+  val EXACT_MATCH: EvalMetric = EvalMetric(
+    threshold = 1.0,
+    dependencies = MetricDependencies(Analysis.EXACT_MATCH)
+  ) { ExactMatchMetric() }
+
+  val AST_MATCH: EvalMetric = EvalMetric(
+    threshold = 1.0,
+    dependencies = MetricDependencies(Analysis.AST_MATCH)
+  ) { AstMatchMetric() }
 }

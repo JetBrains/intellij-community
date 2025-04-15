@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
+import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
@@ -22,10 +23,13 @@ import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
-import com.intellij.openapi.observable.properties.*
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.observable.properties.whenPropertyReset
+import com.intellij.openapi.observable.properties.whenPropertySet
 import com.intellij.openapi.observable.util.set
 import com.intellij.openapi.observable.util.whenDisposed
-import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -37,7 +41,7 @@ import com.intellij.util.ui.update.queueTracked
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.*
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.streams.asStream
@@ -413,7 +417,7 @@ class AutoImportProjectTracker(
 
     private val asyncChangesProcessingProperty = AtomicBooleanProperty(
       !ApplicationManager.getApplication().isHeadlessEnvironment
-      || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+      || BackgroundAsyncSupplier.isAsyncInHeadless()
     )
 
     private val isEnabledAutoReload: Boolean

@@ -54,7 +54,7 @@ open class ProjectActionsEnvironment(
   }
   private var datasetRefIsHandled = false
 
-  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
+  override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language), strategy)
   override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
   override val preparationDescription: String = "Generating actions by selected files"
@@ -83,7 +83,7 @@ open class ProjectActionsEnvironment(
     if (!datasetRefIsHandled) {
       if (datasetRef != null) {
         datasetRef.prepare(datasetContext)
-        val path = datasetContext.path(datasetRef.name)
+        val path = datasetContext.path(datasetRef)
         val finalPath = DatasetRefConverter().convert(datasetRef, datasetContext, project) ?: path
         datasetContext.replaceActionsStorage(ActionsSingleFileStorage(finalPath))
      }
@@ -248,7 +248,7 @@ open class ProjectActionsEnvironment(
 
   private inner class FileActionsChunk(
     private val fileActions: FileActions,
-    override val presentationText: String,
+    private val presentationText: String,
   ) : EvaluationChunk {
     override val datasetName: String = config.projectName
     override val name: String = fileActions.path
@@ -259,13 +259,16 @@ open class ProjectActionsEnvironment(
       filter: InterpretFilter,
       order: InterpretationOrder,
       sessionHandler: (Session) -> Unit
-    ): List<Session> {
+    ): EvaluationChunk.Result {
       val factory = object : InvokersFactory {
         override fun createActionsInvoker(): ActionsInvoker = CommonActionsInvoker(project)
         override fun createFeatureInvoker(): FeatureInvoker = featureInvoker
       }
       val actionInterpreter = ActionInvokingInterpreter(factory, handler, filter, order)
-      return actionInterpreter.interpret(fileActions, sessionHandler)
+      return EvaluationChunk.Result(
+        actionInterpreter.interpret(fileActions, sessionHandler),
+        presentationText
+      )
     }
   }
 

@@ -24,6 +24,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:fastutil-min",
     "//java/codeserver/core:java-codeserver-core",
+    "//java/java-syntax:syntax",
   ],
   exports = [
     "//java/java-psi-api:psi",

@@ -9,14 +9,13 @@ import com.intellij.openapi.project.DumbAwareAction
 
 private class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    getTerminalWidget(e)?.resetFontSize()
+    val widget = getTerminalWidget(e) ?: return
+    widget.settingsProvider.resetTerminalFontSize()
   }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = getTerminalWidget(e) != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

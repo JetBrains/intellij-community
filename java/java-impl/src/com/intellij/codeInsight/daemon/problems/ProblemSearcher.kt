@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.problems
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector
 import com.intellij.pom.Navigatable
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.util.PsiTreeUtil
 
 /**
@@ -106,7 +107,7 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
   }
 
   private fun findProblem(element: PsiElement) {
-    if (element !is Navigatable) return
+    if (element !is Navigatable || element is SyntheticElement || element is LightElement) return
     val error = JavaErrorCollector.findSingleError(element) ?: return
     val context = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement::class.java,
                                                        PsiClass::class.java, PsiMethod::class.java, PsiVariable::class.java) ?: element

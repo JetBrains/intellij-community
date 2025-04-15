@@ -370,12 +370,14 @@ fun KtExpression.isPure(): Boolean {
                 true
             }
 
-            target is KtParameter && !target.isPropertyParameter() -> {
+            target is KtParameter && !(target.isPropertyParameter() && target.isMutable) -> {
                 true
             }
 
             else -> false
         }
+    } else if (expr is KtQualifiedExpression) {
+        return expr.receiverExpression.isPure() && expr.selectorExpression?.isPure() != false
     }
     return false
 }

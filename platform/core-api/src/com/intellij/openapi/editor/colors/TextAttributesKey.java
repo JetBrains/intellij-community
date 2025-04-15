@@ -276,8 +276,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public static @NotNull List<TextAttributesKey> getAllKeys() {
-    return new ArrayList<>(ourRegistry.values());
+  public static @NotNull @Unmodifiable List<TextAttributesKey> getAllKeys() {
+    return Collections.unmodifiableList(new ArrayList<>(ourRegistry.values()));
   }
 
   @FunctionalInterface

@@ -269,7 +269,7 @@ internal class WorkspaceMetaModelBuilder(
         classSymbol.classKind == KaClassKind.ENUM_CLASS -> {
           val enumEntries = classSymbol.staticMemberScope.callables.filterIsInstance<KaEnumEntrySymbol>().map { it.name.asString() }
           ValueType.Enum<Any>(javaClassFqn, superTypesJavaFqns, enumEntries.toList(),
-                              createProperties(classSymbol, knownTypes).asSequence().withoutEnumFields().toList())
+                              createProperties(classSymbol, knownTypes).withoutEnumFields().toList())
         }
         classSymbol.modality == KaSymbolModality.SEALED && classSymbol is KaNamedClassSymbol -> {
           val subclasses = classSymbol.sealedClassInheritors

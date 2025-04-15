@@ -1,0 +1,10 @@
+- name: lib/ec4j-core.jar
+  library: ec4j-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/ec4j/core/ec4j-core/0/ec4j-core-0.jar
+  reason: <- intellij.editorconfig.backend
+- name: lib/editorconfig-plugin.jar
+  modules:
+  - name: intellij.editorconfig.plugin
+  contentModules:
+  - name: intellij.editorconfig.backend

@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
 import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
 abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
@@ -82,8 +84,15 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
   suspend fun waitForImport(action: suspend () -> Project): Project {
     val p = action()
-    waitForImportCompletion(p)
+    Observation.awaitConfiguration(p) { message ->
+      logConfigurationMessage(message)
+    }
     return p
+  }
+
+  private fun logConfigurationMessage(message: String) {
+    if (message.contains("scanning")) return
+    MavenLog.LOG.warn(message)
   }
 
   private suspend fun waitForImportCompletion(project: Project) {

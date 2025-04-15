@@ -13,7 +13,16 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
-import org.apache.maven.project.*;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DefaultProjectBuilder;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionResult;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
+import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
@@ -25,14 +34,30 @@ import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.LongRunningTask;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 import org.jetbrains.idea.maven.server.PomHashMap;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -42,6 +67,7 @@ public class Maven40ProjectResolver {
   private final boolean myUpdateSnapshots;
   private final @NotNull Maven40ImporterSpy myImporterSpy;
   private final LongRunningTask myLongRunningTask;
+  @NotNull List<@NotNull File> myFilesToResolve;
   private final PomHashMap myPomHashMap;
   private final List<String> myActiveProfiles;
   private final List<String> myInactiveProfiles;
@@ -55,6 +81,7 @@ public class Maven40ProjectResolver {
                                 boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
                                 @NotNull LongRunningTask longRunningTask,
+                                @NotNull List<@NotNull File> filesToResolve,
                                 @NotNull PomHashMap pomHashMap,
                                 @NotNull List<String> activeProfiles,
                                 @NotNull List<String> inactiveProfiles,
@@ -67,6 +94,7 @@ public class Maven40ProjectResolver {
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myLongRunningTask = longRunningTask;
+    myFilesToResolve = filesToResolve;
     myPomHashMap = pomHashMap;
     myActiveProfiles = activeProfiles;
     myInactiveProfiles = inactiveProfiles;
@@ -114,7 +142,7 @@ public class Maven40ProjectResolver {
   }
 
   private @NotNull ArrayList<MavenServerExecutionResult> doResolveProject() {
-    Set<File> files = myPomHashMap.keySet();
+    List<File> files = myFilesToResolve;
     File file = !files.isEmpty() ? files.iterator().next() : null;
     MavenExecutionRequest request = myEmbedder.createRequest(file, myActiveProfiles, myInactiveProfiles, userProperties);
 
@@ -130,7 +158,7 @@ public class Maven40ProjectResolver {
   }
 
   private @NotNull ArrayList<MavenServerExecutionResult> getExecutionResults(MavenSession session,
-                                                                             Set<File> files,
+                                                                             Collection<File> files,
                                                                              MavenExecutionRequest request) {
     ArrayList<MavenServerExecutionResult> executionResults = new ArrayList<>();
     try {
@@ -343,7 +371,6 @@ public class Maven40ProjectResolver {
 
     MavenModel model = new MavenModel();
     Model nativeModel = mavenProject.getModel();
-    Model interpolatedNativeModel = myEmbedder.interpolateAndAlignModel(nativeModel, mavenProject.getBasedir());
     try {
       DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
@@ -351,7 +378,7 @@ public class Maven40ProjectResolver {
       List<DependencyNode> dependencyNodes = dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven40AetherModelConverter.convertModelWithAetherDependencyTree(
         mavenProject,
-        interpolatedNativeModel,
+        nativeModel,
         dependencyNodes,
         myLocalRepositoryFile);
     }
@@ -366,7 +393,7 @@ public class Maven40ProjectResolver {
       activatedProfiles.addAll(profileList);
     }
 
-    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(interpolatedNativeModel);
+    Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(nativeModel);
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, getManagedDependencies(mavenProject), dependencyHash, dependencyResolutionSkipped,
                                                  mavenModelMap, activatedProfiles);
@@ -532,7 +559,7 @@ public class Maven40ProjectResolver {
     }));
   }
 
-  private @NotNull List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Set<File> files,
+  private @NotNull List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files,
                                                                          MavenSession session) {
     ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
 

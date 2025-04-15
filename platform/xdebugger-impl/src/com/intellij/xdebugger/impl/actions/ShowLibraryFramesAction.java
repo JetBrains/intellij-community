@@ -6,13 +6,15 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-final class ShowLibraryFramesAction extends ToggleAction {
+final class ShowLibraryFramesAction extends ToggleAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   // we should remember initial answer "isLibraryFrameFilterSupported" because on stop no debugger process, but UI is still shown
   // - we should avoid "jumping" (visible (start) - invisible (stop) - visible (start again))
   private static final String IS_LIBRARY_FRAME_FILTER_SUPPORTED = "isLibraryFrameFilterSupported";
@@ -23,15 +25,15 @@ final class ShowLibraryFramesAction extends ToggleAction {
 
   private static boolean isLibraryFrameFilterSupported(@NotNull AnActionEvent e, Presentation presentation) {
     Object isSupported = presentation.getClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED);
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
+    XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
     if (isSupported == null) {
-      if (session == null) {
-        // if session is null and isSupported is null - just return, it means that action created initially not in the xdebugger tab
+      if (sessionProxy == null) {
+        // if sessionProxy is null and isSupported is null - just return, it means that action created initially not in the xdebugger tab
         presentation.setVisible(false);
         return false;
       }
 
-      isSupported = session.getDebugProcess().isLibraryFrameFilterSupported();
+      isSupported = sessionProxy.isLibraryFrameFilterSupported();
       presentation.putClientProperty(IS_LIBRARY_FRAME_FILTER_SUPPORTED, isSupported);
     }
 

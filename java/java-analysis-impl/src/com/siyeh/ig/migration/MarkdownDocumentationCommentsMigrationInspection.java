@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +24,11 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.javadoc.PsiDocToken.isDocToken;
+
+/**
+ * @author Bas Leijdekkers
+ */
 @ApiStatus.Internal
 public final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection implements DumbAware {
   @Override
@@ -93,7 +97,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         if (isDocToken(child, JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) {
           continue;
         }
-        else if (child instanceof PsiDocToken token && SKIP_TOKENS.contains(token.getTokenType())) {
+        else if (isDocToken(child, SKIP_TOKENS)) {
           continue;
         }
         else if (child instanceof PsiInlineDocTag inlineDocTag) {
@@ -316,10 +320,6 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         }
       }
       result.append(']');
-    }
-
-    private static boolean isDocToken(PsiElement element, IElementType tokenType) {
-      return element instanceof PsiDocToken token && tokenType == token.getTokenType();
     }
   }
 }

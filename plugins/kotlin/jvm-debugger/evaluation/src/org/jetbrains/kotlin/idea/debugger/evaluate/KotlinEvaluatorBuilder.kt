@@ -151,6 +151,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
 
         return try {
+            checkCodeFragmentBytecode(compiledData)
             runEvaluation(context, compiledData).also {
                 if (!compiledData.statisticReported) {
                     compiledData.statisticReported = true
@@ -166,6 +167,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             if (!isUnitTestMode()) {
                 val cause = e.cause
                 val errorType = when {
+                    e is MiscompiledCodeException -> StatisticsEvaluationResult.MISCOMPILED
                     e is ControlFlowException || e is IndexNotReadyException -> StatisticsEvaluationResult.UNRELATED_EXCEPTION
                     e is LinkageError || e is Eval4JIllegalArgumentException || e is Eval4JIllegalStateException ->
                         StatisticsEvaluationResult.MISCOMPILED

@@ -4,7 +4,10 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.OsAbstractionForJdkInstaller;
@@ -223,12 +226,9 @@ public class JavaHomeFinderBasic {
     try (Stream<Path> files = Files.list(folder)) {
       files.forEach(candidate -> {
         for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-          try {
-            final int found = result.size();
-            scanFolder(adjusted, false, result);
-            if (result.size() > found) { break; } // Avoid duplicates
-          }
-          catch (IllegalStateException ignored) {}
+          final int found = result.size();
+          scanFolder(adjusted, false, result);
+          if (result.size() > found) { break; } // Avoid duplicates
         }
       });
     }

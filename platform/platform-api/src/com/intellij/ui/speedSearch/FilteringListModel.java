@@ -7,6 +7,7 @@ import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -103,8 +104,8 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     }
   }
 
-  protected @NotNull Collection<T> getElementsToFilter() {
-    ArrayList<T> result = new ArrayList<>();
+  protected @NotNull @Unmodifiable Collection<T> getElementsToFilter() {
+    List<T> result = new ArrayList<>(myOriginalModel.getSize());
     for (int i = 0; i < myOriginalModel.getSize(); i++) {
       result.add(myOriginalModel.getElementAt(i));
     }

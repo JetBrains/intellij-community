@@ -1,7 +1,6 @@
 package com.intellij.webSymbols.search
 
 import com.intellij.model.psi.PsiExternalReferenceHost
-import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.progress.ProgressManager
@@ -14,6 +13,7 @@ import com.intellij.util.Processor
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.utils.asSingleSymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -22,14 +22,16 @@ class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiEl
                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {
   private val mySymbolReferenceService = PsiSymbolReferenceService.getService()
   private val myPsiReferenceService = PsiReferenceService.getService()
+  private val myTargetSymbol = PsiSymbolService.getInstance().asSymbol(targetElement)
 
   override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
     if (!targetElement.isValid) {
       return false
     }
     if (element is PsiExternalReferenceHost) {
+      val targetSymbol = targetSymbols.asSingleSymbol() ?: myTargetSymbol
       // Web symbol references
-      mySymbolReferenceService.getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement))
+      mySymbolReferenceService.getReferences(element, WebSymbolReferenceHints(targetSymbol, offsetInElement))
         .asSequence()
         .filterIsInstance<WebSymbolReference>()
         .filter { it.rangeInElement.containsOffset(offsetInElement) }
@@ -38,8 +40,7 @@ class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiEl
           val psiSourcedWebSymbols = ref.resolveReference().filterIsInstance<PsiSourcedWebSymbol>()
           if (psiSourcedWebSymbols.isEmpty()) return@forEach
           val equivalentSymbol = if (targetSymbols.isEmpty()) {
-            val targetPsiSymbol = PsiSymbolService.getInstance().asSymbol(targetElement)
-            psiSourcedWebSymbols.find { it.isEquivalentTo(targetPsiSymbol) }
+            psiSourcedWebSymbols.find { it.isEquivalentTo(myTargetSymbol) }
           }
           else {
             targetSymbols.find { targetSymbol -> psiSourcedWebSymbols.any { it.isEquivalentTo(targetSymbol) } }

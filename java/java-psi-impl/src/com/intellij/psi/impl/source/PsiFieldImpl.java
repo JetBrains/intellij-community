@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -20,7 +20,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stub.JavaStubImplUtil;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IconManager;
@@ -48,7 +48,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     this(stub, JavaStubElementTypes.FIELD);
   }
 
-  protected PsiFieldImpl(PsiFieldStub stub, IStubElementType type) {
+  protected PsiFieldImpl(PsiFieldStub stub, IElementType type) {
     super(stub, type);
   }
 
@@ -166,7 +166,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   private @Nullable PsiModifierList getSelfModifierList() {
-    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

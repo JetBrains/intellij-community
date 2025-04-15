@@ -31,7 +31,8 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    Graphics2D g2 = (Graphics2D)g.create();
+    InternalUICustomization service = InternalUICustomization.getInstance();
+    Graphics2D g2 = (Graphics2D) ((service != null) ? service.transformButtonGraphics(g.create()) : g.create()) ;
 
     try {
       Object avoidExtendingObject = ClientProperty.get(c, AVOID_EXTENDING_BORDER_GRAPHICS);

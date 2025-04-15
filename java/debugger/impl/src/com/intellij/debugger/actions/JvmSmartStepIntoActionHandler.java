@@ -56,7 +56,7 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
   }
 
   @Override
-  public String getPopupTitle(@NotNull XSourcePosition position) {
+  public String getPopupTitle() {
     return JavaDebuggerBundle.message("title.smart.step.popup");
   }
 

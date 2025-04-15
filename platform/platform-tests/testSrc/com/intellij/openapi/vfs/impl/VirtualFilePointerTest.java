@@ -165,6 +165,27 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
 
+  @Test//IJPL-176784
+  public void testDeleteFileAndRecreateWithAnotherCase() {
+    VirtualFilePointerListener pointersListener = new LoggingListener();
+
+    File fileToDelete = tempDir.newFile("lower-case.txt");
+    VirtualFilePointer pointerToFileToDelete = createPointerByFile(fileToDelete, pointersListener);
+    assertTrue(pointerToFileToDelete.isValid());
+    VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
+    assertFalse(pointerToFileToDelete.isValid());
+
+    File fileToReCreate = tempDir.newFile("lower-case.txt");
+    VirtualFilePointer pointerToFileToReCreate = createPointerByFile(fileToReCreate, pointersListener);
+    assertTrue(pointerToFileToReCreate.isValid());
+    VfsTestUtil.deleteFile(getVirtualFile(fileToReCreate));
+    assertFalse(pointerToFileToReCreate.isValid());
+
+    File fileToReCreateWithAnotherCase = tempDir.newFile("LOWER-CASE.txt");
+    VirtualFilePointer pointerToFileToReCreateAnotherCase = createPointerByFile(fileToReCreateWithAnotherCase, pointersListener);
+    assertTrue(pointerToFileToReCreateAnotherCase.isValid());
+  }
+
   @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testSwitchingVfs() {

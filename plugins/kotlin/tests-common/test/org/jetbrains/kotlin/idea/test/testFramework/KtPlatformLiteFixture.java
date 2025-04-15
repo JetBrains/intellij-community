@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.test.testFramework;
 import com.intellij.core.CoreEncodingProjectManager;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.pico.DefaultPicoContainer;
 
@@ -18,7 +17,7 @@ public abstract class KtPlatformLiteFixture extends KtUsefulTestCase {
 
     public void initApplication() {
         MockApplication instance = new MockApplication(getTestRootDisposable());
-        ApplicationManager.setApplication(instance, FileTypeManager::getInstance, getTestRootDisposable());
+        ApplicationManager.setApplication(instance, getTestRootDisposable());
         getApplication().registerService(EncodingManager.class, CoreEncodingProjectManager.class);
     }
 

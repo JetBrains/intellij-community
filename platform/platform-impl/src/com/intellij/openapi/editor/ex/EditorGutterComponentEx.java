@@ -129,6 +129,14 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
     return -1;
   }
 
+  /**
+   * @return y coordinate of the last mouse cursor point on the gutter's free markers area or -1 if the point is not on the area.
+   */
+  @ApiStatus.Internal
+  public int getHoveredFreeMarkersY() {
+    return -1;
+  }
+
   @ApiStatus.Internal
   public int getLineNumberAreaOffset() {
     return 0;

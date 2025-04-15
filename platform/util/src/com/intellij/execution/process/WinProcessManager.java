@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
@@ -28,7 +28,7 @@ public final class WinProcessManager {
     String processClassName = process.getClass().getName();
     if (processClassName.equals("java.lang.Win32Process") || processClassName.equals("java.lang.ProcessImpl")) {
       try {
-        if (JavaVersion.current().feature >= 9) {
+        if (CurrentJavaVersion.currentJavaVersion().feature >= 9) {
           return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
         }
         else {

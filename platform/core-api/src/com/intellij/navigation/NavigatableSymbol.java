@@ -7,6 +7,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -20,5 +21,6 @@ import java.util.Collection;
 public interface NavigatableSymbol extends Symbol {
 
   @NotNull
+  @Unmodifiable
   Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project);
 }

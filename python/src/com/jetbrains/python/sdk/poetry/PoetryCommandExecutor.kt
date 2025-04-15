@@ -12,7 +12,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
@@ -28,9 +30,11 @@ import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import io.github.z4kn4fein.semver.toVersion
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemDependent
@@ -44,6 +48,7 @@ import kotlin.io.path.pathString
  */
 private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
 private val poetryNotFoundException: Throwable = Throwable(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
+private val VERSION_2 = "2.0.0".toVersion()
 
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
@@ -89,10 +94,17 @@ suspend fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? =
  * 1. `poetry env use [sdk]`
  * 2. `poetry [args]`
  */
-internal suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): Result<String> {
+@Internal
+suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): Result<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) } ?: return Result.failure(poetryNotFoundException) // Choose a correct sdk
-  runPoetry(projectPath, "env", "use", sdk.homePath!!)
-  return runPoetry(projectPath, *args)
+  return reportSequentialProgress(2) { reporter ->
+    reporter.itemStep {
+      runPoetry(projectPath, "env", "use", sdk.homePath!!)
+    }
+    reporter.itemStep {
+      runPoetry(projectPath, *args)
+    }
+  }
 }
 
 
@@ -148,7 +160,12 @@ internal suspend fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<Str
   return getPoetryEnvs(path).filter { existingSdkPaths?.contains(getPythonExecutable(it)) != false }.map { PyDetectedSdk(getPythonExecutable(it)) }
 }
 
-internal suspend fun getPoetryVersion(): String? = runPoetry(null, "--version").getOrNull()?.split(' ')?.lastOrNull()
+internal suspend fun getPoetryVersion(): String? =
+  runPoetry(null, "--version")
+    .getOrNull()
+    ?.split(' ')
+    ?.lastOrNull()
+    ?.replace(Regex("""\D+$"""), "") // strip all non-numeric characters after the version
 
 @Internal
 suspend fun getPythonExecutable(homePath: String): String = withContext(Dispatchers.IO) {
@@ -201,10 +218,12 @@ suspend fun poetryShowOutdated(sdk: Sdk): Result<Map<String, PythonOutdatedPacka
 
 @Internal
 suspend fun poetryListPackages(sdk: Sdk): Result<Pair<List<PyPackage>, List<PyRequirement>>> {
-  // Just in case there were any changes to pyproject.toml
-  if (runPoetryWithSdk(sdk, "lock", "--check").isFailure) {
-    if (runPoetryWithSdk(sdk, "lock", "--no-update").isFailure) {
-      runPoetryWithSdk(sdk, "lock")
+  val version = getPoetryVersion()?.toVersion()
+
+  // Ensure that the lock file is up to date.
+  if (!Registry.get("python.poetry.list.packages.without.lock").asBoolean() && !checkLock(sdk, version)) {
+    fixLock(sdk, version).getOrElse {
+      return Result.failure(it)
     }
   }
 
@@ -218,8 +237,30 @@ suspend fun poetryListPackages(sdk: Sdk): Result<Pair<List<PyPackage>, List<PyRe
 }
 
 @Internal
+suspend fun checkLock(sdk: Sdk, version: Version?): Boolean {
+  // From Poetry 1.6.0 and forward, `poetry check --lock` should be used to figure out the validity of the lock file.
+  // However, this command fails whenever a README file (as described in pyproject.toml) is absent, without even checking the lock file.
+  // The old command, albeit deprecated, doesn't check for the README; instead, it only checks for the validity of the lock file.
+  // After Poetry 2.0.0 and forward, `poetry check --lock` also only checks for the lock file, ignoring the existence of a README.
+  if (version == null || version >= VERSION_2) {
+    return runPoetryWithSdk(sdk, "check", "--lock").isSuccess
+  }
+
+  return runPoetryWithSdk(sdk, "lock", "--check").isSuccess
+}
+
+@Internal
+suspend fun fixLock(sdk: Sdk, version: Version?): Result<String> {
+  if (version == null || version >= VERSION_2) {
+    return runPoetryWithSdk(sdk, "lock")
+  }
+
+  return runPoetryWithSdk(sdk, "lock", "--no-update")
+}
+
+@Internal
 fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
-  val installedLines = listOf("Already installed", "Skipping", "Updating")
+  val installedLines = listOf("Already installed", "Skipping", "Updating", "Downgrading")
 
   fun getNameAndVersion(line: String): Triple<String, String, String> {
     return line.split(" ").let {

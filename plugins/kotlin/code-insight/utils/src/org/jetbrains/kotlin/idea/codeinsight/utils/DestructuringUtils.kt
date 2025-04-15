@@ -4,21 +4,21 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 
-fun extractParameterNames(declaration: KtDestructuringDeclaration): List<String>? {
-    return analyze(declaration) {
-        val type = getClassType(declaration) ?: return null
-        extractDataClassParameterNames(type)
-    }
+fun KaSession.extractPrimaryParameters(
+    declaration: KtDestructuringDeclaration,
+): List<KaValueParameterSymbol>? {
+    val type = getClassType(declaration) ?: return null
+    return extractDataClassParameters(type)
 }
 
-fun KaSession.extractDataClassParameterNames(type: KaClassType): List<String>? {
+fun KaSession.extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>? {
     if (type.nullability != KaTypeNullability.NON_NULLABLE) return null
     val classSymbol = type.expandedSymbol
 
@@ -28,18 +28,13 @@ fun KaSession.extractDataClassParameterNames(type: KaClassType): List<String>? {
             .find { it.isPrimary }
             ?: return null
 
-        constructorSymbol.valueParameters.map { it.name.asString() }
+        constructorSymbol.valueParameters
     } else null
 }
 
-context(KaSession)
-private fun getClassType(declaration: KtDestructuringDeclaration): KaClassType? {
-    val initializer = declaration.initializer
-    val type = if (initializer != null) {
-        initializer.expressionType
-    } else {
-        val parentAsParameter = declaration.parent as? KtParameter
-        parentAsParameter?.symbol?.returnType
-    } ?: return null
+private fun KaSession.getClassType(declaration: KtDestructuringDeclaration): KaClassType? {
+    val type = declaration.initializer?.expressionType
+        ?: (declaration.parent as? KtParameter)?.symbol?.returnType
+        ?: return null
     return type.lowerBoundIfFlexible() as? KaClassType
 }

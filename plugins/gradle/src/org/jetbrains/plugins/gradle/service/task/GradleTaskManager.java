@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -414,6 +415,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
+  /**
+   * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
+   */
+  @Deprecated
   public static void runCustomTaskScript(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull String projectPath,
@@ -438,6 +443,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                progressExecutionMode, false, userData);
   }
 
+  /**
+   * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
+   */
+  @Deprecated
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,
@@ -456,6 +465,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     runCustomTaskScript(project, executionName, projectPath, gradlePath, progressExecutionMode, callback, initScript, taskName);
   }
 
+  /**
+   * @deprecated Use {@link ExternalSystemUtil#runTask(TaskExecutionSpec)} directly.
+   */
+  @Deprecated
   public static void runCustomTask(@NotNull Project project,
                                    @NotNull @Nls String executionName,
                                    @NotNull Class<? extends Task> taskClass,

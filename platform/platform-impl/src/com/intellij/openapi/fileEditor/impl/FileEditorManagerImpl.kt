@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
@@ -1024,11 +1024,13 @@ open class FileEditorManagerImpl(
     return targetSplitters.getOrCreateCurrentWindow(file)
   }
 
-  fun openFileInNewWindow(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  @JvmOverloads
+  fun openFileInNewWindow(file: VirtualFile, reuseOpen: Boolean = false): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     return openFile(
       file = file,
       window = null,
       options = FileEditorOpenOptions(
+        reuseOpen = reuseOpen,
         requestFocus = true,
         openMode = OpenMode.NEW_WINDOW,
       ),

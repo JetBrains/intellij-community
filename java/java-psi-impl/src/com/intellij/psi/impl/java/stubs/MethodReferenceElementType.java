@@ -2,36 +2,25 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
+import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodReferenceElementType extends FunctionalExpressionElementType<PsiMethodReferenceExpression> {
-  //prevents cyclic static variables initialization
-  private static final NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = NotNullLazyValue.lazy(() -> {
-    return TokenSet.orSet(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TokenSet.create(JavaElementType.REFERENCE_PARAMETER_LIST));
-  });
+import java.util.Collections;
+import java.util.Set;
 
+public class MethodReferenceElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public MethodReferenceElementType() {
-    super("METHOD_REF_EXPRESSION", BasicJavaElementType.BASIC_METHOD_REF_EXPRESSION);
+    super("METHOD_REF_EXPRESSION");
   }
 
   @Override
-  public PsiMethodReferenceExpression createPsi(@NotNull ASTNode node) {
-    return new PsiMethodReferenceExpressionImpl(node);
-  }
-
-  @Override
-  public PsiMethodReferenceExpression createPsi(@NotNull FunctionalExpressionStub<PsiMethodReferenceExpression> stub) {
-    return new PsiMethodReferenceExpressionImpl(stub);
+  public @NotNull Set<IElementType> getParents() {
+    return Collections.singleton(BasicJavaElementType.BASIC_METHOD_REF_EXPRESSION);
   }
 
   @Override
@@ -51,10 +40,5 @@ public class MethodReferenceElementType extends FunctionalExpressionElementType<
         return ChildRole.EXPRESSION;
       }
     };
-  }
-
-  @Override
-  protected @NotNull String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr) {
-    return LightTreeUtil.toFilteredString(tree, funExpr, EXCLUDE_FROM_PRESENTABLE_TEXT.getValue());
   }
 }

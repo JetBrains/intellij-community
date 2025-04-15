@@ -25,18 +25,18 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 
 @Service(Service.Level.PROJECT)
 class GHPROnCurrentBranchService(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Default)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val vmState: StateFlow<GHPRBranchWidgetViewModel?> by lazy {
-    val toolWindowVm = project.service<GHPRToolWindowViewModel>()
-    toolWindowVm.projectVm.flatMapLatest { projectVm ->
+    val vm = project.service<GHPRProjectViewModel>()
+    vm.connectedProjectVm.flatMapLatest { projectVm ->
       projectVm?.prOnCurrentBranch
         ?.mapNotNull { it?.result } // we're not interested in intermittent loading/canceled state
         ?.map { it.getOrNull() }
@@ -58,7 +58,7 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
         }
       ?: flowOf(null)
     }.onStart {
-      toolWindowVm.loginIfPossible()
+      vm.loginIfPossible()
     }.stateIn(cs, SharingStarted.Eagerly, null)
   }
 

@@ -229,6 +229,9 @@ open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEvery
 
     override fun canToggleEverywhere() = if (everywhereScope == projectScope) false
     else selectedScopeDescriptor.scopeEquals(everywhereScope) || selectedScopeDescriptor.scopeEquals(projectScope)
+
+    override fun getEverywhereScopeName(): String = everywhereScope.displayName
+    override fun getProjectScopeName(): String? = projectScope?.displayName
   }
 
   override fun dispose() {

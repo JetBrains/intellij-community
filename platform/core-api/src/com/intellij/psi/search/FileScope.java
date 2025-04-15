@@ -12,6 +12,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,7 +32,7 @@ final class FileScope extends GlobalSearchScope implements VirtualFileEnumeratio
   }
 
   @Override
-  public @NotNull Collection<VirtualFile> getFilesIfCollection() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getFilesIfCollection() {
     return Collections.singleton(myVirtualFile);
   }
 

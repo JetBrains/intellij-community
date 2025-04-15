@@ -18,6 +18,7 @@ import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
@@ -63,7 +64,8 @@ internal data class TagInfo(
   override fun toString() = tag.name
 }
 
-internal sealed class BranchNodeDescriptor {
+@ApiStatus.Internal
+sealed class BranchNodeDescriptor {
   abstract val children: List<BranchNodeDescriptor>
   abstract val displayName: String
 
@@ -97,7 +99,7 @@ internal sealed class BranchNodeDescriptor {
     override fun toString(): String = "REMOTE:$displayName"
   }
 
-  sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor(), LogNavigatable {
+  internal sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor(), LogNavigatable {
     override val children: List<BranchNodeDescriptor>
       get() = emptyList()
   }
@@ -149,8 +151,9 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal interface BranchesTreeModel {
-  val root: BranchNodeDescriptor.Root
+@ApiStatus.Internal
+interface BranchesTreeModel {
+  val root: BranchNodeDescriptor
   val groupingConfig: Map<GroupingKey, Boolean>
   val isLoading: Boolean
 
@@ -163,8 +166,10 @@ internal interface BranchesTreeModel {
   }
 }
 
-internal abstract class BranchesTreeModelBase : BranchesTreeModel {
-  final override val root: BranchNodeDescriptor.Root = BranchNodeDescriptor.Root()
+@ApiStatus.Internal
+abstract class BranchesTreeModelBase : BranchesTreeModel {
+  private val _root = BranchNodeDescriptor.Root()
+  final override val root: BranchNodeDescriptor = _root
   private val listeners = EventDispatcher.create(BranchesTreeModel.Listener::class.java)
 
   private val loadingCounter = AtomicInteger()
@@ -172,7 +177,7 @@ internal abstract class BranchesTreeModelBase : BranchesTreeModel {
     get() = loadingCounter.get() > 0
 
   protected fun setTree(nodes: List<BranchNodeDescriptor>) {
-    root.children = nodes
+    _root.children = nodes
     listeners.multicaster.onTreeChange()
   }
 

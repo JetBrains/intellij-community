@@ -19,7 +19,6 @@ import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleBuildEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
@@ -50,7 +49,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     storage: MutableEntityStorage
   ) {
-    val project = context.project()
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val contentRootsToAdd = LinkedHashMap<GradleProjectEntitySource, GradleContentRootData>()
@@ -224,7 +223,7 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     storage: MutableEntityStorage,
   ) {
-    val project = context.project()
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val exModuleOptionsToAdd = LinkedHashMap<GradleProjectEntitySource, GradleExModuleOptionsData>()

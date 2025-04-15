@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
@@ -20,18 +19,15 @@ interface ThreadingSupport {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
    */
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
-
+  fun <T> runWriteIntentReadAction(computation: () -> T): T
 
   /**
    * Executes a runnable with a write-intent lock only if locking is permitted on this thread
    * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
    * may be not needed.
    */
-  fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
+  fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T
 
   /**
    * Checks, if Write Intent lock acquired by the current thread.
@@ -47,24 +43,12 @@ interface ThreadingSupport {
   fun isWriteIntentLocked(): Boolean
 
   /**
-   * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
-   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
-   *
-   * This method is used to implement higher-level API. Please do not use it directly.
-   *
-   * @param action the action to run
-   */
-  @ApiStatus.Internal
-  fun runIntendedWriteActionOnCurrentThread(action: Runnable)
-
-  /**
    * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.
    *
    * This method is used to implement higher-level API. Please do not use it directly.
    */
   @ApiStatus.Internal
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T
+  fun <T> runUnlockingIntendedWrite(action: () -> T): T
 
   /**
    * Set a [ReadActionListener].
@@ -86,51 +70,8 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun removeReadActionListener(listener: ReadActionListener)
 
-  /**
-   * Runs the specified read action. Can be called from any thread. The action is executed immediately
-   * if no write action is currently running, or blocked until the currently running write action completes.
-   *
-   * See also [ReadAction.run] for a more lambda-friendly version.
-   *
-   * @param action the action to run.
-   * @see CoroutinesKt.readAction
-   *
-   * @see CoroutinesKt.readActionBlocking
-   */
   @RequiresBlockingContext
-  fun runReadAction(action: Runnable)
-
-  /**
-   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
-   *
-   * See also [ReadAction.compute] for a more lambda-friendly version.
-   *
-   * @param computation the computation to perform.
-   * @return the result returned by the computation.
-   * @see CoroutinesKt.readAction
-   * @see CoroutinesKt.readActionBlocking
-   */
-  @RequiresBlockingContext
-  fun <T> runReadAction(computation: Computable<T>): T
-
-  /**
-   * Runs the specified computation in a read action. Can be called from any thread. The action is executed
-   * immediately if no write action is currently running, or blocked until the currently running write action
-   * completes.
-   *
-   * See also [ReadAction.compute] for a more lambda-friendly version.
-   *
-   * @param computation the computation to perform.
-   * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
-   * @see CoroutinesKt.readAction
-   * @see CoroutinesKt.readActionBlocking
-   */
-  @RequiresBlockingContext
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T
+  fun <T> runReadAction(clazz: Class<*>, action: () -> T): T
 
   /**
    * Tries to acquire the read lock and run the `action`.
@@ -275,6 +216,15 @@ interface ThreadingSupport {
   fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String)
 
   /**
+   * Allows using R/W locks inside [action].
+   * This is mostly needed for incremental transition from previous approach with unconditional lock acquisiton:
+   * we cannot afford prohibiting taking locks for large regions of the platform
+   */
+  @ApiStatus.Internal
+  @Throws(LockAccessDisallowed::class)
+  fun allowTakingLocksInsideAndRun(action: Runnable)
+
+  /**
    * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
    * this function will return not-null string with advice on how to fix the problem
    */
@@ -293,6 +243,32 @@ interface ThreadingSupport {
 
   @ApiStatus.Internal
   fun isInTopmostReadAction(): Boolean
+
+  /**
+   * This is a very hacky function ABSOLUTELY NOT FOR PRODUCTION.
+   * Consider the following old code:
+   * ```kotlin
+   * launch(Dispatchers.EDT) {
+   *   writeIntentReadAction {
+   *     // do something
+   *     IndexingTestUtil.waitUntilIndexesAreReady()
+   *     // do something else
+   *   }
+   * }
+   *
+   * launch(Dispatchers.Default) {
+   *   backgroundWriteAction {}
+   * }
+   * ```
+   *
+   * This is a deadlock, because `waitUntilIndexesAreReady` spins the event queue inside, and it waits for some write action to happen.
+   * When WA is executed on background, the code above would result in a deadlock, because the code in WI waits for (lower-level) Write to finish.
+   *
+   * This function is a TEMPORARY fix for tests. When we are ready (i.e., when we eliminate write action by default), this hack will be removed.
+   */
+  @ApiStatus.Internal
+  @TestOnly
+  fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T = action()
 
   class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
 }

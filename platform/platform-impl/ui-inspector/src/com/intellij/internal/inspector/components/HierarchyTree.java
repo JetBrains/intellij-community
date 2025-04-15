@@ -224,7 +224,6 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     private final String myName;
     private final boolean isAccessibleNode;
     private final AccessibilityAuditManager accessibilityAudit;
-
     String myText;
 
     public static ComponentNode createAccessibleNode(@NotNull Accessible accessible) {
@@ -272,6 +271,10 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       ComponentNode node = new ComponentNode(component, accessible, name, false);
       TreeUtil.addChildrenTo(node, prepareComponentChildren(component));
       return node;
+    }
+
+    public List<UiInspectorAccessibilityInspection> getFailedInspections() {
+      return accessibilityAudit.getFailedInspections();
     }
 
     public void runAccessibilityTests(@NotNull AccessibleContext ac) { accessibilityAudit.runAccessibilityTests(ac); }

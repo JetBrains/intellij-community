@@ -32,7 +32,7 @@ object KotlinFirLookupElementFactory {
     fun createClassifierLookupElement(
         symbol: KaClassifierSymbol,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
-    ): LookupElement? = when (symbol) {
+    ): LookupElementBuilder? = when (symbol) {
         is KaClassLikeSymbol ->
             if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy)
             else null

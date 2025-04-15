@@ -3,6 +3,10 @@
 [ -z "${INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED:-}" ] && builtin return 0
 builtin unset 'INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED'
 
+# Do not source our shell integration when PowerLevel10K plugin is available
+# because it will work incorrectly until IJPL-178955 is fixed.
+[ -n "${P9K_VERSION:-}" ] && builtin return 0
+
 __jetbrains_intellij_encode_slow() {
   local out=''
   # Use LC_CTYPE=C to process text byte-by-byte and

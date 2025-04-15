@@ -57,6 +57,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/vcs-impl/shared:vcs-impl-shared",
     "@lib//:jgoodies-forms",
+    "//platform/observable:ide-observable",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )
@@ -120,6 +121,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/vcs-impl/shared:vcs-impl-shared",
     "@lib//:jgoodies-forms",
+    "//platform/observable:ide-observable",
   ],
   runtime_deps = [":vcs-impl_resources"]
 )

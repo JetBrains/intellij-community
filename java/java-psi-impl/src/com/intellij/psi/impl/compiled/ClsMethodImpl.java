@@ -109,7 +109,7 @@ public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
+    return (PsiModifierList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
@@ -119,17 +119,17 @@ public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements
 
   @Override
   public @NotNull PsiParameterList getParameterList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
+    return (PsiParameterList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
   }
 
   @Override
   public @NotNull PsiReferenceList getThrowsList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST)).getPsi();
+    return (PsiReferenceList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.THROWS_LIST)).getPsi();
   }
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
+    return (PsiTypeParameterList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
   }
 
   @Override

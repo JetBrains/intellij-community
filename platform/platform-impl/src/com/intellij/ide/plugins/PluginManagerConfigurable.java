@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
@@ -81,7 +82,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
 import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
+import static com.intellij.util.containers.ContainerUtil.exists;
 
 @ApiStatus.Internal
 public final class PluginManagerConfigurable
@@ -379,7 +382,7 @@ public final class PluginManagerConfigurable
 
     JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(
       null, null, actions, context, ActionPlaces.POPUP, new PresentationFactory(),
-      ActionPopupOptions.honorMnemonics(), null);
+      ActionPopupOptions.honorMnemonics(), null) {};
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -1019,7 +1022,7 @@ public final class PluginManagerConfigurable
 
           Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = PluginManager
             .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
-            .collect(Collectors.partitioningBy(IdeaPluginDescriptorImpl::isBundled));
+            .collect(Collectors.partitioningBy(PluginDescriptor::isBundled));
 
           List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
           downloaded.descriptors.addAll(nonBundledPlugins);
@@ -1048,7 +1051,7 @@ public final class PluginManagerConfigurable
             downloaded.sortByName();
 
             long enabledNonBundledCount = nonBundledPlugins.stream()
-              .map(IdeaPluginDescriptorImpl::getPluginId)
+              .map(PluginDescriptor::getPluginId)
               .filter(descriptor -> !PluginManagerCore.isDisabled(descriptor))
               .count();
             downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
@@ -1381,6 +1384,7 @@ public final class PluginManagerConfigurable
     addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
+
   private final class ComparablePluginsGroup extends PluginsGroup
     implements Comparable<ComparablePluginsGroup> {
 
@@ -1396,7 +1400,7 @@ public final class PluginManagerConfigurable
       rightAction = new LinkLabelButton<>("",
                                           null,
                                           (__, ___) -> setEnabledState());
-
+      rightAction.setVisible(hasPluginsForEnableDisable(descriptors));
       titleWithEnabled(myPluginModel);
     }
 
@@ -1413,12 +1417,32 @@ public final class PluginManagerConfigurable
     }
 
     private void setEnabledState() {
-      if (myIsEnable) {
-        myPluginModel.enable(descriptors);
-      }
-      else {
-        myPluginModel.disable(descriptors);
-      }
+      setState(myPluginModel, descriptors, myIsEnable);
+    }
+
+    /** Returns true, if in descriptors list not only Ultimate plugins while we are on Core license.
+     * (Any plugin exists, for which we can change the enabled / disable state) */
+    private static boolean hasPluginsForEnableDisable(List<? extends IdeaPluginDescriptor> descriptors){
+      var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+      return exists(descriptors, descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap));
+    }
+  }
+
+  /** Modifies the state of the plugin list, excluding Ultimate plugins when the Ultimate license is not active. */
+  private static void setState(MyPluginModel pluginModel, Collection<IdeaPluginDescriptor> descriptors, boolean isEnable) {
+    if (descriptors.isEmpty()) return;
+
+    var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    var suitableDescriptors = descriptors.stream().
+      filter(descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap)).toList();
+
+    if (suitableDescriptors.isEmpty()) return;
+
+    if (isEnable) {
+      pluginModel.enable(suitableDescriptors);
+    }
+    else {
+      pluginModel.disable(suitableDescriptors);
     }
   }
 
@@ -1886,14 +1910,7 @@ public final class PluginManagerConfigurable
         }
       }
 
-      if (!descriptors.isEmpty()) {
-        if (myEnable) {
-          myPluginModel.enable(descriptors);
-        }
-        else {
-          myPluginModel.disable(descriptors);
-        }
-      }
+      setState(myPluginModel, descriptors, myEnable);
     }
   }
 

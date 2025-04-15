@@ -55,8 +55,7 @@ final class LibraryNodesBuilder {
     throws IOException {
     FailSafeClassReader reader = new FailSafeClassReader(classFileData);
     JVMClassNode<?, ?> node = JvmClassNodeBuilder.createForLibrary("$" + namespace + "/" + classFileName, reader).getResult();
-    if (node.getFlags().isPublic()) {
-      // todo: maybe too restrictive
+    if (node.isPublic() || node.isProtected()) {
       acc.add(node);
     }
   }

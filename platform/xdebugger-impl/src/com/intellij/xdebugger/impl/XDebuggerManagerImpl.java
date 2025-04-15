@@ -5,13 +5,10 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.DynamicPluginVetoer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -42,7 +39,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -152,28 +148,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     });
 
-    messageBusConnection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
-      @Override
-      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
-          XDebugSessionImpl session = mySessions.get(descriptor.getProcessHandler());
-          if (session != null) {
-            session.activateSession(true);
-          }
-          else {
-            setCurrentSession(null);
-          }
-        }
-      }
-
-      @Override
-      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-        if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
-          mySessions.remove(descriptor.getProcessHandler());
-        }
-      }
-    });
-
     GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
     EditorMouseMotionListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
@@ -184,6 +158,16 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
       eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
       eventMulticaster.addEditorMouseListener(myNewRunToCursorListener, this);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void onSessionSelected(@Nullable XDebugSessionImpl session) {
+    if (session != null) {
+      session.activateSession(true);
+    }
+    else {
+      setCurrentSession(null);
     }
   }
 
@@ -320,10 +304,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   void removeSession(final @NotNull XDebugSessionImpl session) {
-    mySessions.remove(session.getDebugProcess().getProcessHandler());
+    removeSessionNoNotify(session);
     if (myActiveSession.compareAndSet(session, null)) {
       onActiveSessionChanged(session, null);
     }
+  }
+
+  @ApiStatus.Internal
+  public void removeSessionNoNotify(@NotNull XDebugSessionImpl session) {
+    mySessions.remove(session.getDebugProcess().getProcessHandler());
   }
 
   private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {

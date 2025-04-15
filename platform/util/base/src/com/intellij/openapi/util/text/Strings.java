@@ -474,12 +474,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars) {
-    if (chars instanceof String || chars instanceof CharSequenceWithStringHash) {
-      // we know for sure these classes have conformant (and maybe faster) hashCode()
-      return chars.hashCode();
-    }
-
-    return stringHashCode(chars, 0, chars.length());
+    return StringsKmp.stringHashCode(chars);
   }
 
   @Contract(pure = true)
@@ -489,11 +484,7 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to, int prefixHash) {
-    int h = prefixHash;
-    for (int off = from; off < to; off++) {
-      h = 31 * h + chars.charAt(off);
-    }
-    return h;
+    return StringsKmp.stringHashCode(chars, from, to, prefixHash);
   }
 
   @Contract(pure = true)

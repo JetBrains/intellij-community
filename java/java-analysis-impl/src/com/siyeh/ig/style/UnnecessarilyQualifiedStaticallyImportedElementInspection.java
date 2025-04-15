@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -56,7 +57,7 @@ public final class UnnecessarilyQualifiedStaticallyImportedElementInspection ext
     @Override
     public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
-      if (PsiKeyword.YIELD.equals(reference.getReferenceName()) && reference.getParent() instanceof PsiMethodCallExpression) {
+      if (JavaKeywords.YIELD.equals(reference.getReferenceName()) && reference.getParent() instanceof PsiMethodCallExpression) {
         // Qualifier might be required since Java 14, so don't warn
         return;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -15,6 +15,8 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import java.util.concurrent.Callable
+import kotlin.test.assertContains
+import kotlin.test.assertFails
 
 class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   fun testConstructorJavadoc() {
@@ -361,12 +363,14 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val expected = """
       <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://C"><code><span style="color:#000000;">C</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span>&nbsp;<span style="color:#000080;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">m</span><span style="">(</span><span style="">)</span></pre></div><div class='content'> 
         <p> Examples of expected usage:
-        <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
+        <blockquote><pre><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></pre></blockquote>
         <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
         <p> Continuing...
-        <pre><code><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></code></pre>
+        <blockquote><pre><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></pre></blockquote>
         <p> Continuing...
-        <pre><code><span style="">(</span><span style="color:#000080;font-weight:bold;">this</span><span style="">.charAt(&lt;i&gt;k&lt;/i&gt;)&#32;==&#32;ch)&#32;&amp;&amp;&#32;(&lt;i&gt;k&lt;/i&gt;&#32;&lt;=&#32;fromIndex)</span></code></pre>
+        <blockquote><pre>
+          (this.charAt(<i>k</i>) == ch) && (<i>k</i> &lt;= fromIndex)
+        </pre></blockquote>
         <blockquote><pre>
           Unfinished blockquote
         </pre> </blockquote>
@@ -375,6 +379,346 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     TestCase.assertEquals(expected, doc)
   }
 
+  fun testInheritDoc() {
+    configure("""
+      public interface A {
+        /**
+         * A::m-doc
+         * @param a A::m-param
+         */
+        void m(int a);
+      }
+      public interface B extends A {
+        /**
+         * B::m-doc
+         * @param a B::m-param
+         */
+        void m(int a);
+      }
+      public interface C extends B {
+        /**
+         * {@inheritDoc A}
+         * @param a {@inheritDoc}
+         */
+        void m<caret>(int a);
+      }
+    """.trimIndent())
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A::m-doc")
+    assertFails { assertContains(text, "B::m-doc") }
+    assertContains(text, "B::m-param")
+    assertFails { assertContains(text, "A::m-param") }
+  }
+
+  private fun retrieveMethodDocString(): String {
+    val method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod::class.java)
+    val doc = JavaDocumentationProvider().generateDoc(method, null)
+    assert(doc != null)
+    val text = doc.toString()
+    return text
+  }
+
+  fun testInheritDocRecursive() {
+    configure("""
+      public interface A {
+        /**
+         * @param a A::m-param
+         */
+        void m(int a);
+      }
+      public interface B extends A {
+        /**
+         * @param a {@inheritDoc}
+         */
+        void m(int a);
+      }
+      public interface C extends B {
+        /**
+         * @param a {@inheritDoc B}
+         */
+        void m<caret>(int a);
+      }
+    """.trimIndent())
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A::m-param")
+  }
+
+  fun testInheritDocImplementOrder() {
+    data class Param(val order: String, val contains: String, val notContains: String)
+
+    for (param in arrayOf(
+      Param("A, B", "A::m-doc", "B::m-doc"),
+      Param("B, A", "B::m-doc", "A::m-doc"),
+    )) {
+      configure("""
+      public interface A {
+        /** A::m-doc */
+        void m(int a);
+      }
+      public interface B {
+        /** B::m-doc */
+        void m(int a);
+      }
+      public interface C extends ${param.order} {
+        /** {@inheritDoc} */
+        void m<caret>(int a);
+      }
+    """.trimIndent())
+
+      val text = retrieveMethodDocString()
+      assertContains(text, param.contains)
+      assertFails { assertContains(text, param.notContains) }
+    }
+  }
+
+  fun testInheritDocOrder() {
+    configure("""
+      public interface A {
+        /**
+         * @param d A::foo-d
+         * @param b A::foo-b
+         * @param a A::foo-a
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public interface B extends A {
+        /**
+         * @param d B::foo-d
+         * @param b B::foo-b
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public interface C extends B {
+        /**
+         * @param d C::foo-d
+         * @param b C::foo-b
+         * @param a C::foo-a
+         * @param c C::foo-c
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public class D implements B, C {
+        /**
+         * @param d D::foo-d
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public interface E {
+        /**
+         * @param d E::foo-d
+         * @param b E::foo-b
+         * @param a E::foo-a
+         * @param c E::foo-c
+         * @param e E::foo-e
+         */
+        void foo(int a, int b, int c, int d, int e);
+      }
+      public class F extends D implements E {
+        /**
+         * @param d {@inheritDoc}
+         * @param b {@inheritDoc}
+         * @param a {@inheritDoc}
+         * @param c {@inheritDoc}
+         * @param e {@inheritDoc}
+         */
+        void foo<caret>(int a, int b, int c, int d, int e);
+      }
+    """.trimIndent())
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "D::foo-d")
+    assertContains(text, "B::foo-b")
+    assertContains(text, "A::foo-a")
+    assertContains(text, "C::foo-c")
+    assertContains(text, "E::foo-e")
+  }
+
+  fun testInheritDocSkipObject() {
+    configure("""
+      public interface A {
+        /**
+         * @param obj A::equals-obj
+         */
+        public boolean equals(Object obj);
+      }
+      
+      public class B extends A {
+        /**
+         * @param obj {@inheritDoc}
+         * @return {@inheritDoc}
+         */
+        @Override
+        public boolean equals<caret>(Object obj) {
+          return super.equals(obj);
+        }
+      }
+    """.trimIndent())
+
+    val text = retrieveMethodDocString()
+    // A has priority over Object
+    assertContains(text, "A::equals-obj")
+    // A has no doc for `return` so we should inherit from Object
+    assertContains(text, "if this object is the same as the obj")
+  }
+
+  fun testInheritDocThrows() {
+    configure("""
+      interface A1 {
+        /**
+         * @throws E1 A1::m-E1
+         * @throws E2 A1::m-E2
+         * @throws E3 A1::m-E3
+         * @throws E4 A1::m-E4
+         */
+        void m() throws E1, E2, E3, E4;
+      }
+      
+      interface A2 extends A1 {
+        /**
+         * @throws E1 A2::m-E1
+         * @throws E3 A2::m-E3
+         * @throws E4 A2::m-E4
+         */
+        void m() throws E1, E2, E3, E4;
+      }
+      
+      class B implements A2 {
+        /**
+         * @throws E1 {@inheritDoc}
+         * @throws E2 {@inheritDoc}
+         * @throws E3 {@inheritDoc A1}
+         * @throws E4 {@inheritDoc A2}
+         */
+        @Override void m<caret>() throws E1, E2, E3, E4 {}
+      }
+    """)
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A2::m-E1")
+    assertContains(text, "A1::m-E2")
+    assertContains(text, "A1::m-E3")
+    assertContains(text, "A2::m-E4")
+  }
+
+  fun testInheritDocParam() {
+    configure("""
+      interface A1 {
+        /**
+         * @param p1 A1::m-p1
+         * @param p2 A1::m-p2
+         * @param p3 A1::m-p3
+         * @param p4 A1::m-p4
+         */
+        void m(int p1, int p2, int p3, int p4);
+      }
+      
+      interface A2 extends A1 {
+        /**
+         * @param p1 A2::m-p1
+         * @param p3 A2::m-p3
+         * @param p4 A2::m-p4
+         */
+        void m(int p1, int p2, int p3, int p4);
+      }
+      
+      class B implements A2 {
+        /**
+         * @param p1 {@inheritDoc}
+         * @param p2 {@inheritDoc}
+         * @param p3 {@inheritDoc A1}
+         * @param p4 {@inheritDoc A2}
+         */
+        @Override void m<caret>(int p1, int p2, int p3, int p4) {}
+      }
+    """)
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A2::m-p1")
+    assertContains(text, "A1::m-p2")
+    assertContains(text, "A1::m-p3")
+    assertContains(text, "A2::m-p4")
+  }
+
+  fun testInheritDocTypeParam() {
+    configure("""
+      interface A1 {
+        /**
+         * @param <T1> A1::m-T1
+         * @param <T2> A1::m-T2
+         * @param <T3> A1::m-T3
+         * @param <T4> A1::m-T4
+         */
+        <T1, T2, T3, T4> void m();
+      }
+      
+      interface A2 extends A1 {
+        /**
+         * @param <T1> A2::m-T1
+         * @param <T3> A2::m-T3
+         * @param <T4> A2::m-T4
+         */
+        <T1, T2, T3, T4> void m();
+      }
+      
+      class B implements A2 {
+        /**
+         * @param <T1> {@inheritDoc}
+         * @param <T2> {@inheritDoc}
+         * @param <T3> {@inheritDoc A1}
+         * @param <T4> {@inheritDoc A2}
+         */
+        @Override <T1, T2, T3, T4> void m<caret>() {}
+      }
+    """)
+
+    val text = retrieveMethodDocString()
+    assertContains(text, "A2::m-T1")
+    assertContains(text, "A1::m-T2")
+    assertContains(text, "A1::m-T3")
+    assertContains(text, "A2::m-T4")
+  }
+
+  fun testInheritDocReturn() {
+    configure("""
+      interface A1 {
+        /** @return A1::m1 */ void m1();
+        /** @return A1::m2 */ void m2();
+        /** @return A1::m3 */ void m3();
+        /** @return A1::m4 */ void m4();
+      }
+      
+      interface A2 extends A1 {
+        /** @return A2::m1 */ @Override void m1();
+        /** no return tag */ @Override void m2();
+        /** @return A2::m3 */ @Override void m3();
+        /** @return A2::m4 */ @Override void m4();
+      }
+      
+      class B implements A2 {
+        /** @return {@inheritDoc} */ @Override void m1() {}
+        /** @return {@inheritDoc} */ @Override void m2() {}
+        /** @return {@inheritDoc A1} */ @Override void m3() {}
+        /** @return {@inheritDoc A2} */ @Override void m4() {}
+      }
+    """)
+
+    val expected = mapOf(
+      "m1" to "A2::m1",
+      "m2" to "A1::m2",
+      "m3" to "A1::m3",
+      "m4" to "A2::m4",
+    )
+
+    for (method in PsiTreeUtil.findChildrenOfType(file, PsiMethod::class.java)) {
+      if (method.containingClass?.name != "B") continue
+      val doc = JavaDocumentationProvider().generateDoc(method, null)
+      assert(doc != null)
+      val text = doc.toString()
+      assertContains(text, expected[method.name]!!)
+    }
+  }
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())

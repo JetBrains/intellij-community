@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,6 +21,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
@@ -54,6 +57,16 @@ class SingleAlarm @Internal constructor(
   private val taskContext: CoroutineContext
 
   private val LOCK = Any()
+
+  /**
+   * Imagine tasks A, B, C scheduled in a row.
+   * If B waits for A to complete, and B gets canceled by starting C,
+   * then B will be canceled promptly because it is suspended in `join`.
+   * Moreover, the coroutine of B can be canceled even before it starts waiting for A.
+   * We want to enforce an invariant that only one task can be executed at a time.
+   * For this reason, we protect the whole execution with a mutex.
+   */
+  private val taskExecutionMutex = Mutex()
 
   // guarded by LOCK
   private var currentJob: Job? = null
@@ -226,7 +239,7 @@ class SingleAlarm @Internal constructor(
 
     @Internal
     fun getEdtDispatcher(): CoroutineContext {
-      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
+      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
       if (edtDispatcher == null) {
         // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
         LOG.warn("Do not use an alarm in an early executing code")
@@ -326,25 +339,27 @@ class SingleAlarm @Internal constructor(
       }
 
       currentJob = taskCoroutineScope.launch {
-        prevCurrentJob?.join()
-        prevCurrentJob = null
+        taskExecutionMutex.withLock {
+          prevCurrentJob?.join()
+          prevCurrentJob = null
 
-        delay(effectiveDelay)
+          delay(effectiveDelay)
 
-        withContext(taskContext) {
-          //todo fix clients and remove NonCancellable
-          try {
-            if (!isDisposed) {
-              Cancellation.withNonCancelableSection().use {
-                task.run()
+          withContext(taskContext) {
+            //todo fix clients and remove NonCancellable
+            try {
+              if (!isDisposed) {
+                Cancellation.withNonCancelableSection().use {
+                  task.run()
+                }
               }
             }
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              LOG.error(e)
+            }
           }
         }
       }.also { job ->
@@ -385,19 +400,25 @@ class SingleAlarm @Internal constructor(
       }
 
       currentJob = taskCoroutineScope.launch {
-        prevCurrentJob?.join()
-        prevCurrentJob = null
+        taskExecutionMutex.withLock {
+          // see similar behavior in `request`
+          // We do not have a test here because the current usages of `scheduleTask` are running on single-threaded executor
+          withContext(NonCancellable) {
+            prevCurrentJob?.join()
+          }
+          prevCurrentJob = null
 
-        delay(delay)
-        withContext(if (customModality == null) taskContext else (taskContext + customModality)) {
-          try {
-            task()
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
+          delay(delay)
+          withContext(if (customModality == null) taskContext else (taskContext + customModality)) {
+            try {
+              task()
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              LOG.error(e)
+            }
           }
         }
       }.also { job ->

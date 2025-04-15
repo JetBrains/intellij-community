@@ -2,21 +2,19 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.codeInsight.intention.AddAnnotationFix
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.*
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.QuickFixWithReferenceToElement
 import org.jetbrains.idea.devkit.util.REQUIRES_BLOCKING_CONTEXT_ANNOTATION
 import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
 import org.jetbrains.uast.UMethod
@@ -49,15 +47,6 @@ class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTo
     }
   }
 
-  private class AnnotateFix(element: PsiElement, method: PsiMethod) : QuickFixWithReferenceToElement<PsiMethod>(element, method) {
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.calling.method.should.be.rbc.annotated.annotate.fix")
-    override fun getText(): String = familyName
-
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-      AddAnnotationFix(REQUIRES_BLOCKING_CONTEXT_ANNOTATION, referencedElement.element!!).applyFix()
-    }
-  }
-
   @IntellijInternalApi
   @Internal
   interface VisitorProvider {
@@ -87,12 +76,13 @@ class CallingMethodShouldBeRequiresBlockingContextInspection : LocalInspectionTo
                                  else -> null
                                } ?: callExpression
 
-      holder.registerProblem(
+      holder.problem(
         elementToHighlight,
-        DevKitBundle.message("inspections.calling.method.should.be.rbc.annotated.message"),
-        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-        AnnotateFix(callExpression, currentMethod)
-      )
+        DevKitBundle.message("inspections.calling.method.should.be.rbc.annotated.message"))
+        .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        .fix(AddAnnotationModCommandAction(REQUIRES_BLOCKING_CONTEXT_ANNOTATION, currentMethod)
+               .withPresentation { p -> Presentation.of(DevKitBundle.message("inspections.calling.method.should.be.rbc.annotated.annotate.fix")) }
+      ).register()
     }
 
     override fun visitLambdaExpression(expression: PsiLambdaExpression): Unit = Unit

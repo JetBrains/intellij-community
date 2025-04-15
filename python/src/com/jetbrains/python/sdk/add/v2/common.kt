@@ -7,12 +7,16 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
+import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
@@ -26,12 +30,11 @@ import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
-import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
-
-
-@Service(Service.Level.APP)
-internal class PythonAddSdkService(val coroutineScope: CoroutineScope)
+import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Row
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
@@ -50,10 +53,37 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
   abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError>
+
+  open suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> = Result.success(Unit)
+
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
-abstract class PythonNewEnvironmentCreator(override val model: PythonMutableTargetAddInterpreterModel) : PythonAddEnvironment(model)
+abstract class PythonNewEnvironmentCreator(override val model: PythonMutableTargetAddInterpreterModel) : PythonAddEnvironment(model) {
+  internal val venvExistenceValidationState: AtomicProperty<VenvExistenceValidationState> =
+    AtomicProperty(VenvExistenceValidationState.Invisible)
+
+  internal fun Row.venvExistenceValidationAlert(validationRequestor: DialogValidationRequestor, onSelectExisting: () -> Unit) {
+    venvExistenceValidationAlert(venvExistenceValidationState, onSelectExisting)
+      .align(Align.FILL)
+      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(venvExistenceValidationState))
+      .cellValidation { component ->
+        addInputRule {
+          if (!component.isVisible) {
+            return@addInputRule null
+          }
+
+          val state = venvExistenceValidationState.get()
+
+          if (state is VenvExistenceValidationState.Error)
+            ValidationInfo("")
+          else
+            null
+        }
+      }
+  }
+}
+
 abstract class PythonExistingEnvironmentConfigurator(model: PythonAddInterpreterModel) : PythonAddEnvironment(model)
 
 
@@ -63,7 +93,8 @@ enum class PythonSupportedEnvironmentManagers(val nameKey: String, val icon: Ico
   POETRY("sdk.create.custom.poetry", POETRY_ICON),
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
   UV("sdk.create.custom.uv", UV_ICON),
-  PYTHON("sdk.create.custom.python", com.jetbrains.python.psi.icons.PythonPsiApiIcons.Python)
+  HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo),
+  PYTHON("sdk.create.custom.python", PythonPsiApiIcons.Python)
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {

@@ -16,10 +16,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.facet.FacetState;
 
 import java.util.Collection;
@@ -96,12 +93,12 @@ public abstract class FacetManagerBase extends FacetManager {
   }
 
   @Override
-  public @NotNull <F extends Facet<?>> Collection<F> getFacetsByType(final @NotNull Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
+  public @NotNull @Unmodifiable <F extends Facet<?>> Collection<F> getFacetsByType(final @NotNull Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
     return getModel().getFacetsByType(underlyingFacet, typeId);
   }
 
   @Override
-  public @NotNull <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
+  public @NotNull @Unmodifiable <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
     return getModel().getFacetsByType(typeId);
   }
 

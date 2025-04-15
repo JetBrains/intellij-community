@@ -4,7 +4,20 @@ plugins {
     kotlin("jvm")
     `maven-publish`
     id("org.jetbrains.dokka")
+    id("org.jetbrains.dokka-javadoc")
     signing
+}
+
+dokka {
+    dokkaSourceSets {
+        named("main") {
+            sourceLink {
+                // Point to IJP sources
+                remoteUrl("https://github.com/JetBrains/intellij-community")
+                localDirectory.set(rootDir)
+            }
+        }
+    }
 }
 
 val sourcesJar by
@@ -17,7 +30,7 @@ val sourcesJar by
 
 val javadocJar by
     tasks.registering(Jar::class) {
-        from(tasks.dokkaHtml)
+        from(tasks.dokkaGenerateModuleJavadoc)
         archiveClassifier = "javadoc"
         destinationDirectory = layout.buildDirectory.dir("artifacts")
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE

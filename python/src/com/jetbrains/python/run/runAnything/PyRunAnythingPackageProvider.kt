@@ -39,7 +39,7 @@ abstract class PyRunAnythingPackageProvider : RunAnythingCommandLineProvider() {
       initCaches(packageManager)
       if (isInstall) {
         val packageRepository = getPackageRepository(dataContext) ?: return emptySequence()
-        return packageManager.repositoryManager.packagesFromRepository(packageRepository).filter {
+        return packageRepository.getPackages().filter {
           it.startsWith(commandLine.toComplete)
         }.asSequence()
       }

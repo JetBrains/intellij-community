@@ -1,39 +1,43 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api.util
 
-class LinkHttpHeaderValue(val firstLink: String? = null,
-                          val prevLink: String? = null,
-                          val nextLink: String? = null,
-                          val lastLink: String? = null) {
-  companion object {
-    const val HEADER_NAME = "Link"
+import org.apache.http.message.BasicHeaderValueParser
 
-    private val HEADER_SECTION_REGEX = Regex("""^<(.*)>; rel="(first|prev|next|last)"$""")
+data class LinkHttpHeaderValue(
+  val firstLink: String? = null,
+  val prevLink: String? = null,
+  val nextLink: String? = null,
+  val lastLink: String? = null,
+  val isDeprecated: Boolean = false,
+) {
+  companion object {
+    const val HEADER_NAME: String = "Link"
 
     @JvmStatic
     fun parse(linkHeaderValue: String): LinkHttpHeaderValue {
-      var firstLink: String? = null
-      var prevLink: String? = null
-      var nextLink: String? = null
-      var lastLink: String? = null
-
-      val split = linkHeaderValue.split(", ")
-      check(split.isNotEmpty()) { "Cannot parse link header: $linkHeaderValue" }
-      for (section in split) {
-        if (section.isBlank()) continue
-        val matchResult = HEADER_SECTION_REGEX.matchEntire(section) ?: error("Incorrect header section format: $section")
-        val groupValues = matchResult.groupValues
-        if (groupValues.size == 3) {
-          when (groupValues[2]) {
-            "first" -> firstLink = groupValues[1]
-            "prev" -> prevLink = groupValues[1]
-            "next" -> nextLink = groupValues[1]
-            "last" -> lastLink = groupValues[1]
+      val headerElements = BasicHeaderValueParser.parseElements(linkHeaderValue, null)
+        .mapNotNull {
+          val relParam = checkNotNull(it.parameters.find { param -> param.name.equals("rel") }) {
+            "Missing rel-param in: '$linkHeaderValue'"
           }
-        }
-      }
 
-      return LinkHttpHeaderValue(firstLink, prevLink, nextLink, lastLink)
+          val urlPart = (it.name ?: return@mapNotNull null) + (it.value?.let { "=$it" } ?: "")
+          check(urlPart.startsWith("<") && urlPart.endsWith(">")) {
+            "Invalid URL-part '$urlPart' in: '$linkHeaderValue'"
+          }
+          val url = urlPart.removeSurrounding("<", ">")
+
+          relParam.value to url
+        }
+        .toMap()
+
+      return LinkHttpHeaderValue(
+        firstLink = headerElements["first"],
+        prevLink = headerElements["prev"],
+        nextLink = headerElements["next"],
+        lastLink = headerElements["last"],
+        isDeprecated = headerElements.containsKey("deprecation")
+      )
     }
   }
 }

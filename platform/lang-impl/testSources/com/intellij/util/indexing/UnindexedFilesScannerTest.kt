@@ -4,8 +4,8 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadWriteActionSupport
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -44,6 +44,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.locks.LockSupport
@@ -76,7 +77,7 @@ class UnindexedFilesScannerTest {
   @Before
   fun setup() {
     project = p.project
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30))
     testRootDisposable = Disposer.newCheckedDisposable("ScanningAndIndexingTest")
   }
 
@@ -329,7 +330,7 @@ class UnindexedFilesScannerTest {
     val (scanningStat, dirtyFiles) = scanFiles(oneDirIterator)
     assertThat(dirtyFiles).isEmpty()
     assertEquals(0, scanningStat.numberOfFilesForIndexing)
-    IndexingTestUtil.waitUntilIndexesAreReady(project) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
+    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30)) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
 
     val dumbModCount2 = dumbService.modificationTracker.modificationCount
     assertEquals(dumbModCount1 + 1, dumbModCount2)
@@ -401,7 +402,7 @@ class UnindexedFilesScannerTest {
       }
       tumbler.turnOn()
     }
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    IndexingTestUtil.waitUntilIndexesAreReady(project, Duration.ofSeconds(30))
   }
 
   private fun scanAndIndexFiles(filesAndDirs: SingleRootIndexableFilesIterator) {
@@ -479,6 +480,6 @@ class UnindexedFilesScannerTest {
       return VfsUtilCore.iterateChildrenRecursively(vfile, { true }, fileIterator)
     }
 
-    override fun getRootUrls(project: Project): MutableSet<String> = mutableSetOf(url)
+    override fun getRootUrls(project: Project): Set<String> = setOf(url)
   }
 }

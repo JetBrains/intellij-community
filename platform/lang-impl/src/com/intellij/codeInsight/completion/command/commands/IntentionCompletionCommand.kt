@@ -3,9 +3,11 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.command.CompletionCommand
+import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 import com.intellij.codeInsight.completion.command.HighlightInfoLookup
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -19,7 +21,8 @@ internal class IntentionCompletionCommand(
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup?,
   private val myOffset: Int,
-) : CompletionCommand() {
+  private val previewProvider: () -> IntentionPreviewInfo?,
+  ) : CompletionCommand(), CompletionCommandWithPreview {
 
   override val name: String
     get() = intentionAction.text
@@ -51,5 +54,9 @@ internal class IntentionCompletionCommand(
     else {
       editor.caretModel.moveToOffset(offset)
     }
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    return previewProvider.invoke()
   }
 }

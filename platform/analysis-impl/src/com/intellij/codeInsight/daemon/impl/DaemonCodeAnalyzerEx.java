@@ -19,8 +19,10 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +39,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @ApiStatus.Internal
   public abstract void restart(@NotNull Object reason);
 
-  // todo ijpl-339 mark deprecated
+  // todo IJPL-339 mark deprecated
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -47,7 +49,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
@@ -60,7 +62,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(model, project, minSeverity, startOffset, endOffset, context, processor);
   }
 
-  // todo ijpl-339 mark experimental
+  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
@@ -82,7 +84,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     });
   }
 
-  // todo ijpl-339 mark deprecated
+  // todo IJPL-339 mark deprecated
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -165,7 +167,15 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
   @ApiStatus.Internal
-  public static final int ANY_GROUP = -409423948;
+  protected static final int ANY_GROUP = -409423948;
   @ApiStatus.Internal
-  public static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+  protected static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull HighlightInfo.Builder builder) {
+    rescheduleShowIntentionsPass(psiFile, ((HighlightInfoB)builder).getRangeSoFar());
+  }
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  protected abstract void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull TextRange visibleRange);
 }

@@ -2,7 +2,7 @@
 package com.intellij.uiDesigner.core;
 
 import com.intellij.uiDesigner.compiler.GridBagConverter;
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.CurrentJavaVersion;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -518,7 +518,7 @@ public class GridBagConverterTest extends TestCase {
 
     applyConversionResults(panel, converter);
 
-    int textAreaWidth = JavaVersion.current().feature >= 9 ? 101 : 100;
+    int textAreaWidth = CurrentJavaVersion.currentJavaVersion().feature >= 9 ? 101 : 100;
 
     assertEquals(textAreaWidth, textArea.getPreferredSize().width);
 

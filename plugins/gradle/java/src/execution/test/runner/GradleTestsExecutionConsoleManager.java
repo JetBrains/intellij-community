@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.build.*;
@@ -10,9 +10,9 @@ import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.testframework.TestTreeView;
@@ -128,7 +128,7 @@ public final class GradleTestsExecutionConsoleManager
     testsRootNode.setSuiteStarted();
     consoleView.getEventPublisher().onTestingStarted(testsRootNode);
     if (processHandler != null) {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (testsRootNode.isInProgress()) {

@@ -45,9 +45,9 @@ class PluginModelValidatorTest {
   @Test
   fun `dependency on a plugin is specified as a plugin`() {
     val modules = produceDependencyAndDependentPlugins()
-    val validator = PluginModelValidator(modules)
-    assertThat(validator.errors).isEmpty()
-    assertWithMatchSnapshot(validator.graphAsString())
+    val result = validatePluginModel(modules)
+    assertThat(result.errors).isEmpty()
+    assertWithMatchSnapshot(result.graphAsString())
   }
 
   @Test
@@ -56,7 +56,7 @@ class PluginModelValidatorTest {
       it.replace("<plugin id=\"dependency\"/>", "<module name=\"intellij.dependent\"/>")
     }
 
-    val errors = PluginModelValidator(modules).errorsAsString
+    val errors = validatePluginModel(modules).errorsAsString()
     assertWithMatchSnapshot(errors)
   }
 
@@ -66,7 +66,7 @@ class PluginModelValidatorTest {
       it.replace("<plugin id=\"dependency\"/>", "<plugin id=\"incorrectId\"/>")
     }
 
-    val errors = PluginModelValidator(modules).errorsAsString
+    val errors = validatePluginModel(modules).errorsAsString()
     assertWithMatchSnapshot(errors)
   }
 
@@ -76,7 +76,7 @@ class PluginModelValidatorTest {
       it.replace("<plugin id=\"com.intellij.modules.lang\"/>", "<plugin id=\"$TEST_PLUGIN_ID\"/>")
     }
 
-    val errors = PluginModelValidator(modules)
+    val errors = validatePluginModel(modules)
       .errors
       .joinToString { it.message!! }
     assertThat(errors).isEqualTo("""
@@ -90,9 +90,9 @@ class PluginModelValidatorTest {
   @Test
   fun `content module in the same source module`() {
     val modules = producePluginWithContentModuleInTheSameSourceModule()
-    val validator = PluginModelValidator(modules)
-    assertThat(validator.errors).isEmpty()
-    assertWithMatchSnapshot(validator.graphAsString())
+    val result = validatePluginModel(modules)
+    assertThat(result.errors).isEmpty()
+    assertWithMatchSnapshot(result.graphAsString())
   }
 
   @Test
@@ -101,8 +101,8 @@ class PluginModelValidatorTest {
       it.replace("<dependencies>", "<dependencies><module name=\"com.intellij.diagram\"/>")
     }
 
-    val charSequence = PluginModelValidator(modules)
-    assertWithMatchSnapshot(charSequence.errorsAsString)
+    val result = validatePluginModel(modules)
+    assertWithMatchSnapshot(result.errorsAsString())
   }
 
   private fun producePluginWithContentModuleInTheSameSourceModule(
@@ -140,8 +140,8 @@ class PluginModelValidatorTest {
     val modules = producePluginWithContentModule {
       it.replace("</dependencies>", "</dependencies><depends>com.intellij.modules.lang</depends>")
     }
-    val validator = PluginModelValidator(modules)
-    assertThat(validator.errors.joinToString { it.message!! }).isEqualTo("""
+    val result = validatePluginModel(modules)
+    assertThat(result.errors.joinToString { it.message!! }).isEqualTo("""
       Old format must be not used for a module but `depends` tag is used (
         descriptorFile=/intellij.plugin.module/intellij.plugin.module.xml,
         depends=XmlElement(name=depends, attributes={}, children=[], content=com.intellij.modules.lang)
@@ -229,4 +229,19 @@ private fun writeIdeaPluginXml(
 private data class PluginModel(
   override val name: String,
   override val sourceRoots: Sequence<Path>,
-) : PluginModelValidator.Module
+) : PluginModelValidator.Module {
+  override val testSourceRoots: Sequence<Path> 
+    get() = emptySequence()
+}
+
+private fun PluginValidationResult.errorsAsString(): CharSequence {
+  if (errors.isEmpty()) return ""
+  val sb = StringBuilder()
+  sb.append("${errors.size} errors:\n")
+  errors.zip(errors.indices).joinTo(sb, "\n") { (error, idx) ->
+    "[${idx + 1}]: ${"-".repeat(30)}\n" +
+    error.message!!.trim()
+  }
+  sb.append("\n${"-".repeat(35)}\n")
+  return sb
+}

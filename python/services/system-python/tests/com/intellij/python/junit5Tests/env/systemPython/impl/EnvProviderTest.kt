@@ -53,7 +53,7 @@ class EnvProviderTest {
     coEvery { provider.findSystemPythons(any()) } returns Result.success(setOf(venvPython))
     coEvery { provider.uiCustomization } returns ui
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
-    val python = SystemPythonService().findSystemPythons().first { it.pythonBinary == venvPython }
+    val python = SystemPythonService().findSystemPythons(forceRefresh = true).first { it.pythonBinary == venvPython }
     assertEquals(ui, python.ui, "Wrong UI")
   }
 }

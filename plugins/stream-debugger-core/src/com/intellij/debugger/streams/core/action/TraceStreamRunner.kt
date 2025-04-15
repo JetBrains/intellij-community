@@ -29,7 +29,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.xdebugger.XDebugSession
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.Nls
 import java.util.stream.Stream
 import kotlin.coroutines.CoroutineContext
@@ -151,26 +158,29 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         val expressionBuilder = provider.getExpressionBuilder(project)
         val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
         val xValueInterpreter = provider.getXValueInterpreter(project)
+        val debuggerLauncher = provider.getDebuggerCommandLauncher(session)
         val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
 
-        val result = tracer.trace(chain)
-        when (result) {
-          is StreamTracer.Result.Evaluated -> {
-            val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
-            withContext(Dispatchers.EDT) {
-              window.setTrace(resolvedTrace, result.debuggerCommandLauncher, provider.getCollectionTreeBuilder(result.debuggerCommandLauncher.project))
+        debuggerLauncher.launchDebuggerCommand {
+          val result = tracer.trace(chain)
+          when (result) {
+            is StreamTracer.Result.Evaluated -> {
+              val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
+              withContext(Dispatchers.EDT) {
+                window.setTrace(resolvedTrace, debuggerLauncher, result.evaluationContext, provider.getCollectionTreeBuilder(project))
+              }
             }
-          }
-          is StreamTracer.Result.EvaluationFailed -> {
-            showError(result.message)
-            throw TraceEvaluationException(result.message, result.traceExpression)
-          }
-          is StreamTracer.Result.CompilationFailed -> {
-            showError(result.message)
-            throw TraceCompilationException(result.message, result.traceExpression)
-          }
-          StreamTracer.Result.Unknown -> {
-            LOG.error("Unknown result")
+            is StreamTracer.Result.EvaluationFailed -> {
+              showError(result.message)
+              throw TraceEvaluationException(result.message, result.traceExpression)
+            }
+            is StreamTracer.Result.CompilationFailed -> {
+              showError(result.message)
+              throw TraceCompilationException(result.message, result.traceExpression)
+            }
+            StreamTracer.Result.Unknown -> {
+              LOG.error("Unknown result")
+            }
           }
         }
       }

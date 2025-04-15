@@ -21,7 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @ApiStatus.Internal
-public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
+public final class EnterAfterJavadocTagHandler implements EnterHandlerDelegate {
 
   private static final Context NOT_MATCHED_CONTEXT = new Context();
 

@@ -1,80 +1,70 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-
-import static com.intellij.reference.SoftReference.dereference;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class LanguageLevelUtil {
+  private LanguageLevelUtil() { }
+
   /**
-   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level.
-   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
    * @param module to get the language level for.
+   * @return explicitly specified language level for a {@link Module}, or {@code null} if the module uses 'Project default' language level.
+   * May return an {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
    */
   public static @Nullable LanguageLevel getCustomLanguageLevel(@NotNull Module module) {
-    LanguageLevelModuleExtension moduleExtension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
+    LanguageLevelModuleExtension moduleExtension =
+      ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
     return moduleExtension != null ? moduleExtension.getLanguageLevel() : null;
   }
 
   /**
-   * Returns effective language level for the module (either custom module level, or project level if module level is not specified).
-   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
    * @param module to get the language level for.
+   * @return the effective language level for a {@link Module}, which is either the overridden language level for the module or the project
+   * language level.
+   * May return {@linkplain LanguageLevel#isUnsupported() unsupported} language level.
    */
-  public static @NotNull LanguageLevel getEffectiveLanguageLevel(final @NotNull Module module) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  public static @NotNull LanguageLevel getEffectiveLanguageLevel(@NotNull Module module) {
     LanguageLevel level = getCustomLanguageLevel(module);
     if (level != null) return level;
     return LanguageLevelProjectExtension.getInstance(module.getProject()).getLanguageLevel();
   }
 
-  private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = new EnumMap<>(LanguageLevel.class);
-
+  /**
+   * @deprecated Please use {@link LanguageLevel#getShortText()} instead.
+   */
+  @Deprecated(forRemoval = true)
   public static String getJdkName(LanguageLevel languageLevel) {
-    final String presentableText = languageLevel.getPresentableText();
-    return presentableText.substring(0, presentableText.indexOf(' '));
+    return languageLevel.getShortText();
   }
 
   /**
    * @param api The language level to get the next from.
-   * @return Next {@link LanguageLevel} that is not in preview.
+   * @return Next {@link LanguageLevel} that is not in preview or null if there is no language level.
    */
   public static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel api) {
-    final LanguageLevel[] levels = LanguageLevel.values();
-    final int currentLevelId = api.ordinal();
-    for (int i = currentLevelId + 1; i < levels.length; i++) {
-      final LanguageLevel level = levels[i];
+    List<LanguageLevel> levels = LanguageLevel.getEntries();
+    for (LanguageLevel level : levels.subList(api.ordinal() + 1, levels.size())) {
       if (!level.isPreview()) return level;
     }
     return null;
-  }
-
-  private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
-
-  static {
-    for (LanguageLevel level : LanguageLevel.values()) {
-      int feature = level.feature() + 1;
-      if (LanguageLevel.forFeature(feature) == null) break;
-      ourPresentableShortMessage.put(level, feature >= 9 ? String.valueOf(feature) : "1." + feature);
-    }
   }
 
   /**
@@ -82,78 +72,29 @@ public final class LanguageLevelUtil {
    *
    * @param languageLevel The language level for which to retrieve the short name.
    * @return The short name associated with the specified language level, or null if the language level is not released yet.
+   * @deprecated Please use {@code languageLevel.toJavaVersion().toFeatureString()} instead.
    */
-  public static @Nullable String getShortMessage(@NotNull LanguageLevel languageLevel) {
-    return ourPresentableShortMessage.get(languageLevel);
+  @Deprecated(forRemoval = true)
+  public static @NotNull String getShortMessage(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.toJavaVersion().toFeatureString();
   }
 
   /**
-   * For performance reasons, the forbidden API is pre-generated.
-   * @see com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator
-   */
-  private static @Nullable Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
-    String message = getShortMessage(languageLevel);
-    if (message == null) return null;
-    Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
-    Set<String> result = dereference(ref);
-    if (result == null) {
-      String fileName = "api" + message + ".txt";
-      URL resource = LanguageLevelUtil.class.getResource(fileName);
-      if (resource != null) {
-        result = loadSignatureList(resource);
-      }
-      else {
-        Logger.getInstance(LanguageLevelUtil.class).error("File not found: " + fileName);
-        result = Collections.emptySet();
-      }
-      ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
-    }
-    return result;
-  }
-
-  /**
-   * @param member The {@link PsiMember} to get the language level from
+   * @param member        The {@link PsiMember} to get the language level from
    * @param languageLevel The effective language level
-   * @return The last incompatible language level for a {@link PsiMember} as annotated by the @since javadoc or null if it is unknown.
+   * @return The last incompatible language level for a {@link PsiMember} as annotated by the @since Javadoc or null if it is unknown.
    * For example, if a method is annotated as @since 9 this method will return {@link LanguageLevel#JDK_1_8}.
+   * @deprecated Please use {@code JdkIncompatibleApiCache.getInstance().getLastIncompatibleLanguageLevel(member, languageLevel)}
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
-    if (member instanceof PsiAnonymousClass) return null;
-    PsiClass containingClass = member.getContainingClass();
-    if (containingClass instanceof PsiAnonymousClass) return null;
-    if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return null;
-    String signature = getSignature(member);
-    if (signature == null) return null;
-    LanguageLevel lastLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel);
-    if (lastLanguageLevel != null) {
-      if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor()) {
-        LanguageLevel lowestSuperLanguageLevel = lastLanguageLevel;
-        for (PsiMethod method : ((PsiMethod)member).findSuperMethods()) {
-          String superSignature = getSignature(method);
-          if (superSignature == null) return null;
-          LanguageLevel lastSuperLanguageLevel = getLastIncompatibleLanguageLevelForSignature(superSignature, languageLevel);
-          if (lastSuperLanguageLevel == null) return null;
-          if (lastSuperLanguageLevel.isLessThan(lowestSuperLanguageLevel)) {
-            lowestSuperLanguageLevel = lastSuperLanguageLevel;
-          }
-        }
-        return lowestSuperLanguageLevel;
-      }
-    }
-    return lastLanguageLevel;
+    return JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
   }
 
-  private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel) {
-    Set<String> forbiddenApi = getForbiddenApi(languageLevel);
-    if (forbiddenApi == null) return null;
-    if (forbiddenApi.contains(signature)) return languageLevel;
-    if (languageLevel.compareTo(LanguageLevel.HIGHEST) == 0) return null;
-    LanguageLevel[] values = LanguageLevel.values();
-    if (languageLevel.ordinal() == values.length - 1) return null;
-    LanguageLevel nextLanguageLevel = values[languageLevel.ordinal() + 1];
-    return getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel);
-  }
-
+  /**
+   * @deprecated Please use {@link JdkApiCompatabilityCache} to check for incompatible APIs.
+   */
+  @Deprecated(forRemoval = true)
   public static Set<String> loadSignatureList(@NotNull URL resource) {
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
       return new HashSet<>(FileUtil.loadLines(reader));
@@ -166,32 +107,11 @@ public final class LanguageLevelUtil {
 
   /**
    * For serialization of forbidden api.
+   *
+   * @deprecated Please don't use this, this API was moved to {@link JdkApiCompatabilityCache} and is for internal use only.
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable String getSignature(@Nullable PsiMember member) {
-    if (member instanceof PsiClass) {
-      return ((PsiClass)member).getQualifiedName();
-    }
-    if (member instanceof PsiField) {
-      String containingClass = getSignature(member.getContainingClass());
-      return containingClass == null ? null : containingClass + "#" + member.getName();
-    }
-    if (member instanceof PsiMethod method) {
-      String containingClass = getSignature(member.getContainingClass());
-      if (containingClass == null) return null;
-
-      StringBuilder buf = new StringBuilder();
-      buf.append(containingClass);
-      buf.append('#');
-      buf.append(method.getName());
-      buf.append('(');
-      for (PsiType type : method.getSignature(PsiSubstitutor.EMPTY).getParameterTypes()) {
-        buf.append(type.getCanonicalText());
-        buf.append(";");
-      }
-      buf.append(')');
-      return buf.toString();
-    }
-    return null;
+    return JdkApiCompatabilityCache.getInstance().getSignature(member);
   }
-
 }

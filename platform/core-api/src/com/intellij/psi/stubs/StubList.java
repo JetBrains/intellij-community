@@ -139,6 +139,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
   @ApiStatus.Internal
   public abstract @Nullable StubBase<?> getCachedStub(int index);
 
+  @Unmodifiable
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
     if (count == 0) return Collections.emptyList();
@@ -151,7 +152,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  private List<StubBase<?>> idSubList(MostlyUShortIntList idList, int start, int count) {
+  private @Unmodifiable List<StubBase<?>> idSubList(MostlyUShortIntList idList, int start, int count) {
     return new AbstractList<StubBase<?>>() {
       @Override
       public StubBase<?> get(int index) {

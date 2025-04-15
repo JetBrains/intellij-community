@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jetbrains-annotations" type="repository">
-    <properties maven-id="org.jetbrains:annotations:24.0.0">
+    <properties maven-id="org.jetbrains:annotations:26.0.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0.jar">
-          <sha256sum>ff112f54ce874b8ae899cfd68f0315d96c9f406a338b8eca80c76d10e2e5a2f7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar">
+          <sha256sum>2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.2/annotations-26.0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/24.0.0/annotations-24.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.2/annotations-26.0.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -13,7 +13,7 @@ import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -158,7 +158,7 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
                                       @Nullable ProgramRunner.Callback callback,
                                       boolean isDelegateBuild) {
 
-    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(project, MavenUtil.SYSTEM_ID)) {
+    if (!ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, MavenUtil.SYSTEM_ID)) {
       MavenUtil.showError(project,
                           RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
                           RunnerBundle.message("notification.project.is.untrusted"));

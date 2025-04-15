@@ -17,6 +17,7 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -101,18 +102,39 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testModuleImportDeclarationInModuleInfoFileFix() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
-      myFixture.configureFromExistingVirtualFile(addFile("module-info.java", """
-        <error descr="Module import is not allowed">import module <caret>M2;</error>
+      val actionName = "ReplaceOnDemandImportAction"
+
+      addFile("pkg/A.java", "package pkg;\npublic class A extends java.util.Random {}")
+
+      highlight("module-info.java", """
+        <error descr="Module import is not allowed">import module java.<caret>base;</error>
         module my.module {
           requires M2;
+          provides Random with pkg.A;
         }
-      """.trimIndent()))
+      """.trimIndent())
 
       val availableIntentions = myFixture.availableIntentions
       val available = availableIntentions
         .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
         .map { it.simpleName }
-      assertThat(available).describedAs(availableIntentions.toString()).contains("ReplaceOnDemandImportAction")
+
+      assertThat(available).describedAs(availableIntentions.toString()).contains(actionName)
+
+      WriteCommandAction.runWriteCommandAction(null) {
+        availableIntentions.first {
+          (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java.simpleName == actionName
+        }.invoke(project, myFixture.editor, myFixture.file)
+      }
+
+      myFixture.checkResult("""
+        import java.util.Random;
+        
+        module my.module {
+          requires M2;
+          provides Random with pkg.A;
+        }
+        """.trimIndent())
     }
   }
 

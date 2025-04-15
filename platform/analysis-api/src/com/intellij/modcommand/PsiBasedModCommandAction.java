@@ -62,13 +62,15 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
-      return element != null && !BaseIntentionAction.canModify(element) ?
-             null :
-             element;
+      if (element == null) return null;
+      PsiFile file = element.getContainingFile();
+      // File could be null e.g., for PsiPackage element
+      if (file != null && !isFileAllowed(file)) return null;
+      return element;
     }
     int offset = context.offset();
     PsiFile file = context.file();
-    if (!BaseIntentionAction.canModify(file)) return null;
+    if (!isFileAllowed(file)) return null;
     if (context.element() != null && context.element().isValid()) {
       return getIfSatisfied(context.element(), context);
     }
@@ -100,6 +102,17 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
       if (stopSearchAt(commonParent, context) || commonParent instanceof PsiFile) return null;
       commonParent = commonParent.getParent();
     }
+  }
+
+  /**
+   * Check if the action is allowed in the supplied file. By default, it checks whether the file could be modified.
+   * Override if you want to perform a custom check.
+   * 
+   * @param file file to check
+   * @return true if the action is allowed inside the specified file; false otherwise
+   */
+  protected boolean isFileAllowed(@NotNull PsiFile file) {
+    return BaseIntentionAction.canModify(file);
   }
 
   private E getIfSatisfied(@NotNull PsiElement element, @NotNull ActionContext context) {

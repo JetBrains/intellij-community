@@ -23,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -35,7 +36,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestRev
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
 
-internal interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
+@ApiStatus.Internal
+interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
   fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
 
   companion object {

@@ -2,6 +2,7 @@ package com.intellij.remoteDev.util
 
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.util.application
 import com.intellij.util.withPath
@@ -36,7 +37,10 @@ object UrlUtil {
     catch (ex: Throwable) {
       application.invokeLater {
         Messages.showErrorDialog(
-          RemoteDevUtilBundle.message("error.message.invalid.address.format", ex.message ?: ""),
+          RemoteDevUtilBundle.message(
+            "error.message.invalid.address.format",
+            ex.message?.let { StringUtil.escapeXmlEntities(it) } ?: ""
+          ),
           product)
       }
       return null

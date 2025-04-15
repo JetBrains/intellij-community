@@ -21,6 +21,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
+import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -65,6 +67,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
 
 
 internal fun <T> PropertyGraph.booleanProperty(dependency: ObservableProperty<T>, value: T) =
@@ -240,7 +243,7 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
 internal fun Row.pythonInterpreterComboBox(
   selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
   model: PythonAddInterpreterModel,
-  onPathSelected: (String) -> Unit, busyState: StateFlow<Boolean>? = null,
+  onPathSelected: (PythonWithLanguageLevel) -> Unit, busyState: StateFlow<Boolean>? = null,
 ): Cell<PythonInterpreterComboBox> {
 
   val comboBox = PythonInterpreterComboBox(selectedSdkProperty, model, onPathSelected, ShowingMessageErrorSync)
@@ -273,7 +276,7 @@ internal fun Row.pythonInterpreterComboBox(
 internal class PythonInterpreterComboBox(
   private val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
   val controller: PythonAddInterpreterModel,
-  val onPathSelected: (String) -> Unit,
+  val onPathSelected: (PythonWithLanguageLevel) -> Unit,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 
@@ -288,7 +291,7 @@ internal class PythonInterpreterComboBox(
     val newOnPathSelected: (String) -> Unit = {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         controller.getSystemPythonFromSelection(it, errorSink)?.let { python ->
-          interpreterToSelect.set(python)
+          interpreterToSelect.set(python.pythonBinary.pathString)
           onPathSelected(python)
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -8,7 +8,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.JdkApiCompatabilityCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -115,7 +115,7 @@ public final class SizeReplaceableByIsEmptyInspection extends BaseInspection {
   private class SizeReplaceableByIsEmptyVisitor extends BaseInspectionVisitor {
     private static boolean isLanguageLevelCompatible(PsiElement element, PsiMethod method) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
-      LanguageLevel lastIncompatibleLanguageLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(method, languageLevel);
+      LanguageLevel lastIncompatibleLanguageLevel = JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(method, languageLevel);
       return lastIncompatibleLanguageLevel == null || lastIncompatibleLanguageLevel.isLessThan(languageLevel);
     }
 

@@ -3,17 +3,18 @@ package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.utils.*;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.apache.maven.*;
 import org.apache.maven.api.*;
+import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
-import org.apache.maven.api.cli.ParserException;
+import org.apache.maven.api.cli.Logger;
 import org.apache.maven.api.cli.ParserRequest;
 import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.api.services.Lookup;
+import org.apache.maven.api.services.model.ModelResolverException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -26,21 +27,14 @@ import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
-import org.apache.maven.model.*;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Repository;
-import org.apache.maven.model.building.*;
-import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
+import org.apache.maven.model.building.FileModelSource;
+import org.apache.maven.model.building.ModelProblem;
+import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.io.ModelReader;
-import org.apache.maven.model.path.DefaultPathTranslator;
-import org.apache.maven.model.path.PathTranslator;
-import org.apache.maven.model.profile.DefaultProfileActivationContext;
-import org.apache.maven.model.profile.DefaultProfileInjector;
-import org.apache.maven.model.profile.activation.JdkVersionProfileActivator;
-import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator;
-import org.apache.maven.model.profile.activation.ProfileActivator;
-import org.apache.maven.model.profile.activation.PropertyProfileActivator;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
@@ -48,9 +42,6 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.apache.maven.resolver.RepositorySystemSessionFactory;
 import org.apache.maven.session.scope.internal.SessionScope;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
-import org.apache.maven.settings.building.SettingsBuilder;
 import org.codehaus.plexus.classworlds.ClassWorld;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -70,11 +61,13 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
@@ -83,7 +76,6 @@ import static org.apache.maven.cling.invoker.Utils.getCanonicalPath;
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private final @NotNull Maven40Invoker myMavenInvoker;
   private final @NotNull Lookup myContainer;
-  private final @NotNull Settings myMavenSettings;
 
   private final Maven40ServerConsoleLogger myConsoleWrapper;
 
@@ -136,7 +128,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       commandLineOptions.add("-q");
     }
 
-    String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+    String mavenEmbedderCliOptions = System.getProperty(MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
     if (mavenEmbedderCliOptions != null) {
       commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
     }
@@ -171,7 +163,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         "",
         "",
         commandLineOptions,
-        myConsoleWrapper,
         new JLineMessageBuilderFactory()
       )
       .userHome(userHomeDirectory)
@@ -181,9 +172,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     MavenParser mavenParser = new MavenParser() {
       @Override
-      protected MavenInvokerRequest getInvokerRequest(LocalContext context) {
+      public MavenInvokerRequest getInvokerRequest(LocalContext context) {
         return new Maven40InvokerRequest(
           context.parserRequest,
+          context.parsingFailed,
           context.cwd,
           context.installationDirectory,
           context.userHomeDirectory,
@@ -191,16 +183,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           context.systemProperties,
           context.topDirectory,
           context.rootDirectory,
-          context.parserRequest.in(),
-          context.parserRequest.out(),
-          context.parserRequest.err(),
           context.extensions,
-          getJvmArguments(context.rootDirectory),
           (MavenOptions)context.options);
       }
 
       @Override
-      protected Path getRootDirectory(LocalContext context) throws ParserException {
+      public Path getRootDirectory(LocalContext context) {
         Path rootDir = super.getRootDirectory(context);
         if (null == rootDir) {
           Path topDirectory = context.topDirectory;
@@ -211,19 +199,24 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
     };
     InvokerRequest invokerRequest;
+    List<Logger.Entry> entries = new ArrayList<>();
     try {
       invokerRequest = mavenParser.parseInvocation(parserRequest);
+      entries.addAll(invokerRequest.parserRequest().logger().drain());
+      myContainer = myMavenInvoker.invokeAndGetContext(invokerRequest).lookup;
     }
-    catch (ParserException e) {
-      throw new MavenConfigParseException(e.getMessage(), multiModuleProjectDirectory);
+    catch (InvokerException.ExitException e) {
+      StringBuilder message = new StringBuilder(e.getMessage());
+      for (var entry : entries) {
+        if (entry.level() == Logger.Level.ERROR) {
+          message.append("\n").append(entry.error().getMessage());
+        }
+      }
+      throw new MavenConfigParseException(message.toString(), multiModuleProjectDirectory);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-
-    myContainer = myMavenInvoker.invokeAndGetContext(invokerRequest).lookup;
-
-    SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
 
     myAlwaysUpdateSnapshots = commandLineOptions.contains("-U") || commandLineOptions.contains("--update-snapshots");
 
@@ -231,14 +224,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     if (serverSettings.getProjectJdk() != null) {
       mySystemProperties.put("java.home", serverSettings.getProjectJdk());
     }
-
-    Map<String, String> userProperties = invokerRequest.userProperties();
-    myMavenSettings = Maven40SettingsBuilder.buildSettings(
-      settingsBuilder,
-      serverSettings,
-      toProperties(mySystemProperties),
-      toProperties(userProperties)
-    );
 
     myRepositorySystem = getComponent(MavenRepositorySystem.class);
 
@@ -252,11 +237,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     myImporterSpy = importerSpy;
   }
 
-  public File getMultiModuleProjectDirectory() {
-    String directory = myEmbedderSettings.getMultiModuleProjectDirectory();
-    return null == directory ? null : new File(directory);
-  }
-
   @Override
   public @NotNull MavenServerResponse<ArrayList<MavenServerExecutionResult>> resolveProjects(@NotNull LongRunningTaskInput longRunningTaskInput,
                                                                                              @NotNull ProjectResolutionRequest request,
@@ -264,6 +244,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
     MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
+    List<File> filesToResolve = request.getFilesToResolve();
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -276,6 +257,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         updateSnapshots,
         myImporterSpy,
         task,
+        filesToResolve,
         pomHashMap,
         activeProfiles,
         inactiveProfiles,
@@ -390,6 +372,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
       result.add(MavenProjectProblem.createRepositoryProblem(path, message, false, mavenArtifact));
     }
+    else if (ex instanceof ModelResolverException) {
+      myConsoleWrapper.error("Maven resolver problem", ex);
+      result.add(MavenProjectProblem.createStructureProblem(path, ex.getMessage(), false));
+    }
     else {
       myConsoleWrapper.error("Maven server structure problem", ex);
       result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), false));
@@ -434,19 +420,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   private <T> T getComponentIfExists(Class<T> clazz, String roleHint) {
     return myContainer.lookupOptional(clazz, roleHint).orElse(null);
-  }
-
-  private static MavenId extractIdFromException(Throwable exception) {
-    try {
-      Field field = exception.getClass().getDeclaredField("extension");
-      field.setAccessible(true);
-      return null;
-      //CoreExtension extension = (CoreExtension)field.get(exception);
-      //return new MavenId(extension.getGroupId(), extension.getArtifactId(), extension.getVersion());
-    }
-    catch (Throwable e) {
-      return null;
-    }
   }
 
   public MavenExecutionRequest createRequest(File file,
@@ -494,72 +467,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         profileActivation.addProfileActivation(profileId, false, false);
       }
     }
-  }
-
-  private static Properties toProperties(Map<String, String> map) {
-    Properties result = new Properties();
-    for (Map.Entry<String, String> entry : map.entrySet()) {
-      result.setProperty(entry.getKey(), entry.getValue());
-    }
-    return result;
-  }
-
-  private void injectDefaultRepositories(MavenExecutionRequest request)
-    throws MavenExecutionRequestPopulationException {
-    Set<String> definedRepositories = myRepositorySystem.getRepoIds(request.getRemoteRepositories());
-
-    if (!definedRepositories.contains(MavenRepositorySystem.DEFAULT_REMOTE_REPO_ID)) {
-      try {
-        request.addRemoteRepository(myRepositorySystem.createDefaultRemoteRepository(request));
-      }
-      catch (Exception e) {
-        throw new MavenExecutionRequestPopulationException("Cannot create default remote repository.", e);
-      }
-    }
-  }
-
-  private void injectDefaultPluginRepositories(MavenExecutionRequest request)
-    throws MavenExecutionRequestPopulationException {
-    Set<String> definedRepositories = myRepositorySystem.getRepoIds(request.getPluginArtifactRepositories());
-
-    if (!definedRepositories.contains(MavenRepositorySystem.DEFAULT_REMOTE_REPO_ID)) {
-      try {
-        request.addPluginArtifactRepository(myRepositorySystem.createDefaultRemoteRepository(request));
-      }
-      catch (Exception e) {
-        throw new MavenExecutionRequestPopulationException("Cannot create default remote repository.", e);
-      }
-    }
-  }
-
-  private static @NotNull File getMultimoduleProjectDir(@Nullable File file) {
-    File mavenMultiModuleProjectDirectory;
-    if (file == null) {
-      mavenMultiModuleProjectDirectory = new File(FileUtilRt.getTempDirectory());
-    }
-    else {
-      mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
-    }
-    return mavenMultiModuleProjectDirectory;
-  }
-
-  private static List<String> collectActiveProfiles(@Nullable List<String> defaultActiveProfiles,
-                                                    @Nullable List<String> explicitActiveProfiles,
-                                                    @Nullable List<String> explicitInactiveProfiles) {
-    if (defaultActiveProfiles == null || defaultActiveProfiles.isEmpty()) {
-      return explicitActiveProfiles != null ? explicitActiveProfiles : Collections.emptyList();
-    }
-
-    Set<String> result = new HashSet<>(defaultActiveProfiles);
-    if (explicitInactiveProfiles != null && !explicitInactiveProfiles.isEmpty()) {
-      result.removeAll(explicitInactiveProfiles);
-    }
-
-    if (explicitActiveProfiles != null) {
-      result.addAll(explicitActiveProfiles);
-    }
-
-    return new ArrayList<>(result);
   }
 
   /**
@@ -614,22 +521,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
 
     return result;
-  }
-
-  private RepositorySystemSessionFactory getCoreSystemSessionFactory() throws RuntimeException {
-
-    try {
-      DefaultMaven component = getComponent(DefaultMaven.class);
-      Field field = DefaultMaven.class.getDeclaredField("repositorySessionFactory");
-      field.setAccessible(true);
-      return (RepositorySystemSessionFactory)field.get(component);
-    }
-    catch (RuntimeException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private static RepositorySystemSession.CloseableSession newCloseableSession(MavenExecutionRequest request,
@@ -688,7 +579,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         }
       }
       return foundComponents;
-    } finally {
+    }
+    finally {
       currentThread.setContextClassLoader(originalContextClassLoader);
     }
   }
@@ -697,7 +589,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerGlobals.getLogger().warn(new RuntimeException(message, e));
   }
 
-  private Lookup getContainer() {
+  private @NotNull Lookup getContainer() {
     return myContainer;
   }
 
@@ -716,9 +608,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       request.setTransferListener(new Maven40TransferListenerAdapter(task.getIndicator()));
       request.setUpdateSnapshots(myAlwaysUpdateSnapshots || forceUpdateSnapshots);
 
-      List<PluginResolutionData> resolutions = collectPluginResolutionData(pluginResolutionRequests);
+
       List<PluginResolutionResponse> results = new ArrayList<>();
       executeWithMavenSession(request, MavenWorkspaceMap.empty(), task.getIndicator(), session -> {
+        List<PluginResolutionData> resolutions = collectPluginResolutionData(session, pluginResolutionRequests);
         results.addAll(ParallelRunnerForServer.execute(false, resolutions, resolution ->
           resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.dependencies, resolution.remoteRepos,
                         session.getRepositorySession())));
@@ -731,12 +624,14 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private @NotNull List<PluginResolutionData> collectPluginResolutionData(@NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests) {
+  private @NotNull List<PluginResolutionData> collectPluginResolutionData(MavenSession session,
+                                                                          @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests) {
     List<PluginResolutionData> resolutions = new ArrayList<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-      List<RemoteRepository> remoteRepos = RepositoryUtils.toRepos(convertRepositories(pluginResolutionRequest.getRepositories(), false));
+      List<RemoteRepository> remoteRepos =
+        RepositoryUtils.toRepos(map2ArtifactRepositories(session, pluginResolutionRequest.getRepositories(), false));
 
       List<Dependency> dependencies = new ArrayList<>();
       for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {
@@ -844,250 +739,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       return Maven40EffectivePomDumper.evaluateEffectivePom(this, file, activeProfiles, inactiveProfiles);
     }
     catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  @Override
-  public @NotNull MavenModel interpolateAndAlignModel(@NotNull MavenModel model, @NotNull File pomDir, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
-    Model result = interpolateAndAlignModel(nativeModel, pomDir);
-    return Maven40ModelConverter.convertModel(result);
-  }
-
-  public @NotNull Model interpolateAndAlignModel(Model nativeModel, File pomDir) {
-    File baseDir = new File(myEmbedderSettings.getMultiModuleProjectDirectory());
-    DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
-    StringVisitorModelInterpolator interpolator = getComponent(StringVisitorModelInterpolator.class);
-    Model result = doInterpolate(interpolator, nativeModel, baseDir);
-    MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
-    myPathTranslator.alignToBaseDirectory(result, pomDir);
-    return result;
-  }
-
-  private static class MyDefaultPathTranslator {
-    private final PathTranslator myPathTranslator;
-
-    private MyDefaultPathTranslator(PathTranslator pathTranslator) {
-      myPathTranslator = pathTranslator;
-    }
-
-    private String alignToBaseDirectory(String path, File basedir) {
-      return myPathTranslator.alignToBaseDirectory(path, basedir);
-    }
-
-    /**
-     * adapted from {@link org.apache.maven.project.path.DefaultPathTranslator#alignToBaseDirectory(Model, File)}
-     */
-    private void alignToBaseDirectory(Model model, File basedir) {
-      if (basedir == null) {
-        return;
-      }
-
-      Build build = model.getBuild();
-
-      if (build != null) {
-        build.setDirectory(alignToBaseDirectory(build.getDirectory(), basedir));
-
-        build.setSourceDirectory(alignToBaseDirectory(build.getSourceDirectory(), basedir));
-
-        build.setTestSourceDirectory(alignToBaseDirectory(build.getTestSourceDirectory(), basedir));
-
-        for (Resource resource : build.getResources()) {
-          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
-        }
-
-        for (Resource resource : build.getTestResources()) {
-          resource.setDirectory(alignToBaseDirectory(resource.getDirectory(), basedir));
-        }
-
-        if (build.getFilters() != null) {
-          List<String> filters = new ArrayList<>();
-          for (String filter : build.getFilters()) {
-            filters.add(alignToBaseDirectory(filter, basedir));
-          }
-          build.setFilters(filters);
-        }
-
-        build.setOutputDirectory(alignToBaseDirectory(build.getOutputDirectory(), basedir));
-
-        build.setTestOutputDirectory(alignToBaseDirectory(build.getTestOutputDirectory(), basedir));
-      }
-
-      Reporting reporting = model.getReporting();
-
-      if (reporting != null) {
-        reporting.setOutputDirectory(alignToBaseDirectory(reporting.getOutputDirectory(), basedir));
-      }
-    }
-  }
-
-  @Override
-  public @NotNull ProfileApplicationResult applyProfiles(@NotNull MavenModel model,
-                                                         @NotNull File basedir,
-                                                         @NotNull MavenExplicitProfiles explicitProfiles,
-                                                         @NotNull HashSet<@NotNull String> alwaysOnProfiles,
-                                                         @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-    }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
-    }
-  }
-
-  private ProfileApplicationResult applyProfiles(MavenModel model,
-                                                 File basedir,
-                                                 MavenExplicitProfiles explicitProfiles,
-                                                 Collection<String> alwaysOnProfiles) {
-    Model nativeModel = Maven40ModelConverter.toNativeModel(model);
-
-    Collection<String> enabledProfiles = explicitProfiles.getEnabledProfiles();
-    Collection<String> disabledProfiles = explicitProfiles.getDisabledProfiles();
-    List<Profile> activatedPom = new ArrayList<>();
-    List<Profile> activatedExternal = new ArrayList<>();
-    List<Profile> activeByDefault = new ArrayList<>();
-
-    List<Profile> rawProfiles = nativeModel.getProfiles();
-    List<Profile> expandedProfilesCache = null;
-    List<Profile> deactivatedProfiles = new ArrayList<>();
-
-    for (int i = 0; i < rawProfiles.size(); i++) {
-      Profile eachRawProfile = rawProfiles.get(i);
-
-      if (disabledProfiles.contains(eachRawProfile.getId())) {
-        deactivatedProfiles.add(eachRawProfile);
-        continue;
-      }
-
-      boolean shouldAdd = enabledProfiles.contains(eachRawProfile.getId()) || alwaysOnProfiles.contains(eachRawProfile.getId());
-
-      Activation activation = eachRawProfile.getActivation();
-      if (activation != null) {
-        if (activation.isActiveByDefault()) {
-          activeByDefault.add(eachRawProfile);
-        }
-
-        // expand only if necessary
-        if (expandedProfilesCache == null) {
-          StringVisitorModelInterpolator interpolator = getComponent(StringVisitorModelInterpolator.class);
-          expandedProfilesCache = doInterpolate(interpolator, nativeModel, basedir).getProfiles();
-        }
-        Profile eachExpandedProfile = expandedProfilesCache.get(i);
-
-        ModelProblemCollector collector = new ModelProblemCollector() {
-          @Override
-          public void add(ModelProblemCollectorRequest request) {
-          }
-        };
-        DefaultProfileActivationContext context = new DefaultProfileActivationContext();
-        for (ProfileActivator eachActivator : getProfileActivators(basedir)) {
-          try {
-            if (eachActivator.isActive(eachExpandedProfile, context, collector)) {
-              shouldAdd = true;
-              break;
-            }
-          }
-          catch (Exception e) {
-            MavenServerGlobals.getLogger().warn(e);
-          }
-        }
-      }
-
-      if (shouldAdd) {
-        if (MavenConstants.PROFILE_FROM_POM.equals(eachRawProfile.getSource())) {
-          activatedPom.add(eachRawProfile);
-        }
-        else {
-          activatedExternal.add(eachRawProfile);
-        }
-      }
-    }
-
-    List<Profile> activatedProfiles = new ArrayList<>(activatedPom.isEmpty() ? activeByDefault : activatedPom);
-    activatedProfiles.addAll(activatedExternal);
-
-    for (Profile each : activatedProfiles) {
-      new DefaultProfileInjector().injectProfile(nativeModel, each, null, null);
-    }
-
-    return new ProfileApplicationResult(
-      Maven40ModelConverter.convertModel(nativeModel),
-      new MavenExplicitProfiles(collectProfilesIds(activatedProfiles), collectProfilesIds(deactivatedProfiles))
-    );
-  }
-
-  private static ProfileActivator[] getProfileActivators(File basedir) {
-    PropertyProfileActivator sysPropertyActivator = new PropertyProfileActivator();
-    /*
-    DefaultContext context = new DefaultContext();
-    context.put("SystemProperties", MavenServerUtil.collectSystemProperties());
-    try {
-      sysPropertyActivator.contextualize(context);
-    }
-    catch (ContextException e) {
-      MavenServerGlobals.getLogger().error(e);
-      return new ProfileActivator[0];
-    }
-    */
-
-    return new ProfileActivator[]{
-      // TODO: implement
-      //new MyFileProfileActivator(basedir),
-      sysPropertyActivator,
-      new JdkVersionProfileActivator(),
-      new OperatingSystemProfileActivator()};
-  }
-
-  private static Collection<String> collectProfilesIds(List<Profile> profiles) {
-    Collection<String> result = new HashSet<>();
-    for (Profile each : profiles) {
-      if (each.getId() != null) {
-        result.add(each.getId());
-      }
-    }
-    return result;
-  }
-
-  private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {
-    try {
-      Properties userProperties = new Properties();
-      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
-      ModelBuildingRequest request = new DefaultModelBuildingRequest();
-      request.setUserProperties(userProperties);
-      request.setSystemProperties(MavenServerUtil.collectSystemProperties());
-      request.setBuildStartTime(new Date());
-      request.setFileModel(result);
-
-      List<ModelProblemCollectorRequest> problems = new ArrayList<>();
-      result = interpolator.interpolateModel(result, basedir, request, new ModelProblemCollector() {
-        @Override
-        public void add(ModelProblemCollectorRequest request) {
-          problems.add(request);
-        }
-      });
-
-      for (ModelProblemCollectorRequest problem : problems) {
-        if (problem.getException() != null) {
-          MavenServerGlobals.getLogger().warn(problem.getException());
-        }
-      }
-    }
-    catch (Exception e) {
-      MavenServerGlobals.getLogger().error(e);
-    }
-    return result;
-  }
-
-  @Override
-  public @NotNull MavenModel assembleInheritance(@NotNull MavenModel model, @NotNull MavenModel parentModel, @NotNull MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      return Maven40ModelInheritanceAssembler.assembleInheritance(model, parentModel);
-    }
-    catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
     }
   }
@@ -1256,11 +907,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       for (MavenArtifactResolutionRequest request : requests) {
         repos.addAll(request.getRemoteRepositories());
       }
-      List<ArtifactRepository> repositories = convertRepositories(new ArrayList<>(repos), updateSnapshots);
-      repositories.forEach(executionRequest::addRemoteRepository);
+
 
       executeWithMavenSession(executionRequest, MavenWorkspaceMap.empty(), task.getIndicator(), mavenSession -> {
         try {
+          List<ArtifactRepository> repositories = map2ArtifactRepositories(mavenSession, new ArrayList<>(repos), updateSnapshots);
+          repositories.forEach(executionRequest::addRemoteRepository);
+
           RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
           for (MavenArtifactResolutionRequest request : requests) {
             MavenArtifact artifact = tryResolveArtifact(mavenSession, request, repositorySystem, repositories);
@@ -1300,19 +953,13 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     Maven40Sl4jLoggerWrapper.setCurrentWrapper(consoleWrapper);
   }
 
-  private @NotNull List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories, boolean forceResolveSnapshots) {
-    List<ArtifactRepository> result = map2ArtifactRepositories(repositories, forceResolveSnapshots);
-    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
-      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
-    }
-    return result;
-  }
-
-  private List<ArtifactRepository> map2ArtifactRepositories(List<MavenRemoteRepository> repositories, boolean forceResolveSnapshots) {
+  private List<ArtifactRepository> map2ArtifactRepositories(@Nullable MavenSession session,
+                                                            List<MavenRemoteRepository> repositories,
+                                                            boolean forceResolveSnapshots) {
     List<ArtifactRepository> result = new ArrayList<>();
     for (MavenRemoteRepository each : repositories) {
       try {
-        result.add(buildArtifactRepository(Maven40ModelConverter.toNativeRepository(each, forceResolveSnapshots)));
+        result.add(buildArtifactRepository(session, Maven40ModelConverter.toNativeRepository(each, forceResolveSnapshots)));
       }
       catch (InvalidRepositoryException e) {
         MavenServerGlobals.getLogger().warn(e);
@@ -1321,16 +968,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return result;
   }
 
-  private ArtifactRepository buildArtifactRepository(Repository repo) throws InvalidRepositoryException {
+  private ArtifactRepository buildArtifactRepository(@Nullable MavenSession session, Repository repo) throws InvalidRepositoryException {
     MavenRepositorySystem repositorySystem = myRepositorySystem;
-    RepositorySystemSession session = getComponent(LegacySupport.class).getRepositorySession();
 
     ArtifactRepository repository = MavenRepositorySystem.buildArtifactRepository(repo);
 
-    if (session != null) {
-      repositorySystem.injectMirror(session, Collections.singletonList(repository));
-      repositorySystem.injectProxy(session, Collections.singletonList(repository));
-      repositorySystem.injectAuthentication(session, Collections.singletonList(repository));
+    RepositorySystemSession repositorySession = session == null ? null : session.getRepositorySession();
+    if (repositorySession != null) {
+      repositorySystem.injectMirror(repositorySession, Collections.singletonList(repository));
+      repositorySystem.injectProxy(repositorySession, Collections.singletonList(repository));
+      repositorySystem.injectAuthentication(repositorySession, Collections.singletonList(repository));
     }
 
     return repository;
@@ -1346,7 +993,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerUtil.checkToken(token);
     try {
       return new HashSet<>(
-        convertRemoteRepositories(convertRepositories(new ArrayList<>(repositories), false)));
+        convertRemoteRepositories(map2ArtifactRepositories(null, new ArrayList<>(repositories), false)));
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
@@ -1362,7 +1009,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenServerUtil.checkToken(token);
     if (artifacts.isEmpty()) return new MavenArtifactResolveResult(new ArrayList<>(), null);
     try {
-      return resolveArtifactsTransitively(artifacts, remoteRepositories);
+      return resolveArtifactsTransitively(artifacts);
     }
     catch (Throwable e) {
       MavenServerGlobals.getLogger().error(e);
@@ -1380,9 +1027,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private MavenArtifactResolveResult resolveArtifactsTransitively(
-    @NotNull List<MavenArtifactInfo> artifacts,
-    @NotNull List<MavenRemoteRepository> remoteRepositories) {
+  private MavenArtifactResolveResult resolveArtifactsTransitively(@NotNull List<MavenArtifactInfo> artifacts) {
     MavenExecutionRequest request = createRequest(null, null, null);
 
     Map<DownloadedArtifact, Path> resolvedArtifactMap = new HashMap<>();
@@ -1413,6 +1058,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           .filter(node -> node != dependencyNode)
           .filter(node -> node.getDependency() != null)
           .map(node -> node.getDependency().toCoordinates())
+          .filter(distinctByKey(
+            coords ->
+              Arrays.asList(
+                coords.getGroupId(),
+                coords.getArtifactId(),
+                coords.getVersionConstraint().toString(),
+                coords.getClassifier(),
+                coords.getExtension(),
+                coords.getOptional()
+              )))
           .collect(Collectors.toList());
         ArtifactResolverResult resolvedChildren = artifactResolver.resolve(session, dependencyCoordinates);
 
@@ -1434,6 +1089,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return new MavenArtifactResolveResult(resolvedArtifacts, null);
   }
 
+  private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    return t -> seen.add(keyExtractor.apply(t));
+  }
 
   @Override
   public ArrayList<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) {

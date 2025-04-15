@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.*
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
@@ -25,7 +26,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtVisitor
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.parameterVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_CLASS_ID
 
@@ -46,10 +47,16 @@ internal class AddExplicitTargetToParameterAnnotationInspection :
         element: KtAnnotationEntry,
         context: List<AnnotationUseSiteTarget>,
         rangeInElement: TextRange?,
-        onTheFly: Boolean
+        onTheFly: Boolean,
     ): ProblemDescriptor {
-        val fix = LocalQuickFix.from(AddAnnotationUseSiteTargetModCommandAction(context))
-        val fixes = if (fix != null) arrayOf(fix) else emptyArray()
+        val annotationTargets = context
+        val action = object : AddAnnotationUseSiteTargetModCommandAction() {
+            override fun getAnnotationTargets(
+                context: ActionContext,
+                element: KtAnnotationEntry,
+            ): List<AnnotationUseSiteTarget> = annotationTargets
+        }
+        val fix = LocalQuickFix.from(action) ?: error("Broken contract: unexpected null quick fix for non-null action")
 
         return createProblemDescriptor(
             /* psiElement = */ element,
@@ -57,20 +64,16 @@ internal class AddExplicitTargetToParameterAnnotationInspection :
             /* descriptionTemplate = */ KotlinBundle.message("inspection.add.annotation.target.problem.description"),
             /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             /* onTheFly = */ onTheFly,
-            /* ...fixes = */ *fixes,
+            /* ...fixes = */ fix,
         )
     }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
-        isOnTheFly: Boolean
-    ): KtVisitor<*, *> {
-        return object : KtVisitorVoid() {
-            override fun visitParameter(parameter: KtParameter) {
-                parameter.annotationEntries.forEach { annotationEntry ->
-                    visitTargetElement(annotationEntry, holder, isOnTheFly)
-                }
-            }
+        isOnTheFly: Boolean,
+    ): KtVisitor<*, *> = parameterVisitor { parameter ->
+        parameter.annotationEntries.forEach { annotationEntry ->
+            visitTargetElement(annotationEntry, holder, isOnTheFly)
         }
     }
 
@@ -79,8 +82,8 @@ internal class AddExplicitTargetToParameterAnnotationInspection :
         val targets = element.getApplicableUseSiteTargets()
         if (targets.isEmpty() || AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER !in targets) return null
         return when {
-            AnnotationUseSiteTarget.PROPERTY in targets ||
-            AnnotationUseSiteTarget.FIELD in targets && annotatedPropertyHasField(element) -> targets
+            AnnotationUseSiteTarget.PROPERTY in targets
+                    || AnnotationUseSiteTarget.FIELD in targets && annotatedPropertyHasField(element) -> targets
             else -> null
         }
     }

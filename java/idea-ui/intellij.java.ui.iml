@@ -41,5 +41,8 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="library" name="maven-resolver-provider" level="project" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
   </component>
 </module>

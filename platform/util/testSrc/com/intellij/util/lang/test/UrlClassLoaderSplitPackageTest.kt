@@ -25,6 +25,7 @@ class UrlClassLoaderSplitPackageTest {
     val knownClassesFromOtherModules = setOf(
       "CompoundRuntimeException",
       "JavaVersion",
+      "JavaVersion\$Companion",
     )
     val project = IntelliJProjectConfiguration.loadIntelliJProject(PathManager.getHomePath())
     project.modules.filterNot { it.name in platformLoaderModules }.forEach { module -> 

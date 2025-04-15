@@ -9,3 +9,5 @@ class Test {
 }
 
 val globalVar = 2
+// KT-76525
+// IGNORE_K2

@@ -5,7 +5,6 @@ import com.intellij.platform.project.findProject
 import com.intellij.terminal.backend.TerminalTabsManager
 import org.jetbrains.plugins.terminal.block.reworked.session.ShellStartupOptionsDto
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toShellStartupOptions
 
@@ -20,7 +19,7 @@ internal class TerminalTabsManagerApiImpl : TerminalTabsManagerApi {
     return manager.createNewTerminalTab()
   }
 
-  override suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionId {
+  override suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionTab {
     val manager = getTerminalTabsManager(projectId)
     return manager.startTerminalSessionForTab(tabId, options.toShellStartupOptions())
   }

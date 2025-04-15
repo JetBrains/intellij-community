@@ -17,7 +17,7 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.CurrentJavaVersion;
 import org.assertj.core.api.Assertions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -385,7 +385,7 @@ public class GeneralCommandLineTest {
   public void unicodeEnvironment() throws Exception {
     // on Unix, JRE uses "file.encoding" ("sun.jnu.encoding" in 18+) to encode and decode environment; on Windows, JRE uses wide characters
     var uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName() :
-              JavaVersion.current().isAtLeast(18) ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) :
+              CurrentJavaVersion.currentJavaVersion().isAtLeast(18) ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) :
               IoTestUtil.getUnicodeName(System.getProperty("file.encoding"));
     assumeTrue(uni != null);
 

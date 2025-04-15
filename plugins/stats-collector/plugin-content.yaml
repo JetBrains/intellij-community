@@ -1,6 +1,8 @@
+- name: lib/completion-log-events.jar
+  library: completion-log-events
+  module: intellij.statsCollector
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0/completion-log-events-0.jar
 - name: lib/statsCollector.jar
   modules:
   - name: intellij.statsCollector
-    libraries:
-      completion-log-events:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0/completion-log-events-0.jar

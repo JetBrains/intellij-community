@@ -803,6 +803,7 @@ com.intellij.lang.injection.general.Injection
 - a:getSuffix():java.lang.String
 - a:getSupportId():java.lang.String
 com.intellij.lang.injection.general.LanguageInjectionContributor
+- com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:INJECTOR_EXTENSION:com.intellij.lang.LanguageExtension
 - a:getInjection(com.intellij.psi.PsiElement):com.intellij.lang.injection.general.Injection
@@ -836,6 +837,7 @@ com.intellij.lexer.DocCommentTokenTypes
 - a:tagName():com.intellij.psi.tree.IElementType
 - tagValueColon():com.intellij.psi.tree.IElementType
 - a:tagValueComma():com.intellij.psi.tree.IElementType
+- tagValueDiv():com.intellij.psi.tree.IElementType
 - a:tagValueGT():com.intellij.psi.tree.IElementType
 - a:tagValueLParen():com.intellij.psi.tree.IElementType
 - a:tagValueLT():com.intellij.psi.tree.IElementType
@@ -1376,7 +1378,6 @@ f:com.intellij.openapi.components.ServiceBean
 f:com.intellij.openapi.components.ServiceDescriptor
 - f:client:com.intellij.openapi.client.ClientKind
 - f:headlessImplementation:java.lang.String
-- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
 - f:overrides:Z
 - f:serviceImplementation:java.lang.String
 - f:serviceInterface:java.lang.String
@@ -4380,6 +4381,7 @@ com.intellij.psi.codeStyle.DocCommentSettings
 - a:isLeadingAsteriskEnabled():Z
 - a:isRemoveEmptyTags():Z
 - a:setDocFormattingEnabled(Z):V
+- setRemoveEmptyLines(Z):V
 - a:setRemoveEmptyTags(Z):V
 f:com.intellij.psi.codeStyle.DocCommentSettings$Defaults
 - com.intellij.psi.codeStyle.DocCommentSettings
@@ -4899,7 +4901,7 @@ com.intellij.psi.tree.IStrongWhitespaceHolderElementType
 f:com.intellij.psi.tree.ParentAwareTokenSet
 - contains(com.intellij.psi.tree.IElementType):Z
 - s:create(com.intellij.psi.tree.TokenSet):com.intellij.psi.tree.ParentAwareTokenSet
-- s:create(java.util.Set):com.intellij.psi.tree.ParentAwareTokenSet
+- s:create(java.util.Collection):com.intellij.psi.tree.ParentAwareTokenSet
 - s:create(com.intellij.psi.tree.IElementType[]):com.intellij.psi.tree.ParentAwareTokenSet
 - s:orSet(com.intellij.psi.tree.ParentAwareTokenSet[]):com.intellij.psi.tree.ParentAwareTokenSet
 com.intellij.psi.tree.ParentProviderElementType

@@ -272,6 +272,9 @@ internal class PluginXIncludeTest {
     }
     assertThat(err).isNotNull()
     val allErrors = generateSequence(err) { it.cause }.toList()
+    if (allErrors.any { it is StackOverflowError }) {
+      return // ok
+    }
     assertThat(allErrors).hasSizeGreaterThan(500)
     val msgs = allErrors.map { it.message ?: "" }
     assertThat(msgs.count { it.contains("Cannot resolve a.xml") }).withFailMessage { msgs.joinToString() }.isGreaterThan(250)

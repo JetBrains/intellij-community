@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
-    "//json",
+    "//json/backend",
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "@lib//:guava",
@@ -39,7 +39,7 @@ jvm_library(
   associates = [":themes"],
   deps = [
     "//platform/analysis-api:analysis",
-    "//json",
+    "//json/backend",
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

@@ -424,5 +424,10 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
      * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
      **/
     const val PROP_JS_SYMBOL_KIND: String = "js-symbol-kind"
+
+    /**
+     * Text attributes key of an IntelliJ ColorScheme.
+     **/
+    const val PROP_IJ_TEXT_ATTRIBUTES_KEY: String = "ij-text-attributes-key"
   }
 }

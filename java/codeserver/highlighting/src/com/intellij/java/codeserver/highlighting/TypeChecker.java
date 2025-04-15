@@ -2,7 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -157,7 +157,7 @@ final class TypeChecker {
   }
 
   void checkIllegalVoidType(@NotNull PsiKeyword type) {
-    if (!PsiKeyword.VOID.equals(type.getText())) return;
+    if (!JavaKeywords.VOID.equals(type.getText())) return;
 
     PsiElement parent = type.getParent();
     if (parent instanceof PsiErrorElement) return;
@@ -186,7 +186,7 @@ final class TypeChecker {
     PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
     if (type != null && !TypeConversionUtil.isAssignable(throwable, type) &&
         !(myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context))) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
+      myVisitor.reportIncompatibleType(throwable, type, context);
     }
   }
 }

@@ -286,5 +286,5 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   indexes.symbolicIdIndex.copyFrom(backupBuilder.indexes.symbolicIdIndex)
   indexes.externalMappings.putAll(indexes.externalMappings)
   // Just checking that all properties have been asserted
-  assertEquals(5, StorageIndexes::class.memberProperties.size)
+  assertEquals(5, ImmutableStorageIndexes::class.memberProperties.size)
 }

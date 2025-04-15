@@ -5,12 +5,14 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Allows querying project init state
  * NB: order of pre-init and init is not guaranteed to allow for parallel processing
  */
-internal sealed interface ProjectInitObservable {
+@Internal
+sealed interface ProjectInitObservable {
   /**
    * Set when all project init activities are done or scheduled
    */
@@ -27,7 +29,8 @@ internal sealed interface ProjectInitObservable {
   suspend fun awaitProjectInit(): Project
 }
 
-internal sealed interface ProjectFrameAllocator {
+@Internal
+interface ProjectFrameAllocator {
   /**
    * A job that will be run in parallel with [run] and will be canceled when allocation is complete.
    */
@@ -49,7 +52,8 @@ internal sealed interface ProjectFrameAllocator {
   suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?)
 }
 
-internal class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
+@Internal
+class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
   override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
   }
 

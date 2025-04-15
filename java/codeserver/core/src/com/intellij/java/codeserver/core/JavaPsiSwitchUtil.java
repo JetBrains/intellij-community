@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.core;
 
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -176,7 +177,7 @@ public final class JavaPsiSwitchUtil {
     if (!isOverWhomUnconditionalForSelector &&
         ((!(overWhom instanceof PsiExpression expression) || ExpressionUtil.isNullLiteral(expression)) &&
          who instanceof PsiKeyword &&
-         PsiKeyword.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
+         JavaKeywords.DEFAULT.equals(who.getText()) || isInCaseNullDefaultLabel(who))) {
       // JEP 440-441
       // A 'default' label dominates a case label with a case pattern,
       // and it also dominates a case label with a null case constant.

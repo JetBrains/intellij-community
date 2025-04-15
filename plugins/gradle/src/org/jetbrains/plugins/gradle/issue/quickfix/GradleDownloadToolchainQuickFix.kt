@@ -6,20 +6,19 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
+import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteriaDownloadToolchain
 import java.util.concurrent.CompletableFuture
 
 class GradleDownloadToolchainQuickFix(
-    private val externalProjectPath: String
+  private val externalProjectPath: String,
 ) : BuildIssueQuickFix {
 
-    override val id: String = "download_toolchain"
+  override val id: String = "download_toolchain"
 
-    override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-        return GradleCoroutineScopeProvider.getInstance(project).cs
-            .launch {
-                GradleDaemonJvmCriteriaDownloadToolchain.downloadJdkMatchingCriteria(project, externalProjectPath)
-            }.asCompletableFuture()
-    }
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
+    return project.gradleCoroutineScope.launch {
+      GradleDaemonJvmCriteriaDownloadToolchain.downloadJdkMatchingCriteria(project, externalProjectPath)
+    }.asCompletableFuture()
+  }
 }

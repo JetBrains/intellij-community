@@ -24,7 +24,7 @@ public class IdentifierSplitter extends BaseSplitter {
   private static final @NonNls Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (text == null || range.getLength() < 1 || range.getStartOffset() < 0) {
       return;
     }

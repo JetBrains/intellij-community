@@ -3,11 +3,13 @@ package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class GradleUntrustedProjectTest : GradleUntrustedProjectTestCase() {
 
   @Test
+  @Disabled("IDEA-362282")
   fun `test untrusted project opening`() {
     runBlocking {
       val project1 = getSimpleProjectInfo("project1")

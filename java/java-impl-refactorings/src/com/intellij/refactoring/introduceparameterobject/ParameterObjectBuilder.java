@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -69,7 +70,7 @@ class ParameterObjectBuilder {
     if (!packageName.isEmpty()) out.append("package ").append(packageName).append(';');
     out.append('\n');
     out.append(myVisibility).append(" ");
-    out.append(recordsAvailable ? PsiKeyword.RECORD : PsiKeyword.CLASS);
+    out.append(recordsAvailable ? JavaKeywords.RECORD : JavaKeywords.CLASS);
     out.append(" ").append(className);
     if (!typeParams.isEmpty()) {
       out.append('<');

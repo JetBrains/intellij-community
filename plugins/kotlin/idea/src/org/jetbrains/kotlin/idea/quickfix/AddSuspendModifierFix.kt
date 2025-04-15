@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -12,27 +14,32 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
-class AddSuspendModifierFix(
+internal class AddSuspendModifierFix(
     element: KtModifierListOwner,
     private val declarationName: String?
-) : AddModifierFixFE10(element, KtTokens.SUSPEND_KEYWORD) {
+) : AddModifierFix(element, KtTokens.SUSPEND_KEYWORD) {
 
-    override fun getText() = when (element) {
-        is KtNamedFunction -> {
-            if (declarationName != null) {
-                KotlinBundle.message("fix.add.suspend.modifier.function", declarationName)
-            } else {
-                KotlinBundle.message("fix.add.suspend.modifier.function.generic")
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
+        val actionName = when (element) {
+            is KtNamedFunction -> {
+                if (declarationName != null) {
+                    KotlinBundle.message("fix.add.suspend.modifier.function", declarationName)
+                } else {
+                    KotlinBundle.message("fix.add.suspend.modifier.function.generic")
+                }
             }
-        }
-        is KtTypeReference -> {
-            if (declarationName != null) {
-                KotlinBundle.message("fix.add.suspend.modifier.receiver", declarationName)
-            } else {
-                KotlinBundle.message("fix.add.suspend.modifier.receiver.generic")
+
+            is KtTypeReference -> {
+                if (declarationName != null) {
+                    KotlinBundle.message("fix.add.suspend.modifier.receiver", declarationName)
+                } else {
+                    KotlinBundle.message("fix.add.suspend.modifier.receiver.generic")
+                }
             }
+
+            else -> familyName
         }
-        else -> super.getText()
+        return Presentation.of(actionName)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -41,7 +48,7 @@ class AddSuspendModifierFix(
             val function = element.containingFunction() ?: return null
             val functionName = function.name ?: return null
 
-            return AddSuspendModifierFix(function, functionName)
+            return AddSuspendModifierFix(function, functionName).asIntention()
         }
     }
 
@@ -65,7 +72,7 @@ class AddSuspendModifierFix(
             if (declaration is KtFunction) return null
             val variableTypeReference = declaration.typeReference ?: return null
 
-            return AddSuspendModifierFix(variableTypeReference, declaration.name)
+            return AddSuspendModifierFix(variableTypeReference, declaration.name).asIntention()
         }
     }
 }

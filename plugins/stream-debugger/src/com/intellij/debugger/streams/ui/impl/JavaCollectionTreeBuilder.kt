@@ -5,10 +5,10 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
+import com.intellij.debugger.streams.core.trace.GenericEvaluationContext
 import com.intellij.debugger.streams.core.trace.TraceElement
 import com.intellij.debugger.streams.core.trace.Value
-import com.intellij.debugger.streams.trace.impl.JavaDebuggerCommandLauncher
+import com.intellij.debugger.streams.trace.impl.JavaEvaluationContext
 import com.intellij.debugger.streams.trace.impl.JvmValue
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor
@@ -37,10 +37,10 @@ class JavaCollectionTreeBuilder(val project: Project) : CollectionTreeBuilder {
     }
   }
 
-  override fun createXNamedValue(value: Value?, launcher: DebuggerCommandLauncher): XNamedValue {
+  override fun createXNamedValue(value: Value?, evaluationContext: GenericEvaluationContext): XNamedValue {
     val jvmValue : com.sun.jdi.Value? = (value as? JvmValue)?.value
     val valueDescriptor = PrimitiveValueDescriptor(project, jvmValue)
-    return InstanceJavaValue(valueDescriptor, (launcher as JavaDebuggerCommandLauncher).context, nodeManager)
+    return InstanceJavaValue(valueDescriptor, (evaluationContext as JavaEvaluationContext).context, nodeManager)
   }
 
   override fun getKey(container: XValueContainer, nullMarker: Any): Any {

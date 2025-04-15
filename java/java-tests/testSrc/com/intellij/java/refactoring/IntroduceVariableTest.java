@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -20,6 +20,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.ui.ChooserInterceptor;
@@ -158,29 +159,11 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testCaseLabelRuleExpression() { doTest(new IntroduceVariableHandler()); }
 
   public void testCaseLabelEnum() {
-    try {
-      doTest("temp", true, false, false, "");
-    }
-    catch (RuntimeException e) {
-      assertEquals("Error message:" +
-                   RefactoringBundle.message("cannot.perform.refactoring") + "\n" +
-                   JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"), e.getMessage());
-      return;
-    }
-    fail("Should not be able to perform refactoring");
+    doTestWithFailure("temp", "", JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
   }
 
   public void testPatternVariableUsedAfterwards() {
-    try {
-      doTest("temp", true, false, false, "");
-    }
-    catch (RuntimeException e) {
-      assertEquals("Error message:" +
-                   RefactoringBundle.message("cannot.perform.refactoring") + "\n" +
-                   JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", "s"), e.getMessage());
-      return;
-    }
-    fail("Should not be able to perform refactoring");
+    doTestWithFailure("temp", "", JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", "s"));
   }
   public void testPatternVariableNotUsedAfterwards() {
     doTest("temp", true, false, false, "boolean");
@@ -266,15 +249,18 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTestWithFailure("strings", "java.lang.String[]");
   }
 
-  public void doTestWithFailure(String newName, String expectedType) {
+  private void doTestWithFailure(String newName, String expectedType) {
+    doTestWithFailure(newName, expectedType, "Selected block should represent an expression");
+  }
+
+  private void doTestWithFailure(String newName, String expectedType, String errorMessage) {
     try {
       doTest(newName, false, false, false, expectedType);
+      fail("Should not be able to perform refactoring");
     }
-    catch (Exception e) {
-      assertEquals("Error message:Cannot perform refactoring.\nSelected block should represent an expression", e.getMessage());
-      return;
+    catch (CommonRefactoringUtil.RefactoringErrorHintException  e) {
+      assertEquals(RefactoringBundle.getCannotRefactorMessage(errorMessage), e.getMessage());
     }
-    fail("Should not be able to perform refactoring");
   }
 
   public void testNonExpression() { doTest("sum", true, true, false, "int"); }
@@ -364,7 +350,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int") {
       @Override
       protected void showErrorMessage(Project project, Editor editor, String message) {
-        assertEquals("Cannot perform refactoring.\nExtracting selected expression would change the semantic of the whole expression.", message);
+        assertEquals("Cannot perform refactoring.\nExtracting the selected expression changes the semantics of the surrounding expression.", message);
       }
     });
   }
@@ -401,26 +387,14 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
     doTest("l", false, false, false, "D<java.lang.Integer>", false);
   }
 
-  public void testForIterationParameterVar() {
-    try {
-      doTest("input", false, false, false, "Object", false);
-    }
-    catch (Exception e) {
-      assertEquals("Error message:Cannot perform refactoring.\nUnknown expression type.", e.getMessage());
-      return;
-    }
-    fail("Should not be able to perform refactoring");
-  }
+  public void testForIterationParameterVar() { doTestWithFailure("input", "Object", "Unknown expression type."); }
 
   public void testPatternUsedInSubsequentConditionCannotExtract() {
-    try {
-      doTest("input", false, false, false, "Object", false);
-    }
-    catch (Exception e) {
-      assertEquals("Error message:Cannot perform refactoring.\nThe expression refers to the pattern variable 's' declared outside", e.getMessage());
-      return;
-    }
-    fail("Should not be able to perform refactoring");
+    doTestWithFailure("input", "Object", "The selected expression refers to pattern variable 's', which will be out of scope.");
+  }
+
+  public void testDisallowInInterface() {
+    doTestWithFailure("", "", "Cannot extract variable in an interface.");
   }
 
   public void testOneLineLambdaVoidCompatible() {UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote("Runnable: () -> {...}"))); doTest("c", false, false, false, JAVA_LANG_STRING); }

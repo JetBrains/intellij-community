@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -20,12 +21,12 @@ public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQu
     PsiTypeElement typeElement = ObjectUtils.tryCast(ref.getParent(), PsiTypeElement.class);
     if (typeElement == null || typeElement.getFirstChild() != typeElement.getLastChild()) return;
     PsiElement parent = typeElement.getParent();
-    if (PsiKeyword.VAR.equals(ref.getReferenceName())) {
+    if (JavaKeywords.VAR.equals(ref.getReferenceName())) {
       registerSetVariableTypeFix(parent, registrar);
       registerLambdaParametersFix(parent, registrar);
       registerVarLanguageLevelFix(ref, parent, registrar);
     }
-    if (PsiKeyword.RECORD.equals(ref.getReferenceName())) {
+    if (JavaKeywords.RECORD.equals(ref.getReferenceName())) {
       registerRecordLanguageLevelFix(ref, parent, registrar);
     }
   }

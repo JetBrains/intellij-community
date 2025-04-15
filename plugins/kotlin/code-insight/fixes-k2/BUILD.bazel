@@ -59,6 +59,8 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/base/kdoc:kotlin-base-kdoc",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//java/java-impl:impl",
   ],
   runtime_deps = [":kotlin-code-insight-fixes-k2_resources"]
 )

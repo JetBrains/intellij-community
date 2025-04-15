@@ -15,8 +15,8 @@ import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class JavaStubPsiElement<T extends StubElement> extends StubBasedPsiElementBase<T> implements StubBasedPsiElement<T> {
   private static final Logger LOG = Logger.getInstance(JavaStubPsiElement.class);
 
-  public JavaStubPsiElement(@NotNull T stub, @NotNull IStubElementType nodeType) {
+  public JavaStubPsiElement(@NotNull T stub, @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -44,6 +44,11 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
 
   protected CompositeElement calcTreeElement() {
     return (CompositeElement)getNode();
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return getElementTypeImpl();
   }
 
   @Override

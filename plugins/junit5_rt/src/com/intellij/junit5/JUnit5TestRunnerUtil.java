@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import org.junit.platform.commons.support.ReflectionSupport;
@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 public final class JUnit5TestRunnerUtil {
   private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
+  private static Class<?> NESTED_CLASS_SELECTOR_CLASS = null;
 
   public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef, String param) {
     if (suiteClassNames.length == 0) {
@@ -99,9 +100,9 @@ public final class JUnit5TestRunnerUtil {
     }
     else {
       DiscoverySelector selector = createSelector(suiteClassNames[0], packageNameRef);
-      if (selector instanceof MethodSelector && !loadMethodByReflection((MethodSelector)selector)) {
+      if (selector instanceof MethodSelector) {
         DiscoverySelector classSelector = createClassSelector(((MethodSelector)selector).getClassName());
-        DiscoverySelector methodSelector = classSelector instanceof NestedClassSelector
+        DiscoverySelector methodSelector = isNestedClassSelector(classSelector)
                                            ? DiscoverySelectors.selectMethod(((NestedClassSelector)classSelector).getNestedClassName(),
                                                                              ((MethodSelector)selector).getMethodName())
                                            : selector;
@@ -119,6 +120,18 @@ public final class JUnit5TestRunnerUtil {
     }
 
     return null;
+  }
+
+  private static boolean isNestedClassSelector(DiscoverySelector selector) {
+    if (NESTED_CLASS_SELECTOR_CLASS == null) {
+      try {
+        NESTED_CLASS_SELECTOR_CLASS = Class.forName("org.junit.platform.engine.discovery.NestedClassSelector");
+      }
+      catch (ClassNotFoundException e) {
+        return false;
+      }
+    }
+    return NESTED_CLASS_SELECTOR_CLASS.isInstance(selector);
   }
 
   private static boolean loadMethodByReflection(MethodSelector selector) {
@@ -174,7 +187,7 @@ public final class JUnit5TestRunnerUtil {
       }
 
       private boolean inNestedClass(MethodSource source, DiscoverySelector selector) {
-        return selector instanceof NestedClassSelector &&
+        return isNestedClassSelector(selector) &&
                ((NestedClassSelector)selector).getNestedClassName().equals(source.getClassName());
       }
     };
@@ -253,7 +266,7 @@ public final class JUnit5TestRunnerUtil {
     String enclosingClass = line.substring(0, nestedClassIdx);
     String nestedClassName = line.substring(nestedClassIdx + 1);
     DiscoverySelector enclosingClassSelector = createClassSelector(enclosingClass);
-    Class<?> klass = enclosingClassSelector instanceof NestedClassSelector
+    Class<?> klass = isNestedClassSelector(enclosingClassSelector)
                      ? ((NestedClassSelector)enclosingClassSelector).getNestedClass()
                      : ((ClassSelector)enclosingClassSelector).getJavaClass();
     Class<?> superclass = klass.getSuperclass();
@@ -261,7 +274,7 @@ public final class JUnit5TestRunnerUtil {
       for (Class<?> nested : superclass.getDeclaredClasses()) {
         if (nested.getSimpleName().equals(nestedClassName)) {
           List<Class<?>> enclosingClasses;
-          if (enclosingClassSelector instanceof NestedClassSelector) {
+          if (isNestedClassSelector(enclosingClassSelector)) {
             enclosingClasses = new ArrayList<>(((NestedClassSelector)enclosingClassSelector).getEnclosingClasses());
             enclosingClasses.add(klass);
           }

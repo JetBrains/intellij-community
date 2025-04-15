@@ -23,3 +23,5 @@ object DerivedB : DerivedA(), IntB, IntA {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix
+// IGNORE_K2
+// KT-76365

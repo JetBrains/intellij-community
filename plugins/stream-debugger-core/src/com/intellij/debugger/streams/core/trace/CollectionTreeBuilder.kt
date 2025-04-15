@@ -8,7 +8,7 @@ import com.intellij.xdebugger.frame.XValueContainer
 interface CollectionTreeBuilder {
   fun isSupported(container: XValueContainer): Boolean
 
-  fun createXNamedValue(value: Value?, debuggerCommandLauncher: DebuggerCommandLauncher): XNamedValue
+  fun createXNamedValue(value: Value?, evaluationContext: GenericEvaluationContext): XNamedValue
 
   /**
    * Is called under `com.intellij.debugger.streams.trace.EvaluationContextWrapper.launchDebuggerCommand`

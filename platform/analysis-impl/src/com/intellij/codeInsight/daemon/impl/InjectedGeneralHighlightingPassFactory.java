@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -14,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar,
+                                                              DumbAware {
   private final @NotNull List<InjectedLanguageHighlightingRangeReducer> myLanguageHighlightingRangeReducers;
 
   InjectedGeneralHighlightingPassFactory() {

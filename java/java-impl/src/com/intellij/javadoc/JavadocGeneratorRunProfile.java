@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -9,8 +9,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
@@ -101,7 +101,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
       OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
       ProcessTerminatedListener.attach(handler, myProject, JavaBundle.message("javadoc.generate.exited"));
-      handler.addProcessListener(new ProcessAdapter() {
+      handler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (myConfiguration.OPEN_IN_BROWSER && event.getExitCode() == 0) {

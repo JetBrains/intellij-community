@@ -30,6 +30,9 @@ interface HighlightSeverity {
   fun getName(): String
 }
 
+val HighlightInfo.isError: Boolean
+  get() = getSeverity().getName() == "ERROR"
+
 fun Driver.isCodeAnalysisRunning(project: Project? = null): Boolean {
   return withContext(OnDispatcher.EDT) {
     service<DaemonCodeAnalyzer>(project ?: singleProject()).isRunningOrPending()

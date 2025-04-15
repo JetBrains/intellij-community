@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -147,7 +148,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     String superClassName = StringUtil.getShortName(mySuperClassName);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "",
                                                "public class " + StringUtil.getShortName(myImplementationClassName) + " " +
-                                               (myInterface ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS) + " " + superClassName + " {\n" +
+                                               (myInterface ? JavaKeywords.IMPLEMENTS : JavaKeywords.EXTENDS) + " " + superClassName + " {\n" +
                                                "  public static " + superClassName + " provider() { return null;}" +
                                                "\n}");
   }

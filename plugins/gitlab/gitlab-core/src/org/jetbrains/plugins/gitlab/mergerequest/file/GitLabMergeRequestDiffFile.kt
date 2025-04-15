@@ -29,11 +29,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal data class GitLabMergeRequestDiffFile(
@@ -54,14 +55,7 @@ internal data class GitLabMergeRequestDiffFile(
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
-      project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
-    }
-    else {
-      project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(connectionId, mergeRequestIid)
-    }
-    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
-    return processor
+    return project.service<GitLabMergeRequestDiffService>().createGitLabDiffRequestProcessor(connectionId, mergeRequestIid)
   }
 }
 
@@ -71,39 +65,53 @@ private fun getPresentablePath(glProject: GitLabProjectCoordinates, mergeRequest
   "$glProject/mergerequests/${mergeRequestIid}.diff"
 
 private fun isFileValid(project: Project, connectionId: String): Boolean =
-  project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm?.value.takeIf { it?.connectionId == connectionId } != null
+  project.serviceIfCreated<GitLabProjectViewModel>()?.connectedProjectVm?.value.takeIf { it?.connectionId == connectionId } != null
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-private class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
-  fun createDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffRequestProcessor {
-    val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
-    return AsyncDiffRequestProcessorFactory.createIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
-  }
-
-  fun createGitLabCombinedDiffProcessor(connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
-    val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
-    return AsyncDiffRequestProcessorFactory.createCombinedIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
-  }
-
-  private fun createDiffContext(vm: GitLabMergeRequestDiffViewModel): List<KeyValuePair<*>> = buildList {
-    add(KeyValuePair(GitLabMergeRequestDiffViewModel.KEY, vm))
-    add(KeyValuePair(DiffUserDataKeys.DATA_PROVIDER, GenericDataProvider().apply {
-      putData(GitLabMergeRequestReviewViewModel.DATA_KEY, vm)
-    }))
-    add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS,
-                     listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))))
-  }
-
-  private fun getChangeDiffVmPresentation(changeVm: GitLabMergeRequestDiffChangeViewModel): PresentableChange =
-    object : PresentableChange {
-      override fun getFilePath(): FilePath = changeVm.change.filePath
-      override fun getFileStatus(): FileStatus = changeVm.change.fileStatus
+class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
+  fun createGitLabDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffEditorViewer {
+    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
+      createCombinedDiffProcessor(project, cs, connectionId, mergeRequestIid)
     }
+    else {
+      createDiffRequestProcessor(project, cs, connectionId, mergeRequestIid)
+    }
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
+    return processor
+  }
+
+  companion object {
+    fun createDiffRequestProcessor(project: Project, cs: CoroutineScope, connectionId: String, mergeRequestIid: String): DiffRequestProcessor {
+      val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
+      return AsyncDiffRequestProcessorFactory.createIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
+    }
+
+    fun createCombinedDiffProcessor(project: Project, cs: CoroutineScope, connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
+      val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
+      return AsyncDiffRequestProcessorFactory.createCombinedIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
+    }
+
+    private fun createDiffContext(vm: GitLabMergeRequestDiffViewModel): List<KeyValuePair<*>> = buildList {
+      add(KeyValuePair(GitLabMergeRequestDiffViewModel.KEY, vm))
+      add(KeyValuePair(DiffUserDataKeys.DATA_PROVIDER, GenericDataProvider().apply {
+        putData(GitLabMergeRequestReviewViewModel.DATA_KEY, vm)
+      }))
+      add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS,
+                       listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))))
+    }
+
+    private fun getChangeDiffVmPresentation(changeVm: GitLabMergeRequestDiffChangeViewModel): PresentableChange =
+      object : PresentableChange {
+        override fun getFilePath(): FilePath = changeVm.change.filePath
+        override fun getFileStatus(): FileStatus = changeVm.change.fileStatus
+      }
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun findDiffVm(project: Project, connectionId: String, mergeRequestIid: String): Flow<GitLabMergeRequestDiffViewModel?> {
-  val projectVm = project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm ?: return flowOf(null)
+  val projectVm = project.serviceIfCreated<GitLabProjectViewModel>()?.connectedProjectVm ?: return flowOf(null)
   return projectVm.flatMapLatest {
     if (it != null && it.connectionId == connectionId) {
       it.getDiffViewModel(mergeRequestIid).map { it.getOrNull() }

@@ -157,7 +157,8 @@ public class DarculaButtonUI extends BasicButtonUI {
       return true;
     }
 
-    Graphics2D g2 = (Graphics2D)g.create();
+    InternalUICustomization service = InternalUICustomization.getInstance();
+    Graphics2D g2 = (Graphics2D) ((service != null) ? service.transformButtonGraphics(g.create()) : g.create()) ;
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,

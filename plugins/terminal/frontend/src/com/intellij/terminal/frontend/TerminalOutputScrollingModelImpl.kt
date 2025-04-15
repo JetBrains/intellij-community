@@ -2,6 +2,8 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -37,7 +39,7 @@ internal class TerminalOutputScrollingModelImpl(
   private var shouldScrollToCursor: Boolean = true
 
   init {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
         if (shouldScrollToCursor) {
           scrollToCursor(offset)
@@ -49,7 +51,7 @@ internal class TerminalOutputScrollingModelImpl(
       override fun afterContentChanged(startOffset: Int) {
         if (shouldScrollToCursor) {
           // We already called in an EDT, but let's update the scroll later to not block output model updates.
-          coroutineScope.launch(Dispatchers.EDT) {
+          coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             scrollToCursor(outputModel.cursorOffsetState.value)
           }
         }

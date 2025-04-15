@@ -13,6 +13,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -28,11 +30,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.PatternSyntaxException;
 
-public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible {
+import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
+
+public class ReformatCodeAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions {
   private static final Logger LOG = Logger.getInstance(ReformatCodeAction.class);
 
   private static ReformatFilesOptions myTestOptions;
@@ -143,6 +146,10 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
     new FileInEditorProcessor(file, editor, currentRunOptions).processCode();
   }
 
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return Collections.singletonList(getProjectFilesWrite());
+  }
 
   private static @Nullable DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(

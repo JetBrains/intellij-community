@@ -2,9 +2,9 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.blockingContext
@@ -215,7 +215,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     val vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory)
     val debugPort = freeDebugPort
     val connector: MavenServerConnector
-    if (project.isTrusted() || project.isDefault) {
+    if (TrustedProjects.isProjectTrusted(project) || project.isDefault) {
       val connectorFactory = ApplicationManager.getApplication().getService(
         MavenServerConnectorFactory::class.java)
       connector = connectorFactory.create(project, jdk, vmOptions, debugPort, distribution, multimoduleDirectory)

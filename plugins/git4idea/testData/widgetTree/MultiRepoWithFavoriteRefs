@@ -1,0 +1,20 @@
+-Update Project...
+-Commit…
+-Push…
+------
+-New Branch…
+-Checkout Tag or Revision…
+------
+-bro-repo
+-project
+------
+-Common Local Branches
+ master [nodes/favorite.svg]
+ b [vcs/branchNode.svg]
+ e [nodes/favorite.svg]
+ a [vcs/branchNode.svg]
+ c [vcs/branchNode.svg]
+ d [vcs/branchNode.svg]
+-Common Remote Branches
+ -origin [nodes/folder.svg]
+  master [nodes/favorite.svg]

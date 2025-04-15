@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 final class StartupTest {
   private static final Logger LOG = Logger.getInstance(StartupTest.class);
@@ -84,7 +85,7 @@ final class StartupTest {
   }
 
   // Runs simple jcef test in background thread
-  static void checkBrowserCreation() {
+  static void checkBrowserCreation(@NotNull CefApp cefApp, @NotNull Supplier<Boolean> restarter) {
     if (IS_DISABLED)
       return;
     final Runnable test = new Runnable() {
@@ -92,57 +93,80 @@ final class StartupTest {
       private String errText = null;
       @Override
       public void run() {
-        CountDownLatch latch = new CountDownLatch(2);
-        CefClient client = CefApp.getInstance().createClient();
-        client.addLoadHandler(new CefLoadHandlerAdapter() {
-          @Override
-          public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
-            latch.countDown();
-          }
-          @Override
-          public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
-            latch.countDown();
-          }
-          @Override
-          public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
-            errCode = errorCode;
-            errText = errorText;
-          }
-        });
-        client.addRequestHandler(new CefRequestHandlerAdapter() {
-          @Override
-          public CefResourceRequestHandler getResourceRequestHandler(CefBrowser browser,
-                                                                     CefFrame frame,
-                                                                     CefRequest request,
-                                                                     boolean isNavigation,
-                                                                     boolean isDownload,
-                                                                     String requestInitiator,
-                                                                     BoolRef disableDefaultHandling) {
-            return new CefResourceRequestHandlerAdapter() {
-              @Override
-              public CefResourceHandler getResourceHandler(CefBrowser browser, CefFrame frame, CefRequest request) {
-                return new TestResourceHandler(TEST_CONTENT, "text/html");
-              }
-            };
-          }
-        });
-
-        CefBrowser browser = JBCefBrowserBase.createOsrBrowser(JBCefOSRHandlerFactory.getInstance(), client, TEST_URL, null, null, null, true, new CefBrowserSettings());
-        browser.createImmediately();
+        boolean isInitialized = false;
         try {
+          final CountDownLatch latch = new CountDownLatch(1);
+          cefApp.onInitialization(state -> latch.countDown());
           latch.await(LOAD_TIMEOUT_SEC, TimeUnit.SECONDS);
+          if (latch.getCount() == 0)
+            isInitialized = true;
         } catch (InterruptedException e) {
           LOG.error(e);
-        } finally {
-          client.dispose();
         }
-        if (latch.getCount() > 0) {
-          LOG.error(String.format("Startup JCEF test is failed (lc=%d), out-of-process mode is disabled.", (int)latch.getCount()));
+
+        String errDesc = null;
+        if (isInitialized) {
+          final CountDownLatch latch = new CountDownLatch(2);
+          CefClient client = cefApp.createClient();
+          client.addLoadHandler(new CefLoadHandlerAdapter() {
+            @Override
+            public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
+              latch.countDown();
+            }
+            @Override
+            public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+              latch.countDown();
+            }
+            @Override
+            public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+              errCode = errorCode;
+              errText = errorText;
+            }
+          });
+          client.addRequestHandler(new CefRequestHandlerAdapter() {
+            @Override
+            public CefResourceRequestHandler getResourceRequestHandler(CefBrowser browser,
+                                                                       CefFrame frame,
+                                                                       CefRequest request,
+                                                                       boolean isNavigation,
+                                                                       boolean isDownload,
+                                                                       String requestInitiator,
+                                                                       BoolRef disableDefaultHandling) {
+              return new CefResourceRequestHandlerAdapter() {
+                @Override
+                public CefResourceHandler getResourceHandler(CefBrowser browser, CefFrame frame, CefRequest request) {
+                  return new TestResourceHandler(TEST_CONTENT, "text/html");
+                }
+              };
+            }
+          });
+
+          CefBrowser browser = JBCefBrowserBase.createOsrBrowser(JBCefOSRHandlerFactory.getInstance(), client, TEST_URL, null, null, null, true, new CefBrowserSettings());
+          browser.createImmediately();
+          try {
+            latch.await(LOAD_TIMEOUT_SEC, TimeUnit.SECONDS);
+          } catch (InterruptedException e) {
+            LOG.error(e);
+          } finally {
+            client.dispose();
+          }
+
+          final int lc = (int)latch.getCount();
+          if (lc == 0)
+            return;
+
           if (errCode != CefLoadHandler.ErrorCode.ERR_NONE)
-            LOG.error(String.format("onLoadError occurred, errCode=%s, errText=%s.", errCode, errText));
-          Registry.get(JBCefApp.REGISTRY_REMOTE_KEY).setValue(false);
-          showNotification();
-        }
+            LOG.warn(String.format("onLoadError occurred, errCode=%s, errText=%s.", errCode, errText));
+
+          if (lc == 2) errDesc = "onLoadStart wasn't called";
+          else if (lc == 1) errDesc = "onLoadEnd wasn't called";
+        } else
+          errDesc = "CefApp wasn't initialized";
+
+        LOG.error(String.format("Startup JCEF test is failed (because %s). JCEF will be restarted with verbose logging.", errDesc));
+        final boolean result = restarter.get();
+        if (!result)
+          LOG.warn("JCEF restart failed.");
       }
     };
     ApplicationManager.getApplication().executeOnPooledThread(test);

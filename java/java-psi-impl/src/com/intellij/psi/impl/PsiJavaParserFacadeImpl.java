@@ -2,9 +2,9 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.java.parser.BasicReferenceParser;
-import com.intellij.lang.java.parser.DeclarationParser;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.DeclarationParser;
+import com.intellij.java.syntax.parser.JavaParser;
+import com.intellij.java.syntax.parser.ReferenceParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -30,48 +30,66 @@ import java.util.Map;
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final String DUMMY_FILE_NAME = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
 
-  private static final JavaParserUtil.ParserWrapper ANNOTATION =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
-
-  private static final JavaParserUtil.ParserWrapper PARAMETER =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseParameter(builder, true, false, false);
-
-  private static final JavaParserUtil.ParserWrapper RESOURCE = builder -> JavaParser.INSTANCE.getDeclarationParser().parseResource(builder);
-
-  private static final JavaParserUtil.ParserWrapper TYPE = builder -> {
-    int flags = BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD | BasicReferenceParser.DISJUNCTIONS | BasicReferenceParser.VAR_TYPE;
-    JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags);
+  private static final JavaParserUtil.ParserWrapper ANNOTATION = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getDeclarationParser().parseAnnotation(builder);
   };
 
-  public static final JavaParserUtil.ParserWrapper REFERENCE =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false);
+  private static final JavaParserUtil.ParserWrapper PARAMETER = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getDeclarationParser().parseParameter(builder, true, false, false);
+  };
 
-  private static final JavaParserUtil.ParserWrapper DIAMOND_REF =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, true);
+  private static final JavaParserUtil.ParserWrapper RESOURCE = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getDeclarationParser().parseResource(builder);
+  };
 
-  private static final JavaParserUtil.ParserWrapper STATIC_IMPORT_REF =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, true);
+  private static final JavaParserUtil.ParserWrapper TYPE = (builder, languageLevel) -> {
+    int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS | ReferenceParser.VAR_TYPE;
+    new JavaParser(languageLevel).getReferenceParser().parseType(builder, flags);
+  };
 
-  private static final JavaParserUtil.ParserWrapper MODULE_IMPORT_REF =
-    builder -> JavaParser.INSTANCE.getModuleParser().parseName(builder);
+  public static final JavaParserUtil.ParserWrapper REFERENCE = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getReferenceParser().parseJavaCodeReference(builder, false, true, false, false);
+  };
 
-  private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseTypeParameter(builder);
+  private static final JavaParserUtil.ParserWrapper DIAMOND_REF = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getReferenceParser().parseJavaCodeReference(builder, false, true, false, true);
+  };
 
-  private static final JavaParserUtil.ParserWrapper DECLARATION =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
+  private static final JavaParserUtil.ParserWrapper STATIC_IMPORT_REF = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getReferenceParser().parseImportCodeReference(builder, true);
+  };
 
-  private static final JavaParserUtil.ParserWrapper CODE_BLOCK =
-    builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
+  private static final JavaParserUtil.ParserWrapper MODULE_IMPORT_REF = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getModuleParser().parseName(builder);
+  };
 
-  private static final JavaParserUtil.ParserWrapper STATEMENT = builder -> JavaParser.INSTANCE.getStatementParser().parseStatement(builder);
+  private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getReferenceParser().parseTypeParameter(builder);
+  };
 
-  private static final JavaParserUtil.ParserWrapper EXPRESSION = builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder);
+  private static final JavaParserUtil.ParserWrapper DECLARATION = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
+  };
 
-  private static final JavaParserUtil.ParserWrapper ENUM_CONSTANT =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseEnumConstant(builder);
+  private static final JavaParserUtil.ParserWrapper CODE_BLOCK = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getStatementParser().parseCodeBlockDeep(builder, true);
+  };
 
-  private static final JavaParserUtil.ParserWrapper MODULE = builder -> JavaParser.INSTANCE.getModuleParser().parse(builder);
+  private static final JavaParserUtil.ParserWrapper STATEMENT = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getStatementParser().parseStatement(builder);
+  };
+
+  private static final JavaParserUtil.ParserWrapper EXPRESSION = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getExpressionParser().parse(builder);
+  };
+
+  private static final JavaParserUtil.ParserWrapper ENUM_CONSTANT = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getDeclarationParser().parseEnumConstant(builder);
+  };
+
+  private static final JavaParserUtil.ParserWrapper MODULE = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getModuleParser().parse(builder);
+  };
 
   private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES;
   static {

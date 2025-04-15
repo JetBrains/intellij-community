@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jetbrains.ml.models.python.imports.ranking.model" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.ml.models:python-imports-ranking-model:coral-panda">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.ml.models:python-imports-ranking-model:nebulous-albatross">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda/python-imports-ranking-model-coral-panda.jar">
-          <sha256sum>3ede7c75d81a2a643bca12c237c814508c70178708923e27a282a0c896cf1c6e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar">
+          <sha256sum>5c5e1cc5fae2d8379a586b87ca580c677e65bdc4538ee0e0773cce141dc61b6a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda/python-imports-ranking-model-coral-panda.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda/python-imports-ranking-model-coral-panda-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

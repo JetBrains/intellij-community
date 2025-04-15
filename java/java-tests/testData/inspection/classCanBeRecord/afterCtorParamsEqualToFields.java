@@ -1,4 +1,4 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 record R(String second, int first) {
     R(String second, int first) {
         this.second = second;

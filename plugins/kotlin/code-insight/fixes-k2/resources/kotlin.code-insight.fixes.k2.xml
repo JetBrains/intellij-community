@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.fixes">
   <dependencies>
     <module name="kotlin.refactorings.k2"/>
+    <module name="kotlin.code-insight.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinK2QuickFixRegistrar"/>

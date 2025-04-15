@@ -43,6 +43,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testInsideInterface() { doSingleTest(); }
   public void testReferenceInCall() { doSingleTest(); }
   public void testReferenceLambdaType() { doSingleTest(); }
+  public void testReferenceNull() { doSingleTest(); }
   public void testWithAlignment() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;

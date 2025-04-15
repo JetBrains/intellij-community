@@ -91,6 +91,7 @@ jvm_library(
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "@lib//:mockito",
   ],
   runtime_deps = [":collaborationTools_resources"]
 )

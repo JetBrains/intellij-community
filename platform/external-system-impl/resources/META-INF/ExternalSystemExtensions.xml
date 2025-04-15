@@ -151,9 +151,6 @@
     <externalSystemRecoveryContributor implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectDataRecoveryContributor$Factory"/>
   </extensions>
   <applicationListeners>
-    <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"
-              topic="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener"
-              activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedListener"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>

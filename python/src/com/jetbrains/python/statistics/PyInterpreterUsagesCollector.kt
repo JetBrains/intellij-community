@@ -17,7 +17,7 @@ internal class PyInterpreterUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.sdks", 4)
+  private val GROUP = EventLogGroup("python.sdks", 5)
   private val PYTHON_SDK_USED = registerPythonSpecificEvent(GROUP, "python_sdk_used")
 }
 

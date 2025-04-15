@@ -145,6 +145,21 @@ public class K2KDocCompletionTestGenerated extends AbstractK2JvmBasicCompletionT
         runTest("../../completion/testData/kdoc/PrivateMember.kt");
     }
 
+    @TestMetadata("PropertyTag.kt")
+    public void testPropertyTag() throws Exception {
+        runTest("../../completion/testData/kdoc/PropertyTag.kt");
+    }
+
+    @TestMetadata("SampleTag.kt")
+    public void testSampleTag() throws Exception {
+        runTest("../../completion/testData/kdoc/SampleTag.kt");
+    }
+
+    @TestMetadata("SeeTag.kt")
+    public void testSeeTag() throws Exception {
+        runTest("../../completion/testData/kdoc/SeeTag.kt");
+    }
+
     @TestMetadata("SkipExistingParamTag.kt")
     public void testSkipExistingParamTag() throws Exception {
         runTest("../../completion/testData/kdoc/SkipExistingParamTag.kt");
@@ -178,5 +193,10 @@ public class K2KDocCompletionTestGenerated extends AbstractK2JvmBasicCompletionT
     @TestMetadata("TagNameStart.kt")
     public void testTagNameStart() throws Exception {
         runTest("../../completion/testData/kdoc/TagNameStart.kt");
+    }
+
+    @TestMetadata("ThrowsTag.kt")
+    public void testThrowsTag() throws Exception {
+        runTest("../../completion/testData/kdoc/ThrowsTag.kt");
     }
 }

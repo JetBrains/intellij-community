@@ -1507,6 +1507,15 @@
         <constraint name="t" nameOfExprType="java\.lang\.Object\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.lang\.Object\[\]" exprTypeWithinHierarchy="true" negateExprType="true" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="JComponent.getGraphics() shall not be used" description="Use GraphicsUtil.safelyGetGraphics if direct drawing is necessary. Prefer not to use at all. See UIUtil.computeStringWidth to compute the text width for preferred size." suppressId="RawComponentGraphics" text="$Instance$.graphics" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="Instance" nameOfExprType="javax\.swing\.JComponent" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="JComponent.getGraphics() shall not be used" description="Use GraphicsUtil.safelyGetGraphics if direct drawing is necessary. Prefer not to use at all. See UIUtil.computeStringWidth to compute the text width for preferred size." suppressId="RawComponentGraphics" text="$Instance$.getGraphics()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="Instance" nameOfExprType="javax\.swing\.JComponent" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="JComponent.getGraphics() shall not be used" description="Use GraphicsUtil.safelyGetGraphics if direct drawing is necessary. Prefer not to use at all. See UIUtil.computeStringWidth to compute the text width for preferred size." suppressId="RawComponentGraphics" text="$Instance$.getGraphics()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
+        <constraint name="Instance" nameOfExprType="javax\.swing\.JComponent" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Lambda can be replaced with Pair.comparingByFirst()" text="java.util.Comparator.comparing((com.intellij.openapi.util.Pair $p$) -&gt; $p$.first)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Pair.comparingByFirst()">
         <constraint name="__context__" script="&quot;__context__.parent instanceof com.intellij.psi.PsiExpressionList&quot;" within="" contains="" />
         <constraint name="p" within="" contains="" />

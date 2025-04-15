@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
@@ -46,10 +47,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.stubs.CoreStubElementRegistryServiceImpl;
-import com.intellij.psi.stubs.CoreStubTreeLoader;
-import com.intellij.psi.stubs.StubElementRegistryService;
-import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.stubs.*;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
@@ -82,12 +80,10 @@ public class CoreApplicationEnvironment {
 
     PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
+    application = createApplication(parentDisposable);
+    ApplicationManager.setApplication(application, parentDisposable);
     myFileTypeRegistry = new CoreFileTypeRegistry();
-
-    application = createApplication(myParentDisposable);
-    ApplicationManager.setApplication(application,
-                                      () -> myFileTypeRegistry,
-                                      myParentDisposable);
+    FileTypeRegistry.setInstanceSupplier(() -> myFileTypeRegistry, parentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
     myJrtFileSystem = createJrtFileSystem();
@@ -118,7 +114,9 @@ public class CoreApplicationEnvironment {
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
-    registerApplicationService(StubElementRegistryService.class, new CoreStubElementRegistryServiceImpl());
+
+    registerApplicationExtensionPoint(StubElementRegistryServiceImplKt.STUB_REGISTRY_EP, StubRegistryExtension.class);
+    registerApplicationService(StubElementRegistryService.class, new StubElementRegistryServiceImpl());
 
     application.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
 
@@ -249,12 +247,12 @@ public class CoreApplicationEnvironment {
       return;
     }
 
-    List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
+    List<ExtensionPointDescriptor> extensionPoints = descriptor.getAppContainerDescriptor().getExtensionPoints();
     ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
     if (!extensionPoints.isEmpty()) {
       areaImpl.registerExtensionPoints(extensionPoints, descriptor);
     }
-    descriptor.registerExtensions(areaImpl.getNameToPointMap(), descriptor.appContainerDescriptor, null);
+    descriptor.registerExtensions(areaImpl.getNameToPointMap(), null);
   }
 
   public @NotNull CoreLocalFileSystem getLocalFileSystem() {

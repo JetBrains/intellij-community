@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -53,7 +54,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
     myTargets = NotNullLazyValue.createValue(targets);
   }
 
-  public @NotNull Collection<? extends GotoRelatedItem> createGotoRelatedItems() {
+  public @NotNull @Unmodifiable Collection<? extends GotoRelatedItem> createGotoRelatedItems() {
     return myTargets.getValue();
   }
 

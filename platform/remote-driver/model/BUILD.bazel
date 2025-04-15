@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.driver.model` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "driver-model_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "driver-model",
@@ -9,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-  ]
+  ],
+  runtime_deps = [":driver-model_resources"]
 )
 ### auto-generated section `build intellij.driver.model` end

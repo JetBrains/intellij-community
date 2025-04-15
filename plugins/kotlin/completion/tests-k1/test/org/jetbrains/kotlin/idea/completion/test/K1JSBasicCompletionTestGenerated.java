@@ -694,6 +694,16 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AnnotationLiteralFirst.kt")
+            public void testAnnotationLiteralFirst() throws Exception {
+                runTest("../testData/basic/common/enums/AnnotationLiteralFirst.kt");
+            }
+
+            @TestMetadata("AnnotationLiteralSecond.kt")
+            public void testAnnotationLiteralSecond() throws Exception {
+                runTest("../testData/basic/common/enums/AnnotationLiteralSecond.kt");
+            }
+
             @TestMetadata("EnumEntryCompletion.kt")
             public void testEnumEntryCompletion() throws Exception {
                 runTest("../testData/basic/common/enums/EnumEntryCompletion.kt");
@@ -709,9 +719,44 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/enums/EnumEntryEmptyCompletion.kt");
             }
 
+            @TestMetadata("EnumEntryExpectedPreferred.kt")
+            public void testEnumEntryExpectedPreferred() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryExpectedPreferred.kt");
+            }
+
+            @TestMetadata("EnumEntryExpectedPreferred2.kt")
+            public void testEnumEntryExpectedPreferred2() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryExpectedPreferred2.kt");
+            }
+
             @TestMetadata("ExpectedEnumEntryCompletion.kt")
             public void testExpectedEnumEntryCompletion() throws Exception {
                 runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion.kt");
+            }
+
+            @TestMetadata("ExpectedEnumEntryCompletion2.kt")
+            public void testExpectedEnumEntryCompletion2() throws Exception {
+                runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion2.kt");
+            }
+
+            @TestMetadata("ExpectedEnumEntryCompletion3.kt")
+            public void testExpectedEnumEntryCompletion3() throws Exception {
+                runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion3.kt");
+            }
+
+            @TestMetadata("ExpectedEnumEntryCompletion4.kt")
+            public void testExpectedEnumEntryCompletion4() throws Exception {
+                runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion4.kt");
+            }
+
+            @TestMetadata("ExpectedEnumEntryCompletion5.kt")
+            public void testExpectedEnumEntryCompletion5() throws Exception {
+                runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion5.kt");
+            }
+
+            @TestMetadata("ExpectedEnumEntryCompletion6.kt")
+            public void testExpectedEnumEntryCompletion6() throws Exception {
+                runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion6.kt");
             }
 
             @TestMetadata("InvisibleEnumEntryCompletion.kt")
@@ -1689,6 +1734,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected3.kt");
             }
 
+            @TestMetadata("BaseClassConstructor.kt")
+            public void testBaseClassConstructor() throws Exception {
+                runTest("../testData/basic/common/namedArguments/BaseClassConstructor.kt");
+            }
+
             @TestMetadata("BooleanArgumentExpected.kt")
             public void testBooleanArgumentExpected() throws Exception {
                 runTest("../testData/basic/common/namedArguments/BooleanArgumentExpected.kt");
@@ -2387,11 +2437,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral1.kt");
             }
 
-            @TestMetadata("noCompletionAfterNumberLiteral2.kt")
-            public void testNoCompletionAfterNumberLiteral2() throws Exception {
-                runTest("../testData/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral2.kt");
-            }
-
             @TestMetadata("nullableCompletion.kt")
             public void testNullableCompletion() throws Exception {
                 runTest("../testData/basic/common/primitiveCompletion/nullableCompletion.kt");
@@ -2942,6 +2987,16 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AbsentReceiver1.kt")
+            public void testAbsentReceiver1() throws Exception {
+                runTest("../testData/basic/common/AbsentReceiver1.kt");
+            }
+
+            @TestMetadata("AbsentReceiver2.kt")
+            public void testAbsentReceiver2() throws Exception {
+                runTest("../testData/basic/common/AbsentReceiver2.kt");
             }
 
             @TestMetadata("AfterFloatOnNewLine.kt")

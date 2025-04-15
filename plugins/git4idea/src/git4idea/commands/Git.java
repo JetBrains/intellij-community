@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -185,6 +185,11 @@ public interface Git {
 
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
+
+  @NotNull
+  default GitCommandResult getResolvedFiles(@NotNull GitRepository repository) {
+    throw new IllegalStateException("getResolvedFiles should be implemented in GitImpl");
+  }
 
   @NotNull
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,

@@ -29,6 +29,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/platform-impl/rpc:ide-rpc",
     "//platform/lang-impl",
+    "//platform/usageView",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"],
   runtime_deps = [":frontend_resources"]

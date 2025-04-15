@@ -8,6 +8,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +24,7 @@ public interface UsageFilteringRuleProvider {
   /**
    * @return read-only collection of available filtering rules for this {@code project}
    */
-  default @NotNull Collection<? extends @NotNull UsageFilteringRule> getApplicableRules(@NotNull Project project) {
+  default @NotNull @Unmodifiable Collection<? extends @NotNull UsageFilteringRule> getApplicableRules(@NotNull Project project) {
     return Collections.emptyList();
   }
 

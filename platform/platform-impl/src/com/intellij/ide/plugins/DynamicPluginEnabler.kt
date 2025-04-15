@@ -35,7 +35,6 @@ class DynamicPluginEnabler : PluginEnabler {
     }
   }
 
-
   override fun isDisabled(pluginId: PluginId): Boolean =
     PluginEnabler.HEADLESS.isDisabled(pluginId)
 
@@ -46,8 +45,15 @@ class DynamicPluginEnabler : PluginEnabler {
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
   ): Boolean {
+    if (descriptors.any { !PluginManagerCore.isCompatible(it) }) {
+      // mark plugins enabled and require restart
+      PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+      PluginEnabler.HEADLESS.enable(descriptors)
+
+      return false
+    }
+
     if (LoadingState.APP_STARTED.isOccurred) {
-      // no FUS until then, especially during licensing init
       PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
     }
 

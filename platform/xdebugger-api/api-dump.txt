@@ -202,10 +202,14 @@ a:com.intellij.xdebugger.XSourcePositionWrapper
 e:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - java.lang.Enum
 - sf:ALL:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- sf:Companion:com.intellij.xdebugger.breakpoints.SuspendPolicy$Companion
 - sf:NONE:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - sf:THREAD:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.SuspendPolicy
 - s:values():com.intellij.xdebugger.breakpoints.SuspendPolicy[]
+f:com.intellij.xdebugger.breakpoints.SuspendPolicy$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.xdebugger.breakpoints.XBreakpoint
 - com.intellij.openapi.util.UserDataHolder
 - a:getConditionExpression():com.intellij.xdebugger.XExpression
@@ -386,7 +390,7 @@ a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PRIORITY_COMPARATOR:java.util.Comparator
 - p:<init>(java.lang.String,java.lang.String):V
-- a:getGroup(java.lang.Object,java.util.Collection):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
+- a:getGroup(java.lang.Object):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 - getIcon():javax.swing.Icon
 - getId():java.lang.String
 - getPresentableName():java.lang.String
@@ -739,7 +743,8 @@ a:com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 - a:computeSmartStepVariants(com.intellij.xdebugger.XSourcePosition):java.util.List
 - computeSmartStepVariantsAsync(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
 - computeStepIntoVariants(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
-- a:getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
+- getPopupTitle():java.lang.String
+- getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
 - startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant):V
 - startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant,com.intellij.xdebugger.frame.XSuspendContext):V
 - stepIntoEmpty(com.intellij.xdebugger.XDebugSession):V

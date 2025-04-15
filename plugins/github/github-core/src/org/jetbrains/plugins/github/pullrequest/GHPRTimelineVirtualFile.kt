@@ -7,11 +7,9 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import javax.swing.Icon
 
 internal data class GHPRTimelineVirtualFile(
@@ -28,20 +26,36 @@ internal data class GHPRTimelineVirtualFile(
 
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GHPRVirtualFileSystem.getInstance()
 
-  override fun getName() = "#${pullRequest.number}"
-  override fun getPresentableName() = findDetails()?.let { "${it.title} $name" } ?: name
+  override fun getName() = GHPRTimelineUIUtil.getName(pullRequest)
+  override fun getPresentableName() = GHPRTimelineUIUtil.getPresentableName(project, repository, pullRequest)
 
   override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, false)
-  override fun getPresentablePath() = findDetails()?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
+  override fun getPresentablePath() = GHPRTimelineUIUtil.getPresentablePath(project, repository, pullRequest)
 
-  fun getIcon(): Icon? = findDetails()?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
+  fun getIcon(): Icon? = GHPRTimelineUIUtil.getIcon(project, repository, pullRequest)
 
   override fun isValid(): Boolean = findProjectVm() != null
 
   override fun setValid(valid: Boolean) = Unit
 
-  fun findProjectVm(): GHPRToolWindowProjectViewModel? =
-    project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
+  fun findProjectVm(): GHPRConnectedProjectViewModel? =
+    project.service<GHPRProjectViewModel>().connectedProjectVm.value?.takeIf { it.repository == repository }
 
-  private fun findDetails(): GHPullRequestShort? = findProjectVm()?.findDetails(pullRequest)
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GHPRTimelineVirtualFile) return false
+    if (!super.equals(other)) return false
+
+    if (project != other.project) return false
+    if (repository != other.repository) return false
+    return pullRequest == other.pullRequest
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + project.hashCode()
+    result = 31 * result + repository.hashCode()
+    result = 31 * result + pullRequest.hashCode()
+    return result
+  }
 }

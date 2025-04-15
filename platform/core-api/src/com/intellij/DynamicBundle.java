@@ -212,11 +212,19 @@ public class DynamicBundle extends AbstractBundle {
   @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault, @NotNull ClassLoader classLoader) {
     ResourceBundle bundle = super.getBundle(isDefault, classLoader);
-    if (bundle != null &&
-        !isDefault &&
-        (getBundleFromCache(classLoader, bundle.getBaseBundleName()) == null ||
-         getBundleFromCache(classLoader, bundle.getBaseBundleName()) != bundle)) {
-      LOG.info("Cleanup bundle cache for " + bundle.getBaseBundleName());
+    if (bundle == null || isDefault) {
+      return bundle;
+    }
+
+    String bundleName = bundle.getBaseBundleName();
+    if (bundleName == null) {
+      LOG.warn("Bundle without name cannot be properly cached: " + bundle);
+      return bundle;
+    }
+
+    if (getBundleFromCache(classLoader, bundleName) == null ||
+        getBundleFromCache(classLoader, bundleName) != bundle) {
+      LOG.info("Cleanup bundle cache for " + bundleName);
       return null;
     }
     return bundle;

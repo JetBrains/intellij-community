@@ -4,14 +4,15 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.IdeaTestFixture
+import java.nio.file.Path
 
 interface GradleTestFixture : IdeaTestFixture {
 
-  suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project
+  suspend fun openProject(projectPath: Path, numProjectSyncs: Int = 1): Project
 
-  suspend fun linkProject(project: Project, relativePath: String)
+  suspend fun linkProject(project: Project, projectPath: Path)
 
-  suspend fun reloadProject(project: Project, relativePath: String = ".", configure: ImportSpecBuilder.() -> Unit = {})
+  suspend fun reloadProject(project: Project, projectPath: Path, configure: ImportSpecBuilder.() -> Unit = {})
 
   suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project
 

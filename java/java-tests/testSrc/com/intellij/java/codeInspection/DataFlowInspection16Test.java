@@ -47,6 +47,11 @@ public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
     doTest();
   }
   
+  public void testCheckerLocalVariableOverridesDefault() {
+    addCheckerAnnotations(myFixture);
+    doTest();
+  }
+  
   public void testRecordComponentAnnotate() {
     doTest();
     IntentionAction intention = myFixture.findSingleIntention("Annotate record component 'member' as '@Nullable'");

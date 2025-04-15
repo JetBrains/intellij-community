@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -25,7 +25,7 @@ class AnyThreadWriteThreadingSupportTest {
       val rt = Thread({
         try {
           readThreadStarted.release()
-          lock.runReadAction {
+          lock.runReadAction(javaClass) {
             readRun.set(true)
           }
         } catch (_: InterruptedException) {

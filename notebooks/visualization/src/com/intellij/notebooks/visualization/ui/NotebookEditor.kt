@@ -13,4 +13,7 @@ interface NotebookEditor {
 internal val notebookEditorKey = Key.create<NotebookEditor>(NotebookEditor::class.java.name)
 
 val Editor.notebookEditor: NotebookEditor
+  get() = notebookEditorOrNull!!
+
+val Editor.notebookEditorOrNull: NotebookEditor?
   get() = notebookEditorKey.get(this)

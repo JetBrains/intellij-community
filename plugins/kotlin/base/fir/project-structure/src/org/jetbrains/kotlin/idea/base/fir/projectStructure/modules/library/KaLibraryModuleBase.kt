@@ -36,7 +36,6 @@ abstract class KaLibraryModuleBase<E : WorkspaceEntityWithSymbolicId, EID : Symb
      */
     abstract override val librarySources: KaLibrarySourceModule?
 
-    // libraries have no dependencies
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
     override val directFriendDependencies: List<KaModule> get() = emptyList()
 

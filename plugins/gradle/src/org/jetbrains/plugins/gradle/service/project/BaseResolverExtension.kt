@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.service.project
 
 import com.amazon.ion.IonType
 import com.google.gson.GsonBuilder
-import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -38,8 +37,6 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
                                    ideModule: DataNode<ModuleData>,
                                    ideProject: DataNode<ProjectData>): Collection<TaskData> = emptyList()
 
-  override fun getExtraProjectModelClasses(): Set<Class<*>> = emptySet()
-  override fun getExtraBuildModelClasses(): Set<Class<*>> = emptySet()
   override fun getToolingExtensionsClasses(): Set<Class<*>> {
     return linkedSetOf(
       Multimap::class.java, // repacked gradle guava
@@ -72,14 +69,9 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
     return extraJvmArgs
   }
 
-  override fun getExtraCommandLineArgs(): List<String> = emptyList()
   override fun getUserFriendlyError(buildEnvironment: BuildEnvironment?,
                                     error: Throwable,
                                     projectPath: String,
                                     buildFilePath: String?): ExternalSystemException =
     BaseProjectImportErrorHandler().getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath)
-
-  override fun preImportCheck() {}
-
-  override fun enhanceRemoteProcessing(parameters: SimpleJavaParameters) {}
 }

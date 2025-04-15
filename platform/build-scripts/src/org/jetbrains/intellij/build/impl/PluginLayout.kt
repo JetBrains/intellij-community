@@ -4,11 +4,22 @@ package org.jetbrains.intellij.build.impl
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.plus
+import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CustomAssetDescriptor
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.FileSystemException
@@ -75,7 +86,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   /**
    * Should be `true` if the semantic versioning is enabled for the plugin in plugins.jetbrains.com.
-   * Then the plugin version will be checked against [org.jetbrains.intellij.build.impl.SemanticVersioningScheme].
+   * Then the plugin version will be checked against [com.intellij.util.text.SemVer].
    */
   var semanticVersioning: Boolean = false
     private set
@@ -93,7 +104,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   val hasPlatformSpecificResources: Boolean
-    get() = platformResourceGenerators.isNotEmpty()
+    get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
 
@@ -135,17 +146,19 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
-      plugin(mainModuleName, auto = true, body)
+    fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true, body)
+    }
 
     // we cannot break compatibility / risk to change the existing plugin dir name
     @Suppress("DEPRECATION")
-    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout =
-      plugin(mainModuleName, auto = true) { spec ->
+    fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      return plugin(mainModuleName, auto = true) { spec ->
         spec.directoryName = dirName
         spec.mainJarName = "${dirName}.jar"
         body(spec)
       }
+    }
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
@@ -182,12 +195,19 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
   }
 
-  override fun toString(): String =
-    "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  override fun toString(): String {
+    return "Plugin '$mainModule'" + (if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions")
+  }
 
-  override fun getRelativeJarPath(moduleName: String): String =
-    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) "${convertModuleNameToFileName(moduleName)}.jar"  // must be in a separate JAR
-    else mainJarName
+  override fun getRelativeJarPath(moduleName: String): String {
+    if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+      // must be in a separate JAR
+      return "${convertModuleNameToFileName(moduleName)}.jar"
+    }
+    else {
+      return mainJarName
+    }
+  }
 
   sealed class PluginLayoutBuilder(@JvmField protected val layout: PluginLayout) : BaseLayoutSpec(layout) {
     /**
@@ -217,7 +237,21 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun withCustomAsset(lazySourceSupplier: (context: BuildContext) -> LazySource?) {
       layout.customAssets += object : CustomAssetDescriptor {
-        override suspend fun getSources(context: BuildContext): Sequence<Source>? {
+        override val platformSpecific: SupportedDistribution?
+          get() = null
+
+        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
+          return sequenceOf(lazySourceSupplier(context) ?: return null)
+        }
+      }
+    }
+
+    fun withCustomAsset(platform: SupportedDistribution, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+      layout.customAssets += object : CustomAssetDescriptor {
+        override val platformSpecific: SupportedDistribution
+          get() = platform
+
+        override suspend fun getSources(context: BuildContext): Sequence<LazySource>? {
           return sequenceOf(lazySourceSupplier(context) ?: return null)
         }
       }

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,10 +124,10 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public boolean isWritingAllowed() {
-    Application app = ApplicationManager.getApplication();
-    // Check to suppress LOG.error() about implicit lock
-    if (!app.isWriteIntentLockAcquired()) {
-      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    if (!EDT.isCurrentThreadEdt()) {
+      // The implementation of nested locking accounts for prevention of unrelated background write actions.
+      // We don't need TransactionGuard there
+      return true;
     }
     return myWritingAllowed;
   }

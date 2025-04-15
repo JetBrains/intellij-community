@@ -1,15 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.parser
 
-import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.*
 import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
+import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
-import com.intellij.platform.syntax.util.CancellationProvider
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.NoopLogger
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 
 /**
  * Factory for constructing a [SyntaxTreeBuilder]
@@ -93,7 +92,7 @@ private class BuilderImpl(
   private var logger: Logger? = null
   private var whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy? = null
   private var opaquePolicy: OpaqueElementPolicy? = null
-
+  
   override fun withStartOffset(startOffset: Int): Builder {
     this.startOffset = startOffset
     return this
@@ -143,15 +142,15 @@ private class BuilderImpl(
     val builder = ParsingTreeBuilder(
       lexer = lexer,
       text = text,
-      myWhitespaces = whitespaces,
-      myComments = comments,
+      myWhitespaces = whitespaces.asSyntaxElementTypeSet(),
+      myComments = comments.asSyntaxElementTypeSet(),
       startOffset = startOffset,
       myWhitespaceSkippedCallback = whitespaceSkippedCallback,
       cachedLexemes = cachedLexemes,
       myDebugMode = debugMode,
       language = language,
       cancellationProvider = null,
-      logger = logger ?: NoopLogger,
+      logger = logger ?: noopLogger(),
       whitespaceOrCommentBindingPolicy = whitespaceOrCommentBindingPolicy ?: WhitespaceOrCommentBindingPolicy { false },
       opaquePolicy = opaquePolicy ?: OpaqueElementPolicy { null },
     )

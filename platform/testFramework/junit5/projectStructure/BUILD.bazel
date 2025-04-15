@@ -11,6 +11,7 @@ jvm_library(
     "//platform/lang-impl",
     "@lib//:kotlin-test",
     "//platform/ide-core-impl",
+    "//platform/workspace/jps",
   ]
 )
 
@@ -26,6 +27,7 @@ jvm_library(
     "@lib//:junit5",
     "@lib//:kotlin-test",
     "//platform/ide-core-impl",
+    "//platform/workspace/jps",
   ]
 )
 

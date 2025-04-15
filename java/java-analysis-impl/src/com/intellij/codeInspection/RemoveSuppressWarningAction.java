@@ -228,8 +228,7 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
   private @NotNull ModCommand removeFromValueExternal(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotationMemberValue value, boolean removeParent, @NotNull PsiModifierListOwner owner) throws IncorrectOperationException {
     String text = StringUtil.unquoteString(value.getText());
     if (!myID.equals(text)) return ModCommand.nop();
-    ModCommandAwareExternalAnnotationsManager manager =
-      (ModCommandAwareExternalAnnotationsManager)ExternalAnnotationsManager.getInstance(annotation.getProject());
+    ModCommandAwareExternalAnnotationsManager manager = ModCommandAwareExternalAnnotationsManager.getInstance(annotation.getProject());
     if (removeParent) {
       String qualifiedName = annotation.getQualifiedName(); //SuppressWarnings
       assert qualifiedName != null;

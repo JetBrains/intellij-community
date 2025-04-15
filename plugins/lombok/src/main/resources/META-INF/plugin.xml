@@ -45,7 +45,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>

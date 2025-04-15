@@ -14,8 +14,8 @@ import com.intellij.platform.workspace.storage.impl.cache.ChangeOnWorkspaceBuild
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
+import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.EmptyExternalEntityMapping
-import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
@@ -61,7 +61,7 @@ private val entityStorageSnapshotImplInstancesCounter: AtomicLong = AtomicLong()
 internal open class ImmutableEntityStorageImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
-  override val indexes: StorageIndexes,
+  override val indexes: ImmutableStorageIndexes,
   internal val snapshotCache: TracedSnapshotCache = TracedSnapshotCacheImpl(),
 ) : ImmutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
@@ -103,7 +103,7 @@ internal open class ImmutableEntityStorageImpl(
 
   companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
-    val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
+    val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), ImmutableStorageIndexes.EMPTY)
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val instancesCountCounter = meter.counterBuilder("workspaceModel.entityStorageSnapshotImpl.instances.count").buildObserver()
@@ -468,7 +468,7 @@ internal class MutableEntityStorageImpl(
       val possibleRemovedSameEntity = removes[addedEntityData]
       val newEntityId = addedEntityData.createEntityId()
       val hasMapping = this.indexes.externalMappings.any { (_, value) ->
-        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(newEntityId) != null
+        value.getDataByEntityId(newEntityId) != null
       }
       if (hasMapping) return@forEach
       val found = possibleRemovedSameEntity?.firstOrNull { possibleRemovedSame ->
@@ -954,7 +954,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
-  internal abstract val indexes: StorageIndexes
+  internal abstract val indexes: AbstractStorageIndexes
 
   internal var brokenConsistency: Boolean = false
 
@@ -1022,7 +1022,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       // https://stackoverflow.com/a/26122232
       reporterExecutor.execute(BridgeAccessThreadAnalyzer(Exception(), identifier as ExternalMappingKey<Any>))
     }
-    val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
+    val index = indexes.externalMappings[identifier] as? AbstractExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
     return index

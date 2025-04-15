@@ -4,7 +4,7 @@ package git4idea.ui.toolbar
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -24,6 +24,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.RowIcon
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import git4idea.GitVcs
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
@@ -73,7 +74,7 @@ class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     updatePlaceholder(project, null)
 
-    val group = if (project.isTrusted()) {
+    val group = if (TrustedProjects.isProjectTrusted(project)) {
       ActionManager.getInstance().getAction("Vcs.ToolbarWidget.CreateRepository") as ActionGroup
     }
     else {
@@ -96,7 +97,7 @@ class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    if (Registry.`is`("git.branches.widget.rd", false)) {
+    if (Registry.isRdBranchWidgetEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }

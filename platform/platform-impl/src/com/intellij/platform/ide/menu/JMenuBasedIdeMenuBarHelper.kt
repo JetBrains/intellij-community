@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton
 import com.intellij.openapi.wm.impl.headertoolbar.MergedMainMenu
 import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.MenuSelectionManager
@@ -50,12 +51,13 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
             actionMenu.isFocusable = false
           }
         }
-        if (mergedMainMenu != null && visibleMenuCount < visibleActions.size && newVisibleActions.indexOf(action) >= visibleMenuCount) {
+        if (mergedMainMenu != null && visibleMenuCount > 0 && visibleMenuCount < visibleActions.size && newVisibleActions.indexOf(action) >= visibleMenuCount) {
           mergedMainMenu.addInvisibleItem(actionMenu)
           continue
         }
         menuBarComponent.add(actionMenu)
       }
+      (mergedMainMenu?.parent as? MainMenuWithButton)?.recalculateWidth()
     }
     presentationFactory.resetNeedRebuild()
     flavor.updateAppMenu()

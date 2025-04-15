@@ -292,7 +292,7 @@ public final class ProtocolParser {
     }
     if (shape.isEmpty()) shape = null;
     if (typeRendererId.isEmpty()) typeRendererId = null;
-    if (type.equals("DataFrame")) {
+    if (type.equals(DataFrameDebugValue.pyDataFrameType)) {
       return new DataFrameDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
                                      "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
     }

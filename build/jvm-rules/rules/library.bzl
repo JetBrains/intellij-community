@@ -7,9 +7,6 @@ visibility("private")
 
 def _make_providers(ctx, providers):
     files = [ctx.outputs.jar]
-    if providers.java.outputs.jdeps:
-        files.append(providers.java.outputs.jdeps)
-
     return [
         providers.java,
         providers.kt,
@@ -69,12 +66,6 @@ jvm_library = rule(
             allow_single_file = True,
             cfg = "target",
             default = Label("@rules_kotlin//third_party:empty.jar"),
-        ),
-        "_empty_jdeps": attr.label(
-            doc = """Empty jdeps for exporting JavaInfos.""",
-            allow_single_file = True,
-            cfg = "target",
-            default = Label("@rules_kotlin//third_party:empty.jdeps"),
         ),
     }),
     outputs = common_outputs,

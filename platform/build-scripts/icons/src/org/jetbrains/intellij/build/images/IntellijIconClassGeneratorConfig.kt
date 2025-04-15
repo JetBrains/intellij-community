@@ -167,6 +167,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
 
       "intellij.platform.icons" -> super.getConfigForModule(moduleName)?.copy(generateJewelIcons = true) ?: IntellijIconClassGeneratorModuleConfig(generateJewelIcons = true)
 
+      "intellij.java.ultimate.icons" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JavaUltimateIcons",
+        packageName = "com.intellij.java.ultimate.icons",
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }

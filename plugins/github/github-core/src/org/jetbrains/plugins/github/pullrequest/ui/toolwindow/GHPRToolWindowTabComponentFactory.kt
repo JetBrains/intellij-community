@@ -9,28 +9,21 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
-import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowTabViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import java.awt.BorderLayout
-import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.ListModel
-import javax.swing.event.ListDataListener
 
 internal class GHPRToolWindowTabComponentFactory(
   private val project: Project,
-  private val vm: GHPRToolWindowViewModel
+  private val vm: GHPRProjectViewModel
 ) : ReviewTabsComponentFactory<GHPRToolWindowTabViewModel, GHPRToolWindowProjectViewModel> {
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {
@@ -42,46 +35,8 @@ internal class GHPRToolWindowTabComponentFactory(
   }
 
   override fun createReviewListComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel): JComponent {
-    val ghostUser = projectVm.dataContext.securityService.ghostUser
-    val currentUser = projectVm.dataContext.securityService.currentUser
-    val listVm = projectVm.listVm
-    val listModel = cs.scopedDelegatingListModel(listVm.listModel)
-    val list = GHPRListComponentFactory(projectVm.dataContext.interactionState, listModel)
-      .create(listVm.avatarIconsProvider, ghostUser, currentUser)
-
-    GHPRStatisticsCollector.logListOpened(project)
-    return GHPRListPanelFactory(project, listVm)
-      .create(cs, list, listVm.avatarIconsProvider)
+    return GHPRListPanelFactory.create(project, cs, projectVm.dataContext, projectVm.listVm)
   }
-
-  private fun <T> CoroutineScope.scopedDelegatingListModel(delegate: ListModel<T>) =
-    object : ListModel<T> by delegate {
-      private val listeners = CopyOnWriteArrayList<ListDataListener>()
-
-      init {
-        launchNow {
-          try {
-            awaitCancellation()
-          }
-          finally {
-            listeners.forEach {
-              delegate.removeListDataListener(it)
-            }
-          }
-        }
-      }
-
-      override fun addListDataListener(l: ListDataListener) {
-        if (!isActive) return
-        listeners.add(l)
-        delegate.addListDataListener(l)
-      }
-
-      override fun removeListDataListener(l: ListDataListener) {
-        delegate.removeListDataListener(l)
-        listeners.remove(l)
-      }
-    }
 
   override fun createTabComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel, tabVm: GHPRToolWindowTabViewModel): JComponent =
     when (tabVm) {

@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.ResultErrImpl
@@ -60,48 +62,6 @@ suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
   }
 }
 
-fun EelApi.whereBlocking(exe: String): EelPath? {
-  return runBlockingMaybeCancellable { exec.where(exe) }
-}
-
-/**
- * Function that attempts to locate the full path of the specified executable in the system's PATH.
- *
- * This function uses platform-specific commands to search for the executable:
- * - On POSIX systems, it uses the `which` command.
- * - On Windows systems, it uses `where.exe`.
- *
- * @param exe The name of the executable to search for.
- * @return The full path to the executable if found; `null` if the executable is not found or an error occurs.
- * @throws IllegalArgumentException If the operating system is unsupported.
- *
- * @example
- * ```kotlin
- * val path = eelApi.where("git")
- * if (path != null) {
- *     println("Git is located at: $path")
- * } else {
- *     println("Git executable not found.")
- * }
- * ```
- */
-suspend fun EelExecApi.where(exe: String): EelPath? {
-  val tool = when (descriptor.operatingSystem) {
-    EelPath.OS.UNIX -> "which"
-    EelPath.OS.WINDOWS -> "where.exe"
-  }
-
-  val result = execute(tool) { env(fetchLoginShellEnvVariables()).args(exe) }.getOrThrow().awaitProcessResult()
-
-  if (result.exitCode != 0) {
-    // TODO: log error?/throw Exception?
-    return null
-  }
-  else {
-    return EelPath.parse(result.stdoutString.trim(), descriptor)
-  }
-}
-
 /**
  * Given [this] is a binary, executes it with [args] and returns either [EelExecApi.ExecuteProcessError] (couldn't execute) or
  * [ProcessOutput] as a result of the execution.
@@ -114,7 +74,7 @@ suspend fun EelExecApi.where(exe: String): EelPath? {
 @ApiStatus.Experimental
 suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.days): EelResult<EelProcessExecutionResult, EelExecApi.ExecuteProcessError?> {
 
-  val process = getEelDescriptor().upgrade().exec.executeProcess(pathString, *args).getOr { return it }
+  val process = getEelDescriptor().upgrade().exec.execute(pathString, *args).eelIt().getOr { return it }
   val output = withTimeoutOrNull(timeout) {
     process.awaitProcessResult()
   }

@@ -3,7 +3,6 @@ package com.intellij.openapi.components
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -81,19 +80,3 @@ suspend fun <T : Any> ComponentManager.serviceAsync(keyClass: Class<T>): T {
   return (this as ComponentManagerEx).getServiceAsync(keyClass)
 }
 
-@ApiStatus.Internal
-interface ComponentManagerEx {
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
-    throw AbstractMethodError()
-  }
-
-  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
-    throw AbstractMethodError()
-  }
-
-  @ApiStatus.Obsolete
-  @ApiStatus.Internal
-  fun getCoroutineScope(): CoroutineScope
-}

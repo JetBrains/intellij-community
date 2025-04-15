@@ -62,8 +62,8 @@ final class LookupUi {
   private final Alarm hintAlarm;
   private final JScrollPane myScrollPane;
   private final AsyncProcessIcon processIcon = new AsyncProcessIcon("Completion progress");
-  private final ActionButton myMenuButton;
-  private final ActionButton hintButton;
+  private final JComponent myMenuButton;
+  private final JComponent hintButton;
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
@@ -103,14 +103,8 @@ final class LookupUi {
     menuAction.add(new ShowCompletionSettingsAction());
 
     myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    JComponent menuButtonWrapper = UiDataProvider.wrapComponent(myMenuButton, sink -> {
-      sink.set(CommonDataKeys.PROJECT, this.lookup.getProject());
-      sink.set(CommonDataKeys.EDITOR, this.lookup.getEditor());
-    });
-
-    AnAction hintAction = new HintAction();
-    hintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
-                                  ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    HintAction hintAction = new HintAction();
+    hintButton = new ActionButton(hintAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     hintButton.setVisible(false);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
@@ -120,7 +114,7 @@ final class LookupUi {
       myBottomPanel.add(myAdvertiser.getAdComponent());
       myBottomPanel.add(processIcon);
       myBottomPanel.add(hintButton);
-      myBottomPanel.add(menuButtonWrapper);
+      myBottomPanel.add(myMenuButton);
       if (ExperimentalUI.isNewUI()) {
         myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
         myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
@@ -237,7 +231,7 @@ final class LookupUi {
       lookup.pack();
       rectangle = calculatePosition();
     }
-    HintManagerImpl.updateLocation(lookup, editor, rectangle.getLocation());
+    lookup.updateLocation(rectangle.getLocation());
 
     if (reused || selectionVisible || onExplicitAction) {
       lookup.ensureSelectionVisible(false);
@@ -386,11 +380,11 @@ final class LookupUi {
     }
   }
 
-  private final class LookupLayeredPane extends JBLayeredPane {
+  private final class LookupLayeredPane extends JBLayeredPane implements UiDataProvider {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
-      mainPanel.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+      mainPanel.setBackground(lookup.getBackgroundColor());
       add(mainPanel, 0, 0);
 
       setLayout(new AbstractLayoutManager() {
@@ -433,6 +427,12 @@ final class LookupUi {
           myList.setFixedCellWidth(myScrollPane.getViewport().getWidth());
         }
       });
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.PROJECT, lookup.getProject());
+      sink.set(CommonDataKeys.EDITOR, lookup.getEditor());
     }
   }
 

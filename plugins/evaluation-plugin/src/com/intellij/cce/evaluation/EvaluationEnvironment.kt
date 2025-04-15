@@ -2,6 +2,8 @@ package com.intellij.cce.evaluation
 
 import com.intellij.cce.actions.DatasetContext
 import com.intellij.cce.actions.DatasetRef
+import com.intellij.cce.evaluation.data.Bindable
+import com.intellij.cce.evaluation.data.Binding
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.EvaluationWorkspace
@@ -27,16 +29,21 @@ interface EvaluationEnvironment : AutoCloseable {
   fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk>
 
   fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace?
+
+  // place here just for convenience, should be final protected by meaning
+  infix fun <T, B : Bindable<T>> B.bind(value: T): Binding<B> = Binding.create(this, value)
 }
 
-abstract class SimpleFileEnvironment : EvaluationEnvironment {
+interface SimpleFileEnvironment : EvaluationEnvironment {
 
-  protected abstract val datasetRef: DatasetRef
+  val datasetRef: DatasetRef
 
-  override val setupSdk: EvaluationStep? = null
-  override val checkSdk: EvaluationStep? = null
+  override val setupSdk: EvaluationStep? get() = null
+  override val checkSdk: EvaluationStep? get() = null
 
-  protected open fun checkFile(datasetPath: Path) {
+  override val preparationDescription: String get() = "Checking that dataset file is available"
+
+  fun checkFile(datasetPath: Path) {
   }
 
   override fun prepare(datasetContext: DatasetContext, progress: Progress) {

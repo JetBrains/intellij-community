@@ -271,7 +271,9 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
         SearchEverywhereManager manager = SearchEverywhereManager.getInstance(project);
         if (!manager.isShown()) return null;
 
-        return manager.getCurrentlyShownUI().getSearchField().getText();
+        SearchEverywherePopupInstance popupInstance = manager.getCurrentlyShownPopupInstance();
+        if (popupInstance != null) return popupInstance.getSearchText();
+        else return null;
       };
 
       return new RunConfigurationsSEContributor(project, contextComponent, commandSupplier);

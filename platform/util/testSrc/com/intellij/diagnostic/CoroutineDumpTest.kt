@@ -2,6 +2,8 @@
 package com.intellij.diagnostic
 
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.SystemProperty
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
@@ -11,6 +13,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 import kotlin.concurrent.thread
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 class CoroutineDumpTest {
   companion object {
@@ -95,6 +99,32 @@ class CoroutineDumpTest {
     } finally {
       b2.complete(Unit)
       t.join()
+    }
+  }
+
+  private class AnElement : AbstractCoroutineContextElement(Key) {
+    companion object Key : CoroutineContext.Key<AnElement>
+  }
+
+  @Test
+  fun `different instances of the same class with base toString are deduplicated`() = timeoutRunBlocking {
+    val job = Job()
+    repeat(10) {
+      launch(AnElement()) {
+        job.join()
+      }
+    }
+    try {
+      val dumpWithDeduplication = dumpCoroutines(this, stripDump = false, deduplicateTrees = true)!!
+      // because in debug mode, there is CoroutineId which appears in the context and in coroutine names
+      val dumpWithReplacedNumbers = dumpWithDeduplication.replace(Regex("[0-9]+"), "<NUM>").lines()
+      val targetLine = dumpWithReplacedNumbers.find { it.contains("AnElement") }!!
+      // if it was not for CoroutineId, this dump would be deduplicated
+      // here we check that apart from these numbers, nothing blocks the deduplication
+      assert(dumpWithReplacedNumbers.count { it == targetLine } == 10)
+    }
+    finally {
+      job.complete()
     }
   }
 }

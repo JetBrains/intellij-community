@@ -19,6 +19,11 @@ internal class WorkspaceModelGenerationAction: AnAction() {
   }
 
   override fun update(event: AnActionEvent) {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(event.project)) {
+      event.presentation.isEnabledAndVisible = false
+      return
+    }
+
     if (event.place == ActionPlaces.ACTION_SEARCH) {
       event.presentation.isEnabledAndVisible = true
     } else {

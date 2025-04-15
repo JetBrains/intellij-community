@@ -1,0 +1,11 @@
+interface E
+
+interface EE : E {
+    fun f(): Boolean
+}
+
+fun caller(
+    elements: List<E>
+): Boolean = elements.none {
+    it is EE && it.f()
+}

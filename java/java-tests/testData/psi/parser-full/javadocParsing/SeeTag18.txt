@@ -1,0 +1,58 @@
+PsiJavaFile:SeeTag18.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_START('/**')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocTag:@see
+        PsiDocToken:DOC_TAG_NAME('@see')
+        PsiWhiteSpace(' ')
+        PsiJavaModuleReference
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('java.base')
+        PsiDocToken:DOC_TAG_VALUE_DIV_TOKEN('/')
+        PsiElement(DOC_METHOD_OR_FIELD_REF)
+          PsiElement(DOC_REFERENCE_HOLDER)
+            PsiJavaCodeReferenceElement:java.util.ArrayList
+              PsiJavaCodeReferenceElement:java.util
+                PsiJavaCodeReferenceElement:java
+                  PsiIdentifier:java('java')
+                  PsiReferenceParameterList
+                    <empty list>
+                PsiJavaToken:DOT('.')
+                PsiIdentifier:util('util')
+                PsiReferenceParameterList
+                  <empty list>
+              PsiJavaToken:DOT('.')
+              PsiIdentifier:ArrayList('ArrayList')
+              PsiReferenceParameterList
+                <empty list>
+          PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('add')
+          PsiDocToken:DOC_TAG_VALUE_LPAREN('(')
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:Object
+                PsiJavaCodeReferenceElement:Object
+                  PsiIdentifier:Object('Object')
+                  PsiReferenceParameterList
+                    <empty list>
+          PsiDocToken:DOC_TAG_VALUE_RPAREN(')')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_END('*/')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

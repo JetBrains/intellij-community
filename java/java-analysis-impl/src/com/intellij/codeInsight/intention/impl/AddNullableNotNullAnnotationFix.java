@@ -14,8 +14,8 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
- * @deprecated use {@link AddAnnotationPsiFix#createAddNullableFix(PsiModifierListOwner)} or
- * {@link AddAnnotationPsiFix#createAddNotNullFix(PsiModifierListOwner)}.
+ * @deprecated use {@link com.intellij.codeInsight.intention.AddAnnotationModCommandAction#createAddNullableFix(PsiModifierListOwner)} or
+ * {@link com.intellij.codeInsight.intention.AddAnnotationModCommandAction#createAddNotNullFix(PsiModifierListOwner)}.
  */
 @Deprecated(forRemoval = true)
 public class AddNullableNotNullAnnotationFix extends AddAnnotationPsiFix {

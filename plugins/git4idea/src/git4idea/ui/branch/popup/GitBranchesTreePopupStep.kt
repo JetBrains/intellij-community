@@ -33,7 +33,7 @@ import git4idea.ui.branch.tree.*
 import org.intellij.lang.annotations.Language
 import javax.swing.JComponent
 
-class GitBranchesTreePopupStep(
+internal class GitBranchesTreePopupStep(
   project: Project,
   selectedRepository: GitRepository?,
   repositories: List<GitRepository>,
@@ -42,7 +42,6 @@ class GitBranchesTreePopupStep(
   private var finalRunnable: Runnable? = null
 
   private val topLevelItems: List<Any> = buildList {
-    val affectedRepositories = affectedRepositories(selectedRepository, repositories)
     val presentationFactory = PresentationFactory()
 
     if (ExperimentalUI.isNewUI() && isFirstStep) {
@@ -68,18 +67,17 @@ class GitBranchesTreePopupStep(
     private set
 
   override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
-    return when {
-      !filterActive && repositories.size > 1
-      && !userWantsSyncControl(project) && selectedRepository != null -> {
+    val model = when {
+      !filterActive && repositories.size > 1 && !userWantsSyncControl(project) && selectedRepository != null -> {
         GitBranchesTreeSelectedRepoModel(project, selectedRepository, repositories, topLevelItems)
-          .apply(GitBranchesTreeSelectedRepoModel::init)
       }
       filterActive && repositories.size > 1 -> {
-        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems).apply(GitBranchesTreeMultiRepoFilteringModel::init)
+        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
       }
       !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
-      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems).apply(GitBranchesTreeSingleRepoModel::init)
+      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
     }
+    return model.apply(GitBranchesTreeModel::init)
   }
 
   override fun setTreeModel(treeModel: GitBranchesTreeModel) {
@@ -89,12 +87,8 @@ class GitBranchesTreePopupStep(
   override fun getFinalRunnable() = finalRunnable
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
-    if (selectedValue is GitBranchesTreeModel.TopLevelRepository) {
+    if (selectedValue is GitBranchesTreeModel.RepositoryNode) {
       return GitBranchesTreePopupStep(project, selectedValue.repository, listOf(selectedValue.repository), false)
-    }
-
-    if (selectedValue is GitRepository) {
-      return GitBranchesTreePopupStep(project, selectedValue, listOf(selectedValue), false)
     }
 
     val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository

@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import org.jetbrains.annotations.NotNull;
 
-
 public abstract class EscapeSequenceTokenizer<T extends PsiElement> extends Tokenizer<T> {
   private static final Key<int[]> ESCAPE_OFFSETS = Key.create("escape.tokenizer.offsets");
 
@@ -20,7 +19,7 @@ public abstract class EscapeSequenceTokenizer<T extends PsiElement> extends Toke
   }
 
   @Override
-  public @NotNull TextRange getHighlightingRange(PsiElement element, int offset, TextRange range) {
+  public @NotNull TextRange getHighlightingRange(@NotNull PsiElement element, int offset, @NotNull TextRange range) {
     final int[] offsets = element.getUserData(ESCAPE_OFFSETS);
     if (offsets != null) {
       int start = offsets[range.getStartOffset()];

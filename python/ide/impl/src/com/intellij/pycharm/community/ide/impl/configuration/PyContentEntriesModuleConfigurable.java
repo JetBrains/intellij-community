@@ -118,7 +118,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     return new Configurable[0];
   }
 

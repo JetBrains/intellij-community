@@ -377,6 +377,60 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/addJvmOverloads")
+    public static class AddJvmOverloads extends AbstractSharedK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyHasAnnotation.kt")
+        public void testAlreadyHasAnnotation() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/alreadyHasAnnotation.kt");
+        }
+
+        @TestMetadata("method.kt")
+        public void testMethod() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/method.kt");
+        }
+
+        @TestMetadata("noDefaultParams.kt")
+        public void testNoDefaultParams() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/noDefaultParams.kt");
+        }
+
+        @TestMetadata("primaryConstructor.kt")
+        public void testPrimaryConstructor() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/primaryConstructor.kt");
+        }
+
+        @TestMetadata("primaryConstructorOnAnnotationClass.kt")
+        public void testPrimaryConstructorOnAnnotationClass() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/primaryConstructorOnAnnotationClass.kt");
+        }
+
+        @TestMetadata("primaryConstructorOneWithDefault.kt")
+        public void testPrimaryConstructorOneWithDefault() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/primaryConstructorOneWithDefault.kt");
+        }
+
+        @TestMetadata("primaryConstructorWithConstructorKeyword.kt")
+        public void testPrimaryConstructorWithConstructorKeyword() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/primaryConstructorWithConstructorKeyword.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("../testData/intentions/addJvmOverloads/secondaryConstructor.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/convertLambdaToMultiLine")
     public static class ConvertLambdaToMultiLine extends AbstractSharedK2IntentionTest {
         @java.lang.Override
@@ -2043,6 +2097,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         @TestMetadata("ifWithComment2.kt")
         public void testIfWithComment2() throws Exception {
             runTest("../testData/intentions/removeBraces/ifWithComment2.kt");
+        }
+
+        @TestMetadata("ifWithComment3.kt")
+        public void testIfWithComment3() throws Exception {
+            runTest("../testData/intentions/removeBraces/ifWithComment3.kt");
         }
 
         @TestMetadata("ifWithLocalClass.kt")

@@ -159,7 +159,7 @@ class IntArrayList: MutableIntList, Comparable<IntList> {
     var i = elements.indices.first
     size += n
     while (n-- != 0) a[index++] = elements[i++]
-    assert(size <= a.size)
+    check(size <= a.size)
     return true
   }
 

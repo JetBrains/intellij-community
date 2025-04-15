@@ -10,8 +10,8 @@
 9(10,19) refutable pattern: 'bar': foo.bar
 10(11,19) refutable pattern: 'bar'
 11(12) matched pattern: 'bar'
-12(13,19) refutable pattern: foo.bar
-13(14) READ ACCESS: foo
+12(13) refutable pattern: foo.bar
+13(14,19) READ ACCESS: foo
 14(15) matched pattern: foo.bar
 15(16) matched pattern: 'bar': foo.bar
 16(17) matched pattern: {'foo': 1, 'bar': foo.bar}

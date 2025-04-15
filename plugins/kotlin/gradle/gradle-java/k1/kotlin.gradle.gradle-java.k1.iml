@@ -42,10 +42,8 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm.shared" />
     <orderEntry type="module" module-name="kotlin.migration" />
     <orderEntry type="module" module-name="kotlin.inspections" />
-    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />

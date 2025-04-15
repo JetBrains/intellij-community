@@ -40,6 +40,11 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/dataClassToString.test");
     }
 
+    @TestMetadata("enumEntries.test")
+    public void testEnumEntries() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/enumEntries.test");
+    }
+
     @TestMetadata("flexibleType.test")
     public void testFlexibleType() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/flexibleType.test");

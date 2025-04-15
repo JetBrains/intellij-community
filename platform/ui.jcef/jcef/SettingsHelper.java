@@ -117,7 +117,8 @@ final class SettingsHelper {
     return settings;
   }
 
-  static String[] loadArgs(@NotNull JCefAppConfig config, @NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
+  @NotNull
+  static String @NotNull [] loadArgs(@NotNull JCefAppConfig config, @NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()

@@ -2,7 +2,11 @@
 package org.jetbrains.idea.maven.utils;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.plugins.compatibility.MavenLifecycleMetadataReader;
+import org.jetbrains.idea.maven.plugins.compatibility.MavenPluginM2ELifecycles;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -16,8 +20,9 @@ public class MavenPluginInfo {
   private final String myVersion;
   private final String myGoalPrefix;
   private final Map<String, Mojo> myMojos;
+  private final @Nullable MavenPluginM2ELifecycles myLifecycles;
 
-  public MavenPluginInfo(byte[] text) {
+  public MavenPluginInfo(@NotNull byte[] text, @Nullable byte[] lifecycle) {
     Element plugin = MavenJDOMUtil.read(text, null);
 
     myGroupId = MavenJDOMUtil.findChildValueByPath(plugin, "groupId", MavenId.UNKNOWN_VALUE);
@@ -27,6 +32,12 @@ public class MavenPluginInfo {
     myGoalPrefix = MavenJDOMUtil.findChildValueByPath(plugin, "goalPrefix", "unknown");
 
     myMojos = readMojos(plugin);
+    myLifecycles = readLifecycles(lifecycle);
+  }
+
+  private @Nullable MavenPluginM2ELifecycles readLifecycles(byte[] lifecycle) {
+    if (lifecycle == null) return null;
+    return MavenLifecycleMetadataReader.read(this.getGroupId() + ":" + this.getArtifactId() + ":" + this.getVersion(), lifecycle);
   }
 
   private Map<String, Mojo> readMojos(Element plugin) {
@@ -56,6 +67,10 @@ public class MavenPluginInfo {
 
   public Collection<Mojo> getMojos() {
     return myMojos.values();
+  }
+
+  public @Nullable MavenPluginM2ELifecycles getLifecycles() {
+    return myLifecycles;
   }
 
   public Mojo findMojo(String name) {

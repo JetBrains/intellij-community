@@ -902,6 +902,7 @@
           <action id="Performance.MemTester" class="com.intellij.ide.actions.MemTestAction"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
+          <action id="BrowseSpecialPaths" class="com.intellij.diagnostic.specialPaths.BrowseSpecialPathsAction" />
           <action id="CollectTroubleshootingInformation" class="com.intellij.troubleshooting.ui.CollectTroubleshootingInformationAction"
                   internal="true"/>
         </group>
@@ -1135,6 +1136,7 @@
       <separator/>
       <reference ref="EditCustomProperties"/>
       <reference ref="EditCustomVmOptions"/>
+      <reference ref="BrowseSpecialPaths"/>
       <reference ref="CollectZippedLogs"/>
       <separator/>
       <reference ref="CreateDesktopEntry"/>
@@ -1257,12 +1259,19 @@
       <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Vcs.History"/>
     </group>
 
+    <action id="MoveFileToAnotherModule" internal="true" class="com.intellij.ide.actions.MoveFileToAnotherModuleAction"/>
+
     <action id="LogFocusRequests" class="com.intellij.internal.focus.LogFocusRequestsAction"/>
     <action id="CreateAllServicesAndExtensions" internal="true"
             class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsAction"
             text="Create All Services And Extensions"/>
     <action id="PerformGC" internal="true" class="com.intellij.internal.PerformGCAction"/>
-    <action id="ShowTrustProjectDialog" class="com.intellij.ide.impl.ShowTrustProjectDialogAction"/>
+
+    <action id="ShowTrustProjectDialog" class="com.intellij.ide.trustedProjects.impl.ShowTrustProjectDialogAction"/>
+    <group id="Internal.Trust" popup="true">
+      <action id="TrustProject" internal="true" class="com.intellij.ide.trustedProjects.impl.YesTrustAction"/>
+      <action id="UntrustProject" internal="true" class="com.intellij.ide.trustedProjects.impl.NoTrustAction"/>
+    </group>
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
@@ -1277,10 +1286,6 @@
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
-      <group id="Internal.Trust" popup="true">
-        <action id="TrustProject" internal="true" class="com.intellij.internal.YesTrustAction"/>
-        <action id="UntrustProject" internal="true" class="com.intellij.internal.NoTrustAction"/>
-      </group>
       <group id="Internal.WorkspaceModel" popup="true">
         <action id="PrintModulesAndEntitySources" internal="true"
                 class="com.intellij.internal.PrintModulesAndEntitySources"
@@ -1536,7 +1541,7 @@
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
 
-    <action id="ClearAllNotifications" class="com.intellij.notification.impl.ClearAllNotificationsAction" icon="AllIcons.Actions.GC"/>
+    <action id="ClearAllNotifications" class="com.intellij.notification.impl.actions.ClearAllNotificationsAction" icon="AllIcons.Actions.GC"/>
 
     <group id="ProjectViewToolbar">
       <separator/>

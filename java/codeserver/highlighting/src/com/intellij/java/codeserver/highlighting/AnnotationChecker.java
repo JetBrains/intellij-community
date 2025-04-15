@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.AnnotationValueErrorContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +37,7 @@ final class AnnotationChecker {
     psiElement().withParent(PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiAnnotationMethod.class),
-    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT),
+    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(JavaKeywords.DEFAULT),
     // Unterminated parameter list like "void test(@NotNull String)": error on annotation looks annoying here
     psiElement().withParents(PsiModifierList.class, PsiParameterList.class)
   );

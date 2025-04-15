@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -206,7 +207,13 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
+      checkClassAttributeAccess(node);
+    }
+
+    @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
+      checkClassAttributeAccess(node);
       // TODO: Check types in class-level assignments
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyClass) return;
@@ -238,6 +245,31 @@ public class PyTypeCheckerInspection extends PyInspection {
                                                    expectedName, actualName) :
                                PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
+    }
+
+    // Using generic classes (parameterized or not) to access attributes will result in type check failure.
+    private <T extends PyQualifiedExpression & PyReferenceOwner> void checkClassAttributeAccess(@NotNull T expression) {
+      PyExpression qualifier = expression.getQualifier();
+      if (qualifier != null) {
+        PyType qualifierType = myTypeEvalContext.getType(qualifier);
+        if (qualifierType instanceof PyClassType classType && classType.isDefinition()) {
+          PsiElement resolved = expression.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve();
+          if (resolved instanceof PyTargetExpression target && PyUtil.isClassAttribute(target)) {
+            PyType targetType = myTypeEvalContext.getType(target);
+            if (requiresTypeSpecialization(targetType)) {
+              ASTNode nameElement = expression.getNameElement();
+              registerProblem(nameElement == null ? null : nameElement.getPsi(),
+                              PyPsiBundle.message("INSP.type.checker.access.to.generic.instance.variables.via.class.is.ambiguous"));
+            }
+          }
+        }
+      }
+    }
+
+    private static boolean requiresTypeSpecialization(@Nullable PyType type) {
+      if (type instanceof PyTypeParameterType && !(type instanceof PySelfType)) return true;
+      return type instanceof PyCollectionType collectionType &&
+             exists(collectionType.getElementTypes(), Visitor::requiresTypeSpecialization);
     }
 
     private @Nullable Ref<PyType> getClassAttributeType(@NotNull PyTargetExpression attribute) {
@@ -510,15 +542,17 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
-        // First collect type parameter substitutions by matching the expected type with the union.
-        PyType actualJoin = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        matchParameterAndArgument(expected, actualJoin, null, substitutions);
-        PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
+        // First collect type parameter substitutions by matching the expected type with the union, if it's a keyword container
+        // otherwise, match as usual arguments, passed to a function
+        if (container.isKeywordContainer()) {
+          PyType actualJoin = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
+          matchParameterAndArgument(expected, actualJoin, null, substitutions);
+        }
         return ContainerUtil.map(arguments, argument -> {
           // Then match each argument type against the expected type after these substitutions.
           PyType actual = myTypeEvalContext.getType(argument);
           boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
-          return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
+          return new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched);
         });
       }
       else {

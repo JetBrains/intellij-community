@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -42,7 +43,17 @@ class CompilationCacheTest {
       )
     }
     finally {
-      outDir.deleteRecursively()
+      if (SystemInfoRt.isMac) {
+        println("Remove compilation cache directory: $outDir")
+        ProcessBuilder("rsync", "-a", "--delete", "--quiet", "/tmp/emptyDir/", outDir.toAbsolutePath().normalize().toString() + "/")
+          .inheritIO()
+          .directory(outDir.toFile())
+          .start()
+          .waitFor()
+      }
+      else {
+        NioFiles.deleteRecursively(outDir)
+      }
     }
   }
 }

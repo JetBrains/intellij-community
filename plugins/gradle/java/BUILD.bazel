@@ -42,7 +42,7 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//plugins/maven",
     "//plugins/properties/properties-psi-api:psi",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//jps/model-impl",
     "//platform/statistics",
     "//platform/core-ui",

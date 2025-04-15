@@ -38,7 +38,9 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
         LanguageTextField popupEditor = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), settings.getProject(), text);
         setupEditor(popupEditor, settings);
         myPopupEditor = popupEditor;
-        myPopupEditor.setCaretPosition(Math.min(text.length(), myEditor.getCaretModel().getOffset()));
+        if (myEditor.getCaretModel().getOffset() <= 0) {
+          myPopupEditor.setCaretPosition(0);
+        }
         return popupEditor;
       }
     };

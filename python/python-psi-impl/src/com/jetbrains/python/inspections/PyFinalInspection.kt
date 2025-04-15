@@ -323,7 +323,11 @@ class PyFinalInspection : PyInspection() {
       val scopeOwner = ScopeUtil.getScopeOwner(target);
       if (!target.isQualified && scopeOwner != null) {
         // multiResolve finds last assignments, but we need all earlier assignments
-        resolved += ControlFlowCache.getScope(scopeOwner).getNamedElements(target.referencedName, false)
+        val scope = ControlFlowCache.getScope(scopeOwner)
+        resolved += scope.getNamedElements(target.referencedName, false)
+        target.name?.let { name ->
+          resolved += scope.importedNameDefiners.flatMap { it.multiResolveName(name).mapNotNull { it.element } }
+        }
       }
 
 

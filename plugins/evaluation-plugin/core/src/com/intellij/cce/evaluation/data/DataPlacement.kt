@@ -47,6 +47,12 @@ sealed interface DataPlacement<In, Out> {
     override fun restore(props: DataProps): List<Boolean> = listOfNotNull(props.lookup.additionalInfo[propertyKey] as? Boolean)
   }
 
+  data class AdditionalDouble(val propertyKey: String) : DataPlacement<Double, Double> {
+    override val serialName: String = "additional_double"
+    override fun dump(lookup: Lookup, t: Double): Lookup = lookup.copy(additionalInfo = lookup.additionalInfo + mapOf(propertyKey to t))
+    override fun restore(props: DataProps): List<Double> = listOfNotNull(props.lookup.additionalInfo[propertyKey] as? Double)
+  }
+
   data class AdditionalConcatenatedLines(val propertyKey: String) : DataPlacement<List<String>, List<String>> {
     override val serialName: String = "additional_concatenated_lines"
 
@@ -84,12 +90,8 @@ sealed interface DataPlacement<In, Out> {
       props.lookup.suggestions.map { TextUpdate(props.currentFileContent ?: "", it.presentationText) }
   }
 
-  data object FileUpdates : DataPlacement<List<FileUpdate>, FileUpdate> {
+  data class FileUpdates(val propertyKey: String) : DataPlacement<List<FileUpdate>, FileUpdate> {
     override val serialName: String = "file_updates"
-
-    val propertyKey: String = "file_updates"
-
-    private val gson = Gson()
 
     override fun dump(lookup: Lookup, t: List<FileUpdate>): Lookup {
       return lookup.copy(
@@ -117,13 +119,18 @@ sealed interface DataPlacement<In, Out> {
       return when (type) {
         "additional_text" -> context?.deserialize(json, AdditionalText::class.java)
         "additional_boolean" -> context?.deserialize(json, AdditionalBoolean::class.java)
+        "additional_double" -> context?.deserialize(json, AdditionalDouble::class.java)
         "additional_concatenated_lines" -> context?.deserialize(json, AdditionalConcatenatedLines::class.java)
         "latency" -> Latency
         "current_file_update" -> CurrentFileUpdate
-        "file_updates" -> FileUpdates
+        "file_updates" -> context?.deserialize(json, FileUpdates::class.java)
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }
+  }
+
+  companion object {
+    private val gson = Gson()
   }
 }
 

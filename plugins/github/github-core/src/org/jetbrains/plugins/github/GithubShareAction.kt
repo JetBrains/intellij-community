@@ -2,7 +2,7 @@
 
 package org.jetbrains.plugins.github
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,7 +15,7 @@ internal class GithubShareAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
-    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && project.isTrusted()
+    e.presentation.isEnabledAndVisible = project != null && !project.isDefault && TrustedProjects.isProjectTrusted(project)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

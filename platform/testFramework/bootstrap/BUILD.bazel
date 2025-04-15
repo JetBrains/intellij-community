@@ -14,6 +14,7 @@ jvm_library(
     "@lib//:tc_service_messages",
     "@lib//:junit5Jupiter-provided",
     "@lib//:opentest4j",
+    "//platform/core-nio-fs",
   ],
   runtime_deps = ["//platform/boot"]
 )

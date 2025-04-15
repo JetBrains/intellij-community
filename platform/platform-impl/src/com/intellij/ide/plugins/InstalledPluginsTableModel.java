@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -97,7 +98,7 @@ public class InstalledPluginsTableModel {
 
     Set<String> pluginNamesToUpdate = descriptorsToUpdate.stream()
       .filter(descriptor -> !isHiddenImplementationDetail(descriptor))
-      .map(IdeaPluginDescriptorImpl::getName)
+      .map(PluginDescriptor::getName)
       .collect(Collectors.toCollection(TreeSet::new));
     if (HIDE_IMPLEMENTATION_DETAILS &&
         !createUpdateDependenciesDialog(pluginNamesToUpdate, action)) {
@@ -165,7 +166,7 @@ public class InstalledPluginsTableModel {
                                                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
     ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     Set<PluginId> pluginIds = descriptors.stream()
-      .map(IdeaPluginDescriptorImpl::getPluginId)
+      .map(PluginDescriptor::getPluginId)
       .collect(Collectors.toUnmodifiableSet());
 
     for (IdeaPluginDescriptorImpl descriptor : PluginManagerCore.INSTANCE.getPluginSet().allPlugins) {

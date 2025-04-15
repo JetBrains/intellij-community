@@ -174,7 +174,7 @@ private class NewEnvironmentStep<P>(parent: P)
       PyAddNewVirtualEnvPanel(null, null, sdks, newProjectPath, context),
       PyAddNewCondaEnvPanel(null, null, sdks, newProjectPath),
     )
-    val providedPanels = PySdkProvider.EP_NAME.extensionList.map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
+    val providedPanels = PySdkProvider.EP_NAME.extensionList.mapNotNull { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
     val panels = basePanels + providedPanels
     return panels
       .associateBy { it.envName }

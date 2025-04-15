@@ -176,7 +176,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
 
   @Override
   public @NotNull String @NotNull [] getAllMethodNames() {
-    Collection<String> keys = StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject);
+    Collection<String> keys = new HashSet<>(StubIndex.getInstance().getAllKeys(GrMethodNameIndex.KEY, myProject));
     keys.addAll(StubIndex.getInstance().getAllKeys(GrAnnotationMethodNameIndex.KEY, myProject));
     return ArrayUtilRt.toStringArray(keys);
   }

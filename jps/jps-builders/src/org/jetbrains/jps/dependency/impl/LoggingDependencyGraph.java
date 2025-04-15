@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +35,10 @@ public final class LoggingDependencyGraph extends LoggingGraph implements Depend
   }
 
   @Override
-  public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
+  public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params, Iterable<Graph> extParts) {
     long start = System.currentTimeMillis();
     try {
-      return getDelegate().differentiate(delta, params);
+      return getDelegate().differentiate(delta, params, extParts);
     }
     finally {
       long duration = System.currentTimeMillis() - start;

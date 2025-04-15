@@ -41,10 +41,8 @@ public final class JavaImportOptimizer implements ImportOptimizer {
       public void run() {
         try {
           final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-          final Document document = manager.getDocument(file);
-          if (document != null) {
-            manager.commitDocument(document);
-          }
+          final Document document = file.getFileDocument();
+          manager.commitDocument(document);
           final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
           assert oldImportList != null;
           final List<String> oldImports = new ArrayList<>();

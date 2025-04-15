@@ -19,7 +19,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptConfigurationsSource.KotlinGradleScriptModuleEntitySource
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptModuleEntitySource
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.function.Function
 import javax.swing.JComponent

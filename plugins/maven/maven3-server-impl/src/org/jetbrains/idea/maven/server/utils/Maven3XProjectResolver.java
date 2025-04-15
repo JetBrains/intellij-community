@@ -16,7 +16,16 @@ import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.plugin.LegacySupport;
-import org.apache.maven.project.*;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DefaultProjectBuilder;
+import org.apache.maven.project.DependencyResolutionException;
+import org.apache.maven.project.DependencyResolutionResult;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
+import org.apache.maven.project.ProjectDependenciesResolver;
 import org.codehaus.plexus.util.ExceptionUtils;
 import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -25,17 +34,46 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.server.LongRunningTask;
+import org.jetbrains.idea.maven.server.Maven3AetherModelConverter;
+import org.jetbrains.idea.maven.server.Maven3EffectivePomDumper;
+import org.jetbrains.idea.maven.server.Maven3ImporterSpy;
+import org.jetbrains.idea.maven.server.Maven3ModelConverter;
+import org.jetbrains.idea.maven.server.Maven3TransferListenerAdapter;
+import org.jetbrains.idea.maven.server.Maven3WorkspaceMapReader;
+import org.jetbrains.idea.maven.server.Maven3XProfileUtil;
+import org.jetbrains.idea.maven.server.Maven3XServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
+import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
+import org.jetbrains.idea.maven.server.MavenServerStatsCollector;
+import org.jetbrains.idea.maven.server.PomHashMap;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -47,6 +85,7 @@ public class Maven3XProjectResolver {
   private final boolean myUpdateSnapshots;
   private final @NotNull Maven3ImporterSpy myImporterSpy;
   private final LongRunningTask myLongRunningTask;
+  @NotNull List<@NotNull File> myFilesToResolve;
   private final PomHashMap myPomHashMap;
   private final List<String> myActiveProfiles;
   private final List<String> myInactiveProfiles;
@@ -59,6 +98,7 @@ public class Maven3XProjectResolver {
                                 boolean updateSnapshots,
                                 @NotNull Maven3ImporterSpy importerSpy,
                                 @NotNull LongRunningTask longRunningTask,
+                                @NotNull List<@NotNull File> filesToResolve,
                                 @NotNull PomHashMap pomHashMap,
                                 @NotNull List<String> activeProfiles,
                                 @NotNull List<String> inactiveProfiles,
@@ -70,6 +110,7 @@ public class Maven3XProjectResolver {
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myLongRunningTask = longRunningTask;
+    myFilesToResolve = filesToResolve;
     myPomHashMap = pomHashMap;
     myActiveProfiles = activeProfiles;
     myInactiveProfiles = inactiveProfiles;
@@ -116,7 +157,7 @@ public class Maven3XProjectResolver {
   }
 
   private @NotNull ArrayList<MavenServerExecutionResult> doResolveProject() {
-    Set<File> files = myPomHashMap.keySet();
+    List<File> files = myFilesToResolve;
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
     MavenExecutionRequest request = myEmbedder.createRequest(file, myActiveProfiles, myInactiveProfiles, userProperties);
@@ -132,7 +173,7 @@ public class Maven3XProjectResolver {
     return executionResults;
   }
 
-  private @NotNull ArrayList<MavenServerExecutionResult> getExecutionResults(Set<File> files,
+  private @NotNull ArrayList<MavenServerExecutionResult> getExecutionResults(Collection<File> files,
                                                                              MavenExecutionRequest request) {
     ArrayList<MavenServerExecutionResult> executionResults = new ArrayList<>();
     try {
@@ -170,6 +211,18 @@ public class Maven3XProjectResolver {
 
         if (project == null || pomFile == null) {
           executionResults.add(createExecutionResult(pomFile, modelProblems));
+          continue;
+        }
+
+        boolean hasErrors = false;
+        for (ModelProblem p : modelProblems) {
+          if (p.getSeverity() == ModelProblem.Severity.ERROR || p.getSeverity() == ModelProblem.Severity.FATAL) {
+            hasErrors = true;
+            break;
+          }
+        }
+        if (hasErrors) {
+          executionResults.add(createExecutionResult(pomFile, Collections.emptyList(), modelProblems, project, null, null, false));
           continue;
         }
 
@@ -247,8 +300,10 @@ public class Maven3XProjectResolver {
   }
 
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") < 0) return;
     if (myWorkspaceMap != null) {
-      session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap));
+      session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap, myEmbedder.getSystemProperties()));
     }
   }
 
@@ -375,8 +430,12 @@ public class Maven3XProjectResolver {
         cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
       }
       mavenSession.setProjectMap(mavenProjectMap);
-      ((DefaultRepositorySystemSession)session).setWorkspaceReader(
-        new Maven3WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
+      DefaultRepositorySystemSession defaultSession = (DefaultRepositorySystemSession)session;
+      WorkspaceReader reader = defaultSession.getWorkspaceReader();
+      if (reader instanceof Maven3WorkspaceMapReader) {
+        Maven3WorkspaceMapReader mapReader = (Maven3WorkspaceMapReader)reader;
+        mapReader.fillSessionCache(cacheMavenModelMap);
+      }
     }
   }
 
@@ -400,21 +459,16 @@ public class Maven3XProjectResolver {
     projectBuildingRequest.setResolveDependencies(false);
 
     try {
-      if (files.size() == 1) {
-        buildSinglePom(builder, buildingResults, projectBuildingRequest, files.iterator().next());
+      try {
+        buildMultiplyPoms(builder, buildingResults, projectBuildingRequest, files);
       }
-      else {
-        try {
-          buildMultiplyPoms(builder, buildingResults, projectBuildingRequest, files);
-        }
-        catch (ProjectBuildingException e) {
-          for (ProjectBuildingResult result : e.getResults()) {
-            if (result.getProject() != null) {
-              buildingResults.add(result);
-            }
-            else {
-              buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
-            }
+      catch (ProjectBuildingException e) {
+        for (ProjectBuildingResult result : e.getResults()) {
+          if (result.getProject() != null) {
+            buildingResults.add(result);
+          }
+          else {
+            buildSinglePom(builder, buildingResults, projectBuildingRequest, result.getPomFile());
           }
         }
       }
@@ -432,7 +486,7 @@ public class Maven3XProjectResolver {
                                    ProjectBuildingRequest projectBuildingRequest,
                                    @NotNull Collection<File> files
   ) throws ProjectBuildingException {
-    buildingResults.addAll(builder.build(new ArrayList<>(files), false, projectBuildingRequest));
+    buildingResults.addAll(builder.build(new ArrayList<>(files), true, projectBuildingRequest));
   }
 
   protected void buildSinglePom(ProjectBuilder builder,

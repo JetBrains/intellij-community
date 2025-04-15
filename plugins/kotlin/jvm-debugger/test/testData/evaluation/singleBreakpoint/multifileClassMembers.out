@@ -1,0 +1,15 @@
+LineBreakpoint created at multifileClassMembers.kt:5
+Run Java
+Connected to the target VM
+multifileClassMembers.kt:5
+Compile bytecode for privateVarDefaultAccessors = 1; privateVarDefaultAccessors
+Compile bytecode for internalValDefaultAccessors = 2; internalValDefaultAccessors
+Compile bytecode for publicValDefaultAccessors = 3; publicValDefaultAccessors
+Compile bytecode for privateFun()
+Compile bytecode for internalFun()
+Compile bytecode for publicFun()
+Compile bytecode for MyClass().prop
+Compile bytecode for MyClass().foo()
+Disconnected from the target VM
+
+Process finished with exit code 0

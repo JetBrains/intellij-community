@@ -4,8 +4,6 @@ import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.diff.Difference
-import org.jetbrains.jps.dependency.impl.GraphDataInputImpl
-import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl
 
 abstract class AnnotationInstance : ExternalizableGraphElement {
   val annotationClass: TypeRepr.ClassType
@@ -18,15 +16,13 @@ abstract class AnnotationInstance : ExternalizableGraphElement {
   }
 
   @Suppress("unused")
-  protected constructor(`in`: GraphDataInput) {
-    annotationClass = TypeRepr.ClassType(`in`.readUTF())
-    val input = `in` as GraphDataInputImpl
+  protected constructor(input: GraphDataInput) {
+    annotationClass = TypeRepr.ClassType(input.readUTF())
     contentHash = input.readRawLong()
   }
 
   override fun write(out: GraphDataOutput) {
     out.writeUTF(annotationClass.jvmName)
-    out as GraphDataOutputImpl
     out.writeRawLong(contentHash)
   }
 

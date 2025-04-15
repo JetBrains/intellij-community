@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -369,7 +370,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically
         List<String> lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
-        if (!lines.get(0).startsWith("\n")) lines.set(0, "\n" + lines.get(0));
+        if (!lines.get(0).startsWith("\n")) lines = ContainerUtil.prepend(lines.subList(1, lines.size()),"\n" + lines.get(0));
         System.err.println(String.join(FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n", lines));
       }
     }

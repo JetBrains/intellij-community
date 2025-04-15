@@ -35,7 +35,7 @@ public final class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     mySchemesConfigurable = configurable;
   }
 
-  public Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     return new CodeStyleGroupConfigurable();
   }
 
@@ -102,7 +102,7 @@ public final class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     }
 
     @Override
-    public Configurable @NotNull [] buildConfigurables() {
+    public @NotNull Configurable @NotNull [] buildConfigurables() {
       List<Configurable> childConfigurables = new ArrayList<>();
       for (CodeStyleSettingsProvider childProvider : myChildProviders) {
         CodeStyleConfigurableWrapper wrapper =

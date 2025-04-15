@@ -2,8 +2,11 @@
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.client.ClientKind;
+import com.intellij.openapi.components.ComponentManagerEx;
+import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
@@ -14,11 +17,18 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.ListenerDescriptor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.impl.MessageBusFactoryImpl;
+import com.intellij.util.messages.impl.PluginListenerDescriptor;
 import com.intellij.util.pico.DefaultPicoContainer;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
+import kotlin.jvm.functions.Function3;
+import kotlin.sequences.Sequence;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +37,11 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MockComponentManager extends UserDataHolderBase implements ComponentManager, MessageBusOwner {
+public class MockComponentManager extends UserDataHolderBase implements ComponentManagerEx, MessageBusOwner {
   private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
   private final DefaultPicoContainer picoContainer;
   private final ExtensionsAreaImpl myExtensionArea;
@@ -179,8 +190,9 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return Conditions.alwaysFalse();
   }
 
+  @Internal
   @Override
-  public @NotNull Object createListener(@NotNull ListenerDescriptor descriptor) {
+  public @NotNull Object createListener(@NotNull PluginListenerDescriptor descriptor) {
     throw new UnsupportedOperationException();
   }
 
@@ -203,5 +215,142 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Internal
+  @Override
+  public @NotNull CoroutineScope instanceCoroutineScope(@NotNull Class<?> pluginClass) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @Nullable ComponentAdapter unregisterComponent(@NotNull Class<?> componentKey) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> void replaceServiceInstance(@NotNull Class<@NotNull T> serviceInterface,
+                                         @NotNull T instance,
+                                         @NotNull Disposable parentDisposable) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull Sequence<@NotNull Object> instances(boolean createIfNeeded,
+                                                      @Nullable Function1<? super @NotNull Class<?>, @NotNull Boolean> filter) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void processAllImplementationClasses(@NotNull Function2<? super @NotNull Class<?>, ? super @Nullable PluginDescriptor, @NotNull Unit> processor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void registerService(@NotNull Class<?> serviceInterface,
+                              @NotNull Class<?> implementation,
+                              @NotNull PluginDescriptor pluginDescriptor,
+                              boolean override,
+                              @Nullable ClientKind clientKind) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void unloadServices(@NotNull IdeaPluginDescriptor module, @NotNull List<@NotNull ServiceDescriptor> services) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void processAllHolders(@NotNull Function3<? super @NotNull String, ? super @NotNull Class<?>, ? super @Nullable PluginDescriptor, @NotNull Unit> processor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull CoroutineScope pluginCoroutineScope(@NotNull ClassLoader pluginClassloader) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void stopServicePreloading() {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull <T> List<@NotNull T> collectInitializedComponents(@NotNull Class<@NotNull T> aClass) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @NotNull String debugString() {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public boolean isServiceSuitable(@NotNull ServiceDescriptor descriptor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> void registerServiceInstance(@NotNull Class<@NotNull T> serviceInterface,
+                                          @NotNull T instance,
+                                          @NotNull PluginDescriptor pluginDescriptor) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public @Nullable Class<?> getServiceImplementation(@NotNull Class<?> key) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> void replaceComponentInstance(@NotNull Class<@NotNull T> componentKey,
+                                           @NotNull T componentImplementation,
+                                           @Nullable Disposable parentDisposable) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public void registerComponentInstance(@NotNull Class<?> key, @NotNull Object instance) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @Override
+  public <T> void replaceRegularServiceInstance(@NotNull Class<@NotNull T> serviceInterface, @NotNull T instance) {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Internal
+  @ApiStatus.Obsolete
+  @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    throw new UnsupportedOperationException("unsupported");
+  }
+
+  @Override
+  public void unregisterService(@NotNull Class<?> serviceInterface) {
+    throw new UnsupportedOperationException("unsupported");
   }
 }

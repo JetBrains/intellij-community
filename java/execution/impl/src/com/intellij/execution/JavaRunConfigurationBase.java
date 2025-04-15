@@ -7,10 +7,16 @@ import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Predicate;
+
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener {
@@ -26,17 +32,17 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
     super(configurationModule, factory);
   }
 
-  protected boolean runsUnderWslJdk() {
+  private boolean jdkHomeSatisfies(Predicate<String> condition) {
     String path = getAlternativeJrePath();
     if (path != null) {
       Sdk sdk = ProjectJdkTable.getInstance().findJdk(path);
       if (sdk != null) {
         String homePath = sdk.getHomePath();
         if (homePath != null) {
-          return WslPath.isWslUncPath(homePath);
+          return condition.test(homePath);
         }
       }
-      return WslPath.isWslUncPath(path);
+      return condition.test(path);
     }
     Module module = getConfigurationModule().getModule();
     if (module != null) {
@@ -48,9 +54,19 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
         return false;
       }
       String sdkHomePath = sdk.getHomePath();
-      return sdkHomePath != null && WslPath.isWslUncPath(sdkHomePath);
+      return sdkHomePath != null && condition.test(sdkHomePath);
     }
     return false;
+  }
+
+  protected boolean runsUnderRemoteJdk() {
+    return jdkHomeSatisfies(homePath -> getEelDescriptor(Path.of(homePath)) != LocalEelDescriptor.INSTANCE);
+  }
+
+  @ApiStatus.Obsolete
+  // TODO: use only runsUnderRemoteJdk
+  protected boolean runsUnderWslJdk() {
+    return jdkHomeSatisfies(WslPath::isWslUncPath);
   }
 
   @Override

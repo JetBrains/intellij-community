@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.execution.*;
@@ -6,7 +6,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
@@ -88,10 +87,9 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         (sdkPath, sdk, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
-    ProcessListener consolePostprocessor = new ProcessAdapter() {
+    ProcessListener consolePostprocessor = new ProcessListener() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        super.processTerminated(event);
         ApplicationManager.getApplication().invokeAndWait(() -> prepareConsoleAfterProcessEnd(), ModalityState.nonModal());
       }
     };
@@ -109,7 +107,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       executionEnvironment.getState().execute(executionEnvironment.getExecutor(), executionEnvironment.getRunner());
     ProcessHandler handler = executionResult.getProcessHandler();
 
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
     });
     RunContentDescriptor descriptor = DefaultProgramRunnerKt.showRunContent(executionResult, executionEnvironment);
     handler.addProcessListener(processListener, project);

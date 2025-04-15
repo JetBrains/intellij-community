@@ -204,7 +204,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
 
     if (memberToRename instanceof PsiMethod) {
       final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)elementFactory.createExpressionFromText(newName + "()", context);
-      return callExpression.getMethodExpression().multiResolve(false).length > 0;
+      return callExpression.multiResolve(false).length > 0;
     }
     return false;
   }

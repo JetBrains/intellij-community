@@ -13,28 +13,41 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelFactory
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.FlowLayout
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.ListModel
+import javax.swing.event.ListDataListener
 
-internal class GHPRListPanelFactory(private val project: Project, private val listVm: GHPRListViewModel) {
+@ApiStatus.Internal
+object GHPRListPanelFactory {
+  fun create(project: Project, cs: CoroutineScope, dataContext: GHPRDataContext, listVm: GHPRListViewModel): JComponent {
+    val ghostUser = dataContext.securityService.ghostUser
+    val currentUser = dataContext.securityService.currentUser
+    val listModel = cs.scopedDelegatingListModel(listVm.listModel)
+    val list = GHPRListComponentFactory(dataContext.interactionState, listModel)
+      .create(listVm.avatarIconsProvider, ghostUser, currentUser)
 
-  fun create(cs: CoroutineScope, list: JBList<GHPullRequestShort>, avatarIconsProvider: GHAvatarIconsProvider): JComponent {
+    GHPRStatisticsCollector.logListOpened(project)
+
     val actionManager = ActionManager.getInstance()
-    val searchPanel = GHPRSearchPanelFactory(listVm.searchVm, avatarIconsProvider).create(cs)
+    val searchPanel = GHPRSearchPanelFactory(listVm.searchVm, listVm.avatarIconsProvider).create(cs)
 
     val outdatedStatePanel = JPanel(FlowLayout(FlowLayout.LEFT, JBUIScale.scale(5), 0)).apply {
       background = UIUtil.getPanelBackground()
@@ -78,4 +91,33 @@ internal class GHPRListPanelFactory(private val project: Project, private val li
       actionManager.getAction("Github.PullRequest.List.Reload").registerCustomShortcutSet(it, cs.nestedDisposable())
     }
   }
+
+  private fun <T> CoroutineScope.scopedDelegatingListModel(delegate: ListModel<T>) =
+    object : ListModel<T> by delegate {
+      private val listeners = CopyOnWriteArrayList<ListDataListener>()
+
+      init {
+        launchNow {
+          try {
+            awaitCancellation()
+          }
+          finally {
+            listeners.forEach {
+              delegate.removeListDataListener(it)
+            }
+          }
+        }
+      }
+
+      override fun addListDataListener(l: ListDataListener) {
+        if (!isActive) return
+        listeners.add(l)
+        delegate.addListDataListener(l)
+      }
+
+      override fun removeListDataListener(l: ListDataListener) {
+        delegate.removeListDataListener(l)
+        listeners.remove(l)
+      }
+    }
 }

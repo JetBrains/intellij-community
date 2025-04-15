@@ -450,7 +450,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (isUserActivityEvent(e)) {
       ActivityTracker.getInstance().inc()
     }
-    if (popupManager.isPopupActive && threadingSupport.runPreventiveWriteIntentReadAction<Boolean, Throwable> { popupManager.dispatch(e) }) {
+    if (popupManager.isPopupActive && threadingSupport.runPreventiveWriteIntentReadAction { popupManager.dispatch(e) }) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
       }
@@ -459,11 +459,11 @@ class IdeEventQueue private constructor() : EventQueue() {
 
     if (e is WindowEvent) {
       // app activation can call methods that need write intent (like project saving)
-      threadingSupport.runPreventiveWriteIntentReadAction<Unit, Throwable> { processAppActivationEvent(e) }
+      threadingSupport.runPreventiveWriteIntentReadAction { processAppActivationEvent(e) }
     }
 
     // IJPL-177735 Remove Write-Intent lock from IdeEventQueue.EventDispatcher
-    if (threadingSupport.runPreventiveWriteIntentReadAction<Boolean, Throwable> { dispatchByCustomDispatchers(e) }) {
+    if (threadingSupport.runPreventiveWriteIntentReadAction { dispatchByCustomDispatchers(e) }) {
       return
     }
     if (e is InputMethodEvent && SystemInfoRt.isMac && keyEventDispatcher.isWaitingForSecondKeyStroke) {
@@ -471,8 +471,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> threadingSupport.runPreventiveWriteIntentReadAction<Unit, Throwable> { dispatchMouseEvent(e) }
-      e is KeyEvent -> threadingSupport.runPreventiveWriteIntentReadAction<Unit, Throwable> { dispatchKeyEvent(e) }
+      e is MouseEvent -> threadingSupport.runPreventiveWriteIntentReadAction { dispatchMouseEvent(e) }
+      e is KeyEvent -> threadingSupport.runPreventiveWriteIntentReadAction { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {

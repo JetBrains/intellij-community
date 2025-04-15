@@ -200,7 +200,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
                               stub.name,
                               parseNamedTupleFields(targetOrCall, fields, context),
                               true,
-                              fields.values.any { it.isPresent },
+                              fields.values.any { it.type != null },
                               getDeclaration(targetOrCall))
     }
 
@@ -289,21 +289,21 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return fields.stream().collect(toNTFields)
     }
 
-    private fun parseNamedTupleFields(anchor: PsiElement, fields: Map<String, Optional<String>>, context: TypeEvalContext): NTFields {
+    private fun parseNamedTupleFields(anchor: PsiElement, fields: LinkedHashMap<String, PyNamedTupleStub.FieldTypeAndHasDefault>, context: TypeEvalContext): NTFields {
       val result = NTFields()
-      for ((name, type) in fields) {
-        result[name] = parseNamedTupleField(anchor, type.orElse(null), context)
+      for ((name, typeAndDefault) in fields) {
+        result[name] = parseNamedTupleField(anchor, typeAndDefault.type(), typeAndDefault.hasDefault(), context)
       }
       return result
     }
 
     private fun parseNamedTupleField(anchor: PsiElement,
                                      type: String?,
+                                     hasDefault: Boolean,
                                      context: TypeEvalContext): PyNamedTupleType.FieldTypeAndDefaultValue {
-      if (type == null) return PyNamedTupleType.FieldTypeAndDefaultValue(null, null)
-
-      val pyType = Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context))
-      return PyNamedTupleType.FieldTypeAndDefaultValue(pyType, null)
+      val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) }
+      val defaultValue = if (hasDefault) PyElementGenerator.getInstance(anchor.project).createEllipsis() else null
+      return PyNamedTupleType.FieldTypeAndDefaultValue(pyType, defaultValue)
     }
 
     private fun getDeclaration(referenceTarget: PsiElement): PyQualifiedNameOwner? {

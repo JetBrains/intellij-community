@@ -326,7 +326,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public boolean needPrepareTarget() {
-    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk() || runsUnderRemoteJdk();
   }
 
   @Override

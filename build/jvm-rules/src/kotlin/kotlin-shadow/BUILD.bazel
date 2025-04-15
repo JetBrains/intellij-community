@@ -1,0 +1,12 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "kotlin-shadow",
+    srcs = glob(["org/jetbrains/kotlin/**/*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+      "//:kotlin-stdlib",
+      "//:kotlin-compiler",
+    ],
+    visibility = ["//visibility:public"],
+)

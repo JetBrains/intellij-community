@@ -2,52 +2,28 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.PsiClassInitializer;
-import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.impl.source.tree.java.ClassInitializerElement;
-import com.intellij.psi.stubs.EmptyStubSerializer;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer>
-  implements EmptyStubSerializer<PsiClassInitializerStub> {
+import java.util.Collections;
+import java.util.Set;
+
+public class JavaClassInitializerElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaClassInitializerElementType() {
-    super("CLASS_INITIALIZER", BasicJavaElementType.BASIC_CLASS_INITIALIZER);
+    super("CLASS_INITIALIZER");
+  }
+
+  @Override
+  public @NotNull Set<IElementType> getParents() {
+    return Collections.singleton(BasicJavaElementType.BASIC_CLASS_INITIALIZER);
   }
 
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new ClassInitializerElement();
-  }
-
-  @Override
-  public PsiClassInitializer createPsi(final @NotNull PsiClassInitializerStub stub) {
-    return getPsiFactory(stub).createClassInitializer(stub);
-  }
-
-  @Override
-  public PsiClassInitializer createPsi(final @NotNull ASTNode node) {
-    return new PsiClassInitializerImpl(node);
-  }
-
-  @Override
-  public @NotNull PsiClassInitializerStub createStub(final @NotNull LighterAST tree,
-                                                     final @NotNull LighterASTNode node,
-                                                     final @NotNull StubElement<?> parentStub) {
-    return new PsiClassInitializerStubImpl(parentStub);
-  }
-
-  @Override
-  public @NotNull PsiClassInitializerStub instantiate(StubElement<?> parentStub) {
-    return new PsiClassInitializerStubImpl(parentStub);
-  }
-
-  @Override
-  public void indexStub(final @NotNull PsiClassInitializerStub stub, final @NotNull IndexSink sink) {
   }
 }

@@ -184,6 +184,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
+        val rawJvmDefaultMode = preferences[DebuggerPreferenceKeys.JVM_DEFAULT_MODE]
+        val jvmDefaultMode =
+            if (rawJvmDefaultMode == DebuggerPreferenceKeys.JVM_DEFAULT_MODE.defaultValue)
+                null
+            else
+                JvmDefaultMode.fromStringOrNull(rawJvmDefaultMode) ?: error("Invalid JVM default mode value: $rawJvmDefaultMode")
+
         val languageVersion = chooseLanguageVersionForCompilation(compileWithK2)
 
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
@@ -195,7 +202,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                 lambdasGenerationScheme(),
                 languageVersion,
                 enabledLanguageFeatures,
-                useInlineScopes
+                useInlineScopes,
+                jvmDefaultMode,
             )
         )
 

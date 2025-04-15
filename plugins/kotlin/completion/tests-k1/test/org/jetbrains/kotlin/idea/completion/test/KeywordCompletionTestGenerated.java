@@ -150,6 +150,16 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/CompanionObjectBeforeObject.kt");
     }
 
+    @TestMetadata("ContextParameter.kt")
+    public void testContextParameter() throws Exception {
+        runTest("../testData/keywords/ContextParameter.kt");
+    }
+
+    @TestMetadata("ContextReceiver.kt")
+    public void testContextReceiver() throws Exception {
+        runTest("../testData/keywords/ContextReceiver.kt");
+    }
+
     @TestMetadata("ContinuePrefixMatching.kt")
     public void testContinuePrefixMatching() throws Exception {
         runTest("../testData/keywords/ContinuePrefixMatching.kt");

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.InclusionListener;
 import com.intellij.openapi.vcs.changes.InclusionModel;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.ClickListener;
@@ -81,6 +82,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   public static final @NotNull TreeStateStrategy<?> KEEP_SELECTED_OBJECTS = new KeepSelectedObjectsStrategy();
 
   protected final @NotNull Project myProject;
+  protected final boolean myShowConflictsNode;
   private boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private final int myCheckboxWidth;
@@ -115,14 +117,19 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   private final UpdateScaleHelper scaleHelper = new UpdateScaleHelper();
 
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    this(project, showCheckboxes, highlightProblems, true);
+    this(project, showCheckboxes, highlightProblems, true, false);
   }
 
-  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean withSpeedSearch) {
+  protected ChangesTree(@NotNull Project project,
+                        boolean showCheckboxes,
+                        boolean highlightProblems,
+                        boolean withSpeedSearch,
+                        boolean showConflictsNode) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
+    myShowConflictsNode = showConflictsNode;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
     myInclusionModel.addInclusionListener(myInclusionModelListener);
     myHandlers = new ChangesTreeHandlers(this);
@@ -201,6 +208,9 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
         setSelectionPath(path);
         List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
+        if (MergeConflictManager.isForceIncludeResolvedConflicts()) {
+          selected = ContainerUtil.filter(selected, item -> !MergeConflictManager.getInstance(myProject).isResolvedConflict(item));
+        }
         boolean exclude = toggleChanges(selected);
         logInclusionToggleEvents(exclude, event);
         return true;
@@ -251,7 +261,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
    * @see #installGroupingSupport(ChangesTree, ChangesGroupingSupport, Supplier, Consumer)
    */
   protected @NotNull ChangesGroupingSupport installGroupingSupport() {
-    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, false);
+    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, myShowConflictsNode);
 
     migrateShowFlattenSetting();
     installGroupingSupport(this, result, GROUPING_KEYS, DEFAULT_GROUPING_KEYS);

@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -6,6 +8,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.Cancellation.ensureActive
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.*
@@ -232,7 +235,16 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   val (rawRemoteDateTime, level, message) =
     ijentLogMessageRegex.matchEntire(line)?.destructured
     ?: run {
-      LOG.info("$ijentLabel log: $line")
+      val message = "$ijentLabel log: $line"
+      // It's important to always log such messages,
+      // but if logs are supposed to be written to a separate file in debug level,
+      // they're logged in debug level.
+      if (LOG.isDebugEnabled) {
+        LOG.debug(message)
+      }
+      else {
+        LOG.info(message)
+      }
       return
     }
 

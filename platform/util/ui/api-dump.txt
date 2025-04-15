@@ -86,6 +86,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:Install:javax.swing.Icon
 - sf:IntentionBulb:javax.swing.Icon
 - sf:IntentionBulbGrey:javax.swing.Icon
+- sf:Learn:javax.swing.Icon
 - sf:Lightning:javax.swing.Icon
 - sf:ListChanges:javax.swing.Icon
 - sf:ListFiles:javax.swing.Icon
@@ -198,6 +199,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:StepOutCodeBlock:javax.swing.Icon
 - sf:StopAndRestart:javax.swing.Icon
 - sf:StopRefresh:javax.swing.Icon
+- sf:StopWatch:javax.swing.Icon
 - sf:Stub:javax.swing.Icon
 - sf:SuggestedRefactoringBulb:javax.swing.Icon
 - sf:Suspend:javax.swing.Icon
@@ -569,9 +571,11 @@ f:com.intellij.icons.AllIcons$General
 - sf:QuestionDialog:javax.swing.Icon
 - sf:ReaderMode:javax.swing.Icon
 - sf:Refresh:javax.swing.Icon
+- sf:RefreshAuto:javax.swing.Icon
 - sf:Remove:javax.swing.Icon
 - sf:Reset:javax.swing.Icon
 - sf:RunWithCoverage:javax.swing.Icon
+- sf:SelectIn:javax.swing.Icon
 - sf:SeparatorH:javax.swing.Icon
 - sf:Settings:javax.swing.Icon
 - sf:Show:javax.swing.Icon
@@ -1077,6 +1081,9 @@ f:com.intellij.icons.AllIcons$Profiler
 - sf:ExpandNode:javax.swing.Icon
 - sf:Rec:javax.swing.Icon
 - <init>():V
+f:com.intellij.icons.AllIcons$Promo
+- sf:JavaDuke:javax.swing.Icon
+- <init>():V
 f:com.intellij.icons.AllIcons$Providers
 - sf:ActiveMQ:javax.swing.Icon
 - sf:Apache:javax.swing.Icon
@@ -1256,6 +1263,7 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:Documentation:javax.swing.Icon
 - sf:ErrorEvents:javax.swing.Icon
 - sf:InfoEvents:javax.swing.Icon
+- sf:Learn:javax.swing.Icon
 - sf:MeetNewUi:javax.swing.Icon
 - sf:NoEvents:javax.swing.Icon
 - sf:Notifications:javax.swing.Icon
@@ -4425,6 +4433,7 @@ com.intellij.util.ui.JBUI$CurrentTheme$List$Tag
 - sf:FOREGROUND:java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar
 - <init>():V
+- s:borderColor():java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$MainToolbar$Button
 - <init>():V
 - s:hoverArc():com.intellij.util.ui.JBValue
@@ -4666,7 +4675,9 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$ToolWindow
 - s:hoverBackground():java.awt.Color
 - s:hoverInactiveBackground():java.awt.Color
 - s:inactiveUnderlineColor():java.awt.Color
+- s:mainBorderColor():java.awt.Color
 - s:overrideHeaderFontSizeOffset():F
+- s:stripeBackground():java.awt.Color
 - s:stripeSeparatorColor(Z):java.awt.Color
 - s:underlineColor():java.awt.Color
 - s:underlineHeight():I
@@ -4702,6 +4713,8 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:horizontalToolbarInsets():java.awt.Insets
 - s:mainToolbarButtonInsets():java.awt.Insets
 - s:mainToolbarButtonInsetsKey():java.lang.String
+- s:recentProjectAvatarIconSize():I
+- s:recentProjectAvatarIconSizeKey():java.lang.String
 - s:stripeToolbarButtonIconPadding(Z,Z):java.awt.Insets
 - s:stripeToolbarButtonIconPaddingKey():java.lang.String
 - s:stripeToolbarButtonIconSize():I
@@ -5149,6 +5162,8 @@ f:com.intellij.util.ui.UIUtil
 - s:canDisplayFocusedState(java.awt.Component):Z
 - s:changeBackGround(java.awt.Component,java.awt.Color):V
 - s:colorToHex(java.awt.Color):java.lang.String
+- s:computeStringWidth(javax.swing.JComponent,java.awt.FontMetrics,java.lang.String):I
+- s:computeStringWidth(javax.swing.JComponent,java.lang.String):I
 - s:computeTextComponentMinimumSize(I,java.lang.String,java.awt.FontMetrics):I
 - s:computeTextComponentMinimumSize(I,java.lang.String,java.awt.FontMetrics,I):I
 - s:configureNumericFormattedTextField(javax.swing.JFormattedTextField):V

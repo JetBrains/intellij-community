@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+  <actions resource-bundle="messages.DevkitScaffoldingBundle">
+    <action id="newIjModule" icon="AllIcons.Nodes.Module"
+            class="com.intellij.devkit.scaffolding.NewIjModuleAction">
+      <add-to-group group-id="NewGroup1" anchor="after" relative-to-action="NewModuleInGroup"/>
+      <add-to-group group-id="NewProjectOrModuleGroup"/>
+    </action>
+  </actions>
+</idea-plugin>

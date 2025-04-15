@@ -43,7 +43,7 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
     }
     int count = 0;
     for (StubElement<?> child : getStub().getChildrenStubs()) {
-      if (child.getStubType() == JavaStubElementTypes.PARAMETER) {
+      if (child.getElementType() == JavaStubElementTypes.PARAMETER) {
         if (count == index) return (PsiParameter)child.getPsi();
         count++;
       }

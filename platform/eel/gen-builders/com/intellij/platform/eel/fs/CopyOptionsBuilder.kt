@@ -7,81 +7,7 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.CopyOptions
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.CheckReturnValue
 
-@GeneratedBuilder.Result
-fun EelFileSystemApi.copy(
-  source: EelPath,
-  target: EelPath,
-): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder(
-    owner = this,
-    source = source,
-    target = target,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-  private var source: EelPath,
-  private var target: EelPath,
-) : OwnedBuilder<EelResult<Unit, EelFileSystemApi.CopyError>> {
-  private var copyRecursively: Boolean = false
-
-  private var followLinks: Boolean = false
-
-  private var interruptible: Boolean = false
-
-  private var preserveAttributes: Boolean = false
-
-  private var replaceExisting: Boolean = false
-
-  fun copyRecursively(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.copyRecursively = arg
-  }
-
-  fun followLinks(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.followLinks = arg
-  }
-
-  fun interruptible(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.interruptible = arg
-  }
-
-  fun preserveAttributes(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.preserveAttributes = arg
-  }
-
-  fun replaceExisting(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.replaceExisting = arg
-  }
-
-  fun source(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.source = arg
-  }
-
-  fun target(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_copy_OwnedBuilder = apply {
-    this.target = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.copy]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.CopyOptions].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<Unit, EelFileSystemApi.CopyError> =
-    owner.copy(
-      CopyOptionsImpl(
-        copyRecursively = copyRecursively,
-        followLinks = followLinks,
-        interruptible = interruptible,
-        preserveAttributes = preserveAttributes,
-        replaceExisting = replaceExisting,
-        source = source,
-        target = target,
-      )
-    )
-}
 
 @GeneratedBuilder.Result
 class CopyOptionsBuilder(
@@ -139,7 +65,7 @@ class CopyOptionsBuilder(
 }
 
 @GeneratedBuilder.Result
-private class CopyOptionsImpl(
+internal class CopyOptionsImpl(
   override val copyRecursively: Boolean,
   override val followLinks: Boolean,
   override val interruptible: Boolean,
@@ -148,4 +74,3 @@ private class CopyOptionsImpl(
   override val source: EelPath,
   override val target: EelPath,
 ) : CopyOptions
-      

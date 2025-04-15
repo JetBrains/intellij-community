@@ -41,7 +41,7 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   public @NotNull String getFileName() {
     FilePartNode node = checkDisposed(myNode);
     if (node == null) return "";
-    Object result = node.myFileOrUrl;
+    Object result = node.fileOrUrl;
     if (result instanceof VirtualFile) {
       return ((VirtualFile)result).getName();
     }
@@ -57,7 +57,7 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   public VirtualFile getFile() {
     FilePartNode node = checkDisposed(myNode);
     if (node == null) return null;
-    VirtualFile file = FilePartNode.myFile(node.myFileOrUrl);
+    VirtualFile file = FilePartNode.fileOrNull(node.fileOrUrl);
     return (file != null && file.isValid()) ? file : null;
   }
 
@@ -65,7 +65,7 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   public @NotNull String getUrl() {
     FilePartNode node = myNode;
     if (node == null) return "";
-    return FilePartNode.myUrl(node.myFileOrUrl);
+    return FilePartNode.urlOf(node.fileOrUrl);
   }
 
   @Override
@@ -85,13 +85,13 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   @Override
   public boolean isValid() {
     FilePartNode node = myNode;
-    return node != null && FilePartNode.myFile(node.myFileOrUrl) != null;
+    return node != null && FilePartNode.fileOrNull(node.fileOrUrl) != null;
   }
 
   @Override
   public @NonNls String toString() {
     FilePartNode node = myNode;
-    return node == null ? "(disposed)" : FilePartNode.myUrl(node.myFileOrUrl);
+    return node == null ? "(disposed)" : FilePartNode.urlOf(node.fileOrUrl);
   }
 
   public void dispose() {

@@ -88,20 +88,11 @@ internal fun toPsiClass(
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-internal fun toPsiMethod(
+private fun fakePsiMethodForReifiedInline(
     functionSymbol: KaFunctionSymbol,
     context: KtElement,
     kaCallInfo: KaCallInfo? = null,
 ): PsiMethod? {
-    // Error handling for a case like KTIJ-23503: Outer.<no name provided>.Inner from broken code
-    val nameToCheck = if (functionSymbol is KaConstructorSymbol)
-        functionSymbol.containingClassId?.asSingleFqName()
-    else
-        functionSymbol.callableId?.asSingleFqName()
-    if (nameToCheck?.pathSegments()?.any { it.isSpecial } == true) {
-        return null
-    }
-
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
     if (functionSymbol.origin == KaSymbolOrigin.LIBRARY &&
@@ -122,7 +113,27 @@ internal fun toPsiMethod(
                 }
         }
     }
-    return when (val psi = psiForUast(functionSymbol)) {
+    return null
+}
+
+context(KaSession)
+internal fun toPsiMethod(
+    functionSymbol: KaFunctionSymbol,
+    context: KtElement,
+    kaCallInfo: KaCallInfo? = null,
+): PsiMethod? {
+    // Error handling for a case like KTIJ-23503: Outer.<no name provided>.Inner from broken code
+    val nameToCheck = if (functionSymbol is KaConstructorSymbol)
+        functionSymbol.containingClassId?.asSingleFqName()
+    else
+        functionSymbol.callableId?.asSingleFqName()
+    if (nameToCheck?.pathSegments()?.any { it.isSpecial } == true) {
+        return null
+    }
+
+    fakePsiMethodForReifiedInline(functionSymbol, context, kaCallInfo)?.let { return it }
+
+    return when (val psi = psiForUast(functionSymbol, context)) {
         null -> {
             // Lint/UAST CLI: try `fake` creation for a deserialized declaration
             toPsiMethodForDeserialized(functionSymbol, context, psi, kaCallInfo)
@@ -443,19 +454,26 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KaType? {
 }
 
 /**
- * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KaLibraryModule].
+ * Finds Java stub-based [PsiElement] for symbols that refer to declarations from [KaSymbolOrigin.LIBRARY]
  */
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-internal tailrec fun psiForUast(symbol: KaSymbol): PsiElement? {
+internal tailrec fun psiForUast(
+    symbol: KaSymbol,
+    context: KtElement,
+): PsiElement? {
     if (symbol.origin == KaSymbolOrigin.LIBRARY) {
+        if (symbol is KaFunctionSymbol) {
+            fakePsiMethodForReifiedInline(symbol, context, null)?.let { return it }
+        }
+
         val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
         return with(psiProvider) { provide(symbol) }
     }
 
     if (symbol is KaConstructorSymbol) {
         symbol.originalConstructorIfTypeAliased?.let { originalConstructorSymbol ->
-            return psiForUast(originalConstructorSymbol)
+            return psiForUast(originalConstructorSymbol, context)
         }
     }
 
@@ -463,8 +481,21 @@ internal tailrec fun psiForUast(symbol: KaSymbol): PsiElement? {
         if (symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
             val originalSymbol = symbol.fakeOverrideOriginal
             if (originalSymbol != symbol) {
-                return psiForUast(originalSymbol)
+                return psiForUast(originalSymbol, context)
             }
+        }
+    }
+
+    // For compiler-generated synthetic members, source PSI may point to the declaration
+    // from which this symbol originates, but that's not its real source, either.
+    // However, some resolutions still rely on that PSI info, e.g.,
+    //   default constructors, local functions/variables, implicit lambda parameter, etc.
+    // Hence, case-by-case bail-out
+    if (symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED) {
+        val containingDeclaration = symbol.containingDeclaration
+        // E.g., KTIJ-33572: data class `hasCode` resolves to `KtClass`, resulting in constructor?!
+        if ((containingDeclaration as? KaNamedClassSymbol)?.isData == true) {
+            return null
         }
     }
 

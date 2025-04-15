@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassBody
 
@@ -39,6 +40,7 @@ private val TYPE_TOKENS_INSIDE_ANGLE_BRACKETS = TokenSet.orSet(
 
 class KotlinPairMatcher : PairedBraceMatcher {
     private val pairs = arrayOf(
+        BracePair(KDocTokens.KDOC_LPAR, KDocTokens.KDOC_RPAR, false),
         BracePair(KtTokens.LPAR, KtTokens.RPAR, false),
         BracePair(KtTokens.LONG_TEMPLATE_ENTRY_START, KtTokens.LONG_TEMPLATE_ENTRY_END, false),
         BracePair(KtTokens.LBRACE, KtTokens.RBRACE, true),

@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UnusedReceiverParameter", "DATA_CLASS_INVISIBLE_COPY_USAGE_WARNING")
 
 package com.intellij.tools.apiDump
 
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentHashMap
-import kotlinx.metadata.jvm.JvmFieldSignature
 import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -16,6 +15,8 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.walk
+import kotlin.metadata.jvm.JvmFieldSignature
+import kotlin.metadata.jvm.JvmMethodSignature
 
 val emptyApiIndex: ApiIndex = ApiIndex(
   persistentHashMapOf(),
@@ -415,8 +416,8 @@ private fun ClassBinarySignature.removeToString(): ClassBinarySignature {
   val withoutToString = memberSignatures.filterNot { signature ->
     signature is MethodBinarySignature
     && !signature.access.access.isSet(Opcodes.ACC_ABSTRACT)
-    && signature.jvmMember.let { member ->
-      member.name == "toString" && member.desc == "()Ljava/lang/String;"
+    && signature.jvmMember.let { member: JvmMethodSignature ->
+      member.name == "toString" && member.descriptor == "()Ljava/lang/String;"
     }
   }
   if (withoutToString.size == memberSignatures.size) {

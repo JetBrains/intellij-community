@@ -17,13 +17,13 @@ sealed interface TerminalOutputEvent
 data class TerminalContentUpdatedEvent(
   val text: String,
   val styles: List<StyleRangeDto>,
-  val startLineLogicalIndex: Int,
+  val startLineLogicalIndex: Long,
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal
 @Serializable
 data class TerminalCursorPositionChangedEvent(
-  val logicalLineIndex: Int,
+  val logicalLineIndex: Long,
   val columnIndex: Int,
 ) : TerminalOutputEvent
 

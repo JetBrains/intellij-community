@@ -15,6 +15,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -121,6 +122,11 @@ internal class TerminalWidgetImpl(
 
   override fun sendCommandToExecute(shellCommand: String) {
     view.sendCommandToExecute(shellCommand)
+  }
+
+  override fun isCommandRunning(): Boolean {
+    val connector = ttyConnector ?: return false
+    return TerminalUtil.hasRunningCommands(connector)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {

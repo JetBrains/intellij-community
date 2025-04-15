@@ -88,10 +88,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
       DebuggerSupport support = new DebuggerSupport();
-      if (!getHandler(support).isHidden(project, event)) {
-        return false;
-      }
-      return true;
+      return getHandler(support).isHidden(project, event);
     }
     return true;
   }

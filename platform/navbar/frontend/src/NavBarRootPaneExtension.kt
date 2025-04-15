@@ -108,6 +108,7 @@ private fun createNavBarPanel(scrollPane: JScrollPane, navigationBar: JComponent
   val navBarPanel = NavBarContainer(layout = BorderLayout(), scrollPane = scrollPane, navigationBar = navigationBar)
   navBarPanel.add(scrollPane, BorderLayout.CENTER)
   navBarPanel.isOpaque = !ExperimentalUI.isNewUI()
+  navigationBar.isOpaque = !ExperimentalUI.isNewUI()
   navBarPanel.updateUI()
   if (ExperimentalUI.isNewNavbar) {
     val hoverListener: HoverListener = object : HoverListener() {

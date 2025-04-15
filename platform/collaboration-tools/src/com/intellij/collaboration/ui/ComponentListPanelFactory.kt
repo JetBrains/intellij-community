@@ -3,6 +3,8 @@ package com.intellij.collaboration.ui
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
 import com.intellij.util.containers.toArray
@@ -62,10 +64,10 @@ object ComponentListPanelFactory {
   fun <T : Any> createVertical(cs: CoroutineScope, model: ListModel<T>, gap: Int = 0,
                                componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
     val panel = VerticalListPanel(gap)
-    cs.launchNow(Dispatchers.Main.immediate) {
+    cs.launchNow(Dispatchers.EdtImmediate) {
       val listener = object : ListDataListener {
         private fun addComponent(idx: Int, item: T) {
-          val scope = childScope()
+          val scope = childScope("Child component scope for $item")
           val component = scope.componentFactory(item).also {
             ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
           }
@@ -155,13 +157,13 @@ object ComponentListPanelFactory {
     gap: Int = 0,
     componentFactory: CoroutineScope.(T) -> JComponent
   ): JPanel {
-    val cs = parentCs.childScope(Dispatchers.Main)
+    val cs = parentCs.childScope("List panel", Dispatchers.EDT)
     val panel = panelFactory(gap).apply(panelInitializer)
     val currentList = LinkedList<T>()
 
     fun addComponent(idx: Int, item: T) {
       currentList.add(idx, item)
-      val scope = cs.childScope()
+      val scope = cs.childScope("Child component scope for $item")
       val component = scope.componentFactory(item).also {
         ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
       }

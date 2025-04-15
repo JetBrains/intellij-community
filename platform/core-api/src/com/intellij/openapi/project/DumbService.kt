@@ -32,13 +32,11 @@ import javax.swing.JComponent
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
  * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing [DumbAware] interface.
  *
- *
  * "Dumb" mode starts and ends in a [com.intellij.openapi.application.WriteAction], so if you're inside a [ReadAction]
  * on a background thread, it won't suddenly begin in the middle of your operation. But note that whenever you start
- * a top-level read action on a background thread, you should be prepared to anything being changed, including "dumb"
+ * a top-level read action on a background thread, you should be prepared for anything being changed, including "dumb"
  * mode being suddenly on and off. To avoid executing a read action in "dumb" mode, please use [runReadActionInSmartMode] or
  * [com.intellij.openapi.application.NonBlockingReadAction.inSmartMode].
- *
  *
  * More information about dumb mode could be found here: [IndexNotReadyException]
  */
@@ -87,7 +85,7 @@ abstract class DumbService {
    * WARNING: This method does not have any effect if it is called inside another read action.
    *
    * Otherwise, it pauses the current thread until dumb mode ends, and then runs the read action.
-   * In this case indexes are guaranteed to be available inside
+   * In this case, indexes are guaranteed to be available inside.
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */

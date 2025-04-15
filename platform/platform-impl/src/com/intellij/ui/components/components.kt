@@ -4,6 +4,7 @@ package com.intellij.ui.components
 
 import com.intellij.BundleBase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
+import com.intellij.util.Consumer
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil

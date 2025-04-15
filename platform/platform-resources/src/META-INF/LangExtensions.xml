@@ -122,14 +122,20 @@
                  description="Limits size of orphan dirty files queue."/>
     <registryKey defaultValue="true" key="indexing.over.fast.attributes" restartRequired="true"
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
+    <registryKey defaultValue="false" key="indexing.double.check.files.still.in.project" restartRequired="false"
+                 description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
-                 description="Use specialized Eel API for working with remote filesystems. This may result in a signigicant performance improvement and better CPU utilization"/>
+                 description="Use specialized Eel API for working with remote filesystems. This may result in a significant performance improvement and better CPU utilization"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
+    <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
+                 description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
+    <projectService serviceInterface="com.intellij.util.indexing.IndexingIteratorsProvider"
+                    serviceImplementation="com.intellij.util.indexing.roots.IndexingIteratorsProviderImpl"/>
     <postStartupActivity implementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheckStarter"/>
     <projectService serviceImplementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck"/>
 
@@ -351,6 +357,8 @@
 
     <projectService serviceInterface="com.intellij.facet.ProjectFacetManager"
                     serviceImplementation="com.intellij.facet.impl.ProjectFacetManagerImpl"/>
+    <projectService serviceInterface="com.intellij.facet.FacetManagerFactory"
+                    serviceImplementation="com.intellij.facet.impl.FacetManagerFactoryImpl"/>
     <projectService serviceInterface="com.intellij.facet.impl.invalid.InvalidFacetManager"
                     serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.facet.FacetTypeFeatureCollector"/>
@@ -596,20 +604,10 @@
     <lang.quoteHandler language="TEXT" implementationClass="com.intellij.ide.highlighter.custom.impl.CustomFileTypeQuoteHandler"/>
     <lang.ast.factory language="TEXT" implementationClass="com.intellij.psi.impl.source.tree.PlainTextASTFactory"/>
 
-    <getDataRule key="psi.File" implementationClass="com.intellij.ide.impl.dataRules.PsiFileRule"/>
-    <getDataRule key="psi.Element" implementationClass="com.intellij.ide.impl.dataRules.PsiElementFromSelectionRule"/>
-    <getDataRule key="psi.Element.array" implementationClass="com.intellij.ide.impl.dataRules.PsiElementFromSelectionsRule"/>
-    <getDataRule key="psi.pasteTargetElement" implementationClass="com.intellij.ide.impl.dataRules.PasteTargetRule"/>
-    <getDataRule key="virtualFile" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileRule"/>
-    <getDataRule key="virtualFileArray" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileArrayRule"/>
-    <getDataRule key="Navigatable" implementationClass="com.intellij.ide.impl.dataRules.NavigatableRule"/>
-    <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule" injectedContext="true"/>
-    <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule"/>
-    <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
-    <getDataRule key="symbols" implementationClass="com.intellij.model.psi.impl.TargetSymbolsDataRule" injectedContext="true" type="context"/>
-    <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule" type="context"/>
-    <getDataRule key="documentation.targets" implementationClass="com.intellij.lang.documentation.ide.actions.DocumentationTargetsDataRule"
-                 type="context"/>
+    <uiDataRule implementation="com.intellij.ide.impl.dataRules.BasicLangUiDataRule" order="last"/>
+    <uiDataRule implementation="com.intellij.model.psi.impl.TargetSymbolsDataRule"/>
+    <uiDataRule implementation="com.intellij.find.actions.SearchTargetsDataRule"/>
+    <uiDataRule implementation="com.intellij.lang.documentation.ide.actions.DocumentationTargetsDataRule"/>
 
     <dataValidators implementation="com.intellij.ide.impl.LangDataValidators"/>
 
@@ -749,8 +747,9 @@
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.command.CommandCompletionCharFilter" order="first" id="commandCompletion"/>
     <lookup.customizer implementation="com.intellij.codeInsight.completion.command.CommandCompletionLookupCustomizer" order="last" id="commandCompletionLookupCustomizer"/>
 
-    <codeInsight.completion.command.provider language="" implementationClass="com.intellij.codeInsight.completion.command.commands.ExtensionPointCommandProvider" />
     <codeInsight.completion.command.provider language="" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
+    <platform.backend.documentation.lookupElementTargetProvider
+      implementation="com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider"/>
 
     <nonWriteAccessTypedHandler implementation="com.intellij.codeInsight.completion.command.CommandCompletionNonWriteAccessTypedHandler" id="commandCompletion"/>
 
@@ -893,36 +892,45 @@
     <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.hints.AddToExcludeListCurrentMethodIntention</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.hints.EnableCustomHintsOption</className>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.language.injection</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language/>
       <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
@@ -1049,7 +1057,7 @@
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <registryKey defaultValue="false" key="ide.project.view.coroutines" restartRequired="true"
                  description="Use the new experimental coroutine-based Project View implementation"/>
-    <registryKey defaultValue="true" description="Show the New File or Directory button in the Project View title"
+    <registryKey defaultValue="true" description="Show the new file or directory button in the project view title"
                  key="ide.project.view.show.new.element.button" />
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
@@ -1076,7 +1084,7 @@
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper"
                              order="last"/>
-    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
+    <psi.referenceContributor language="" implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
 
     <projectConfigurable groupId="editor"
                          groupWeight="140"
@@ -1095,42 +1103,42 @@
 
     <applicationService serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
-    <globalInspection shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
+    <globalInspection language="" shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="ERROR"
                       bundle="messages.InspectionsBundle" key="inspection.annotator.display.name"
                       implementationClass="com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection"/>
-    <localInspection shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
+    <localInspection language="" shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
-    <localInspection shortName="ReassignedToPlainText" bundle="messages.InspectionsBundle" key="reassigned.to.plain.text.inspection.name"
+    <localInspection language="" shortName="ReassignedToPlainText" bundle="messages.InspectionsBundle" key="reassigned.to.plain.text.inspection.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReassignedToPlainTextInspection"/>
-    <localInspection shortName="NonAsciiCharacters" bundle="messages.LangBundle" key="non.ascii.characters"
+    <localInspection language="" shortName="NonAsciiCharacters" bundle="messages.LangBundle" key="non.ascii.characters"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.NonAsciiCharactersInspection"/>
-    <localInspection shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
+    <localInspection language="" shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspectionMerger"/>
-    <localInspection shortName="IncorrectFormatting" bundle="messages.LangBundle" key="inspection.incorrect.formatting.display.name"
+    <localInspection language="" shortName="IncorrectFormatting" bundle="messages.LangBundle" key="inspection.incorrect.formatting.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection"
                      runForWholeFile="true"/>
-    <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
+    <localInspection language="" shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
-    <localInspection shortName="LongLine" bundle="messages.LangBundle" key="long.line.display.name"
+    <localInspection language="" shortName="LongLine" bundle="messages.LangBundle" key="long.line.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.longLine.LongLineInspection"/>
-    <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
+    <globalInspection language="" shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
-    <globalInspection shortName="EmptyDirectory" bundle="messages.LangBundle" key="empty.directory.display.name"
+    <globalInspection language="" shortName="EmptyDirectory" bundle="messages.LangBundle" key="empty.directory.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                       level="WARNING" implementationClass="com.intellij.codeInspection.EmptyDirectoryInspection"/>
 
@@ -1378,9 +1386,6 @@
 
     <search.optionContributor implementation="com.intellij.codeInspection.ex.InspectionSearchableOptionContributor"/>
 
-    <statusBarWidgetFactory id="VfsRefresh" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory"
-                            order="first"/>
-    <statusBarWidgetFactory id="Position" implementation="com.intellij.openapi.wm.impl.status.PositionPanelWidgetFactory"/>
     <statusBarWidgetFactory id="LanguageServiceStatusBarWidget"
                             implementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetFactory"
                             order="after Position, after AIAssistant, before LineSeparator"/>
@@ -1389,38 +1394,12 @@
                         serviceImplementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetActionsServiceImpl"/>
     <notificationGroup id="language.service.stopped.or.restarted" displayType="BALLOON" isLogByDefault="false"
                        bundle="messages.LangBundle" key="language.services.notification.group.service.stopped.or.restarted"/>
-    <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
-                            order="after Position"/>
-    <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"
-                            order="after LineSeparator"/>
-    <statusBarWidgetFactory id="PowerSaveMode" implementation="com.intellij.openapi.wm.impl.status.PowerSaveStatusWidgetFactory"
-                            order="after Encoding"/>
     <statusBarWidgetFactory id="largeFileEncodingWidget" implementation="com.intellij.largeFilesEditor.encoding.LargeFileEncodingWidgetFactory"
                             order="after PowerSaveMode"/>
-    <statusBarWidgetFactory id="InsertOverwrite" implementation="com.intellij.openapi.wm.impl.status.ColumnSelectionModeWidgetFactory"
-                            order="after largeFileEncodingWidget"/>
     <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory"
                             order="after InsertOverwrite"/>
-    <statusBarWidgetFactory id="ReadOnlyAttribute" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory"
-                            order="after CodeStyleStatusBarWidget"/>
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory"
                             order="after ReadOnlyAttribute"/>
-    <statusBarWidgetFactory id="Notifications" implementation="com.intellij.notification.impl.widget.NotificationWidgetFactory"
-                            order="after inspectionProfileWidget"/>
-    <statusBarWidgetFactory id="FatalError" implementation="com.intellij.openapi.wm.impl.status.FatalErrorWidgetFactory"
-                            order="after Notifications"/>
-    <statusBarWidgetFactory id="WriteThread" implementation="com.intellij.openapi.wm.impl.status.WriteThreadIndicatorWidgetFactory"
-                            order="last"/>
-    <statusBarWidgetFactory id="Memory" implementation="com.intellij.openapi.wm.impl.status.MemoryIndicatorWidgetFactory"
-                            order="last"/>
-    <registryKey key="idea.memory.usage.show.total.memory.estimation"
-                 description="Show total memory usage estimation (instead of -Xmx) info in a memory-usage bar"
-                 defaultValue="true"/>
-
-    <statusBarWidgetFactory id="settingsEntryPointWidget" implementation="com.intellij.ide.actions.SettingsEntryPointAction$StatusBarManager"
-                            order="last"/>
-    <statusBarWidgetFactory id="SmartModeIndicator" implementation="com.intellij.openapi.wm.impl.status.SmartModeIndicatorWidgetFactory"/>
-    <statusBarWidgetFactory id="IndexesAndVfsFlushIndicator" implementation="com.intellij.openapi.wm.impl.status.IndexesAndVfsFlushIndicatorWidgetFactory"/>
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <lang.formatter.restriction implementation="com.intellij.formatting.ExcludedFileFormattingRestriction"/>
@@ -1489,6 +1468,7 @@
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager"
                     serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl"/>
+    <searchEverywhere.manager implementation="com.intellij.ide.actions.searcheverywhere.MonolithSearchEverywhereManagerFactory"/>
 
     <advancedSetting id="se.text.search" default="true" groupKey="group.advanced.settings.se"/>
     <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
@@ -1555,7 +1535,7 @@
     <!-- must be first because TextEditorProvider.getInstance search by instance of -->
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider" id="text-editor"
                         order="first"/>
-    <uiDataRule implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider$DataRule"/>
+    <uiDataRule implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataRule"/>
 
     <fileEditorProvider id="LargeFileEditorProvider" implementation="com.intellij.largeFilesEditor.editor.LargeFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.largeFilesEditor.editor.LargeFileNotificationProvider"/>
@@ -1715,9 +1695,9 @@
     <registryKey defaultValue="2000"
                  description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>
-    <registryKey key="ide.completion.command.enabled" defaultValue="false"
+    <registryKey key="ide.completion.command.force.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="false"/>
-    <registryKey key="ide.completion.command.internal.enabled" defaultValue="false"
+    <registryKey key="ide.completion.command.enabled" defaultValue="true"
                  description="Enable experimental support command completion for internal mode" restartRequired="false"/>
 
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
@@ -1862,19 +1842,9 @@
 
     <registryKey key="client.generator.inlay.action" defaultValue="false"
                  description="Enable open in client generator action"/>
+    <registryKey key="editor.show.indexing.as.analyzing" defaultValue="true"
+                 description="Replaces Indexing progress with Analyzing during dumb mode"/>
   </extensions>
-
-  <!--suppress PluginXmlDynamicPlugin -->
-  <module-components>
-    <component>
-      <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.facet.FacetManager</interface-class>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge</implementation-class>
-    </component>
-  </module-components>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider
@@ -1915,4 +1885,11 @@
     <listener class="com.intellij.codeInsight.completion.command.CommandCompletionListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
+  <actions>
+    <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
+  </actions>
+
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.facet.impl.invalid.FacetIgnorer" name="facetIgnorer" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

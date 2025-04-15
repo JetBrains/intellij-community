@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class TestModuleProperties {
   public static TestModuleProperties getInstance(@NotNull Module module) {
-    return module.getService(TestModuleProperties.class);
+    return module.getProject().getService(TestModulePropertiesProvider.class).getTestModuleProperties(module);
   }
 
   @ApiStatus.Internal

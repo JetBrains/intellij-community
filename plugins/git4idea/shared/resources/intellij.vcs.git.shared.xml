@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.vcs.git.shared">
+<idea-plugin>
   <resource-bundle>messages.GitSharedBundle</resource-bundle>
 
   <dependencies>
@@ -16,5 +16,7 @@
                  key="git.branches.widget.rd"
                  restartRequired="true"
                  description="WIP: Enables RD-friendly version of the Git branches widget"/>
+
+    <platform.entityTypes implementation="com.intellij.vcs.git.shared.rhizome.GitEntityTypeProvider"/>
   </extensions>
 </idea-plugin>

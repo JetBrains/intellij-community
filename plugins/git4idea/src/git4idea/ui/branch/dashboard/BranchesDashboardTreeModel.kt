@@ -24,13 +24,16 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitTagHolder
 import git4idea.repo.GitTagLoaderListener
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.Delegates.observable
 
-internal interface BranchesDashboardTreeModel : BranchesTreeModel {
+@ApiStatus.Internal
+interface BranchesDashboardTreeModel : BranchesTreeModel {
   var showOnlyMy: Boolean
 }
 
-internal class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
+@ApiStatus.Internal
+class BranchesDashboardTreeModelImpl(private val logData: VcsLogData)
   : BranchesTreeModelBase(), BranchesDashboardTreeModel, Disposable {
 
   private val project: Project = logData.project

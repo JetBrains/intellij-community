@@ -360,6 +360,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveMultipleWithComments/moveMultipleWithComments.test");
     }
 
+    @TestMetadata("kotlin/moveNoSearchReferencesRetainImports/moveNoSearchReferencesRetainImports.test")
+    public void testKotlin_moveNoSearchReferencesRetainImports_MoveNoSearchReferencesRetainImports() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveNoSearchReferencesRetainImports/moveNoSearchReferencesRetainImports.test");
+    }
+
     @TestMetadata("kotlin/moveObjectToFile/moveObjectToFile.test")
     public void testKotlin_moveObjectToFile_MoveObjectToFile() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveObjectToFile/moveObjectToFile.test");
@@ -568,6 +573,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
     @TestMetadata("kotlin/staticUsageFromSuperClass/staticUsageFromSuperClass.test")
     public void testKotlin_staticUsageFromSuperClass_StaticUsageFromSuperClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/staticUsageFromSuperClass/staticUsageFromSuperClass.test");
+    }
+
+    @TestMetadata("kotlin/subclassWithoutUsages/subclassWithoutUsages.test")
+    public void testKotlin_subclassWithoutUsages_SubclassWithoutUsages() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/subclassWithoutUsages/subclassWithoutUsages.test");
     }
 
     @TestMetadata("kotlin/superReferences/superReferences.test")

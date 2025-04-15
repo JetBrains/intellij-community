@@ -52,7 +52,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   private fun writeGraph(writer: JsonGenerator) {
     writer.array {
       val entries = pluginIdToInfo.entries.toMutableList()
-      entries.sortBy { it.value.sourceModuleName }
+      entries.sortBy { it.value.sourceModule.name }
       for (entry in entries) {
         val item = entry.value
         if (item.packageName == null && !hasContentOrDependenciesInV2Format(item.descriptor)) {
@@ -82,7 +82,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
       return
     }
 
-    val nodeName = item.name ?: item.sourceModuleName
+    val nodeName = item.name ?: item.sourceModule.name
     val id = idGenerator.getId(nodeName)
     var compoundId: String? = null
     if (!item.content.isEmpty()) {
@@ -106,7 +106,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
         writer.writeStringField("name", nodeName)
         writer.writeStringField("n", getShortName(nodeName))
         writer.writeStringField("package", item.packageName)
-        writer.writeStringField("sourceModule", item.sourceModuleName)
+        writer.writeStringField("sourceModule", item.sourceModule.name)
         writer.writeStringField("descriptor", pathToShortString(item.descriptorFile).replace(File.separatorChar, '/'))
         item.pluginId?.let {
           writer.writeStringField("pluginId", it)
@@ -131,7 +131,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
   private fun writeDependencies(dependentInfo: ModuleInfo, writer: JsonGenerator, dependentId: String) {
     for (ref in dependentInfo.dependencies) {
-      val dep = ref.moduleInfo
+      val dep = ref.moduleInfo ?: continue
       if (isNodeSkipped(dep)) {
         continue
       }

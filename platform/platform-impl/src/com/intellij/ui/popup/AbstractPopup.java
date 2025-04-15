@@ -2067,7 +2067,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public static class MyContentPanel extends JPanel implements UiCompatibleDataProvider {
-    private @Nullable DataProvider myDataProvider;
+    private @Nullable UiDataProvider myDataProvider;
 
     public MyContentPanel(@NotNull PopupBorder border) {
       super(new BorderLayout());
@@ -2092,7 +2092,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       DataSink.uiDataSnapshot(sink, myDataProvider);
     }
 
-    public void setDataProvider(@Nullable DataProvider dataProvider) {
+    public void setDataProvider(@Nullable UiDataProvider dataProvider) {
       myDataProvider = dataProvider;
     }
   }
@@ -2659,6 +2659,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void setDataProvider(@NotNull DataProvider dataProvider) {
+    if (myContent != null) {
+      myContent.setDataProvider((UiCompatibleDataProvider)sink -> DataSink.uiDataSnapshot(sink, dataProvider));
+    }
+  }
+
+  @Override
+  public void setUiDataProvider(@NotNull UiDataProvider dataProvider) {
     if (myContent != null) {
       myContent.setDataProvider(dataProvider);
     }

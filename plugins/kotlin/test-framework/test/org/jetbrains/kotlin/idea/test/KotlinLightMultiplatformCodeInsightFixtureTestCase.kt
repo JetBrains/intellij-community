@@ -30,7 +30,6 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
     override fun tearDown() {
         runAll(
             { projectDescriptor.cleanupSourceRoots() },
-            { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() },
         )
     }

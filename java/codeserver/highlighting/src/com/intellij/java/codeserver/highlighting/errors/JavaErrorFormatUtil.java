@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -158,7 +159,8 @@ final class JavaErrorFormatUtil {
   static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
     PsiModifierList modifierList = field.getModifierList();
     TextRange range = field.getTextRange();
-    int start = modifierList == null ? range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
+    int start = modifierList == null || modifierList.getParent() != field ? 
+                range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
     int end = field.getNameIdentifier().getTextRange().getEndOffset();
     return new TextRange(start, end).shiftLeft(range.getStartOffset());
   }
@@ -210,7 +212,7 @@ final class JavaErrorFormatUtil {
   }
 
   static @NotNull String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+    return type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   static @NlsSafe @NotNull String format(@NotNull PsiElement element) {

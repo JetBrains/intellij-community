@@ -1,4 +1,5 @@
 // "Convert to record class" "true"
+// no "true-preview" above because of IDEA-369873
 public class SpreadSymb<caret>ol {
   public final String symbol;
   public final int legs;

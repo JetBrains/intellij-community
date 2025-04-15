@@ -8,7 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -361,7 +361,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       activity = null
       null
     }
-    else if (project.isTrusted()) {
+    else if (TrustedProjects.isProjectTrusted(project)) {
       childActivity = childActivity?.endAndStart("loading entities from files")
       val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
       val sourcesToUpdate = loadAndReportErrors {

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.intentions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -92,6 +93,15 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testRemoveLeadingF() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest(PyPsiBundle.message("QFIX.remove.string.prefix", "F")));
+  }
+
+  // PY-45729
+  public void  testJoinTupleToSingleLine() {
+    doTest(CodeInsightBundle.message("intention.name.join.comma.values"));
+  }
+
+  public void testSplitTupleToMultiLine() {
+    doTest(CodeInsightBundle.message("intention.name.split.comma.values"));
   }
 
   // PY-18972

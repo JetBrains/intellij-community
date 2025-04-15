@@ -52,6 +52,7 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
 
   override fun create(): WebSymbolsQueryExecutor =
     WebSymbolsQueryExecutorImpl(
+      null,
       rootScopes,
       WebSymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
       WebSymbolsCompoundQueryResultsCustomizer(customizers),

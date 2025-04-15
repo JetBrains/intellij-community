@@ -21,7 +21,8 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
  */
 internal class FrontendTerminalSession(private val id: TerminalSessionId) : TerminalSession {
   @Volatile
-  private var isClosed: Boolean = false
+  override var isClosed: Boolean = false
+    private set
 
   override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
     if (isClosed) {

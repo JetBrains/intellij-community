@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5;
 
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
@@ -31,7 +31,6 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
       }
     }
     while (--count > 0);
-    myLauncher = LauncherFactory.create();
   }
 
   @Override
@@ -54,7 +53,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
         }
       }
 
-      myLauncher.execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
+      getLauncher().execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
 
       return listener.wasSuccessful() ? 0 : -1;
     }
@@ -73,7 +72,7 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
   @Override
   public TestIdentifier getTestToStart(String[] args, String name) {
     final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, new String[1], "");
-    myForkedTestPlan = LauncherFactory.create().discover(discoveryRequest);
+    myForkedTestPlan = getLauncher().discover(discoveryRequest);
     final Set<TestIdentifier> roots = myForkedTestPlan.getRoots();
     if (roots.isEmpty()) return null;
     List<TestIdentifier> nonEmptyRoots = roots.stream()
@@ -145,5 +144,12 @@ public final class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier
         }
       }
     }
+  }
+
+  private Launcher getLauncher() {
+    if (myLauncher == null) {
+      myLauncher = LauncherFactory.create();
+    }
+    return myLauncher;
   }
 }

@@ -8,69 +8,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.MoveArgs
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.CheckReturnValue
 
-@GeneratedBuilder.Result
-fun EelFileSystemApi.move(
-  source: EelPath,
-  target: EelPath,
-): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder(
-    owner = this,
-    source = source,
-    target = target,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-  private var source: EelPath,
-  private var target: EelPath,
-) : OwnedBuilder<EelResult<Unit, EelFileSystemApi.MoveError>> {
-  private var followLinks: Boolean = false
-
-  private var replaceExisting: ReplaceExistingDuringMove = ReplaceExistingDuringMove.REPLACE_EVERYTHING
-
-  fun followLinks(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder = apply {
-    this.followLinks = arg
-  }
-
-  fun replaceExisting(arg: ReplaceExistingDuringMove): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder = apply {
-    this.replaceExisting = arg
-  }
-
-  fun doNotReplace(): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder =
-    replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE)
-
-  fun doNotReplaceDirectories(): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder =
-    replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
-
-  fun replaceEverything(): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder =
-    replaceExisting(ReplaceExistingDuringMove.REPLACE_EVERYTHING)
-
-  fun source(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder = apply {
-    this.source = arg
-  }
-
-  fun target(arg: EelPath): com_intellij_platform_eel_fs_EelFileSystemApi_move_OwnedBuilder = apply {
-    this.target = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.move]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.MoveArgs].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<Unit, EelFileSystemApi.MoveError> =
-    owner.move(
-      MoveArgsImpl(
-        followLinks = followLinks,
-        replaceExisting = replaceExisting,
-        source = source,
-        target = target,
-      )
-    )
-}
 
 @GeneratedBuilder.Result
 class MoveArgsBuilder(
@@ -116,10 +54,9 @@ class MoveArgsBuilder(
 }
 
 @GeneratedBuilder.Result
-private class MoveArgsImpl(
+internal class MoveArgsImpl(
   override val followLinks: Boolean,
   override val replaceExisting: ReplaceExistingDuringMove,
   override val source: EelPath,
   override val target: EelPath,
 ) : MoveArgs
-      

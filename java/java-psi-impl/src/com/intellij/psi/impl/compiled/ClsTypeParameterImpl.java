@@ -167,7 +167,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
 
   @Override
   public @NotNull PsiReferenceList getExtendsList() {
-    return getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_BOUND_LIST).getPsi();
+    return (PsiReferenceList)getStub().findChildStubByElementType(JavaStubElementTypes.EXTENDS_BOUND_LIST).getPsi();
   }
 
   @Override

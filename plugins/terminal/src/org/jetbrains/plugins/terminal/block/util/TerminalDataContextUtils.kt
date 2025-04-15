@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction.Companion.SUPPRESS_COMPLETION
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
 import org.jetbrains.plugins.terminal.block.SimpleTerminalController
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
@@ -42,6 +43,8 @@ object TerminalDataContextUtils {
     get() = getUserData(IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY) == true
   val Editor.isReworkedTerminalEditor: Boolean
     get() = isOutputModelEditor || isAlternateBufferModelEditor
+  val Editor.isSuppressCompletion: Boolean
+    get() = getUserData(SUPPRESS_COMPLETION) == true
   val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 
@@ -75,7 +78,6 @@ object TerminalDataContextUtils {
   @get:ApiStatus.Internal
   val DataContext.terminalSession: BlockTerminalSession?
     get() = getData(BlockTerminalSession.DATA_KEY)
-
 
 
   val AnActionEvent.editor: Editor?

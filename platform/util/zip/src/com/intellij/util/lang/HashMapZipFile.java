@@ -73,6 +73,11 @@ public final class HashMapZipFile implements ZipFile {
     return new HashMapZipFile(entrySet, entries, buffer, fileSize);
   }
 
+  // cannot use `.slice` API (JDK 13+)
+  public @NotNull ByteBuffer __getRawSlice() {
+    return mappedBuffer;
+  }
+
   @Override
   public void processResources(@NotNull String dir,
                                @NotNull Predicate<? super String> nameFilter,

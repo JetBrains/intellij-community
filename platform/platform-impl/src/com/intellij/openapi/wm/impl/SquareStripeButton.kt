@@ -7,7 +7,15 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionButtonComponent
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -17,15 +25,25 @@ import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.ui.*
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.RelativeFont
+import com.intellij.ui.UIBundle
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import sun.swing.SwingUtilities2
-import java.awt.*
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.GradientPaint
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.util.function.Supplier
@@ -142,7 +160,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           var firstX: Int? = null
 
           for (text in texts) {
-            val textWidth = SwingUtilities2.stringWidth(this@SquareStripeButton, fm, text)
+            val textWidth = UIUtil.computeStringWidth(this@SquareStripeButton, fm, text)
 
             val g2d = g!!.create() as Graphics2D
 

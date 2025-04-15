@@ -80,8 +80,8 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   private final Path storagePath;
 
 
-  public PersistentFSRecordsOverInMemoryStorage(final Path path,
-                                                final int maxRecords) throws IOException {
+  public PersistentFSRecordsOverInMemoryStorage(Path path,
+                                                int maxRecords) throws IOException {
     storagePath = Objects.requireNonNull(path, "path");
     if (maxRecords <= 0) {
       throw new IllegalArgumentException("maxRecords(=" + maxRecords + ") should be >0");
@@ -92,22 +92,22 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
       .order(nativeOrder());
 
     if (Files.exists(path)) {
-      final long fileSize = Files.size(path);
+      long fileSize = Files.size(path);
       if (fileSize > records.capacity()) {
-        final long recordsInFile = (fileSize - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
+        long recordsInFile = (fileSize - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
         throw new IllegalArgumentException(
           "[" + path + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
           "=> can't load all the records from file!");
       }
 
       try (ByteChannel channel = Files.newByteChannel(path)) {
-        final int actualBytesRead = channel.read(records);
+        int actualBytesRead = channel.read(records);
         if (actualBytesRead <= 0) {
           allocatedRecordsCount.set(0);
         }
         else {
-          final int recordsRead = (actualBytesRead - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
-          final int recordExcess = (actualBytesRead - HEADER_SIZE) % RecordLayout.RECORD_SIZE_IN_BYTES;
+          int recordsRead = (actualBytesRead - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
+          int recordExcess = (actualBytesRead - HEADER_SIZE) % RecordLayout.RECORD_SIZE_IN_BYTES;
           if (recordExcess > 0) {
             throw new IOException(
               "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
@@ -122,7 +122,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
   @Override
   public int allocateRecord() throws IOException {
-    final int recordId = allocatedRecordsCount.incrementAndGet();
+    int recordId = allocatedRecordsCount.incrementAndGet();
     if (recordId > maxRecords) {
       throw new IndexOutOfBoundsException("maxRecords(=" + maxRecords + ") limit exceeded");
     }
@@ -132,47 +132,47 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public void setAttributeRecordId(final int recordId,
-                                   final int recordRef) throws IOException {
+  public void setAttributeRecordId(int recordId,
+                                   int recordRef) throws IOException {
     checkValidIdField(recordId, recordRef, "attributeRecordId");
     setIntField(recordId, RecordLayout.ATTR_REF_OFFSET, recordRef);
   }
 
   @Override
-  public int getAttributeRecordId(final int recordId) throws IOException {
+  public int getAttributeRecordId(int recordId) throws IOException {
     return getIntField(recordId, RecordLayout.ATTR_REF_OFFSET);
   }
 
   @Override
-  public int getParent(final int recordId) throws IOException {
+  public int getParent(int recordId) throws IOException {
     return getIntField(recordId, RecordLayout.PARENT_REF_OFFSET);
   }
 
   @Override
-  public void setParent(final int recordId,
-                        final int parentId) throws IOException {
+  public void setParent(int recordId,
+                        int parentId) throws IOException {
     checkParentIdIsValid(parentId);
     setIntField(recordId, RecordLayout.PARENT_REF_OFFSET, parentId);
   }
 
   @Override
-  public int getNameId(final int recordId) throws IOException {
+  public int getNameId(int recordId) throws IOException {
     return getIntField(recordId, RecordLayout.NAME_REF_OFFSET);
   }
 
   @Override
-  public int updateNameId(final int recordId,
-                          final int nameId) throws IOException {
+  public int updateNameId(int recordId,
+                          int nameId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(nameId);
     return setIntField(recordId, RecordLayout.NAME_REF_OFFSET, nameId);
   }
 
 
   @Override
-  public boolean setFlags(final int recordId,
-                          final @PersistentFS.Attributes int newFlags) throws IOException {
+  public boolean setFlags(int recordId,
+                          @PersistentFS.Attributes int newFlags) throws IOException {
     int oldFlags = getIntField(recordId, RecordLayout.FLAGS_OFFSET);
-    final boolean reallyChanged = (oldFlags != newFlags);
+    boolean reallyChanged = (oldFlags != newFlags);
     if (reallyChanged) {
       setIntField(recordId, RecordLayout.FLAGS_OFFSET, newFlags);
     }
@@ -181,19 +181,19 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
   @Override
   @SuppressWarnings("MagicConstant")
-  public @PersistentFS.Attributes int getFlags(final int recordId) throws IOException {
+  public @PersistentFS.Attributes int getFlags(int recordId) throws IOException {
     return getIntField(recordId, RecordLayout.FLAGS_OFFSET);
   }
 
   @Override
-  public long getLength(final int recordId) throws IOException {
+  public long getLength(int recordId) throws IOException {
     return getLongField(recordId, RecordLayout.LENGTH_OFFSET);
   }
 
   @Override
-  public boolean setLength(final int recordId,
-                           final long newLength) throws IOException {
-    final boolean reallyChanged = getLongField(recordId, RecordLayout.LENGTH_OFFSET) != newLength;
+  public boolean setLength(int recordId,
+                           long newLength) throws IOException {
+    boolean reallyChanged = getLongField(recordId, RecordLayout.LENGTH_OFFSET) != newLength;
     if (reallyChanged) {
       setLongField(recordId, RecordLayout.LENGTH_OFFSET, newLength);
     }
@@ -201,14 +201,14 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public long getTimestamp(final int recordId) throws IOException {
+  public long getTimestamp(int recordId) throws IOException {
     return getLongField(recordId, RecordLayout.TIMESTAMP_OFFSET);
   }
 
   @Override
-  public boolean setTimestamp(final int recordId,
-                              final long newTimestamp) throws IOException {
-    final boolean reallyChanged = getLongField(recordId, RecordLayout.TIMESTAMP_OFFSET) != newTimestamp;
+  public boolean setTimestamp(int recordId,
+                              long newTimestamp) throws IOException {
+    boolean reallyChanged = getLongField(recordId, RecordLayout.TIMESTAMP_OFFSET) != newTimestamp;
     if (reallyChanged) {
       setLongField(recordId, RecordLayout.TIMESTAMP_OFFSET, newTimestamp);
     }
@@ -216,25 +216,25 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public int getModCount(final int recordId) throws IOException {
+  public int getModCount(int recordId) throws IOException {
     return getIntField(recordId, RecordLayout.MOD_COUNT_OFFSET);
   }
 
   @Override
-  public void markRecordAsModified(final int recordId) throws IOException {
+  public void markRecordAsModified(int recordId) throws IOException {
     setIntField(recordId, RecordLayout.MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
   }
 
   @Override
-  public int getContentRecordId(final int recordId) throws IOException {
+  public int getContentRecordId(int recordId) throws IOException {
     return getIntField(recordId, RecordLayout.CONTENT_REF_OFFSET);
   }
 
   @Override
-  public boolean setContentRecordId(final int recordId,
-                                    final int contentRef) throws IOException {
+  public boolean setContentRecordId(int recordId,
+                                    int contentRef) throws IOException {
     checkValidIdField(recordId, contentRef, "contentRecordId");
-    final boolean reallyChanged = getIntField(recordId, RecordLayout.CONTENT_REF_OFFSET) != contentRef;
+    boolean reallyChanged = getIntField(recordId, RecordLayout.CONTENT_REF_OFFSET) != contentRef;
     if (reallyChanged) {
       setIntField(recordId, RecordLayout.CONTENT_REF_OFFSET, contentRef);
     }
@@ -242,13 +242,13 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public void cleanRecord(final int recordId) throws IOException {
+  public void cleanRecord(int recordId) throws IOException {
     checkRecordId(recordId);
     //fill record with zeros, by 4 bytes at once:
-    final int recordStartAtBytes = recordOffsetInBytes(recordId, 0);
+    int recordStartAtBytes = recordOffsetInBytes(recordId, 0);
     int recordSizeInInts = RecordLayout.RECORD_SIZE_IN_BYTES / Integer.BYTES;
     for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
-      final int offset = recordStartAtBytes + wordNo * Integer.BYTES;
+      int offset = recordStartAtBytes + wordNo * Integer.BYTES;
       INT_HANDLE.setVolatile(records, offset, 0);
     }
     markDirty();
@@ -318,7 +318,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
-  public void setVersion(final int version) throws IOException {
+  public void setVersion(int version) throws IOException {
     setIntHeaderField(HEADER_VERSION_OFFSET, version);
     setLongHeaderField(HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
     globalModCount.incrementAndGet();
@@ -347,19 +347,19 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
 
   @Override
   public boolean isValidFileId(int recordId) {
-    final int allocatedSoFar = allocatedRecordsCount.get();
+    int allocatedSoFar = allocatedRecordsCount.get();
     return FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar;
   }
 
   public long actualDataLength() {
-    final int recordsCount = recordsCount();
+    int recordsCount = recordsCount();
     return (RecordLayout.RECORD_SIZE_IN_BYTES * (long)recordsCount) + HEADER_SIZE;
   }
 
 
   @Override
-  public boolean processAllRecords(final @NotNull FsRecordProcessor processor) throws IOException {
-    final int recordsCount = allocatedRecordsCount.get();
+  public boolean processAllRecords(@NotNull FsRecordProcessor processor) throws IOException {
+    int recordsCount = allocatedRecordsCount.get();
     for (int recordId = MIN_VALID_ID; recordId <= recordsCount; recordId++) {
       processor.process(
         recordId,
@@ -379,12 +379,12 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
     if (dirty.get()) {
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
 
-      final long actualDataLength = actualDataLength();
-      final ByteBuffer actualRecordsToStore = records.duplicate();
+      long actualDataLength = actualDataLength();
+      ByteBuffer actualRecordsToStore = records.duplicate();
       actualRecordsToStore.position(0)
         .limit((int)actualDataLength)
         .order(records.order());
-      try (final SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
+      try (SeekableByteChannel channel = Files.newByteChannel(storagePath, WRITE, CREATE)) {
         channel.write(actualRecordsToStore);
       }
       markNotDirty();
@@ -405,7 +405,7 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   /* =============== implementation =============================================================== */
 
   @SuppressWarnings("TestOnlyProblems")
-  private static final class RecordAccessor implements RecordForUpdate {
+  private static class RecordAccessor implements RecordForUpdate {
     private final int recordId;
     private final @NotNull PersistentFSRecordsOverInMemoryStorage records;
 
@@ -546,75 +546,75 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
     }
   }
 
-  private void setLongField(final int recordId,
-                            final int fieldRelativeOffset,
-                            final long fieldValue) {
-    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
+  private void setLongField(int recordId,
+                            int fieldRelativeOffset,
+                            long fieldValue) {
+    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
     LONG_HANDLE.setVolatile(records, offset, fieldValue);
     markDirty();
   }
 
-  private long getLongField(final int recordId,
-                            final int fieldRelativeOffset) {
-    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
+  private long getLongField(int recordId,
+                            int fieldRelativeOffset) {
+    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
     return (long)LONG_HANDLE.getVolatile(records, offset);
   }
 
-  private int setIntField(final int recordId,
-                          final int fieldRelativeOffset,
-                          final int fieldValue) {
-    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
+  private int setIntField(int recordId,
+                          int fieldRelativeOffset,
+                          int fieldValue) {
+    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
     int previousValue = (int)INT_HANDLE.getAndSet(records, offset, fieldValue);
     markDirty();
     return previousValue;
   }
 
-  private int getIntField(final int recordId,
-                          final int fieldRelativeOffset) {
-    final int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
+  private int getIntField(int recordId,
+                          int fieldRelativeOffset) {
+    int offset = recordOffsetInBytes(recordId, fieldRelativeOffset);
     return (int)INT_HANDLE.getVolatile(records, offset);
   }
 
-  private int recordOffsetInBytes(final int recordId,
-                                  final int fieldRelativeOffset) throws IndexOutOfBoundsException {
+  private int recordOffsetInBytes(int recordId,
+                                  int fieldRelativeOffset) throws IndexOutOfBoundsException {
     checkRecordId(recordId);
     return (RecordLayout.RECORD_SIZE_IN_BYTES * (recordId - 1) + fieldRelativeOffset) + HEADER_SIZE;
   }
 
-  private void checkRecordId(final int recordId) throws IndexOutOfBoundsException {
+  private void checkRecordId(int recordId) throws IndexOutOfBoundsException {
     if (!isValidFileId(recordId)) {
-      final int allocatedSoFar = allocatedRecordsCount.get();
+      int allocatedSoFar = allocatedRecordsCount.get();
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + allocatedSoFar + "]");
     }
   }
 
-  private void setLongHeaderField(final @HeaderOffset int headerRelativeOffsetBytes,
-                                  final long headerValue) {
+  private void setLongHeaderField(@HeaderOffset int headerRelativeOffsetBytes,
+                                  long headerValue) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     LONG_HANDLE.setVolatile(records, headerRelativeOffsetBytes, headerValue);
     markDirty();
   }
 
-  private long getLongHeaderField(final @HeaderOffset int headerRelativeOffsetBytes) {
+  private long getLongHeaderField(@HeaderOffset int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     return (long)LONG_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
   }
 
-  private void setIntHeaderField(final @HeaderOffset int headerRelativeOffsetBytes,
-                                 final int headerValue) {
+  private void setIntHeaderField(@HeaderOffset int headerRelativeOffsetBytes,
+                                 int headerValue) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     INT_HANDLE.setVolatile(records, headerRelativeOffsetBytes, headerValue);
     markDirty();
   }
 
 
-  private int getIntHeaderField(final @HeaderOffset int headerRelativeOffsetBytes) {
+  private int getIntHeaderField(@HeaderOffset int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     return (int)INT_HANDLE.getVolatile(records, headerRelativeOffsetBytes);
   }
 
-  private static void checkHeaderOffset(final int headerRelativeOffset) {
+  private static void checkHeaderOffset(int headerRelativeOffset) {
     if (!(0 <= headerRelativeOffset && headerRelativeOffset < HEADER_SIZE)) {
       throw new IndexOutOfBoundsException(
         "headerFieldOffset(=" + headerRelativeOffset + ") is outside of header [0, " + HEADER_SIZE + ") ");

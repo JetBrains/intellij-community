@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.*;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -102,7 +103,7 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", "? " + (isExtends ? PsiKeyword.EXTENDS : PsiKeyword.SUPER));
+      return CommonQuickFixBundle.message("fix.replace.with.x", "? " + (isExtends ? JavaKeywords.EXTENDS : JavaKeywords.SUPER));
     }
 
     @Override

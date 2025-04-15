@@ -7,107 +7,7 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.path.EelPath
-import org.jetbrains.annotations.CheckReturnValue
 
-@GeneratedBuilder.Result
-fun EelFileSystemApi.createTemporaryDirectory(): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder(
-    owner = this,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-) : OwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
-  private var deleteOnExit: Boolean = false
-
-  private var parentDirectory: EelPath? = null
-
-  private var prefix: String = ""
-
-  private var suffix: String = ""
-
-  fun deleteOnExit(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder = apply {
-    this.deleteOnExit = arg
-  }
-
-  fun parentDirectory(arg: EelPath?): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder = apply {
-    this.parentDirectory = arg
-  }
-
-  fun prefix(arg: String): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder = apply {
-    this.prefix = arg
-  }
-
-  fun suffix(arg: String): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryDirectory_OwnedBuilder = apply {
-    this.suffix = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.createTemporaryDirectory]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
-    owner.createTemporaryDirectory(
-      CreateTemporaryEntryOptionsImpl(
-        deleteOnExit = deleteOnExit,
-        parentDirectory = parentDirectory,
-        prefix = prefix,
-        suffix = suffix,
-      )
-    )
-}
-
-@GeneratedBuilder.Result
-fun EelFileSystemApi.createTemporaryFile(): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder =
-  com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder(
-    owner = this,
-  )
-
-@GeneratedBuilder.Result
-class com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder(
-  private val owner: EelFileSystemApi,
-) : OwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
-  private var deleteOnExit: Boolean = false
-
-  private var parentDirectory: EelPath? = null
-
-  private var prefix: String = ""
-
-  private var suffix: String = ""
-
-  fun deleteOnExit(arg: Boolean): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder = apply {
-    this.deleteOnExit = arg
-  }
-
-  fun parentDirectory(arg: EelPath?): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder = apply {
-    this.parentDirectory = arg
-  }
-
-  fun prefix(arg: String): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder = apply {
-    this.prefix = arg
-  }
-
-  fun suffix(arg: String): com_intellij_platform_eel_fs_EelFileSystemApi_createTemporaryFile_OwnedBuilder = apply {
-    this.suffix = arg
-  }
-
-  /**
-   * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.createTemporaryFile]
-   * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions].
-   */
-  @org.jetbrains.annotations.CheckReturnValue
-  override suspend fun eelIt(): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
-    owner.createTemporaryFile(
-      CreateTemporaryEntryOptionsImpl(
-        deleteOnExit = deleteOnExit,
-        parentDirectory = parentDirectory,
-        prefix = prefix,
-        suffix = suffix,
-      )
-    )
-}
 
 @GeneratedBuilder.Result
 class CreateTemporaryEntryOptionsBuilder {
@@ -145,10 +45,9 @@ class CreateTemporaryEntryOptionsBuilder {
 }
 
 @GeneratedBuilder.Result
-private class CreateTemporaryEntryOptionsImpl(
+internal class CreateTemporaryEntryOptionsImpl(
   override val deleteOnExit: Boolean,
   override val parentDirectory: EelPath?,
   override val prefix: String,
   override val suffix: String,
 ) : CreateTemporaryEntryOptions
-      

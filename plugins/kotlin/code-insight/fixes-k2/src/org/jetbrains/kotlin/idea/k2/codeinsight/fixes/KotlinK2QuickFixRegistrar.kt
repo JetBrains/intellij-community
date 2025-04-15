@@ -182,6 +182,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RestrictedRetentionForExpressionAnnotationFactories.quickFixFactory)
         registerFactory(ModifierRequiredFixFactories.addInfixModifierFixFactory)
         registerFactory(ModifierRequiredFixFactories.addOperatorModifierFixFactory)
+        registerFactory(AddSemicolonBeforeLambdaExpressionFixFactory.addSemicolonBeforeLambdaExpressionFixFactory)
+        registerFactory(AbstractSuperCallFixFactories.errorFixFactory)
+        registerFactory(AbstractSuperCallFixFactories.warningFactory)
+        registerFactory(JavaClassOnCompanionFixFactories.factory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -270,10 +274,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentPropertyTypeFixFactory)
         registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentReturnTypeFixFactory)
         registerFactory(AddMemberToSupertypeFixFactory.addMemberToSupertypeFixFactory)
+        registerFactory(RenameParameterToMatchOverriddenMethodFixFactory.renameParameterToMatchOverriddenMethod)
     }
 
     /**
-     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider]. 
+     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider].
      */
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
@@ -286,7 +291,16 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ImportQuickFixFactories.noneApplicableFactory)
         registerFactory(ImportQuickFixFactories.wrongNumberOfTypeArgumentsFactory)
         registerFactory(ImportQuickFixFactories.newInferenceNoInformationForParameterFactory)
-        
+
+        registerFactory(ImportQuickFixFactories.noGetMethodFactory)
+        registerFactory(ImportQuickFixFactories.noSetMethodFactory)
+
+        registerFactory(ImportQuickFixFactories.componentFunctionMissingFactory)
+        registerFactory(ImportQuickFixFactories.componentFunctionAmbiguityFactory)
+
+        registerFactory(ImportQuickFixFactories.iteratorMissingFactory)
+        registerFactory(ImportQuickFixFactories.iteratorAmbiguityFactory)
+
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
     }

@@ -5,9 +5,9 @@ import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -29,8 +29,8 @@ class PyEnumAttributeStubType : CustomTargetExpressionStubType<PyEnumAttributeSt
 
     val argument = callExpr.arguments.singleOrNull() ?: return null
     val isMember = when (calleeFqn) {
-      KnownDecorator.ENUM_MEMBER.qualifiedName -> true
-      KnownDecorator.ENUM_NONMEMBER.qualifiedName -> false
+      PyKnownDecorator.ENUM_MEMBER.qualifiedName -> true
+      PyKnownDecorator.ENUM_NONMEMBER.qualifiedName -> false
       else -> return null
     }
     return PyEnumAttributeStubImpl(PyLiteralKind.fromExpression(argument), isMember)

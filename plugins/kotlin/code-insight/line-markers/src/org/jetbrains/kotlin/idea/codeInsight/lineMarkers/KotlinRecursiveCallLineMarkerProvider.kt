@@ -33,6 +33,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             val symbol = target.symbol
             val targetDeclaration = target.symbol.psi as? KtDeclaration ?: return@process
 
+            if (targetDeclaration is KtDestructuringDeclaration) return@process
+
             if (symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED || !targetDeclaration.isAncestor(target.caller)) {
                 return@process
             }

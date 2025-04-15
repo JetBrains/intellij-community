@@ -51,7 +51,8 @@ public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRec
 
   @Override
   public @NotNull PsiModifierList getModifierList() {
-    final StubElement<PsiModifierList> child = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    final StubElement<PsiModifierList> child =
+      (StubElement<PsiModifierList>)getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
     assert child != null;
     return child.getPsi();
   }

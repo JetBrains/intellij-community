@@ -73,7 +73,6 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myIsEssential;
   private final boolean myIsNotFreeInFreeMode;
   private @NotNull IdeaPluginDescriptor myPlugin;
-  private final @Nullable IdeaPluginDescriptor myUltimatePlugin;
   private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
@@ -115,13 +114,12 @@ public final class ListPluginComponent extends JPanel {
     myMarketplace = marketplace;
     PluginId pluginId = plugin.getPluginId();
     boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
-                         ? !"com.intellij.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
+                         ? !"com.jetbrains.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
                          : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(plugin.getPluginId(), idMap);
-    myUltimatePlugin = idMap.get(PluginManagerCore.ULTIMATE_PLUGIN_ID);
     pluginModel.addComponent(this);
 
     setOpaque(true);

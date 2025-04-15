@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.codeInsight.javadoc.JavaDocUtil
 import com.intellij.idea.IgnoreJUnit3
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -35,7 +36,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.propertyBased.MadTestingUtil
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.psiutils.TypeUtils
-import junit.framework.TestCase
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -100,7 +100,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       if (problems.isNotEmpty()) {
         val relatedProblems = findRelatedProblems(problems, relatedFiles)
         if (relatedProblems.isNotEmpty()) {
-          TestCase.fail("""
+          fail("""
           Problems are still reported even after the fix.
           File: ${changedFile.name}, 
           ${relatedProblems.map { (member, memberProblems) -> extractMemberProblems(member, memberProblems) }}
@@ -445,7 +445,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         if (psiClass.isEnum || psiClass.isInterface || psiClass.isAnnotationType) return
         val classKeyword = PsiTreeUtil.getPrevSiblingOfType(psiClass.nameIdentifier!!, PsiKeyword::class.java) ?: return
         val factory = JavaPsiFacade.getElementFactory(project)
-        val newTypeKeyword = factory.createKeyword(PsiKeyword.INTERFACE)
+        val newTypeKeyword = factory.createKeyword(JavaKeywords.INTERFACE)
         PsiUtil.setModifierProperty(psiClass, PsiModifier.ABSTRACT, false)
         PsiUtil.setModifierProperty(psiClass, PsiModifier.FINAL, false)
         classKeyword.replace(newTypeKeyword)

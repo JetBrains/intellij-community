@@ -2,5 +2,7 @@
 package org.jetbrains.plugins.terminal.block.prompt.lang
 
 import com.intellij.lang.Language
+import org.jetbrains.annotations.ApiStatus
 
-internal object TerminalPromptLanguage : Language("Terminal Prompt")
+@ApiStatus.Internal
+object TerminalPromptLanguage : Language("Terminal Prompt")

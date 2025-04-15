@@ -63,9 +63,11 @@ public class ProblemsHolder {
           return;
         }
       }
-      LOG.error("Inspection generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
-                " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
-                "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")");
+      if (isOnTheFly()) {
+        LOG.error("Inspection generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
+                  " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
+                  "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")");
+      }
     }
 
     saveProblem(problemDescriptor);
@@ -135,6 +137,11 @@ public class ProblemsHolder {
     registerProblem(identifier, "possible problem", ProblemHighlightType.POSSIBLE_PROBLEM);
   }
 
+  @ApiStatus.Internal
+  public void clearResults() {
+    myProblems.clear();
+  }
+
   /**
    * Returns {@link EmptyResolveMessageProvider#getUnresolvedMessagePattern()} (if implemented),
    * otherwise, default message "Cannot resolve symbol '[reference.getCanonicalText()]'".
@@ -183,7 +190,7 @@ public class ProblemsHolder {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, descriptionTemplate, highlightType, myOnTheFly, fixes));
   }
 
-  public @NotNull List<ProblemDescriptor> getResults() {
+  public @NotNull @Unmodifiable List<ProblemDescriptor> getResults() {
     return myProblems;
   }
 

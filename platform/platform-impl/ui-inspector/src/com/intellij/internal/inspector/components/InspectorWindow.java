@@ -10,6 +10,7 @@ import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
+import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.internal.inspector.UiInspectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -35,6 +36,7 @@ import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -45,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -236,9 +239,16 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.addAll(components);
     myInfo = null;
     Component showingComponent = components.get(0);
+
+    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
+    TreePath path = myHierarchyTree.getSelectionPath();
+    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
+      failedInspections = node.getFailedInspections();
+    }
+
     setTitle(showingComponent.getClass().getName());
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(showingComponent, myProject);
+    myInspectorTable = new InspectorTable(showingComponent, myProject, failedInspections);
     myWrapperPanel.setContent(myInspectorTable);
     myNavBarPanel.setSelectedComponent(showingComponent);
   }
@@ -247,8 +257,15 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.clear();
     myInfo = clickInfo;
     setTitle("Click Info");
+
+    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
+    TreePath path = myHierarchyTree.getSelectionPath();
+    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
+      failedInspections = node.getFailedInspections();
+    }
+
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(clickInfo, myProject);
+    myInspectorTable = new InspectorTable(clickInfo, myProject, failedInspections);
     myWrapperPanel.setContent(myInspectorTable);
   }
 
@@ -491,6 +508,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     private ShowAccessibilityIssuesAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
       showAccessibilityIssues = PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
+      Presentation presentation = getTemplatePresentation();
+      presentation.setDescription(InternalActionsBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
     }
 
     @Override
@@ -613,8 +632,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (node == null) return;
       JComponent c = UIUtil.getParentOfType(JComponent.class, node.getComponent());
       if (c == null) return;
+      var components = JBIterable.<TreeNode>generate(node, o -> o.getParent())
+        .filter(HierarchyTree.ComponentNode.class)
+        .filterMap(o -> o.getComponent())
+        .toList();
 
-      new DataContextDialog(myProject, c).show();
+      new DataContextDialog(myProject, components).show();
     }
   }
 

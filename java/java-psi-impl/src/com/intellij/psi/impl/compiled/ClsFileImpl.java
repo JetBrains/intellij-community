@@ -144,7 +144,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     if (statement == null) {
       statement = ClsPackageStatementImpl.NULL_PACKAGE;
       PsiClassHolderFileStub<?> stub = getStub();
-      if (!(stub instanceof PsiJavaFileStub) || stub.findChildStubByType(JavaStubElementTypes.MODULE) == null) {
+      if (!(stub instanceof PsiJavaFileStub) || stub.findChildStubByElementType(JavaStubElementTypes.MODULE) == null) {
         String packageName = findPackageName(stub);
         if (packageName != null) {
           statement = new ClsPackageStatementImpl(this, packageName);

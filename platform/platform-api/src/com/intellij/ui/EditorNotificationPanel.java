@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -365,7 +366,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
                                                          @NotNull @NonNls String actionId,
                                                          boolean showInIntentionMenu) {
-    return createActionLabel(text, () -> executeAction(actionId), showInIntentionMenu);
+    return createActionLabel(text, new ActionHandler() {
+      @Override
+      public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {
+        executeAction(actionId, event);
+      }
+
+      @Override
+      public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+      }
+    }, showInIntentionMenu);
   }
 
   public final @NotNull HyperlinkLabel createActionLabel(@NotNull @LinkLabel String text,
@@ -443,6 +453,18 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
+  }
+
+  protected void executeAction(@NonNls String actionId, @NotNull HyperlinkEvent e) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      throw new AssertionError("'" + actionId + "' is not an found");
+    }
+    DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    AnActionEvent event = AnActionEvent.createEvent(dataContext, null, getActionPlace(), ActionUiKind.TOOLBAR, e.getInputEvent());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
@@ -720,7 +742,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   private static @NotNull Icon getPromoIcon() {
-    // todo it can be different in PyCharm Pro
+    if (PlatformUtils.isPyCharm()) return AllIcons.Ultimate.PycharmLock;
+
     return AllIcons.Ultimate.Lock;
   }
 

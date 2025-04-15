@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -3234,6 +3235,16 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   }
 
   public void testNoSuggestionsAfterDotAtClassLevel() { doAntiTest(); }
+  public void testNoSuggestionsAfterDotInParameter() { doAntiTest(); }
+
+  public void testNoSuggestionsAfterDotWithLetter() {
+    String path = "/" + getTestName(false) + ".java";
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, StringUtil.getShortName(path, '/')));
+    myItems = myFixture.complete(CompletionType.BASIC, 0);
+    checkResultByFile(getTestName(false) + ".java");
+    assertEmpty(myItems);
+    assertNull(getLookup());
+  }
 
   public void testSuggestionsAfterDotAtClassLevel() {
     configureByTestName();

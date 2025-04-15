@@ -10,24 +10,44 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.platform.project.asEntityOrNull
 import com.intellij.ui.RowIcon
 import com.intellij.vcs.git.frontend.GitFrontendBundle
+import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
+import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryEntity
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import icons.DvcsImplIcons
 
-internal class GitRdToolbarWidgetAction: ExpandableComboAction(), DumbAware {
+internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    return null
+    val project = event.project ?: return null
+    val projectEntity = project.asEntityOrNull() ?: return null
+
+    val refs = GitRepositoryEntity.inProject(projectEntity).flatMap {
+      buildList {
+        add(it.repositoryId.rootPath.toString())
+        addAll(it.state.refs.localBranches.map { it.fullName })
+        addAll(it.state.refs.remoteBranches.map { it.fullName })
+      }
+    }
+
+    val baseListPopupStep = object : BaseListPopupStep<String>(null, refs) {
+      override fun isSpeedSearchEnabled() = true
+    }
+
+    return JBPopupFactory.getInstance().createListPopup(baseListPopupStep)
   }
 
   override fun update(e: AnActionEvent) {
-    if (!Registry.Companion.`is`("git.branches.widget.rd", false)) {
+    if (!Registry.isRdBranchWidgetEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }

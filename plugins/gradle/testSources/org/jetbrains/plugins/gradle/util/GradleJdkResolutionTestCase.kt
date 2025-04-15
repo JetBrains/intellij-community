@@ -12,6 +12,11 @@ import org.jetbrains.plugins.gradle.properties.*
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_LOCAL_PROPERTIES_FILE_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_ENV_KEY
+import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import java.io.File
 import java.util.*
 
@@ -42,8 +47,8 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     latestSdk = TestSdkGenerator.createNextSdk("11")
     unsupportedSdk = TestSdkGenerator.createNextSdk("13")
 
-    environment.properties(USER_HOME to null)
-    environment.variables(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY to null)
+    environment.properties(USER_HOME_PROPERTY_KEY to null)
+    environment.variables(GRADLE_USER_HOME_ENV_KEY to null)
   }
 
   fun assertGradleJvmSuggestion(expected: Sdk, expectsSdkRegistration: Boolean = false) {

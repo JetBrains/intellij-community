@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.ExceptionUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -266,7 +266,7 @@ fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, f
  */
 @Internal
 fun saveSettingsForRemoteDevelopment(componentManager: ComponentManager) {
-  if (!AppMode.isRemoteDevHost())
+  if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient())
     return
 
   currentThreadCoroutineScope().launch {

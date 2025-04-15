@@ -2,9 +2,13 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.application.options.EditorFontsConstants
+import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSystemInfo
+import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -26,6 +30,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
@@ -37,7 +42,8 @@ import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
 
-internal const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
+@ApiStatus.Internal
+const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
 
 internal class TerminalOptionsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
@@ -48,18 +54,17 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
-    var fontPreferences = TerminalFontOptions.getInstance().getSettings()
 
     return panel {
       lateinit var terminalEngineComboBox: ComboBox<TerminalEngine>
 
       panel {
         row {
-          val values = if (TerminalUtil.getGenOneTerminalVisibilityValue() == true
+          val values = if (TerminalUtil.isGenOneTerminalOptionVisible()
                            // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                            // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                            // show this option as well to avoid the errors.
-                           || TerminalEngine.getValue() == TerminalEngine.NEW_TERMINAL) {
+                           || optionsProvider.terminalEngine == TerminalEngine.NEW_TERMINAL) {
             listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC, TerminalEngine.NEW_TERMINAL)
           }
           else listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC)
@@ -73,10 +78,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           terminalEngineComboBox = comboBox(values, renderer)
             .label(message("settings.terminal.engine"))
-            .bindItem(
-              getter = { TerminalEngine.getValue() },
-              setter = { it?.let { TerminalEngine.setValue(it) } }
-            ).component
+            .bindItem(optionsProvider::terminalEngine.toNullableProperty())
+            .component
         }
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
@@ -123,6 +126,49 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
       }
 
+      group(message("settings.terminal.font.settings")) {
+        var fontSettings = TerminalFontOptions.getInstance().getSettings()
+        row(message("settings.font.name")) {
+          cell(fontComboBox())
+            .bind(
+              componentGet = { comboBox -> comboBox.fontName },
+              componentSet = {comboBox, value -> comboBox.fontName = value },
+              MutableProperty(
+                getter = { fontSettings.fontFamily },
+                setter = { fontSettings = fontSettings.copy(fontFamily = it) },
+              ).toNullableProperty()
+            )
+        }
+
+        row {
+          textField()
+            .label(message("settings.font.size"))
+            .columns(4)
+            .bindText(
+              getter = { fontSettings.fontSize.fontSizeToString() },
+              setter = { fontSettings = fontSettings.copy(fontSize = it.parseFontSize()) },
+            )
+          textField()
+            .label(message("settings.line.height"))
+            .columns(4)
+            .bindText(
+              getter = { fontSettings.lineSpacing.spacingToString() },
+              setter = { fontSettings = fontSettings.copy(lineSpacing = it.parseSpacing()) },
+            )
+          textField()
+            .label(message("settings.column.width"))
+            .columns(4)
+            .bindText(
+              getter = { fontSettings.columnSpacing.spacingToString() },
+              setter = { fontSettings = fontSettings.copy(columnSpacing = it.parseSpacing()) },
+            )
+        }
+
+        onApply {
+          TerminalFontOptions.getInstance().setSettings(fontSettings)
+        }
+      }
+
       group(message("settings.terminal.application.settings")) {
         row(message("settings.shell.path")) {
           cell(textFieldWithHistoryWithBrowseButton(
@@ -152,46 +198,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .align(AlignX.FILL)
         }
 
-        row(message("settings.font.name")) {
-          cell(fontComboBox())
-            .bind(
-              componentGet = { comboBox -> comboBox.fontName },
-              componentSet = {comboBox, value -> comboBox.fontName = value },
-              MutableProperty(
-                getter = { fontPreferences.fontFamily },
-                setter = { fontPreferences = fontPreferences.copy(fontFamily = it) },
-              ).toNullableProperty()
-            )
-        }
-
-        row {
-          textField()
-            .label(message("settings.font.size"))
-            .columns(4)
-            .bindText(
-              getter = { fontPreferences.fontSize.fontSizeToString() },
-              setter = { fontPreferences = fontPreferences.copy(fontSize = it.parseFontSize()) },
-            )
-          textField()
-            .label(message("settings.line.height"))
-            .columns(4)
-            .bindText(
-              getter = { fontPreferences.lineSpacing.spacingToString() },
-              setter = { fontPreferences = fontPreferences.copy(lineSpacing = it.parseSpacing()) },
-            )
-          textField()
-            .label(message("settings.column.width"))
-            .columns(4)
-            .bindText(
-              getter = { fontPreferences.columnSpacing.spacingToString() },
-              setter = { fontPreferences = fontPreferences.copy(columnSpacing = it.parseSpacing()) },
-            )
-        }
-
-        onApply {
-          TerminalFontOptions.getInstance().setSettings(fontPreferences)
-        }
-
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
@@ -212,6 +218,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
             .bindSelected(optionsProvider::copyOnSelection)
+            .visible(isMac(project) || isWindows(project))
         }
         row {
           checkBox(message("settings.paste.on.middle.mouse.button.click"))
@@ -232,7 +239,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.use.option.as.meta.key.label"))
             .bindSelected(optionsProvider::useOptionAsMetaKey)
-            .visible(SystemInfo.isMac)
+            .visible(isMac(project))
         }
         panel {
           configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
@@ -339,5 +346,25 @@ private fun String.parseSpacing(): Float =
   catch (_: Exception) {
     1.0f
   }
+
+/**
+ * [TerminalOptionsConfigurable] is created on backend under local [ClientId].
+ * But some options need to be shown depending on client OS.
+ * So, it is a hack to check the client OS from the configurable code.
+ */
+private fun isMac(project: Project): Boolean {
+  return getClientSystemInfo(project)?.macClient ?: SystemInfo.isMac
+}
+
+private fun isWindows(project: Project): Boolean {
+  return getClientSystemInfo(project)?.windowsClient ?: SystemInfo.isWindows
+}
+
+private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
+  val clientId = project.sessions(ClientKind.CONTROLLER).singleOrNull()?.clientId ?: return null
+  return ClientId.withExplicitClientId(clientId) {
+    ClientSystemInfo.getInstance()
+  }
+}
 
 private val LOG = logger<TerminalOptionsConfigurable>()

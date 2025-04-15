@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.codeInsight.daemon.impl
@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -132,7 +133,7 @@ open class TrafficLightRenderer private constructor(
       EditorContextManager.getEditorContext(editor, project)
     }
     else {
-      // todo ijpl-339 choose proper file here?
+      // todo IJPL-339 choose proper file here?
       defaultContext()
     }
   }
@@ -170,7 +171,7 @@ open class TrafficLightRenderer private constructor(
     if (infoSeverity > HighlightSeverity.TEXT_ATTRIBUTES) {
       val context: CodeInsightContext = if (isSharedSourceSupportEnabled(project)) {
         highlighter.codeInsightContext ?: run {
-          // todo ijpl-339 please improve this code if context can indeed be null
+          // todo IJPL-339 please improve this code if context can indeed be null
           // logger<TrafficLightRenderer>().error("highlightInfo's rangeHighlighter must have a context")
           defaultContext()
         }
@@ -421,8 +422,13 @@ open class TrafficLightRenderer private constructor(
         AllIcons.General.InspectionsOKEmpty
       }
       return if (isDumb) {
+        val indexingMessage = if (Registry.`is`("editor.show.indexing.as.analyzing"))
+          DaemonBundle.message("iw.status.analyzing")
+        else
+          message("heavyProcess.type.indexing")
+
         AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, uiController)
-          .withTextStatus(message("heavyProcess.type.indexing"))
+          .withTextStatus(indexingMessage)
           .withState(InspectionsState.INDEXING)
           .withAnalyzingType(AnalyzingType.SUSPENDED)
       }

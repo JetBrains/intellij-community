@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -97,7 +98,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       }
 
       @Override
-      public Collection<T> getValues() {
+      public @Unmodifiable Collection<T> getValues() {
         return Collections.singletonList(o);
       }
     });
@@ -120,7 +121,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     return with(new ValuePatternCondition<T>("oneOf") {
 
       @Override
-      public Collection<T> getValues() {
+      public @Unmodifiable Collection<T> getValues() {
         return list;
       }
 
@@ -135,7 +136,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     return with(new ValuePatternCondition<T>("oneOf") {
 
       @Override
-      public Collection<T> getValues() {
+      public @Unmodifiable Collection<T> getValues() {
         return set;
       }
 

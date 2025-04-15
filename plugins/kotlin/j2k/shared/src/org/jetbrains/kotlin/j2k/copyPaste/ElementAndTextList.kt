@@ -13,13 +13,13 @@ class ElementAndTextList() {
 
     constructor(items: List<Any>) : this() {
         val filteredItems = items.filter {
-            it is PsiElement || (it is String && !it.isEmpty())
+            it is PsiElement || (it is String && it.isNotEmpty())
         }
         elementsAndTexts.addAll(filteredItems)
     }
 
     fun addText(text: String) {
-        if (!text.isEmpty()) elementsAndTexts.add(text)
+        if (text.isNotEmpty()) elementsAndTexts.add(text)
     }
 
     fun addElement(element: PsiElement) {

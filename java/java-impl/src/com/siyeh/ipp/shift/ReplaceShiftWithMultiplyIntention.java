@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.shift;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +28,7 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public final class ReplaceShiftWithMultiplyIntention extends MCIntention {
+public final class ReplaceShiftWithMultiplyIntention extends MCIntention implements DumbAware {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -39,27 +40,14 @@ public final class ReplaceShiftWithMultiplyIntention extends MCIntention {
     if (element instanceof PsiBinaryExpression exp) {
       final PsiJavaToken sign = exp.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
-      final String operatorString;
-      if (tokenType.equals(JavaTokenType.LTLT)) {
-        operatorString = "*";
-      }
-      else {
-        operatorString = "/";
-      }
+      final String operatorString = tokenType.equals(JavaTokenType.LTLT) ? "*" : "/";
       return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), operatorString);
     }
     else {
-      final PsiAssignmentExpression exp =
-        (PsiAssignmentExpression)element;
+      final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
       final PsiJavaToken sign = exp.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
-      final String assignString;
-      if (JavaTokenType.LTLTEQ.equals(tokenType)) {
-        assignString = "*=";
-      }
-      else {
-        assignString = "/=";
-      }
+      final String assignString = JavaTokenType.LTLTEQ.equals(tokenType) ? "*=" : "/=";
       return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), assignString);
     }
   }
@@ -80,47 +68,42 @@ public final class ReplaceShiftWithMultiplyIntention extends MCIntention {
   }
 
   private static void replaceShiftAssignWithMultiplyOrDivideAssign(PsiElement element) {
-    final PsiAssignmentExpression exp =
-      (PsiAssignmentExpression)element;
+    final PsiAssignmentExpression exp = (PsiAssignmentExpression)element;
     final PsiExpression lhs = exp.getLExpression();
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(exp.getRExpression());
     final IElementType tokenType = exp.getOperationTokenType();
-    final String assignString;
-    if (tokenType.equals(JavaTokenType.LTLTEQ)) {
-      assignString = "*=";
-    }
-    else {
-      assignString = "/=";
-    }
+    final String assignString = tokenType.equals(JavaTokenType.LTLTEQ) ? "*=" : "/=";
+    final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
+    assert rhs != null;
+    final Number value = (Number)literal.getValue();
+    assert value != null;
     CommentTracker commentTracker = new CommentTracker();
-    final String expString =
-      commentTracker.text(lhs) + assignString + ShiftUtils.getExpBase2(rhs);
+    final String expString = PsiTypes.longType().equals(lhs.getType())
+                             ? commentTracker.text(lhs) + assignString + (1L << value.intValue()) + 'L'
+                             : commentTracker.text(lhs) + assignString + (1 << value.intValue());
     PsiReplacementUtil.replaceExpression(exp, expString, commentTracker);
   }
 
   private static void replaceShiftWithMultiplyOrDivide(PsiElement element) {
-    final PsiBinaryExpression exp = (PsiBinaryExpression)element;
-    final PsiExpression lhs = exp.getLOperand();
-    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(exp.getROperand());
-    final IElementType tokenType = exp.getOperationTokenType();
-    final String operatorString;
-    if (tokenType.equals(JavaTokenType.LTLT)) {
-      operatorString = "*";
-    }
-    else {
-      operatorString = "/";
-    }
+    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
+    final IElementType tokenType = expression.getOperationTokenType();
+    final String operatorString = tokenType.equals(JavaTokenType.LTLT) ? "*" : "/";
     CommentTracker commentTracker = new CommentTracker();
     final String lhsText = commentTracker.text(lhs, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE);
-    String expString = lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
-    final PsiElement parent = exp.getParent();
-    if (parent instanceof PsiExpression) {
-      if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecedence((PsiExpression)parent) < ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE) {
-        expString = '(' + expString + ')';
-      }
+    final PsiLiteralExpression literal = (PsiLiteralExpression)rhs;
+    assert rhs != null;
+    final Number value = (Number)literal.getValue();
+    assert value != null;
+    String expString = PsiTypes.longType().equals(expression.getType())
+                       ? lhsText + operatorString + (1L << value.intValue()) + 'L'
+                       : lhsText + operatorString + (1 << value.intValue());
+    if (expression.getParent() instanceof PsiExpression parent && !(parent instanceof PsiParenthesizedExpression) &&
+        ParenthesesUtils.getPrecedence(parent) < ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE) {
+      expString = '(' + expString + ')';
     }
 
-    PsiReplacementUtil.replaceExpression(exp, expString, commentTracker);
+    PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 }

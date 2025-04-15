@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -73,7 +74,7 @@ public final class JavaNullMethodArgumentUtil {
     MethodReferencesSearch.search(method, scope, true).forEach(ref -> {
       PsiExpressionList argumentList = getCallArgumentList(ref.getElement());
       PsiExpression argument = getCallArgument(argumentList, argumentIdx);
-      if (argument instanceof PsiLiteralExpression && argument.textMatches(PsiKeyword.NULL)) {
+      if (argument instanceof PsiLiteralExpression && argument.textMatches(JavaKeywords.NULL)) {
         if (argumentList.getParent() instanceof PsiMethodCallExpression methodCall) {
           PsiMethod target = methodCall.resolveMethod();
           // Could be resolved to overriding method

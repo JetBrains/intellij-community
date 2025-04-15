@@ -710,6 +710,13 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
+  public void testDunderAllClassReference() {  // PY-54167
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("__init__.py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.checkResultByFile(getTestName(true) + "/__init__.after.py");
+  }
+
   public void testDunderAllReferenceImport() {  // PY-6306
     doTest();
   }

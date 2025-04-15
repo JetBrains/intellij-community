@@ -304,7 +304,7 @@ public class ReplaceInProjectManager {
 
       private Set<Usage> getSelectedUsages() {
         UsageView usageView = replaceContext.getUsageView();
-        Set<Usage> selectedUsages = usageView.getSelectedUsages();
+        Set<Usage> selectedUsages = new HashSet<>(usageView.getSelectedUsages());
         selectedUsages.removeAll(usageView.getExcludedUsages());
         return selectedUsages;
       }

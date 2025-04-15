@@ -49,6 +49,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/core-api:core",
     "//platform/util/coroutines",
+    "@lib//:maven-resolver-provider",
     "//platform/util",
   ],
   runtime_deps = [":project-configuration_resources"]

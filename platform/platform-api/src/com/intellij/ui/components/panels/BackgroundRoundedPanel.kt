@@ -10,7 +10,7 @@ import javax.swing.JPanel
 
 //TODO: provide an external API
 @ApiStatus.Internal
-class BackgroundRoundedPanel(private val arcSize: Int, layoutManager: LayoutManager? = null) : JPanel(layoutManager) {
+open class BackgroundRoundedPanel(private val arcSize: Int, layoutManager: LayoutManager? = null) : JPanel(layoutManager) {
   init {
     isOpaque = false
   }

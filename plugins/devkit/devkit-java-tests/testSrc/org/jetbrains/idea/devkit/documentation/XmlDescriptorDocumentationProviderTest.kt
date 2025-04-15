@@ -46,6 +46,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a> <i>internal</i></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> <i>internal</i></li>" +
+      "<li><a href=\"psi_element://#element:root__xi:include\"><code>&lt;xi:include&gt;</code></a></li>" +
       "</ul>"
     )
   }
@@ -431,6 +432,38 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<a href=\"https://example.com\">First</a> and <code>second</code> internal." +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
       "<p>An internal link note for the <a href=\"psi_element://#attribute:root__any\"><code>attribute</code></a>."
+    )
+  }
+
+  fun `test element with namespace`() {
+    doTestDocContains(
+      """
+        <root xmlns:xi="http://www.w3.org/2001/XInclude">
+          <xi:inc<caret>lude href="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;xi:include&gt;</code></b><hr/>\n" +
+      "Description of <code>xi:include</code>.<h5>Namespace</h5><p><code>xmlns:xi=&quot;http://www.w3.org/2001/XInclude&quot;</code>" +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__xi:include__href\"><code>href</code></a></li>" +
+      "</ul>" +
+      "<h5>Children</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#element:root__xi:include__xi:fallback\"><code>&lt;xi:fallback&gt;</code></a></li>" +
+      "</ul>"
+    )
+  }
+
+  fun `test attribute of element with namespace`() {
+    doTestDocContains(
+      """
+        <root xmlns:xi="http://www.w3.org/2001/XInclude">
+          <xi:include hr<caret>ef="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__xi:include\"><code>&lt;xi:include&gt;</code></a> / <b><code>@href</code></b><hr/>\n" +
+      "Description of <code>xi:include@href</code>."
     )
   }
 

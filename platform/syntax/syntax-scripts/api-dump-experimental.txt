@@ -1,0 +1,3 @@
+*f:com.intellij.platform.syntax.scripts.GenerateBundleMappingKt
+- sf:generateMapping(java.lang.String,java.lang.String,java.lang.String):V
+- sf:main(java.lang.String[]):V

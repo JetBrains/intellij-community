@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.psi.impl
 
+import kotlin.jvm.JvmName
+
 internal abstract class NodeBase(
   val markerId: Int,
   @get:JvmName( "_getIndex") // class with getStartIndex

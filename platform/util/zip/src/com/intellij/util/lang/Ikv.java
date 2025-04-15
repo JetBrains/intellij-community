@@ -35,6 +35,10 @@ public abstract class Ikv implements AutoCloseable {
     this.mappedBuffer = mappedBuffer;
   }
 
+  final ByteBuffer getMappedBuffer() {
+    return mappedBuffer;
+  }
+
   public final ByteBuffer getMappedBufferAt(int position) {
     return mappedBuffer.asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN).position(position);
   }

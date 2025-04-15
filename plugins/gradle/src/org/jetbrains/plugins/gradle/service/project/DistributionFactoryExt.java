@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -142,7 +143,12 @@ public final class DistributionFactoryExt extends DistributionFactory {
                                                        ConnectionParameters connectionParameters,
                                                        BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
-        final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener, clock);
+        final DistributionInstaller installer = new DistributionInstaller(
+          progressLoggerFactory,
+          progressListener,
+          clock,
+          (int)Duration.ofSeconds(30).toMillis()
+        );
         File installDir;
         try {
           cancellationToken.addCallback(() -> installer.cancel());

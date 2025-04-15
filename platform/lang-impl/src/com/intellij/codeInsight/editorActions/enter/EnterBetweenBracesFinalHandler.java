@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * Please, don't extend the class.
  * Use the {@code EnterBetweenBracesDelegate} language-specific implementation instead.
  */
-public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter {
+public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(final @NotNull PsiFile file,
                                 @NotNull Editor editor,

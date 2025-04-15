@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
+    <commandProvider implementation="com.intellij.performanceTesting.frontend.FrontendCommandProvider"/>
+  </extensions>
+</idea-plugin>

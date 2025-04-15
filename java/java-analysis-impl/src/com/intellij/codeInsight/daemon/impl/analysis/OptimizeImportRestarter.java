@@ -1,17 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +34,9 @@ import java.util.List;
 final class OptimizeImportRestarter implements Disposable {
   private final Project myProject;
   private final List<OptimizeRequest> queue = new ArrayList<>(); // guarded by queue
-  private record OptimizeRequest(@NotNull PsiFile psiFile, long modificationStampBefore, @NotNull IntentionAction optimizeFix) {}
+
+  private record OptimizeRequest(@NotNull PsiFile psiFile, long modificationStampBefore, @NotNull ModCommandAction optimizeFix) {
+  }
 
   static OptimizeImportRestarter getInstance(Project project) {
     return project.getService(OptimizeImportRestarter.class);
@@ -74,26 +83,25 @@ final class OptimizeImportRestarter implements Disposable {
       if (!psiFile.isWritable()) {
         continue;
       }
+      ModCommandAction optimizeFix = request.optimizeFix();
       if (!DaemonCodeAnalyzerEx.getInstanceEx(myProject).isErrorAnalyzingFinished(psiFile)) {
         // re-fire when daemon is really finished
-        scheduleOnDaemonFinish(psiFile, request.optimizeFix());
+        scheduleOnDaemonFinish(psiFile, optimizeFix);
         continue;
       }
-      // later because should invoke when highlighting is finished (OptimizeImportsFix relies on that)
-      AppUIExecutor.onUiThread().later().withDocumentsCommitted(myProject).execute(() -> {
-        if (myProject.isDisposed()) return;
-        long stampAfter = psiFile.getModificationStamp();
-        if (stampAfter != request.modificationStampBefore()) {
-          return;
-        }
-        if (request.optimizeFix().isAvailable(myProject, null, psiFile)) {
-          request.optimizeFix().invoke(myProject, null, psiFile);
-        }
-      });
+      ActionContext context = ActionContext.from(null, psiFile);
+      if (optimizeFix.getPresentation(context) == null) continue;
+      ReadAction.nonBlocking(() -> optimizeFix.getPresentation(context) != null ? optimizeFix.perform(context) : ModCommand.nop())
+        .expireWhen(() -> myProject.isDisposed() || psiFile.getModificationStamp() != request.modificationStampBefore())
+        .finishOnUiThread(ModalityState.defaultModalityState(),
+                          command -> CommandProcessor.getInstance().executeCommand(
+                            myProject, () -> ModCommandExecutor.getInstance().executeInBatch(context, command),
+                            CodeInsightBundle.message("process.optimize.imports"), null))
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 
-  void scheduleOnDaemonFinish(@NotNull PsiFile psiFile, @NotNull IntentionAction optimizeFix) {
+  void scheduleOnDaemonFinish(@NotNull PsiFile psiFile, @NotNull ModCommandAction optimizeFix) {
     long modificationStampBefore = psiFile.getModificationStamp();
     synchronized (queue) {
       queue.add(new OptimizeRequest(psiFile, modificationStampBefore, optimizeFix));

@@ -52,7 +52,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
-import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
@@ -929,28 +928,28 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
-    getThreadingSupport().runIntendedWriteActionOnCurrentThread(action);
+    getThreadingSupport().runWriteIntentReadAction(runnableUnitFunction(action));
   }
 
   @Override
   @SuppressWarnings("RedundantThrows")
   public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
-    return getThreadingSupport().runUnlockingIntendedWrite(action);
+    return getThreadingSupport().runUnlockingIntendedWrite(rethrowCheckedExceptions(action));
   }
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    getThreadingSupport().runReadAction(action);
+    getThreadingSupport().runReadAction(action.getClass(), runnableUnitFunction(action));
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    return getThreadingSupport().runReadAction(computation);
+    return getThreadingSupport().runReadAction(computation.getClass(), computation::compute);
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return getThreadingSupport().runReadAction(computation);
+    return getThreadingSupport().runReadAction(computation.getClass(), rethrowCheckedExceptions(computation));
   }
 
   @Override
@@ -1010,7 +1009,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) {
-    return getThreadingSupport().runWriteIntentReadAction(computation);
+    return getThreadingSupport().runWriteIntentReadAction(rethrowCheckedExceptions(computation));
   }
 
   @Override
@@ -1126,15 +1125,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
                                            @NotNull @NlsContexts.DialogTitle String title,
                                            @NotNull Runnable runnable) {
     ThreadingAssertions.assertWriteIntentReadAccess();
-    getThreadingSupport().executeSuspendingWriteAction(() -> {
-      ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
+    getThreadingSupport().executeSuspendingWriteAction(runnableUnitFunction(
+      () -> ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           runnable.run();
         }
-      });
-      return Unit.INSTANCE;
-    });
+      })
+    ));
   }
 
   @Override
@@ -1230,7 +1228,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.appContainerDescriptor;
+    return pluginDescriptor.getAppContainerDescriptor();
   }
 
   @Override
@@ -1317,6 +1315,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
     getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable, failSoftly, advice);
+  }
+
+  @Override
+  public void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
+    getThreadingSupport().allowTakingLocksInsideAndRun(runnable);
   }
 
   @Override

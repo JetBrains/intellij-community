@@ -37,7 +37,7 @@ import java.util.*;
 public final class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
-  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(new PsiFileStubImpl<>(null), null), PropertiesElementTypes.PROPERTY);
+  public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(new PsiFileStubImpl<>(null), null), PropertiesElementTypes.PROPERTY_TYPE);
 
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {

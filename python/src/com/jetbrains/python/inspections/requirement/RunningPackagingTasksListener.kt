@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.management.PythonPackageManager
 
-class RunningPackagingTasksListener(private val myModule: Module) : PyPackageManagerUI.Listener {
+open class RunningPackagingTasksListener(private val myModule: Module) : PyPackageManagerUI.Listener {
   override fun started() {
     setRunningPackagingTasks(myModule, true)
   }

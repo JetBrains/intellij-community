@@ -47,9 +47,9 @@ internal class SelectableLazyColumnTest {
                 }
             }
             composeRule.awaitIdle()
-            composeRule.onNodeWithTag("Item 20").assertDoesNotExist()
+            composeRule.onNodeWithTag("Item 20", useUnmergedTree = true).assertDoesNotExist()
             scrollState.scrollToItem(20)
-            composeRule.onNodeWithTag("Item 20").assertExists()
+            composeRule.onNodeWithTag("Item 20", useUnmergedTree = true).assertExists()
         }
 
     @OptIn(ExperimentalTestApi::class)
@@ -59,7 +59,7 @@ internal class SelectableLazyColumnTest {
         val state = SelectableLazyListState(LazyListState())
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -69,8 +69,8 @@ internal class SelectableLazyColumnTest {
         }
         composeRule.awaitIdle()
         // select item 5 by click
-        composeRule.onNodeWithTag("Item 5").assertExists()
-        composeRule.onNodeWithTag("Item 5").performClick()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).performClick()
 
         // check that 5th element is selected
         assertEquals(1, state.selectedKeys.size)
@@ -115,7 +115,7 @@ internal class SelectableLazyColumnTest {
         val state = SelectableLazyListState(LazyListState())
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -125,8 +125,8 @@ internal class SelectableLazyColumnTest {
         }
         composeRule.awaitIdle()
         // select item 5 by click
-        composeRule.onNodeWithTag("Item 5").assertExists()
-        composeRule.onNodeWithTag("Item 5").performClick()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).performClick()
 
         // check that 5th element is selected
         assertEquals(1, state.selectedKeys.size)
@@ -147,8 +147,8 @@ internal class SelectableLazyColumnTest {
         }
 
         // select first item by click
-        composeRule.onNodeWithTag("Item 0").assertExists()
-        composeRule.onNodeWithTag("Item 0").performClick()
+        composeRule.onNodeWithTag("Item 0", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 0", useUnmergedTree = true).performClick()
 
         // check that first element is selected
         assertEquals(1, state.selectedKeys.size)
@@ -179,7 +179,7 @@ internal class SelectableLazyColumnTest {
         val state = SelectableLazyListState(LazyListState())
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -189,8 +189,8 @@ internal class SelectableLazyColumnTest {
         }
         composeRule.awaitIdle()
         // select item 5 by click
-        composeRule.onNodeWithTag("Item 5").assertExists()
-        composeRule.onNodeWithTag("Item 5").performClick()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).performClick()
 
         // check that 5th element is selected
         assertEquals(1, state.selectedKeys.size)
@@ -203,8 +203,8 @@ internal class SelectableLazyColumnTest {
         assertEquals(expectedElementsAfterPageUp.toSet(), state.selectedKeys.toSet())
 
         // select item 5 by click
-        composeRule.onNodeWithTag("Item 5").assertExists()
-        composeRule.onNodeWithTag("Item 5").performClick()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).performClick()
 
         // check that 5th element is selected
         assertEquals(1, state.selectedKeys.size)
@@ -226,7 +226,7 @@ internal class SelectableLazyColumnTest {
         composeRule.setContent {
             Box(modifier = Modifier.requiredHeight(300.dp)) {
                 val items = currentItems.value
-                SelectableLazyColumn(state = state, modifier = Modifier.testTag("list")) {
+                SelectableLazyColumn(modifier = Modifier.testTag("list"), state = state) {
                     items(items.size, key = { items[it] }) {
                         val itemText = "Item ${items[it]}"
                         BasicText(itemText, modifier = Modifier.testTag(itemText))
@@ -236,8 +236,8 @@ internal class SelectableLazyColumnTest {
         }
         composeRule.awaitIdle()
         // select item 5 by click
-        composeRule.onNodeWithTag("Item 5").assertExists()
-        composeRule.onNodeWithTag("Item 5").performClick()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 5", useUnmergedTree = true).performClick()
 
         // check that 5th element is selected
         assertEquals(1, state.selectedKeys.size)
@@ -250,8 +250,8 @@ internal class SelectableLazyColumnTest {
         //  https://github.com/JetBrains/jewel/issues/242
         // assertEquals(0, state.selectedKeys.size)
 
-        composeRule.onNodeWithTag("Item 75").assertExists()
-        composeRule.onNodeWithTag("Item 75").performClick()
+        composeRule.onNodeWithTag("Item 75", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag("Item 75", useUnmergedTree = true).performClick()
 
         assertEquals(1, state.selectedKeys.size)
         assertEquals(currentItems.value[5], state.selectedKeys.single())

@@ -32,14 +32,14 @@ public interface ExpressionTest extends ResolveTest, TypingTest {
   @NotNull
   default <T extends PsiMethod> T resolveMethodTest(@NotNull Class<T> clazz) {
     GrMethodCall expression = elementUnderCaret(GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolve(false);
+    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     PsiElement resolved = assertOneElement(results).getElement();
     return assertInstanceOf(resolved, clazz);
   }
 
   default <T extends PsiMethod> T methodCallTest(@Nullable Class<T> clazz, @Nullable String expectedType) {
     GrMethodCall expression = elementUnderCaret(GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolve(false);
+    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     final T resolved;
     if (clazz == null) {
       assertEmpty(results);

@@ -120,11 +120,11 @@ object OperatorToFunctionConverter {
             KtTokens.MULTEQ -> if (functionName == "timesAssign") "$0.timesAssign($1)" else "$0 = $0.times($1)"
             KtTokens.DIVEQ -> if (functionName == "divAssign") "$0.divAssign($1)" else "$0 = $0.div($1)"
             KtTokens.PERCEQ -> {
-                val remSupported = element.languageVersionSettings.supportsFeature(LanguageFeature.OperatorRem)
-                if (remSupported && functionName == "remAssign") "$0.remAssign($1)"
-                else if (functionName == "modAssign") "$0.modAssign($1)"
-                else if (remSupported) "$0 = $0.rem($1)"
-                else "$0 = $0.mod($1)"
+                when (functionName) {
+                  "remAssign" -> "$0.remAssign($1)"
+                  "modAssign" -> "$0.modAssign($1)"
+                  else -> "$0 = $0.rem($1)"
+                }
             }
 
             KtTokens.EQEQ -> if (receiverIsNullable != false) "$0?.equals($1) ?: ($1 == null)" else "$0.equals($1)"

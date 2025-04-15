@@ -1,0 +1,37 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//:src/jvm-args.bzl", "get_jvm_flags")
+
+kt_jvm_library(
+    name = "jvm-builder-test-lib",
+    srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "//:assertj-core",
+        "//src/worker-util",
+        "//src/jvm-builder:jvm-builder-lib",
+    ],
+)
+
+java_binary(
+    name = "jps-builder-test",
+    runtime_deps = [":jvm-builder-test-lib"],
+    main_class = "org.jetbrains.bazel.jvm.worker.test.BuildStateTest",
+    jvm_flags = get_jvm_flags([]),
+)
+
+java_binary(
+    name = "output-jar-test",
+    runtime_deps = [":jvm-builder-test-lib"],
+    main_class = "org.jetbrains.bazel.jvm.worker.test.TestOutputJar",
+)
+
+java_binary(
+    name = "test-worker",
+    runtime_deps = [":jvm-builder-test-lib"],
+    main_class = "org.jetbrains.bazel.jvm.worker.test.TestJpsBuildWorker",
+    jvm_flags = get_jvm_flags([
+        "-Djps.use.experimental.storage=true",
+    ]),
+)

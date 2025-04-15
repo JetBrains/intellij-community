@@ -24,7 +24,7 @@ internal class CompositeMarker(
       val startOffset = getStartOffset() - builder.startOffset
       val endOffset = getEndOffset() - builder.startOffset
       val text = originalText.subSequence(startOffset, endOffset)
-      assert(text.length == endOffset - startOffset)
+      check(text.length == endOffset - startOffset)
       return text
     }
 
@@ -42,7 +42,7 @@ internal class CompositeMarker(
   override fun getEndTokenIndex(): Int = endIndex
 
   override fun getErrorMessage(): String? =
-    if (getNodeType() == SyntaxTokenTypes.ERROR_ELEMENT) builder.myOptionalData.getDoneError(markerId) else null
+    if (getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) builder.myOptionalData.getDoneError(markerId) else null
 
   override fun getNodeType(): SyntaxElementType =
     type

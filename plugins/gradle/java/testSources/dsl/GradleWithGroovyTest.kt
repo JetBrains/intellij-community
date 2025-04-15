@@ -24,7 +24,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
       @Suppress("SpellCheckingInspection")
       testBuildscript(decorator, "<caret>allprojects {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
-        val element = assertOneElement(call.multiResolve(false)).element
+        val element = assertOneElement(call.multiResolveGroovy(false)).element
         val method = assertInstanceOf<PsiMethod>(element)
         assertEquals(GRADLE_API_PROJECT, method.containingClass!!.qualifiedName)
         assertTrue(method.parameterList.parameters.first().type.equalsToText(GROOVY_LANG_CLOSURE))
@@ -38,7 +38,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>configurations.all {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
-        val element = assertOneElement(call.multiResolve(false)).element
+        val element = assertOneElement(call.multiResolveGroovy(false)).element
         val method = assertInstanceOf<PsiMethod>(element)
         assertEquals(GRADLE_API_DOMAIN_OBJECT_COLLECTION, method.containingClass!!.qualifiedName)
         assertTrue(method.parameterList.parameters.first().type.equalsToText(GROOVY_LANG_CLOSURE))
@@ -52,7 +52,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>plugins.withType(JavaPlugin) {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
-        val element = assertOneElement(call.multiResolve(false)).element
+        val element = assertOneElement(call.multiResolveGroovy(false)).element
         val method = assertInstanceOf<PsiMethod>(element)
         assertEquals(GRADLE_API_DOMAIN_OBJECT_COLLECTION, method.containingClass!!.qualifiedName)
         assertTrue(method.parameterList.parameters.last().type.equalsToText(GROOVY_LANG_CLOSURE))

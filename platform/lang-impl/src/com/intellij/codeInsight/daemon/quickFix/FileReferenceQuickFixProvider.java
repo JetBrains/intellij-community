@@ -2,7 +2,7 @@
 
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileModCommand;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -66,7 +66,7 @@ public final class FileReferenceQuickFixProvider {
         String existingElementName = ((PsiNamedElement)psiElement).getName();
 
         RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
-        RenameFileFix renameFileFix = new RenameFileFix(newFileName);
+        LocalQuickFix renameFileFix = LocalQuickFix.from(new RenameFileModCommand(newFileName));
         return Arrays.asList(renameRefAction, renameFileFix);
       }
     }

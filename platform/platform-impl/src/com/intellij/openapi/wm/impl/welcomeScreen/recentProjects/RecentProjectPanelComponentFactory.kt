@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.WelcomeScreenCloneCollector
@@ -16,14 +17,21 @@ import com.intellij.util.containers.JBTreeTraverser
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreeNode
+import java.awt.Color
 
-internal object RecentProjectPanelComponentFactory {
+@ApiStatus.Internal
+object RecentProjectPanelComponentFactory {
   private const val UPDATE_INTERVAL = 50 // 50ms -- 20 frames per second
 
   @JvmStatic
-  fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>): RecentProjectFilteringTree {
-    val tree = Tree()
+  fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>,
+                      treeBackground: Color? = WelcomeScreenUIManager.getProjectsBackground()
+  ): RecentProjectFilteringTree {
+    val tree = Tree().apply {
+      background = treeBackground
+    }
     val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
       expandGroups()

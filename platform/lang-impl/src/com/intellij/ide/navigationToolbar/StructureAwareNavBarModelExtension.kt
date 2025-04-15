@@ -11,7 +11,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Key
@@ -29,10 +29,10 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   private var currentFileStructure: SoftReference<StructureViewModel>? = null
   private var currentFileModCount = -1L
 
-  override fun getLeafElement(dataContext: DataContext): PsiElement? {
+  override fun getLeafElement(dataProvider: DataMap): PsiElement? {
     if (UISettings.getInstance().showMembersInNavigationBar) {
-      val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
-      val editor = CommonDataKeys.EDITOR.getData(dataContext)
+      val psiFile = dataProvider[CommonDataKeys.PSI_FILE]
+      val editor = dataProvider[CommonDataKeys.EDITOR]
       if (editor == null
           || psiFile == null
           || !psiFile.isValid
@@ -46,7 +46,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
             return (model.currentEditorElement as? PsiElement)?.originalElement
           }
         }
-        catch (ignored: IndexNotReadyException) {
+        catch (_: IndexNotReadyException) {
         }
       }
     }

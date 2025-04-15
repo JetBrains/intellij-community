@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import java.util.function.Supplier
 
 class GithubViewPullRequestsAction :
@@ -23,11 +23,11 @@ class GithubViewPullRequestsAction :
 
   private fun isEnabledAndVisible(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
-    return project.service<GHPRToolWindowViewModel>().isAvailable.value
+    return project.service<GHPRProjectViewModel>().isAvailable.value
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
+    e.project!!.service<GHPRProjectViewModel>().activateAndAwaitProject {
       viewList()
     }
   }

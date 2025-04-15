@@ -2,7 +2,6 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.find.FindManager
 import com.intellij.find.impl.TextSearchContributor
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper
@@ -11,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.usages.impl.ScopeRuleValidator
 
 internal class SearchEverywhereStateFeaturesProvider {
@@ -43,7 +43,7 @@ internal class SearchEverywhereStateFeaturesProvider {
     }
   }
 
-  fun getSearchStateFeatures(project: Project?, tabId: String, query: String,
+  fun getSearchStateFeatures(project: Project?, tab: SearchEverywhereTab, query: String,
                              searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean): List<EventPair<*>> {
     val features = arrayListOf<EventPair<*>>(
       QUERY_LENGTH_DATA_KEY.with(query.length),
@@ -60,15 +60,15 @@ internal class SearchEverywhereStateFeaturesProvider {
       features.add(IS_DUMB_MODE.with(isDumb))
     }
 
-    if (hasSuitableContributor(tabId, FileSearchEverywhereContributor::class.java.simpleName)) features.addAll(getFileQueryFeatures(query))
-    if (hasSuitableContributor(tabId, SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)) features.addAll(getAllTabQueryFeatures(query))
+    if (hasSuitableContributor(tab, SearchEverywhereTab.Files)) features.addAll(getFileQueryFeatures(query))
+    if (hasSuitableContributor(tab, SearchEverywhereTab.All)) features.addAll(getAllTabQueryFeatures(query))
 
     searchScope?.displayName?.let { searchScopeDisplayName ->
       val scopeId = ScopeIdMapper.instance.getScopeSerializationId(searchScopeDisplayName)
       features.add(SEARCH_SCOPE_DATA_KEY.with(scopeId))
     }
 
-    if (project != null && isTabWithTextContributor(tabId)) {
+    if (project != null && isTabWithTextContributor(tab)) {
       features.addAll(getTextContributorFeatures(project))
     }
 
@@ -91,11 +91,11 @@ internal class SearchEverywhereStateFeaturesProvider {
     )
   }
 
-  private fun hasSuitableContributor(currentTabId: String, featuresTab: String): Boolean {
-    return currentTabId == featuresTab || currentTabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+  private fun hasSuitableContributor(currentTab: SearchEverywhereTab, featuresTab: SearchEverywhereTab): Boolean {
+    return currentTab == featuresTab || currentTab == SearchEverywhereTab.All
   }
 
-  private fun isTabWithTextContributor(tabId: String) = when(tabId) {
+  private fun isTabWithTextContributor(tab: SearchEverywhereTab) = when(tab.tabId) {
     TextSearchContributor::class.java.simpleName -> true
     SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID -> true
     else -> false

@@ -148,7 +148,7 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
         true -> (start + i).let { if (it > range.last) it - size else it }
         else -> (start - i).let { if (it < range.first) it + size else it }
       }
-      if (model.getElementAt(index)?.rpcModel?.hasProblems == true) return index
+      if (model.getElementAt(index)?.hasProblems == true) return index
     }
     return null
   }

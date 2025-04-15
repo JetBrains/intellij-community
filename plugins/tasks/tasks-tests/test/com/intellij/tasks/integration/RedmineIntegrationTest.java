@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class RedmineIntegrationTest extends TaskManagerTestCase {
   private static final String REDMINE_2_0_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8072";
-  private static final String API_ACCESS_KEY = "b60d03b2449869ee1a4ba331011a32e50475f820";
+  private static final String API_ACCESS_KEY = System.getProperty("tasks.tests.redmine.api.access.key");
 
   private RedmineRepository myRepository;
 

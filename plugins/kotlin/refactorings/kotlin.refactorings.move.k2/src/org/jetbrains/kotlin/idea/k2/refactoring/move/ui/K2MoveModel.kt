@@ -9,23 +9,30 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.getPackage
+import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor.Declarations
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel.Declarations.MoveTargetType
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -176,56 +183,93 @@ sealed class K2MoveModel {
         }
     }
 
-    internal fun isValidDeclarationsRefactoring(source: K2MoveSourceModel.ElementSource, target: K2MoveTargetModel.File): Boolean {
-        fun KtFile.isTargetFile(): Boolean {
-            return containingDirectory == target.directory
-                    && packageFqName == target.pkgName
-                    && name == target.fileName
-        }
-        if (!target.fileName.isValidKotlinFile()) return false
-        val files = source.elements.map { it.containingFile }
-        return files.size != 1 || !(files.single() as KtFile).isTargetFile()
-    }
-
     /**
      * @see K2MoveDescriptor.Declarations
      */
     open class Declarations(
         override val project: Project,
         override val source: K2MoveSourceModel.ElementSource,
-        override val target: K2MoveTargetModel.File,
+        override val target: K2MoveTargetModel,
         override val inSourceRoot: Boolean,
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
+        private fun isValidFileRefactoring(fileName: String): Boolean {
+            fun KtFile.isTargetFile(): Boolean {
+                return containingDirectory == target.directory
+                        && packageFqName == target.pkgName
+                        && name == fileName
+            }
+            if (!fileName.isValidKotlinFile()) return false
+            val files = source.elements.map { it.containingFile }
+            return files.size != 1 || !(files.single() as KtFile).isTargetFile()
+        }
+
+        private fun K2MoveTargetModel.Declarations.isValidRefactoring(): Boolean {
+            return if (destinationTargetType == MoveTargetType.FILE) {
+                isValidFileRefactoring(fileName)
+            } else {
+                val destinationClass = destinationClass ?: return false
+                // Cannot allow moving the class into itself
+                destinationClass.parentsWithSelf.none { it in source.elements }
+            }
+        }
+
+        internal fun isValidDeclarationsRefactoring(): Boolean {
+            val target = target
+            return when (target) {
+                is K2MoveTargetModel.Declarations -> target.isValidRefactoring()
+                is K2MoveTargetModel.File -> isValidFileRefactoring(target.fileName)
+                else -> false
+            }
+        }
 
         override fun isValidRefactoring(): Boolean {
-            return super.isValidRefactoring() && isValidDeclarationsRefactoring(source, target)
+            return super.isValidRefactoring() && isValidDeclarationsRefactoring()
         }
 
         override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
-            return K2MoveOperationDescriptor.Declarations(
-                project = project,
-                declarations = source.elements,
-                baseDir = target.directory,
-                fileName = target.fileName,
-                pkgName = target.pkgName,
-                searchForText = searchForText.state,
-                searchReferences = if (inSourceRoot) searchReferences.state else false,
-                searchInComments = searchInComments.state,
-                mppDeclarations = mppDeclarations.state,
-                dirStructureMatchesPkg = true,
-                moveCallBack = moveCallBack
-            )
+            val declarations = source.elements
+            val searchForReferences = if (inSourceRoot) searchReferences.state else false
+            val searchForText = searchForText.state
+            val searchInComments = searchInComments.state
+            if (mppDeclarations.state && declarations.any { it.isExpectDeclaration() || it.hasActualModifier() }) {
+                val descriptors = declarations.flatMap { elem ->
+                    ExpectActualUtils.withExpectedActuals(elem).filterIsInstance<KtNamedDeclaration>()
+                }.groupBy { elem ->
+                    ProjectFileIndex.getInstance(project).getSourceRootForFile(elem.containingFile.virtualFile)?.toPsiDirectory(project)
+                }.mapNotNull { (baseDir, elements) ->
+                    if (baseDir == null) return@mapNotNull null
+                    val srcDescriptor = K2MoveSourceDescriptor.ElementSource(elements)
+                    val targetDescriptor = target.toDescriptor() as K2MoveTargetDescriptor.Declaration<*>
+                    K2MoveDescriptor.Declarations(project, srcDescriptor, targetDescriptor)
+                }
+                return Declarations(
+                    project = project,
+                    moveDescriptors = descriptors,
+                    searchForText = searchForText,
+                    searchInComments = searchForReferences,
+                    searchReferences = searchInComments,
+                    dirStructureMatchesPkg = true,
+                    moveCallBack = moveCallBack
+                )
+            } else {
+                val srcDescr = K2MoveSourceDescriptor.ElementSource(declarations)
+                val targetDescr = target.toDescriptor() as K2MoveTargetDescriptor.Declaration<*>
+                val moveDescriptor = K2MoveDescriptor.Declarations(project, srcDescr, targetDescr)
+                return Declarations(
+                    project = project,
+                    moveDescriptors = listOf(moveDescriptor),
+                    searchForText = searchForText,
+                    searchInComments = searchInComments,
+                    searchReferences = searchForReferences,
+                    dirStructureMatchesPkg = true,
+                    moveCallBack = moveCallBack
+                )
+            }
         }
     }
 
     companion object {
-        private val MOVE_DECLARATIONS: String
-            @Nls
-            get() = KotlinBundle.message("text.move.declarations")
-
-        private fun List<PsiElement>.fileElements() = map { if (it is PsiDirectory) it else it.containingFile }
-
         fun create(
             elements: Array<out PsiElement>,
             targetContainer: PsiElement?,
@@ -244,62 +288,13 @@ sealed class K2MoveModel {
                 }
             }
 
-            fun inSourceRoot(declarations: List<PsiElement>): Boolean {
-                val fileIndex = ProjectFileIndex.getInstance(project)
-                if (declarations.fileElements().toSet().any { !fileIndex.isInSourceContent(it.virtualFile) }) return false
-                if (targetContainer == null || targetContainer is PsiDirectory) return true
-                val targetFile = targetContainer.containingFile?.virtualFile ?: return false
-                return fileIndex.isInSourceContent(targetFile)
-            }
-
-            fun isSingleFileMove(movedElements: List<PsiElement>) = movedElements.all { it is KtNamedDeclaration }
-                    || movedElements.singleOrNull() is KtFile
-
-            fun isMultiFileMove(movedElements: List<PsiElement>) = movedElements.fileElements().toSet().size > 1
-
-            fun PsiElement?.isSingleClassContainer(): Boolean {
-                if (this !is KtClassOrObject) return false
-                val file = parent as? KtFile ?: return false
-                return this == file.declarations.singleOrNull()
-            }
-
             if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), true)) return null
 
-            if (elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
-                val singleElementToMove = elementsToMove.singleOrNull()
-                if (singleElementToMove == null) {
-                    val message = RefactoringBundle.getCannotRefactorMessage(
-                        KotlinBundle.message("text.move.declaration.only.support.for.single.elements")
-                    )
-                    CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
-                    return null
-                } else if (singleElementToMove !is KtClassOrObject && singleElementToMove !is KtNamedFunction && singleElementToMove !is KtProperty) {
-                    val message = RefactoringBundle.getCannotRefactorMessage(
-                        KotlinBundle.message("text.move.declaration.only.support.for.some.nested.declarations")
-                    )
-                    CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
+            for (moveCheck in k2MoveModelChecks) {
+                if (!moveCheck.isMoveAllowed(elementsToMove, targetContainer)) {
+                    moveCheck.showErrorHint(project, editor)
                     return null
                 }
-            }
-
-            if (elementsToMove.any { it is KtEnumEntry }) {
-                val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.no.support.for.enums"))
-                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
-                return null
-            }
-
-            if (isMultiFileMove(elementsToMove) && targetContainer != null && targetContainer !is PsiDirectory) {
-                val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.file.no.support.for.file.target"))
-                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
-                return null
-            }
-
-            if (isMultiFileMove(elementsToMove) && elementsToMove.any { it is KtNamedDeclaration && !it.isSingleClassContainer() }) {
-                val message = RefactoringBundle.getCannotRefactorMessage(
-                    KotlinBundle.message("text.move.declaration.no.support.for.multi.file")
-                )
-                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
-                return null
             }
 
             val declarationsFromFiles = elementsToMove.flatMap { elem ->
@@ -310,23 +305,14 @@ sealed class K2MoveModel {
                 }
             }
 
-            fun sourceFileName(): String {
-                val firstElem = elementsToMove.firstOrNull() as KtElement
-                return when (firstElem) {
-                    is KtFile -> firstElem.name
-                    is KtNamedDeclaration -> "${firstElem.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"
-                    else -> error("Element to move should be a file or declaration")
-                }
-            }
-
-            val inSourceRoot = inSourceRoot(elementsToMove)
+            val inSourceRoot = isInSourceRoot(project, elementsToMove, targetContainer)
             return when {
                 (elementsToMove.all { it is KtFile } && targetContainer is PsiDirectory)
                         || isMultiFileMove(elementsToMove)
                         || declarationsFromFiles.isEmpty()
                         || (targetContainer is PsiDirectory && targetContainer.getPackage() == null) -> {
                     // this move can contain foreign language files
-                    val source = K2MoveSourceModel.FileSource(elementsToMove.fileElements().toSet())
+                    val source = K2MoveSourceModel.FileSource(elementsToMove.toFileElements().toSet())
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.SourceDirectory(pkg, targetContainer)
@@ -347,12 +333,16 @@ sealed class K2MoveModel {
                         K2MoveTargetModel.File(targetFile)
                     } else if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
-                        K2MoveTargetModel.File(sourceFileName(), pkg, targetContainer)
+                        K2MoveTargetModel.File(findSourceFileNameByMovedElements(elementsToMove), pkg, targetContainer)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val firstElem = elementsToMove.firstOrNull() as KtElement
                         val containingFile = firstElem.containingKtFile
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
-                        K2MoveTargetModel.File(sourceFileName(), containingFile.packageFqName, psiDirectory)
+                        K2MoveTargetModel.Declarations(
+                            defaultDirectory = psiDirectory,
+                            defaultPkgName = containingFile.packageFqName,
+                            defaultFileName = findSourceFileNameByMovedElements(elementsToMove)
+                        )
                     }
 
                     Declarations(

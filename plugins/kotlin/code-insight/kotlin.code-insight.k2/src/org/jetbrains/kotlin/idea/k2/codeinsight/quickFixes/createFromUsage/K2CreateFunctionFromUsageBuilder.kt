@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -125,7 +126,7 @@ object K2CreateFunctionFromUsageBuilder {
                 isAbstractClassOrInterface = false,
                 isForCompanion = shouldCreateCompanionClass,
             )
-            if (!hasExtensionFunction(containerClassForExtension, request.methodName)) {
+            if (explicitReceiverType !is KaErrorType && !hasExtensionFunction(containerClassForExtension, request.methodName)) {
                 requests.add(jvmClassWrapper to request)
             }
         }

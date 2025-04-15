@@ -28,7 +28,12 @@ import java.util.function.Predicate;
 
 /**
  * Provides utility methods for navigating, locating and collecting PSI elements.
- *
+ * <p>
+ * The naming scheme of methods in this class <b>does not</b> consistently follow the established convention of:
+ * <ul>
+ * <li> <i>children</i> being only the direct descendants of the current node
+ * <li> <i>parent</i> being only the direct ancestor of the current node
+ * </ul>
  * @see SyntaxTraverser
  */
 @ApiStatus.NonExtendable
@@ -45,7 +50,7 @@ public class PsiTreeUtil {
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is {@code null}.
    * @param element  child candidate
    * @param strict   whether to start search from the element ({@code true}) or from the element's parent ({@code false}).
-   * @return {@code true} if the element has ancestor as its parent somewhere in the hierarchy, {@code false} otherwise.
+   * @return {@code true} if {@code element} has {@code ancestor} as its ancestor somewhere in the hierarchy, {@code false} otherwise.
    */
   @Contract(value = "null, _, _ -> false", pure = true)
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
@@ -91,6 +96,9 @@ public class PsiTreeUtil {
     }
   }
 
+  /**
+   * @return the common ancestor of all provided {@code elements}, or {@code null} if there is no common ancestor.
+   */
   public static @Nullable PsiElement findCommonParent(@NotNull List<? extends @Nullable PsiElement> elements) {
     if (elements.isEmpty()) return null;
 
@@ -107,6 +115,9 @@ public class PsiTreeUtil {
     return elements.length == 0 ? null : findCommonParent(Arrays.asList(elements));
   }
 
+  /**
+   * @return common ancestor of {@code element1} and {@code element2}, or {@code null} if there is no common ancestor.
+   */
   public static @Nullable PsiElement findCommonParent(@NotNull PsiElement element1, @NotNull PsiElement element2) {
     // optimization
     if (element1 == element2) return element1;
@@ -193,23 +204,33 @@ public class PsiTreeUtil {
     return depth;
   }
 
-  /** See {@link #findChildOfType(PsiElement, Class, boolean, Class)}. */
+  /**
+   * Recursive (depth-first) search for the first element of class {@code aClass} among {@code element}'s descendants.
+   * <p>
+   * The {@code element} itself is not included in the search.
+   * @see #findChildOfType(PsiElement, Class, boolean, Class)
+   */
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T findChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     return findChildOfType(element, aClass, true, null);
   }
 
-  /** See {@link #findChildOfType(PsiElement, Class, boolean, Class)}. */
+  /**
+   * Recursive (depth-first) search for the first element of class {@code aClass} among {@code element}'s descendants.
+   *
+   * @param strict if {@code true} then the {@code element} itself is not included in the search
+   * @see #findChildOfType(PsiElement, Class, boolean, Class)
+   */
   @Contract("null, _, _ -> null")
   public static @Nullable <T extends PsiElement> T findChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, boolean strict) {
     return findChildOfType(element, aClass, strict, null);
   }
 
   /**
-   * Recursive (depth first) search for the first element of a given class.
+   * Recursive (depth-first) search for the first element of a given class {@code aClass} among {@code element}'s descendants.
    *
    * @param element a PSI element to start search from
-   * @param strict  if {@code false} {@code element} is also included in the search
+   * @param strict  if {@code true} then the {@code element} itself is not included in the search
    * @param aClass  element type to search for
    * @param stopAt  element type to abort the search at
    * @param <T>     type to cast the found element to
@@ -234,7 +255,13 @@ public class PsiTreeUtil {
     return aClass.cast(processor.getFoundElement());
   }
 
-  /** See {@link #findChildOfAnyType(PsiElement, boolean, Class[])}. */
+  /**
+   * Recursive (depth-first) search for the first element that is an instance of any of {@code classes}.
+   *
+   * @param element a PSI element to start search from. It is not included in the search.
+   * @param classes element types to search for.
+   * @see #findChildOfAnyType(PsiElement, boolean, Class[])
+   */
   @SafeVarargs
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T findChildOfAnyType(@Nullable PsiElement element,
@@ -243,10 +270,10 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Recursive (depth-first) search for the first element of given {@code classes}.
+   * Recursive (depth-first) search for the first element that is an instance of any of {@code classes}.
    *
    * @param element a PSI element to start search from.
-   * @param strict  if {@code false} {@code element} is also included in the search.
+   * @param strict  if {@code true} then the {@code element} itself is not included in the search.
    * @param classes element types to search for.
    * @param <T>     type to cast the found element to.
    * @return first found element, or {@code null} if nothing found.
@@ -274,12 +301,27 @@ public class PsiTreeUtil {
     return (T)processor.getFoundElement();
   }
 
-  /** See {@link #findChildrenOfAnyType(PsiElement, boolean, Class[])}. */
+  /**
+   * Recursive (depth-first) search for all descendant elements that are an instance of {@code aClass}.
+   *
+   * @param element a PSI element to start search from. It is not included in the search.
+   * @param <T>     type to cast found elements to.
+   * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
+   * @see #findChildrenOfAnyType(PsiElement, Class[])
+  */
   public static @Unmodifiable @NotNull <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     return findChildrenOfAnyType(element, true, aClass);
   }
 
-  /** See {@link #findChildrenOfAnyType(PsiElement, boolean, Class[])}. */
+  /**
+   * Recursive (depth-first) search for all descendant elements that are an instance of any of {@code classes}.
+   *
+   * @param element a PSI element to start search from. It is not included in the search.
+   * @param classes element types to search for.
+   * @param <T>     type to cast found elements to.
+   * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
+   * @see #findChildrenOfAnyType(PsiElement, boolean, Class[])
+  */
   @SafeVarargs
   public static @Unmodifiable @NotNull <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable PsiElement element,
                                                                                     @NotNull Class<? extends T> @NotNull ... classes) {
@@ -287,10 +329,10 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Recursive (depth first) search for all elements of given {@code classes}.
+   * Recursive (depth-first) search for all descendant elements that are an instance of any of {@code classes}.
    *
    * @param element a PSI element to start search from.
-   * @param strict  if {@code false} {@code element} is also included in the search.
+   * @param strict  if {@code true} then the {@code element} itself is not included in the search.
    * @param classes element types to search for.
    * @param <T>     type to cast found elements to.
    * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
@@ -317,7 +359,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Non-recursive search for an element of type {@link T} amongst given {@code element} children.
+   * Non-recursive search for the first element of type {@link T} among {@code element}'s children.
    * <p>
    * If stubs are available, consider using {@link #getStubChildOfType(PsiElement, Class)} instead for improved performance.
    * </p>
@@ -340,10 +382,24 @@ public class PsiTreeUtil {
     return null;
   }
 
+  /**
+   * @param element the starting element from which to begin the search upwards. It is included in the search.
+   * @param condition determines whether an ancestor element satisfies the search criteria.
+   * @return the first ancestor of {@code element} that satisfies {@code condition}, or null if no such ancestor exists.
+   * @see #findFirstParent(PsiElement, boolean, Condition)
+   */
+  @Contract("null, _ -> null")
   public static @Nullable PsiElement findFirstParent(@Nullable PsiElement element, @NotNull Condition<? super PsiElement> condition) {
     return findFirstParent(element, false, condition);
   }
 
+  /**
+   * @param element the starting element to search from.
+   * @param strict  if true, then the {@code element} itself is excluded from the search and search starts from its parent instead.
+   * @param condition determines whether an ancestor element satisfies the search criteria.
+   * @return the first ancestor of {@code element} that satisfies {@code condition}, or null if no such ancestor exists.
+   */
+  @Contract("null, _, _ -> null")
   public static @Nullable PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, @NotNull Condition<? super PsiElement> condition) {
     if (strict && element != null) {
       element = element.getParent();
@@ -465,6 +521,9 @@ public class PsiTreeUtil {
     return result;
   }
 
+  /**
+   * Returns true if the given {@code object} is an instance of any of the specified {@code classes}.
+   */
   public static boolean instanceOf(Object object, @NotNull Class<?> @NotNull ... classes) {
     if (object != null) {
       for (Class<?> c : classes) {
@@ -715,7 +774,7 @@ public class PsiTreeUtil {
    * Finds the closest next sibling, skipping elements of supplied types.
    * @param element element to start search from
    * @param elementClasses element types to skip
-   * @return found next sibling; null if not found.
+   * @return the found next sibling; null if not found.
    */
   @SafeVarargs
   @Contract("null, _ -> null")
@@ -733,7 +792,7 @@ public class PsiTreeUtil {
   /**
    * Finds the closest next sibling, ignoring {@linkplain PsiWhiteSpace white spaces}.
    * @param element element to start search from
-   * @return found next sibling; null if not found.
+   * @return the found next sibling; null if not found.
    */
   @Contract("null -> null")
   public static @Nullable PsiElement skipWhitespacesForward(@Nullable PsiElement element) {
@@ -743,7 +802,7 @@ public class PsiTreeUtil {
   /**
    * Finds the closest next sibling, ignoring {@linkplain PsiWhiteSpace white spaces} and {@linkplain PsiComment comments}.
    * @param element element to start search from
-   * @return found next sibling; null if not found.
+   * @return the found next sibling; null if not found.
    */
   @Contract("null -> null")
   public static @Nullable PsiElement skipWhitespacesAndCommentsForward(@Nullable PsiElement element) {
@@ -813,7 +872,7 @@ public class PsiTreeUtil {
    * Finds the closest element, skipping elements matching the given predicate.
    *
    * @param element   element to start search from
-   * @param next      a function to obtain the next element
+   * @param next      a function to get the next element
    * @param condition a predicate to test whether the element should be skipped
    */
   @Contract("null, _, _ -> null")
@@ -831,7 +890,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Finds the closest parent that is an instance of one of the supplied classes. Traversal stops at {@link PsiFile} level.
+   * Finds the closest ancestor that is an instance of one of the supplied {@code classes}. Traversal stops at {@link PsiFile} level.
    *
    * @param element element to start traversal from
    * @param classes wanted element types
@@ -900,7 +959,7 @@ public class PsiTreeUtil {
    * @param elementClass the class of elements to process. All other elements are skipped.
    * @param processor processor to consume elements
    * @param <T> type of elements to process
-   * @return {@code true} if processing was not cancelled ({@code Processor.execute()} method returned {@code true} for all elements).
+   * @return {@code true} if processing was not canceled ({@code Processor.execute()} method returned {@code true} for all elements).
    */
   @Contract("null, _, _ -> true")
   public static <T extends PsiElement> boolean processElements(@Nullable PsiElement element,
@@ -917,14 +976,14 @@ public class PsiTreeUtil {
    *
    * @param element root element to process
    * @param processor processor to consume elements
-   * @return {@code true} if processing was not cancelled ({@code Processor.execute()} method returned {@code true} for all elements).
+   * @return {@code true} if processing was not canceled ({@code Processor.execute()} method returned {@code true} for all elements).
    */
   @Contract("null, _ -> true")
   public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor<? super PsiElement> processor) {
     if (element == null) return true;
 
     if (element instanceof PsiCompiledElement || !element.isPhysical()) {
-      // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
+      // DummyHolders cannot be visited by walking visitors because the children / parent relationship is broken there
       if (!processor.execute(element)) return false;
       for (PsiElement child : element.getChildren()) {
         if (!processElements(child, processor)) return false;
@@ -1144,7 +1203,7 @@ public class PsiTreeUtil {
 
   /**
    * @param element element to start the search from
-   * @param skipEmptyElements if true, empty elements (of zero length) will be skipped.
+   * @param skipEmptyElements if true, elements whose text is empty are skipped.
    * @return the previous leaf element within the current file (skipping empty elements if skipEmptyElements is true);
    * null if there's no such an element
    * @see #prevLeaf(PsiElement)
@@ -1179,7 +1238,7 @@ public class PsiTreeUtil {
 
   /**
    * @return closest leaf (not necessarily a sibling) before the given element
-   * which has non-empty range and is neither a whitespace nor a comment
+   * which has a non-empty range and is neither a whitespace nor a comment
    */
   public static @Nullable PsiElement prevCodeLeaf(@NotNull PsiElement element) {
     PsiElement prevLeaf = prevLeaf(element, true);
@@ -1189,7 +1248,7 @@ public class PsiTreeUtil {
 
   /**
    * @return closest leaf (not necessarily a sibling) after the given element
-   * which has non-empty range and is neither a whitespace nor a comment
+   * which has a non-empty range and is neither a whitespace nor a comment
    */
   public static @Nullable PsiElement nextCodeLeaf(@NotNull PsiElement element) {
     PsiElement nextLeaf = nextLeaf(element, true);
@@ -1203,7 +1262,7 @@ public class PsiTreeUtil {
 
   /**
    * @param element element to start the search from
-   * @param skipEmptyElements if true, empty elements (of zero length) will be skipped.
+   * @param skipEmptyElements if true, elements whose text is empty are skipped.
    * @return the next leaf element within the current file (skipping empty elements if skipEmptyElements is true);
    * null if there's no such an element
    * @see #nextLeaf(PsiElement)

@@ -1,13 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.history.ActivityId
 import com.intellij.history.LocalHistory
 import com.intellij.history.integration.IntegrationTestCase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 
 class LocalHistoryActivityProviderTest : IntegrationTestCase() {
+  override fun setUp() {
+    super.setUp()
+
+    Registry.get("lvcs.show.system.labels.in.activity.view").setValue(false, testRootDisposable)
+  }
+
   fun `test single file`() {
     val file = createFile("file.txt")
     val otherFile = createFile("other.txt")

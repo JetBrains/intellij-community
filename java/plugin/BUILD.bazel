@@ -14,7 +14,6 @@ java_library(
   runtime_deps = [
     ":plugin_resources",
     "//java/compiler/impl:java-compiler-impl",
-    "//java/compiler/charts:java-compiler-charts",
     "//java/debugger/impl:java-debugger-impl",
     "//java/debugger/shared:java-debugger-impl-shared",
     "//java/debugger/frontend:java-debugger-impl-frontend",
@@ -37,6 +36,7 @@ java_library(
     "//plugins/IntelliLang/java-support:java-langInjection",
     "//java/performancePlugin",
     "//java/vcs",
+    "//java/java-syntax:syntax",
   ]
 )
 ### auto-generated section `build intellij.java.plugin` end

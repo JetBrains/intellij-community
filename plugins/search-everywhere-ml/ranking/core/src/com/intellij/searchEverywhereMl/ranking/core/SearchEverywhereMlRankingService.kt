@@ -1,19 +1,27 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SEListSelectionTracker
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorContributor
+import com.intellij.ide.actions.searcheverywhere.SearchListModel
+import com.intellij.ide.actions.searcheverywhere.SearchListener
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.RANKING_EP_NAME
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
+import com.intellij.searchEverywhereMl.isTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider.Companion.BUFFERED_TIMESTAMP
-import com.intellij.searchEverywhereMl.settings.SearchEverywhereMlSettings
 import com.intellij.ui.components.JBList
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -27,24 +35,9 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
-  internal val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
-
-
   override fun isEnabled(): Boolean {
-    val settings = service<SearchEverywhereMlSettings>()
-    return settings.isSortingByMlEnabledInAnyTab() || experiment.isAllowed
-  }
-
-  internal fun shouldUseExperimentalModel(tab: SearchEverywhereTabWithMlRanking): Boolean {
-    return when (experiment.getExperimentForTab(tab)) {
-      SearchEverywhereMlExperiment.ExperimentType.ENABLE_SEMANTIC_SEARCH -> {
-        tab == SearchEverywhereTabWithMlRanking.ACTION ||
-        tab == SearchEverywhereTabWithMlRanking.FILES ||
-        tab == SearchEverywhereTabWithMlRanking.CLASSES && PlatformUtils.isPyCharm() && PlatformUtils.isIntelliJ()
-      }
-      SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL -> true
-      else -> false
-    }
+    return SearchEverywhereTab.allTabs.any { it.isTabWithMlRanking() && it.isMlRankingEnabled }
+           || SearchEverywhereMlExperiment.isAllowed
   }
 
 
@@ -58,7 +51,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
     if (isEnabled()) {
       activeSession.updateAndGet {
-        SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet(), FeaturesLoggingRandomisation())
+        SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet())
       }
     }
   }
@@ -72,11 +65,6 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
-
-    val tab = SearchEverywhereTabWithMlRanking.findById(state.tabId)
-    if (tab != null && experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES) {
-      return foundElementInfoWithoutMl
-    }
 
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo)
@@ -94,7 +82,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     // Don't calculate ML weight for typo fix, as otherwise it will affect the ranking priority, which is meant to be Int.MAX_VALUE
     if (contributor is SearchEverywhereSpellingCorrectorContributor) return false
     // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
-    if (searchState.tabId == ActionSearchEverywhereContributor::class.simpleName && searchState.searchQuery.isEmpty()) return false
+    if (searchState.tab == SearchEverywhereTab.Actions && searchState.searchQuery.isEmpty()) return false
     // Do not calculate machine learning weight for semantic items until the ranking models know how to treat them
     if ((contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(element) == true) return false
 
@@ -114,37 +102,34 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
     val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
-      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider),
+      project, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider),
       searchScope, isSearchEverywhere
     )
   }
 
   private fun shouldOrderByMlInTab(tabId: String, searchQuery: String): Boolean {
-    val tab = SearchEverywhereTabWithMlRanking.findById(tabId) ?: return false // Tab does not support ML ordering
-    val settings = service<SearchEverywhereMlSettings>()
+    val tab = SearchEverywhereTab.findById(tabId) ?: return false // Tab does not support ML ordering
 
-    if (tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID && searchQuery.isEmpty()) return false
+    if (!tab.isTabWithMlRanking()) {
+      return false
+    }
 
-    if (settings.isSortingByMlEnabledByDefault(tab)) {
-      return settings.isSortingByMlEnabled(tab)
-             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML
-             && experiment.getExperimentForTab(tab) != SearchEverywhereMlExperiment.ExperimentType.NO_ML_FEATURES
+    if (tab == SearchEverywhereTab.All && searchQuery.isEmpty()) {
+      return false
     }
-    else {
-      return settings.isSortingByMlEnabled(tab)
-             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
-    }
+
+    return tab.isMlRankingEnabled
   }
 
   override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                               closePopup: Boolean,
                               query: String) {
-    getCurrentSession()?.onItemSelected(project, experiment, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
+    getCurrentSession()?.onItemSelected(project, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
   }
 
   override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(project, experiment, mapElementsProvider(elementsProvider))
+    getCurrentSession()?.onSearchFinished(project, mapElementsProvider(elementsProvider))
   }
 
   override fun notifySearchResultsUpdated() {
@@ -181,7 +166,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
 
   override fun getExperimentVersion(): Int = SearchEverywhereMlExperiment.VERSION
 
-  override fun getExperimentGroup(): Int = SearchEverywhereMlExperiment().experimentGroup
+  override fun getExperimentGroup(): Int = SearchEverywhereMlExperiment.experimentGroup
 
   override fun addBufferedTimestamp(item: SearchEverywhereFoundElementInfo, timestamp: Long) {
     (item as? SearchEverywhereFoundElementInfoWithMl)?.let {

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
-import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.jsp.JspSpiUtil;
 import com.intellij.lang.ASTNode;
@@ -19,6 +18,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -77,7 +77,7 @@ public final class ImportHelper {
   }
 
   /**
-   * @param filter pretend some references do not exist so the corresponding imports may be deleted
+   * @param filter pretend some references do not exist, so the corresponding imports may be deleted
    * @return the import list to replace with, or null when there's no need to replace the import list because they are the same
    */
   public @Nullable PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file, @NotNull Predicate<? super Import> filter) {
@@ -103,8 +103,7 @@ public final class ImportHelper {
     Map<String, Boolean> classesOrPackagesToImportOnDemand = new HashMap<>();
     List<PsiImportModuleStatement> previousModuleStatements = collectModuleImports(file, mySettings);
     Map<String, PsiImportModuleStatement> moduleStatementMap = collectNamesImportedByModules(file, previousModuleStatements, resultList);
-    JavaProjectCodeInsightSettings javaProjectCodeInsightSettings = JavaProjectCodeInsightSettings.getSettings(file.getProject());
-    collectOnDemandImports(resultList, mySettings, javaProjectCodeInsightSettings, classesOrPackagesToImportOnDemand, moduleStatementMap);
+    collectOnDemandImports(resultList, mySettings, classesOrPackagesToImportOnDemand, moduleStatementMap);
 
     MultiMap<String, String> conflictingMemberNames = new MultiMap<>();
     for (Import anImport : resultList) {
@@ -161,7 +160,7 @@ public final class ImportHelper {
   }
 
   /**
-   * Collects the names of classes that are imported by modules specified implicitly in the given Java file and in import list.
+   * Collects the names of classes that are imported by modules specified implicitly in the given Java file and in the import list.
    *
    * @param file       the Java file for which imported class names are being collected.
    * @param statements a list of import module statements that specify the modules from which classes are imported.
@@ -213,7 +212,6 @@ public final class ImportHelper {
 
   public static void collectOnDemandImports(@NotNull List<Import> resultList,
                                             @NotNull JavaCodeStyleSettings javaCodeStyleSettings,
-                                            @NotNull JavaProjectCodeInsightSettings javaProjectCodeInsightSettings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand,
                                             @NotNull Map<String, PsiImportModuleStatement> moduleStatementMap) {
     Object2IntMap<String> packageToCountMap = new Object2IntOpenHashMap<>();
@@ -1188,6 +1186,9 @@ public final class ImportHelper {
         }
 
         if (refElement instanceof PsiClass psiClass) {
+          // Implicitly declared classed are not accessible outside the file, so it is not possible to have import statement on them.
+          if (refElement.getParent() instanceof PsiImplicitClass) continue;
+
           String qName = psiClass.getQualifiedName();
           if (qName == null || hasPackage(qName, thisPackageName)) continue;
           imports.add(new Import(qName, false));
@@ -1240,7 +1241,8 @@ public final class ImportHelper {
               Import unresolvedImport = unresolvedNames.get(name);
               if (reference.multiResolve(false).length == 0) {
                 hasResolveProblem[0] = true;
-                if (unresolvedImport != null) {
+                if (unresolvedImport != null &&
+                    (IncompleteModelUtil.canBeClassReference(reference) || unresolvedImport.isStatic())) {
                   namesToImport.add(unresolvedImport);
                   unresolvedNames.remove(name);
                   if (unresolvedNames.isEmpty()) return;

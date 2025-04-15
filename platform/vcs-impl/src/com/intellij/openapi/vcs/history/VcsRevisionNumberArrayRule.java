@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
-import com.intellij.ide.impl.dataRules.GetDataRule;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListByDateComparator;
@@ -24,6 +23,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,24 +31,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.VcsDataKeys.*;
+
 /**
  * {@link VcsDataKeys#VCS_REVISION_NUMBERS}
  */
-final class VcsRevisionNumberArrayRule implements GetDataRule {
-  @Override
-  public @Nullable Object getData(@NotNull DataProvider dataProvider) {
+@ApiStatus.Internal
+public final class VcsRevisionNumberArrayRule {
+  public static VcsRevisionNumber @Nullable [] getData(@NotNull DataMap dataProvider) {
     List<VcsRevisionNumber> revisionNumbers = getRevisionNumbers(dataProvider);
 
     return !ContainerUtil.isEmpty(revisionNumbers) ? revisionNumbers.toArray(new VcsRevisionNumber[0]) : null;
   }
 
-  public @Nullable List<VcsRevisionNumber> getRevisionNumbers(@NotNull DataProvider dataProvider) {
-    VcsRevisionNumber revisionNumber = VcsDataKeys.VCS_REVISION_NUMBER.getData(dataProvider);
+  private static @Nullable List<VcsRevisionNumber> getRevisionNumbers(@NotNull DataMap dataProvider) {
+    VcsRevisionNumber revisionNumber = dataProvider.get(VCS_REVISION_NUMBER);
     if (revisionNumber != null) {
       return Collections.singletonList(revisionNumber);
     }
 
-    ChangeList[] changeLists = VcsDataKeys.CHANGE_LISTS.getData(dataProvider);
+    ChangeList[] changeLists = dataProvider.get(CHANGE_LISTS);
     if (changeLists != null && changeLists.length > 0) {
       List<CommittedChangeList> committedChangeLists = new ArrayList<>(ContainerUtil.findAll(changeLists, CommittedChangeList.class));
 
@@ -59,7 +61,7 @@ final class VcsRevisionNumberArrayRule implements GetDataRule {
       }
     }
 
-    VcsFileRevision[] fileRevisions = VcsDataKeys.VCS_FILE_REVISIONS.getData(dataProvider);
+    VcsFileRevision[] fileRevisions = dataProvider.get(VCS_FILE_REVISIONS);
     if (fileRevisions != null) {
       List<VcsFileRevision> revisions = ContainerUtil.filter(fileRevisions, r -> r != VcsFileRevision.NULL);
       if (!revisions.isEmpty()) {

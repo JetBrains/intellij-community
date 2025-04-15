@@ -261,7 +261,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                     - getPreferredSize().width;
             if (locationLabel != null) containerMaxWidth -= locationLabel.getPreferredSize().width;
 
-            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, fm);
+            @NlsSafe String containerText = PaintUtil.cutContainerText(presentation.getContainerText(), containerMaxWidth, this);
             SimpleTextAttributes containerAttributes = presentation.getContainerTextAttributes() != null
                                                        ? SimpleTextAttributes.fromTextAttributes(presentation.getContainerTextAttributes())
                                                        : SimpleTextAttributes.GRAYED_ATTRIBUTES;

@@ -26,7 +26,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//java/java-analysis-impl:analysis-impl",
     "//java/java-structure-view:structureView",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/properties/properties-psi-api:psi",
     "//platform/core-ui",
     "@lib//:kotlin-reflect",
