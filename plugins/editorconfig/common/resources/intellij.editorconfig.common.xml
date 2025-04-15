@@ -5,6 +5,7 @@
               implementationClass="com.intellij.editorconfig.common.plugin.EditorConfigFileType"
               fieldName="INSTANCE"
               fileNames=".editorconfig"/>
+    <editor.rd.localSupport filetype="EditorConfig"/>
     <lang.parserDefinition language="EditorConfig"
                            implementationClass="com.intellij.editorconfig.common.plugin.EditorConfigParserDefinition"/>
     <lang.braceMatcher language="EditorConfig" implementationClass="com.intellij.editorconfig.common.lang.EditorConfigBraceMatcher"/>
