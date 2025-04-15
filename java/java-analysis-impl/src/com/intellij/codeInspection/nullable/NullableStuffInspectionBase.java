@@ -153,7 +153,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             typeElement.acceptsAnnotations()) {
           fix = new AddTypeAnnotationFix(typeElement, manager.getDefaultNullable(), notNulls);
         }
-        holder.problem(expression, "Constructor is not compatible with non-null type argument")
+        holder.problem(expression,
+                       JavaAnalysisBundle.message("inspection.nullable.problems.constructor.not.compatible.non.null.type.argument"))
           .maybeFix(fix)
           .register();
       }
