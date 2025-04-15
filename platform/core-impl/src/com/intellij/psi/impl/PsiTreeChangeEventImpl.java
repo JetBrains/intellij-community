@@ -79,8 +79,8 @@ public final class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     myNewValue = newValue;
   }
 
-  public void setFile(PsiFile file) {
-    myFile = file;
+  public void setFile(@NotNull PsiFile psiFile) {
+    myFile = psiFile;
   }
 
   public void setOffset(int offset) {

@@ -347,7 +347,10 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
     event.setParent(scope);
-    event.setFile(scope.getContainingFile());
+    PsiFile containingFile = scope.getContainingFile();
+    if (containingFile != null) {
+      event.setFile(containingFile);
+    }
     TextRange range = scope.getTextRange();
     event.setOffset(range == null ? 0 : range.getStartOffset());
     event.setOldLength(scope.getTextLength());
