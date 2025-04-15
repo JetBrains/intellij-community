@@ -1,13 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.impl.wsl.ijent.nio
+package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.execution.ijent.nio.IjentNioPosixFileAttributesWithDosAdapter
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
-import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
 
-@ApiStatus.Internal
 class IjentWslNioPath(
   private val fileSystem: IjentWslNioFileSystem,
 

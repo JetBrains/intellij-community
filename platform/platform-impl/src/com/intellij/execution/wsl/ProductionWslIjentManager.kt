@@ -1,9 +1,6 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.impl.wsl.wsl
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.wsl
 
-import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslIjentAvailabilityService
-import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project

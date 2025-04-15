@@ -1,14 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.impl.wsl.ijent.nio
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.wsl.ijent.nio
 
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.*
 import java.nio.file.attribute.UserPrincipalLookupService
 
 /**
  * See [IjentWslNioFileSystemProvider].
  */
-@ApiStatus.Internal
 class IjentWslNioFileSystem internal constructor(
   private val provider: IjentWslNioFileSystemProvider,
   internal val wslId: String,

@@ -2,14 +2,14 @@
 @file:JvmName("WslIjentTestUtil")
 package com.intellij.ijent.testFramework.wsl
 
+import com.intellij.execution.wsl.ProductionWslIjentManager
 import com.intellij.execution.wsl.WslIjentManager
+import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.impl.provider.EelNioBridgeServiceImpl
 import com.intellij.platform.eel.provider.EelNioBridgeService
-import com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler
-import com.intellij.platform.ide.impl.wsl.wsl.ProductionWslIjentManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope

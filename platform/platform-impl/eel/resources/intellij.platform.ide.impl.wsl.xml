@@ -1,9 +1,0 @@
-<idea-plugin package="com.intellij.platform.ide.impl.wsl">
-  <id>intellij.platform.ide.impl.wsl</id>
-  <vendor>JetBrains</vendor>
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
-                        serviceImplementation="com.intellij.platform.ide.impl.wsl.wsl.ProductionWslIjentManager"/>
-    <eelProvider implementation="com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler$WslEelProvider" os="windows"/>
-  </extensions>
-</idea-plugin>
