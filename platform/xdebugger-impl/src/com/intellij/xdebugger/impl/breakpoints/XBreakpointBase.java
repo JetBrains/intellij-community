@@ -127,6 +127,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     myBreakpointChangedFlow.tryEmit(Unit.INSTANCE);
   }
 
+  @ApiStatus.Internal
+  public final void fireBreakpointPresentationUpdated(@Nullable XDebugSession session) {
+    clearIcon();
+    myBreakpointManager.fireBreakpointPresentationUpdated(this, session);
+    myBreakpointChangedFlow.tryEmit(Unit.INSTANCE);
+  }
+
   public final Flow<Unit> breakpointChangedFlow() {
     return myBreakpointChangedFlow;
   }
@@ -533,7 +540,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       if (session.isInactiveSlaveBreakpoint(breakpoint)) {
         return type.getInactiveDependentIcon();
       }
-      CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(breakpoint);
+      CustomizedBreakpointPresentation presentation = breakpoint.getCustomizedPresentationForCurrentSession();
       if (presentation != null) {
         Icon icon = presentation.getIcon();
         if (icon != null) {
@@ -580,7 +587,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myCustomizedPresentation != null ? myCustomizedPresentation.getErrorMessage() : null;
   }
 
-  CustomizedBreakpointPresentation getCustomizedPresentation() {
+  @ApiStatus.Internal
+  public CustomizedBreakpointPresentation getCustomizedPresentation() {
     return myCustomizedPresentation;
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -13,6 +14,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
@@ -62,7 +65,21 @@ data class XBreakpointDtoState(
   val logExpressionObjectInt: XExpressionDto?,
   val isTemporary: Boolean,
   val timestamp: Long,
+  val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
+  val customPresentation: XBreakpointCustomPresentationDto?,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointCustomPresentationDto(
+  val icon: IconId?,
+  val errorMessage: @NlsSafe String?,
+  val timestamp: Long,
+)
+
+private fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto? {
+  return XBreakpointCustomPresentationDto(icon?.rpcId(), errorMessage, timestamp)
+}
 
 @ApiStatus.Internal
 @Serializable
@@ -217,6 +234,8 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
       isTemporary = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false,
       timestamp = timeStamp,
+      currentSessionCustomPresentation = (XDebuggerManager.getInstance(project).currentSession as? XDebugSessionImpl)?.getBreakpointPresentation(breakpoint)?.toRpc(),
+      customPresentation = breakpoint.customizedPresentation?.toRpc()
     )
   }
 }

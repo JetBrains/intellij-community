@@ -857,7 +857,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
     val debuggerManager = myDebuggerManager.breakpointManager
     debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint, Runnable {
-      debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this)
+      (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
     })
   }
 

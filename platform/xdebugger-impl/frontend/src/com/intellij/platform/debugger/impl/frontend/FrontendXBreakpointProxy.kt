@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -225,8 +226,22 @@ class FrontendXBreakpointProxy(
   }
 
   override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
-    // TODO: support customized presentation
-    return null
+    // TODO: let's convert it once on state change rather then on every getCustomizedPresentation call
+    return _state.value.customPresentation?.toPresentation()
+  }
+
+  override fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation? {
+    // TODO: let's convert it once on state change rather then on every getCustomizedPresentation call
+    return _state.value.currentSessionCustomPresentation?.toPresentation()
+  }
+
+  private fun XBreakpointCustomPresentationDto.toPresentation(): CustomizedBreakpointPresentation {
+    val presentation = this
+    return CustomizedBreakpointPresentation().apply {
+      icon = presentation.icon?.icon()
+      errorMessage = presentation.errorMessage
+      timestamp = presentation.timestamp
+    }
   }
 
   internal fun dispose() {

@@ -355,11 +355,6 @@ class FrontendXDebuggerSession private constructor(
     return false
   }
 
-  override fun getBreakpointPresentation(breakpoint: XBreakpointProxy): CustomizedBreakpointPresentation? {
-    // TODO: support passing breakpoint presentation from backend
-    return null
-  }
-
   companion object {
     private val LOG = thisLogger()
 

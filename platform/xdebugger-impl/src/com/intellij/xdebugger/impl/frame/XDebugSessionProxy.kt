@@ -85,7 +85,6 @@ interface XDebugSessionProxy {
 
   fun areBreakpointsMuted(): Boolean
   fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean
-  fun getBreakpointPresentation(breakpoint: XBreakpointProxy): CustomizedBreakpointPresentation?
 
   companion object {
     @JvmField
@@ -231,13 +230,6 @@ interface XDebugSessionProxy {
         return false
       }
       return (session as XDebugSessionImpl).isInactiveSlaveBreakpoint(breakpoint.breakpoint)
-    }
-
-    override fun getBreakpointPresentation(breakpoint: XBreakpointProxy): CustomizedBreakpointPresentation? {
-      if (breakpoint !is XBreakpointProxy.Monolith) {
-        return null
-      }
-      return (session as XDebugSessionImpl).getBreakpointPresentation(breakpoint.breakpoint)
     }
   }
 }
