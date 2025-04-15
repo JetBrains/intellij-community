@@ -16,7 +16,6 @@ class CommunityPluginModelTest {
       skipUnresolvedOptionalContentModules = true,
       modulesToSkip = setOf(
         "intellij.android.device-explorer",
-        "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
       ),
       pathsIncludedFromLibrariesViaXiInclude = setOf(
         "META-INF/analysis-api/analysis-api-fe10.xml",

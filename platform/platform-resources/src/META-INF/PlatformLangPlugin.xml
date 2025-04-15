@@ -73,7 +73,7 @@
 
   <xi:include href="intellij.platform.todo.xml"/>
 
-  <xi:include href="/META-INF/intellij.platform.syntax.psi.xml">
+  <xi:include href="intellij.platform.syntax.psi.xml">
     <xi:fallback/>
   </xi:include>
 
