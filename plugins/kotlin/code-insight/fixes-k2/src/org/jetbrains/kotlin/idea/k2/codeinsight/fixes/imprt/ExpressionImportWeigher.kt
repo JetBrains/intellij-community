@@ -130,12 +130,8 @@ internal class CallExpressionImportWeigher(
     override fun ownWeigh(symbol: KaDeclarationSymbol): Int = withValidityAssertion {
         when {
             symbol is KaCallableSymbol -> calculateWeight(symbol, presentReceiverTypes, valueArgumentTypes)
-            // TODO: some constructors could be not visible
-            symbol is KaClassSymbol && presentReceiverTypes.isEmpty() -> {
-                val constructors = symbol.declaredMemberScope.constructors
-                constructors.maxOfOrNull { calculateWeight(it, presentReceiverTypes = emptyList(), valueArgumentTypes) } ?: 0
-            }
-
+            symbol is KaClassSymbol -> calculateWeight(symbol, valueArgumentTypes)
+            symbol is KaTypeAliasSymbol -> -1
             else -> 0
         }
     }
@@ -200,7 +196,25 @@ internal class CallExpressionImportWeigher(
         return weight
     }
 
+    private fun KaSession.calculateWeight(
+        symbolToBeImported: KaClassSymbol,
+        presentValueArgumentTypes: List<KaType?>,
+    ): Int {
+        // TODO: some constructors could be not visible
+        val constructors = symbolToBeImported.declaredMemberScope.constructors
+        constructors
+            .filter { it.psi is KtFunction } // Filter out default constructors that don't have their own PSI.
+            .maxOfOrNull { calculateWeight(it, presentReceiverTypes = emptyList(), presentValueArgumentTypes) }
+            ?.let { return it }
+
+        // In some cases (eg with an interface), there are no constructors. Weigh the class instead.
+        return calculateCallExtensionsWeight(symbolToBeImported)
+    }
+
     private fun KaSession.calculateCallExtensionsWeight(symbolToBeImported: KaCallableSymbol): Int =
+        with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
+
+    private fun KaSession.calculateCallExtensionsWeight(symbolToBeImported: KaClassSymbol): Int =
         with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
 }
 
