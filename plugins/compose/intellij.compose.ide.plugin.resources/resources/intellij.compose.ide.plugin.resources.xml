@@ -16,6 +16,7 @@
     <postStartupActivity
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService$ComposeResourcesWatcherActivity"/>
     <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataService"/>
+    <usageTypeProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageTypeProvider" order="first"/>
   </extensions>
 
   <projectListeners>
