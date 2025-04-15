@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.editorconfig.language.codeinsight.actions
+package com.intellij.editorconfig.frontend.editor
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile
 
 // Those functions look somewhat C-ish...
 internal class EnterInEditorConfigFileHandler : EnterHandlerDelegate {
+
   override fun preprocessEnter(
     file: PsiFile,
     editor: Editor,
@@ -22,7 +23,7 @@ internal class EnterInEditorConfigFileHandler : EnterHandlerDelegate {
     caretAdvance: Ref<Int>,
     dataContext: DataContext,
     originalHandler: EditorActionHandler?
-  ): EnterHandlerDelegate.Result {
+  ): Result {
     if (file !is EditorConfigPsiFile) return Result.Continue
 
     val document = editor.document

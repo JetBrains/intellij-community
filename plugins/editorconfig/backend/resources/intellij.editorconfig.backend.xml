@@ -30,7 +30,6 @@
     <!-- Language support -->
     <annotator language="EditorConfig"
                implementationClass="org.editorconfig.language.codeinsight.annotators.EditorConfigDescriptorAnnotator"/>
-    <enterHandlerDelegate implementation="org.editorconfig.language.codeinsight.actions.EnterInEditorConfigFileHandler"/>
     <vetoRenameCondition implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigVetoRenameCondition"/>
     <completion.contributor
         language="EditorConfig"

@@ -12,5 +12,6 @@
     <statementUpDownMover implementation="com.intellij.editorconfig.frontend.editor.EditorConfigStatementUpDownMover"/>
     <moveLeftRightHandler language="EditorConfig"
                           implementationClass="com.intellij.editorconfig.frontend.editor.EditorConfigMoveElementLeftRightHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.editorconfig.frontend.editor.EnterInEditorConfigFileHandler"/>
   </extensions>
 </idea-plugin>
