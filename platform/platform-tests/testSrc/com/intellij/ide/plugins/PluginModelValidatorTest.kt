@@ -81,7 +81,7 @@ class PluginModelValidatorTest {
       .joinToString { it.message!! }
     assertThat(errors).isEqualTo("""
       Do not add dependency on a parent plugin (
-        entry=XmlElement(name=plugin, attributes={id=plugin}, children=[], content=null),
+        entry=PluginDependency(pluginId=plugin),
         referencingDescriptorFile=/intellij.plugin.module/intellij.plugin.module.xml
       )
     """.trimIndent())
@@ -144,7 +144,7 @@ class PluginModelValidatorTest {
     assertThat(result.errors.joinToString { it.message!! }).isEqualTo("""
       Old format must be not used for a module but `depends` tag is used (
         descriptorFile=/intellij.plugin.module/intellij.plugin.module.xml,
-        depends=XmlElement(name=depends, attributes={}, children=[], content=com.intellij.modules.lang)
+        depends=DependsElement(pluginId=com.intellij.modules.lang)
       )
     """.trimIndent())
   }
