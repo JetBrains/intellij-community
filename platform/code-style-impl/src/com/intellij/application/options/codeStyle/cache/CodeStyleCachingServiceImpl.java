@@ -174,8 +174,8 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   private @Nullable FileData getFileData(@NotNull String path) {
     final FileData fileData = myFileDataCache.get(path);
     if (fileData != null) {
-      fileData.update();
       myRemoveQueue.remove(fileData);
+      fileData.update();
       myRemoveQueue.add(fileData);
     }
     return fileData;
