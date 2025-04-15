@@ -100,11 +100,17 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
 
   /**
    * If this manager folded [offset], the first folded offset on this line is returned. Otherwise, [offset] is returned.
+   *
+   * Exceptional case: if [offset] points to the very end of the line, we still return the start of the folded region, however,
+   * the line end is never folded actually. The reason is that we might have rendered a multiline at the previous offset while the
+   * line ending was folded. When we start to render anything right after the folded range, we'd like to continue rendering at the
+   * same multiline state. See IJPL-183620.
    */
   @RequiresEdt
   fun offsetOfFoldStart(offset: Int): Int {
     val foldRegion = getFoldingRegion(offset) ?: return offset
-    return if (foldRegion.textRange.contains(offset)) foldRegion.startOffset else offset
+    val range = foldRegion.textRange
+    return if (range.contains(offset) || range.endOffset == offset) foldRegion.startOffset else offset
   }
 
   private fun getFoldingRegion(offset: Int): FoldRegion? {
