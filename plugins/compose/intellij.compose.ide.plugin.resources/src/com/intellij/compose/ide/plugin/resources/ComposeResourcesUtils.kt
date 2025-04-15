@@ -11,9 +11,12 @@ import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import java.nio.file.Path
 
-const val COMPOSE_RESOURCES_DIR: String = "composeResources"
-const val STRINGS_XML_FILENAME: String = "strings.xml"
-const val VALUES_DIRNAME: String = "values"
+internal const val COMPOSE_RESOURCES_DIR: String = "composeResources"
+internal const val STRINGS_XML_FILENAME: String = "strings.xml"
+internal const val VALUES_DIRNAME: String = "values"
+
+internal const val ANDROID_RESOURCE_REFERENCE = "org.jetbrains.android.dom.converters.AndroidResourceReference"
+
 
 /** Retrieves the module name for the Compose resources task of the given module. */
 internal fun Module.getModuleNameForComposeResourcesTask(): String? =
