@@ -261,29 +261,19 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall.test");
             }
 
-            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_single.test")
-            public void testInvokeExtension_afterConstructorCall_anotherInvokes_single() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_anotherInvokes_single.test");
+            @TestMetadata("invokeExtension_afterConstructorCall_unrelatedInvokes_single.test")
+            public void testInvokeExtension_afterConstructorCall_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_unrelatedInvokes_single.test");
             }
 
-            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_two.test")
-            public void testInvokeExtension_afterConstructorCall_anotherInvokes_two() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_anotherInvokes_two.test");
+            @TestMetadata("invokeExtension_afterConstructorCall_unrelatedInvokes_two.test")
+            public void testInvokeExtension_afterConstructorCall_unrelatedInvokes_two() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_unrelatedInvokes_two.test");
             }
 
-            @TestMetadata("invokeExtension_anotherInvokes_single.test")
-            public void testInvokeExtension_anotherInvokes_single() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_anotherInvokes_single.test");
-            }
-
-            @TestMetadata("invokeExtension_anotherInvokes_two.test")
-            public void testInvokeExtension_anotherInvokes_two() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_anotherInvokes_two.test");
-            }
-
-            @TestMetadata("invokeExtension_extraArguments_anotherInvoke_single.test")
-            public void testInvokeExtension_extraArguments_anotherInvoke_single() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_extraArguments_anotherInvoke_single.test");
+            @TestMetadata("invokeExtension_extraArguments_unrelatedInvokes_single.test")
+            public void testInvokeExtension_extraArguments_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_extraArguments_unrelatedInvokes_single.test");
             }
 
             @TestMetadata("invokeExtension_qualifiedCall.test")
@@ -291,19 +281,29 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall.test");
             }
 
-            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_single.test")
-            public void testInvokeExtension_qualifiedCall_anotherInvokes_single() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_anotherInvokes_single.test");
+            @TestMetadata("invokeExtension_qualifiedCall_unrelatedInvokes_single.test")
+            public void testInvokeExtension_qualifiedCall_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_unrelatedInvokes_single.test");
             }
 
-            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_two.test")
-            public void testInvokeExtension_qualifiedCall_anotherInvokes_two() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_anotherInvokes_two.test");
+            @TestMetadata("invokeExtension_qualifiedCall_unrelatedInvokes_two.test")
+            public void testInvokeExtension_qualifiedCall_unrelatedInvokes_two() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_unrelatedInvokes_two.test");
             }
 
             @TestMetadata("invokeExtension_topLevelVal.test")
             public void testInvokeExtension_topLevelVal() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_topLevelVal.test");
+            }
+
+            @TestMetadata("invokeExtension_unrelatedInvokes_single.test")
+            public void testInvokeExtension_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_unrelatedInvokes_two.test")
+            public void testInvokeExtension_unrelatedInvokes_two() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_unrelatedInvokes_two.test");
             }
 
             @TestMetadata("invokeExtension_unresolvedReceiver.test")
