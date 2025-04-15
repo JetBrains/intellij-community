@@ -63,6 +63,8 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.shouldEnableServicesViewInCurrentEnvironment;
+
 public final class RunDashboardServiceViewContributor
   implements ServiceViewGroupingContributor<RunDashboardServiceViewContributor.RunConfigurationContributor, GroupingNode>,
              RunDashboardGroupNode {
@@ -79,6 +81,8 @@ public final class RunDashboardServiceViewContributor
 
   @Override
   public @NotNull @Unmodifiable List<RunConfigurationContributor> getServices(@NotNull Project project) {
+    if (!shouldEnableServicesViewInCurrentEnvironment()) return Collections.emptyList();
+
     RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),
                              value -> new RunConfigurationContributor(
@@ -94,6 +98,8 @@ public final class RunDashboardServiceViewContributor
 
   @Override
   public @NotNull List<GroupingNode> getGroups(@NotNull RunConfigurationContributor contributor) {
+    if (!shouldEnableServicesViewInCurrentEnvironment()) return Collections.emptyList();
+
     List<GroupingNode> result = new ArrayList<>();
     GroupingNode parentGroupNode = null;
     for (RunDashboardGroupingRule groupingRule : RunDashboardManagerImpl.GROUPING_RULE_EP_NAME.getExtensions()) {
@@ -123,6 +129,8 @@ public final class RunDashboardServiceViewContributor
 
   @Override
   public @NotNull List<@NotNull Object> getChildren(@NotNull Project project, @NotNull AnActionEvent e) {
+    if (!shouldEnableServicesViewInCurrentEnvironment()) return Collections.emptyList();
+
     return ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project))
       .getChildrenSafe(e, List.of(this), RunDashboardServiceViewContributor.class);
   }

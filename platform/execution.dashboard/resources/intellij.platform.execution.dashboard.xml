@@ -3,6 +3,8 @@
     <module name="intellij.platform.execution.serviceView"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
+
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
                     serviceImplementation="com.intellij.platform.execution.dashboard.RunDashboardManagerImpl"/>
     <backgroundPostStartupActivity implementation="com.intellij.platform.execution.dashboard.RunDashboardCheckerActivity"/>

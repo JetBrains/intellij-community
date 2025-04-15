@@ -6,6 +6,5 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
   </extensions>
 </idea-plugin>
