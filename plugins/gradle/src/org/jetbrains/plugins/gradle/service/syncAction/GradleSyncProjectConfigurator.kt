@@ -13,6 +13,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.serviceContainer.AlreadyDisposedException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -27,6 +28,9 @@ object GradleSyncProjectConfigurator {
     configuratorName: String,
     perform: suspend GradleSyncContributor.(MutableEntityStorage) -> Unit
   ) {
+    if ((context as DefaultProjectResolverContext).isBuildSrcProject || context.policy != null) { // if the partial resolve policy is set
+     return
+    }
     configureProject(context, configuratorName) { storage ->
       forEachGradleSyncContributor { syncContributor ->
         checkCanceled()
