@@ -1,0 +1,16 @@
+<idea-plugin>
+    <dependencies>
+        <module name="intellij.toml.core"/>
+        <module name="intellij.platform.frontend"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+
+        <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
+
+        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
+
+        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
+    </extensions>
+</idea-plugin>

@@ -1,6 +1,9 @@
 - name: lib/modules/intellij.toml.backend.jar
   contentModules:
   - name: intellij.toml.backend
+- name: lib/modules/intellij.toml.frontend.jar
+  contentModules:
+  - name: intellij.toml.frontend
 - name: lib/modules/intellij.toml.frontend.split.jar
   contentModules:
   - name: intellij.toml.frontend.split

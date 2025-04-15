@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module" module-name="intellij.toml.core" />
     <orderEntry type="module" module-name="intellij.toml.backend" />
+    <orderEntry type="module" module-name="intellij.toml.frontend" />
     <orderEntry type="module" module-name="intellij.toml.json" />
     <orderEntry type="module" module-name="intellij.toml.grazie" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />

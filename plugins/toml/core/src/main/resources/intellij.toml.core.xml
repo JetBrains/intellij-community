@@ -8,15 +8,11 @@
                   fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;poetry.lock;uv.lock"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
-        <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
         <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
         <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
         <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
         <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral"
                                  implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
-
-
-        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
 
         <!-- Formatting -->
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
@@ -25,13 +21,10 @@
         <enterBetweenBracesDelegate language="TOML"
                                     implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
 
-        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
-
-        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
-
 
         <virtualFileCustomDataProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsSynchronizer"/>
 
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+        <editor.rd.localSupport filetype="TOML"/>
     </extensions>
 </idea-plugin>
