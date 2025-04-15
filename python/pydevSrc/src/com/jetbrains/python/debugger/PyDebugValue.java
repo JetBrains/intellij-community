@@ -5,6 +5,12 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,9 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.awt.*;
+import java.util.*;
+import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -353,12 +360,31 @@ public class PyDebugValue extends XNamedValue {
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
     setFullValueEvaluator(node, value);
-    setConfigureTypeRenderersLink(node);
+    setAdditionalLinks(node);
     if (value.length() >= MAX_VALUE) {
       value = value.substring(0, MAX_VALUE);
     }
     value = applyRendererIfApplicable(value);
     setElementPresentation(node, value);
+  }
+
+  private void setAdditionalLinks(@NotNull XValueNode node) {
+    if (node instanceof XValueNodeImpl valueNode) {
+      if (checkAndEnableViewAsImageVisibility(this)) {
+        addViewAsImageLink(valueNode);
+      }
+      addConfigureTypeRendererLink(valueNode);
+    }
+  }
+
+  private void addConfigureTypeRendererLink(@NotNull XValueNodeImpl valueNode) {
+    String typeRendererId = getTypeRendererId();
+    if (typeRendererId != null) {
+      XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
+      if (link != null) {
+        valueNode.addAdditionalHyperlink(link);
+      }
+    }
   }
 
   public void updateNodeValueAfterLoading(@NotNull XValueNode node,
@@ -463,19 +489,85 @@ public class PyDebugValue extends XNamedValue {
       }
       return;
     }
+
+    if (node instanceof XValueNodeImpl valueNode) {
+      addViewAsImageLink(valueNode);
+    }
     String linkText = PydevBundle.message("pydev.view.as", postfix);
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
-  private void setConfigureTypeRenderersLink(@NotNull XValueNode node) {
-    String typeRendererId = getTypeRendererId();
-    if (node instanceof XValueNodeImpl valueNode) {
-      valueNode.clearAdditionalHyperlinks();
-      if (typeRendererId != null) {
-        XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
-        if (link != null) valueNode.addAdditionalHyperlink(link);
+  private static void addViewAsImageLink(XValueNodeImpl valueNode) {
+    if (!checkAndShowViewAsImageOnScreen((PyDebugValue)valueNode.getXValue()))
+      return;
+    String viewAsImageText = PydevBundle.message("pydev.view.as.image");
+    valueNode.addAdditionalHyperlink(new XDebuggerTreeNodeHyperlink(viewAsImageText) {
+      @Override
+      public void onClick(MouseEvent event) {
+        AnAction action = ActionManager.getInstance().getAction("JupyterShowAsImageAction");
+        DataContext dataContext = DataManager.getInstance().getDataContext((Component)event.getSource());
+        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(
+          action,
+          null,
+          "JupyterShowAsImageAction",
+          dataContext
+        );
+        action.actionPerformed(actionEvent);
       }
+
+      @Override
+      public boolean alwaysOnScreen() {
+        return true;
+      }
+    });
+  }
+
+  private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
+    boolean showViewAsImage = Registry.get("actions.show.as.image.visibility").asBoolean();
+    if (!showViewAsImage) {
+      return false;
     }
+    return checkAndEnableViewAsImageVisibility(debugValue);
+  }
+
+  private static boolean checkAndEnableViewAsImageVisibility(PyDebugValue debugValue) {
+    String nodeType = debugValue.getType();
+    return switch (Objects.requireNonNull(nodeType)) {
+      case NodeTypes.NDARRAY_NODE_TYPE, NodeTypes.EAGER_TENSOR_NODE_TYPE, NodeTypes.RESOURCE_VARIABLE_NODE_TYPE,
+           NodeTypes.SPARSE_TENSOR_NODE_TYPE, NodeTypes.TENSOR_NODE_TYPE -> {
+        int[] shape = extractShape(debugValue);
+        yield isValidArrayShape(shape);
+      }
+      case NodeTypes.IMAGE_NODE_TYPE, NodeTypes.FIGURE_NODE_TYPE -> true;
+      default -> false;
+    };
+  }
+
+  private static int[] extractShape(PyDebugValue debugValue) {
+    String shapeString = debugValue.getShape() == null ? "" : debugValue.getShape();
+    return Arrays.stream(shapeString.replace("(", "").replace(")", "").split(","))
+      .map(String::trim)
+      .mapToInt(s -> {
+        try {
+          return Integer.parseInt(s);
+        }
+        catch (NumberFormatException e) {
+          return Integer.MIN_VALUE;
+        }
+      })
+      .filter(value -> value != Integer.MIN_VALUE)
+      .toArray();
+  }
+
+  private static boolean isValidArrayShape(int[] shape) {
+    if (shape == null || shape.length == 0) {
+      return false;
+    }
+    return switch (shape.length) {
+      case 1, 2 -> true;
+      case 3 -> shape[2] == 3 || shape[2] == 4 || shape[2] == 1;
+      default -> false;
+    };
   }
 
   @Override
