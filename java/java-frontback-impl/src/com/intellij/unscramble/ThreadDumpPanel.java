@@ -51,12 +51,15 @@ import java.util.List;
  */
 public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoStackTraceFoldingPanel {
   private final JBList<DumpItem> myThreadList;
+  private final EditorNotificationPanel myNotificationPanel = new EditorNotificationPanel(EditorNotificationPanel.Status.Info);
   private final List<DumpItem> myThreadDump;
   private final List<DumpItem> myMergedThreadDump;
   private Comparator<DumpItem> currentComparator = DumpItem.BY_INTEREST;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
   private final ExporterToTextFile myExporterToTextFile;
+  private int myDumpItemsTruncated = 0;
+  private int myMergedDumpItemsTruncated = 0;
 
   public ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<ThreadState> threadDump) {
     this(project, consoleView, toolbarActions, DumpItemKt.toDumpItems(threadDump), false);
@@ -68,9 +71,14 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   }
 
   @ApiStatus.Internal
-  public void addDumpItems(List<DumpItem> threadDump, List<DumpItem> mergedThreadDump) {
+  public void addDumpItems(List<DumpItem> threadDump,
+                           int dumpItemsTruncated,
+                           List<DumpItem> mergedThreadDump,
+                           int mergedDumpItemsTruncated) {
     myThreadDump.addAll(threadDump);
+    myDumpItemsTruncated += dumpItemsTruncated;
     myMergedThreadDump.addAll(mergedThreadDump);
+    myMergedDumpItemsTruncated += mergedDumpItemsTruncated;
     sortAndUpdateThreadDumpItemList();
   }
 
@@ -154,7 +162,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     FilterAction filterAction = new FilterAction();
     filterAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet(), myThreadList);
     toolbarActions.add(filterAction);
-    toolbarActions.add(new CopyToClipboardAction(myThreadDump, project));
+    toolbarActions.add(new CopyToClipboardAction(project));
     toolbarActions.add(new SortThreadsAction());
     toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
     toolbarActions.add(new MergeStacktracesAction());
@@ -164,7 +172,11 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     add(toolbar.getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(myFilterPanel, BorderLayout.NORTH);
+    JPanel northPanel = new JPanel(new BorderLayout());
+
+    northPanel.add(myNotificationPanel, BorderLayout.NORTH);
+    northPanel.add(myFilterPanel, BorderLayout.SOUTH);
+    leftPanel.add(northPanel, BorderLayout.NORTH);
     leftPanel.add(ScrollPaneFactory.createScrollPane(myThreadList, SideBorder.LEFT | SideBorder.RIGHT), BorderLayout.CENTER);
 
     Splitter splitter = new Splitter(false, 0.3f);
@@ -190,7 +202,8 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     int selectedIndex = 0;
     int index = 0;
     ArrayList<DumpItem> filteredThreadStates = new ArrayList<>();
-    List<DumpItem> threadStates = UISettings.getInstance().getState().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
+    boolean useMerged = UISettings.getInstance().getState().getMergeEqualStackTraces();
+    List<DumpItem> threadStates = useMerged ? myMergedThreadDump : myThreadDump;
     for (DumpItem state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
         filteredThreadStates.add(state);
@@ -205,6 +218,14 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     DefaultListModel<DumpItem> model = (DefaultListModel<DumpItem>)myThreadList.getModel();
     model.clear();
     model.addAll(filteredThreadStates);
+    int truncated = useMerged ? myMergedDumpItemsTruncated : myDumpItemsTruncated;
+    if (truncated > 0) {
+      myNotificationPanel.text(JavaFrontbackBundle.message("truncated.dump.notification", threadStates.size()));
+      myNotificationPanel.setVisible(true);
+    }
+    else {
+      myNotificationPanel.setVisible(false);
+    }
     if (!model.isEmpty()) {
       myThreadList.setSelectedIndex(selectedIndex);
     }
@@ -243,9 +264,11 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     private static @NotNull Color getBackgroundColor(DumpItem threadState, DumpItem selectedThread) {
       if (threadState.isDeadLocked()) {
         return LightColors.RED;
-      } else if (threadState.getAwaitingDumpItems().contains(selectedThread)) {
+      }
+      else if (selectedThread != null && threadState.getAwaitingDumpItems().contains(selectedThread)) {
         return LightColors.YELLOW;
-      } else {
+      }
+      else {
         return UIUtil.getListBackground();
       }
     }
@@ -280,27 +303,30 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
                                   JavaFrontbackBundle.message("sort.threads.by.interest.level")                                  );
     }
   }
-  private static final class CopyToClipboardAction extends DumbAwareAction {
+  private final class CopyToClipboardAction extends DumbAwareAction {
     private static final NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Analyze thread dump");
-    private final List<? extends DumpItem> myThreadDump;
     private final Project myProject;
 
-    private CopyToClipboardAction(List<? extends DumpItem> threadDump, Project project) {
+    private CopyToClipboardAction(Project project) {
       super(JavaFrontbackBundle.message("action.text.copy.to.clipboard"), JavaFrontbackBundle.message("action.description.copy.whole.thread.dump.to.clipboard"), PlatformIcons.COPY_ICON);
-      myThreadDump = threadDump;
       myProject = project;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      boolean isTruncated = myDumpItemsTruncated > 0;
       StringBuilder buf = new StringBuilder();
-      buf.append("Full thread dump").append("\n\n");
+      String firstLine = isTruncated ? "Truncated thread dump" : "Full thread dump";
+      buf.append(firstLine).append("\n\n");
       for (DumpItem state : myThreadDump) {
         buf.append(state.getStackTrace()).append("\n\n");
       }
       CopyPasteManager.getInstance().setContents(new StringSelection(buf.toString()));
 
-      GROUP.createNotification(JavaFrontbackBundle.message("notification.text.full.thread.dump.was.successfully.copied.to.clipboard"), MessageType.INFO).notify(myProject);
+      String message = isTruncated
+                       ? JavaFrontbackBundle.message("notification.text.truncated.thread.dump.was.successfully.copied.to.clipboard")
+                       : JavaFrontbackBundle.message("notification.text.full.thread.dump.was.successfully.copied.to.clipboard");
+      GROUP.createNotification(message, MessageType.INFO).notify(myProject);
     }
   }
 

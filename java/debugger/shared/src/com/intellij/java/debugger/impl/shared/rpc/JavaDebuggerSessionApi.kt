@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
-  suspend fun dumpThreads(sessionId: XDebugSessionId): JavaThreadDumpResponseDto?
+  suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int = Int.MAX_VALUE): JavaThreadDumpResponseDto?
 
   companion object {
     @JvmStatic
@@ -48,17 +48,23 @@ data class JavaThreadDumpDto(
 @Serializable
 data class ThreadDumpWithAwaitingDependencies(
   val items: List<JavaThreadDumpItemDto>,
-  val awaitingDependencies: Map<Int, List<Int>>,
+  val icons: List<IconId>,
+  val attributes: List<SerializableSimpleTextAttributes>,
+  val stackTraces: List<@NlsSafe String>,
+  val stateDescriptions: List<@NlsSafe String>,
+  val awaitingDependencies: Map<Int, IntArray>,
+  val truncatedItemsNumber: Int,
 )
 
 @ApiStatus.Internal
 @Serializable
 data class JavaThreadDumpItemDto(
   val name: @NlsSafe String,
-  val stateDesc: @NlsSafe String,
-  val stackTrace: @NlsSafe String,
+  val firstLine: @NlsSafe String,
+  val stateDescriptionIndex: Int,
+  val stackTraceIndex: Int,
   val interestLevel: Int,
-  val iconId: IconId,
-  val attributes: SerializableSimpleTextAttributes,
+  val iconIndex: Byte,
+  val attributesIndex: Byte,
   val isDeadLocked: Boolean,
 )
