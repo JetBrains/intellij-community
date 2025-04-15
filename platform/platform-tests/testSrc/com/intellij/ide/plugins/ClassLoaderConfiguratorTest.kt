@@ -170,7 +170,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
                          overrideUseIfCompatible = false,
                          productBuildNumber = buildNumber,
                          isPluginDisabled = context::isPluginDisabled,
-                         isPluginBroken = context::isBroken)
+                         isPluginBroken = context::isPluginBroken)
   }
   return result
 }

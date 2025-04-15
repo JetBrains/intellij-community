@@ -66,7 +66,7 @@ class PluginSetTestBuilder(private val path: Path) {
           overrideUseIfCompatible = false,
           productBuildNumber = context.productBuildNumber(),
           isPluginDisabled = context::isPluginDisabled,
-          isPluginBroken = context::isBroken,
+          isPluginBroken = context::isPluginBroken,
         )
       }
     }

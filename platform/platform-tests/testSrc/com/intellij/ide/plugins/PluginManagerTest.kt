@@ -386,7 +386,7 @@ class PluginManagerTest {
       }
       parentContext.close()
       val result = PluginLoadingResult(false)
-      result.initAndAddAll(list, isPluginDisabled = parentContext::isPluginDisabled, isPluginBroken = parentContext::isBroken)
+      result.initAndAddAll(list, isPluginDisabled = parentContext::isPluginDisabled, isPluginBroken = parentContext::isPluginBroken)
       return PluginManagerCore.initializePlugins(parentContext, result, PluginManagerTest::class.java.getClassLoader(), false, null)
     }
 

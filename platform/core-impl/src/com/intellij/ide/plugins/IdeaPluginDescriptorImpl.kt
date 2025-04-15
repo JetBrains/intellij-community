@@ -694,7 +694,7 @@ class IdeaPluginDescriptorImpl private constructor(
 fun IdeaPluginDescriptorImpl.initialize(context: DescriptorListLoadingContext): PluginLoadingError? = initialize(
   context.productBuildNumber,
   context::isPluginDisabled,
-  context::isBroken,
+  context::isPluginBroken,
 )
 
 internal fun IdeaPluginDescriptorImpl.createSub(

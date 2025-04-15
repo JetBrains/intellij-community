@@ -545,10 +545,10 @@ private suspend fun loadDescriptors(
 
   val isMainProcess = isMainProcess()
   loadingResult.initAndAddAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber,
-                              isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
+                              isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isPluginBroken)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
   loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber,
-                              isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
+                              isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isPluginBroken)
 
   if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
@@ -560,7 +560,7 @@ private suspend fun loadDescriptors(
       overrideUseIfCompatible = false,
       productBuildNumber = buildNumber,
       isPluginDisabled = context::isPluginDisabled,
-      isPluginBroken = context::isBroken
+      isPluginBroken = context::isPluginBroken
     )
   }
   return loadingResult
@@ -1178,7 +1178,7 @@ fun loadAndInitDescriptorsFromOtherIde(
       overrideUseIfCompatible = false,
       productBuildNumber = context.productBuildNumber(),
       isPluginDisabled = context::isPluginDisabled,
-      isPluginBroken = context::isBroken,
+      isPluginBroken = context::isPluginBroken,
     )
     result
   }
@@ -1197,7 +1197,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
       overrideUseIfCompatible = false,
       productBuildNumber = context.productBuildNumber(),
       isPluginDisabled = context::isPluginDisabled,
-      isPluginBroken = context::isBroken
+      isPluginBroken = context::isPluginBroken
     )
     result
   }
@@ -1240,7 +1240,7 @@ fun testLoadAndInitDescriptorsFromClassPath(
     overrideUseIfCompatible = false,
     productBuildNumber = buildNumber,
     isPluginDisabled = context::isPluginDisabled,
-    isPluginBroken = context::isBroken
+    isPluginBroken = context::isPluginBroken
   )
   return result.enabledPlugins
 }

@@ -81,7 +81,7 @@ class DescriptorListLoadingContext(
     return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
   }
 
-  fun isBroken(id: PluginId, version: String?): Boolean {
+  fun isPluginBroken(id: PluginId, version: String?): Boolean {
     val set = brokenPluginVersions.get(id) ?: return false
     return set.contains(version)
   }
