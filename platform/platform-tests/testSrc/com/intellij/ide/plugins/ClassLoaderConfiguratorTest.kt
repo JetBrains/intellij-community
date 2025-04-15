@@ -166,11 +166,11 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    result.addAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context, pool = ZipFilePoolImpl()) },
-                  overrideUseIfCompatible = false,
-                  productBuildNumber = buildNumber,
-                  isPluginDisabled = context::isPluginDisabled,
-                  isPluginBroken = context::isBroken)
+    result.initAndAddAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context, pool = ZipFilePoolImpl()) },
+                         overrideUseIfCompatible = false,
+                         productBuildNumber = buildNumber,
+                         isPluginDisabled = context::isPluginDisabled,
+                         isPluginBroken = context::isBroken)
   }
   return result
 }

@@ -67,7 +67,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   /**
    * @see [com.intellij.openapi.project.ex.ProjectManagerEx]
    */
-  fun addAll(
+  fun initAndAddAll(
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
     overrideUseIfCompatible: Boolean,
     productBuildNumber: BuildNumber,
@@ -85,17 +85,17 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   }
 
   @TestOnly
-  fun addAll(
+  fun initAndAddAll(
     descriptors: List<IdeaPluginDescriptorImpl>,
     isPluginDisabled: (PluginId) -> Boolean,
     isPluginBroken: (PluginId, version: String?) -> Boolean,
   ) {
     val productBuildNumber = BuildNumber.fromString("2042.42")!!
-    addAll(descriptors = descriptors.asSequence(),
-           overrideUseIfCompatible = false,
-           productBuildNumber = productBuildNumber,
-           isPluginDisabled = isPluginDisabled,
-           isPluginBroken = isPluginBroken)
+    initAndAddAll(descriptors = descriptors.asSequence(),
+                  overrideUseIfCompatible = false,
+                  productBuildNumber = productBuildNumber,
+                  isPluginDisabled = isPluginDisabled,
+                  isPluginBroken = isPluginBroken)
   }
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber, initError: PluginLoadingError?) {

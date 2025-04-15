@@ -544,15 +544,15 @@ private suspend fun loadDescriptors(
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
-  loadingResult.addAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber,
-                       isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
+  loadingResult.initAndAddAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber,
+                              isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.addAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber,
-                       isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
+  loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber,
+                              isPluginDisabled = context::isPluginDisabled, isPluginBroken = context::isBroken)
 
   if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
-    loadingResult.addAll(
+    loadingResult.initAndAddAll(
       descriptors = toSequence(coroutineScope {
         val dir = Paths.get(PathManager.getPreInstalledPluginsPath())
         loadDescriptorsFromDir(dir = dir, context = context, isBundled = true, pool = zipPoolDeferred.await())
@@ -1161,7 +1161,7 @@ fun loadAndInitDescriptorsFromOtherIde(
   ).use { context ->
     val result = PluginLoadingResult()
     @Suppress("SSBasedInspection")
-    result.addAll(
+    result.initAndAddAll(
       descriptors = toSequence(runBlocking {
         val classLoader = DescriptorListLoadingContext::class.java.classLoader
         val pool = NonShareableJavaZipFilePool()
@@ -1187,7 +1187,7 @@ fun loadAndInitDescriptorsFromOtherIde(
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): PluginLoadingResult {
   return DescriptorListLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { context ->
     val result = PluginLoadingResult()
-    result.addAll(
+    result.initAndAddAll(
       descriptors = toSequence(
         list = coroutineScope {
           loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
@@ -1218,7 +1218,7 @@ fun testLoadAndInitDescriptorsFromClassPath(
     productBuildNumber = { buildNumber },
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
-  result.addAll(
+  result.initAndAddAll(
     descriptors = toSequence(
       list = @Suppress("RAW_RUN_BLOCKING") runBlocking {
         urlToFilename.map { (url, filename) ->
