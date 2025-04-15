@@ -10,5 +10,7 @@
     <lang.foldingBuilder language="EditorConfig"
                          implementationClass="com.intellij.editorconfig.frontend.lang.editor.EditorConfigFoldingBuilder"/>
     <statementUpDownMover implementation="com.intellij.editorconfig.frontend.editor.EditorConfigStatementUpDownMover"/>
+    <moveLeftRightHandler language="EditorConfig"
+                          implementationClass="com.intellij.editorconfig.frontend.editor.EditorConfigMoveElementLeftRightHandler"/>
   </extensions>
 </idea-plugin>

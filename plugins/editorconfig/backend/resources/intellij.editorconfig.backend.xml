@@ -43,9 +43,6 @@
         order="last"
         implementationClass="org.editorconfig.configmanagement.completion.EditorConfigUnsetCompletionContributor"/>
     <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
-    <moveLeftRightHandler
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.actions.EditorConfigMoveElementLeftRightHandler"/>
     <spellchecker.support
         language="EditorConfig"
         implementationClass="org.editorconfig.language.spellchecker.EditorConfigSpellcheckerStrategy"/>
