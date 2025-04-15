@@ -11,13 +11,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivityBlocking
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.projectModel.readProjectModelGraph
 import com.jetbrains.python.projectModel.uv.UvLinkAction.CoroutineScopeService.Companion.coroutineScope
+import com.jetbrains.python.projectModel.uv.UvProjectResolver.linkAllUvProjects
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
-import java.nio.file.Path
 
 /**
  * Discovers and links as managed by uv all relevant project roots and saves them in `.idea/uv.xml`.
@@ -26,14 +24,10 @@ import java.nio.file.Path
 class UvLinkAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val uvSettings = project.service<UvSettings>()
     val basePath = project.basePath ?: return
     project.trackActivityBlocking(UvLinkActivityKey) {
       project.coroutineScope.launchTracked {
-        val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.uv.projects")) {
-          readProjectModelGraph(Path.of(basePath), UvProjectRootResolver).roots.map { it.root }
-        }
-        uvSettings.setLinkedProjects(allProjectRoots)
+        linkAllUvProjects(project, basePath)
       }
     }
   }

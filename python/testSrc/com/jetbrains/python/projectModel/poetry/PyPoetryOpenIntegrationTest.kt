@@ -30,7 +30,41 @@ class PyPoetryOpenIntegrationTest {
       [tool.poetry]
       name = "project"
     """.trimIndent())
+
+    multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
+      ModuleAssertions.assertModules(project, "project")
+      CollectionAssertions.assertEqualsUnordered(listOf(projectPath),
+                                                 project.service<PoetrySettings>().getLinkedProjects())
+    }
+  }
+
+  @Test
+  fun `project with top-level PEP-621 Poetry pyproject-toml without tool dot poetry table is not automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+    val projectPath = testRoot.resolve("project")
+    projectPath.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "project"
+    """.trimIndent())
+
+    multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
+      ModuleAssertions.assertModules(project, "project")
+      CollectionAssertions.assertEqualsUnordered(emptyList(), project.service<PoetrySettings>().getLinkedProjects())
+    }
+  }
+
+
+  @Test
+  fun `project with top-level PEP-621 Poetry pyproject-toml and tool dot poetry table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+    val projectPath = testRoot.resolve("project")
     
+    projectPath.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "project"
+      
+      [tool.poetry]
+      requires-poetry = ">=2.0"
+    """.trimIndent())
+
     multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
       ModuleAssertions.assertModules(project, "project")
       CollectionAssertions.assertEqualsUnordered(listOf(projectPath),

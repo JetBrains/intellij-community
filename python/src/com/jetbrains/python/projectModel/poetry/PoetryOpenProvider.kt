@@ -6,13 +6,20 @@ import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.toNioPathOrNull
 import java.nio.file.Path
 
 class PoetryOpenProvider() : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = PoetryConstants.SYSTEM_ID
 
-  override fun isProjectFile(file: VirtualFile): Boolean = file.name == PoetryConstants.PYPROJECT_TOML
+  override fun isProjectFile(file: VirtualFile): Boolean {
+    return file.name == PoetryConstants.POETRY_LOCK || isPoetrySpecificPyProjectToml(file)
+  }
+
+  private fun isPoetrySpecificPyProjectToml(file: VirtualFile): Boolean {
+    return file.name == PoetryConstants.PYPROJECT_TOML && POETRY_TOOL_TABLE_HEADER.find(file.readText()) != null
+  }
 
   override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     val projectDirectory = getProjectDirectory(projectFile) 
@@ -23,6 +30,10 @@ class PoetryOpenProvider() : AbstractOpenProjectProvider() {
 
   override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
     PoetryProjectResolver.forgetPoetryProject(project, Path.of(externalProjectPath))
+  }
+  
+  companion object {
+    val POETRY_TOOL_TABLE_HEADER: Regex = """\[tool\.poetry[.\w-]*]""".toRegex()
   }
 }
 

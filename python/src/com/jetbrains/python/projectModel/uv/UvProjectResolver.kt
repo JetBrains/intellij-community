@@ -12,12 +12,22 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.ModuleDescriptor
 import com.jetbrains.python.projectModel.readProjectModelGraph
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
 object UvProjectResolver {
+  suspend fun linkAllUvProjects(project: Project, basePath: @SystemIndependent @NonNls String) {
+    val uvSettings = project.service<UvSettings>()
+    val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.uv.projects")) {
+      readProjectModelGraph(Path.of(basePath), UvProjectRootResolver).roots.map { it.root }
+    }
+    uvSettings.setLinkedProjects(allProjectRoots)
+  }
+
   suspend fun syncAllUvProjects(project: Project) {
     withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.all.uv.projects")) {
       // TODO progress bar, listener with events
@@ -61,6 +71,9 @@ object UvProjectResolver {
       val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
       val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
       val graph = readProjectModelGraph(projectRoot, UvProjectRootResolver)
+      if (graph.roots.isEmpty()) {
+        return
+      }
       val storage = createProjectModel(project, graph.roots.flatMap { it.modules }, source)
 
       project.workspaceModel.update("Uv sync at ${projectRoot}") { mutableStorage ->
@@ -121,7 +134,7 @@ object UvProjectResolver {
       storage.removeEntity(entity)
     }
   }
-  
+
   private val Project.baseNioPath: Path?
     get() = basePath?.let { Path.of(it) }
 }

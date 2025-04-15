@@ -71,6 +71,9 @@ object PoetryProjectResolver {
       val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
       val source = PoetryEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
       val graph = readProjectModelGraph(projectRoot, PoetryRootResolver)
+      if (graph.roots.isEmpty()) {
+        return
+      }
       val storage = createProjectModel(project, graph.roots.flatMap { it.modules }, source)
 
       project.workspaceModel.update("Poetry sync at ${projectRoot}") { mutableStorage ->

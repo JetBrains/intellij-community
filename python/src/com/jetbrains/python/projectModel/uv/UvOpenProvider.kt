@@ -6,13 +6,20 @@ import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.toNioPathOrNull
 import java.nio.file.Path
 
 class UvOpenProvider() : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = UvConstants.SYSTEM_ID
 
-  override fun isProjectFile(file: VirtualFile): Boolean = file.name == UvConstants.PYPROJECT_TOML
+  override fun isProjectFile(file: VirtualFile): Boolean {
+    return file.name == UvConstants.UV_LOCK || isUvSpecificPyProjectToml(file)
+  }
+
+  private fun isUvSpecificPyProjectToml(file: VirtualFile): Boolean {
+    return file.name == UvConstants.PYPROJECT_TOML && UV_TOOL_TABLE_HEADER.find(file.readText()) != null
+  }
 
   override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     val projectDirectory = getProjectDirectory(projectFile) 
@@ -24,5 +31,8 @@ class UvOpenProvider() : AbstractOpenProjectProvider() {
   override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
     UvProjectResolver.forgetUvProject(project, Path.of(externalProjectPath))
   }
-}
 
+  companion object {
+    val UV_TOOL_TABLE_HEADER: Regex = """\[tool\.uv[.\w-]*]""".toRegex()
+  }
+}
