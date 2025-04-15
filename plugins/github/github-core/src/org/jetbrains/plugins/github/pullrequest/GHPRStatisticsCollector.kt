@@ -250,7 +250,7 @@ internal object GHPRStatisticsCollector : CounterUsagesCollector() {
     val resource = RateLimitResource.fromString(resourceName)
 
     if (resource == RateLimitResource.Unknown) {
-      LOG.warn("Unknown rate limit resource: ${resourceName}")
+      LOG.info("Unknown rate limit resource: ${resourceName}")
     }
 
     activity.finished {
