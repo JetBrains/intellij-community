@@ -16,7 +16,6 @@
     <runDashboardGroupingRule id="folder" order="after status"
                               implementation="com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule"/>
     <actionPromoter implementation="com.intellij.platform.execution.dashboard.actions.RunDashboardActionPromoter"/>
-    <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.statistics">
     <projectUsagesCollector implementation="com.intellij.platform.execution.dashboard.RunDashboardUsagesCollector"/>
