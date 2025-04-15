@@ -102,7 +102,7 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     if (selectedItem is RecentProjectItem) {
       return selectedItem.projectPath
     }
-    if (project != null) {
+    if (project != null && selectedItem == null) {
       return ProjectWindowCustomizerService.projectPath(project)
     }
     return null
