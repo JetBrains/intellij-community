@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.isLocalEditorUx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus.Internal
 
 fun assertLocalEditorSupport(editor: Editor) {
@@ -24,7 +25,18 @@ fun Editor.isLocalEditorSupport(): Boolean {
   if (virtualFile == null) {
     return false
   }
-  return virtualFile.fileType.isLocalEditorSupport()
+  return virtualFile.isLocalEditorSupportInternal()
+}
+
+fun VirtualFile.isLocalEditorSupport(): Boolean {
+  if (!isLocalEditorUx) {
+    return false
+  }
+  return isLocalEditorSupportInternal()
+}
+
+private fun VirtualFile.isLocalEditorSupportInternal(): Boolean {
+  return fileType.isLocalEditorSupport()
 }
 
 private fun FileType.isLocalEditorSupport(): Boolean {
