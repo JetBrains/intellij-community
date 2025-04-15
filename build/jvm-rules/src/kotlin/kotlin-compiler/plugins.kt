@@ -84,7 +84,9 @@ internal inline fun configurePlugins(
       compilerPluginRegistrar = JvmAbiComponentRegistrar(outputConsumer = abiOutputConsumer),
       commandLineProcessor = JvmAbiCommandLineProcessor(),
       pluginOptions = listOf(
+        cliOptionValue("removeDataClassCopyIfConstructorIsPrivate", "true"),
         cliOptionValue("removePrivateClasses", "true"),
+        cliOptionValue("treatInternalAsPrivate", "true"),
       )))
   }
 }
