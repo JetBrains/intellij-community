@@ -32,12 +32,27 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
 
+data class CorePluginDescription(
+  val mainModuleName: String,
+  val rootPluginXmlName: String = "plugin.xml"
+)
+
+val COMMUNITY_CORE_PLUGINS = listOf(
+  CorePluginDescription(mainModuleName = "intellij.idea.community.customization", rootPluginXmlName = "IdeaPlugin.xml"),
+  CorePluginDescription(mainModuleName = "intellij.pycharm.community", rootPluginXmlName = "PyCharmCorePlugin.xml"),
+)
+
 data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
   val pathsIncludedFromLibrariesViaXiInclude: Set<String> = emptySet(),
-  val modulesToSkip: Set<String> = emptySet(), 
+  val modulesToSkip: Set<String> = emptySet(),
+  /**
+   * Describes different core plugins (with ID `com.intellij`) located in the project sources. 
+   * All of them are checked, but only the first one is used when checking dependencies from other plugins.  
+   */
+  val corePluginDescriptions: List<CorePluginDescription> = COMMUNITY_CORE_PLUGINS,
 )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
@@ -140,6 +155,9 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         moduleNameToInfo = moduleNameToInfo,
       )
     }
+    val alternativeCorePluginMainModules = validationOptions.corePluginDescriptions.drop(1).mapTo(HashSet()) {
+      it.mainModuleName
+    }
 
     // 2. process plugins - process content to collect modules
     for ((sourceModuleName, moduleMetaInfo) in sourceModuleNameToFileInfo) {
@@ -170,17 +188,19 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         packageName = descriptor.`package`,
         descriptor = descriptor,
       )
-      val prev = pluginIdToInfo.put(id, moduleInfo)
-      // todo how do we can exclude it automatically
-      if (prev != null && id != "com.jetbrains.ae.database" && id != "org.jetbrains.plugins.github") {
-        throw PluginValidationError(
-          "Duplicated plugin id: $id",
-          moduleMetaInfo.sourceModule,
-          mapOf(
-            "prev" to prev,
-            "current" to moduleInfo,
-          ),
-        )
+      if (sourceModuleName !in alternativeCorePluginMainModules) {
+        val prev = pluginIdToInfo.put(id, moduleInfo)
+        // todo how do we can exclude it automatically
+        if (prev != null && id != "com.jetbrains.ae.database" && id != "org.jetbrains.plugins.github") {
+          throw PluginValidationError(
+            "Duplicated plugin id: $id",
+            moduleMetaInfo.sourceModule,
+            mapOf(
+              "prev" to prev,
+              "current" to moduleInfo,
+            ),
+          )
+        }
       }
 
       checkContent(
@@ -498,12 +518,9 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         ))
       }
     }
-    
-    val pluginFileName = when (module.name) {
-      "intellij.platform.backend.split" -> "pluginBase.xml"
-      "intellij.idea.community.customization" -> "IdeaPlugin.xml"
-      else -> "plugin.xml"
-    }
+
+    val customRootPluginXmlFileName = validationOptions.corePluginDescriptions.find { it.mainModuleName == module.name }?.rootPluginXmlName
+    val pluginFileName = customRootPluginXmlFileName ?: "plugin.xml"
 
     val pluginDescriptors =
       module.sourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
@@ -511,6 +528,13 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         loadRawPluginDescriptor(pluginDescriptorFile)?.let { pluginDescriptorFile to it }
       }
 
+    if (customRootPluginXmlFileName != null && pluginDescriptors.isEmpty()) {
+      _errors.add(PluginValidationError(
+        message = "Cannot find $customRootPluginXmlFileName in ${module.name}",
+        sourceModule = module,
+      ))
+    }
+    
     val moduleDescriptors =
       module.sourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
         val moduleDescriptorFile: Path = sourceRoot.resolve("${module.name}.xml")
