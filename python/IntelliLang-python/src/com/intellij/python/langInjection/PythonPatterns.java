@@ -6,6 +6,7 @@ import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.ast.PyAstStringElement;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.patterns.PyElementPattern;
@@ -20,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.codeInsight.template.PyHTMLInjectionControllerKt.looksLikeHTML;
 
 /**
  * Provides patterns for literals, strings, arguments and function/method arguments of Python.
@@ -67,6 +70,19 @@ public final class PythonPatterns extends PlatformPatterns {
         return isCallArgument(o, functionName, index);
       }
     });
+  }
+
+  public static @NotNull PyElementPattern.Capture<PyFormattedStringElement> templateOrFormattedStringContainsHTML() {
+    return new PyElementPattern.Capture<>(PyFormattedStringElement.class) {
+      @Override
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        if (o instanceof PyStringLiteralExpression stringLiteralExpression && stringLiteralExpression.getStringElements().size() == 1) {
+          PyAstStringElement stringElement = stringLiteralExpression.getStringElements().get(0);
+          return stringElement.isTemplate() && looksLikeHTML(stringElement.getContent());
+        }
+        return false;
+      }
+    };
   }
 
   public static @NotNull PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(@Nullable String functionName,
