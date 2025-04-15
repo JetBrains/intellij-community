@@ -181,8 +181,9 @@ internal class PythonAddNewEnvironmentPanel(
           }
 
           promoPopup.show(customButton, GotItTooltip.BOTTOM_MIDDLE)
-          custom.newInterpreterManager.afterChange(promoPopup) {
-            if (promoPopup.wasCreated()) {
+
+          if (promoPopup.wasCreated()) {
+            custom.newInterpreterManager.afterChange(promoPopup) {
               promoPopup.gotIt()
               promoPopup.hidePopup()
             }
