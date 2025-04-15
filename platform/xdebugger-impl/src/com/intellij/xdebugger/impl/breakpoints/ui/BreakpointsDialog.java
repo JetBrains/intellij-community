@@ -15,10 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -29,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -325,15 +321,10 @@ public class BreakpointsDialog extends DialogWrapper {
       .map(AddXBreakpointAction::new)
       .toList();
 
-    DefaultActionGroup breakpointTypes = new DefaultActionGroup(breakpointTypeActions);
-
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
       setToolbarPosition(ActionToolbarPosition.TOP).
       setPanelBorder(JBUI.Borders.empty()).
-      setAddAction(button -> JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
-                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-        .show(button.getPreferredPopupPoint())).
+      setAddAction(createAddActionRunnable(breakpointTypeActions)).
       setRemoveAction(button -> myTreeController.removeSelectedBreakpoints(myProject)).
       setRemoveActionUpdater(e -> {
         for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
@@ -358,6 +349,22 @@ public class BreakpointsDialog extends DialogWrapper {
     });
 
     return decoratorPanel;
+  }
+
+  private static @Nullable AnActionButtonRunnable createAddActionRunnable(List<AddXBreakpointAction> breakpointTypeActions) {
+    DefaultActionGroup breakpointTypes = new DefaultActionGroup(breakpointTypeActions);
+
+    AnActionButtonRunnable addAction;
+    if (breakpointTypeActions.isEmpty()) {
+      addAction = null;
+    }
+    else {
+      addAction = button -> JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
+                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+        .show(button.getPreferredPopupPoint());
+    }
+    return addAction;
   }
 
   private void navigate(final boolean requestFocus) {
