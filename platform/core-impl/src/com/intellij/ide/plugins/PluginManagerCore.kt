@@ -66,7 +66,7 @@ object PluginManagerCore {
   const val ENABLE: String = "enable"
   const val EDIT: String = "edit"
 
-  private const val PLATFORM_MODULE_DEPENDENCY_PREFIX = "com.intellij.module"
+  private const val PLATFORM_ALIAS_DEPENDENCY_PREFIX = "com.intellij.module"
   private const val THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt"
 
   @JvmField val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
@@ -204,13 +204,13 @@ object PluginManagerCore {
 
   @Internal
   @JvmStatic
-  fun isPlatformModule(pluginId: PluginId): Boolean {
-    return pluginId.idString.startsWith(PLATFORM_MODULE_DEPENDENCY_PREFIX)
+  fun looksLikePlatformPluginAlias(pluginId: PluginId): Boolean {
+    return pluginId.idString.startsWith(PLATFORM_ALIAS_DEPENDENCY_PREFIX)
   }
 
   @Internal
   @JvmStatic
-  fun findPluginByPlatformModuleId(id: PluginId): IdeaPluginDescriptorImpl? =
+  fun findPluginByPlatformAlias(id: PluginId): IdeaPluginDescriptorImpl? =
     getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
 
   @ApiStatus.ScheduledForRemoval

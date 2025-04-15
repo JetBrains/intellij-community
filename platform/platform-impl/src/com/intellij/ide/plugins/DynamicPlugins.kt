@@ -383,7 +383,7 @@ object DynamicPlugins {
                                             pluginSet: PluginSet): PluginId? {
     for (dependency in descriptor.dependencies) {
       if (!dependency.isOptional &&
-          !PluginManagerCore.isPlatformModule(dependency.pluginId) &&
+          !PluginManagerCore.looksLikePlatformPluginAlias(dependency.pluginId) &&
           !pluginSet.isPluginEnabled(dependency.pluginId) &&
           context.none { it.pluginId == dependency.pluginId }) {
         return dependency.pluginId

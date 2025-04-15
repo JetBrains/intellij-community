@@ -181,15 +181,15 @@ internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescrip
          descriptor.moduleDependencies.plugins.isEmpty() &&
          descriptor.pluginId != PluginManagerCore.CORE_ID &&
          descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-         !hasJavaOrPlatformModuleV1Dependency(descriptor)
+         !hasJavaOrPlatformAliasDependency(descriptor)
 }
 
-private fun hasJavaOrPlatformModuleV1Dependency(descriptor: IdeaPluginDescriptorImpl): Boolean {
+private fun hasJavaOrPlatformAliasDependency(descriptor: IdeaPluginDescriptorImpl): Boolean {
   for (dependency in descriptor.dependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
         PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||
-        PluginManagerCore.isPlatformModule(dependencyPluginId)) {
+        PluginManagerCore.looksLikePlatformPluginAlias(dependencyPluginId)) {
       return true
     }
   }
