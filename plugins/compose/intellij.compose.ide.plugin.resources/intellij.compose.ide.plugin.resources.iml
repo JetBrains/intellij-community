@@ -30,5 +30,6 @@
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.gradleTooling.rt" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" />
     <orderEntry type="module" module-name="intellij.xml.parser" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
   </component>
 </module>
