@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.psi.reference.EditorConfigVirtualFileDescriptor
@@ -21,8 +20,6 @@ import org.editorconfig.language.util.core.EditorConfigPsiTreeUtilCore
 import kotlin.math.max
 
 object EditorConfigPsiTreeUtil {
-  inline fun <reified T : PsiElement> PsiElement.getParentOfType(strict: Boolean = false, vararg stopAt: Class<out PsiElement>): T? =
-    PsiTreeUtil.getParentOfType(this, T::class.java, strict, *stopAt)
 
   inline fun <reified T : PsiElement> PsiElement.hasParentOfType(): Boolean =
     parentOfType<T>(withSelf = true) != null

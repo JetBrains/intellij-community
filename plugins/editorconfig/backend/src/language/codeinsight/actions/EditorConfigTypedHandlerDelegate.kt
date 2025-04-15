@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.impl.TypedActionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
+import com.intellij.psi.util.PsiTreeUtil.getParentOfType
 
 class EditorConfigTypedHandlerDelegate : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
@@ -55,6 +55,10 @@ class EditorConfigTypedHandlerDelegate : TypedHandlerDelegate() {
     return Result.CONTINUE
   }
 
-  private fun findEnclosableHeader(element: PsiElement): EditorConfigHeader? =
-    element.getParentOfType<EditorConfigHeader>(false, EditorConfigEnumerationPattern::class.java)
+  private fun findEnclosableHeader(element: PsiElement): EditorConfigHeader? {
+    return getParentOfType(
+      element, EditorConfigHeader::class.java, false,
+      EditorConfigEnumerationPattern::class.java,
+    )
+  }
 }
