@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.render
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -27,7 +28,6 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
     get() = editor.foldingModel
 
   private val foldedLines = mutableMapOf<Int, FoldRegion>()
-  private var lastModificationStamp: Long? = null
 
   /**
    * Folds the text for the range `[startOffset, lineEndOffset)`.
@@ -53,12 +53,11 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
       return null
     }
 
-    verifyDocumentUnchanged()
-
     if (lineNumber in foldedLines) {
-      LOG.error("Incorrect state of folding for inline completion. The same line $lineNumber is folded twice.")
+      LOG.error("[Inline Completion] Incorrect state of folding. The same line $lineNumber is folded twice.")
       return null
     }
+
     foldingModel.runBatchFoldingOperation {
       val foldRegion = foldingModel.createFoldRegion(
         /* startOffset = */ startOffset,
@@ -78,10 +77,10 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
             foldingModel.removeFoldRegion(foldRegion)
           }
           foldedLines.remove(lineNumber)
-          if (foldedLines.isEmpty()) {
-            lastModificationStamp = null
-          }
         }
+      }
+      else {
+        LOG.debug { "[Inline Completion] Failed to fold line $lineNumber." }
       }
     }
 
@@ -115,25 +114,12 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
 
   private fun getFoldingRegion(offset: Int): FoldRegion? {
     ThreadingAssertions.assertEventDispatchThread()
-    if (lastModificationStamp == null) {
-      return null
-    }
-    verifyDocumentUnchanged()
     return foldedLines[document.getLineNumber(offset)]
   }
 
-  private fun verifyDocumentUnchanged() {
-    val currentStamp = document.modificationStamp
-    if (lastModificationStamp != currentStamp && lastModificationStamp != null) {
-      LOG.error("Incorrect state of folding for inline completion. Some unexpected document changes.")
-      clear()
-    }
-    lastModificationStamp = currentStamp
-  }
-
   override fun dispose() {
-    if (foldedLines.isNotEmpty() || lastModificationStamp != null) {
-      LOG.error("Incorrect state of folding for inline completion. Some folded regions are not disposed.")
+    if (foldedLines.isNotEmpty()) {
+      LOG.error("[Inline Completion] Incorrect state of folding. Some folded regions are not disposed.")
       clear()
     }
   }
@@ -145,7 +131,6 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
       }
     }
     foldedLines.clear()
-    lastModificationStamp = null
   }
 
   companion object : InlineCompletionComponentFactory<InlineCompletionFoldingManager>() {
