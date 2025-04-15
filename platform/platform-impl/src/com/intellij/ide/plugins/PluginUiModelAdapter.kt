@@ -25,11 +25,37 @@ class PluginUiModelAdapter(
     }
 
   override val name: String = pluginDescriptor.name
-  
+
   override val requiresUpgrade: Boolean
     get() {
       return pluginDescriptor is PluginNode && pluginDescriptor.suggestedCommercialIde != null
     }
+
+  override val tags: List<String>
+    get() {
+      return getTags(pluginDescriptor)
+    }
+
+  override val isBundled: Boolean
+    get() = pluginDescriptor.isBundled
+
+  override val version: String?
+    get() = pluginDescriptor.version
+
+  override val vendor: String?
+    get() = pluginDescriptor.vendor
+
+  override val organization: String?
+    get() = pluginDescriptor.organization
+
+  override val downloads: String?
+    get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).getPresentableDownloads() else null
+
+  override val rating: String?
+    get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).getPresentableRating() else null
+
+  override val isLicenseOptional: Boolean
+    get() = pluginDescriptor.isLicenseOptional
 
   override val source: PluginSource = PluginSource.LOCAL
 }

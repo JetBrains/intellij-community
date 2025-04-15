@@ -396,17 +396,13 @@ public final class ListPluginComponent extends JPanel {
     myMetricsPanel = new NonOpaquePanel(new TextHorizontalLayout(JBUIScale.scale(7)));
     myMetricsPanel.setBorder(JBUI.Borders.emptyTop(5));
     myLayout.addLineComponent(myMetricsPanel);
-    IdeaPluginDescriptor descriptor = myPlugin.getDescriptor();
     if (myMarketplace) {
-      assert descriptor instanceof PluginNode;
-      PluginNode pluginNode = (PluginNode)descriptor;
-
-      String downloads = pluginNode.getPresentableDownloads();
+      String downloads = PluginUiModelKt.presentableDownloads(myPlugin);
       if (downloads != null) {
         myDownloads = createRatingLabel(myMetricsPanel, downloads, AllIcons.Plugins.Downloads);
       }
 
-      String rating = pluginNode.getPresentableRating();
+      String rating = PluginUiModelKt.presentableRating(myPlugin);
       if (rating != null) {
         myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
@@ -417,15 +413,15 @@ public final class ListPluginComponent extends JPanel {
       }
     }
     else {
-      String version = descriptor.isBundled() ? IdeBundle.message("plugin.status.bundled") : descriptor.getVersion();
+      String version = myPlugin.isBundled() ? IdeBundle.message("plugin.status.bundled") : myPlugin.getVersion();
 
       if (!StringUtil.isEmptyOrSpaces(version)) {
         myVersion = createRatingLabel(myMetricsPanel, version, null);
       }
     }
 
-    if (!descriptor.isBundled()) {
-      String vendor = StringUtil.defaultIfEmpty(Strings.trim(descriptor.getVendor()), Strings.trim(descriptor.getOrganization()));
+    if (!myPlugin.isBundled()) {
+      String vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.getVendor()), Strings.trim(myPlugin.getOrganization()));
       if (!StringUtil.isEmptyOrSpaces(vendor)) {
         myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
       }
