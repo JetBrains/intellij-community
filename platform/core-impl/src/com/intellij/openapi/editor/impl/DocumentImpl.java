@@ -38,6 +38,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -384,6 +385,10 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public void setReadOnly(boolean isReadOnly) {
     if (myIsReadOnly != isReadOnly) {
+      if (LOG.isTraceEnabled()) {
+        String message = MessageFormat.format("Setting readonly flag, myIsReadOnly = \"{0}\" for {1}", isReadOnly, this);
+        LOG.trace(new Throwable(message));
+      }
       myIsReadOnly = isReadOnly;
       myPropertyChangeSupport.firePropertyChange(PROP_WRITABLE, !isReadOnly, isReadOnly);
     }
