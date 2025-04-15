@@ -55,7 +55,7 @@ sealed interface XDebuggerManagerSessionEvent {
 sealed interface XDebuggerSessionEvent {
   @Serializable
   class SessionPaused(
-    @Serializable(with = DeferredSerializer::class) val pauseData: Deferred<PauseData?>,
+    @Serializable(with = DeferredSerializer::class) val suspendData: Deferred<SuspendData?>,
   ) : XDebuggerSessionEvent
 
   @Serializable
@@ -79,7 +79,7 @@ sealed interface XDebuggerSessionEvent {
 
 @ApiStatus.Internal
 @Serializable
-data class PauseData(
+data class SuspendData(
   val suspendContextDto: XSuspendContextDto,
   val executionStack: XExecutionStackDto?,
   val stackFrame: XStackFrameDto?,

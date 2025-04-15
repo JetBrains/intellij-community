@@ -146,6 +146,7 @@ class FrontendXDebuggerSession private constructor(
   }
 
   init {
+    sessionDto.sessionDataDto.initialSuspendData?.applyToCurrents()
     cs.launch {
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
@@ -185,22 +186,7 @@ class FrontendXDebuggerSession private constructor(
   private suspend fun XDebuggerSessionEvent.updateCurrents() {
     when (this) {
       is XDebuggerSessionEvent.SessionPaused -> {
-        val pauseData = pauseData.await()
-        if (pauseData != null) {
-          val (suspendContextDto, executionStackDto, stackFrameDto) = pauseData
-          val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
-                                                          FrontendXStackFramesStorage())
-          val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
-          suspendContext.value = currentSuspendContext
-          executionStackDto?.let {
-            currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
-              suspendContext.value?.activeExecutionStack = it
-            }
-          }
-          stackFrameDto?.let {
-            currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStack(it, project)
-          }
-        }
+        suspendData.await()?.applyToCurrents()
       }
       is XDebuggerSessionEvent.SessionResumed,
       is XDebuggerSessionEvent.BeforeSessionResume,
@@ -223,6 +209,22 @@ class FrontendXDebuggerSession private constructor(
         }
       }
       else -> {}
+    }
+  }
+
+  private fun SuspendData.applyToCurrents() {
+    val (suspendContextDto, executionStackDto, stackFrameDto) = this
+    val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
+                                                    FrontendXStackFramesStorage())
+    val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
+    suspendContext.value = currentSuspendContext
+    executionStackDto?.let {
+      currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
+        suspendContext.value?.activeExecutionStack = it
+      }
+    }
+    stackFrameDto?.let {
+      currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStack(it, project)
     }
   }
 

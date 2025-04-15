@@ -120,6 +120,7 @@ data class XDebugSessionDataDto(
   val configurationName: String,
   val initialBreakpointsMuted: Boolean,
   val breakpointsMutedFlow: RpcFlow<Boolean>,
+  val initialSuspendData: SuspendData?,
 )
 
 @ApiStatus.Internal

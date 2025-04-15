@@ -55,7 +55,8 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val sessionDataDto = XDebugSessionDataDto(
       currentSession.sessionData.configurationName,
       currentSession.areBreakpointsMuted(),
-      currentSession.getBreakpointsMutedFlow().toRpc()
+      currentSession.getBreakpointsMutedFlow().toRpc(),
+      currentSession.suspendData(),
     )
 
     val consoleView = if (useFeProxy()) {
@@ -96,9 +97,9 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           val stackTraceDto = currentSession.currentStackFrame?.let {
             createXStackFrameDto(it, suspendScope, currentSession)
           }
-          PauseData(suspendContextDto,
-                    executionStackDto,
-                    stackTraceDto)
+          SuspendData(suspendContextDto,
+                      executionStackDto,
+                      stackTraceDto)
         }
         trySend(XDebuggerSessionEvent.SessionPaused(data))
       }
