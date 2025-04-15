@@ -281,6 +281,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_anotherInvokes_two.test");
             }
 
+            @TestMetadata("invokeExtension_extraArguments_anotherInvoke_single.test")
+            public void testInvokeExtension_extraArguments_anotherInvoke_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_extraArguments_anotherInvoke_single.test");
+            }
+
             @TestMetadata("invokeExtension_qualifiedCall.test")
             public void testInvokeExtension_qualifiedCall() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall.test");
