@@ -57,8 +57,9 @@ object GitLabLoginUtil {
     }
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
-  internal fun updateToken(
+  fun updateToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
