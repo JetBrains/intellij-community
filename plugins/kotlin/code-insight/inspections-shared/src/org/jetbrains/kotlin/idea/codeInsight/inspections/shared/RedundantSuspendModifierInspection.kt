@@ -4,14 +4,20 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.descendants
+import com.intellij.psi.util.findParentOfType
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
@@ -86,6 +92,27 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 return true
             }
         })
+
+        if (!hasSuspendOrUnresolvedCall) {
+            ReferencesSearch
+                .search(containingFunction, LocalSearchScope(containingFunction.parent))
+                .forEach(Processor { reference ->
+                    val expression = reference.element.parent.findParentOfType<KtExpression>() ?: return@Processor !hasSuspendOrUnresolvedCall
+                    analyze(expression) {
+                        val call = expression.resolveToCall() ?: return@analyze
+                        val functionCall = call.singleFunctionCallOrNull() ?: return@analyze
+
+                        val anySuspendFunctionType =
+                            functionCall.argumentMapping.any {
+                                (it.value.returnType as? KaFunctionType)?.isSuspend == true
+                            }
+                        if (anySuspendFunctionType) {
+                            hasSuspendOrUnresolvedCall = true
+                        }
+                    }
+                    !hasSuspendOrUnresolvedCall
+                })
+        }
 
         return hasSuspendOrUnresolvedCall
     }

@@ -2424,6 +2424,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
         }
 
+        @TestMetadata("functionalTypeParameter.kt")
+        public void testFunctionalTypeParameter() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/functionalTypeParameter.kt");
+        }
+
         @TestMetadata("interface.kt")
         public void testInterface() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/interface.kt");
