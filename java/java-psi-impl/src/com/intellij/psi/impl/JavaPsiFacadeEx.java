@@ -20,14 +20,13 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.concurrent.Callable;
 
 public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
   @TestOnly
@@ -42,16 +41,16 @@ public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
    * This method uses thread local variables to keep it state.
    *
    * @param <T> the type of the result returned by the callable
-   * @param callable the callable to be executed within the temporary scope
+   * @param computation the callable to be executed within the temporary scope
    * @return the result produced by the callable
    */
   @ApiStatus.Internal
-  public abstract <T> T withTemporaryScopeCaches(Callable<T> callable);
+  public abstract <T, E extends Throwable> T withTemporaryScopeCaches(@NotNull ThrowableComputable<T, E> computation) throws E;
 
   /**
    * @return true if temporary scope caches are enabled, otherwise false
    *
-   * @see #withTemporaryScopeCaches(Callable)
+   * @see #withTemporaryScopeCaches(ThrowableComputable)
    */
   @ApiStatus.Internal
   public abstract boolean temporaryScopeCachesEnabled();
