@@ -14,6 +14,7 @@ java_library(
     "//plugins/markdown/spellchecker",
     "//plugins/markdown/xml",
     "//plugins/markdown/compose:compose-preview",
+    "//plugins/markdown/core/frontend:markdown-frontend",
   ]
 )
 ### auto-generated section `build intellij.markdown.plugin.main` end

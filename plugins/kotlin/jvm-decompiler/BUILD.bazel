@@ -22,7 +22,6 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/jvm/k1:kotlin-jvm-k1",
     "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//platform/core-ui",
     "//java/openapi:java",

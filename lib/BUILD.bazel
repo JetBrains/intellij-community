@@ -1613,7 +1613,7 @@ java_import(
 
 kt_jvm_import(
   name = "gradle",
-  jar = "@gradle-api-8_13_http//file",
+  jar = "@gradle-api-8_14-rc-1_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4689,6 +4689,77 @@ java_import(
   name = "libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui2",
   jars = ["@ui-1_8_0-alpha04_http//file"],
   srcjar = "@ui-1_8_0-alpha04-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors",
+  jar = "@analysis-kotlin-descriptors-2_0_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors-provided",
+  exports = [":libraries-dokka-jetbrains-dokka-analysis-kotlin-descriptors"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "libraries-dokka-jetbrains-dokka-cli",
+  jar = "@dokka-cli-2_0_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-dokka-jetbrains-dokka-cli-provided",
+  exports = [":libraries-dokka-jetbrains-dokka-cli"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-dokka-jetbrains-dokka-javadoc-plugin",
+  exports = [
+    ":javadoc-plugin-2_0_0_http_import",
+    ":dokka-base-2_0_0_http_import",
+    ":freemarker-2_3_32_http_import",
+    ":kotlin-as-java-plugin-2_0_0_http_import",
+    ":korte-jvm-4_0_10_http_import",
+    ":kotlinx-html-jvm-0_9_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "javadoc-plugin-2_0_0_http_import",
+  jar = "@javadoc-plugin-2_0_0_http//file"
+)
+
+kt_jvm_import(
+  name = "dokka-base-2_0_0_http_import",
+  jar = "@dokka-base-2_0_0_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-as-java-plugin-2_0_0_http_import",
+  jar = "@kotlin-as-java-plugin-2_0_0_http//file"
+)
+
+kt_jvm_import(
+  name = "korte-jvm-4_0_10_http_import",
+  jar = "@korte-jvm-4_0_10_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlinx-html-jvm-0_9_1_http_import",
+  jar = "@kotlinx-html-jvm-0_9_1_http//file"
+)
+
+java_library(
+  name = "libraries-dokka-jetbrains-dokka-javadoc-plugin-provided",
+  exports = [":libraries-dokka-jetbrains-dokka-javadoc-plugin"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -8358,8 +8429,8 @@ java_import(
 
 kt_jvm_import(
   name = "pty4j",
-  jar = "@pty4j-0_13_1_http//file",
-  srcjar = "@pty4j-0_13_1-sources_http//file",
+  jar = "@pty4j-0_13_4_http//file",
+  srcjar = "@pty4j-0_13_4-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8633,8 +8704,8 @@ java_import(
 
 kt_jvm_import(
   name = "studio-platform",
-  jar = "@studio-platform-2024_3_2-alpha05-222_http//file",
-  srcjar = "@studio-platform-2024_3_2-alpha05-222-sources_http//file",
+  jar = "@studio-platform-2024_3_2-alpha05-244_http//file",
+  srcjar = "@studio-platform-2024_3_2-alpha05-244-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8647,8 +8718,8 @@ java_library(
 
 kt_jvm_import(
   name = "studio-test-platform",
-  jar = "@studio-test-platform-2024_3_2-alpha05-222_http//file",
-  srcjar = "@studio-test-platform-2024_3_2-alpha05-222-sources_http//file",
+  jar = "@studio-test-platform-2024_3_2-alpha05-244_http//file",
+  srcjar = "@studio-test-platform-2024_3_2-alpha05-244-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -31,6 +31,9 @@ jvm_library(
     "//platform/util",
     "//platform/settings",
     "//platform/util/coroutines",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
   ],
   runtime_deps = [":ide-core_resources"]
 )

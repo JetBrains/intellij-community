@@ -28,6 +28,7 @@ jvm_library(
     "//platform/ui.jcef:ui-jcef",
     "@lib//:kotlin-stdlib",
     "//platform/statistics",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":images_resources"]
 )
@@ -58,6 +59,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":images_resources"]
 )

@@ -48,6 +48,11 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/ui.jcef:ui-jcef",
     "@lib//:kotlin-stdlib",
+    "//platform/project/shared:project",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc:ide-rpc",
   ],
   exports = ["//platform/ui.jcef:ui-jcef"],
   runtime_deps = [":markdown_resources"]

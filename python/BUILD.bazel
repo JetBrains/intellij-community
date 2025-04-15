@@ -516,6 +516,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/xdebugger-impl:debugger-impl",
     "//python/python-syntax-core:syntax-core",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":python-pydev_resources"]
 )

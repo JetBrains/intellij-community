@@ -2016,10 +2016,10 @@ http_file(
 )
 
 http_file(
-  name = "gradle-api-8_13_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/8.13/gradle-api-8.13.jar",
-  sha256 = "63047597f2f6724abc9b39508b1da58a793edd93990e1c23f7ef5634e25adda9",
-  downloaded_file_path = "gradle-api-8.13.jar"
+  name = "gradle-api-8_14-rc-1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/8.14-rc-1/gradle-api-8.14-rc-1.jar",
+  sha256 = "5e790fd4e2b434fd9b2d2837c8af029a53a965dea21f5e6c340db2b5aca112ec",
+  downloaded_file_path = "gradle-api-8.14-rc-1.jar"
 )
 
 http_file(
@@ -6612,6 +6612,55 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/ui/ui-unit/1.8.0-alpha04/ui-unit-1.8.0-alpha04-sources.jar",
   sha256 = "b48428c4739e1e46d19ab93e8fdb8b36c0f0037a2d7fb166f5da5f09a267c73b",
   downloaded_file_path = "ui-unit-1.8.0-alpha04-sources.jar"
+)
+
+http_file(
+  name = "analysis-kotlin-descriptors-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0.jar",
+  sha256 = "829788c40891a2a3c4b9435cb9ec80d645560d926e9fbbd08ccc29e8e4f1eb7c",
+  downloaded_file_path = "analysis-kotlin-descriptors-2.0.0.jar"
+)
+
+http_file(
+  name = "dokka-cli-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0.jar",
+  sha256 = "5f70f358160b48ef9763b2ced4e96037f1bfc8d0122de692550ca320ab4b9f20",
+  downloaded_file_path = "dokka-cli-2.0.0.jar"
+)
+
+http_file(
+  name = "javadoc-plugin-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/javadoc-plugin/2.0.0/javadoc-plugin-2.0.0.jar",
+  sha256 = "41055e59e3f0a6e04b77557641b9a2db0311e99f81c5bc7b1fcc3409bb23d99b",
+  downloaded_file_path = "javadoc-plugin-2.0.0.jar"
+)
+
+http_file(
+  name = "dokka-base-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0.jar",
+  sha256 = "0411d1c38a1d100cbd346c6340c3c4b5f154a48a9c119ed11893d6fae94c91aa",
+  downloaded_file_path = "dokka-base-2.0.0.jar"
+)
+
+http_file(
+  name = "kotlin-as-java-plugin-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/dokka/kotlin-as-java-plugin/2.0.0/kotlin-as-java-plugin-2.0.0.jar",
+  sha256 = "3d8931b3c03f84edbf72f67348265205d819d327bb110043ab11d840d59bde41",
+  downloaded_file_path = "kotlin-as-java-plugin-2.0.0.jar"
+)
+
+http_file(
+  name = "korte-jvm-4_0_10_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/soywiz/korlibs/korte/korte-jvm/4.0.10/korte-jvm-4.0.10.jar",
+  sha256 = "b9b983817a80dbb5f9b599b508616115c1e8e1e3f1fccc301695f4530792690f",
+  downloaded_file_path = "korte-jvm-4.0.10.jar"
+)
+
+http_file(
+  name = "kotlinx-html-jvm-0_9_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.9.1/kotlinx-html-jvm-0.9.1.jar",
+  sha256 = "b68f39cd9ad7b46de0a0e77e7f5908d4e7661f3d0c85d2d9171543fcd5b156fb",
+  downloaded_file_path = "kotlinx-html-jvm-0.9.1.jar"
 )
 
 http_file(
@@ -12005,17 +12054,17 @@ http_file(
 )
 
 http_file(
-  name = "pty4j-0_13_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.1/pty4j-0.13.1.jar",
-  sha256 = "b8df7a5814a082741c523cb1647e2c0fa3cdd0fd1147ca8e9b0b3cf10995a9ed",
-  downloaded_file_path = "pty4j-0.13.1.jar"
+  name = "pty4j-0_13_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.4/pty4j-0.13.4.jar",
+  sha256 = "bc1bb1855a20a5f99583890ed0ed23165f2a7c5b64be037db2c46fc5533edccc",
+  downloaded_file_path = "pty4j-0.13.4.jar"
 )
 
 http_file(
-  name = "pty4j-0_13_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.1/pty4j-0.13.1-sources.jar",
-  sha256 = "1e5698c4c76d411416b2ea4d2e31d0b63d96157200231ea23f8365ff0a3d48d5",
-  downloaded_file_path = "pty4j-0.13.1-sources.jar"
+  name = "pty4j-0_13_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/pty4j/pty4j/0.13.4/pty4j-0.13.4-sources.jar",
+  sha256 = "0669c0c5b41abb1c71a42730f4002895929c162371651b6f29bffb04da38ce01",
+  downloaded_file_path = "pty4j-0.13.4-sources.jar"
 )
 
 http_file(
@@ -12460,31 +12509,31 @@ http_file(
 )
 
 http_file(
-  name = "studio-platform-2024_3_2-alpha05-222_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-222/studio-platform-2024.3.2-alpha05-222.jar",
-  sha256 = "29254aa865510979045ee3812c652bdba0bbee01d5ac95bb829ce686fff0dd1b",
-  downloaded_file_path = "studio-platform-2024.3.2-alpha05-222.jar"
+  name = "studio-platform-2024_3_2-alpha05-244_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-244/studio-platform-2024.3.2-alpha05-244.jar",
+  sha256 = "88c8f710e6249359df74b1ef51768b4471d6edd2be2b5adc015cc9ea5ce7ac49",
+  downloaded_file_path = "studio-platform-2024.3.2-alpha05-244.jar"
 )
 
 http_file(
-  name = "studio-platform-2024_3_2-alpha05-222-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-222/studio-platform-2024.3.2-alpha05-222-sources.jar",
-  sha256 = "767bd9ced53c85f5d07185e76efe15a064e304c8d226eca530e2b531397963a5",
-  downloaded_file_path = "studio-platform-2024.3.2-alpha05-222-sources.jar"
+  name = "studio-platform-2024_3_2-alpha05-244-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2024.3.2-alpha05-244/studio-platform-2024.3.2-alpha05-244-sources.jar",
+  sha256 = "782303f16215c5d8f69c3e60abc9ea7b1b7fbc0907c170d74cda5f0fcd2a70aa",
+  downloaded_file_path = "studio-platform-2024.3.2-alpha05-244-sources.jar"
 )
 
 http_file(
-  name = "studio-test-platform-2024_3_2-alpha05-222_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-222/studio-test-platform-2024.3.2-alpha05-222.jar",
-  sha256 = "9c1322c7186947c8b78af455c4430abf9ca275c83b800e7189a8f0ca44a00fea",
-  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-222.jar"
+  name = "studio-test-platform-2024_3_2-alpha05-244_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-244/studio-test-platform-2024.3.2-alpha05-244.jar",
+  sha256 = "a2f1c2de10a7b54d605eab303b41d8179229fdb726800a8daf30f894a486bd12",
+  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-244.jar"
 )
 
 http_file(
-  name = "studio-test-platform-2024_3_2-alpha05-222-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-222/studio-test-platform-2024.3.2-alpha05-222-sources.jar",
-  sha256 = "e5a9bec493cd5367e56361e62a499135871fd2c8d46669562d0e3e9a3c86aef0",
-  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-222-sources.jar"
+  name = "studio-test-platform-2024_3_2-alpha05-244-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2024.3.2-alpha05-244/studio-test-platform-2024.3.2-alpha05-244-sources.jar",
+  sha256 = "9fc81a1a75d67c62753b73e774e4b78de9e4e1e46de81cff46d5dffde5455346",
+  downloaded_file_path = "studio-test-platform-2024.3.2-alpha05-244-sources.jar"
 )
 
 http_file(

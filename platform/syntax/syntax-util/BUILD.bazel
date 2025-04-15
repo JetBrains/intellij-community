@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.syntax.util` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "util_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "util",
@@ -12,6 +18,9 @@ jvm_library(
     "//platform/syntax/syntax-api:syntax",
     "@lib//:jetbrains-annotations",
     "//platform/util/base/multiplatform:util-base-multiplatform",
-  ]
+    "//platform/util/multiplatform",
+    "//platform/syntax/syntax-i18n:i18n",
+  ],
+  runtime_deps = [":util_resources"]
 )
 ### auto-generated section `build intellij.platform.syntax.util` end

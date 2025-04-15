@@ -1,0 +1,3 @@
+### auto-generated section `build intellij.libraries.dokka` start
+load("@rules_java//java:defs.bzl", "java_library")
+### auto-generated section `build intellij.libraries.dokka` end

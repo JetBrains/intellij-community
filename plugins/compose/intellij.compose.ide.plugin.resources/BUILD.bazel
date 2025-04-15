@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.compose.ide.plugin.resources` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "ide-plugin-resources_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-plugin-resources",
+  module_name = "intellij.compose.ide.plugin.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/gradle",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/lang-impl",
+    "//xml/impl",
+    "//platform/util/coroutines",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//xml/xml-parser:parser",
+  ],
+  runtime_deps = [":ide-plugin-resources_resources"]
+)
+
+jvm_library(
+  name = "ide-plugin-resources_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":ide-plugin-resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl_test_lib",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/gradle",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/lang-impl",
+    "//xml/impl",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/util:util-tests_test_lib",
+    "//platform/util/coroutines",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//xml/xml-parser:parser",
+  ],
+  runtime_deps = [":ide-plugin-resources_resources"]
+)
+
+jvm_test(
+  name = "ide-plugin-resources_test",
+  runtime_deps = [":ide-plugin-resources_test_lib"]
+)
+### auto-generated section `build intellij.compose.ide.plugin.resources` end
