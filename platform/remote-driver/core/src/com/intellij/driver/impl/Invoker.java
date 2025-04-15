@@ -1,9 +1,6 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.DriverIllegalStateException;
-import com.intellij.driver.model.OnDispatcher;
-import com.intellij.driver.model.ProductVersion;
-import com.intellij.driver.model.RdTarget;
+import com.intellij.driver.model.*;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -149,9 +146,15 @@ public class Invoker implements InvokerMBean {
       catch (Throwable e) {
         throw new RuntimeException(e);
       }
-      ApplicationManager.getApplication().invokeAndWait(() -> {
+      Application app = ApplicationManager.getApplication();
+      Runnable runnable = () -> {
         res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
-      }, modalityState[0]);
+      };
+      if (call.getLockSemantics() == LockSemantics.NO_LOCK && app instanceof ApplicationEx applicationEx) {
+        applicationEx.invokeAndWaitRelaxed(runnable, modalityState[0]);
+      } else {
+        app.invokeAndWait(runnable, modalityState[0]);
+      }
       result = res[0];
     }
     else {
