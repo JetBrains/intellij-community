@@ -10,13 +10,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.annotations.ApiStatus.Internal
 
-fun assertLocalTypingAssist(editor: Editor) {
-  if (editor.isLocalTypingAssist()) {
+fun assertLocalEditorSupport(editor: Editor) {
+  if (editor.isLocalEditorSupport()) {
     AppModeAssertions.assertFrontend(false)
   }
 }
 
-fun Editor.isLocalTypingAssist(): Boolean {
+fun Editor.isLocalEditorSupport(): Boolean {
   if (!isLocalEditorUx) {
     return false
   }
@@ -24,10 +24,10 @@ fun Editor.isLocalTypingAssist(): Boolean {
   if (virtualFile == null) {
     return false
   }
-  return virtualFile.fileType.isLocalTypingAssist()
+  return virtualFile.fileType.isLocalEditorSupport()
 }
 
-private fun FileType.isLocalTypingAssist(): Boolean {
+private fun FileType.isLocalEditorSupport(): Boolean {
   return localEditorSupportBeanFor(this) != null
 }
 
