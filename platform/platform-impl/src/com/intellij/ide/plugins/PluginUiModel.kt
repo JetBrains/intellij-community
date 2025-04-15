@@ -3,7 +3,9 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import java.text.DecimalFormat
+import java.util.Locale
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -16,6 +18,7 @@ interface PluginUiModel {
 
   val canBeEnabled: Boolean
 
+  @get:NlsSafe
   val name: String
 
   val source: PluginSource
@@ -38,9 +41,19 @@ interface PluginUiModel {
   @get:NlsSafe
   val organization: String?
 
+  @get:NlsSafe
   val downloads: String?
 
+  @get:NlsSafe
   val rating: String?
+
+  @get:NlsSafe
+  val productCode: String?
+
+  @get:NlsSafe
+  val size: String?
+
+  val isDeleted: Boolean
 
   val isLicenseOptional: Boolean
 
@@ -87,6 +100,19 @@ fun PluginUiModel.presentableDownloads(): String? {
       value < 1000000 -> K_FORMAT.format(value / 1000.0)
       else -> M_FORMAT.format(value / 1000000.0)
     }
+  }
+  catch (_: NumberFormatException) { }
+  return null
+}
+
+@NlsSafe
+fun PluginUiModel.presentableSize(): String? {
+  val size = this.size ?: return null
+  if (size.isBlank()) return null
+
+  try {
+    val value = size.toLong()
+    return if (value >= 0) StringUtil.formatFileSize(value).uppercase(Locale.ENGLISH) else null
   }
   catch (_: NumberFormatException) { }
   return null

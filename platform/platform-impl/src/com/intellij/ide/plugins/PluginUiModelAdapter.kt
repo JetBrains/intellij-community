@@ -1,6 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.getTags
+import com.intellij.ide.plugins.newui.NewUiUtil
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfoRt
@@ -53,6 +58,15 @@ class PluginUiModelAdapter(
 
   override val rating: String?
     get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).getPresentableRating() else null
+
+  override val productCode: String?
+    get() = pluginDescriptor.productCode
+
+  override val size: String?
+    get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).size else null
+
+  override val isDeleted: Boolean
+    get() = NewUiUtil.isDeleted(pluginDescriptor)
 
   override val isLicenseOptional: Boolean
     get() = pluginDescriptor.isLicenseOptional
