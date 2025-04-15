@@ -124,6 +124,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private static JBList<DumpItem> createThreadList(ConsoleView consoleView) {
     JBList<DumpItem> threadList = new JBList<>(new DefaultListModel<>());
     threadList.setCellRenderer(new ThreadListCellRenderer());
+    threadList.setEmptyText(JavaBundle.message("thread.dump.loading.text"));
     threadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     threadList.addListSelectionListener(new ListSelectionListener() {
       int currentSelectedIndex = -2; // to avoid multiple expensive invocations of printStackTrace()
