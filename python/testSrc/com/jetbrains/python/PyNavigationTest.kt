@@ -135,7 +135,7 @@ class PyNavigationTest : PyTestCase() {
     myFixture.configureByText(
       "a.py",
       "class MyMeta(type):\n" +
-      "  def __call__(self, p1, p2):\n" +
+      "  def __call__(self, p1, p2) -> object:\n" +
       "    pass\n" +
       "class MyClass(metaclass=MyMeta):\n" +
       "  def __init__(self, p3, p4):\n" +

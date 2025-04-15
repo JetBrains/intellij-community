@@ -401,4 +401,65 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
         """
     );
   }
+
+  public void testMetaclassHavingDunderCall() {
+    doTestByText("""
+                   from typing import Self
+      
+      
+                   class Meta(type):
+                       def call(cls, *args, **kwargs) -> object: ...
+                   
+                       __call__ = call
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   expr = MyClass()
+                   """);
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__(cls): ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   """);
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__[T](cls: type[T], *args, **kwargs) -> T: ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p) -> Self: ...
+                   
+                   
+                   c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   """);
+    doTestByText("""
+                   from typing import Self
+                   
+                   
+                   class Meta(type):
+                       def __call__[T](cls, x: T) -> T: ...
+                   
+                   
+                   class MyClass(metaclass=Meta):
+                       def __new__(cls, p1, p2) -> Self: ...
+                   
+                   
+                   c = MyClass(1)
+                   """);
+  }
 }

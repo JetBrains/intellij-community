@@ -3492,6 +3492,67 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  public void testMetaclassHavingDunderCall() {
+    doTest("object", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def call(cls, *args, **kwargs) -> object: ...
+      
+          __call__ = call
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p) -> Self: ...
+      
+      
+      expr = MyClass()
+      """);
+    doTest("MyClass", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__(cls): ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p: int) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+    doTest("MyClass", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__[T](cls: type[T], *args, **kwargs) -> T: ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+    doTest("int", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__[T](cls, x: T) -> T: ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p1, p2) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
