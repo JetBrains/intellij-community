@@ -91,14 +91,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     buildProjectArtifacts(distState.platform, getEnabledPluginModules(distState.pluginsToPublish, context), context)
 
     val searchableOptionSet = buildSearchableOptions(context)
-    buildNonBundledPlugins(
-      pluginsToPublish = pluginsToPublish,
-      compressPluginArchive = context.options.compressZipFiles,
-      buildPlatformLibJob = null,
-      state = distState,
-      searchableOptionSet = searchableOptionSet,
-      context = context,
-    )
+    buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, null, distState, searchableOptionSet, context)
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -160,7 +153,7 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val temp = builder.toString()
   builder.setLength(0)
   val map = LinkedHashMap<String, String>(1)
-  map.put("settings_dir", settingsDir)
+  map["settings_dir"] = settingsDir
   builder.append(BuildUtils.replaceAll(temp, map, "@@"))
   if (context.applicationInfo.isEAP) {
     builder.append(
@@ -456,12 +449,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         toPublish = true
       )
       buildNonBundledPlugins(
-        pluginsToPublish = pluginsToPublish,
-        compressPluginArchive = context.options.compressZipFiles,
-        buildPlatformLibJob = null,
-        state = distributionState,
-        searchableOptionSet = buildSearchableOptions(context),
-        context = context,
+        pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), context
       )
       return@coroutineScope
     }
