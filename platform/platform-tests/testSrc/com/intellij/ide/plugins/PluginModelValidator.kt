@@ -215,14 +215,14 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         val prev = pluginIdToInfo.put(id, moduleInfo)
         // todo how do we can exclude it automatically
         if (prev != null) {
-          throw PluginValidationError(
+          _errors.add(PluginValidationError(
             "Duplicated plugin id: $id",
             moduleMetaInfo.sourceModule,
             mapOf(
               "prev" to prev,
               "current" to moduleInfo,
             ),
-          )
+          ))
         }
       }
 
