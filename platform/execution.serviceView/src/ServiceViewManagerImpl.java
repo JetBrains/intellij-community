@@ -56,10 +56,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import kotlin.Unit;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -247,11 +244,13 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
-  boolean shouldBeAvailable() {
+  @ApiStatus.Internal
+  public boolean shouldBeAvailable() {
     return myRegisteringToolWindowAvailable;
   }
 
-  void createToolWindowContent(@NotNull ToolWindow toolWindow) {
+  @ApiStatus.Internal
+  public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
     String toolWindowId = toolWindow.getId();
     Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindowId);
     if (contributors == null) return;

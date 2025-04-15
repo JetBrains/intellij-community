@@ -3,7 +3,8 @@
     <module name="intellij.platform.navbar.frontend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Enable services toolwindow split into frontend/backend" key="services.view.split.enabled"/>
+    <!--todo move to backend module some day-->
+    <registryKey defaultValue="false" description="Enable monolith services toolwindow on backend" key="services.view.monolith.enabled"/>
 
     <actionPromoter implementation="com.intellij.platform.execution.serviceView.ServiceViewActionPromoter"/>
     <navbar implementation="com.intellij.platform.execution.serviceView.ServiceViewNavBarExtension"/>

@@ -8,18 +8,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 
-internal class ServiceViewToolWindowManager(
+internal class FrontendServiceViewToolWindowManager(
   private val project: Project,
 ) : ServiceViewToolWindowFactory.CompatibilityDelegate {
 
   override fun shouldBeAvailable(): Boolean {
     // TODO move impl to this class
-    return Registry.`is`("services.view.monolith.enabled") && (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).shouldBeAvailable()
+    return Registry.`is`("services.view.split.enabled") && (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).shouldBeAvailable()
   }
 
   override fun createToolWindowContent(toolWindow: ToolWindow) {
-    if (!Registry.`is`("services.view.monolith.enabled")) {
-      thisLogger().warn("Split services implementation is going to be used. Backend toolwindow is disabled")
+    if (!Registry.`is`("services.view.split.enabled")) {
+      thisLogger().warn("Monolith services implementation is going to be used. Frontend toolwindow is disabled")
       return
     }
     // TODO move impl to this class
