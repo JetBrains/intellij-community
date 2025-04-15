@@ -67,6 +67,9 @@ class PluginUiModelAdapter(
 
   override val isDeleted: Boolean
     get() = NewUiUtil.isDeleted(pluginDescriptor)
+    
+  override val dependencies: List<PluginDependencyModel>
+    get() = pluginDescriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) }
 
   override val isLicenseOptional: Boolean
     get() = pluginDescriptor.isLicenseOptional

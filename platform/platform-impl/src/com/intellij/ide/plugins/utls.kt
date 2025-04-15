@@ -49,7 +49,7 @@ fun getEnableDisabledPluginsDependentConfirmationData(): Int? {
   return ref.get()
 }
 
-fun getUiInspectorContextFor(selectedPlugin: IdeaPluginDescriptor): List<PropertyBean> {
+fun getUiInspectorContextFor(selectedPlugin: PluginUiModel): List<PropertyBean> {
   val result = mutableListOf<PropertyBean>()
   result.add(PropertyBean("Plugin ID", selectedPlugin.pluginId, true))
 

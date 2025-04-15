@@ -1158,6 +1158,10 @@ public final class ListPluginComponent extends JPanel {
     return myPlugin.getDescriptor();
   }
 
+  public PluginUiModel getPluginModel(){
+    return myPlugin;
+  }
+
   public IdeaPluginDescriptor getInstalledDescriptorForMarketplace() {
     return myInstalledDescriptorForMarketplace;
   }
@@ -1181,7 +1185,7 @@ public final class ListPluginComponent extends JPanel {
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {
     Iterator<? extends ListPluginComponent> iterator = selection.iterator();
     BooleanSupplier isGloballyEnabledGenerator = () ->
-      myPluginModel.getModel().getState(iterator.next().getPluginDescriptor()) == PluginEnabledState.ENABLED;
+      myPluginModel.getState(iterator.next().getPluginModel()) == PluginEnabledState.ENABLED;
 
     boolean firstDisabled = !isGloballyEnabledGenerator.getAsBoolean();
     while (iterator.hasNext()) {
@@ -1255,7 +1259,7 @@ public final class ListPluginComponent extends JPanel {
   private final class PluginIdUiInspectorContextProvider implements UiInspectorContextProvider {
     @Override
     public @NotNull List<PropertyBean> getUiInspectorContext() {
-      return PluginUtilsKt.getUiInspectorContextFor(myPlugin.getDescriptor());
+      return PluginUtilsKt.getUiInspectorContextFor(myPlugin);
     }
   }
 
@@ -1566,7 +1570,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isInstalledAndEnabled() {
-    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getModel().getState(myPlugin.getPluginId()).isDisabled();
+    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myPluginModel.getState(myPlugin).isDisabled();
   }
 
   @Override

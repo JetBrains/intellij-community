@@ -54,6 +54,8 @@ interface PluginUiModel {
   val size: String?
 
   val isDeleted: Boolean
+  
+  val dependencies: List<PluginDependencyModel>
 
   val isLicenseOptional: Boolean
 
@@ -71,6 +73,14 @@ fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
 enum class PluginSource {
   LOCAL, REMOTE
 }
+
+/**
+ * Represents a plugin dependency in the UI model
+ */
+data class PluginDependencyModel(
+  val pluginId: PluginId,
+  val isOptional: Boolean
+)
 
 private val K_FORMAT = DecimalFormat("###.#K")
 private val M_FORMAT = DecimalFormat("###.#M")
