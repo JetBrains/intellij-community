@@ -3,9 +3,7 @@ package com.intellij.platform.execution.serviceView
 
 import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowFactory
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 
 internal class ServiceViewToolWindowManager(
@@ -14,15 +12,13 @@ internal class ServiceViewToolWindowManager(
 
   override fun shouldBeAvailable(): Boolean {
     // TODO move impl to this class
-    return Registry.`is`("services.view.monolith.enabled") && (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).shouldBeAvailable()
+    return shouldEnableServicesViewInCurrentEnvironment() && (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).shouldBeAvailable()
   }
 
   override fun createToolWindowContent(toolWindow: ToolWindow) {
-    if (!Registry.`is`("services.view.monolith.enabled")) {
-      thisLogger().warn("Split services implementation is going to be used. Backend toolwindow is disabled")
-      return
-    }
     // TODO move impl to this class
-    return (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).createToolWindowContent(toolWindow)
+    if (shouldEnableServicesViewInCurrentEnvironment()) {
+      return (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).createToolWindowContent(toolWindow)
+    }
   }
 }
