@@ -298,10 +298,6 @@ open class EditorComposite internal constructor(
       return
     }
 
-    val messageBus = project.messageBus
-    val deferredPublishers = messageBus.syncAndPreloadPublisher(FileOpenedSyncListener.TOPIC) to
-      messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-
     val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
 
     val fileEditorManager = FileEditorManager.getInstance(project)
@@ -310,14 +306,6 @@ open class EditorComposite internal constructor(
 
     val states = oldBadForRemoteDevGetStates(fileEditorWithProviders = fileEditorWithProviders, state = model.state)
     applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
-
-    val (goodPublisher, deprecatedPublisher) = deferredPublishers
-    goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
-    @Suppress("DEPRECATION")
-    deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
-
-    val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-    publisher.fileOpened(fileEditorManager, file)
   }
 
   @RequiresEdt
