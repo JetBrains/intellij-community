@@ -8,5 +8,7 @@
     <lang.parserDefinition language="EditorConfig"
                            implementationClass="com.intellij.editorconfig.common.plugin.EditorConfigParserDefinition"/>
     <lang.braceMatcher language="EditorConfig" implementationClass="com.intellij.editorconfig.common.lang.EditorConfigBraceMatcher"/>
+    <lang.formatter language="EditorConfig"
+                    implementationClass="com.intellij.editorconfig.common.formatting.EditorConfigFormattingModelBuilder"/>
   </extensions>
 </idea-plugin>

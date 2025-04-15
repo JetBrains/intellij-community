@@ -413,9 +413,6 @@
     <commenter
         language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigCommenter"/>
-    <formatter
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.formatting.EditorConfigFormattingModelBuilder"/>
     <psiStructureViewFactory
         language="EditorConfig"
         implementationClass="org.editorconfig.language.structureview.EditorConfigStructureViewFactory"/>
