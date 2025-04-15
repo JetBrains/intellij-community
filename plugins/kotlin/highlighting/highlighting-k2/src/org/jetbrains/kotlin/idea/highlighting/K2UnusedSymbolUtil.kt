@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isCheapEnoughToSearchUsages
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
@@ -102,7 +101,7 @@ object K2UnusedSymbolUtil {
         if (declaration is KtTypeParameter) {
             var parent = declaration.parent
             if (parent != null && parent !is KtTypeParameterListOwner) parent = parent.parent
-            owner = if (parent is KtTypeParameterListOwner) parent else declaration
+            owner = parent as? KtTypeParameterListOwner ?: declaration
         } else {
             owner = declaration
         }
@@ -363,12 +362,6 @@ object K2UnusedSymbolUtil {
         symbol: KaDeclarationSymbol?,
         useScope: SearchScope
     ): Boolean {
-        val searchOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = declaration.hasActualModifier())
-        val searchParameters = KotlinReferencesSearchParameters(
-            declaration,
-            useScope,
-            kotlinOptions = searchOptions
-        )
         val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
         if (symbol !is KaNamedFunctionSymbol || !symbol.annotations.contains(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
             val symbolPointer = symbol?.createPointer()
@@ -458,7 +451,7 @@ object K2UnusedSymbolUtil {
     // search for references to an element in the scope, satisfying predicate, lazily
     private fun referenceExists(psiElement: PsiElement, scope: SearchScope, predicate: (PsiReference) -> Boolean): Boolean {
         return !ReferencesSearch.search(KotlinReferencesSearchParameters(psiElement, scope))
-            .forEach(Processor<PsiReference> { !predicate.invoke(it) })
+            .forEach(Processor { !predicate.invoke(it) })
     }
 
     context(KaSession)
