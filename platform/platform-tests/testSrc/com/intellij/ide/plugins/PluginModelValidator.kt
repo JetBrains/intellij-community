@@ -138,7 +138,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
   }
 
   private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
-
+  private val pluginAliases = HashSet<String>()
   private val _errors = mutableListOf<PluginValidationError>()
   private val xIncludeLoader =
     LoadFromSourceXIncludeLoader(
@@ -162,6 +162,12 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
       }
     
     val sourceModuleNameToFileInfo = moduleDescriptorFileInfos.associateBy { it.sourceModule.name }
+    moduleDescriptorFileInfos.flatMapTo(pluginAliases) {
+      it.pluginDescriptor?.pluginAliases ?: emptySet()
+    } 
+    moduleDescriptorFileInfos.flatMapTo(pluginAliases) {
+      it.moduleDescriptor?.pluginAliases ?: emptySet()
+    } 
 
     val moduleNameToInfo = HashMap<String, ModuleInfo>()
 
@@ -321,7 +327,10 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
           }
 
           val dependency = pluginIdToInfo[id]
-          if (!id.startsWith("com.intellij.modules.") && id !in validationOptions.referencedPluginIdsOfExternalPlugins && dependency == null) {
+          if (dependency == null 
+              && !id.startsWith("com.intellij.modules.") 
+              && id !in validationOptions.referencedPluginIdsOfExternalPlugins
+              && id !in pluginAliases) {
             registerError("Plugin not found: $id")
             continue
           }
