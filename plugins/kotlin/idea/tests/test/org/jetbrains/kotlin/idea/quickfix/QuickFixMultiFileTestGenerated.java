@@ -336,6 +336,90 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/autoImports/invoke")
+        public static class Invoke extends AbstractQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeExtension.test")
+            public void testInvokeExtension() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension.test");
+            }
+
+            @TestMetadata("invokeExtensionNoOperator_afterConstructorCall.test")
+            public void testInvokeExtensionNoOperator_afterConstructorCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtensionNoOperator_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter.test")
+            public void testInvokeExtensionWithLambdaParameter() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtensionWithLambdaParameter.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter_qualifiedCall.test")
+            public void testInvokeExtensionWithLambdaParameter_qualifiedCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtensionWithLambdaParameter_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall.test")
+            public void testInvokeExtension_afterConstructorCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_single.test")
+            public void testInvokeExtension_afterConstructorCall_anotherInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_anotherInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_two.test")
+            public void testInvokeExtension_afterConstructorCall_anotherInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_anotherInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_anotherInvokes_single.test")
+            public void testInvokeExtension_anotherInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_anotherInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_anotherInvokes_two.test")
+            public void testInvokeExtension_anotherInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_anotherInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall.test")
+            public void testInvokeExtension_qualifiedCall() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_single.test")
+            public void testInvokeExtension_qualifiedCall_anotherInvokes_single() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_anotherInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_two.test")
+            public void testInvokeExtension_qualifiedCall_anotherInvokes_two() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_anotherInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_topLevelVal.test")
+            public void testInvokeExtension_topLevelVal() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_topLevelVal.test");
+            }
+
+            @TestMetadata("invokeExtension_unresolvedReceiver.test")
+            public void testInvokeExtension_unresolvedReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/invoke/invokeExtension_unresolvedReceiver.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/autoImports/kt21515")
         public static class Kt21515 extends AbstractQuickFixMultiFileTest {
             @java.lang.Override
@@ -912,76 +996,6 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("infixCallK1.before.Main.kt")
             public void testInfixCallK1() throws Exception {
                 runTest("testData/quickfix/autoImports/infixCallK1.before.Main.kt");
-            }
-
-            @TestMetadata("invokeExtension.test")
-            public void testInvokeExtension() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension.test");
-            }
-
-            @TestMetadata("invokeExtensionNoOperator_afterConstructorCall.test")
-            public void testInvokeExtensionNoOperator_afterConstructorCall() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtensionNoOperator_afterConstructorCall.test");
-            }
-
-            @TestMetadata("invokeExtensionWithLambdaParameter.test")
-            public void testInvokeExtensionWithLambdaParameter() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtensionWithLambdaParameter.test");
-            }
-
-            @TestMetadata("invokeExtensionWithLambdaParameter_qualifiedCall.test")
-            public void testInvokeExtensionWithLambdaParameter_qualifiedCall() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtensionWithLambdaParameter_qualifiedCall.test");
-            }
-
-            @TestMetadata("invokeExtension_afterConstructorCall.test")
-            public void testInvokeExtension_afterConstructorCall() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_afterConstructorCall.test");
-            }
-
-            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_single.test")
-            public void testInvokeExtension_afterConstructorCall_anotherInvokes_single() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_afterConstructorCall_anotherInvokes_single.test");
-            }
-
-            @TestMetadata("invokeExtension_afterConstructorCall_anotherInvokes_two.test")
-            public void testInvokeExtension_afterConstructorCall_anotherInvokes_two() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_afterConstructorCall_anotherInvokes_two.test");
-            }
-
-            @TestMetadata("invokeExtension_anotherInvokes_single.test")
-            public void testInvokeExtension_anotherInvokes_single() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_anotherInvokes_single.test");
-            }
-
-            @TestMetadata("invokeExtension_anotherInvokes_two.test")
-            public void testInvokeExtension_anotherInvokes_two() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_anotherInvokes_two.test");
-            }
-
-            @TestMetadata("invokeExtension_qualifiedCall.test")
-            public void testInvokeExtension_qualifiedCall() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall.test");
-            }
-
-            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_single.test")
-            public void testInvokeExtension_qualifiedCall_anotherInvokes_single() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall_anotherInvokes_single.test");
-            }
-
-            @TestMetadata("invokeExtension_qualifiedCall_anotherInvokes_two.test")
-            public void testInvokeExtension_qualifiedCall_anotherInvokes_two() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_qualifiedCall_anotherInvokes_two.test");
-            }
-
-            @TestMetadata("invokeExtension_topLevelVal.test")
-            public void testInvokeExtension_topLevelVal() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_topLevelVal.test");
-            }
-
-            @TestMetadata("invokeExtension_unresolvedReceiver.test")
-            public void testInvokeExtension_unresolvedReceiver() throws Exception {
-                runTest("testData/quickfix/autoImports/invokeExtension_unresolvedReceiver.test");
             }
 
             @TestMetadata("iteratorOperator.test")
