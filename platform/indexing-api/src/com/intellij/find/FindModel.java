@@ -232,7 +232,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isMultiline ? 1 : 0);
     result = 31 * result + (isPreserveCase ? 1 : 0);
     result = 31 * result + (mySearchInProjectFiles ? 1 : 0);
-    result = 31 * result + (myPattern != null ? myPattern.hashCode() : 0);
     return result;
   }
 
