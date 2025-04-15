@@ -41,6 +41,8 @@ public final class BasicJavaDocParser {
   private static final String LINK_TAG = "@link";
   private static final String LINK_PLAIN_TAG = "@linkplain";
   private static final String PARAM_TAG = "@param";
+  private static final String CODE_TAG = "@code";
+  private static final String LITERAL_TAG = "@literal";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
   private static final String INHERIT_DOC_TAG = "@inheritDoc";
@@ -76,7 +78,7 @@ public final class BasicJavaDocParser {
         parseTag(builder, javaDocElementTypeContainer);
       }
       else {
-        parseDataItem(builder, null, false, javaDocElementTypeContainer);
+        parseDataItem(builder, null, false, javaDocElementTypeContainer, true);
       }
     }
   }
@@ -89,7 +91,7 @@ public final class BasicJavaDocParser {
     while (true) {
       IElementType tokenType = getTokenType(builder);
       if (tokenType == null || tokenType == JavaDocTokenType.DOC_TAG_NAME || tokenType == JavaDocTokenType.DOC_COMMENT_END) break;
-      parseDataItem(builder, tagName, false, javaDocElementTypeContainer);
+      parseDataItem(builder, tagName, false, javaDocElementTypeContainer, true);
     }
     tag.done(javaDocElementTypeContainer.DOC_TAG);
   }
@@ -97,15 +99,23 @@ public final class BasicJavaDocParser {
   private static void parseDataItem(PsiBuilder builder,
                                     @Nullable String tagName,
                                     boolean isInline,
-                                    @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+                                    @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer,
+                                    boolean allowNestedMarkup) {
+    int initialBraceScope = getBraceScope(builder);
     IElementType tokenType = getTokenType(builder);
     if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_START) {
       int braceScope = getBraceScope(builder);
+      boolean isLiteralTag = CODE_TAG.equals(tagName) || LITERAL_TAG.equals(tagName) || SNIPPET_TAG.equals(tagName);
+      boolean allowNestedMarkupInside = !isLiteralTag && allowNestedMarkup;
+
       if (braceScope > 0) {
         setBraceScope(builder, braceScope + 1);
-        builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
-        builder.advanceLexer();
-        return;
+        // Some inline tags can contain arbitrary other markup, process it as such
+        if (!allowNestedMarkupInside) {
+          builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
+          builder.advanceLexer();
+          return;
+        }
       }
 
       PsiBuilder.Marker tag = builder.mark();
@@ -131,11 +141,11 @@ public final class BasicJavaDocParser {
           break;
         }
 
-        parseDataItem(builder, inlineTagName, true, javaDocElementTypeContainer);
+        parseDataItem(builder, inlineTagName, true, javaDocElementTypeContainer, allowNestedMarkupInside);
         if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
           braceScope = getBraceScope(builder);
           if (braceScope > 0) setBraceScope(builder, --braceScope);
-          if (braceScope == 0) break;
+          if (braceScope == initialBraceScope) break;
         }
       }
 
@@ -181,7 +191,7 @@ public final class BasicJavaDocParser {
       parseMarkdownReferenceChecked(builder, javaDocElementTypeContainer);
     }
     else {
-      remapAndAdvance(builder);
+      remapAndAdvance(builder, allowNestedMarkup);
     }
   }
 
@@ -634,8 +644,8 @@ public final class BasicJavaDocParser {
     builder.putUserData(BRACE_SCOPE_KEY, braceScope);
   }
 
-  private static void remapAndAdvance(PsiBuilder builder) {
-    if (INLINE_TAG_BORDERS_SET.contains(builder.getTokenType()) && getBraceScope(builder) != 1) {
+  private static void remapAndAdvance(PsiBuilder builder, boolean allowNestedMarkup) {
+    if (INLINE_TAG_BORDERS_SET.contains(builder.getTokenType()) && !allowNestedMarkup) {
       builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
     }
     builder.advanceLexer();
