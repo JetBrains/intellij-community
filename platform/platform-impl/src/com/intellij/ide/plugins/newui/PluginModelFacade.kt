@@ -3,8 +3,6 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnabledState
-import com.intellij.ide.plugins.PluginSource
-import com.intellij.ide.plugins.PluginUiModel
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
 

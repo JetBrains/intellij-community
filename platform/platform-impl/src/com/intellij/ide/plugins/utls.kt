@@ -7,6 +7,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.plugins.newui.LicensePanel
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.openapi.components.serviceAsync
