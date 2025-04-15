@@ -33,7 +33,7 @@ class DescriptorListLoadingContext(
   checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
   val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
-  val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
+  private val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
   val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
   private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
 
@@ -85,6 +85,8 @@ class DescriptorListLoadingContext(
     val set = brokenPluginVersions.get(id) ?: return false
     return set.contains(version)
   }
+
+  fun isPluginExpired(id: PluginId): Boolean = expiredPlugins.contains(id)
 
   override val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!

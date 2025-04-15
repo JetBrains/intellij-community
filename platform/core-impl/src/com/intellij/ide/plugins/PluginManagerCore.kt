@@ -682,7 +682,7 @@ object PluginManagerCore {
       if (loadingError != null) {
         registerLoadingError(loadingError)
       }
-      if (loadingError != null || context.expiredPlugins.contains(descriptor.getPluginId())) {
+      if (loadingError != null || context.isPluginExpired(descriptor.getPluginId())) {
         descriptor.isMarkedForLoading = false
       }
       !descriptor.isMarkedForLoading
