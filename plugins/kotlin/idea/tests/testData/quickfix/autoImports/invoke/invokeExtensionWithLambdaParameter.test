@@ -14,9 +14,6 @@ fun main() {
 
 
 // FILE: second.kt
-// "Import extension function 'A.invoke'" "true"
-// ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
-
 package a
 
 class A

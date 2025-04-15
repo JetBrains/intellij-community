@@ -18,7 +18,6 @@ fun testing(f: Foo) {
 
 
 // FILE: second.kt
-
 package some
 
 public class Some
