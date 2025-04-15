@@ -9,7 +9,9 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.list.ReviewListUtil.wrapWithLazyVerticalScroll
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.components.ActionLink
@@ -18,6 +20,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
@@ -40,7 +43,7 @@ object GHPRListPanelFactory {
   fun create(project: Project, cs: CoroutineScope, dataContext: GHPRDataContext, listVm: GHPRListViewModel): JComponent {
     val ghostUser = dataContext.securityService.ghostUser
     val currentUser = dataContext.securityService.currentUser
-    val listModel = cs.scopedDelegatingListModel(listVm.listModel)
+    val listModel = cs.childScope("EDT", Dispatchers.EDT).scopedDelegatingListModel(listVm.listModel)
     val list = GHPRListComponentFactory(dataContext.interactionState, listModel)
       .create(listVm.avatarIconsProvider, ghostUser, currentUser)
 

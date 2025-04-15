@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.emoji
 
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.ComponentListPanelFactory
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionComponent
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionPillPresentation
@@ -20,7 +21,7 @@ internal object GHReactionsComponentFactory {
   fun create(cs: CoroutineScope, reactionsVm: GHReactionsViewModel): JComponent {
     return ComponentListPanelFactory.createHorizontal(
       cs,
-      reactionsVm.reactionsWithInfo.map { it.keys.toList() },
+      reactionsVm.reactionsWithInfo.mapState { it.keys.toList() },
       gap = CodeReviewReactionsUIUtil.HORIZONTAL_GAP,
       componentFactory = { reaction -> createReactionLabel(this, reactionsVm, reaction) }
     ).apply {
