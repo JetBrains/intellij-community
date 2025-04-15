@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -52,12 +54,15 @@ import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
 
 object K2UnusedSymbolUtil {
     private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
+    private val DEPRECATION_LEVEL_HIDDEN: FqName = StandardNames.FqNames.deprecationLevel.child(Name.identifier("HIDDEN"))
+    private val DEPRECATION_LEVEL_PARAMETER_NAME: Name = Name.identifier("level")
 
     // Simple PSI-based checks
     fun isApplicableByPsi(declaration: KtNamedDeclaration): Boolean {
@@ -124,6 +129,19 @@ object K2UnusedSymbolUtil {
             return true
         }
         return ownerFunction.containingClass()?.isInterface() == true
+    }
+
+    context(KaSession)
+    fun isHiddenFromResolution(declaration: KtNamedDeclaration): Boolean {
+        val anno = declaration.findAnnotation(
+            ClassId.topLevel(StandardNames.FqNames.deprecated),
+            useSiteTarget = null,
+            withResolve = false,
+        ) ?: return false
+        val call = anno.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
+        val levelArgument = call.argumentMapping.entries.find { it.value.symbol.name == DEPRECATION_LEVEL_PARAMETER_NAME } ?: return false
+        val levelArgumentCall = levelArgument.key.resolveToCall()?.successfulVariableAccessCall() ?: return false
+        return levelArgumentCall.symbol.importableFqName == DEPRECATION_LEVEL_HIDDEN
     }
 
     fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {

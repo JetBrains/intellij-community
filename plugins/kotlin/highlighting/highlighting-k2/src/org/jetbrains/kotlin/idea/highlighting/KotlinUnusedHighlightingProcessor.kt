@@ -177,6 +177,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         if (SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection)) {
             return
         }
+        if (K2UnusedSymbolUtil.isHiddenFromResolution(declaration)) return
         val nameIdentifier = declaration.nameIdentifier
         val problemPsiElement =
             if (mustBeLocallyReferenced
