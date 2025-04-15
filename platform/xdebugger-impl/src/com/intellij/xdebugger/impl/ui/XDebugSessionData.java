@@ -25,7 +25,7 @@ public class XDebugSessionData extends UserDataHolderBase {
   private final @Nullable Project myProject;
   private final @NotNull String myConfigurationName;
   private final MutableStateFlow<Boolean> myBreakpointsMutedFlow = createMutableStateFlow(false);
-
+  private final MutableStateFlow<Boolean> myPauseSupported = createMutableStateFlow(false);
   /**
    * @deprecated Use {@link XDebugSessionData#XDebugSessionData(Project, String)} instead
    */
@@ -78,5 +78,20 @@ public class XDebugSessionData extends UserDataHolderBase {
 
   public @NotNull String getConfigurationName() {
     return myConfigurationName;
+  }
+
+  @ApiStatus.Internal
+  public StateFlow<Boolean> getPauseSupportedFlow() {
+    return myPauseSupported;
+  }
+
+  @ApiStatus.Internal
+  public boolean isPauseSupported() {
+    return myPauseSupported.getValue();
+  }
+
+  @ApiStatus.Internal
+  public void setPauseSupported(boolean pauseSupported) {
+    myPauseSupported.setValue(pauseSupported);
   }
 }

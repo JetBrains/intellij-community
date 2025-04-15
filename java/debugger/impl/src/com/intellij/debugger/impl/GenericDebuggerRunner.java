@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -170,6 +170,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             if (executionResult instanceof DefaultExecutionResult) {
               sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
             }
+            sessionImpl.setPauseActionSupported(true); // enable pause by default
             return JavaDebugProcess.create(session, debuggerSession);
           }
         }).getRunContentDescriptor());

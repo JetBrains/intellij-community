@@ -174,8 +174,13 @@ class FrontendXDebuggerSession private constructor(
         sessionData.isBreakpointsMuted = it
       }
     }
-  }
 
+    cs.launch {
+      sessionState.collectLatest { state ->
+        sessionData.isPauseSupported = state.isPauseActionSupported
+      }
+    }
+  }
 
   private suspend fun XDebuggerSessionEvent.updateCurrents() {
     when (this) {
