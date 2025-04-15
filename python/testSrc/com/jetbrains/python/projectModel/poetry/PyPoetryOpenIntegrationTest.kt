@@ -4,6 +4,7 @@ package com.jetbrains.python.projectModel.poetry
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.testFramework.fixtures.multiProjectFixture
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -34,6 +35,49 @@ class PyPoetryOpenIntegrationTest {
       ModuleAssertions.assertModules(project, "project")
       CollectionAssertions.assertEqualsUnordered(listOf(projectPath),
                                                  project.service<PoetrySettings>().getLinkedProjects())
+    }
+  }
+
+  @Test
+  fun `test poetry monorepo without root pyproject_toml`() = timeoutRunBlocking(timeout = 20.seconds) {
+    val projectPath = testRoot.resolve("project")
+    projectPath.createFile("libs/project1/pyproject.toml").writeText("""
+      [tool.poetry]
+      name = "project1"
+      
+      [tool.poetry.dependencies]
+      project2 = { path = "../project2", develop = true }
+    """.trimIndent())
+
+    projectPath.createFile("libs/project2/pyproject.toml").writeText("""
+      [tool.poetry]
+      name = "project2"
+    """.trimIndent())
+
+    multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
+      val poetrySettings = project.service<PoetrySettings>()
+      // Such projects without pyproject.toml or poetry.lock in the root cannot be recognized automatically
+      CollectionAssertions.assertEmpty(poetrySettings.getLinkedProjects())
+      ModuleAssertions.assertModules(project, "project")
+
+      multiprojectFixture.awaitProjectConfiguration(project) {
+        PoetryProjectResolver.linkAllPoetryProjects(project, project.basePath!!)
+        PoetryProjectResolver.syncAllPoetryProjects(project)
+      }
+
+      ModuleAssertions.assertModules(project, "project", "project1", "project2")
+      CollectionAssertions.assertEqualsUnordered(
+        listOf(projectPath.resolve("libs")),
+        poetrySettings.getLinkedProjects()
+      )
+
+      ModuleAssertions.assertModuleEntity(project, "project1") { module ->
+        DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE, "project2")
+      }
+
+      ModuleAssertions.assertModuleEntity(project, "project2") { module ->
+        DependencyAssertions.assertDependencies(module, DependencyAssertions.INHERITED_SDK, DependencyAssertions.MODULE_SOURCE)
+      }
     }
   }
 }

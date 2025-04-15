@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.ModuleDescriptor
+import com.jetbrains.python.projectModel.readProjectModelGraph
 import java.nio.file.Path
 
 /**
@@ -59,8 +60,8 @@ object UvProjectResolver {
     try {
       val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
       val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-      val graph = UvProjectRootResolver.discoverProjectRoot(projectRoot)
-      val storage = createProjectModel(project, graph?.modules.orEmpty(), source)
+      val graph = readProjectModelGraph(projectRoot, UvProjectRootResolver)
+      val storage = createProjectModel(project, graph.roots.flatMap { it.modules }, source)
 
       project.workspaceModel.update("Uv sync at ${projectRoot}") { mutableStorage ->
         // Fake module entity is added by default if nothing was discovered

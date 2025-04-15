@@ -11,12 +11,23 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.ModuleDescriptor
+import com.jetbrains.python.projectModel.readProjectModelGraph
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
 object PoetryProjectResolver {
+  suspend fun linkAllPoetryProjects(project: Project, basePath: @SystemIndependent @NonNls String) {
+    val poetrySettings = project.service<PoetrySettings>()
+    val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.poetry.projects")) {
+      readProjectModelGraph(Path.of(basePath), PoetryRootResolver).roots.map { it.root }
+    }
+    poetrySettings.setLinkedProjects(allProjectRoots)
+  }
+  
   suspend fun syncAllPoetryProjects(project: Project) {
     withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.all.poetry.projects")) {
       // TODO progress bar, listener with events
@@ -59,9 +70,8 @@ object PoetryProjectResolver {
     try {
       val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
       val source = PoetryEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-      // TODO handle roots that don't contain pyproject.toml
-      val graph = PoetryRootResolver.discoverProjectRoot(projectRoot)
-      val storage = createProjectModel(project, graph?.modules.orEmpty(), source)
+      val graph = readProjectModelGraph(projectRoot, PoetryRootResolver)
+      val storage = createProjectModel(project, graph.roots.flatMap { it.modules }, source)
 
       project.workspaceModel.update("Poetry sync at ${projectRoot}") { mutableStorage ->
         // Fake module entity is added by default if nothing was discovered

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectModel
 
+import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.FileVisitResult
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -58,7 +59,7 @@ data class ModuleDescriptor(val name: String, val root: Path, val moduleDependen
 data class ModuleDependency(val name: String, val path: Path)
 
 interface PythonProjectRootResolver {
-   fun discoverProjectRoot(directory: Path): ProjectModelRoot?
+  fun discoverProjectRoot(directory: Path): ProjectModelRoot?
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -74,6 +75,41 @@ fun readProjectModelGraph(ijProjectRoot: Path, resolver: PythonProjectRootResolv
       return@onPreVisitDirectory FileVisitResult.CONTINUE
     }
   }
-  
-  return ProjectModelGraph(roots)
+
+  // TODO make sure that roots doesn't leave ijProjectRoot boundaries
+  val clusteredRoots = mergeRootsReferringToEachOther(roots)
+  return ProjectModelGraph(clusteredRoots)
+}
+
+private fun mergeRootsReferringToEachOther(roots: MutableList<ProjectModelRoot>): MutableList<ProjectModelRoot> {
+  fun commonAncestorPath(paths: Iterable<Path>): Path {
+    val normalized = paths.map { it.normalize() }
+    return normalized.reduce { p1, p2 -> FileUtil.findAncestor(p1, p2)!! }
+  }
+
+  val expandedProjectRoots = roots.map { root ->
+    val allModuleRootsAndDependencies = root.modules.asSequence()
+      .flatMap { module -> listOf(module.root) + module.moduleDependencies.map { it.path } }
+      .distinct()
+      .toList()
+    root.copy(root = commonAncestorPath(allModuleRootsAndDependencies))
+  }
+
+  val expandedProjectRootsByRootPath = expandedProjectRoots.sortedBy { it.root }
+  val mergedProjectRoots = mutableListOf<ProjectModelRoot>()
+  for (root in expandedProjectRootsByRootPath) {
+    if (mergedProjectRoots.isEmpty()) {
+      mergedProjectRoots.add(root)
+    }
+    else {
+      val lastCluster = mergedProjectRoots.last()
+      if (root.root.startsWith(lastCluster.root)) {
+        mergedProjectRoots[mergedProjectRoots.lastIndex] = lastCluster.copy(modules = lastCluster.modules + root.modules)
+      }
+      else {
+        mergedProjectRoots.add(root)
+      }
+    }
+  }
+  return mergedProjectRoots
 }
