@@ -498,7 +498,8 @@ public class PyDebugValue extends XNamedValue {
   }
 
   private static void addViewAsImageLink(XValueNodeImpl valueNode) {
-    if (!checkAndShowViewAsImageOnScreen((PyDebugValue)valueNode.getXValue()))
+    PyDebugValue debugValue = (PyDebugValue)valueNode.getXValue();
+    if (!checkAndShowViewAsImageOnScreen(debugValue) || hasJupyterFrameAccessor(debugValue.getFrameAccessor()))
       return;
     String viewAsImageText = PydevBundle.message("pydev.view.as.image");
     valueNode.addAdditionalHyperlink(new XDebuggerTreeNodeHyperlink(viewAsImageText) {
@@ -520,6 +521,12 @@ public class PyDebugValue extends XNamedValue {
         return true;
       }
     });
+  }
+
+  // TODO: remove this check after dealing with IOPub
+  private static boolean hasJupyterFrameAccessor(PyFrameAccessor frameAccessor) {
+    if (frameAccessor == null) return true;
+    return frameAccessor.getClass().getName().contains("JupyterVarsFrameAccessor");
   }
 
   private static boolean checkAndShowViewAsImageOnScreen(PyDebugValue debugValue) {
