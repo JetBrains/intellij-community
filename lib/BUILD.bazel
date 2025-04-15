@@ -775,6 +775,20 @@ java_import(
   visibility = ["//visibility:public"]
 )
 
+kt_jvm_import(
+  name = "app-cash-turbine-jvm",
+  jar = "@turbine-jvm-1_0_0_http//file",
+  srcjar = "@turbine-jvm-1_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "app-cash-turbine-jvm-provided",
+  exports = [":app-cash-turbine-jvm"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 java_import(
   name = "asm",
   jars = ["@asm-all-9_6_1_http//file"],

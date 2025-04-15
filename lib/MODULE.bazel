@@ -665,6 +665,20 @@ http_file(
 )
 
 http_file(
+  name = "turbine-jvm-1_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/app/cash/turbine/turbine-jvm/1.0.0/turbine-jvm-1.0.0.jar",
+  sha256 = "41984dffaf069b84b814fa787f740bf7ebdc90bf89f69d05bc4660c69874b49e",
+  downloaded_file_path = "turbine-jvm-1.0.0.jar"
+)
+
+http_file(
+  name = "turbine-jvm-1_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/app/cash/turbine/turbine-jvm/1.0.0/turbine-jvm-1.0.0-sources.jar",
+  sha256 = "622d155fa2d89d0ba17475216d691fc628189d4f00bc75df3ca4ab90d8838683",
+  downloaded_file_path = "turbine-jvm-1.0.0-sources.jar"
+)
+
+http_file(
   name = "asm-all-9_6_1_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/asm-all/9.6.1/asm-all-9.6.1.jar",
   sha256 = "a72e84efb1406a7ab326e0b28c4376e9e1ebfc08c09f23edff5e6e7249588df7",

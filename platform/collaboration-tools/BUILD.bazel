@@ -94,6 +94,8 @@ jvm_library(
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
     "@lib//:mockito",
     "@lib//:http-client",
+    "@lib//:app-cash-turbine-jvm",
+    "@lib//:assert_j",
   ],
   runtime_deps = [":collaborationTools_resources"]
 )
