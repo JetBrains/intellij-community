@@ -525,10 +525,18 @@ private fun generateClass(
 ): KtClassOrObject {
     val factory = KtPsiFactory(project)
     val classText = symbol.render(renderer)
-    val klass = if (symbol.classKind.isObject) {
-        factory.createObject(classText)
-    } else {
-        factory.createClass(classText)
+    val klass = when (symbol.classKind) {
+        KaClassKind.COMPANION_OBJECT -> {
+            factory.createCompanionObject(classText)
+        }
+
+        KaClassKind.OBJECT, KaClassKind.ANONYMOUS_OBJECT -> {
+            factory.createObject(classText)
+        }
+
+        else -> {
+            factory.createClass(classText)
+        }
     }
     val constructorSymbol = symbol.declaredMemberScope.constructors.find { it.isPrimary }
     if (constructorSymbol != null) {
