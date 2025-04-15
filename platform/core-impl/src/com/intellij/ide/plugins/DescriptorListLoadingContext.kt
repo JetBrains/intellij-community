@@ -34,21 +34,11 @@ class DescriptorListLoadingContext(
 ) : AutoCloseable, ReadModuleContext {
   private val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
   private val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
-  val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
   private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
+  val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
 
-  fun patchPlugin(builder: PluginDescriptorBuilder) {
-    if (builder.version == null) {
-      builder.version = defaultVersion
-    }
-  }
+  private val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 
-  @JvmField
-  internal val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
-
-  internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
-
-  private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
     val factory = MyXmlInterner()
@@ -56,6 +46,13 @@ class DescriptorListLoadingContext(
     toDispose.add(ref)
     ref
   })
+
+  private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
+
+  override val interner: XmlInterner
+    get() = threadLocalXmlFactory.get()[0]!!
+
+  override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
 
   @Volatile var defaultVersion: String? = null
     get() {
@@ -69,6 +66,17 @@ class DescriptorListLoadingContext(
     private set
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
+
+  @JvmField
+  internal val debugData: PluginDescriptorsDebugData? =
+    if (System.getProperty("intellij.platform.plugins.record.debug.data.for.descriptors").toBoolean()) {
+      PluginDescriptorsDebugData()
+    }
+    else {
+      null
+    }
+
+  internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)
@@ -88,13 +96,9 @@ class DescriptorListLoadingContext(
 
   fun isPluginExpired(id: PluginId): Boolean = expiredPlugins.contains(id)
 
-  override val interner: XmlInterner
-    get() = threadLocalXmlFactory.get()[0]!!
-  override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
-
-  override fun close() {
-    for (ref in toDispose) {
-      ref[0] = null
+  fun patchPlugin(builder: PluginDescriptorBuilder) {
+    if (builder.version == null) {
+      builder.version = defaultVersion
     }
   }
 
@@ -111,19 +115,16 @@ class DescriptorListLoadingContext(
     }
 
     PluginManagerCore.logger.error("Optional config file with name $configFile already registered by $oldPluginId. " +
-              "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
-              "Current plugin: $descriptor.")
+                                   "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+                                   "Current plugin: $descriptor.")
     return true
   }
 
-  @JvmField
-  internal val debugData: PluginDescriptorsDebugData? =
-    if (System.getProperty("intellij.platform.plugins.record.debug.data.for.descriptors").toBoolean()) {
-      PluginDescriptorsDebugData()
+  override fun close() {
+    for (ref in toDispose) {
+      ref[0] = null
     }
-    else {
-      null
-    }
+  }
 }
 
 // doesn't make sense to intern class name since it is unique
