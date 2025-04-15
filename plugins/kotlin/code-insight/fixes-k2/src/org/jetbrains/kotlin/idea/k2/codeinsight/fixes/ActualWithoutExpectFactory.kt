@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.createFileForDeclaration
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
+import org.jetbrains.kotlin.idea.core.overrideImplement.generateClassWithMembers
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getTypeDescription
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
@@ -37,6 +39,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import kotlin.collections.plus
 
 internal object ActualWithoutExpectFactory {
 
@@ -63,6 +66,7 @@ internal object ActualWithoutExpectFactory {
                     }
                     CreateExpectedCallableMemberFix(actualDeclaration, expectedContainingClass, fileToCreateDeclaration, expectedModule)
                 }
+                is KtClassOrObject -> CreateExpectedClassFix(actualDeclaration, expectedContainingClass, fileToCreateDeclaration, expectedModule)
                 else -> null
             }
         }
@@ -207,6 +211,34 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
     private fun getOrCreateImplementationFile(): KtFile? {
         val declaration = element as? KtNamedDeclaration ?: return null
         return targetFile ?: createFileForDeclaration(module, declaration)
+    }
+}
+
+class CreateExpectedClassFix(
+    declaration: KtClassOrObject,
+    targetExpectedClass: KtClassOrObject?,
+    targetFile: KtFile?,
+    commonModule: Module,
+) : CreateExpectedFix<KtNamedDeclaration>(declaration, targetExpectedClass, commonModule, targetFile) {
+    @OptIn(KaExperimentalApi::class)
+    override fun generate(
+        project: Project,
+        targetExpectedClass: KtClassOrObject?,
+        declaration: KtNamedDeclaration,
+    ): KtNamedDeclaration? {
+        if (!isCorrectAndHaveAccessibleModifiers(declaration, true)) return null
+
+        return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
+            val classSymbol = declaration.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
+
+            generateClassWithMembers(
+                project = declaration.project,
+                ktClassMember = null,
+                symbol = classSymbol,
+                targetClass = targetExpectedClass,
+                mode = MemberGenerateMode.EXPECT,
+            )
+        }
     }
 }
 
