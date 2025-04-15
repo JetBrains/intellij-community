@@ -20,6 +20,19 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         val psiElement = diagnostic.psi as? KtExpression ?: return null
 
+        val invokeCallReceiver = when {
+            // Cases like `(... /* anything complex here */)()` (see KT-61638)
+            psiElement is KtCallExpression -> psiElement.calleeExpression
+
+            // Cases like `simpleName()` (see KT-76531)
+            psiElement.isCalleeExpression -> psiElement
+
+            else -> null
+        } ?: return null
+
+        val invokeCall = invokeCallReceiver.getCallExpressionForCallee() ?: return null
+        val qualifiedInvokeCall = invokeCall.getQualifiedExpressionForSelectorOrThis()
+
         val invokeReceiverType = when (diagnostic) {
             is KaFirDiagnostic.FunctionExpected -> {
                 diagnostic.type
@@ -27,19 +40,6 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
 
             is KaFirDiagnostic.UnresolvedReference,
             is KaFirDiagnostic.NoneApplicable -> {
-                val invokeCallReceiver = when {
-                    // Cases like `(... /* anything complex here */)()` (see KT-61638)
-                    psiElement is KtCallExpression -> psiElement.calleeExpression
-
-                    // Cases like `simpleName()` (see KT-76531)
-                    psiElement.isCalleeExpression -> psiElement
-
-                    else -> null
-                } ?: return null
-
-                val invokeCall = invokeCallReceiver.getCallExpressionForCallee() ?: return null
-                val qualifiedInvokeCall = invokeCall.getQualifiedExpressionForSelectorOrThis()
-
                 val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
 
                 // we have no way to know the type of the receiver from the diagnostic,
@@ -48,10 +48,8 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
             }
 
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
-                if (!psiElement.isCalleeExpression) return null
-
                 // for this diagnostic, AA can provide the receiver type just fine
-                psiElement.expressionType
+                invokeCallReceiver.expressionType
             }
 
             else -> null
