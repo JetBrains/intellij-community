@@ -7,6 +7,8 @@ import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+// FIXME: When we consider client services stable enough, all usages of the method must be removed,
+//        and the corresponding classes must be moved to frontend modules of their plugins
 fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
   return when {
     isClient() && isFrontendServiceViewEnabled() -> true
