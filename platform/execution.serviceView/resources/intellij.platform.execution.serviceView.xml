@@ -3,6 +3,8 @@
     <module name="intellij.platform.navbar.frontend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="Enable services toolwindow split into frontend/backend" key="services.view.split.enabled"/>
+
     <actionPromoter implementation="com.intellij.platform.execution.serviceView.ServiceViewActionPromoter"/>
     <navbar implementation="com.intellij.platform.execution.serviceView.ServiceViewNavBarExtension"/>
     <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
