@@ -13,5 +13,6 @@
     <moveLeftRightHandler language="EditorConfig"
                           implementationClass="com.intellij.editorconfig.frontend.editor.EditorConfigMoveElementLeftRightHandler"/>
     <enterHandlerDelegate implementation="com.intellij.editorconfig.frontend.editor.EnterInEditorConfigFileHandler"/>
+    <typedHandler implementation="com.intellij.editorconfig.frontend.editor.EditorConfigTypedHandlerDelegate"/>
   </extensions>
 </idea-plugin>

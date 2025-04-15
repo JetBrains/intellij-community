@@ -45,7 +45,6 @@
     <spellchecker.support
         language="EditorConfig"
         implementationClass="org.editorconfig.language.spellchecker.EditorConfigSpellcheckerStrategy"/>
-    <typedHandler implementation="org.editorconfig.language.codeinsight.actions.EditorConfigTypedHandlerDelegate"/>
     <findUsagesHandlerFactory implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigFindUsagesHandlerFactory"/>
     <breadcrumbsInfoProvider implementation="org.editorconfig.language.breadcrumbs.EditorConfigBreadcrumbsProvider"/>
     <renameHandler implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler"/>
