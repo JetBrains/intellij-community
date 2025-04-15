@@ -13,10 +13,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 /**
  * Given a Compose resource declaration, we rename the associated Kotlin property through the [RenameKotlinPropertyProcessor]
  * and the PSI file/xml attribute value we gather inside [prepareRenaming]
- *
- * Using the custom [isToSearchInComments] allows us renaming the string values
- * inside the file which are needed for proper navigation without relying on generation new accessors
- *
  * */
 internal class ComposeResourcesRenameProcessor : RenamePsiElementProcessor() {
   override fun canProcessElement(element: PsiElement): Boolean {
@@ -37,7 +33,4 @@ internal class ComposeResourcesRenameProcessor : RenamePsiElementProcessor() {
       allRenames[it] = if (it is PsiFile) "$newName.${it.virtualFile.extension}" else newName
     }
   }
-
-  // allows changing the string values present in the generated file when invoked from IntelliJ
-  override fun isToSearchInComments(element: PsiElement): Boolean = true
 }
