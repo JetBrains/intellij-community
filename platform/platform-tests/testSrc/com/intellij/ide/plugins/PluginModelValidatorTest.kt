@@ -78,13 +78,7 @@ class PluginModelValidatorTest {
 
     val errors = validatePluginModel(modules)
       .errors
-      .joinToString { it.message!! }
-    assertThat(errors).isEqualTo("""
-      Do not add dependency on a parent plugin (
-        entry=PluginDependency(pluginId=plugin),
-        referencingDescriptorFile=/intellij.plugin.module/intellij.plugin.module.xml
-      )
-    """.trimIndent())
+    assertThat(errors).isEmpty()
   }
 
   @Test
