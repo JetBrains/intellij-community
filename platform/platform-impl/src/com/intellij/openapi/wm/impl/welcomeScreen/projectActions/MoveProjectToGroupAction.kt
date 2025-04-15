@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 import com.intellij.ide.ProjectGroup
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 
 /**
@@ -26,5 +27,6 @@ class MoveProjectToGroupAction(private val myGroup: ProjectGroup) : RecentProjec
   override fun update(event: AnActionEvent) {
     val item = getSelectedItem(event)
     event.presentation.isEnabled = item is RecentProjectItem
+    event.presentation.isVisible = item !is ProviderRecentProjectItem
   }
 }
