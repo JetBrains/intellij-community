@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -52,7 +52,7 @@ public abstract class EditorActionHandler {
    * instead.
    */
   @Deprecated
-  public boolean isEnabled(Editor editor, final DataContext dataContext) {
+  public boolean isEnabled(Editor editor, DataContext dataContext) {
     if (inCheck) {
       return true;
     }
@@ -68,7 +68,7 @@ public abstract class EditorActionHandler {
       final boolean[] result = new boolean[1];
       final CaretTask check = (___, __) -> result[0] = true;
       if (myRunForEachCaret) {
-        hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext, check));
+        hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext, check), reverseCaretOrder());
       }
       else {
         doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext, check);
@@ -179,6 +179,10 @@ public abstract class EditorActionHandler {
     return myRunForEachCaret;
   }
 
+  protected boolean reverseCaretOrder() {
+    return false;
+  }
+
   /**
    * Executes the action in the context of given caret. If the caret is {@code null}, and the handler is a 'per-caret' handler,
    * it's executed for all carets.
@@ -202,7 +206,7 @@ public abstract class EditorActionHandler {
         DataContext refreshed = commitAndRefreshDataContextIfNeeded(dataContext, caret);
         doIfEnabled(caret, refreshed,
                     (c, dc) -> doExecute(c.getEditor(), c, dc));
-      });
+      }, reverseCaretOrder());
     }
     else if (contextCaret == null) {
       Caret caret = hostEditor.getCaretModel().getCurrentCaret();
