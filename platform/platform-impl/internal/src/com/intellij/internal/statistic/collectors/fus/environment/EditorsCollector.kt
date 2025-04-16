@@ -24,12 +24,15 @@ private const val ECLIPSE_ID = ".eclipse"
 private const val ZED_ID = ".zed"
 private const val VISUAL_STUDIO_ID = "VisualStudio"
 
+private const val NONE = "none"
+
 internal class EditorsCollector : ApplicationUsagesCollector() {
-  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 8)
+  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 9)
 
   override fun getGroup(): EventLogGroup = EDITORS_GROUP
 
   private val CONFIGS: List<String> = listOf(
+    NONE,
     VIMRC_ID,
     VSCODE_ID,
     CURSOR_ID,
@@ -115,6 +118,10 @@ internal class EditorsCollector : ApplicationUsagesCollector() {
         if (vsVersions.any()) {
           add(CONFIG_EXISTS.metric(VISUAL_STUDIO_ID))
           add(VISUAL_STUDIO_VERSIONS_INSTALLED.metric(vsVersions))
+        }
+
+        if (isEmpty()) {
+          add(CONFIG_EXISTS.metric(NONE))
         }
       }
     }
