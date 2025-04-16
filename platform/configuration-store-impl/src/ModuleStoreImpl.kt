@@ -211,17 +211,3 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
     return TrackedFileStorage(storageManager = this, file, fileSpec, rootTagName, roamingType, macroSubstitutor, provider, controller = null)
   }
 }
-
-private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
-  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
-
-  override fun doSetPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    super.doSetPath(path, virtualFile, isNew)
-    if (!isNew && Files.exists(path)) {
-      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
-    }
-  }
-
-  override val loadPolicy: StateLoadPolicy
-    get() = moduleComponentLoadPolicy ?: ((project as ProjectStoreOwner).componentStore as ComponentStoreImpl).loadPolicy
-}
