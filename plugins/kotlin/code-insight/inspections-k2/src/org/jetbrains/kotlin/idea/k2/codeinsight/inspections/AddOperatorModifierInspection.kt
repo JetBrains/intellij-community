@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -33,7 +35,13 @@ class AddOperatorModifierInspection : KotlinApplicableInspectionBase.Simple<KtNa
                 project: Project,
                 element: KtNamedFunction,
                 updater: ModPsiUpdater,
-            ) = element.addModifier(KtTokens.OPERATOR_KEYWORD)
+            ) {
+                val originElement = PsiTreeUtil.findSameElementInCopy(element, element.containingFile.originalFile)
+                val declarations = withExpectedActuals(originElement)
+                for (declaration in declarations) {
+                    updater.getWritable(declaration).addModifier(KtTokens.OPERATOR_KEYWORD)
+                }
+            }
         }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = object : KtVisitorVoid() {
