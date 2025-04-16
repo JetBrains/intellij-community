@@ -58,7 +58,6 @@ internal class ReplaceWithOperatorAssignmentInspection :
 
         val operatorAssignment = buildOperatorAssignment(element) ?: return null
 
-        // Check if the operator assignment resolves correctly
         if (operatorAssignment.operationReference.mainReference.resolveToSymbol() == null) return null
 
         val problemHighlightType = getProblemHighlightType(element)
