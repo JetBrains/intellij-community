@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.SuvorovProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -53,6 +54,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
+import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
@@ -1351,6 +1353,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().setWriteActionListener(app.myLockDispatcherListener);
     getThreadingSupport().setWriteIntentReadActionListener(app.myLockDispatcherListener);
     getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
+    if (ThreadingRuntimeFlagsKt.getPermitSuvorovProgress()) {
+      SwingUtilities.invokeLater(() -> {
+        getThreadingSupport().setLockAcquisitionInterceptor(300, (shouldTerminate) -> {
+          SuvorovProgress.dispatchEventsUntilConditionCompletes(shouldTerminate);
+          return Unit.INSTANCE;
+        });
+      });
+    }
     getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
     getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
 

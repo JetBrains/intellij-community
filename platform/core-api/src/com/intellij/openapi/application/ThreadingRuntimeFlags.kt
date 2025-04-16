@@ -25,6 +25,13 @@ val useNestedLocking: Boolean = System.getProperty("ide.nested.locking.enabled",
 val useBackgroundWriteAction: Boolean = useNestedLocking && System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
 /**
+ * - `false` means that IDE will be freezed on attempt to acquire a taken lock
+ * - `true` means that we will show a "modal" progress indicator instead of a freeze
+ */
+@ApiStatus.Internal
+val permitSuvorovProgress: Boolean = System.getProperty("ide.permit.suvorov.progress", "false").toBoolean()
+
+/**
  * - `false` means wrong action chains are ignored and not reported
  * - `true` means chains of actions like `WriteIntentReadAction -> ReadAction -> WriteAction` will be reported as warnings
  *
