@@ -15099,6 +15099,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/extension2.kt");
         }
 
+        @TestMetadata("lowercase.kt")
+        public void testLowercase() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/lowercase.kt");
+        }
+
         @TestMetadata("notApplicable.kt")
         public void testNotApplicable() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/notApplicable.kt");
@@ -15142,6 +15147,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("toUpperCase.kt")
         public void testToUpperCase() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/toUpperCase.kt");
+        }
+
+        @TestMetadata("uppercase.kt")
+        public void testUppercase() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/uppercase.kt");
         }
     }
 
