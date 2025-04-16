@@ -30,7 +30,6 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.*;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -186,17 +185,6 @@ public final class PsiClassImplUtil {
   }
 
   private static MemberCache getMap(@NotNull PsiClass aClass, @NotNull GlobalSearchScope scope) {
-    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(aClass.getProject());
-    if (javaPsiFacade instanceof JavaPsiFacadeEx && ((JavaPsiFacadeEx)javaPsiFacade).temporaryScopeCachesEnabled()) {
-      MemberCache cache = CachedValuesManager.getProjectPsiDependentCache(aClass, c ->
-        ConcurrentFactoryMap.create(
-          (GlobalSearchScope s) -> new MemberCache(c, s),
-          CollectionFactory::createConcurrentWeakKeyWeakValueMap).get(scope));
-      if (cache == null) {
-        cache = new MemberCache(aClass, scope);
-      }
-      return cache;
-    }
     return CachedValuesManager.getProjectPsiDependentCache(aClass, c ->
       ConcurrentFactoryMap.createMap((GlobalSearchScope s) -> new MemberCache(c, s))).get(scope);
   }

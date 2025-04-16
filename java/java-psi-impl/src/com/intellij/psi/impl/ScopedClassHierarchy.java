@@ -85,19 +85,6 @@ class ScopedClassHierarchy {
     if (psiClass instanceof PsiAnonymousClass) {
       return new ScopedClassHierarchy(psiClass, resolveScope);
     }
-    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
-    if (javaPsiFacade instanceof JavaPsiFacadeEx && ((JavaPsiFacadeEx)javaPsiFacade).temporaryScopeCachesEnabled()) {
-      ScopedClassHierarchy hierarchy = CachedValuesManager.getCachedValue(psiClass, () -> {
-        Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.create(
-          resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1),
-          CollectionFactory::createConcurrentWeakKeyWeakValueMap);
-        return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-      }).get(resolveScope);
-      if (hierarchy == null) {
-        hierarchy = new ScopedClassHierarchy(psiClass, resolveScope);
-      }
-      return hierarchy;
-    }
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
