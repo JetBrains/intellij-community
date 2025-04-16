@@ -265,16 +265,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public float getTerminalFontSize() {
-    return (float)myFontSizeProvider.getFontSize();
-  }
-
-  /**
-   * Same as getTerminalFontSize() but without rounding.
-   * @return the raw font size value
-   */
-  @ApiStatus.Internal
-  public float getTerminalFontSize2D() {
-    return myFontSizeProvider.getFontSize2D();
+    return myFontSizeProvider.getFontSize();
   }
 
   @ApiStatus.Internal

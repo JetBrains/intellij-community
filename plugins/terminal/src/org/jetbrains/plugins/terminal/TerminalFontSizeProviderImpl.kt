@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.terminal.TerminalFontSizeProvider
 import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.math.roundToInt
 
 @Service(Service.Level.APP)
 internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposable {
@@ -29,11 +28,7 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposab
     }, disposable = this)
   }
 
-  override fun getFontSize(): Int {
-    return getFontSize2D().roundToInt()
-  }
-
-  override fun getFontSize2D(): Float {
+  override fun getFontSize(): Float {
     var size = fontSize
     if (size == null) {
       size = getDefaultScaledFontSize().floatValue

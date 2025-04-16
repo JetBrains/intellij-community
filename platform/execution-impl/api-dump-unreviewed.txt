@@ -2405,8 +2405,7 @@ f:com.intellij.terminal.TerminalUiSettingsManager
 - f:getAutoShowDocumentationPopup():Z
 - f:getCursorShape():com.intellij.terminal.TerminalUiSettingsManager$CursorShape
 - f:getEditorColorsScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
-- f:getFontSize():I
-- f:getFontSize2D():F
+- f:getFontSize():F
 - sf:getInstance():com.intellij.terminal.TerminalUiSettingsManager
 - f:getMaxVisibleCompletionItemsCount():I
 - getState():com.intellij.terminal.TerminalUiSettingsManager$State

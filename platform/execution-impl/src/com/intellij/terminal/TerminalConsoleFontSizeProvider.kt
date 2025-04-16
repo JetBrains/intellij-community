@@ -6,12 +6,8 @@ import com.intellij.openapi.Disposable
 internal class TerminalConsoleFontSizeProvider : TerminalFontSizeProvider {
   private val uiSettingsManager = TerminalUiSettingsManager.getInstance()
 
-  override fun getFontSize(): Int {
+  override fun getFontSize(): Float {
     return uiSettingsManager.getFontSize()
-  }
-
-  override fun getFontSize2D(): Float {
-    return uiSettingsManager.getFontSize2D()
   }
 
   override fun setFontSize(newSize: Float) {
