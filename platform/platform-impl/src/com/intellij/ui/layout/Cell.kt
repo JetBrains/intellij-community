@@ -145,12 +145,6 @@ private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Un
   return also { task(component) }
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
-  return withBindingInt(JTextComponent::getText, JTextComponent::setText, modelBinding)
-}
-
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
 @ApiStatus.ScheduledForRemoval
@@ -168,17 +162,6 @@ abstract class Cell : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   val grow: CCFlags = CCFlags.grow
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.Internal
-  fun label(@Label text: String,
-            style: UIUtil.ComponentStyle? = null,
-            fontColor: UIUtil.FontColor? = null,
-            bold: Boolean = false): CellBuilder<JLabel> {
-    val label = Label(text, style, fontColor, bold)
-    return component(label)
-  }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
@@ -272,14 +255,6 @@ abstract class Cell : BaseBuilder {
         modelBinding
       )
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(prop.intToBinding(), columns)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(PropertyBinding(getter, setter), columns)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)

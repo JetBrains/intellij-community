@@ -15497,11 +15497,7 @@ a:com.intellij.ui.layout.Cell
 - bf:link(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - bs:link$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bf:textField(com.intellij.ui.layout.PropertyBinding,java.lang.Integer):com.intellij.ui.layout.CellBuilder
-- bf:textField(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.Integer):com.intellij.ui.layout.CellBuilder
-- bf:textField(kotlin.reflect.KMutableProperty0,java.lang.Integer):com.intellij.ui.layout.CellBuilder
 - bs:textField$default(com.intellij.ui.layout.Cell,com.intellij.ui.layout.PropertyBinding,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- bs:textField$default(com.intellij.ui.layout.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- bs:textField$default(com.intellij.ui.layout.Cell,kotlin.reflect.KMutableProperty0,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 com.intellij.ui.layout.CellBuilder
 - a:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
@@ -15518,7 +15514,6 @@ f:com.intellij.ui.layout.CellBuilder$DefaultImpls
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellKt
 - sf:createPropertyBinding(kotlin.reflect.KMutableProperty0,java.lang.Class):com.intellij.ui.layout.PropertyBinding
-- bsf:withTextBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 @:com.intellij.ui.layout.CellMarker
 - java.lang.annotation.Annotation
 e:com.intellij.ui.layout.GrowPolicy
