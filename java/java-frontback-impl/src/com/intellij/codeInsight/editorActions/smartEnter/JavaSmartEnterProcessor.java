@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -94,6 +94,7 @@ public final class JavaSmartEnterProcessor extends AbstractBasicJavaSmartEnterPr
     return AbstractBasicJavaSmartEnterProcessor.isModified(editor);
   }
 
+  // looks like it might be called on both FE and BE sides. be careful with 2x numbers.
   private static final class FixerUsageCollector extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 3);
     private static final EventId1<String> USED = GROUP.registerEvent("fixer_used", new StringEventField.ValidatedByAllowedValues(

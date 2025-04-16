@@ -1293,8 +1293,6 @@
     <codeCompletionConfigurable instance="com.intellij.application.options.JavaCompletionConfigurable" order="first"/>
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
-    <lang.smartEnterProcessor language="JAVA"
-                              implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
     <enterHandlerDelegate
       id="JavaEnterInInjectedTextBlockHandler"
       order="before EnterBetweenBracesHandler, before JavaEnterInTextBlockHandler, first"
