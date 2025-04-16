@@ -5,11 +5,13 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -87,6 +89,11 @@ class PythonLangSupportTest {
       }
       withContext(Dispatchers.EDT) {
         ProjectManager.getInstance().closeAndDispose(project)
+      }
+      withContext(Dispatchers.IO) {
+        if (SystemInfoRt.isWindows) {
+          deleteCheckLocking(learningProjectsPath) // drop dir if some leaked python project keeps it
+        }
       }
     }
   }
