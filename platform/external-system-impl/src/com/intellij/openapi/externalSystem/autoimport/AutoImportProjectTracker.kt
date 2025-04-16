@@ -15,7 +15,6 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
-import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
@@ -26,6 +25,7 @@ import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.observable.util.set
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -413,7 +413,8 @@ class AutoImportProjectTracker(
 
     private val asyncChangesProcessingProperty = AtomicBooleanProperty(
       !ApplicationManager.getApplication().isHeadlessEnvironment
-      || BackgroundAsyncSupplier.isAsyncInHeadless()
+      || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+      || java.lang.Boolean.getBoolean("external.system.auto.import.headless.async")
     )
 
     private val isEnabledAutoReload: Boolean

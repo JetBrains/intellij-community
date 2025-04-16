@@ -18,7 +18,6 @@ import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListen
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
-import com.intellij.openapi.externalSystem.autoimport.settings.tracked
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -363,10 +362,12 @@ class ProjectSettingsTracker(
       }
     }
 
-    private val supplier = BackgroundAsyncSupplier.Builder(::getOrCollectSettingsFiles)
-      .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
-      .build(backgroundExecutor)
-      .tracked(project)
+    private val supplier = BackgroundAsyncSupplier(
+      project,
+      supplier = AsyncSupplier.blocking(::getOrCollectSettingsFiles),
+      shouldKeepTasksAsynchronous = ::isAsyncChangesProcessing,
+      backgroundExecutor = backgroundExecutor,
+    )
 
     override fun supply(parentDisposable: Disposable, consumer: (Set<String>) -> Unit) {
       supplier.supply(parentDisposable) {
