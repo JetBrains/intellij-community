@@ -4,14 +4,8 @@ module(
 )
 
 bazel_dep(name = "rules_java", version = "8.8.0")
-bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
+bazel_dep(name = "rules_kotlin", version = "2.1.3")
 bazel_dep(name = "rules_jvm_external", version = "6.7")
-
-archive_override(
-    module_name = "rules_kotlin",
-    integrity = "sha256-jWDqcTgDWbeBqISkF4XFI/WbgeejFJVXMIDsv2oX/ww=",
-    urls = ["https://github.com/develar/rules_kotlin/releases/download/v2.0.0-jb.12/rules_kotlin-v2.0.0-jb.12.tar.gz"],
-)
 
 intellij_version = "251.21223"
 
