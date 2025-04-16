@@ -7,6 +7,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -20,7 +21,9 @@ import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.g
 /**
  * @author Konstantin Aleev
  */
-final class GroupConfigurationsAction extends DumbAwareAction {
+final class GroupConfigurationsAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -50,6 +53,7 @@ final class GroupConfigurationsAction extends DumbAwareAction {
 
     String groupName = value.isEmpty() ? null : value; // If input value is empty then ungroup nodes.
 
+    // fixme - delegate to backend following part, ask Lera?
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     runManager.fireBeginUpdate();
     try {

@@ -70,7 +70,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor.RUN_DASHBOARD_CONTENT_TOOLBAR;
-
+// fixme might want to save the state on backend machine
 @State(name = "RunDashboard", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final ExtensionPointName<RunDashboardCustomizer> CUSTOMIZER_EP_NAME =
@@ -148,6 +148,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
       }
     }, myProject);
+
+    // todo backend and likely no frontend?? updates
     ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -168,6 +170,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     if (!myListenersInitialized.compareAndSet(false, true)) return;
 
     MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    // todo backend updates
     connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private volatile boolean myUpdateStarted;
 
@@ -214,6 +217,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         updateDashboard(true);
       }
     });
+    // todo backend updates
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
@@ -237,12 +241,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
+    // todo backend and frontend updates
     connection.subscribe(DASHBOARD_TOPIC, new RunDashboardListener() {
       @Override
       public void configurationChanged(@NotNull RunConfiguration configuration, boolean withStructure) {
         updateDashboardIfNeeded(configuration, withStructure);
       }
     });
+
+    //todo backend and frontend updates
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void exitDumbMode() {

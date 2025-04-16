@@ -10,6 +10,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
@@ -19,7 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
 
-final class ClearContentAction extends DumbAwareAction {
+final class ClearContentAction extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -65,9 +67,11 @@ final class ClearContentAction extends DumbAwareAction {
       RunContentDescriptor descriptor = node.getDescriptor();
       if (descriptor == null) continue;
 
+      // fixme executor proxy - ask Lera?
       Executor executor = RunContentManagerImpl.getExecutorByContent(content);
       if (executor == null) continue;
 
+      // fixme expect content on client - ask Lera?
       RunContentManager.getInstance(project).removeRunContent(executor, descriptor);
       ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).clearConfigurationStatus(
         node.getConfigurationSettings().getConfiguration());

@@ -13,6 +13,7 @@ import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.callNewConfigurationCreated
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -30,7 +31,7 @@ private val IGNORE_CASE_DISPLAY_NAME_COMPARATOR = Comparator<ConfigurationType> 
   t1.displayName.compareTo(t2.displayName, ignoreCase = true)
 }
 
-class AddRunConfigurationAction : DumbAwareAction() {
+class AddRunConfigurationAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -114,6 +115,7 @@ private fun addRunConfiguration(type: ConfigurationType, project: Project): RunC
   runManager.setUniqueNameIfNeeded(settings)
   callNewConfigurationCreated(settings.getFactory(), settings.getConfiguration())
 
+  // fixme ask Lera?
   val added = RunDialog.editConfiguration(project, settings,
                                           ExecutionBundle.message("add.new.run.configuration.action2.name"))
   if (added) {

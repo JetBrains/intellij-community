@@ -9,6 +9,7 @@ import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +20,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class RemoveRunConfigurationTypeAction extends DumbAwareAction {
+final class RemoveRunConfigurationTypeAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

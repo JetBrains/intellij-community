@@ -5,12 +5,13 @@ import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-final class OpenRunningConfigInNewTabAction extends ToggleAction implements DumbAware {
+final class OpenRunningConfigInNewTabAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
