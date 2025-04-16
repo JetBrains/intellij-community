@@ -10,26 +10,26 @@ import java.awt.*;
 public final class MixedColorProducerTest {
   @Test
   public void checkFirstColorInstance() {
-    Assert.assertSame(Color.BLACK, getBlackWhite(0).get());
-    Assert.assertSame(Color.WHITE, getWhiteBlack(0).get());
+    Assert.assertSame(Color.BLACK, getBlackWhite(0));
+    Assert.assertSame(Color.WHITE, getWhiteBlack(0));
   }
 
   @Test
   public void checkSecondColorInstance() {
-    Assert.assertSame(Color.WHITE, getBlackWhite(1).get());
-    Assert.assertSame(Color.BLACK, getWhiteBlack(1).get());
+    Assert.assertSame(Color.WHITE, getBlackWhite(1));
+    Assert.assertSame(Color.BLACK, getWhiteBlack(1));
   }
 
   @Test
   public void checkCachedColorInstance() {
-    MixedColorProducer producer = getTransparentRed(.999);
-    Color color = producer.get();
-    producer.setMixer(.999);
-    Assert.assertEquals(color, producer.get());
-    Assert.assertSame(color, producer.get());
-    producer.setMixer(.9999);
-    Assert.assertEquals(color, producer.get());
-    Assert.assertNotSame(color, producer.get());
+    MixedColorProducer producer = new MixedColorProducer(new Color(0xFF, 0, 0, 0), Color.RED);
+    Color color1 = producer.produce(.999);
+    Color color2 = producer.produce(.999);
+    Assert.assertEquals(color1, color2);
+    Assert.assertSame(color1, color2);
+    Color color3 = producer.produce(.9999);
+    Assert.assertEquals(color1, color3);
+    Assert.assertNotSame(color1, color3);
   }
 
 
@@ -74,8 +74,8 @@ public final class MixedColorProducerTest {
 
 
   @NotNull
-  private static MixedColorProducer getBlackWhite(double mixer) {
-    return new MixedColorProducer(Color.BLACK, Color.WHITE, mixer);
+  private static Color getBlackWhite(double mixer) {
+    return new MixedColorProducer(Color.BLACK, Color.WHITE).produce(mixer);
   }
 
   @Test
@@ -95,17 +95,16 @@ public final class MixedColorProducerTest {
 
   @Test
   public void testBlackWhiteAll() {
-    MixedColorProducer producer = getBlackWhite(0);
+    MixedColorProducer producer = new MixedColorProducer(Color.BLACK, Color.WHITE);
     for (int i = 0; i <= 0xFF; i++) {
-      producer.setMixer((float)i / 0xFF);
-      assertGrayColor(producer, i);
+      Color color = producer.produce((float)i / 0xFF);
+      assertGrayColor(color, i);
     }
   }
 
-
   @NotNull
-  private static MixedColorProducer getWhiteBlack(double mixer) {
-    return new MixedColorProducer(Color.WHITE, Color.BLACK, mixer);
+  private static Color getWhiteBlack(double mixer) {
+    return new MixedColorProducer(Color.WHITE, Color.BLACK).produce(mixer);
   }
 
   @Test
@@ -125,17 +124,17 @@ public final class MixedColorProducerTest {
 
   @Test
   public void testWhiteBlackAll() {
-    MixedColorProducer producer = getWhiteBlack(0);
+    MixedColorProducer producer = new MixedColorProducer(Color.WHITE, Color.BLACK);
     for (int i = 0; i <= 0xFF; i++) {
-      producer.setMixer((float)i / 0xFF);
-      assertGrayColor(producer, 0xFF - i);
+      Color color = producer.produce((float)i / 0xFF);
+      assertGrayColor(color, 0xFF - i);
     }
   }
 
 
   @NotNull
-  private static MixedColorProducer getTransparentRed(double mixer) {
-    return new MixedColorProducer(new Color(0xFF, 0, 0, 0), Color.RED, mixer);
+  private static Color getTransparentRed(double mixer) {
+    return new MixedColorProducer(new Color(0xFF, 0, 0, 0), Color.RED).produce(mixer);
   }
 
   @Test
@@ -154,19 +153,19 @@ public final class MixedColorProducerTest {
   }
 
 
-  private static void assertColor(@NotNull MixedColorProducer producer, int expected) {
-    assertColor(producer, new Color(expected, false));
+  private static void assertColor(@NotNull Color actual, int expected) {
+    assertColor(actual, new Color(expected, false));
   }
 
-  private static void assertColorWithAlpha(@NotNull MixedColorProducer producer, int expected) {
-    assertColor(producer, new Color(expected, true));
+  private static void assertColorWithAlpha(@NotNull Color actual, int expected) {
+    assertColor(actual, new Color(expected, true));
   }
 
-  private static void assertGrayColor(@NotNull MixedColorProducer producer, int expected) {
-    assertColor(producer, new Color(expected, expected, expected));
+  private static void assertGrayColor(@NotNull Color actual, int expected) {
+    assertColor(actual, new Color(expected, expected, expected));
   }
 
-  private static void assertColor(@NotNull MixedColorProducer producer, @NotNull Color expected) {
-    Assert.assertEquals(expected, producer.get());
+  private static void assertColor(@NotNull Color actual, @NotNull Color expected) {
+    Assert.assertEquals(expected, actual);
   }
 }

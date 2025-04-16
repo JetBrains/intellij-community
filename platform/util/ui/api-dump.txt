@@ -2590,12 +2590,8 @@ com.intellij.ui.LightColors
 - sf:SLIGHTLY_GREEN:java.awt.Color
 - sf:YELLOW:java.awt.Color
 f:com.intellij.ui.MixedColorProducer
-- java.util.function.Supplier
 - <init>(java.awt.Color,java.awt.Color):V
-- <init>(java.awt.Color,java.awt.Color,D):V
-- get():java.awt.Color
 - produce(D):java.awt.Color
-- setMixer(D):V
 f:com.intellij.ui.MouseMovementTracker
 - <init>():V
 - isMovingTowards(java.awt.event.MouseEvent,java.awt.Rectangle):Z

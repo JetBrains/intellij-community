@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.function.Supplier;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -64,14 +64,39 @@ public final class ColorUtil {
 
   private static @NotNull Color tuneHSBComponent(@NotNull Color color, int componentIndex, int howMuch, float factor) {
     Checks.checkIndex(componentIndex, 3);
-    float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    float component = hsb[componentIndex];
-    for (int i = 0; i < howMuch; i++) {
-      component = MathUtil.clamp(factor * component, 0, 1);
-      if (component == 0 || component == 1) break;
+    return new TuneHSBComponent(color, componentIndex, howMuch, factor).createColor(false);
+  }
+
+  private static class TuneHSBComponent extends ColorMixture {
+    @NotNull private final Color color;
+    private final int componentIndex;
+    private final int howMuch;
+    private final float factor;
+
+    private TuneHSBComponent(@NotNull Color color, int componentIndex, int howMuch, float factor) {
+      super("tuneHSBComponent");
+      this.color = color;
+      this.componentIndex = componentIndex;
+      this.howMuch = howMuch;
+      this.factor = factor;
     }
-    hsb[componentIndex] = component;
-    return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color, componentIndex, howMuch, factor);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+      float component = hsb[componentIndex];
+      for (int i = 0; i < howMuch; i++) {
+        component = MathUtil.clamp(factor * component, 0, 1);
+        if (component == 0 || component == 1) break;
+      }
+      hsb[componentIndex] = component;
+      return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
+    }
   }
 
   private static @NotNull Color shiftHSBComponent(@NotNull Color color, int componentIndex, float shift) {
@@ -82,37 +107,92 @@ public final class ColorUtil {
   }
 
   public static @NotNull Color saturate(@NotNull Color color, int tones) {
-    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    float saturation = hsb[1];
-    for (int i = 0; i < tones; i++) {
-      saturation = Math.min(1, saturation * 1.1F);
-      if (saturation == 1) break;
+    return new Saturate(color, tones).createColor(false);
+  }
+
+  private static class Saturate extends ColorMixture {
+    @NotNull private final Color color;
+    private final int tones;
+
+    private Saturate(@NotNull Color color, int tones) {
+      super("saturate");
+      this.color = color;
+      this.tones = tones;
     }
-    return Color.getHSBColor(hsb[0], saturation, hsb[2]);
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color, tones);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+      float saturation = hsb[1];
+      for (int i = 0; i < tones; i++) {
+        saturation = Math.min(1, saturation * 1.1F);
+        if (saturation == 1) break;
+      }
+      return Color.getHSBColor(hsb[0], saturation, hsb[2]);
+    }
   }
 
   public static @NotNull Color desaturate(@NotNull Color color, int tones) {
-    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    float saturation = hsb[1];
-    for (int i = 0; i < tones; i++) {
-      saturation = Math.max(0, saturation / 1.1F);
-      if (saturation == 0) break;
+    return new Desaturate(color, tones).createColor(false);
+  }
+
+  private static class Desaturate extends ColorMixture {
+    @NotNull private final Color color;
+    private final int tones;
+
+    private Desaturate(@NotNull Color color, int tones) {
+      super("desaturate");
+      this.color = color;
+      this.tones = tones;
     }
-    return Color.getHSBColor(hsb[0], saturation, hsb[2]);
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color, tones);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+      float saturation = hsb[1];
+      for (int i = 0; i < tones; i++) {
+        saturation = Math.max(0, saturation / 1.1F);
+        if (saturation == 0) break;
+      }
+      return Color.getHSBColor(hsb[0], saturation, hsb[2]);
+    }
   }
 
   public static @NotNull Color dimmer(final @NotNull Color color) {
-    return wrap(color, () -> {
+    return new Dimmer(color).createColor(true);
+  }
+
+  private static class Dimmer extends ColorMixture {
+    @NotNull private final Color color;
+
+    private Dimmer(@NotNull Color color) {
+      super("dimmer");
+      this.color = color;
+    }
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color);
+    }
+
+    @Override
+    public @NotNull Color get() {
       float[] rgb = color.getRGBColorComponents(null);
 
       float alpha = 0.80f;
       float rem = 1 - alpha;
       return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
-    });
-  }
-
-  private static Color wrap(@NotNull Color color, @NotNull Supplier<? extends @NotNull Color> func) {
-    return color instanceof JBColor ? JBColor.lazy(func) : func.get();
+    }
   }
 
   private static int shift(int colorComponent, double d) {
@@ -121,8 +201,28 @@ public final class ColorUtil {
   }
 
   public static @NotNull Color shift(final @NotNull Color c, final double d) {
-    Supplier<@NotNull Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
-    return wrap(c, func);
+    return new Shift(c, d).createColor(true);
+  }
+
+  private static class Shift extends ColorMixture {
+    @NotNull private final Color color;
+    private final double d;
+
+    private Shift(@NotNull Color color, double d) {
+      super("shift");
+      this.color = color;
+      this.d = d;
+    }
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color, d);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      return new Color(shift(color.getRed(), d), shift(color.getGreen(), d), shift(color.getBlue(), d), color.getAlpha());
+    }
   }
 
   public static @NotNull Color withAlpha(@NotNull Color c, double a) {
@@ -138,8 +238,28 @@ public final class ColorUtil {
 
   public static @NotNull Color toAlpha(@Nullable Color color, final int a) {
     final Color c = color == null ? Color.black : color;
-    Supplier<@NotNull Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
-    return wrap(c, func);
+    return new ToAlpha(c, a).createColor(true);
+  }
+
+  private static class ToAlpha extends ColorMixture {
+    @NotNull private final Color color;
+    private final int alpha;
+
+    private ToAlpha(@NotNull Color color, int alpha) {
+      super("toAlpha");
+      this.color = color;
+      this.alpha = alpha;
+    }
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color, alpha);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+    }
   }
 
   public static @NotNull String toHex(final @NotNull Color c) {
@@ -218,19 +338,65 @@ public final class ColorUtil {
   public static @NotNull Color mix(final @NotNull Color c1, final @NotNull Color c2, double balance) {
     if (balance <= 0) return c1;
     if (balance >= 1) return c2;
-    Supplier<Color> func = new MixedColorProducer(c1, c2, balance);
-    return c1 instanceof JBColor || c2 instanceof JBColor ? JBColor.lazy(func) : func.get();
+    return new Mix(c1, c2, balance).createColor(true);
+  }
+
+  private static class Mix extends ColorMixture {
+    @NotNull private final Color color1;
+    @NotNull private final Color color2;
+    private final double balance;
+
+    private final MixedColorProducer producer;
+
+    private Mix(@NotNull Color color1, @NotNull Color color2, double balance) {
+      super("mix");
+      this.color1 = color1;
+      this.color2 = color2;
+      this.balance = balance;
+      producer = new MixedColorProducer(color1, color2);
+    }
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(color1, color2, balance);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      return producer.produce(balance);
+    }
   }
 
   /**
    * Returns the color that is the result of having a foreground color on top of a background color
    */
   public static @NotNull Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
-    return new Color(
-      alphaBlendingComponent(foreground.getRed(), foreground.getAlpha(), background.getRed(), background.getAlpha()),
-      alphaBlendingComponent(foreground.getGreen(), foreground.getAlpha(), background.getGreen(), background.getAlpha()),
-      alphaBlendingComponent(foreground.getBlue(), foreground.getAlpha(), background.getBlue(), background.getAlpha()),
-      (255 * 255 - (255 - background.getAlpha()) * (255 - foreground.getAlpha())) / 255);
+    return new AlphaBlending(foreground, background).createColor(false);
+  }
+
+  private static class AlphaBlending extends ColorMixture {
+    @NotNull private final Color foreground;
+    @NotNull private final Color background;
+
+    private AlphaBlending(@NotNull Color foreground, @NotNull Color background) {
+      super("alphaBlending");
+      this.foreground = foreground;
+      this.background = background;
+    }
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(foreground, background);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      return new Color(
+        alphaBlendingComponent(foreground.getRed(), foreground.getAlpha(), background.getRed(), background.getAlpha()),
+        alphaBlendingComponent(foreground.getGreen(), foreground.getAlpha(), background.getGreen(), background.getAlpha()),
+        alphaBlendingComponent(foreground.getBlue(), foreground.getAlpha(), background.getBlue(), background.getAlpha()),
+        (255 * 255 - (255 - background.getAlpha()) * (255 - foreground.getAlpha())) / 255);
+    }
   }
 
   private static int alphaBlendingComponent(int foregroundComponent,
@@ -252,12 +418,37 @@ public final class ColorUtil {
    * @return the mixed color of bg and fg with given coefficient.
    */
   public static @NotNull Color blendColorsInRgb(@NotNull Color bg, @NotNull Color fg, double value) {
-    int red = blendRgb(bg.getRed(), fg.getRed(), value);
-    int green = blendRgb(bg.getGreen(), fg.getGreen(), value);
-    int blue = blendRgb(bg.getBlue(), fg.getBlue(), value);
-    return new Color(MathUtil.clamp(red, 0, 255),
-                     MathUtil.clamp(green, 0, 255),
-                     MathUtil.clamp(blue, 0, 255));
+    return new BlendColorsInRgb(bg, fg, value).createColor(false);
+  }
+
+  private static class BlendColorsInRgb extends ColorMixture {
+    @NotNull private final Color background;
+    @NotNull private final Color foreground;
+    private final double value;
+
+    private BlendColorsInRgb(@NotNull Color background, @NotNull Color foreground, double value) {
+      super("colorBlendInRgb");
+      this.background = background;
+      this.foreground = foreground;
+      this.value = value;
+    }
+
+    @Override
+    public @NotNull List<@NotNull Object> getArgs() {
+      return List.of(background, foreground, value);
+    }
+
+    @Override
+    public @NotNull Color get() {
+      Color bg = background;
+      Color fg = foreground;
+      int red = blendRgb(bg.getRed(), fg.getRed(), value);
+      int green = blendRgb(bg.getGreen(), fg.getGreen(), value);
+      int blue = blendRgb(bg.getBlue(), fg.getBlue(), value);
+      return new Color(MathUtil.clamp(red, 0, 255),
+                       MathUtil.clamp(green, 0, 255),
+                       MathUtil.clamp(blue, 0, 255));
+    }
   }
 
   /**
