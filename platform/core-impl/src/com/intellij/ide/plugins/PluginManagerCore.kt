@@ -632,6 +632,7 @@ object PluginManagerCore {
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
     checkEssentialPlugins: Boolean,
+    getEssentialPlugins: () -> List<PluginId>,
     parentActivity: Activity?,
   ): PluginManagerState {
     val pluginErrorsById = loadingResult.copyPluginErrors()
@@ -659,8 +660,9 @@ object PluginManagerCore {
 
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
 
+    val essentialPlugins = getEssentialPlugins()
     val pluginSetBuilder = PluginSetBuilder(loadingResult.enabledPluginsById.values)
-    disableIncompatiblePlugins(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = context.essentialPlugins)
+    disableIncompatiblePlugins(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = essentialPlugins)
     pluginSetBuilder.checkPluginCycles(globalErrors)
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
@@ -700,7 +702,7 @@ object PluginManagerCore {
     }
 
     if (checkEssentialPlugins) {
-      checkEssentialPluginsAreAvailable(idMap, context.essentialPlugins)
+      checkEssentialPluginsAreAvailable(idMap, essentialPlugins)
     }
 
     val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
@@ -892,7 +894,14 @@ object PluginManagerCore {
     val tracerShim = CoroutineTracerShim.coroutineTracer
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
-      val initResult = initializePlugins(context, loadingResult, coreLoader, checkEssentialPlugins = !isUnitTestMode, tracerShim.getTraceActivity())
+      val initResult = initializePlugins(
+        context = context,
+        loadingResult = loadingResult,
+        coreLoader = coreLoader,
+        checkEssentialPlugins = !isUnitTestMode,
+        getEssentialPlugins = { ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() },
+        parentActivity = tracerShim.getTraceActivity()
+      )
       pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
       pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
       shadowedBundledPlugins = loadingResult.shadowedBundledIds

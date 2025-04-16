@@ -387,7 +387,14 @@ class PluginManagerTest {
       parentContext.close()
       val result = PluginLoadingResult(false)
       result.initAndAddAll(list, isPluginDisabled = parentContext::isPluginDisabled, isPluginBroken = parentContext::isPluginBroken)
-      return PluginManagerCore.initializePlugins(parentContext, result, PluginManagerTest::class.java.getClassLoader(), false, null)
+      return PluginManagerCore.initializePlugins(
+        context = parentContext,
+        loadingResult = result,
+        coreLoader = PluginManagerTest::class.java.getClassLoader(),
+        checkEssentialPlugins = false,
+        getEssentialPlugins = { emptyList() },
+        parentActivity = null
+      )
     }
 
     @Throws(XMLStreamException::class)

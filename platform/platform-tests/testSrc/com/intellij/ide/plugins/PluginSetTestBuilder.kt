@@ -76,6 +76,7 @@ class PluginSetTestBuilder(private val path: Path) {
       loadingResult = loadingResult,
       coreLoader = UrlClassLoader.build().get(),
       checkEssentialPlugins = false,
+      getEssentialPlugins = ::emptyList,
       parentActivity = null,
     ).pluginSet
   }
