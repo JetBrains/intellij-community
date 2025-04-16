@@ -6,6 +6,7 @@ import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.ide.ui.icons.icon
 import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils
+import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerManager
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaThreadDumpItemDto
@@ -62,8 +63,8 @@ private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecific
       presentation.setEnabled(false)
       return
     }
-    // TODO should be isAttached
-    val isAttached = !sessionProxy.isStopped
+    val javaSession = SharedJavaDebuggerManager.getInstance(project).getJavaSession(sessionProxy.id)
+    val isAttached = javaSession != null && javaSession.isAttached
     presentation.setEnabled(isAttached)
   }
 

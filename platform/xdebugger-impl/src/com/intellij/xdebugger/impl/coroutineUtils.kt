@@ -14,9 +14,7 @@ import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -24,6 +22,8 @@ import kotlinx.coroutines.withContext
 internal fun <T> createMutableStateFlow(initialValue: T): MutableStateFlow<T> {
   return MutableStateFlow(initialValue)
 }
+
+internal fun <T, R> mapFlow(f: Flow<T>, mapper: (T) -> R): Flow<R> = f.map(mapper)
 
 // Used only for Java code, since MutableSharedFlow function cannot be called there.
 internal fun <T> createMutableSharedFlow(replay: Int, extraBufferCapacity: Int): MutableSharedFlow<T> {
