@@ -13,7 +13,6 @@ import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.JdkApiCompatibilityCache
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -29,8 +28,6 @@ import com.intellij.uast.UastVisitorAdapter
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jdom.Element
 import org.jetbrains.uast.*
-
-private val logger = logger<JavaApiUsageInspection>()
 
 private const val EFFECTIVE_LL = "effectiveLL"
 
@@ -239,16 +236,12 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
-    val targetLanguageLevel = sinceLanguageLevel.next() ?: run {
-      logger.error("Unable to get the next language level for $sinceLanguageLevel")
-      return
-    }
     if (reference.getUastParentOfType<UComment>() != null) return
     val message = JvmAnalysisBundle.message(
       "jvm.inspections.1.5.problem.descriptor", sinceLanguageLevel.toJavaVersion().toFeatureString()
     )
     val fix = if (isOnTheFly) {
-      QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(targetLanguageLevel) as LocalQuickFix
+      QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(sinceLanguageLevel) as LocalQuickFix
     }
     else null
     holder.registerProblem(reference, message, *LocalQuickFix.notNullElements(fix))
