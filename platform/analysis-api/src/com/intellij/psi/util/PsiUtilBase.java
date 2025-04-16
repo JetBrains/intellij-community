@@ -79,22 +79,22 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     Editor editor = caret.getEditor();
     assertEditorAndProjectConsistent(project, editor);
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
-    if (file == null) return null;
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
+    if (psiFile == null) return null;
 
-    PsiUtilCore.ensureValid(file);
+    PsiUtilCore.ensureValid(psiFile);
 
-    if (file instanceof PsiFileWithOneLanguage) {
-      return file;
+    if (psiFile instanceof PsiFileWithOneLanguage) {
+      return psiFile;
     }
 
     final Language language = getLanguageInEditor(caret, project);
 
-    if (language == file.getLanguage()) return file;
+    if (language == psiFile.getLanguage()) return psiFile;
 
     int caretOffset = caret.getOffset();
     int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
-    return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
+    return getPsiFileAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
   /**

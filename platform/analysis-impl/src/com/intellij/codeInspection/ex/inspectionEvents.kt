@@ -11,7 +11,7 @@ import java.util.concurrent.Callable
 fun reportToQodanaWhenInspectionFinished(inspectListener: InspectListener,
                                          toolWrapper: InspectionToolWrapper<*, *>,
                                          globalSimple : Boolean,
-                                         file: PsiFile?,
+                                         psiFile: PsiFile?,
                                          project: Project,
                                          inspectAction: Callable<Int>) {
   val start = System.nanoTime()
@@ -20,12 +20,12 @@ fun reportToQodanaWhenInspectionFinished(inspectListener: InspectListener,
     problemsCount = inspectAction.call()
   }
   catch (e: Exception) {
-    inspectListener.inspectionFailed(toolWrapper.tool.getShortName(), e, file, project)
+    inspectListener.inspectionFailed(toolWrapper.tool.getShortName(), e, psiFile, project)
     throw e
   }
   finally {
     inspectListener.inspectionFinished(TimeoutUtil.getDurationMillis(start), Thread.currentThread().id, problemsCount, toolWrapper,
-                                       if (globalSimple) InspectListener.InspectionKind.GLOBAL_SIMPLE else InspectListener.InspectionKind.GLOBAL, file, project)
+                                       if (globalSimple) InspectListener.InspectionKind.GLOBAL_SIMPLE else InspectListener.InspectionKind.GLOBAL, psiFile, project)
   }
 }
 
