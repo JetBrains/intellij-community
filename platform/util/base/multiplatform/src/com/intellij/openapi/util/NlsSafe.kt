@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util
 
-import org.jetbrains.annotations.ApiStatus
-
 /**
  * Marker annotation for strings that don't require localization but still could be displayed in the UI.
  *
@@ -23,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus
  * Avoid using it on method parameters (in "consumer" context), as this will simply allow calling the method with anything,
  * including hardcoded strings.
  */
-@ApiStatus.Experimental
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 @Target(AnnotationTarget.TYPE,
