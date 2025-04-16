@@ -23,7 +23,7 @@ class PyPoetryOpenIntegrationTest {
   private val multiprojectFixture by multiProjectFixture()
 
   @Test
-  fun `project without dot-idea with pyproject-toml is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `project with top-level legacy pyproject-toml is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
 
     projectPath.createFile("pyproject.toml").writeText("""
@@ -39,7 +39,7 @@ class PyPoetryOpenIntegrationTest {
   }
 
   @Test
-  fun `project with top-level PEP-621 Poetry pyproject-toml without tool dot poetry table is not automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `project with top-level PEP-621 pyproject-toml without tool-poetry table is not automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     projectPath.createFile("pyproject.toml").writeText("""
       [project]
@@ -54,7 +54,7 @@ class PyPoetryOpenIntegrationTest {
 
 
   @Test
-  fun `project with top-level PEP-621 Poetry pyproject-toml and tool dot poetry table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `project with top-level PEP-621 pyproject-toml containing tool-poetry table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     
     projectPath.createFile("pyproject.toml").writeText("""
@@ -91,7 +91,7 @@ class PyPoetryOpenIntegrationTest {
   }
 
   @Test
-  fun `test poetry monorepo without root pyproject_toml`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `test monorepo without top-level pyproject-toml and with sibling path dependency`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     projectPath.createFile("libs/project1/pyproject.toml").writeText("""
       [tool.poetry]

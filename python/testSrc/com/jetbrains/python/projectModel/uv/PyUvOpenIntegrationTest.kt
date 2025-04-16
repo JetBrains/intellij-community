@@ -23,7 +23,7 @@ class PyUvOpenIntegrationTest {
   private val multiprojectFixture by multiProjectFixture()
 
   @Test
-  fun `project with top-level uv lock file is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `project with top-level uv-lock is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     
     projectPath.createFile("uv.lock").writeText("""
@@ -43,7 +43,7 @@ class PyUvOpenIntegrationTest {
   }
 
   @Test
-  fun `project with top-level pyproject toml with uv tool table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `project with top-level pyproject-toml containing uv-tool table is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     
     projectPath.createFile("pyproject.toml").writeText("""
@@ -62,7 +62,7 @@ class PyUvOpenIntegrationTest {
   }
 
   @Test
-  fun `project with top-level pyproject toml without uv tool table is not automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `project with top-level pyproject-toml without uv-tool table is not automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     
     projectPath.createFile("pyproject.toml").writeText("""
@@ -77,7 +77,7 @@ class PyUvOpenIntegrationTest {
   }
 
   @Test
-  fun `test uv monorepo with path dependency`() = timeoutRunBlocking(timeout = 20.seconds) {
+  fun `test monorepo without top-level pyproject-toml and with sibling path dependency`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     
     projectPath.createFile("libs/project1/pyproject.toml").writeText("""
