@@ -12,7 +12,7 @@ suspend fun <T> hackyNonBlockingChange(body: ChangeScope.() -> T): T =
     var res: T? = null
     val db = db()
     val insn = span("run change in background") {
-      buildList<Instruction> {
+      buildList {
         db.change(defaultPart = 1) {
           middleware.run {
             performChange {
@@ -33,5 +33,6 @@ suspend fun <T> hackyNonBlockingChange(body: ChangeScope.() -> T): T =
         }
       }.await()
     }
+    @Suppress("UNCHECKED_CAST")
     res as T
   }

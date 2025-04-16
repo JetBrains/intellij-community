@@ -67,6 +67,7 @@ suspend fun <T> withStorage(
           when (event) {
             is SubscriptionEvent.First, is SubscriptionEvent.Reset -> {
               asOf(event.db) {
+                @Suppress("UNCHECKED_CAST")
                 queryIndex(IndexQuery.LookupMany(Durable.StorageKeyAttr.attr as Attribute<StorageKey>, storageKey))
                   .forEach { storedEntitiesCache.add(it.eid) }
               }
