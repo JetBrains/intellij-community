@@ -13,7 +13,6 @@ class PluginSetTestBuilder(private val path: Path) {
   private var disabledPluginIds = mutableSetOf<PluginId>()
   private var expiredPluginIds = mutableSetOf<PluginId>()
   private var brokenPlugins = mutableMapOf<PluginId, MutableSet<String?>>()
-  private var essentialPlugins = mutableListOf<PluginId>()
   private var productBuildNumber = PluginManagerCore.buildNumber
 
   fun withDisabledPlugins(vararg disabledPluginIds: String) = apply {
@@ -26,10 +25,6 @@ class PluginSetTestBuilder(private val path: Path) {
 
   fun withBrokenPlugin(pluginId: String, vararg versions: String?) = apply {
     brokenPlugins.computeIfAbsent(PluginId.getId(pluginId), { mutableSetOf() }).addAll(versions)
-  }
-
-  fun withEssentialPlugins(vararg ids: String) = apply {
-    essentialPlugins.addAll(ids.map(PluginId::getId))
   }
 
   fun withProductBuildNumber(productBuildNumber: BuildNumber) = apply {
@@ -49,7 +44,7 @@ class PluginSetTestBuilder(private val path: Path) {
       customDisabledPlugins = disabledPluginIds.toSet(),
       customExpiredPlugins = expiredPluginIds.toSet(),
       customBrokenPluginVersions = brokenPlugins.mapValues { it.value.toSet() }.toMap(),
-      customEssentialPlugins = essentialPlugins.toList(),
+      customEssentialPlugins = emptyList(),
       productBuildNumber = { buildNumber },
     )
   }
@@ -77,11 +72,11 @@ class PluginSetTestBuilder(private val path: Path) {
     val context = buildLoadingContext()
     val loadingResult = buildLoadingResult(context)
     return PluginManagerCore.initializePlugins(
-      /* context = */ context,
-      /* loadingResult = */ loadingResult,
-      /* coreLoader = */ UrlClassLoader.build().get(),
-      /* checkEssentialPlugins = */ false,
-      /* parentActivity = */ null,
+      context = context,
+      loadingResult = loadingResult,
+      coreLoader = UrlClassLoader.build().get(),
+      checkEssentialPlugins = false,
+      parentActivity = null,
     ).pluginSet
   }
 }
