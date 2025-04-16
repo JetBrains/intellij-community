@@ -91,7 +91,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/swapStringEqualsIgnoreCase", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceExplicitFunctionLiteralParamWithIt", pattern = pattern)
             model("${idea}intentions/nullableBooleanEqualityCheckToElvis", pattern = pattern)
-            model("${idea}intentions/convertOrdinaryPropertyToLazy", pattern = pattern)
             model("${idea}intentions/replaceWithOrdinaryAssignment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/introduceImportAlias", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addForLoopIndices", pattern = pattern, isIgnored = true)

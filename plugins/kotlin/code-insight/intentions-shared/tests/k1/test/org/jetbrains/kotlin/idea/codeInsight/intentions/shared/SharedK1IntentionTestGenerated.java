@@ -603,6 +603,45 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/convertOrdinaryPropertyToLazy")
+    public static class ConvertOrdinaryPropertyToLazy extends AbstractSharedK1IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/basic.kt");
+        }
+
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/const.kt");
+        }
+
+        @TestMetadata("noInitializer.kt")
+        public void testNoInitializer() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/noInitializer.kt");
+        }
+
+        @TestMetadata("run.kt")
+        public void testRun() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/run.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../testData/intentions/convertOrdinaryPropertyToLazy/var.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/convertToForEachFunctionCall")
     public abstract static class ConvertToForEachFunctionCall extends AbstractSharedK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)

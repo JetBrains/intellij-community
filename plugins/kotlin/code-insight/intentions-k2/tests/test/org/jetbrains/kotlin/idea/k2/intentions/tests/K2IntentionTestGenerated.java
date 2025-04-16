@@ -8604,45 +8604,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/convertOrdinaryPropertyToLazy")
-    public static class ConvertOrdinaryPropertyToLazy extends AbstractK2IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("basic.kt")
-        public void testBasic() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertOrdinaryPropertyToLazy/basic.kt");
-        }
-
-        @TestMetadata("const.kt")
-        public void testConst() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertOrdinaryPropertyToLazy/const.kt");
-        }
-
-        @TestMetadata("noInitializer.kt")
-        public void testNoInitializer() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertOrdinaryPropertyToLazy/noInitializer.kt");
-        }
-
-        @TestMetadata("run.kt")
-        public void testRun() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertOrdinaryPropertyToLazy/run.kt");
-        }
-
-        @TestMetadata("var.kt")
-        public void testVar() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertOrdinaryPropertyToLazy/var.kt");
-        }
-    }
-
 
 
 
