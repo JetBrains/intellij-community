@@ -2,14 +2,24 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.util.collectAllExpectAndActualDeclaration
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.collectAllExpectAndActualDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
-import org.jetbrains.kotlin.lexer.KtTokens.INLINE_KEYWORD
-import org.jetbrains.kotlin.lexer.KtTokens.MODALITY_MODIFIERS
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 
 /**
  * Similar to [AddModifierFix] but with multiplatform support.
@@ -18,7 +28,7 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
  * @param modifier The modifier keyword to be added (supported modifiers are `abstract`, `final`, `sealed`, `open`, and `inline`).
  * Other modifiers do not appear to be multiplatform-persistent; in such cases, [AddModifierFix] should be used instead.
  */
-internal class AddModifierFixMpp(
+class AddModifierFixMpp(
     private val element: KtModifierListOwner,
     private val modifier: KtModifierKeywordToken,
 ) : ModCommandAction {
@@ -29,7 +39,8 @@ internal class AddModifierFixMpp(
 
         override fun invoke(context: ActionContext, element: KtModifierListOwner, updater: ModPsiUpdater) {
             if (element !is KtDeclaration) throw IllegalArgumentException("KtDeclaration expected but ${element::class} found")
-            val elementsToMutate = element.collectAllExpectAndActualDeclaration(withSelf = true).map(updater::getWritable)
+            val declaration = PsiTreeUtil.findSameElementInCopy(element, element.containingFile.originalFile)
+            val elementsToMutate = declaration.collectAllExpectAndActualDeclaration(withSelf = true).map(updater::getWritable)
             for (elementToMutate in elementsToMutate) {
                 super.invoke(context, elementToMutate, updater)
             }
@@ -64,6 +75,15 @@ internal class AddModifierFixMpp(
     }
 
     companion object : AddModifierFix.Factory<ModCommandAction> {
+        val addAbstractModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD)
+        val addAbstractToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
+        val addOpenToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
+        val addFinalToProperty: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
+        val addInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INNER_KEYWORD)
+        val addOverrideModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OVERRIDE_KEYWORD)
+        val addDataModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
+        val addInlineToFunctionWithReified: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INLINE_KEYWORD, KtNamedFunction::class.java)
+
         override fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): ModCommandAction {
             return if (modifier in AddModifierFix.modifiersWithWarning || modifier.isMultiplatformPersistent()) {
                 AddModifierFixMpp(element, modifier)
@@ -75,4 +95,4 @@ internal class AddModifierFixMpp(
 }
 
 fun KtModifierKeywordToken.isMultiplatformPersistent(): Boolean =
-    this in MODALITY_MODIFIERS || this == INLINE_KEYWORD
+    this in KtTokens.MODALITY_MODIFIERS || this == KtTokens.INLINE_KEYWORD
