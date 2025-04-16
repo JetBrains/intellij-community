@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.withThreadLocal
 import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ComputationState.Companion.thisLevelPermit
@@ -10,18 +11,27 @@ import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.isWrite
 import com.intellij.openapi.application.impl.NestedLocksThreadingSupport.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.util.coroutines.runSuspend
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 import com.jetbrains.rd.util.forEachReversed
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Result
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.startCoroutine
+import kotlin.getOrThrow
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.toDuration
 
 /**
  * The locking state that is shared by all computations belonging to the same level.
@@ -106,14 +116,14 @@ private class ComputationState(
   }
 
   private fun upgradeWritePermit(permit: WriteIntentPermit, original: WriteIntentPermit?) {
-    val finalPermit = runSuspend {
+    val finalPermit = NestedLocksThreadingSupport.runSuspendMaybeConsuming(false) {
       permit.acquireWritePermit()
     }
 
     // we need to acquire writes on the whole stack of lower-level write-intent permits,
     // since we want to cancel all lower-level running read actions
     val writePermits = Array(level()) {
-      runSuspend {
+      NestedLocksThreadingSupport.runSuspendMaybeConsuming(false) {
         lowerLevelPermits[it].acquireWritePermit()
       }
     }
@@ -162,7 +172,7 @@ private class ComputationState(
    * Obtains a write-intent permit if the current thread does not hold anything
    */
   fun acquireWriteIntentPermit(): WriteIntentPermit {
-    val permit = runSuspend {
+    val permit = NestedLocksThreadingSupport.runSuspendMaybeConsuming(false) {
       thisLevelLock.acquireWriteIntentPermit()
     }
     thisLevelPermit.set(permit)
@@ -182,7 +192,7 @@ private class ComputationState(
    * Obtains a write-intent permit if the current thread does not hold anything
    */
   fun acquireReadPermit(): ReadPermit {
-    val permit = acquireReadLockWithCompensation {
+    val permit = NestedLocksThreadingSupport.runSuspendMaybeConsuming(true) {
       thisLevelLock.acquireReadPermit(false)
     }
     thisLevelPermit.set(permit)
@@ -193,7 +203,7 @@ private class ComputationState(
    * same as [acquireReadPermit], but returns `null` if acquisition failed
    */
   fun tryAcquireReadPermit(): ReadPermit? {
-    val permit = runSuspend {
+    val permit = NestedLocksThreadingSupport.runSuspendMaybeConsuming(false) {
       thisLevelLock.tryAcquireReadPermit()
     }
     if (permit != null) {
@@ -430,6 +440,8 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   @Volatile
   private var myWriteAcquired: Thread? = null
 
+  private val myLockInterceptor: ThreadLocal<PermitWaitingInterceptor?> = ThreadLocal.withInitial { null }
+
   /**
    * Performance optimization.
    * The IDE often asserts the presence of write or write-intent lock.
@@ -542,7 +554,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
             cleanup.finish()
             currentComputationState.releaseReadPermit(newPermit)
             // we need to reacquire the previously released write permit
-            val newWritePermit = runSuspend {
+            val newWritePermit = runSuspendMaybeConsuming(false) {
               currentWriteIntentPermit.acquireWritePermit()
             }
             currentComputationState.hack_setThisLevelPermit(newWritePermit)
@@ -836,6 +848,11 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
+  override fun setLockAcquisitionInterceptor(delayMillis: Long, consumer: (shouldStop: () -> Boolean) -> Unit) {
+    myLockInterceptor.set(PermitWaitingInterceptor(delayMillis.toDuration(DurationUnit.MILLISECONDS), consumer))
+  }
+
+  @ApiStatus.Internal
   override fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
     if (myWriteLockReacquisitionListener != null)
       error("WriteLockReacquisitionListener already registered")
@@ -1044,12 +1061,12 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     }
     finally {
       myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
-      val newWritePermit = runSuspend {
+      val newWritePermit = runSuspendMaybeConsuming(false) {
         rootWriteIntentPermit.acquireWritePermit()
       }
       state.hack_setThisLevelPermit(newWritePermit)
       val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
-        runSuspend {
+        runSuspendMaybeConsuming(false) {
           exposedPermitData.writeIntentStack[it].acquireWritePermit()
         }
       }
@@ -1406,4 +1423,91 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   private fun isWriteActionPendingOrRunning(): Boolean {
     return isWriteActionPending() || myWriteAcquired != null
   }
+
+  @OptIn(InternalCoroutinesApi::class)
+  fun <T> runSuspendMaybeConsuming(tryCompensateParallelism: Boolean, block: suspend () -> T): T {
+    return if (tryCompensateParallelism && readLockCompensationTimeout != -1) {
+      IntellijCoroutines.runAndCompensateParallelism(readLockCompensationTimeout.toDuration(DurationUnit.MILLISECONDS)) {
+        runSuspendWithWaitingConsumer(block, myLockInterceptor.get())
+      }
+    }
+    else {
+      runSuspendWithWaitingConsumer(block, myLockInterceptor.get())
+    }
+  }
 }
+
+
+/**
+ * Runs [block] and invokes [interceptor] to handle waiting if [block] does not finish in time
+ */
+@OptIn(InternalCoroutinesApi::class)
+private fun <T> runSuspendWithWaitingConsumer(block: suspend () -> T, interceptor: PermitWaitingInterceptor?): T {
+  val currentJob = currentThreadContext()[Job]
+  val run = RunSuspend<T>(currentJob, interceptor)
+  block.startCoroutine(run)
+  return run.await()
+}
+
+private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterceptor?) : Continuation<T> {
+  override val context: CoroutineContext
+    get() = job ?: EmptyCoroutineContext
+
+  var result: Result<T>? = null
+
+  override fun resumeWith(result: Result<T>) = synchronized(this) {
+    this.result = result
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).notifyAll()
+  }
+
+  @OptIn(ExperimentalTime::class)
+  fun await(): T {
+    synchronized(this) {
+      var interrupted = false
+      while (true) {
+        when (val result = this.result) {
+          null ->
+            try {
+              @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+              if (interceptor == null) {
+                (this as Object).wait()
+              } else {
+                (this as Object).wait(interceptor.initialDelay.inWholeMilliseconds)
+                // todo: protection against spurious wakeups?
+                break
+              }
+            }
+            catch (_: InterruptedException) {
+              // Suppress exception or token could be lost.
+              interrupted = true
+            }
+          else -> {
+            if (interrupted) {
+              // Restore "interrupted" flag
+              Thread.currentThread().interrupt()
+            }
+            return result.getOrThrow() // throw up failure
+          }
+        }
+      }
+    }
+    val currentResult = result
+    if (currentResult == null) {
+      // if consumer is null, then wait() will block until the value is not null
+      check(interceptor != null)
+      interceptor.consumer {
+        synchronized(this) {
+          this.result != null
+        }
+      }
+      return result!!.getOrThrow() // consumer returns when `result` gets non-nullable value
+    } else {
+      return currentResult.getOrThrow()
+    }
+  }
+}
+
+private data class PermitWaitingInterceptor(
+  val initialDelay: Duration,
+  val consumer: ((shouldTerminate: () -> Boolean) -> Unit))
+

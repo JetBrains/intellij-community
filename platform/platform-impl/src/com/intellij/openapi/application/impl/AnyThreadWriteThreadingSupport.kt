@@ -564,6 +564,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myLockAcquisitionListener = listener
   }
 
+  override fun setLockAcquisitionInterceptor(delayMillis: Long, consumer: (() -> Boolean) -> Unit) {
+    return
+  }
+
   @ApiStatus.Internal
   override fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
     if (myWriteLockReacquisitionListener != null)

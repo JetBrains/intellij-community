@@ -195,6 +195,10 @@ interface ThreadingSupport {
   fun setLockAcquisitionListener(listener: LockAcquisitionListener)
 
   @ApiStatus.Internal
+  // long because this is called from Java
+  fun setLockAcquisitionInterceptor(delayMillis: Long, consumer: (shouldStop: () -> Boolean) -> Unit)
+
+  @ApiStatus.Internal
   fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
 
   @ApiStatus.Internal
