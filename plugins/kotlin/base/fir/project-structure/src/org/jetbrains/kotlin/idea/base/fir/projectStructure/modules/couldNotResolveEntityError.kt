@@ -11,7 +11,7 @@ internal fun <M> couldNotResolveEntityError(
 
     error(buildString {
         appendLine("Could not resolve `${owner.entityId}` ")
-        appendLine("for `$owner` ")
+        appendLine("for `${owner::class}` ")
 
         if (owner is KaModuleWithDebugData) {
             val project = owner.project
