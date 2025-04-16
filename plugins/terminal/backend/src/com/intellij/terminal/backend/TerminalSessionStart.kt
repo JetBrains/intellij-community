@@ -89,7 +89,7 @@ internal fun startTerminalSession(
     }
   }
 
-  val session = BackendTerminalSession(inputChannel, outputFlow.asSharedFlow(), coroutineScope)
+  val session = BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
   return session to configuredOptions
 }
 
