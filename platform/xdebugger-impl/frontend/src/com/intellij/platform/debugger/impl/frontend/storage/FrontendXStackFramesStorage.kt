@@ -20,7 +20,7 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
   }
 }
 
-internal fun CoroutineScope.getOrCreateStack(frameDto: XStackFrameDto, project: Project): FrontendXStackFrame {
+internal fun CoroutineScope.getOrCreateStackFrame(frameDto: XStackFrameDto, project: Project): FrontendXStackFrame {
   val storageCache = coroutineContext[FrontendXStackFramesStorage]
   requireNotNull(storageCache) { "StacksStorage not found" }
 

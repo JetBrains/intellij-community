@@ -18,7 +18,7 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStac
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
-import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStack
+import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -205,7 +205,8 @@ class FrontendXDebuggerSession private constructor(
       }
       is XDebuggerSessionEvent.StackFrameChanged -> {
         stackFrame?.let {
-          currentStackFrame.value = FrontendXStackFrame(it, project, cs)
+          val suspendContext = suspendContext.value ?: return
+          currentStackFrame.value = suspendContext.getOrCreateStackFrame(it)
         }
       }
       else -> {}
@@ -224,7 +225,7 @@ class FrontendXDebuggerSession private constructor(
       }
     }
     stackFrameDto?.let {
-      currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStack(it, project)
+      currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
     }
   }
 
