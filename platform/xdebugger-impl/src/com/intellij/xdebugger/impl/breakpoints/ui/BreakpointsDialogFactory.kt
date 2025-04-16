@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 
 @Service(Service.Level.PROJECT)
@@ -23,7 +24,9 @@ import org.jetbrains.annotations.ApiStatus
 class BreakpointsDialogFactory(private val project: Project) {
   private var balloonToHide: Balloon? = null
   private var breakpointFromBalloon: Any? = null
-  private var showingDialog: BreakpointsDialog? = null
+
+  @VisibleForTesting
+  var showingDialog: BreakpointsDialog? = null
 
   private val showDialogEvents = MutableSharedFlow<Any?>(extraBufferCapacity = 1)
 
