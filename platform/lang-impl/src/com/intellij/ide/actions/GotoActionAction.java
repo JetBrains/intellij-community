@@ -10,6 +10,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -26,8 +27,11 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     e = SearchFieldStatisticsCollector.wrapEventWithActionStartData(e);
+    var event = e;
     String tabID = ActionSearchEverywhereContributor.class.getSimpleName();
-    showInSearchEverywherePopup(tabID, e, false, true);
+    WriteIntentReadAction.run((Runnable)() -> {
+      showInSearchEverywherePopup(tabID, event, false, true);
+    });
   }
 
   public static void openOptionOrPerformAction(@NotNull Object element,

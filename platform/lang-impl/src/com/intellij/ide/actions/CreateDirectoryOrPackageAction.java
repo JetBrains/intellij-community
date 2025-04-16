@@ -12,6 +12,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
@@ -76,46 +77,48 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    if (view == null || project == null) return;
+    WriteIntentReadAction.run((Runnable)() -> {
+      final IdeView view = event.getData(LangDataKeys.IDE_VIEW);
+      final Project project = event.getData(CommonDataKeys.PROJECT);
+      if (view == null || project == null) return;
 
-    final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
-    if (directory == null) return;
+      final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
+      if (directory == null) return;
 
-    final CreateGroupHandler validator;
-    final String message, title;
+      final CreateGroupHandler validator;
+      final String message, title;
 
-    if (isPackage(project, Collections.singletonList(directory))) {
-      validator = new CreatePackageHandler(project, directory);
-      message = IdeBundle.message("prompt.enter.new.package.name");
-      title = IdeBundle.message("title.new.package");
-    }
-    else {
-      validator = new CreateDirectoryHandler(project, directory);
-      message = IdeBundle.message("prompt.enter.new.directory.name");
-      title = IdeBundle.message("title.new.directory");
-    }
-
-    String initialText = validator.getInitialText();
-    Consumer<List<PsiElement>> consumer = elements -> {
-      // we don't have API for multi-selection in the views,
-      // so let's at least make sure the created elements are visible, and the first one is selected
-      for (PsiElement element : ContainerUtil.iterateBackward(elements)) {
-        view.selectElement(element);
+      if (isPackage(project, Collections.singletonList(directory))) {
+        validator = new CreatePackageHandler(project, directory);
+        message = IdeBundle.message("prompt.enter.new.package.name");
+        title = IdeBundle.message("title.new.package");
       }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      @SuppressWarnings("TestOnlyProblems")
-      String testDirectoryName = event.getData(TEST_DIRECTORY_NAME_KEY);
-      if (testDirectoryName != null && validator.checkInput(testDirectoryName) && validator.canClose(testDirectoryName)) {
-        consumer.accept(Collections.singletonList(validator.getCreatedElement()));
-        return;
+      else {
+        validator = new CreateDirectoryHandler(project, directory);
+        message = IdeBundle.message("prompt.enter.new.directory.name");
+        title = IdeBundle.message("title.new.directory");
       }
-    }
 
-    createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
+      String initialText = validator.getInitialText();
+      Consumer<List<PsiElement>> consumer = elements -> {
+        // we don't have API for multi-selection in the views,
+        // so let's at least make sure the created elements are visible, and the first one is selected
+        for (PsiElement element : ContainerUtil.iterateBackward(elements)) {
+          view.selectElement(element);
+        }
+      };
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        @SuppressWarnings("TestOnlyProblems")
+        String testDirectoryName = event.getData(TEST_DIRECTORY_NAME_KEY);
+        if (testDirectoryName != null && validator.checkInput(testDirectoryName) && validator.canClose(testDirectoryName)) {
+          consumer.accept(Collections.singletonList(validator.getCreatedElement()));
+          return;
+        }
+      }
+
+      createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
+    });
   }
 
   @Override

@@ -31,10 +31,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -191,7 +188,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    performShowUsagesAction(e);
+    WriteIntentReadAction.run((Runnable) () -> {
+      performShowUsagesAction(e);
+    });
   }
 
   @ApiStatus.Internal

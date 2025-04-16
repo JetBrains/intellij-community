@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.common
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.client.impl.RefWrapper
+import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.RemoteMouseButton
@@ -172,7 +173,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getLineText(line: Int): String = text.lines().getOrElse(line - 1) { "" }
 
   fun <T> interact(block: Editor.() -> T): T {
-    return driver.withContext(OnDispatcher.EDT) {
+    return driver.withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
       block.invoke(editor)
     }
   }
