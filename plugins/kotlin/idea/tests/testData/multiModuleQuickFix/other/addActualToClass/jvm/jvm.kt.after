@@ -4,4 +4,4 @@
 // IGNORE_K1
 // KTIJ-19789 No diagnostic "actual is missing" on top-level class/function/property in IDE
 
-class <caret>Foo
+actual class Foo
