@@ -2852,7 +2852,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <java.definitions id="java-backend" implementation="com.intellij.codeInsight.JavaDefinitionService"/>
     <projectService serviceImplementation="com.intellij.jarRepository.RepositoryLibrarySettings$Service"
                     configurationSchemaKey="repositoryLibrary"/>
   </extensions>

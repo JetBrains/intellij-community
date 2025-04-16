@@ -49,5 +49,7 @@
 
     <lang.smartEnterProcessor language="JAVA"
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
+
+    <java.definitions id="java-backend" implementation="com.intellij.codeInsight.JavaDefinitionService"/>
   </extensions>
 </idea-plugin>
