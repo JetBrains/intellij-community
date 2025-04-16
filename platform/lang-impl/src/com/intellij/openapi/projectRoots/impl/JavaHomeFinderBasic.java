@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -143,17 +143,23 @@ public class JavaHomeFinderBasic {
 
       Set<Path> dirsToCheck = new HashSet<>();
       for (String p : pathVarString.split(mySystemInfo.getPathSeparator())) {
-        Path dir = mySystemInfo.getPath(p);
-        if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
-          continue;
-        }
+        if (p.isEmpty()) continue;
+        try {
+          Path dir = mySystemInfo.getPath(p);
+          if (!StringUtilRt.equal(dir.getFileName().toString(), "bin", mySystemInfo.isFileSystemCaseSensitive())) {
+            continue;
+          }
 
-        Path parentFile = dir.getParent();
-        if (parentFile == null) {
-          continue;
-        }
+          Path parentFile = dir.getParent();
+          if (parentFile == null) {
+            continue;
+          }
 
-        dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+          dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
+        }
+        catch (Exception e) {
+          log.warn("Failed to get Java home path for " + p, e);
+        }
       }
 
       return scanAll(dirsToCheck, false);
