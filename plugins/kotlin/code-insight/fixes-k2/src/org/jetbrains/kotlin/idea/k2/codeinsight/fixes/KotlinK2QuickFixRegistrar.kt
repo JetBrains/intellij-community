@@ -531,6 +531,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddConsistentCopyVisibilityAnnotationFixFactories.warningFixFactory)
 
         registerFactory(ActualWithoutExpectFactory.fixFactory)
+        registerFactory(NoActualClassMemberForExpectedClassFactory.fixFactory)
 
         registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
