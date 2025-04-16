@@ -47,7 +47,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   private static final @NotNull Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
 
-  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
+  private static final @NotNull Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
+
+  private static final @NotNull Set<String> PYTHON314_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF", "T", "TR", "RT");
 
   protected @NotNull List<LanguageLevel> myVersionsToProcess;
 
@@ -282,8 +284,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     else if (level.isOlderThan(LanguageLevel.PYTHON36)) {
       return PYTHON34_PREFIXES;
     }
-    else {
+    else if (level.isOlderThan(LanguageLevel.PYTHON314)) {
       return PYTHON36_PREFIXES;
+    }
+    else {
+      return PYTHON314_PREFIXES;
     }
   }
 
