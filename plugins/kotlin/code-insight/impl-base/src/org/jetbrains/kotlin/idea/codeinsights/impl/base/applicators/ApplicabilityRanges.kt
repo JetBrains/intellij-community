@@ -28,7 +28,7 @@ object ApplicabilityRanges {
     private fun modifier(
         element: KtModifierListOwner,
         tokens: TokenSet,
-    ) = ApplicabilityRange.single(element) { it.modifierList?.getModifier(tokens) }
+    ): List<TextRange> = ApplicabilityRange.single(element) { it.modifierList?.getModifier(tokens) }
 
     fun calleeExpression(element: KtCallExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.calleeExpression }
