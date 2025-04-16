@@ -78,10 +78,11 @@ abstract class BaseProjectModelService<E : EntitySource> {
       if (graph.isEmpty()) {
         return
       }
-      val storage = createProjectModel(project, graph.flatMap { it.modules }, source)
+      val allModules = graph.flatMap { it.modules }
+      val storage = createProjectModel(project, allModules, source)
       project.workspaceModel.update("$systemName sync at ${projectRoot}") { mutableStorage ->
         // Fake module entity is added by default if nothing was discovered
-        if (projectRoot == project.baseNioPath) {
+        if (allModules.any { it.root == project.baseNioPath }) {
           removeFakeModuleEntity(project, mutableStorage)
         }
         mutableStorage.replaceBySource({ it == source }, storage)
@@ -122,7 +123,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
 
   /**
    * Removes the default IJ module created for the root of the project 
-   * (that's going to be replaced with another module managed by Poetry).
+   * (that's going to be replaced with a module belonging to a specific project management system).
    */
   fun removeFakeModuleEntity(project: Project, storage: MutableEntityStorage) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
