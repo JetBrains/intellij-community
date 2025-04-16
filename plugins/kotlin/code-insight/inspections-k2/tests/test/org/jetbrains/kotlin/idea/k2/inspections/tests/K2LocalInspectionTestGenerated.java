@@ -14794,65 +14794,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty")
-    public static class ReplaceNegatedIsEmptyWithIsNotEmpty extends AbstractK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("call.kt")
-        public void testCall() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/call.kt");
-        }
-
-        @TestMetadata("notNegateBlank.kt")
-        public void testNotNegateBlank() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/notNegateBlank.kt");
-        }
-
-        @TestMetadata("notNegateEmpty.kt")
-        public void testNotNegateEmpty() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/notNegateEmpty.kt");
-        }
-
-        @TestMetadata("parenthesized.kt")
-        public void testParenthesized() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/parenthesized.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/simple.kt");
-        }
-
-        @TestMetadata("stringIsBlank.kt")
-        public void testStringIsBlank() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/stringIsBlank.kt");
-        }
-
-        @TestMetadata("stringIsEmpty.kt")
-        public void testStringIsEmpty() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/stringIsEmpty.kt");
-        }
-
-        @TestMetadata("stringIsNotBlank.kt")
-        public void testStringIsNotBlank() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/stringIsNotBlank.kt");
-        }
-
-        @TestMetadata("stringIsNotEmpty.kt")
-        public void testStringIsNotEmpty() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNegatedIsEmptyWithIsNotEmpty/stringIsNotEmpty.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/removeRedundantSpreadOperator")
     public static class RemoveRedundantSpreadOperator extends AbstractK2LocalInspectionTest {
         @java.lang.Override
