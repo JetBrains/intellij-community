@@ -339,7 +339,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
     override fun visitFile(file: VirtualFile): Boolean {
       if (file.isDirectory) {
-        println(file.path)
+        LOG.debug(file.path)
       }
       else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
         val psiFile = psiManager.findFile(file)
