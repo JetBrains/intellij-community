@@ -185,7 +185,7 @@
     <registryKey key="debugger.thread.dump.extended" defaultValue="true"
                  description="Try to get extended thread dump (virtual threads, coroutines, ...) during debugger's Get Thread Dump action"/>
     <registryKey key="debugger.thread.dump.suspension.timeout.ms" defaultValue="500"
-                 description="Timeout (in ms) for Get Thread Dump action to wait until we suspend the VM to perform extended dump collection (virtual threads, coroutines, ...)"/>
+                 description="Timeout (in ms) for Get Thread Dump action to wait before suspending the VM to perform extended dump collection (virtual threads, coroutines, ...)"/>
     <registryKey key="debugger.thread.dump.include.virtual.threads" defaultValue="true"
                  description="Try to get virtual threads during debugger's Get Thread Dump action"/>
     <registryKey key="debugger.thread.dump.virtual.threads.with.monitors.max.count" defaultValue="1000"
