@@ -4,12 +4,12 @@ package org.editorconfig.language.codeinsight.completion.providers
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.editorconfig.language.filetype.EditorConfigFileConstants
-import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.util.hasValidRootDeclaration
 
 object EditorConfigRootDeclarationCompletionProvider : EditorConfigCompletionProviderBase() {

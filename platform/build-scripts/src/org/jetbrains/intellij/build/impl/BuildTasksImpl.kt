@@ -91,14 +91,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     buildProjectArtifacts(distState.platform, getEnabledPluginModules(distState.pluginsToPublish, context), context)
 
     val searchableOptionSet = buildSearchableOptions(context)
-    buildNonBundledPlugins(
-      pluginsToPublish = pluginsToPublish,
-      compressPluginArchive = context.options.compressZipFiles,
-      buildPlatformLibJob = null,
-      state = distState,
-      searchableOptionSet = searchableOptionSet,
-      context = context,
-    )
+    buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, null, distState, searchableOptionSet, context)
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -160,7 +153,7 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val temp = builder.toString()
   builder.setLength(0)
   val map = LinkedHashMap<String, String>(1)
-  map.put("settings_dir", settingsDir)
+  map["settings_dir"] = settingsDir
   builder.append(BuildUtils.replaceAll(temp, map, "@@"))
   if (context.applicationInfo.isEAP) {
     builder.append(
@@ -456,12 +449,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         toPublish = true
       )
       buildNonBundledPlugins(
-        pluginsToPublish = pluginsToPublish,
-        compressPluginArchive = context.options.compressZipFiles,
-        buildPlatformLibJob = null,
-        state = distributionState,
-        searchableOptionSet = buildSearchableOptions(context),
-        context = context,
+        pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), context
       )
       return@coroutineScope
     }
@@ -953,6 +941,15 @@ private fun crossPlatformZip(
       out.entryToDir(macArm64DistDir.resolve("bin/${executableName}.vmoptions"), "bin/mac")
       out.entryToDir(linuxX64DistDir.resolve("bin/${executableName}64.vmoptions"), "bin/linux")
 
+      val zipFileUniqueGuard = HashMap<String, DistFileContent>()
+
+      val nonConflictingBinDirs = when (context.applicationInfo.productCode) {
+        "CL" -> listOf("clang/", "cmake/", "gdb/", "lldb/", "mingw/", "ninja/", "profiler/")
+        else -> emptyList()
+      }
+      val binEntryCustomizer = { entry: ZipArchiveEntry, path: Path, relative: String ->
+        entryCustomizer.invoke(entry, path, "bin/${relative}")
+      }
       distResults.forEach {
         val prefix = "bin/${it.builder.targetOs.dirName}/${it.arch.dirName}/"
         out.dir(it.outDir.resolve("bin"), prefix, fileFilter = { _, relPath ->
@@ -964,13 +961,15 @@ private fun crossPlatformZip(
           relPath != "idea.properties" &&
           !relPath.endsWith(".vmoptions") &&
           !relPath.startsWith("repair") &&
-          !relPath.startsWith("restart")
-        }, entryCustomizer = { entry, path, relative ->
-          entryCustomizer.invoke(entry, path, "bin/$relative")
-        })
-      }
+          !relPath.startsWith("restart") &&
+          !nonConflictingBinDirs.any(relPath::startsWith)
+        }, binEntryCustomizer)
 
-      val zipFileUniqueGuard = HashMap<String, DistFileContent>()
+        out.dir(it.outDir.resolve("bin"), prefix = "bin/", fileFilter = { file, relPath ->
+          nonConflictingBinDirs.any(relPath::startsWith)&&
+          filterFileIfAlreadyInZip(relPath, file, zipFileUniqueGuard)
+        }, binEntryCustomizer)
+      }
 
       out.dir(context.paths.distAllDir, prefix = "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer)
 

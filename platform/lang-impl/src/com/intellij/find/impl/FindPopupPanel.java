@@ -1450,7 +1450,13 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     if (hash != myLoadingHash) {
       return;
     }
+
     UIUtil.invokeLaterIfNeeded(() -> {
+      if (hash != myLoadingHash) {
+        return;
+      }
+      myLoadingHash = 0;
+
       //noinspection HardCodedStringLiteral
       showEmptyText(message);
       header.loadingIcon.setIcon(EmptyIcon.ICON_16);

@@ -57,8 +57,8 @@ CoroutinePreflightFrame invokeSuspend (optimisedVariablesWithLambdas.kt:32)
 optimisedVariablesWithLambdas.kt:34
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesWithLambdas.kt:34)
     JavaValue[local] result: Unit@uniqueID = kotlin.Unit
-    JavaValue[local] f: java.lang.String = f
-    JavaValue[local] e: java.lang.String = e
+    JavaValue[local] f: java.lang.String = f (optimisedVariablesWithLambdas.kt:30)
+    JavaValue[local] e: java.lang.String = e (optimisedVariablesWithLambdas.kt:27)
 optimisedVariablesWithLambdas.kt:39
 CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:39)
     JavaValue[local] param1: int = 1 (optimisedVariablesWithLambdas.kt:8)

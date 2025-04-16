@@ -11,7 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import org.intellij.images.ImagesBundle
-import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.utils.ScientificUtils
 import org.jetbrains.annotations.Nls
 import java.awt.FlowLayout
 import javax.swing.*

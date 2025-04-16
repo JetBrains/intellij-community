@@ -224,7 +224,7 @@ class LambdaExpression(val parameterList: ParameterList?, val block: Block) : Ex
     override fun generateCode(builder: CodeBuilder) {
         builder append block.lBrace append " "
 
-        if (parameterList != null && parameterList.parameters.isNotEmpty()) {
+        if (parameterList != null && !parameterList.parameters.isEmpty()) {
             builder.append(parameterList)
                     .append("->")
                     .append(if (block.statements.size > 1) "\n" else " ")

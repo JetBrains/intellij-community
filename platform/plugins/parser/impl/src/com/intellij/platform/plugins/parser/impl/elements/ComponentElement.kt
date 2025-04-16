@@ -9,4 +9,17 @@ class ComponentElement(
   @JvmField val os: OS?,
   @JvmField val overrides: Boolean,
   @JvmField val options: Map<String, String>
-)
+) {
+  override fun toString(): String {
+    return buildString {
+      append("ComponentElement(implementationClass=$implementationClass")
+      if (interfaceClass != null) append(", interfaceClass=$interfaceClass")
+      if (headlessImplementationClass != null) append(", headlessImplementationClass=$headlessImplementationClass")
+      if (loadForDefaultProject) append(", loadForDefaultProject=true")
+      if (os != null) append(", os=$os")
+      if (overrides) append(", overrides=true")
+      if (options.isNotEmpty()) append(", options=$options")
+      append(")")
+    }
+  }
+}

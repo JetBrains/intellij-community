@@ -3,7 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStack
+import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
@@ -37,7 +37,7 @@ internal class FrontendXExecutionStack(
             //  which is the safest-narrowest scope in our possession.
             //  However, maybe it's possible to set up, for example, a scope that ends when another stack is selected from a combobox.
             //  But it requires further investigation.
-            val feFrames = event.frames.map { suspendContextLifetimeScope.getOrCreateStack(it, project) }
+            val feFrames = event.frames.map { suspendContextLifetimeScope.getOrCreateStackFrame(it, project) }
             container.addStackFrames(feFrames, event.last)
           }
         }

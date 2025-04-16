@@ -94,4 +94,9 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
     public void testSerialize_non_existing_jar_from_kotlinDistForIde() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_non_existing_jar_from_kotlinDistForIde.kt");
     }
+
+    @TestMetadata("violationViaPrimaryConstructorPointer.kt")
+    public void testViolationViaPrimaryConstructorPointer() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/violationViaPrimaryConstructorPointer.kt");
+    }
 }

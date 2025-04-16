@@ -3,12 +3,12 @@ package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigMergeSectionsQuickFix
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveSectionQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigSection
-import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.iterateTypedSiblingsBackward
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.iterateTypedSiblingsForward
 import org.editorconfig.language.util.isEquivalentTo

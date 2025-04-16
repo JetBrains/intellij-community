@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 
 /**
@@ -37,6 +38,7 @@ class CreateNewProjectGroupAction : RecentProjectsWelcomeScreenActionBase() {
   override fun update(event: AnActionEvent) {
     val item = getSelectedItem(event)
     event.presentation.isEnabled = item == null || item is RecentProjectItem || item is ProjectsGroupItem
+    event.presentation.isVisible = item !is ProviderRecentProjectItem
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

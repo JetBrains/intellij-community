@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.gradle"/>
+  </dependencies>
+</idea-plugin>

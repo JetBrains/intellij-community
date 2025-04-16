@@ -59,13 +59,17 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
         GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
 
         val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
-            val path = Path.of(it.file)
-            VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                GradleScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports, sync.javaHome)
-            }
+            val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
+            GradleScriptModel(
+                virtualFile,
+                it.classPath,
+                it.sourcePath,
+                it.imports,
+                sync.javaHome
+            )
         }
 
-        GradleScriptRefinedConfigurationProvider.getInstance(project).updateConfigurations(gradleScripts)
+        GradleScriptRefinedConfigurationProvider.getInstance(project).processScripts(gradleScripts, storage)
 
         val ktFiles = gradleScripts.mapNotNull {
             readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }

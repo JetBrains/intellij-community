@@ -62,6 +62,7 @@ jvm_library(
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
+    "@lib//:kotlin-test",
   ]
 )
 

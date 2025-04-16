@@ -3,24 +3,17 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptLazyResolveProhibitionCondition
+import org.jetbrains.kotlin.idea.core.script.k2.KotlinScripDeferredResolutionPolicy
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
-import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 private const val GRADLE_KTS = ".gradle.kts"
 
-class GradleScriptLazyResolveProhibitionCondition(val project: Project) : KotlinScriptLazyResolveProhibitionCondition {
-    override fun shouldPostponeResolution(script: VirtualFile): Boolean {
-        val gradleDefinitionIds =
-            project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.definitions?.map { it.definitionId }?.toSet()
-                ?: emptySet()
+class GradleScripDeferredResolvePolicy(val project: Project) : KotlinScripDeferredResolutionPolicy {
+    override fun shouldDeferResolution(script: VirtualFile): Boolean {
+        if (!script.name.endsWith(GRADLE_KTS) || isUnitTestMode()) return false
 
         // gradle definitions are empty so project import wasn't finished yet
-        if (gradleDefinitionIds.isEmpty() && script.name.endsWith(GRADLE_KTS)) return true
-
-        val definition = findScriptDefinition(project, VirtualFileScriptSource(script)).definitionId
-
-        return gradleDefinitionIds.contains(definition)
+        return project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.definitions.orEmpty().none()
     }
 }

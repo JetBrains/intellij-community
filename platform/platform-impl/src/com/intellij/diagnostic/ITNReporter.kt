@@ -107,7 +107,7 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
     return true
   }
 
-  private fun onSuccess(project: Project?, reportId: Int, callback: (SubmittedReportInfo) -> Unit) {
+  private fun onSuccess(project: Project?, reportId: Long, callback: (SubmittedReportInfo) -> Unit) {
     val reportUrl = ITNProxy.getBrowseUrl(reportId)
     callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
 

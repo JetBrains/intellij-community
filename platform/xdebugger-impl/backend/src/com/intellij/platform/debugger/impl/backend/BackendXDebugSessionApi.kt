@@ -11,6 +11,7 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
@@ -20,6 +21,7 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
@@ -34,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
@@ -161,9 +164,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val sourcePosition = sourcePositionDto.sourcePosition()
     return computeVariants(handler, sourcePosition).map { variant ->
       val id = variant.storeGlobally(scope, session)
-      val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
-      val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
-      XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+      readAction {
+        val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+        val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
+        XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+      }
     }
   }
 
@@ -264,6 +269,26 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       session.showExecutionPoint()
     }
   }
+}
+
+internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
+  val suspendContext = suspendContext ?: return null
+  val suspendScope = currentSuspendCoroutineScope ?: return null
+  val suspendContextId = coroutineScope {
+    suspendContext.storeGlobally(suspendScope, this@suspendData)
+  }
+  val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
+  val executionStackDto = suspendContext.activeExecutionStack?.let {
+    val activeExecutionStackId = it.getOrStoreGlobally(suspendScope, this@suspendData)
+    XExecutionStackDto(activeExecutionStackId, it.displayName, it.icon?.rpcId())
+  }
+  val stackTraceDto = currentStackFrame?.let {
+    createXStackFrameDto(it, suspendScope, this@suspendData)
+  }
+
+  return SuspendData(suspendContextDto,
+                     executionStackDto,
+                     stackTraceDto)
 }
 
 internal fun createXStackFrameDto(frame: XStackFrame, coroutineScope: CoroutineScope, session: XDebugSessionImpl): XStackFrameDto {

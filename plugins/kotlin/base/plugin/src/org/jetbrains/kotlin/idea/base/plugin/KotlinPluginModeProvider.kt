@@ -46,11 +46,3 @@ enum class KotlinPluginMode(
             if (useK2Plugin) K2 else K1
     }
 }
-
-/**
- * A switch to mitigate exceptions from Android plugin
- * because it tries to use K1 frontend in K2 plugin.
- *
- * This is a separate method from [KotlinPluginModeProvider.isK2Mode] to better track and update its usages.
- */
-fun suppressAndroidPlugin(): Boolean = KotlinPluginModeProvider.isK2Mode()

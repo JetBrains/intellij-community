@@ -4,10 +4,10 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigEnumerationPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveBracesQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigEnumerationPattern
-import org.editorconfig.language.psi.EditorConfigVisitor
 
 internal fun EditorConfigEnumerationPattern.hasRedundancy(): Boolean = this.patternList.size <= 1
 

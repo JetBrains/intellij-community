@@ -115,8 +115,9 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
-        for (Fixer fixer : myFixers) {
-          fixer.apply(editor, this, psiElement);
+        for (Fixer<? extends SmartEnterProcessorWithFixers> fixer : myFixers) {
+          //noinspection unchecked
+          ((Fixer<SmartEnterProcessorWithFixers>)fixer).apply(editor, this, psiElement);
           if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;
           }

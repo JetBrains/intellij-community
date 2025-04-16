@@ -33,7 +33,12 @@ class WbrView(elem: Element) : InlineView(elem) {
     super.setSize(0f, 0f)
   }
 
-  override fun getPreferredSpan(axis: Int): Float = 0f
+  override fun getPreferredSpan(axis: Int): Float =
+    // We need to have a non-zero span for all measurements to work correctly.
+    // However, it cannot be 1.0, because we would see a gap if <span> has background,
+    // because we are not painting <wbr>. Let's return a pretty small number to avoid
+    // any visible gap on higher resolutions and zooms
+    if (axis == X_AXIS) 0.01f else 0f
 
   override fun getText(p0: Int, p1: Int): Segment = Segment()
 

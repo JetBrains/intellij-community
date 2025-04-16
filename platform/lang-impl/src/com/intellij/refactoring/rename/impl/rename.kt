@@ -2,7 +2,6 @@
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
-import com.intellij.model.ModelPatch
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -287,12 +286,8 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
     fileUpdates.preview()
   }
   // write action might happen here, but this code is internal, used to check preview dialog
-  val patch = object : ModelPatch {
-    override fun getBranchChanges(): Map<VirtualFile, CharSequence> = preview
-    override fun applyBranchChanges() = error("not implemented")
-  }
   return withContext(Dispatchers.EDT) {
-    VcsFacade.getInstance().createPatchPreviewComponent(project, patch)?.let { previewComponent ->
+    VcsFacade.getInstance().createPatchPreviewComponent(project, preview)?.let { previewComponent ->
       DialogBuilder(project)
         .title(RefactoringBundle.message("rename.preview.tab.title"))
         .centerPanel(previewComponent)

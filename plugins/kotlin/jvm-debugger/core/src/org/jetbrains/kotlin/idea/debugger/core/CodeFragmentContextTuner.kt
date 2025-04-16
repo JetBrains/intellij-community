@@ -50,6 +50,12 @@ internal class K2CodeFragmentContextTunerImpl : CodeFragmentContextTuner {
             if (parent is KtBlockExpression) {
                 // Block scope should be visible on a closing bracket, so we cannot lose the precise context element
                 return parent
+            } else if (parent is KtFunctionLiteral) {
+                val literalBlock = parent.bodyExpression
+                if (literalBlock != null) {
+                    // For function literals, braces are parts of the literal itself, not a block
+                    return literalBlock
+                }
             }
         }
 

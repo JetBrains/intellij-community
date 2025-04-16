@@ -41,7 +41,6 @@ jvm_library(
     "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
     "//plugins/kotlin/j2k/k1.new:kotlin-j2k-k1-new",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
-    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/idea",
     "//platform/lang-impl",
     "//platform/code-style-impl:codeStyle-impl",

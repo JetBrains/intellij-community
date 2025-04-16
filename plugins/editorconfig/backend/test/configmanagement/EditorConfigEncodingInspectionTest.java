@@ -3,11 +3,11 @@ package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionFixtureTestCase;
 import org.editorconfig.EditorConfigRegistry;
 import org.editorconfig.Utils;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 

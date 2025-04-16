@@ -21,7 +21,7 @@ private val EP: ExtensionPointName<FloatingToolbarLanguageBean> = ExtensionPoint
 private const val FLOATING_CODE_TOOLBAR_GROUP_ID = "Floating.CodeToolbar"
 
 private fun forLanguage(language: Language): FloatingToolbarLanguageBean? {
-  return EP.extensionList.firstOrNull { bean -> bean.language == language.id }
+  return EP.extensionList.firstOrNull { bean -> bean.language == language.id || bean.language == language.baseLanguage?.id }
 }
 
 internal fun findActionGroupFor(language: Language): String? {

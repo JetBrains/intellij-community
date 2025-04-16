@@ -8,8 +8,6 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.JavaVersion.Companion.compose
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import kotlin.jvm.JvmStatic
-import kotlin.jvm.JvmField
 
 /**
  * Represents a language level (i.e. features available) of a Java code.
@@ -159,6 +157,20 @@ enum class LanguageLevel {
    */
   fun feature(): Int {
     return myVersion.feature
+  }
+
+  /**
+   * The next [LanguageLevel] that is not in preview or null if there is no such language level, may return [LanguageLevel.JDK_X].
+   */
+  fun next(): LanguageLevel? {
+    return forFeature(feature() + 1)
+  }
+
+  /**
+   * The previous [LanguageLevel] that is not in preview or null if there is no such language level.
+   */
+  fun previous(): LanguageLevel? {
+    return forFeature(feature() - 1)
   }
 
   /**

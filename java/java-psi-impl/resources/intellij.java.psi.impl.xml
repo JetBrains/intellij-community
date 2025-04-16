@@ -25,7 +25,6 @@
     <extensionPoint qualifiedName="com.intellij.lang.inferredAnnotationProvider" interface="com.intellij.codeInsight.InferredAnnotationProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.psi.classFileDecompiler" interface="com.intellij.psi.compiled.ClassFileDecompilers$Decompiler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory" dynamic="true"/>
@@ -102,9 +101,6 @@
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
     <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.PsiJavaModuleTreeChangePreprocessor"/>
 
-    <languageStubDefinition language="JAVA" implementationClass="com.intellij.psi.impl.java.stubs.JavaStubDefinition"/>
-    <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
-
     <syntax.syntaxDefinition language="JAVA" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension"/>
     <syntax.syntaxDefinition language="JShellLanguage" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JShellSyntaxDefinitionExtension"/>
 
@@ -130,9 +126,7 @@
     <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes" externalIdPrefix="java."/>
     <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
     <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
-    <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
-    <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
-    <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+
     <lang.commenter language="JAVA" implementationClass="com.intellij.lang.java.JavaCommenter"/>
     <lang.parserDefinition language="JShellLanguage" implementationClass="com.intellij.lang.java.JShellParserDefinition"/>
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
@@ -155,7 +149,6 @@
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
-    <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
     <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
                  description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
     <lang.dumb.mode.supported language="JAVA" implementationClass="com.intellij.lang.java.JavaLanguageDumbAware"/>

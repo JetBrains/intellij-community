@@ -43,7 +43,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       }
 
       for (plugin in component) {
-        plugin.isEnabled = false
+        plugin.isMarkedForLoading = false
       }
 
       val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
@@ -106,19 +106,19 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
     m@ for (module in sortedModulesWithDependencies.modules) {
       if (module.moduleName == moduleIncompatibleWithCurrentMode) {
-        module.isEnabled = false
+        module.isMarkedForLoading = false
         logMessages.add("Module ${module.moduleName} is disabled because it is not compatible with the current product mode")
         continue
       }
       
       if (module.isUseIdeaClassLoader && !canExtendIdeaClassLoader) {
-        module.isEnabled = false
+        module.isMarkedForLoading = false
         logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
         continue@m
       }
 
       if (module.moduleName == null) {
-        if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isEnabled || (disabler != null && disabler(module)))) {
+        if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isMarkedForLoading || (disabler != null && disabler(module)))) {
           continue
         }
       }
@@ -150,7 +150,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         // do this as late as possible, because if we mark the module disabled a bit later, it would still be registered for a given prefix
         val alreadyRegistered = usedPackagePrefixes.putIfAbsent(module.packagePrefix, module)
         if (alreadyRegistered != null) {
-          module.isEnabled = false
+          module.isMarkedForLoading = false
           isDisabledDueToPackagePrefixConflict.put(module.moduleName ?: module.pluginId.idString, alreadyRegistered)
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
                           "${alreadyRegistered.moduleName ?: alreadyRegistered.pluginId}")
@@ -172,7 +172,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         if (module.pluginId != PluginManagerCore.CORE_ID) {
           for (contentModule in module.content.modules) {
             if (contentModule.loadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.name)) {
-              module.isEnabled = false
+              module.isMarkedForLoading = false
               if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.name)) {
                 val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.name]!!
                 loadingErrors.add(PluginLoadingError(
@@ -221,7 +221,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     if (corePlugin != null) {
       for (moduleItem in corePlugin.content.modules) {
         if (moduleItem.loadingRule.required && !enabledModuleV2Ids.containsKey(moduleItem.name)) {
-          moduleItem.requireDescriptor().isEnabled = false
+          moduleItem.requireDescriptor().isMarkedForLoading = false
           registerLoadingError(corePlugin, moduleItem)
         }
       }
@@ -269,14 +269,14 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
     val java11Shim = Java11Shim.INSTANCE
     fun isPluginModuleEnabled(module: IdeaPluginDescriptorImpl): Boolean {
-      if (module.moduleName == null) return module.isEnabled
+      if (module.moduleName == null) return module.isMarkedForLoading
       return enabledModuleV2Ids[module.moduleName] === module
     }
 
     return PluginSet(
       sortedModulesWithDependencies = sortedModulesWithDependencies, 
       allPlugins = allPlugins,
-      enabledPlugins = sortedPlugins.filterTo(ArrayList<IdeaPluginDescriptorImpl>()) { it.isEnabled },
+      enabledPlugins = sortedPlugins.filterTo(ArrayList<IdeaPluginDescriptorImpl>()) { it.isMarkedForLoading },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
@@ -294,12 +294,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     descriptor: IdeaPluginDescriptorImpl,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     fullIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    disabledPlugins: Set<PluginId>,
+    isPluginDisabled: (PluginId) -> Boolean,
     errors: MutableMap<PluginId, PluginLoadingError>,
   ): PluginLoadingError? {
     val isNotifyUser = !descriptor.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(descriptor.pluginId, fullIdMap)
     for (incompatibleId in descriptor.incompatiblePlugins) {
-      if (!enabledPluginIds.containsKey(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
+      if (!enabledPluginIds.containsKey(incompatibleId) || isPluginDisabled(incompatibleId)) {
         continue
       }
 

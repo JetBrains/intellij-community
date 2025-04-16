@@ -24,7 +24,7 @@
                         serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
-    <applicationService serviceImplementation="org.intellij.images.scientific.BinarizationThresholdConfig"/>
+    <applicationService serviceImplementation="org.intellij.images.scientific.utils.BinarizationThresholdConfig"/>
     <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                     serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <!-- ImageIO.getReaderFormatNames() -->

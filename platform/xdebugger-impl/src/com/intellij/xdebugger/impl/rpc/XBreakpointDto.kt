@@ -5,12 +5,17 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
@@ -41,7 +46,6 @@ data class XBreakpointDto(
 @Serializable
 data class XBreakpointDtoState(
   val displayText: String,
-  val iconId: IconId,
   val sourcePosition: XSourcePositionDto?,
   val isDefault: Boolean,
   val logExpressionObject: XExpressionDto?,
@@ -60,7 +64,22 @@ data class XBreakpointDtoState(
   val logExpression: String?,
   val logExpressionObjectInt: XExpressionDto?,
   val isTemporary: Boolean,
+  val timestamp: Long,
+  val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
+  val customPresentation: XBreakpointCustomPresentationDto?,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointCustomPresentationDto(
+  val icon: IconId?,
+  val errorMessage: @NlsSafe String?,
+  val timestamp: Long,
+)
+
+private fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentationDto? {
+  return XBreakpointCustomPresentationDto(icon?.rpcId(), errorMessage, timestamp)
+}
 
 @ApiStatus.Internal
 @Serializable
@@ -68,11 +87,60 @@ data class XBreakpointTypeDto(
   val id: XBreakpointTypeId,
   val index: Int,
   val title: String,
-  val enabledIcon: IconId,
   val suspendThreadSupported: Boolean,
   val lineTypeInfo: XLineBreakpointTypeInfo?,
   val defaultSuspendPolicy: SuspendPolicy,
+  val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
+  val customPanels: XBreakpointTypeCustomPanels,
+  val icons: XBreakpointTypeIcons,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointTypeIcons(
+  val enabledIcon: IconId,
+  val disabledIcon: IconId,
+  val suspendNoneIcon: IconId,
+  val mutedEnabledIcon: IconId,
+  val mutedDisabledIcon: IconId,
+  val pendingIcon: IconId?,
+  val inactiveDependentIcon: IconId,
+  val temporaryIcon: IconId?,
+)
+
+
+// TODO: LUXify it for remote dev?
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointTypeCustomPanels(
+  @Transient val customPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+  @Transient val customConditionsPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+  @Transient val customRightPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+  @Transient val customTopPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
+)
+
+@ApiStatus.Internal
+@Serializable
+enum class XBreakpointTypeSerializableStandardPanels {
+  SUSPEND_POLICY, ACTIONS, DEPENDENCY
+}
+
+private fun XBreakpointType.StandardPanels.toDto(): XBreakpointTypeSerializableStandardPanels {
+  return when (this) {
+    XBreakpointType.StandardPanels.SUSPEND_POLICY -> XBreakpointTypeSerializableStandardPanels.SUSPEND_POLICY
+    XBreakpointType.StandardPanels.ACTIONS -> XBreakpointTypeSerializableStandardPanels.ACTIONS
+    XBreakpointType.StandardPanels.DEPENDENCY -> XBreakpointTypeSerializableStandardPanels.DEPENDENCY
+  }
+}
+
+@ApiStatus.Internal
+fun XBreakpointTypeSerializableStandardPanels.standardPanel(): XBreakpointType.StandardPanels {
+  return when (this) {
+    XBreakpointTypeSerializableStandardPanels.SUSPEND_POLICY -> XBreakpointType.StandardPanels.SUSPEND_POLICY
+    XBreakpointTypeSerializableStandardPanels.ACTIONS -> XBreakpointType.StandardPanels.ACTIONS
+    XBreakpointTypeSerializableStandardPanels.DEPENDENCY -> XBreakpointType.StandardPanels.DEPENDENCY
+  }
+}
 
 @ApiStatus.Internal
 @Serializable
@@ -110,9 +178,35 @@ private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
   }
   val index = XBreakpointType.EXTENSION_POINT_NAME.extensionList.indexOf(this)
   val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(this)
+  val customPanels = XBreakpointTypeCustomPanels(
+    customPropertiesPanelProvider = {
+      this.createCustomPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    },
+    customConditionsPanelProvider = {
+      this.createCustomConditionsPanel() as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    },
+    customRightPropertiesPanelProvider = {
+      this.createCustomRightPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    },
+    customTopPropertiesPanelProvider = {
+      this.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+    }
+  )
+  val icons = XBreakpointTypeIcons(
+    enabledIcon = enabledIcon.rpcId(),
+    disabledIcon = disabledIcon.rpcId(),
+    suspendNoneIcon = suspendNoneIcon.rpcId(),
+    mutedEnabledIcon = mutedEnabledIcon.rpcId(),
+    mutedDisabledIcon = mutedDisabledIcon.rpcId(),
+    pendingIcon = pendingIcon?.rpcId(),
+    inactiveDependentIcon = inactiveDependentIcon.rpcId(),
+    temporaryIcon = (this as? XLineBreakpointType<*>)?.temporaryIcon?.rpcId(),
+  )
   // TODO: do we need to subscribe on [defaultState] changes?
   return XBreakpointTypeDto(
-    XBreakpointTypeId(id), index, title, enabledIcon.rpcId(), isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy
+    XBreakpointTypeId(id), index, title, isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
+    standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
+    customPanels, icons
   )
 }
 
@@ -121,12 +215,6 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
   return withContext(Dispatchers.EDT) {
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
-      iconId = getIcon().rpcId().also {
-        // let's not cache icon while sending it through RPC
-        // TODO: it is better to send all needed icons from BreakpointType
-        //  and then collect it on the frontend (taking XBreakpointBase.updateIcon() method)
-        clearIcon()
-      },
       sourcePosition = sourcePosition?.toRpc(),
       isDefault = XDebuggerManager.getInstance(project).breakpointManager.isDefaultBreakpoint(breakpoint),
       logExpressionObject = logExpressionObject?.toRpc(),
@@ -145,6 +233,9 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       logExpression = logExpression,
       logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
       isTemporary = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false,
+      timestamp = timeStamp,
+      currentSessionCustomPresentation = (XDebuggerManager.getInstance(project).currentSession as? XDebugSessionImpl)?.getBreakpointPresentation(breakpoint)?.toRpc(),
+      customPresentation = breakpoint.customizedPresentation?.toRpc()
     )
   }
 }

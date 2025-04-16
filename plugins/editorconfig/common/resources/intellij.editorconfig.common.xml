@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="EditorConfig"
+              language="EditorConfig"
+              implementationClass="com.intellij.editorconfig.common.plugin.EditorConfigFileType"
+              fieldName="INSTANCE"
+              fileNames=".editorconfig"/>
+    <lang.parserDefinition language="EditorConfig"
+                           implementationClass="com.intellij.editorconfig.common.plugin.EditorConfigParserDefinition"/>
+  </extensions>
+</idea-plugin>

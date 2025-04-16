@@ -125,6 +125,41 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       @Override
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        if (expression.isArrayCreation()) return;
+        PsiJavaCodeReferenceElement ref = expression.getClassOrAnonymousClassReference();
+        if (ref == null) return;
+        if (!(ref.resolve() instanceof PsiClass cls)) return;
+        String qualifiedName = cls.getQualifiedName();
+        if (qualifiedName == null) return;
+        PsiExpressionList list = expression.getArgumentList();
+        if (list == null) return;
+        if (!(expression.getType() instanceof PsiClassType type) || type.getParameterCount() != 1) return;
+        PsiType typeParameter = type.getParameters()[0];
+        if (!(typeParameter instanceof PsiClassType classType) || 
+            DfaPsiUtil.getTypeNullability(typeParameter) != Nullability.NOT_NULL) return;
+        boolean matched = switch (qualifiedName) {
+          case "java.util.concurrent.atomic.AtomicReference" -> list.getExpressionCount() == 0;
+          case "java.util.concurrent.atomic.AtomicReferenceArray" ->
+            list.getExpressionCount() == 1 && PsiTypes.intType().equals(list.getExpressionTypes()[0]);
+          case "java.lang.ThreadLocal" -> list.getExpressionCount() == 0 && expression.getAnonymousClass() == null;
+          default -> false;
+        };
+        if (!matched) return;
+        
+        AddTypeAnnotationFix fix = null;
+        if (classType.getPsiContext() instanceof PsiJavaCodeReferenceElement typeRef &&
+            typeRef.getParent() instanceof PsiTypeElement typeElement && typeElement.getType().equals(classType) &&
+            typeElement.acceptsAnnotations()) {
+          fix = new AddTypeAnnotationFix(typeElement, manager.getDefaultNullable(), notNulls);
+        }
+        holder.problem(expression,
+                       JavaAnalysisBundle.message("inspection.nullable.problems.constructor.not.compatible.non.null.type.argument"))
+          .maybeFix(fix)
+          .register();
+      }
+
+      @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         checkMethodReference(expression, holder);
 
@@ -325,7 +360,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   AddTypeAnnotationFix fix = null;
                   if (annotationClass != null &&
                       AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
-                    fix = new AddTypeAnnotationFix(annotationToAdd, manager.getNullables());
+                    fix = new AddTypeAnnotationFix(typeArgument, annotationToAdd, manager.getNullables());
                   }
                   reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
                 }

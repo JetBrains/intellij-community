@@ -15,10 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -29,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -39,6 +35,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +52,7 @@ import java.util.List;
 public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
-  private final Object myInitialBreakpoint;
+  private final @Nullable BreakpointsDialogInitialBreakpoint myInitialBreakpoint;
   private final XBreakpointManagerProxy myBreakpointManager;
 
   private BreakpointItemsTreeController myTreeController;
@@ -95,10 +92,12 @@ public class BreakpointsDialog extends DialogWrapper {
     return myBreakpointManager;
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, XBreakpointManagerProxy breakpointManager) {
+  protected BreakpointsDialog(@NotNull Project project,
+                              @Nullable BreakpointsDialogInitialBreakpoint initialBreakpoint,
+                              XBreakpointManagerProxy breakpointManager) {
     super(project);
     myProject = project;
-    myInitialBreakpoint = breakpoint;
+    myInitialBreakpoint = initialBreakpoint;
     myBreakpointManager = breakpointManager;
 
     collectGroupingRules();
@@ -182,7 +181,12 @@ public class BreakpointsDialog extends DialogWrapper {
         });
       myTreeController.selectFirstBreakpointItem();
     }
-    selectBreakpoint(myInitialBreakpoint, false);
+    if (myInitialBreakpoint instanceof BreakpointsDialogInitialBreakpoint.BreakpointId) {
+      selectBreakpointById(((BreakpointsDialogInitialBreakpoint.BreakpointId)myInitialBreakpoint).getId(), false);
+    }
+    else if (myInitialBreakpoint instanceof BreakpointsDialogInitialBreakpoint.GenericBreakpoint) {
+      selectBreakpoint(((BreakpointsDialogInitialBreakpoint.GenericBreakpoint)myInitialBreakpoint).getBreakpoint(), false);
+    }
   }
 
   @Override
@@ -296,7 +300,7 @@ public class BreakpointsDialog extends DialogWrapper {
           res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
-          res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
+          res.add(new EditDescriptionAction((XBreakpointProxy)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
         return res.toArray(AnAction.EMPTY_ARRAY);
       }
@@ -317,15 +321,10 @@ public class BreakpointsDialog extends DialogWrapper {
       .map(AddXBreakpointAction::new)
       .toList();
 
-    DefaultActionGroup breakpointTypes = new DefaultActionGroup(breakpointTypeActions);
-
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
       setToolbarPosition(ActionToolbarPosition.TOP).
       setPanelBorder(JBUI.Borders.empty()).
-      setAddAction(button -> JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
-                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-        .show(button.getPreferredPopupPoint())).
+      setAddAction(createAddActionRunnable(breakpointTypeActions)).
       setRemoveAction(button -> myTreeController.removeSelectedBreakpoints(myProject)).
       setRemoveActionUpdater(e -> {
         for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
@@ -350,6 +349,22 @@ public class BreakpointsDialog extends DialogWrapper {
     });
 
     return decoratorPanel;
+  }
+
+  private static @Nullable AnActionButtonRunnable createAddActionRunnable(List<AddXBreakpointAction> breakpointTypeActions) {
+    DefaultActionGroup breakpointTypes = new DefaultActionGroup(breakpointTypeActions);
+
+    AnActionButtonRunnable addAction;
+    if (breakpointTypeActions.isEmpty()) {
+      addAction = null;
+    }
+    else {
+      addAction = button -> JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
+                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+        .show(button.getPreferredPopupPoint());
+    }
+    return addAction;
   }
 
   private void navigate(final boolean requestFocus) {
@@ -448,6 +463,21 @@ public class BreakpointsDialog extends DialogWrapper {
     super.toFront();
   }
 
+  private boolean selectBreakpointById(@Nullable XBreakpointId breakpointId, boolean update) {
+    if (update) {
+      updateBreakpoints();
+    }
+    if (breakpointId != null) {
+      for (BreakpointItem item : myBreakpointItems) {
+        if (Objects.equals(item.getId(), breakpointId)) {
+          myTreeController.selectBreakpointItem(item, null);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public boolean selectBreakpoint(Object breakpoint, boolean update) {
     if (update) {
       updateBreakpoints();
@@ -517,9 +547,9 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private final class EditDescriptionAction extends AnAction {
-    private final XBreakpointBase myBreakpoint;
+    private final XBreakpointProxy myBreakpoint;
 
-    private EditDescriptionAction(XBreakpointBase breakpoint) {
+    private EditDescriptionAction(XBreakpointProxy breakpoint) {
       super(XDebuggerBundle.message("breakpoints.dialog.edit.description"));
       myBreakpoint = breakpoint;
     }

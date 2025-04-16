@@ -1,5 +1,4 @@
 // "Make 'One' 'open'" "true"
-// IGNORE_K2
 
 actual open class One
 class Two : <caret>One()

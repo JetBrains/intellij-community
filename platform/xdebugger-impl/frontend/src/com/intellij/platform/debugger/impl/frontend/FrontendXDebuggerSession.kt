@@ -18,7 +18,7 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStac
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
 import com.intellij.platform.debugger.impl.frontend.storage.FrontendXStackFramesStorage
-import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStack
+import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
 import com.intellij.platform.execution.impl.frontend.executionEnvironment
 import com.intellij.platform.util.coroutines.childScope
@@ -33,6 +33,8 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.*
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
@@ -144,6 +146,7 @@ class FrontendXDebuggerSession private constructor(
   }
 
   init {
+    sessionDto.sessionDataDto.initialSuspendData?.applyToCurrents()
     cs.launch {
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
@@ -166,28 +169,24 @@ class FrontendXDebuggerSession private constructor(
         this.cancel() // Only one tab expected
       }
     }
-  }
 
+    cs.launch(Dispatchers.EDT) {
+      sessionDto.sessionDataDto.breakpointsMutedFlow.toFlow().collectLatest {
+        sessionData.isBreakpointsMuted = it
+      }
+    }
+
+    cs.launch {
+      sessionState.collectLatest { state ->
+        sessionData.isPauseSupported = state.isPauseActionSupported
+      }
+    }
+  }
 
   private suspend fun XDebuggerSessionEvent.updateCurrents() {
     when (this) {
       is XDebuggerSessionEvent.SessionPaused -> {
-        val pauseData = pauseData.await()
-        if (pauseData != null) {
-          val (suspendContextDto, executionStackDto, stackFrameDto) = pauseData
-          val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
-                                                          FrontendXStackFramesStorage())
-          val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
-          suspendContext.value = currentSuspendContext
-          executionStackDto?.let {
-            currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
-              suspendContext.value?.activeExecutionStack = it
-            }
-          }
-          stackFrameDto?.let {
-            currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStack(it, project)
-          }
-        }
+        suspendData.await()?.applyToCurrents()
       }
       is XDebuggerSessionEvent.SessionResumed,
       is XDebuggerSessionEvent.BeforeSessionResume,
@@ -206,10 +205,27 @@ class FrontendXDebuggerSession private constructor(
       }
       is XDebuggerSessionEvent.StackFrameChanged -> {
         stackFrame?.let {
-          currentStackFrame.value = FrontendXStackFrame(it, project, cs)
+          val suspendContext = suspendContext.value ?: return
+          currentStackFrame.value = suspendContext.getOrCreateStackFrame(it)
         }
       }
       else -> {}
+    }
+  }
+
+  private fun SuspendData.applyToCurrents() {
+    val (suspendContextDto, executionStackDto, stackFrameDto) = this
+    val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
+                                                    FrontendXStackFramesStorage())
+    val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
+    suspendContext.value = currentSuspendContext
+    executionStackDto?.let {
+      currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
+        suspendContext.value?.activeExecutionStack = it
+      }
+    }
+    stackFrameDto?.let {
+      currentStackFrame.value = suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
     }
   }
 
@@ -330,6 +346,15 @@ class FrontendXDebuggerSession private constructor(
     return FrontendXStackFramesListColorsCache(this, framesList)
   }
 
+  override fun areBreakpointsMuted(): Boolean {
+    return sessionData.isBreakpointsMuted
+  }
+
+  override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
+    // TODO: support dependent manager
+    return false
+  }
+
   companion object {
     private val LOG = thisLogger()
 
@@ -346,9 +371,11 @@ class FrontendXDebuggerSession private constructor(
   }
 }
 
-// TODO pass breakpoints muted flow
-private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData =
-  XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)
+private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData {
+  val sessionData = XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)
+  sessionData.isBreakpointsMuted = sessionDto.sessionDataDto.initialBreakpointsMuted
+  return sessionData
+}
 
 private fun CoroutineScope.createPositionFlow(dtoFlow: suspend () -> Flow<XSourcePositionDto?>): StateFlow<XSourcePosition?> = channelFlow {
   dtoFlow().collectLatest { sourcePositionDto ->

@@ -4,13 +4,13 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import org.editorconfig.core.EditorConfigAutomatonBuilder.getCachedHeaderRunAutomaton
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveSectionQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.isValidGlob
 

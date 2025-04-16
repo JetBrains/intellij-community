@@ -6,7 +6,7 @@ import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
-import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
+import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmStatic
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.highlighting
 
+import com.intellij.editorconfig.common.plugin.EditorConfigLexerFactory
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
@@ -9,8 +11,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import org.editorconfig.configmanagement.lexer.EditorConfigLexerFactory
-import org.editorconfig.language.psi.EditorConfigElementTypes
 
 object EditorConfigSyntaxHighlighter : SyntaxHighlighterBase() {
 

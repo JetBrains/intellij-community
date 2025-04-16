@@ -37,8 +37,12 @@ interface XBreakpointApi : RemoteApi<Unit> {
   suspend fun setLogExpressionObject(breakpointId: XBreakpointId, logExpression: XExpressionDto?)
   
   suspend fun setTemporary(breakpointId: XBreakpointId, isTemporary: Boolean)
+  
+  suspend fun setUserDescription(breakpointId: XBreakpointId, description: String?)
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
+
+  suspend fun removeBreakpoint(breakpointId: XBreakpointId)
 
   companion object {
     @JvmStatic

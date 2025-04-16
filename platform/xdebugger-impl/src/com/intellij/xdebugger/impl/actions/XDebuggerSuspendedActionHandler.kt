@@ -8,9 +8,9 @@ import com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus
 
-@Deprecated("Use XDebuggerProxySuspendedActionHandler instead")
+@ApiStatus.Obsolete
 abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
-  @Deprecated("Deprecated in Java")
+  @Suppress("UsagesOfObsoleteApi")
   override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
     return isEnabled(session)
   }
@@ -24,21 +24,18 @@ abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
   }
 }
 
+@Suppress("UsagesOfObsoleteApi")
 @ApiStatus.Internal
 abstract class XDebuggerProxySuspendedActionHandler : XDebuggerActionHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
     return isEnabled(session)
   }
 
-  @Deprecated("Deprecated in Java")
   final override fun isEnabled(session: XDebugSession, dataContext: DataContext): Boolean {
-    @Suppress("DEPRECATION")
     return super.isEnabled(session, dataContext)
   }
 
-  @Deprecated("Deprecated in Java")
   final override fun perform(session: XDebugSession, dataContext: DataContext) {
-    @Suppress("DEPRECATION")
     super.perform(session, dataContext)
   }
 

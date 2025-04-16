@@ -218,7 +218,9 @@ suspend fun buildUsingJps(
 
   val isRebuild = rebuildReason != null
   if (isRebuild) {
-    log.out.appendLine("rebuild reason: $rebuildReason")
+    if (isDebugEnabled) {
+      log.out.appendLine("rebuild reason: $rebuildReason")
+    }
   }
 
   var exitCode = try {

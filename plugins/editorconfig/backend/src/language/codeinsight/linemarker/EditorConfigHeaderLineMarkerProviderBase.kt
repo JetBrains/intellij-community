@@ -4,13 +4,13 @@ package org.editorconfig.language.codeinsight.linemarker
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcherBase
 import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcherBase.OverrideSearchResult
 import org.editorconfig.language.util.isValidGlob

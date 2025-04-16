@@ -25,24 +25,25 @@ class ObservableTtyConnector(delegate: TtyConnector) : ProxyTtyConnector {
   override fun read(buf: CharArray, offset: Int, length: Int): Int {
     val charsReadCount = connector.read(buf, offset, length)
     if (charsReadCount > 0) {
-      fireCharsRead(buf, offset, charsReadCount)
+      fireListeners { it.charsRead(buf, offset, length) }
     }
     return charsReadCount
   }
 
-  private fun fireCharsRead(buf: CharArray, offset: Int, length: Int) {
+  override fun write(bytes: ByteArray) {
+    connector.write(bytes)
+    fireListeners { it.bytesWritten(bytes) }
+  }
+
+  private inline fun fireListeners(action: (TtyConnectorListener) -> Unit) {
     for (listener in listeners) {
       try {
-        listener.charsRead(buf, offset, length)
+        action(listener)
       }
       catch (t: Throwable) {
         thisLogger().error(t)
       }
     }
-  }
-
-  override fun write(bytes: ByteArray?) {
-    connector.write(bytes)
   }
 
   override fun write(string: String?) {

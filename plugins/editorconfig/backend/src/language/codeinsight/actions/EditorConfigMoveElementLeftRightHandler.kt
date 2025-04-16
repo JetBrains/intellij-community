@@ -2,9 +2,9 @@
 package org.editorconfig.language.codeinsight.actions
 
 import com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigEnumerationPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueList
 import com.intellij.psi.PsiElement
-import org.editorconfig.language.psi.EditorConfigOptionValueList
-import org.editorconfig.language.psi.EditorConfigEnumerationPattern
 
 class EditorConfigMoveElementLeftRightHandler : MoveElementLeftRightHandler() {
   override fun getMovableSubElements(element: PsiElement): Array<PsiElement> = when (element) {

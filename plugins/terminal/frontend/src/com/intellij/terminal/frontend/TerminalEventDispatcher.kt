@@ -21,7 +21,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
 import java.awt.event.InputEvent
@@ -60,14 +59,15 @@ internal abstract class TerminalEventDispatcher(
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is KeyEvent) {
-      dispatchKeyEvent(e)
+      val timedEvent = TimedKeyEvent(e)
+      dispatchKeyEvent(timedEvent)
     }
     return false
   }
 
-  private fun dispatchKeyEvent(e: KeyEvent) {
-    if (!skipAction(e)) {
-      if (e.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
+  private fun dispatchKeyEvent(e: TimedKeyEvent) {
+    if (!skipAction(e.original)) {
+      if (e.original.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
         ignoreNextKeyTypedEvent = false
         handleKeyEvent(e)
       }
@@ -78,7 +78,7 @@ internal abstract class TerminalEventDispatcher(
     }
   }
 
-  internal abstract fun handleKeyEvent(e: KeyEvent)
+  internal abstract fun handleKeyEvent(e: TimedKeyEvent)
 
   fun register() {
     ThreadingAssertions.assertEventDispatchThread()
@@ -228,11 +228,11 @@ internal fun setupKeyEventDispatcher(
 ) {
   // Key events forwarding from the editor to the shell
   val eventDispatcher: TerminalEventDispatcher = object : TerminalEventDispatcher(editor, settings, disposable) {
-    override fun handleKeyEvent(e: KeyEvent) {
-      if (e.id == KeyEvent.KEY_TYPED) {
+    override fun handleKeyEvent(e: TimedKeyEvent) {
+      if (e.original.id == KeyEvent.KEY_TYPED) {
         eventsHandler.keyTyped(e)
       }
-      else if (e.id == KeyEvent.KEY_PRESSED) {
+      else if (e.original.id == KeyEvent.KEY_PRESSED) {
         eventsHandler.keyPressed(e)
       }
     }

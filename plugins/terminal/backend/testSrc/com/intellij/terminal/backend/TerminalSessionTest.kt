@@ -59,7 +59,7 @@ internal class TerminalSessionTest(private val shellPath: Path) {
       session.awaitOutputEvent(TerminalSessionTerminatedEvent)
     }
 
-    session.getInputChannel().send(TerminalCloseEvent)
+    session.getInputChannel().send(TerminalCloseEvent())
   }
 
   private suspend fun startTerminalSession(scope: CoroutineScope): TerminalSession {

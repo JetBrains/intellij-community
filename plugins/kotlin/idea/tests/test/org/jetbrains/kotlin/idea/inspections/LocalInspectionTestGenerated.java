@@ -5848,6 +5848,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNotNullable2.kt");
         }
 
+        @TestMetadata("VarUsedAsNotNullableInvoke.kt")
+        public void testVarUsedAsNotNullableInvoke() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNotNullableInvoke.kt");
+        }
+
         @TestMetadata("VarUsedAsNullable.kt")
         public void testVarUsedAsNullable() throws Exception {
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/VarUsedAsNullable.kt");
@@ -17852,6 +17857,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("dataInlineClassDeclarationk2.kt")
             public void testDataInlineClassDeclarationk2() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
+            }
+
+            @TestMetadata("deprecationLevelHidden.kt")
+            public void testDeprecationLevelHidden() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/deprecationLevelHidden.kt");
+            }
+
+            @TestMetadata("deprecationLevelHidden2.kt")
+            public void testDeprecationLevelHidden2() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/deprecationLevelHidden2.kt");
+            }
+
+            @TestMetadata("deprecationLevelHidden3.kt")
+            public void testDeprecationLevelHidden3() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/deprecationLevelHidden3.kt");
             }
 
             @TestMetadata("effectivelyFinalFunctionParameter.kt")

@@ -223,7 +223,7 @@ public interface ApplicationEx extends Application {
 
   @ApiStatus.Internal
   @ApiStatus.Obsolete
-  default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
+  default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
   default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {

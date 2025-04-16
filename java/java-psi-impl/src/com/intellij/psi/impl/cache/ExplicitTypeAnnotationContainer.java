@@ -9,13 +9,11 @@ import com.intellij.psi.impl.compiled.ClsAnnotationParameterListImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * An immutable container that holds all the type annotations for some type (including internal type components).
@@ -105,99 +102,13 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
     }
   }
 
-  /**
-   * @param type type
-   * @param context context PsiElement
-   * @return type annotated with annotations from this container
-   */
   @Override
-  public @NotNull PsiType applyTo(@NotNull PsiType type, @NotNull PsiElement context) {
-    if (type instanceof PsiArrayType) {
-      PsiType componentType = ((PsiArrayType)type).getComponentType();
-      PsiType modifiedComponentType = forArrayElement().applyTo(componentType, context);
-      if (componentType != modifiedComponentType) {
-        type = type instanceof PsiEllipsisType ? new PsiEllipsisType(modifiedComponentType) : modifiedComponentType.createArrayType();
+  public void appendImmediateText(@NotNull StringBuilder sb) {
+    for (TypeAnnotationEntry entry : myList) {
+      if (entry.myPath.length == 0) {
+        sb.append(entry.myText).append(' ');
       }
     }
-    else if (type instanceof PsiClassReferenceType) {
-      PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-      PsiJavaCodeReferenceElement modifiedReference = annotateReference(reference, context);
-      if (modifiedReference != reference) {
-        type = new PsiClassReferenceType(modifiedReference, PsiUtil.getLanguageLevel(context), type.getAnnotationProvider());
-      }
-      if (modifiedReference.isQualified()) {
-        return type;
-      }
-    }
-    else if (type instanceof PsiWildcardType) {
-      PsiWildcardType wildcardType = (PsiWildcardType)type;
-      PsiType bound = wildcardType.getBound();
-      if (bound != null) {
-        PsiType modifiedBound = forBound().applyTo(bound, context);
-        if (modifiedBound != bound) {
-          if (wildcardType.isExtends()) {
-            type = PsiWildcardType.createExtends(context.getManager(), modifiedBound);
-          }
-          else if (wildcardType.isSuper()) {
-            type = PsiWildcardType.createSuper(context.getManager(), modifiedBound);
-          }
-        }
-      }
-    }
-    return type.annotate(getProvider(context));
-  }
-
-  @Override
-  public @NotNull PsiJavaCodeReferenceElement annotateReference(@NotNull PsiJavaCodeReferenceElement reference,
-                                                                @NotNull PsiElement context) {
-    PsiReferenceParameterList list = reference.getParameterList();
-    PsiJavaCodeReferenceElement copy = reference;
-    PsiElement qualifier = reference.getQualifier();
-    if (qualifier != null) {
-      PsiJavaCodeReferenceElement modifiedQualifier =
-        forEnclosingClass().annotateReference((PsiJavaCodeReferenceElement)qualifier, context);
-      if (modifiedQualifier != qualifier) {
-        copy = (PsiJavaCodeReferenceElement)reference.copy();
-        Objects.requireNonNull(copy.getQualifier()).replace(modifiedQualifier);
-      }
-      StringBuilder refText = null;
-      for (TypeAnnotationEntry entry : myList) {
-        if (entry.myPath.length == 0) {
-          if (refText == null) {
-            refText = new StringBuilder(modifiedQualifier.getText());
-            refText.append(".");
-          }
-          refText.append(entry.myText).append(' ');
-        }
-      }
-      if (refText != null) {
-        boolean startCopy = false;
-        for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (startCopy) {
-            refText.append(child.getText());
-          }
-          if (PsiUtil.isJavaToken(child, JavaTokenType.DOT)) {
-            startCopy = true;
-          }
-        }
-        copy = JavaPsiFacade.getElementFactory(context.getProject()).createReferenceFromText(refText.toString(), context);        
-      }
-    }
-    if (list != null) {
-      PsiTypeElement[] elements = list.getTypeParameterElements();
-      for (int i = 0; i < elements.length; i++) {
-        PsiType parameter = elements[i].getType();
-        PsiType modifiedParameter = forTypeArgument(i).applyTo(parameter, context);
-        if (parameter != modifiedParameter) {
-          if (copy == reference) {
-            copy = (PsiJavaCodeReferenceElement)reference.copy();
-          }
-          Objects.requireNonNull(copy.getParameterList()).getTypeParameterElements()[i]
-            .replace(JavaPsiFacade.getElementFactory(context.getProject()).createTypeElement(modifiedParameter));
-        }
-      }
-    }
-    return copy;
   }
 
   /**

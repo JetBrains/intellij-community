@@ -13,9 +13,9 @@ import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
+import com.intellij.xdebugger.impl.rpc.standardPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.swing.Icon
 
 internal class FrontendXBreakpointType(
@@ -25,13 +25,28 @@ internal class FrontendXBreakpointType(
   override val id: String = dto.id.id
   override val index: Int = dto.index
   override val title: String = dto.title
-  override val enabledIcon: Icon = dto.enabledIcon.icon()
+
+  override val enabledIcon: Icon = dto.icons.enabledIcon.icon()
+  override val disabledIcon: Icon = dto.icons.disabledIcon.icon()
+  override val suspendNoneIcon: Icon = dto.icons.suspendNoneIcon.icon()
+  override val mutedEnabledIcon: Icon = dto.icons.mutedEnabledIcon.icon()
+  override val mutedDisabledIcon: Icon = dto.icons.mutedDisabledIcon.icon()
+  override val pendingIcon: Icon? = dto.icons.pendingIcon?.icon()
+  override val inactiveDependentIcon: Icon = dto.icons.inactiveDependentIcon.icon()
+  override val temporaryIcon: Icon? = dto.icons.temporaryIcon?.icon()
+
   override val isLineBreakpoint: Boolean = dto.lineTypeInfo != null
   override val isSuspendThreadSupported: Boolean = dto.suspendThreadSupported
   override val priority: Int? = dto.lineTypeInfo?.priority
 
   // TODO: should we support changes from the backend (so we need to subscribe on them)
   private var _defaultSuspendPolicy = dto.defaultSuspendPolicy
+
+  private val visibleStandardPanels: Set<StandardPanels> = dto.standardPanels.mapTo(mutableSetOf()) { it.standardPanel() }.also {
+    // TODO: support DEPENDENCY on the frontend side
+    //  see com.intellij.platform.debugger.impl.frontend.FrontendXDependentBreakpointManagerProxy
+    it.remove(StandardPanels.DEPENDENCY)
+  }
 
   override val defaultSuspendPolicy: SuspendPolicy
     get() = _defaultSuspendPolicy
@@ -44,29 +59,24 @@ internal class FrontendXBreakpointType(
     }
   }
 
-  override fun getVisibleStandardPanels(): EnumSet<StandardPanels> {
-    // TODO: pass through RPC
-    return EnumSet.allOf(StandardPanels::class.java)
+  override fun getVisibleStandardPanels(): Set<StandardPanels> {
+    return visibleStandardPanels
   }
 
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customPropertiesPanelProvider?.invoke()
   }
 
   override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customConditionsPanelProvider?.invoke()
   }
 
   override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customRightPropertiesPanelProvider?.invoke()
   }
 
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    // TODO: LUXify?
-    return null
+    return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
   }
 }
 

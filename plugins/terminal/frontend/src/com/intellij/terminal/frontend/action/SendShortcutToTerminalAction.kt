@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.TerminalEventDispatcher
+import com.intellij.terminal.frontend.TimedKeyEvent
 import org.jetbrains.plugins.terminal.TerminalBundle
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -69,7 +70,7 @@ internal class SendShortcutToTerminalAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     val event = e.inputEvent as? KeyEvent ?: return
-    dispatcher.handleKeyEvent(event)
+    dispatcher.handleKeyEvent(TimedKeyEvent(event))
   }
 }
 

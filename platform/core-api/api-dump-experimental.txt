@@ -50,14 +50,6 @@ com.intellij.lexer.RestartableLexer
 - hasType(I,com.intellij.psi.tree.IElementType):Z
 - hasType(I,com.intellij.psi.tree.TokenSet):Z
 - hasType(I,com.intellij.psi.tree.IElementType[]):Z
-*:com.intellij.model.ModelBranch
-- com.intellij.openapi.util.UserDataHolder
-- s:getFileBranch(com.intellij.openapi.vfs.VirtualFile):com.intellij.model.ModelBranch
-- a:obtainPsiCopy(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- s:performInBranch(com.intellij.openapi.project.Project,java.util.function.Consumer):com.intellij.model.ModelPatch
-*:com.intellij.model.ModelPatch
-- a:applyBranchChanges():V
-- a:getBranchChanges():java.util.Map
 *:com.intellij.model.Pointer
 - s:delegatingPointer(com.intellij.model.Pointer,java.util.function.Function):com.intellij.model.Pointer
 - a:dereference():java.lang.Object

@@ -10,9 +10,10 @@
             interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
             area="IDEA_PROJECT"
             dynamic="true"/>
+
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kotlinScriptLazyResolveProhibitionCondition"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptLazyResolveProhibitionCondition"
+            qualifiedName="org.jetbrains.kotlin.kotlinScripDeferredResolutionPolicy"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScripDeferredResolutionPolicy"
             area="IDEA_PROJECT"
             dynamic="true"/>
 

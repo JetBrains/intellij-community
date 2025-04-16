@@ -10,7 +10,6 @@ import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider;
-import com.intellij.internal.inspector.accessibilityAudit.UiInspectorAccessibilityInspection;
 import com.intellij.internal.inspector.UiInspectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -239,16 +238,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.addAll(components);
     myInfo = null;
     Component showingComponent = components.get(0);
-
-    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
-    TreePath path = myHierarchyTree.getSelectionPath();
-    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
-      failedInspections = node.getFailedInspections();
-    }
-
     setTitle(showingComponent.getClass().getName());
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(showingComponent, myProject, failedInspections);
+    myInspectorTable = new InspectorTable(showingComponent, myProject);
     myWrapperPanel.setContent(myInspectorTable);
     myNavBarPanel.setSelectedComponent(showingComponent);
   }
@@ -257,15 +249,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.clear();
     myInfo = clickInfo;
     setTitle("Click Info");
-
-    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
-    TreePath path = myHierarchyTree.getSelectionPath();
-    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
-      failedInspections = node.getFailedInspections();
-    }
-
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(clickInfo, myProject, failedInspections);
+    myInspectorTable = new InspectorTable(clickInfo, myProject);
     myWrapperPanel.setContent(myInspectorTable);
   }
 

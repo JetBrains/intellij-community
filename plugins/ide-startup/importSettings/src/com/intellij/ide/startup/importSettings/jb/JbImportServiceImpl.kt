@@ -111,9 +111,9 @@ internal data class JbProductInfo(
         }
         if (descriptors2ProcessCnt.decrementAndGet() == 0) {
           // checking for plugins compatibility:
-          for (entry in descriptorsMap) {
-            if (!isCompatible(entry.value)) {
-              descriptorsMap.remove(entry.key)
+          for ((id, descriptor) in descriptorsMap) {
+            if (!isCompatible(descriptor)) {
+              descriptorsMap.remove(id)
             }
           }
         }
@@ -146,6 +146,7 @@ internal data class JbProductInfo(
         return false
       }
     }
+    // FIXME v2 plugin dependencies are not checked
     return true
   }
 
@@ -350,9 +351,9 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val productInfo = products[itemId] ?: error("Can't find product")
     val plugins = arrayListOf<ChildSetting>()
     val pluginNames = arrayListOf<String>()
-    for (entry in productInfo.getPluginsDescriptors()) {
-      plugins.add(JbChildSetting(entry.key.idString, entry.value.name))
-      pluginNames.add(entry.value.name)
+    for ((id, descriptor) in productInfo.getPluginsDescriptors()) {
+      plugins.add(JbChildSetting(id.idString, descriptor.name))
+      pluginNames.add(descriptor.name)
     }
     logger.info("Found ${pluginNames.size} custom plugins: ${pluginNames.joinToString()}")
     val pluginsCategory = JbSettingsCategoryConfigurable(SettingsCategory.PLUGINS, StartupImportIcons.Icons.Plugin,

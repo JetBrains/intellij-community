@@ -2,14 +2,14 @@
 package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.ThrowableRunnable
 import org.editorconfig.language.codeinsight.inspections.*
-import org.editorconfig.language.messages.EditorConfigBundle
 import kotlin.reflect.KClass
 
 class EditorConfigInspectionsTest : BasePlatformTestCase() {

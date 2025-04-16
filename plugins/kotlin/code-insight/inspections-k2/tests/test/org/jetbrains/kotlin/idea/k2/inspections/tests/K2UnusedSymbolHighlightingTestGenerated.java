@@ -287,6 +287,21 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
         }
 
+        @TestMetadata("deprecationLevelHidden.kt")
+        public void testDeprecationLevelHidden() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/deprecationLevelHidden.kt");
+        }
+
+        @TestMetadata("deprecationLevelHidden2.kt")
+        public void testDeprecationLevelHidden2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/deprecationLevelHidden2.kt");
+        }
+
+        @TestMetadata("deprecationLevelHidden3.kt")
+        public void testDeprecationLevelHidden3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/deprecationLevelHidden3.kt");
+        }
+
         @TestMetadata("effectivelyFinalFunctionParameter.kt")
         public void testEffectivelyFinalFunctionParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/effectivelyFinalFunctionParameter.kt");

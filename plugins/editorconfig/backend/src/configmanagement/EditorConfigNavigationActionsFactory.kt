@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService
+import com.intellij.editorconfig.common.EditorConfigBundle.message
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.containers.toArray
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.editor.EditorConfigPreviewManager
-import org.editorconfig.language.messages.EditorConfigBundle.message
 import org.editorconfig.language.util.EditorConfigPresentationUtil.getFileName
 import org.jetbrains.annotations.Nls
 

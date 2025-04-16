@@ -37,7 +37,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +188,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return getPsiInner(target);
   }
 
-  protected abstract @Nullable PsiFile getPsiInner(Language target);
+  protected abstract @Nullable PsiFile getPsiInner(@NotNull Language target);
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
@@ -249,12 +249,12 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   public final void onContentReload() {
-    List<PsiFile> files = getCachedPsiFiles();
-    List<PsiTreeChangeEventImpl> events = new ArrayList<>(files.size());
-    List<PsiTreeChangeEventImpl> genericEvents = new ArrayList<>(files.size());
-    for (PsiFile file : files) {
-      genericEvents.add(createChildrenChangeEvent(file, true));
-      events.add(createChildrenChangeEvent(file, false));
+    List<PsiFile> psiFiles = getCachedPsiFiles();
+    List<PsiTreeChangeEventImpl> events = new ArrayList<>(psiFiles.size());
+    List<PsiTreeChangeEventImpl> genericEvents = new ArrayList<>(psiFiles.size());
+    for (PsiFile psiFile : psiFiles) {
+      genericEvents.add(createChildrenChangeEvent(psiFile, true));
+      events.add(createChildrenChangeEvent(psiFile, false));
     }
 
     beforeContentsSynchronized();
@@ -266,7 +266,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       ((PsiManagerImpl)getManager()).beforeChildrenChange(event);
     }
 
-    for (PsiFile psiFile : files) {
+    for (PsiFile psiFile : psiFiles) {
       if (psiFile instanceof PsiFileEx) {
         ((PsiFileEx)psiFile).onContentReload();
       }
@@ -282,14 +282,14 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private PsiTreeChangeEventImpl createChildrenChangeEvent(PsiFile file, boolean generic) {
+  private @NotNull PsiTreeChangeEventImpl createChildrenChangeEvent(@NotNull PsiFile psiFile, boolean generic) {
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-    event.setParent(file);
-    event.setFile(file);
+    event.setParent(psiFile);
+    event.setFile(psiFile);
     event.setGenericChange(generic);
-    if (file instanceof PsiFileImpl && ((PsiFileImpl)file).isContentsLoaded()) {
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
       event.setOffset(0);
-      event.setOldLength(file.getTextLength());
+      event.setOldLength(psiFile.getTextLength());
     }
     return event;
   }
@@ -357,7 +357,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private boolean isDocumentConsistentWithPsi(int fileLength, FileASTNode fileElement, int nodeLength) {
+  private boolean isDocumentConsistentWithPsi(int fileLength, @NotNull FileASTNode fileElement, int nodeLength) {
     if (nodeLength != fileLength) return false;
 
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
@@ -403,10 +403,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private Iterable<AbstractFileViewProvider> getKnownCopies() {
+  private @NotNull Iterable<AbstractFileViewProvider> getKnownCopies() {
     Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
     if (copies != null) {
-      return JBIterable.from(copies).filter(copy -> copy.getCachedPsiFiles().stream().anyMatch(f -> f.getOriginalFile().getViewProvider() == this));
+      return ContainerUtil.filter(copies, copy -> ContainerUtil.exists(copy.getCachedPsiFiles(), f -> f.getOriginalFile().getViewProvider() == this));
     }
     return Collections.emptySet();
   }

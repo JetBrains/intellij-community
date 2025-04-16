@@ -24,6 +24,12 @@ object ExpectActualUtils {
         ExpectActualSupport.getInstance(project).actualsForExpect(this, module)
 
 
+    fun KtDeclaration.collectAllExpectAndActualDeclaration(withSelf: Boolean = true): Set<KtDeclaration> = when {
+        isExpectDeclaration() -> actualsForExpect()
+        hasActualModifier() -> liftToExpect(this)?.let { it.actualsForExpect() + it - this }.orEmpty()
+        else -> emptySet()
+    }.let { if (withSelf) it + this else it }
+
     fun liftToExpect(declaration: KtDeclaration): KtDeclaration? {
         if (declaration is KtParameter) {
             val function = declaration.ownerFunction as? KtCallableDeclaration ?: return null

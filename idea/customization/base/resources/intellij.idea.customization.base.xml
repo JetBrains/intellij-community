@@ -45,7 +45,7 @@
     </group>
 
     <group id="WelcomeScreen.DefaultNewProjectActionGroup" class="com.intellij.ide.actions.DefaultNewProjectActionGroup">
-      <add-to-group group-id="WelcomeScreen.QuickStart"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 
     <action id="WelcomeScreen.DefaultNewProjectAction" class="com.intellij.ide.actions.DefaultNewProjectAction">
@@ -53,7 +53,7 @@
     </action>
 
     <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen">
-      <add-to-group group-id="WelcomeScreen.QuickStart"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before" relative-to-action="Vcs.VcsClone"/>
     </action>
 
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"

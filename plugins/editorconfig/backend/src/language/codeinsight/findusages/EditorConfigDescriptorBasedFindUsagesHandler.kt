@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.findusages
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.application.runReadAction
@@ -12,7 +13,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.getDescriptor
 import org.editorconfig.language.util.EditorConfigVfsUtil
 

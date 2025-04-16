@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XValueApi : RemoteApi<Unit> {
+  suspend fun computeTooltipPresentation(xValueId: XValueId): Flow<XValueSerializedPresentation>
+
   suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>
 
   suspend fun disposeXValue(xValueId: XValueId)

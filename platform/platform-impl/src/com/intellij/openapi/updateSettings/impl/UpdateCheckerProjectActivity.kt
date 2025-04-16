@@ -32,7 +32,7 @@ private class UpdateCheckerProjectActivity : ProjectActivity {
     UpdateCheckerService.showWhatsNew(project, current)
     UpdateCheckerService.showSnapUpdateNotification(project, current)
 
-    UpdateCheckerService.cleanupObsoleteCustomRepositories()
+    UpdateCheckerService.pruneUpdateSettings()
     UpdateCheckerService.showUpdatedPluginsNotification(project)
 
     withContext(Dispatchers.IO) {

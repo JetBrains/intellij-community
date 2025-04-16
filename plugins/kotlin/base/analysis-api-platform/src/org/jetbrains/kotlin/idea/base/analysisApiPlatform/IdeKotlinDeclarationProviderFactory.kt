@@ -12,7 +12,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.analysis.api.platform.declarations.*
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.withRestrictedDataAccess
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -51,7 +51,7 @@ internal class IdeKotlinDeclarationProviderMerger(private val project: Project) 
         providers.mergeSpecificProviders<_, IdeKotlinDeclarationProvider>(KotlinCompositeDeclarationProvider.factory) { targetProviders ->
             IdeKotlinDeclarationProvider(
                 project,
-                KotlinGlobalSearchScopeMerger.getInstance(project).union(targetProviders.map { it.scope }),
+                KaGlobalSearchScopeMerger.getInstance(project).union(targetProviders.map { it.scope }),
                 contextualModule = null,
             )
         }

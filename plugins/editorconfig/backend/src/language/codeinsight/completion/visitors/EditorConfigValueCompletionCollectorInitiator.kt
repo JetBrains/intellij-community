@@ -3,9 +3,9 @@ package org.editorconfig.language.codeinsight.completion.visitors
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
 import com.intellij.psi.PsiFile
-import org.editorconfig.language.EditorConfigLanguage
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor

@@ -7,4 +7,14 @@ class ListenerElement(
   @JvmField val activeInTestMode: Boolean,
   @JvmField val activeInHeadlessMode: Boolean,
   @JvmField val os: OS?,
-)
+) {
+  override fun toString(): String {
+    return buildString {
+      append("ListenerElement(listenerClassName='$listenerClassName', topicClassName='$topicClassName'")
+      if (!activeInTestMode) append(", activeInTestMode=false")
+      if (!activeInHeadlessMode) append(", activeInHeadlessMode=false")
+      if (os != null) append(", os=$os")
+      append(")")
+    }
+  }
+}

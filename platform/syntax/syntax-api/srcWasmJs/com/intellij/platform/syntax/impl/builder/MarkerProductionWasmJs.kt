@@ -9,3 +9,5 @@ import fleet.util.multiplatform.Actual
 @Suppress("unused")
 @Actual("makeStackTraceRelative")
 internal fun makeStackTraceRelativeWasmJs(th: Throwable, relativeTo: Throwable): Throwable {
+  return th
+}

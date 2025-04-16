@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
+import com.intellij.platform.syntax.util.runtime.DUMMY_BLOCK
 import com.intellij.psi.DummyBlockType
 import com.intellij.psi.TokenType
 
@@ -12,6 +13,6 @@ internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
     SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
     SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
     SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
-    com.intellij.platform.syntax.runtime.DUMMY_BLOCK to DummyBlockType.DUMMY_BLOCK
+    DUMMY_BLOCK to DummyBlockType.DUMMY_BLOCK
   )
 }

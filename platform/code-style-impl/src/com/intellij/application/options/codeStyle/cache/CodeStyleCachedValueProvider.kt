@@ -34,7 +34,7 @@ private val LOG = logger<CodeStyleCachedValueProvider>()
 @Service(Service.Level.PROJECT)
 private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope)
 
-internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<VirtualFile>,
+internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFile>,
                                             private val project: Project,
                                             private val dataHolder: UserDataHolder) : CachedValueProvider<CodeStyleSettings?> {
   private val file get() = fileSupplier.get()

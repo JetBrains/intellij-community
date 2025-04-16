@@ -455,7 +455,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     presentation.setErrorMessage(errorMessage);
     presentation.setIcon(icon);
     lineBreakpoint.setCustomizedPresentation(presentation);
-    myLineBreakpointManager.queueBreakpointUpdate(breakpoint, () -> fireBreakpointPresentationUpdated(breakpoint, null));
+    myLineBreakpointManager.queueBreakpointUpdate(breakpoint,
+                                                  () -> ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointPresentationUpdated(null));
   }
 
   @ApiStatus.Internal

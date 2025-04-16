@@ -1,11 +1,15 @@
 <html>
 <body>
-Reports cases when a module name contradicts Java Platform Module System recommendations.
-<p>One of the <a href="http://mail.openjdk.org/pipermail/jpms-spec-experts/2017-March/000659.html">recommendations</a>
-  is to avoid using digits at the end of module names.</p>
+Reports module names in <code>module-info.java</code> that violate the Java Platform Module System
+<a href="http://mail.openjdk.org/pipermail/jpms-spec-experts/2017-March/000659.html">recommendation</a>
+  to avoid encoding version information in module names by ending the name with one or more digits.
 <p><b>Example:</b></p>
 <pre><code>
-module foo1.bar2 {}
+ module foo.bar2 {}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  module foo.bar {}
 </code></pre>
 <!-- tooltip end -->
 </body>

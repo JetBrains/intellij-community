@@ -7,9 +7,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -55,7 +55,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpoint: Any?) {
-    if (useFeProxy() && Registry.`is`("xdebugger.breakpoints.dialog.split")) {
+    if (useFeProxy()) {
       hideBalloon()
       showDialogEvents.tryEmit(initialBreakpoint)
       return
@@ -68,7 +68,8 @@ class BreakpointsDialogFactory(private val project: Project) {
     if (selectInDialogShowing(initialBreakpoint)) return
 
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-    val dialog = object : BreakpointsDialog(project, initialBreakpoint ?: breakpointFromBalloon, breakpointManager) {
+    val initialBreakpoint = convertToInitialBreakpoint(initialBreakpoint ?: breakpointFromBalloon)
+    val dialog = object : BreakpointsDialog(project, initialBreakpoint, breakpointManager) {
       override fun dispose() {
         breakpointFromBalloon = null
         showingDialog = null
@@ -81,6 +82,16 @@ class BreakpointsDialogFactory(private val project: Project) {
     showingDialog = dialog
 
     dialog.show()
+  }
+
+  private fun convertToInitialBreakpoint(initialBreakpoint: Any?): BreakpointsDialogInitialBreakpoint? {
+    if (initialBreakpoint == null) {
+      return null
+    }
+    return when (initialBreakpoint) {
+      is XBreakpointId -> BreakpointsDialogInitialBreakpoint.BreakpointId(initialBreakpoint)
+      else -> BreakpointsDialogInitialBreakpoint.GenericBreakpoint(initialBreakpoint)
+    }
   }
 
   private fun hideBalloon() {

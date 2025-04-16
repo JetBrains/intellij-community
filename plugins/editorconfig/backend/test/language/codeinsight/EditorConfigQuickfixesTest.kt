@@ -3,10 +3,10 @@ package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.editorconfig.language.codeinsight.inspections.*
-import org.editorconfig.language.messages.EditorConfigBundle
 import org.jetbrains.annotations.PropertyKey
 import kotlin.reflect.KClass
 

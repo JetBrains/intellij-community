@@ -340,6 +340,18 @@ fun <D> Wrapper.bindContent(
   }
 }
 
+@ApiStatus.Internal
+fun <D> Wrapper.bindContentIn(
+  scope: CoroutineScope,
+  dataFlow: Flow<D>,
+  defaultComponent: JComponent,
+  componentFactory: CoroutineScope.(D) -> JComponent?,
+) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    bindContentImpl(dataFlow, defaultComponent, componentFactory)
+  }
+}
+
 fun <D> Wrapper.bindContentIn(
   scope: CoroutineScope, dataFlow: Flow<D>,
   componentFactory: CoroutineScope.(D) -> JComponent?,
@@ -368,7 +380,7 @@ private suspend fun <D> Wrapper.bindContentImpl(
 ): Nothing {
   try {
     dataFlow.collectScoped {
-      val component = componentFactory(it) ?: return@collectScoped
+      val component = componentFactory(it)
       runPreservingFocus {
         setContent(component)
       }

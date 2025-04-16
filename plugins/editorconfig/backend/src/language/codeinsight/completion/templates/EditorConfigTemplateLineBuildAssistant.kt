@@ -6,9 +6,9 @@ import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.Variable
 import com.intellij.codeInsight.template.macro.CompleteMacro
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import org.editorconfig.language.codeinsight.completion.getSeparatorInFile
-import org.editorconfig.language.psi.EditorConfigSection
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor

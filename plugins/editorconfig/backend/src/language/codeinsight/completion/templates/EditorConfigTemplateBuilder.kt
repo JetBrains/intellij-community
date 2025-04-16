@@ -2,7 +2,7 @@
 package org.editorconfig.language.codeinsight.completion.templates
 
 import com.intellij.codeInsight.template.impl.TemplateImpl
-import org.editorconfig.language.psi.EditorConfigSection
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor
 
 /**

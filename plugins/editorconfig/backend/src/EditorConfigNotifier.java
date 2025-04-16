@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig;
 
+import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.Nls;
 
 public final class EditorConfigNotifier {

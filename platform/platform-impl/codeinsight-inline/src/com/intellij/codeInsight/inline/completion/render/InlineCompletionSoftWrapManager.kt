@@ -351,7 +351,7 @@ internal class InlineCompletionSoftWrapManager private constructor(private val e
       '\u2936' to '\u2937',
       '\u21A9' to '\u21AA',
       '\uE48B' to '\uE48C'
-    ).map { it.first to it.second }
+    )
 
     private val KEY = Key<InlineCompletionSoftWrapManager>("inline.completion.soft.wrap.manager")
 

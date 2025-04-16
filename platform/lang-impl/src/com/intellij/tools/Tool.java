@@ -30,7 +30,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.utils.JEelUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -345,11 +345,17 @@ public class Tool implements SchemeElement {
                                      ? new PtyCommandLine().withConsoleMode(true)
                                      : new GeneralCommandLine();
     try {
-      String exePath = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
-      exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
-      if (exePath == null) return null;
+      String exePathStr = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
+      exePathStr = MacroManager.getInstance().expandMacrosInString(exePathStr, false, dataContext);
+      if (exePathStr == null) return null;
 
-      DataContext paramContext = SimpleDataContext.getSimpleContext(MacroManager.PATH_CONVERTER_KEY, new EelMacroPathConverter(), dataContext);
+      Path exePath = Path.of(exePathStr);
+      DataContext paramContext = SimpleDataContext
+        .builder()
+        .add(MacroManager.PATH_CONVERTER_KEY, new EelMacroPathConverter())
+        .add(MacroManager.CONTEXT_PATH, exePath)
+        .setParent(dataContext)
+        .build();
 
       String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, paramContext);
       String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
@@ -361,14 +367,14 @@ public class Tool implements SchemeElement {
         commandLine.setWorkDirectory(workDirExpanded);
       }
 
-      File exeFile = new File(exePath);
+      File exeFile = exePath.toFile();
       if (exeFile.isDirectory() && exeFile.getName().endsWith(".app")) {
         commandLine.setExePath("open");
-        commandLine.getParametersList().prependAll("-a", exePath);
+        commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
       else {
-        EelPath eelPath = ToolUtilKt.toEelPath(Path.of(exePath));
-        commandLine.withExePath(eelPath.toString());
+        var eelPath = JEelUtils.toEelPath(exePath);
+        commandLine.withExePath(eelPath != null ? eelPath.toString() : exePathStr);
       }
     }
     catch (Macro.ExecutionCancelledException ignored) {
@@ -430,7 +436,11 @@ public class Tool implements SchemeElement {
 
     @Override
     public @NotNull String convertPath(@NotNull String path) {
-      return !path.isEmpty() ? ToolUtilKt.toEelPath(Path.of(path)).toString() : path;
+      if (!path.isEmpty()) {
+        var eelPath = JEelUtils.toEelPath(Path.of(path));
+        if (eelPath != null) return eelPath.toString();
+      }
+      return path;
     }
 
     @Override

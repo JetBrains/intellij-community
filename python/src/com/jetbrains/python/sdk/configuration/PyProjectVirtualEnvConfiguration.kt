@@ -36,6 +36,8 @@ import com.jetbrains.python.target.getInterpreterVersion
 import org.jetbrains.annotations.ApiStatus
 
 /**
+ * Use [com.jetbrains.python.projectCreation.createVenvAndSdk] unless you need the Targets API.
+ *
  * If you need venv only, please use [com.intellij.python.community.impl.venv.createVenv]: it is cleaner and suspend.
  */
 @ApiStatus.Internal

@@ -296,7 +296,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
     });
     addMainContent(toolWindow.getContentManager(), mainView);
-    loadViews(contentManager, mainView, contributors, states.second);
     ServiceViewDragHelper.installDnDSupport(myProject, toolWindowEx.getDecorator(), contentManager);
   }
 
@@ -861,14 +860,30 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     myProject.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindow.getId());
+        String toolWindowId = toolWindow.getId();
+        Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindowId);
         if (contributors != null) {
+          List<Promise<?>> promises = new ArrayList<>();
           for (ServiceViewContributor<?> contributor : contributors) {
             if (myNotInitializedContributors.remove(contributor)) {
               ServiceEvent e = ServiceEvent.createResetEvent(contributor.getClass());
-              myModel.handle(e);
+              promises.add(myModel.handle(e));
             }
           }
+          Promises.all(promises).onProcessed(ignored -> {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
+              if (tw == null) return;
+
+              Pair<ServiceViewState, List<ServiceViewState>> states = getServiceViewStates(toolWindowId);
+              ContentManager contentManager = tw.getContentManager();
+              Content mainContent = getMainContent(contentManager);
+              if (mainContent == null) return;
+
+              ServiceView mainView = getServiceView(mainContent);
+              loadViews(contentManager, mainView, contributors, states.second);
+            }, ModalityState.nonModal(), myProject.getDisposed());
+          });
         }
         if (myNotInitializedContributors.isEmpty()) {
           Disposer.dispose(disposable);

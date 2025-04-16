@@ -463,7 +463,9 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - s:isUnitTestMode:Z
 - sf:addDisablePluginListener(java.lang.Runnable):V
 - sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginLoadingError
+- sf:disablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:disablePlugin(java.lang.String):Z
+- sf:enablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:enablePlugin(java.lang.String):Z
 - sf:getBuildNumber():com.intellij.openapi.util.BuildNumber
 - f:getIncompatibleOs(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginOsRequirement
@@ -473,7 +475,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - sf:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
-- f:initializePlugins(com.intellij.ide.plugins.DescriptorListLoadingContext,com.intellij.ide.plugins.PluginLoadingResult,java.lang.ClassLoader,Z,com.intellij.diagnostic.Activity):com.intellij.ide.plugins.PluginManagerState
 - sf:invalidatePlugins():V
 - sf:isCompatible(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - f:isCompatible(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):Z
@@ -482,6 +483,7 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:isDisabled(com.intellij.openapi.extensions.PluginId):Z
 - sf:isIncompatible(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - sf:isIncompatible(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):Z
+- sf:isLoaded(com.intellij.openapi.extensions.PluginId):Z
 - sf:isPluginInstalled(com.intellij.openapi.extensions.PluginId):Z
 - sf:isRunningFromSources():Z
 - sf:isVendorJetBrains(java.lang.String):Z

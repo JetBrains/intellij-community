@@ -11,13 +11,21 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 
 open class PauseAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun update(e: AnActionEvent) {
+    var supported = false
     val session = DebuggerUIUtil.getSessionProxy(e)
-    if (session == null || !session.isPauseActionSupported) {
+    if (session != null) {
+      supported = session.isPauseActionSupported
+    }
+    else {
+      DebuggerUIUtil.getSessionData(e)?.apply {
+        supported = isPauseSupported
+      }
+    }
+    if (!supported) {
       e.presentation.setEnabledAndVisible(false)
       return
     }
-    val project = e.project
-    if (project == null || session.isStopped || session.isPaused) {
+    if (e.project == null || session == null || session.isStopped || session.isPaused) {
       e.presentation.setEnabled(false)
     }
   }

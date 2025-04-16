@@ -28,6 +28,8 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//platform/recentFiles/frontend",
+    "//platform/analysis-api:analysis",
   ],
   runtime_deps = [":vcs-impl-frontend_resources"]
 )

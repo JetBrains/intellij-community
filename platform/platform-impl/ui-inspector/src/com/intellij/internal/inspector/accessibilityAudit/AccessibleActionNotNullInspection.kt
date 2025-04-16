@@ -17,7 +17,8 @@ class AccessibleActionNotNullInspection : UiInspectorAccessibilityInspection {
                                           AccessibleRole.CHECK_BOX,
                                           AccessibleRole.RADIO_BUTTON,
                                           AccessibleRole.COMBO_BOX,
-                                          AccessibleRole.HYPERLINK)) {
+                                          AccessibleRole.HYPERLINK)
+    ) {
       return context.accessibleAction != null
     }
     return true

@@ -23,6 +23,8 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/analysis-api:analysis",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//fleet/kernel",
   ],
   runtime_deps = [":vcs-git-frontend_resources"]
 )

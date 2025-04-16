@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
 import com.intellij.lang.BracePair
 import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
-import org.editorconfig.language.psi.EditorConfigElementTypes
 
 internal class EditorConfigBraceMatcher : PairedBraceMatcher {
   override fun getPairs() = PAIRS

@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight.actions.navigation
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.codeInsight.navigation.GotoTargetRendererProvider
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.psi.PsiElement
-import org.editorconfig.language.psi.EditorConfigFlatOptionKey
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.util.EditorConfigPresentationUtil
 
 class EditorConfigGotoTargetRendererProvider : GotoTargetRendererProvider {

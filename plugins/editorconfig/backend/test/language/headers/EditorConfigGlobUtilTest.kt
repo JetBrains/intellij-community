@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.headers
 
+import com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigElementFactory
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.isSubcaseOf
 import org.junit.Test
 

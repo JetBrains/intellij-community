@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.List
@@ -19,7 +20,7 @@ import javax.swing.JPanel
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class UnknownSdkEditorNotification(val scope: CoroutineScope) {
+class UnknownSdkEditorNotification(val project: Project, val scope: CoroutineScope) {
   private val notifications = AtomicReference<MutableList<UnknownSdkFix>>(mutableListOf<UnknownSdkFix>())
 
   fun allowProjectSdkNotifications(): Boolean {
@@ -36,6 +37,7 @@ class UnknownSdkEditorNotification(val scope: CoroutineScope) {
       notifications = mutableListOf<UnknownSdkFix>()
     }
     this.notifications.set(List.copyOf<UnknownSdkFix>(notifications))
+    EditorNotifications.getInstance(project).updateAllNotifications()
   }
 
   companion object {
@@ -49,7 +51,7 @@ class UnknownSdkEditorNotification(val scope: CoroutineScope) {
 internal class UnknownSdkEditorNotificationsProvider : EditorNotificationProvider {
   override fun collectNotificationData(
     project: Project,
-    file: VirtualFile
+    file: VirtualFile,
   ): Function<in FileEditor, out JComponent?>? {
     return Function { editor: FileEditor ->
       val sdkService: UnknownSdkEditorNotification = UnknownSdkEditorNotification.getInstance(project)

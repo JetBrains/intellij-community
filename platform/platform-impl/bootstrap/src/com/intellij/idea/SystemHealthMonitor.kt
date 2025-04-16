@@ -4,6 +4,7 @@ package com.intellij.idea
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
@@ -35,7 +36,6 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.util.SystemProperties
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch

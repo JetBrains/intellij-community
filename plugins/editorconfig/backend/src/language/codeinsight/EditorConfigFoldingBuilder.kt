@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
@@ -10,9 +13,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import org.editorconfig.language.psi.EditorConfigElementTypes
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.psi.EditorConfigSection
 import kotlin.math.min
 
 private val LOG = logger<EditorConfigFoldingBuilder>()

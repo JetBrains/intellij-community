@@ -13,4 +13,18 @@ class ExtensionPointElement(
     require(name != null || qualifiedName != null) { "neither `name` nor `qualifiedName` specified" }
     require((`interface` != null) != (beanClass != null)) { "only one of `interface` or `beanClass` must be specified" }
   }
+
+  override fun toString(): String {
+    return buildString {
+      append("ExtensionPointElement(name=$name")
+      if (qualifiedName != null) append(", qualifiedName=$qualifiedName")
+      if (`interface` != null) append(", `interface`=$`interface`")
+      if (beanClass != null) append(", beanClass=$beanClass")
+      if (hasAttributes) append(", hasAttributes=true")
+      if (isDynamic) append(", isDynamic=true")
+      append(")")
+    }
+  }
+
+
 }

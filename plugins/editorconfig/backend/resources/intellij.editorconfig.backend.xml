@@ -2,6 +2,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.editorconfig.common"/>
   </dependencies>
   <actions resource-bundle="messages.EditorConfigBundle">
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
@@ -27,11 +28,6 @@
     <editorNotificationProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorNotificationProvider"/>
 
     <!-- Language support -->
-    <fileType name="EditorConfig"
-              language="EditorConfig"
-              implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
-              fieldName="INSTANCE"
-              fileNames=".editorconfig"/>
     <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
     <annotator
         language="EditorConfig"
@@ -377,14 +373,14 @@
 
     <!-- Services -->
     <applicationService
-      serviceInterface="org.editorconfig.language.psi.EditorConfigReferenceSupport"
+      serviceInterface="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigReferenceSupport"
       serviceImplementation="org.editorconfig.language.psi.reference.BackendEditorConfigReferenceSupport"
     />
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManager"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl"/>
     <projectService
-        serviceInterface="org.editorconfig.language.services.EditorConfigElementFactory"
+        serviceInterface="com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigElementFactory"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigElementFactoryImpl"/>
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
@@ -419,9 +415,6 @@
     <syntaxHighlighterFactory
         language="EditorConfig"
         implementationClass="org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighterFactory"/>
-    <parserDefinition
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.parser.EditorConfigParserDefinition"/>
     <braceMatcher
         language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.EditorConfigBraceMatcher"/>
@@ -438,10 +431,10 @@
         language="EditorConfig"
         implementationClass="org.editorconfig.language.structureview.EditorConfigStructureViewFactory"/>
     <elementManipulator
-        forClass="org.editorconfig.language.psi.EditorConfigHeader"
+        forClass="com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader"
         implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
     <elementManipulator
-        forClass="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+        forClass="com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement"
         implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
     <findUsagesProvider
         language="EditorConfig"

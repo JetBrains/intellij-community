@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardCustomizer;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardManager.RunDashboardService;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +138,16 @@ public final class RunConfigurationNode extends AbstractTreeNode<RunDashboardSer
         return status;
       }
     }
-    return RunDashboardRunConfigurationStatus.getStatus(this);
+    RunDashboardRunConfigurationStatus status = RunDashboardRunConfigurationStatus.getStatus(this);
+    if (status == RunDashboardRunConfigurationStatus.CONFIGURED) {
+      RunDashboardRunConfigurationStatus persistedStatus =
+        ((RunDashboardManagerImpl)RunDashboardManager.getInstance(getProject())).getPersistedStatus(
+          getConfigurationSettings().getConfiguration());
+      if (persistedStatus != null) {
+        return persistedStatus;
+      }
+    }
+    return status;
   }
 
   private @Nullable Icon getExecutorIcon() {

@@ -127,7 +127,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   val executionEnvironment: ExecutionEnvironment? = environment
   private val myStopped = MutableStateFlow<Boolean>(false)
-  private val myPauseActionSupported = MutableStateFlow<Boolean>(false)
   private val myReadOnly = MutableStateFlow<Boolean>(false)
   private val myShowToolWindowOnSuspendOnly: Boolean = showToolWindowOnSuspendOnly
   private val myTabInitDataFlow = createMutableStateFlow<XDebuggerSessionTabAbstractInfo?>(null)
@@ -219,9 +218,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   override fun setPauseActionSupported(isSupported: Boolean) {
-    myPauseActionSupported.value = isSupported
+    sessionData.isPauseSupported = isSupported
   }
-
 
   val isReadOnlyState: StateFlow<Boolean>
     get() = myReadOnly
@@ -255,11 +253,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   val isPauseActionSupportedState: StateFlow<Boolean>
-    get() = myPauseActionSupported
+    get() = sessionData.pauseSupportedFlow
 
   @JvmName("isPauseActionSupported")
   fun isPauseActionSupported(): Boolean {
-    return myPauseActionSupported.value
+    return sessionData.isPauseSupported
   }
 
   override fun getProject(): Project {
@@ -366,7 +364,6 @@ class XDebugSessionImpl @JvmOverloads constructor(
     ) {
       process.start(this, 1000)
     }
-
 
     process.getProcessHandler().addProcessListener(object : ProcessListener {
       override fun processTerminated(event: ProcessEvent) {
@@ -590,6 +587,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   override fun areBreakpointsMuted(): Boolean {
     return sessionData.isBreakpointsMuted
+  }
+  
+  @ApiStatus.Internal
+  fun getBreakpointsMutedFlow(): StateFlow<Boolean> {
+    return sessionData.breakpointsMutedFlow
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, parentDisposable: Disposable) {
@@ -855,7 +857,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
     val debuggerManager = myDebuggerManager.breakpointManager
     debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint, Runnable {
-      debuggerManager.fireBreakpointPresentationUpdated(breakpoint, this)
+      (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
     })
   }
 

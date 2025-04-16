@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
     "@lib//:fastutil-min",
+    "//platform/syntax/syntax-util:util",
   ],
   exports = ["//platform/syntax/syntax-api:syntax"],
   runtime_deps = [":psi_resources"]

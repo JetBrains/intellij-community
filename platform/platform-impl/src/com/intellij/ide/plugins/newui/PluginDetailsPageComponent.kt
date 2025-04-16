@@ -14,7 +14,7 @@ import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
 import com.intellij.ide.plugins.PluginManagerCore.findPlugin
 import com.intellij.ide.plugins.PluginManagerCore.getIncompatibleOs
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
-import com.intellij.ide.plugins.PluginManagerCore.isModuleDependency
+import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -1670,7 +1670,7 @@ private fun loadDependencyNames(marketplace: MarketplaceRequests, resultNode: Pl
   resultNode.dependencyNames = resultNode.dependencies.asSequence()
     .filter { !it.isOptional }
     .map(IdeaPluginDependency::pluginId)
-    .filter { isNotPlatformModule(it) }
+    .filter { isNotPlatformAlias(it) }
     .map { pluginId ->
       findPlugin(pluginId)?.let {
         return@map it.name
@@ -1681,8 +1681,8 @@ private fun loadDependencyNames(marketplace: MarketplaceRequests, resultNode: Pl
     .toList()
 }
 
-private fun isNotPlatformModule(pluginId: PluginId): Boolean {
-  return if ("com.intellij" == pluginId.idString) false else !isModuleDependency(pluginId)
+private fun isNotPlatformAlias(pluginId: PluginId): Boolean {
+  return if ("com.intellij" == pluginId.idString) false else !looksLikePlatformPluginAlias(pluginId)
 }
 
 private fun updateUrlComponent(panel: LinkPanel?, messageKey: String, url: String?) {

@@ -116,15 +116,6 @@ open class AddModifierFix(
     }
 
     companion object : Factory<AddModifierFix> {
-        val addAbstractModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD)
-        val addAbstractToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
-        val addOpenToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
-        val addFinalToProperty: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
-        val addInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INNER_KEYWORD)
-        val addOverrideModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OVERRIDE_KEYWORD)
-        val addDataModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
-        val addInlineToFunctionWithReified: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INLINE_KEYWORD, KtNamedFunction::class.java)
-
         val modifiersWithWarning: Set<KtModifierKeywordToken> = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
         private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD
 

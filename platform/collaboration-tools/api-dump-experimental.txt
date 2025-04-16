@@ -1585,7 +1585,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:showAndAwait(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
 - sf:showAndAwaitListSubmission(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
 - sf:showAndAwaitSubmission(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JList,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
-- sf:showAndAwaitSubmissions(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JList,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
+- sf:showAndAwaitSubmissions(com.intellij.openapi.ui.popup.JBPopup,javax.swing.ListModel,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 - a:getFullText():java.lang.String
 - a:getIcon():javax.swing.Icon

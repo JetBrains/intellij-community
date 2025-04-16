@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.index
 
+import com.intellij.editorconfig.common.plugin.EditorConfigFileType
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
-import org.editorconfig.language.filetype.EditorConfigFileType
 import org.editorconfig.language.psi.impl.EditorConfigIdentifierFinderVisitor
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import java.io.DataInput
 import java.io.DataOutput
 

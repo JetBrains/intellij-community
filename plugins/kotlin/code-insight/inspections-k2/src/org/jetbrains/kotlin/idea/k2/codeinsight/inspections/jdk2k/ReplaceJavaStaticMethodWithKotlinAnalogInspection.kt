@@ -39,7 +39,7 @@ internal class ReplaceJavaStaticMethodWithKotlinAnalogInspection :
     }
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
-        findReplacementCandidatesByPsi(element).isNotEmpty()
+        !findReplacementCandidatesByPsi(element).isEmpty()
 
     override fun KaSession.prepareContext(element: KtCallExpression): List<Replacement>? {
         val replacements = findReplacementCandidatesByPsi(element).filter {

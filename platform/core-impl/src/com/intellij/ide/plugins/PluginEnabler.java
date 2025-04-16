@@ -19,6 +19,9 @@ public interface PluginEnabler {
     void setIgnoredDisabledPlugins(boolean ignoredDisabledPlugins);
   }
 
+  /**
+   * Manages the persistent disabled/enabled flag of plugins, does not load/unload plugins.
+   */
   Headless HEADLESS = new DisabledPluginsState();
 
   static @NotNull PluginEnabler getInstance() {

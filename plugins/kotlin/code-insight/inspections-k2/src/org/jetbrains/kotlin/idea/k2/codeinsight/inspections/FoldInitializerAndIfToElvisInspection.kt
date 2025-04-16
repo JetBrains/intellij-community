@@ -7,12 +7,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.FoldInitializerAndIfExpressionData
 import org.jetbrains.kotlin.idea.codeInsight.joinLines
 import org.jetbrains.kotlin.idea.codeInsight.prepareData
+import org.jetbrains.kotlin.idea.codeInsight.replaceVarWithVal
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -33,8 +35,9 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
-        return prepareData(element)
+        return prepareData(element, enforceNonNullableTypeIfPossible = true)
     }
 
     override fun createQuickFix(
@@ -50,12 +53,21 @@ internal class FoldInitializerAndIfToElvisInspection :
             element: KtIfExpression,
             updater: ModPsiUpdater,
         ) {
+            val variableDeclaration = updater.getWritable(context.variableDeclaration)
+            val initializer = updater.getWritable(context.initializer)
+            val ifNullExpr = updater.getWritable(context.ifNullExpression)
+            val typeChecked = updater.getWritable<KtTypeReference>(context.typeChecked)
+
+            if (context.couldBeVal) {
+                variableDeclaration.replaceVarWithVal()
+            }
+
             val elvis = joinLines(
                 element,
-                updater.getWritable(context.variableDeclaration),
-                updater.getWritable(context.initializer),
-                updater.getWritable(context.ifNullExpression),
-                updater.getWritable<KtTypeReference>(context.typeChecked),
+                variableDeclaration,
+                initializer,
+                ifNullExpr,
+                typeChecked,
                 context.variableTypeString,
             )
 

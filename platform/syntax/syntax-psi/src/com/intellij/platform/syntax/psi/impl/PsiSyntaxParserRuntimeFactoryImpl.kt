@@ -4,8 +4,8 @@ package com.intellij.platform.syntax.psi.impl
 import com.intellij.lang.Language;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
-import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime
-import com.intellij.platform.syntax.runtime.SyntaxParserRuntimeFactory
+import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+import com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 
 internal class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language) : SyntaxParserRuntimeFactory {
 

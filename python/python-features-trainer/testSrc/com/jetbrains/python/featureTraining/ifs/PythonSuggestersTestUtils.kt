@@ -1,4 +1,4 @@
-package com.intellij.python.featuresTrainer.ifs
+package com.jetbrains.python.featureTraining.ifs
 
 import com.intellij.testFramework.PlatformTestUtil
 import java.io.File

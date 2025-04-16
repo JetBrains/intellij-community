@@ -10,6 +10,7 @@
   </dependencies>
 
   <content>
+    <module name="intellij.markdown" loading="embedded"/>
     <module name="intellij.markdown.fenceInjection"/>
     <module name="intellij.markdown.frontmatter"/>
     <module name="intellij.markdown.frontmatter.yaml"/>
@@ -19,6 +20,8 @@
     <module name="intellij.markdown.model"/>
     <module name="intellij.markdown.spellchecker"/>
     <module name="intellij.markdown.compose.preview"/>
+    <module name="intellij.markdown.frontend"/>
+    <module name="intellij.markdown.backend"/>
   </content>
 
   <description><![CDATA[
@@ -183,10 +186,8 @@
 
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
-    <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
-    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
-                        serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+    <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
     <projectConfigurable id="Settings.Markdown"
                          bundle="messages.MarkdownBundle"

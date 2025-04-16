@@ -1,10 +1,10 @@
 package org.editorconfig.language.util
 
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPsiFile
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigRootDeclaration
 import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.filetype.EditorConfigFileConstants.ROOT_KEY
 import org.editorconfig.language.filetype.EditorConfigFileConstants.ROOT_VALUE
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.containsErrors
 import org.editorconfig.language.util.EditorConfigTextMatchingUtil.textMatchesToIgnoreCase
 

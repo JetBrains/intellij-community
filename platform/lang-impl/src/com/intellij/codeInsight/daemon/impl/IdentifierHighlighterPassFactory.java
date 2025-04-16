@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -44,6 +45,7 @@ public final class IdentifierHighlighterPassFactory {
   }
 
   @TestOnly
+  @RequiresEdt
   public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Runnable r) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundHighlighter.Companion.enableListenersInTest(project, parentDisposable);

@@ -1,15 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.schema.descriptors
 
+import com.intellij.editorconfig.common.syntax.psi.*
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.editorconfig.language.psi.*
 import org.editorconfig.language.psi.impl.EditorConfigListDescriptorFinderVisitor
 import org.editorconfig.language.psi.impl.EditorConfigPairDescriptorFinderVisitor
 import org.editorconfig.language.psi.impl.EditorConfigValueIdentifierDescriptorFinderVisitor
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigPairDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor

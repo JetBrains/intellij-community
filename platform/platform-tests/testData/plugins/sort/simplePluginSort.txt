@@ -13,8 +13,8 @@
 
 
 Module com.intellij.modules.duplicate is declared by multiple plugins:
-  PluginMainDescriptor(name=duplicate0, id=duplicate0, descriptorPath=plugin.xml, path=duplicate0.xml, version=2042.42, package=null, isBundled=false)
-  PluginMainDescriptor(name=duplicate, id=duplicate, descriptorPath=plugin.xml, path=duplicate1.xml, version=2042.42, package=null, isBundled=false)
+  PluginMainDescriptor(name=duplicate0, id=duplicate0, version=2042.42, isBundled=false, descriptorPath=plugin.xml, path=duplicate0.xml)
+  PluginMainDescriptor(name=duplicate, id=duplicate, version=2042.42, isBundled=false, descriptorPath=plugin.xml, path=duplicate1.xml)
 Plugins optional_config_cycle0, optional_config_cycle2 cannot be loaded because they form a dependency cycle
 Plugins cycle3, cycle2, cycle1 cannot be loaded because they form a dependency cycle
 Plugins optional_cycle2, optional_cycle1, optional_cycle0 cannot be loaded because they form a dependency cycle

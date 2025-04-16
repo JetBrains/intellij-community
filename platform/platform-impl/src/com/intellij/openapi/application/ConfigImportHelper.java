@@ -1087,7 +1087,7 @@ public final class ConfigImportHelper {
        * in production, if bundledPluginPath is null, the path from our IDE instance (!) bundled plugin path is used instead
        * so it looks like in production we effectively use bundled plugin path from the current IDE, not from the old one
        */
-      oldIdeLoadingResult = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
+      oldIdeLoadingResult = PluginDescriptorLoader.loadAndInitDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
     }
     catch (ExecutionException | InterruptedException e) {
@@ -1128,14 +1128,6 @@ public final class ConfigImportHelper {
       }
     }
 
-    Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
-    Set<PluginId> disabledPlugins =
-      Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
-    for (IdeaPluginDescriptor pluginToMigrate : pluginsToMigrate) {
-      if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
-        pluginToMigrate.setEnabled(false);
-      }
-    }
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
     }
@@ -1222,7 +1214,7 @@ public final class ConfigImportHelper {
       }
 
       try {
-        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(Paths.get(source), null);
+        IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(Paths.get(source), null);
         if (descriptor != null) {
           result.add(descriptor.getPluginId());
         }

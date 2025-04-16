@@ -5,4 +5,13 @@ class DependsElement(
   @JvmField val pluginId: String,
   @JvmField val isOptional: Boolean,
   @JvmField val configFile: String?,
-)
+) {
+  override fun toString(): String {
+    return buildString {
+      append("DependsElement(pluginId=$pluginId")
+      if (isOptional) append(", isOptional=true")
+      if (configFile != null) append(", configFile=$configFile")
+      append(")")
+    }
+  }
+}

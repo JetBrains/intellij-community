@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.structuralsearch">
+<idea-plugin>
   <module value="com.intellij.modules.structuralsearch"/>
 
   <extensionPoints>

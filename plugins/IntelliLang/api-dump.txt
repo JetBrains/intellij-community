@@ -326,16 +326,6 @@ f:org.intellij.plugins.intelliLang.inject.config.ui.ValueRegExpAnnotator
 - sf:KEY:com.intellij.openapi.util.Key
 - <init>():V
 - annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
-f:org.intellij.plugins.intelliLang.references.InjectedReferencesContributor
-- com.intellij.psi.PsiReferenceContributor
-- <init>():V
-- s:getInjectedReferences(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
-- s:isInjected(com.intellij.psi.PsiReference):Z
-- registerReferenceProviders(com.intellij.psi.PsiReferenceRegistrar):V
-f:org.intellij.plugins.intelliLang.references.InjectedReferencesInspection
-- com.intellij.codeInspection.LocalInspectionTool
-- <init>():V
-- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z):com.intellij.psi.PsiElementVisitor
 a:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY:org.intellij.plugins.intelliLang.util.StringMatcher
 - sf:ANY_PATTERN:org.intellij.plugins.intelliLang.util.StringMatcher

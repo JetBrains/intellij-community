@@ -2,7 +2,7 @@
 package com.intellij.terminal.backend
 
 import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
+import com.intellij.terminal.session.dto.StyleRangeDto
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
@@ -11,8 +11,10 @@ import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
+import kotlin.time.TimeSource
 
 internal class TerminalContentChangesTracker(
   private val textBuffer: TerminalTextBuffer,
@@ -21,7 +23,7 @@ internal class TerminalContentChangesTracker(
   private var lastChangedVisualLine: Int = 0
   private var anyLineChanged: Boolean = false
 
-  private val listeners: MutableList<(TerminalContentUpdatedEvent) -> Unit> = CopyOnWriteArrayList()
+  private val listeners: MutableList<(TerminalContentUpdate) -> Unit> = CopyOnWriteArrayList()
 
   init {
     textBuffer.addChangesListener(object : TextBufferChangesListener {
@@ -58,11 +60,11 @@ internal class TerminalContentChangesTracker(
     })
   }
 
-  fun addHistoryOverflowListener(listener: (TerminalContentUpdatedEvent) -> Unit) {
+  fun addHistoryOverflowListener(listener: (TerminalContentUpdate) -> Unit) {
     listeners.add(listener)
   }
 
-  fun getContentUpdate(): TerminalContentUpdatedEvent? {
+  fun getContentUpdate(): TerminalContentUpdate? {
     return getContentUpdate(emptyList())
   }
 
@@ -73,14 +75,21 @@ internal class TerminalContentChangesTracker(
     }
   }
 
-  private fun getContentUpdate(additionalLines: List<TerminalLine>): TerminalContentUpdatedEvent? {
+  private fun getContentUpdate(additionalLines: List<TerminalLine>): TerminalContentUpdate? {
     return if (anyLineChanged) {
-      collectOutput(additionalLines)
+      val startTime = TimeSource.Monotonic.markNow()
+      val update = collectOutput(additionalLines)
+      ReworkedTerminalUsageCollector.logBackendTextBufferCollectionLatency(
+        textLength = update.text.length,
+        duration = startTime.elapsedNow()
+      )
+
+      update
     }
     else null
   }
 
-  private fun collectOutput(additionalLines: List<TerminalLine>): TerminalContentUpdatedEvent {
+  private fun collectOutput(additionalLines: List<TerminalLine>): TerminalContentUpdate {
     check(anyLineChanged) { "It is expected that this method is called only if something is changed" }
 
     // Transform to the TextBuffer coordinates: negative indexes for history, positive for the screen.
@@ -98,8 +107,11 @@ internal class TerminalContentChangesTracker(
     lastChangedVisualLine = textBuffer.effectiveHistoryLinesCount + textBuffer.screenLinesCount
     anyLineChanged = false
 
-    val styles = output.styleRanges.map { it.toDto() }
-    return TerminalContentUpdatedEvent(output.text, styles, logicalLineIndex)
+    return TerminalContentUpdate(
+      text = output.text,
+      styles = output.styleRanges.map { it.toDto() },
+      startLineLogicalIndex = logicalLineIndex,
+    )
   }
 
   private fun scrapeOutput(startLine: Int, additionalLines: List<TerminalLine>): StyledCommandOutput {
@@ -115,6 +127,12 @@ internal class TerminalContentChangesTracker(
     return StyledCommandOutput(stringCollector.buildText(), false, styles)
   }
 }
+
+internal data class TerminalContentUpdate(
+  val text: String,
+  val styles: List<StyleRangeDto>,
+  val startLineLogicalIndex: Long,
+)
 
 /**
  * Consider the sequence of wrapped lines in the Text Buffer as a single logical line.

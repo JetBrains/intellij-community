@@ -118,6 +118,8 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
   ],
   runtime_deps = [
     ":util-tests_test_resources",

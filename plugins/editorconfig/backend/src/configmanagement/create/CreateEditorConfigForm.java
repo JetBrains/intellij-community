@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBDimension;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

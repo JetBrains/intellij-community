@@ -61,10 +61,12 @@ class PluginSetTestBuilder(private val path: Path) {
     val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
     context.use {
       runBlocking {
-        result.addAll(
+        result.initAndAddAll(
           descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, context, ZipFilePoolImpl()) },
           overrideUseIfCompatible = false,
           productBuildNumber = context.productBuildNumber(),
+          isPluginDisabled = context::isPluginDisabled,
+          isPluginBroken = context::isPluginBroken,
         )
       }
     }

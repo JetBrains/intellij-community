@@ -3,6 +3,9 @@ package org.editorconfig.configmanagement.editor
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
+import com.intellij.editorconfig.common.EditorConfigBundle.message
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
@@ -22,9 +25,6 @@ import org.ec4j.core.model.Ec4jPath
 import org.ec4j.core.model.Glob
 import org.editorconfig.Utils
 import org.editorconfig.Utils.isEnabled
-import org.editorconfig.language.messages.EditorConfigBundle.message
-import org.editorconfig.language.psi.EditorConfigElementTypes
-import org.editorconfig.language.psi.EditorConfigHeader
 import org.jetbrains.annotations.Nls
 
 class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAware {

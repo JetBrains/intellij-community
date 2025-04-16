@@ -87,11 +87,6 @@ c:com.intellij.util.containers.LimitedPool
 com.intellij.util.containers.LimitedPool$ObjectFactory
 - cleanup(java.lang.Object):V
 - a:create():java.lang.Object
-f:com.intellij.util.containers.LimitedPool$Sync
-- com.intellij.util.containers.LimitedPool
-- <init>(I,com.intellij.util.containers.LimitedPool$ObjectFactory):V
-- alloc():java.lang.Object
-- recycle(java.lang.Object):V
 f:com.intellij.util.lang.JavaVersion
 - java.lang.Comparable
 - sf:Companion:com.intellij.util.lang.JavaVersion$Companion

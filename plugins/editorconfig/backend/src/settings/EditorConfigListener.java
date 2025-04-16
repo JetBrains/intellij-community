@@ -16,5 +16,5 @@
 package org.editorconfig.settings;
 
 public interface EditorConfigListener {
-  void valueChanged(Boolean value);
+  void valueChanged(boolean value);
 }

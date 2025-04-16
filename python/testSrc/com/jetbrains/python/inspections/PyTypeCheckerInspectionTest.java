@@ -1219,7 +1219,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def some_fn(arg: B):
                                pass
 
-                           some_fn(<warning descr="Expected type 'B', got 'Type[B]' instead">B</warning>)""")
+                           some_fn(<warning descr="Expected type 'B', got 'type[B]' instead">B</warning>)""")
     );
   }
 

@@ -1,0 +1,91 @@
+### auto-generated section `build intellij.editorconfig.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "backend_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.editorconfig.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-reflect",
+    "@lib//:gson",
+    "//spellchecker",
+    "//platform/indexing-impl",
+    "@lib//:automaton",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:ec4j-core",
+    "//platform/settings",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    ":backend_resources_1",
+  ]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":backend"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/ide-core-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-reflect",
+    "@lib//:gson",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/indexing-impl",
+    "@lib//:automaton",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:ec4j-core",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/settings",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    ":backend_resources_1",
+  ]
+)
+
+jvm_test(
+  name = "backend_test",
+  runtime_deps = [":backend_test_lib"]
+)
+### auto-generated section `build intellij.editorconfig.backend` end

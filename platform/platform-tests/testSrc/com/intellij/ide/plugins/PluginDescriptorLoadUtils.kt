@@ -11,7 +11,7 @@ import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
 
-fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
+fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
   val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet())
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {
@@ -40,15 +40,17 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     pluginDir = path,
     pool = ZipFilePoolImpl(),
   )
-  return result
+  return result.apply { initialize(context = context) }
 }
 
-fun createFromDescriptor(path: Path,
-                         isBundled: Boolean,
-                         data: ByteArray,
-                         context: DescriptorListLoadingContext,
-                         pathResolver: PathResolver,
-                         dataLoader: DataLoader): IdeaPluginDescriptorImpl {
+fun readAndInitDescriptorFromBytesForTest(
+  path: Path,
+  isBundled: Boolean,
+  data: ByteArray,
+  context: DescriptorListLoadingContext,
+  pathResolver: PathResolver,
+  dataLoader: DataLoader,
+): IdeaPluginDescriptorImpl {
   val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
     context.patchPlugin(it.getBuilder())
@@ -56,5 +58,5 @@ fun createFromDescriptor(path: Path,
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled)
   initMainDescriptorByRaw(descriptor = result, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
-  return result
+  return result.apply { initialize(context = context) }
 }

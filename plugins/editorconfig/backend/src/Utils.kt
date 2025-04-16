@@ -2,6 +2,7 @@
 package org.editorconfig
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.editorconfig.common.EditorConfigBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -22,7 +23,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.configmanagement.*
-import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.TestOnly

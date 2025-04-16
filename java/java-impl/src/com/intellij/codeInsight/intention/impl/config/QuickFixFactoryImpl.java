@@ -338,13 +338,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiReferenceExpression element,
-                                                                                    @NotNull PsiMethod getter,
-                                                                                    boolean isSetter) {
-    return new ReplaceInaccessibleFieldWithGetterSetterFix(element, getter, isSetter).asIntention();
-  }
-
-  @Override
   public @NotNull IntentionAction createSurroundWithArrayFix(@Nullable PsiCall methodCall, @Nullable PsiExpression expression) {
     return new SurroundWithArrayFix(methodCall, expression).asIntention();
   }

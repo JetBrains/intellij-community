@@ -238,6 +238,8 @@ java_library(
     "//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1",
     "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
+    "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
     "//plugins/git-modal-commit:vcs-git-commit-modal",
   ]
 )

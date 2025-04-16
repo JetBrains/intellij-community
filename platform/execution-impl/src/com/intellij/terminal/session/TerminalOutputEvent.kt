@@ -6,7 +6,9 @@ import com.intellij.terminal.session.dto.TerminalBlocksModelStateDto
 import com.intellij.terminal.session.dto.TerminalOutputModelStateDto
 import com.intellij.terminal.session.dto.TerminalStateDto
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.TimeMark
 
 @ApiStatus.Internal
 @Serializable
@@ -15,9 +17,13 @@ sealed interface TerminalOutputEvent
 @ApiStatus.Internal
 @Serializable
 data class TerminalContentUpdatedEvent(
+  val id: Int,
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
+  /** This value is used only on Backend. It is always null on the Frontend. */
+  @Transient
+  val readTime: TimeMark? = null,
 ) : TerminalOutputEvent
 
 @ApiStatus.Internal

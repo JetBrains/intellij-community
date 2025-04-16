@@ -41,6 +41,9 @@ jvm_library(
     "//platform/util-ex",
     "@rules_jvm//zip",
     "@lib//:netty-buffer",
+    "@lib//:hash4j",
+    "@lib//:fastutil-min",
+    "@lib//:maven-resolver-provider",
   ],
   runtime_deps = [":buildScripts-tests_test_resources"]
 )

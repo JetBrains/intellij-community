@@ -5,6 +5,10 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.PsiElement
@@ -14,10 +18,6 @@ import org.editorconfig.Utils
 import org.editorconfig.configmanagement.completion.EditorConfigCompletionWeigher
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil.createLookupAndCheckDeprecation
 import org.editorconfig.language.codeinsight.completion.withSeparatorIn
-import org.editorconfig.language.psi.EditorConfigElementTypes
-import org.editorconfig.language.psi.EditorConfigOption
-import org.editorconfig.language.psi.EditorConfigPattern
-import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.services.EditorConfigOptionDescriptorManager
 
 object EditorConfigSimpleOptionKeyCompletionProvider : EditorConfigCompletionProviderBase() {

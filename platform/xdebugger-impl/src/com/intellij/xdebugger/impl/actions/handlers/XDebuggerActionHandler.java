@@ -30,17 +30,17 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   }
 
   /**
-   * @deprecated Override {@link XDebuggerActionHandler#isEnabled(XDebugSessionProxy, DataContext)} instead
+   * Override {@link XDebuggerActionHandler#isEnabled(XDebugSessionProxy, DataContext)} instead
    */
-  @Deprecated
+  @ApiStatus.Obsolete
   protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     throw new AbstractMethodError("Override isEnabled(XDebugSessionProxy, DataContext) in " + getClass().getName());
   }
 
   /**
-   * @deprecated Override {@link XDebuggerActionHandler#perform(XDebugSessionProxy, DataContext)} instead
+   * Override {@link XDebuggerActionHandler#perform(XDebugSessionProxy, DataContext)} instead
    */
-  @Deprecated
+  @ApiStatus.Obsolete
   @ApiStatus.OverrideOnly
   protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     throw new AbstractMethodError("Override perform(XDebugSessionProxy, DataContext) in " + getClass().getName());

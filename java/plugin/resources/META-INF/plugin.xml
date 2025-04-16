@@ -46,6 +46,8 @@
     <module name="intellij.java.frontback.impl" loading="embedded"/>
     <module name="intellij.java.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.java.syntax" loading="embedded"/>
+    <module name="intellij.java.psi.impl" loading="embedded"/>
+    <module name="intellij.java.psi" loading="embedded"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>

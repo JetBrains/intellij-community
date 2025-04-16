@@ -418,7 +418,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="INFORMATION" key="if.null.return.break.foldable.to" bundle="messages.KotlinBundle"/>
+                     level="WEAK WARNING" key="if.null.return.break.foldable.to" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantElseInIfInspection"
                      language="kotlin"
@@ -853,14 +853,6 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.range.start.end.inclusive.with.first.last.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.replace.negated.is.empty.with.is.not.empty.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RemoveRedundantSpreadOperatorInspection"
                      groupPath="Kotlin"

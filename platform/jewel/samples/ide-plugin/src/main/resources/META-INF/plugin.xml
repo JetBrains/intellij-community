@@ -9,7 +9,15 @@ A plugin that demonstrates the capabilities of the Jewel library and Compose.
 See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for more information.
     ]]></description>
 
-    <depends>com.intellij.modules.platform</depends>
+    <dependencies>
+        <module name="intellij.platform.jewel.foundation"/>
+        <module name="intellij.platform.jewel.ui"/>
+        <module name="intellij.platform.jewel.ideLafBridge"/>
+        <module name="intellij.libraries.compose.foundation.desktop"/>
+        <module name="intellij.libraries.skiko"/>
+        <module name="intellij.platform.jewel.markdown.core"/>
+        <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+    </dependencies>
 
     <resource-bundle>messages.JewelBundle</resource-bundle>
 

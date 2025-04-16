@@ -6,6 +6,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.DataManager
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.components.service
@@ -82,27 +83,8 @@ object GHAccountsUtil {
 
   internal fun createAddAccountActionGroup(model: GHLoginModel, project: Project, parentComponent: JComponent): ActionGroup {
     val group = DefaultActionGroup()
-    group.add(
-      DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
-        scopedDialog(project) {
-          GHLoginDialog.OAuth(model, project, this, parentComponent).apply {
-            setServer(GithubServerPath.DEFAULT_HOST, false)
-          }
-        }.showAndGet()
-      })
-
-    group.add(
-      DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-        scopedDialog(project) {
-          GHLoginDialog.Token(model, project, this, parentComponent).apply {
-            title = GithubBundle.message("dialog.title.add.github.account")
-            setLoginButtonText(GithubBundle.message("accounts.add.button"))
-            setServer(GithubServerPath.DEFAULT_HOST, false)
-          }
-        }.showAndGet()
-      }
-    )
-
+    group.add(createBrowserLoginAction(model, project, parentComponent))
+    group.add(createTokenLoginAction(model, project, parentComponent))
     group.add(Separator())
 
     group.add(
@@ -117,6 +99,44 @@ object GHAccountsUtil {
       }
     )
     return group
+  }
+
+  @ApiStatus.Internal
+  fun createBrowserLoginAction(
+    model: GHLoginModel, project: Project, parentComponent: JComponent
+  ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
+    loginViaBrowser(model, project, parentComponent)
+  }
+
+  @ApiStatus.Internal
+  fun loginViaBrowser(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?
+  ) {
+    scopedDialog(project) {
+      GHLoginDialog.OAuth(model, project, this, parentComponent).apply {
+        setServer(GithubServerPath.DEFAULT_HOST, false)
+      }
+    }.showAndGet()
+  }
+
+  @ApiStatus.Internal
+  fun createTokenLoginAction(
+    model: GHLoginModel, project: Project, parentComponent: JComponent,
+  ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+    loginViaToken(model, project, parentComponent)
+  }
+
+  @ApiStatus.Internal
+  fun loginViaToken(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?,
+  ) {
+    scopedDialog(project) {
+      GHLoginDialog.Token(model, project, this, parentComponent).apply {
+        title = GithubBundle.message("dialog.title.add.github.account")
+        setLoginButtonText(GithubBundle.message("accounts.add.button"))
+        setServer(GithubServerPath.DEFAULT_HOST, false)
+      }
+    }.showAndGet()
   }
 
   @RequiresEdt

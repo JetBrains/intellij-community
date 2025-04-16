@@ -4,12 +4,12 @@ package org.editorconfig.language.codeinsight.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigAsteriskPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDoubleAsteriskPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.psi.PsiElement
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveHeaderElementQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigAsteriskPattern
-import org.editorconfig.language.psi.EditorConfigDoubleAsteriskPattern
-import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigWildcardRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

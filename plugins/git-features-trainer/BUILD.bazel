@@ -26,6 +26,7 @@ jvm_library(
     "//platform/vcs-log/impl:vcs-log-impl",
     "//platform/vcs-log/api:vcs-log",
     "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea/shared:vcs-git-shared",
     "//platform/lang-impl",
   ],
   runtime_deps = [":vcs-git-featuresTrainer_resources"]
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/git4idea/shared:vcs-git-shared",
     "//platform/lang-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

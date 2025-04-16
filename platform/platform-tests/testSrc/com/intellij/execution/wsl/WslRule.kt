@@ -3,7 +3,6 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.ide.impl.wsl.wsl.ProductionWslIjentManager
 import com.intellij.testFramework.ensureCorrectVersion
 import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource

@@ -1879,6 +1879,21 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride4.kt");
         }
 
+        @TestMetadata("delegatedMemberHidesSuperTypeOverride5.kt")
+        public void testDelegatedMemberHidesSuperTypeOverride5() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride5.kt");
+        }
+
+        @TestMetadata("delegatedMemberHidesSuperTypeOverride6.kt")
+        public void testDelegatedMemberHidesSuperTypeOverride6() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride6.kt");
+        }
+
+        @TestMetadata("delegatedMemberHidesSuperTypeOverride7.kt")
+        public void testDelegatedMemberHidesSuperTypeOverride7() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantOverride/delegatedMemberHidesSuperTypeOverride7.kt");
+        }
+
         @TestMetadata("equals.kt")
         public void testEquals() throws Exception {
             runTest("../testData/inspectionsLocal/redundantOverride/equals.kt");
@@ -1937,6 +1952,16 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("notCallSuper.kt")
         public void testNotCallSuper() throws Exception {
             runTest("../testData/inspectionsLocal/redundantOverride/notCallSuper.kt");
+        }
+
+        @TestMetadata("overrideInterfaceDelegation.kt")
+        public void testOverrideInterfaceDelegation() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantOverride/overrideInterfaceDelegation.kt");
+        }
+
+        @TestMetadata("overrideInterfaceDelegation2.kt")
+        public void testOverrideInterfaceDelegation2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantOverride/overrideInterfaceDelegation2.kt");
         }
 
         @TestMetadata("overrideModifireFinal.kt")
@@ -2397,6 +2422,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("coroutineContext.kt")
         public void testCoroutineContext() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
+        }
+
+        @TestMetadata("functionalTypeParameter.kt")
+        public void testFunctionalTypeParameter() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/functionalTypeParameter.kt");
         }
 
         @TestMetadata("interface.kt")

@@ -41,6 +41,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "@lib//:http-client",
   ],
   runtime_deps = [":collaborationTools_resources"]
 )
@@ -92,6 +93,9 @@ jvm_library(
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
     "@lib//:mockito",
+    "@lib//:http-client",
+    "@lib//:app-cash-turbine-jvm",
+    "@lib//:assert_j",
   ],
   runtime_deps = [":collaborationTools_resources"]
 )

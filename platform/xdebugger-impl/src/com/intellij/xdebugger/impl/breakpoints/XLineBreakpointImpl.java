@@ -405,15 +405,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     }
   }
 
-  @Override
-  protected void updateIcon() {
-    Icon icon = calculateSpecialIcon();
-    if (icon == null) {
-      icon = isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon();
-    }
-    setIcon(icon);
-  }
-
   private static boolean isHighlighterAvailableIn(Editor editor) {
     if (editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting()) {
       // suppress breakpoints on sticky lines panel

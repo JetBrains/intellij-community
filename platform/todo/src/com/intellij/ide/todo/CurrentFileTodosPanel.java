@@ -3,6 +3,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -19,16 +20,17 @@ abstract class CurrentFileTodosPanel extends TodoPanel {
                         @NotNull Content content) {
     super(todoView, settings, true, content);
 
-    VirtualFile[] files = FileEditorManager.getInstance(myProject).getSelectedFiles();
-    setFile(files.length == 0 ? null : PsiManager.getInstance(myProject).findFile(files[0]), true);
+    VirtualFile[] virtualFiles = FileEditorManager.getInstance(myProject).getSelectedFiles();
+    setFile(virtualFiles.length == 0 ? null : ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(virtualFiles[0])), true);
     ClientId clientId = ClientId.getCurrent();
     // It's important to remove this listener. It prevents invocation of setFile method after the tree builder is disposed
     myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         if (!clientId.equals(ClientId.getCurrent())) return;
-        VirtualFile file = e.getNewFile();
-        final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
+        VirtualFile virtualFile = e.getNewFile();
+        PsiFile psiFile = virtualFile == null || !virtualFile.isValid() ? null
+                          : ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(virtualFile));
         // This invokeLater is required. The problem is setFile does a commit to PSI, but setFile is
         // invoked inside PSI change event. It causes an Exception like "Changes to PSI are not allowed inside event processing"
         ApplicationManager.getApplication().invokeLater(() -> setFile(psiFile, false));

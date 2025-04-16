@@ -2,7 +2,7 @@
   "language": "PHP",
   "projectPath": "../ml-eval/PhpStormMarkerTests",
   "repository": "ssh://git@git.jetbrains.team/code-generation-evaluation/PhpStormMarkerTests.git",
-  "revision": "main",
+  "revision": "master",
   "outputDir": "bin/ml-eval-code-generation-php-output",
   "strategy": {
     "model": "",

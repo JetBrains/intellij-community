@@ -2,13 +2,13 @@
 package org.editorconfig.language.codeinsight.completion.visitors
 
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigDescribableElement
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueList
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValuePair
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.util.containers.Stack
 import org.editorconfig.language.codeinsight.completion.providers.EditorConfigCompletionProviderUtil.createLookupAndCheckDeprecation
 import org.editorconfig.language.codeinsight.completion.withSuffix
-import org.editorconfig.language.psi.EditorConfigOptionValueList
-import org.editorconfig.language.psi.EditorConfigOptionValuePair
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.schema.descriptors.*
 import org.editorconfig.language.schema.descriptors.impl.*
 import org.editorconfig.language.util.EditorConfigIdentifierUtil

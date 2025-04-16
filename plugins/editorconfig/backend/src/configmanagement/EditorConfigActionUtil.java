@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.editorconfig.common.EditorConfigBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
@@ -18,7 +19,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

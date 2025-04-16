@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven
 
 import com.intellij.build.BuildProgressListener
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -175,7 +174,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         CompletableFuture.completedFuture(sdk)
       }
       else {
-        iterateVersions(getNextLanguageLevel(level), progressIndicator)
+        iterateVersions(level.next(), progressIndicator)
       }
     }
   }

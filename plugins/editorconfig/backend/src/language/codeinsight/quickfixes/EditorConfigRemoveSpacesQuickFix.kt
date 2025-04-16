@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight.quickfixes
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.codeinsight.inspections.findSuspiciousSpaces
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigHeader
 import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveSpacesQuickFix : LocalQuickFix {

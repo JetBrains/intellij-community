@@ -37,25 +37,25 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
   // PY-27128
   public void testPy39UnionTypeImports() {
     runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
-      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[Union[X, Y]]"));
+      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[Union[X, Y]]"));
     });
   }
 
   // PY-27128
   public void testPy39BitwiseOrUnionFromFutureAnnotationsUnionTypeImports() {
     runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
-      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
+      doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[X | Y]"));
     });
   }
 
   // PY-27128
   public void testBitwiseOrUnionTypeImports() {
-    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[X | Y]"));
   }
 
   // PY-27128
   public void testAncestorAndInheritorReturn() {
-    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "type[X | Y]"));
   }
 
   // PY-27128 PY-48466

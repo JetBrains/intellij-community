@@ -108,7 +108,10 @@ class FrontendXValue private constructor(
   }
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
-    node.setPresentation(presentation.value)
+    if (place == XValuePlace.TREE) {
+      // for TOOLTIP we are going to calculate it separately
+      node.setPresentation(presentation.value)
+    }
     val initialFullValueEvaluator = fullValueEvaluator.value
     if (initialFullValueEvaluator != null) {
       node.setFullValueEvaluator(initialFullValueEvaluator)
@@ -125,7 +128,15 @@ class FrontendXValue private constructor(
         }
       }
       launch {
-        presentation.collectLatest {
+        val presentationFlow = when (place) {
+          XValuePlace.TREE -> {
+            presentation
+          }
+          XValuePlace.TOOLTIP -> {
+            XValueApi.getInstance().computeTooltipPresentation(xValueDto.id)
+          }
+        }
+        presentationFlow.collectLatest {
           node.setPresentation(it)
         }
       }

@@ -3,24 +3,24 @@ package com.intellij.terminal.backend
 
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
+import com.intellij.util.asDisposable
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import java.util.concurrent.atomic.AtomicInteger
+
+private val outputUpdateEventIdCounter = AtomicInteger(0)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(
-  textBuffer: TerminalTextBuffer,
-  terminalDisplay: TerminalDisplayImpl,
-  controller: ObservableJediTerminal,
+  services: JediTermServices,
   shellIntegrationController: TerminalShellIntegrationController,
   coroutineScope: CoroutineScope,
-  ensureEmulationActive: () -> Unit,
 ): MutableSharedFlow<List<TerminalOutputEvent>> {
   val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>(
     // Do not buffer a lot of events here.
@@ -34,23 +34,39 @@ internal fun createTerminalOutputFlow(
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
+  val textBuffer = services.textBuffer
+  val controller = services.controller
+  val terminalDisplay = services.terminalDisplay
+
   val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
   val contentChangesTracker = TerminalContentChangesTracker(textBuffer, discardedHistoryTracker)
   val cursorPositionTracker = TerminalCursorPositionTracker(textBuffer, discardedHistoryTracker, terminalDisplay)
+  val outputLatencyTracker = TerminalOutputLatencyTracker(services.ttyConnector, textBuffer, coroutineScope.asDisposable())
 
   /**
    * Events should be sent in the following order: content update, cursor position update, other events.
    * This function allows providing content update if it is precalculated, and the other optional event to be sent last.
    */
   fun collectAndSendEvents(
-    contentUpdateEvent: TerminalContentUpdatedEvent?,
+    contentUpdate: TerminalContentUpdate?,
     otherEvent: TerminalOutputEvent?,
-    ensureActive: () -> Unit = { ensureEmulationActive() },
+    ensureActive: () -> Unit = { ensureEmulationActive(services.terminalStarter) },
   ) {
     textBuffer.withLock {
-      val contentUpdate = contentUpdateEvent ?: contentChangesTracker.getContentUpdate()
+      val actualContentUpdate = contentUpdate ?: contentChangesTracker.getContentUpdate()
+      val contentUpdateEvent = if (actualContentUpdate != null) {
+        TerminalContentUpdatedEvent(
+          id = outputUpdateEventIdCounter.getAndIncrement(),
+          text = actualContentUpdate.text,
+          styles = actualContentUpdate.styles,
+          startLineLogicalIndex = actualContentUpdate.startLineLogicalIndex,
+          readTime = outputLatencyTracker.getCurUpdateTtyReadTimeAndReset(),
+        )
+      }
+      else null
+
       val cursorPositionUpdate = cursorPositionTracker.getCursorPositionUpdate()
-      val updates = listOfNotNull(contentUpdate, cursorPositionUpdate, otherEvent)
+      val updates = listOfNotNull(contentUpdateEvent, cursorPositionUpdate, otherEvent)
       if (updates.isNotEmpty()) {
         // Block the shell output reading if any of the following:
         // 1. There are no active collectors: then there is no need to read the shell output.
@@ -65,14 +81,18 @@ internal fun createTerminalOutputFlow(
 
   coroutineScope.launch(Dispatchers.IO) {
     while (true) {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = null, ensureActive = { ensureActive(); ensureEmulationActive() })
+      collectAndSendEvents(
+        contentUpdate = null,
+        otherEvent = null,
+        ensureActive = { ensureActive(); ensureEmulationActive(services.terminalStarter) }
+      )
 
       delay(10)
     }
   }
 
   contentChangesTracker.addHistoryOverflowListener { contentUpdate ->
-    collectAndSendEvents(contentUpdateEvent = contentUpdate, otherEvent = null)
+    collectAndSendEvents(contentUpdate = contentUpdate, otherEvent = null)
   }
 
   var curState = TerminalState(
@@ -94,28 +114,28 @@ internal fun createTerminalOutputFlow(
     override fun arrowKeysModeChanged(isApplication: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isApplicationArrowKeys = isApplication)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun keypadModeChanged(isApplication: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isApplicationKeypad = isApplication)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun autoNewLineChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isAutoNewLine = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun altSendsEscapeChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isAltSendsEscape = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
@@ -127,7 +147,7 @@ internal fun createTerminalOutputFlow(
     override fun beforeAlternateScreenBufferChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isAlternateScreenBuffer = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
   })
@@ -136,48 +156,48 @@ internal fun createTerminalOutputFlow(
     override fun cursorVisibilityChanged(isVisible: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isCursorVisible = isVisible)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun cursorShapeChanged(cursorShape: CursorShape?) {
       textBuffer.withLock {
         curState = curState.copy(cursorShape = cursorShape)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun mouseModeChanged(mode: MouseMode) {
       textBuffer.withLock {
         curState = curState.copy(mouseMode = mode)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun mouseFormatChanged(format: MouseFormat) {
       textBuffer.withLock {
         curState = curState.copy(mouseFormat = format)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun bracketedPasteModeChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isBracketedPasteMode = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun windowTitleChanged(title: String) {
       textBuffer.withLock {
         curState = curState.copy(windowTitle = title)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun beep() {
       textBuffer.withLock {
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalBeepEvent)
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalBeepEvent)
       }
     }
   })
@@ -186,26 +206,32 @@ internal fun createTerminalOutputFlow(
     override fun initialized() {
       textBuffer.withLock {
         curState = curState.copy(isShellIntegrationEnabled = true)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+        collectAndSendEvents(contentUpdate = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun commandStarted(command: String) {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandStartedEvent(command))
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandStartedEvent(command))
     }
 
     override fun commandFinished(command: String, exitCode: Int) {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
     }
 
     override fun promptStarted() {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptStartedEvent)
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalPromptStartedEvent)
     }
 
     override fun promptFinished() {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptFinishedEvent)
+      collectAndSendEvents(contentUpdate = null, otherEvent = TerminalPromptFinishedEvent)
     }
   })
 
   return outputFlow
+}
+
+private fun ensureEmulationActive(starter: TerminalStarterEx) {
+  if (Thread.interrupted() || starter.isStopped) {
+    throw CancellationException("Terminal emulation was stopped")
+  }
 }

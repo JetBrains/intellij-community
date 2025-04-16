@@ -19,7 +19,6 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/util",
     "//platform/platform-api:ide",
-    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/scripting:kotlin-base-scripting",
     "//platform/analysis-api:analysis",

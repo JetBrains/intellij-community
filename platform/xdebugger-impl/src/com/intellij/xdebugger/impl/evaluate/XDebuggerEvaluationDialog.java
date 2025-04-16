@@ -69,9 +69,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final SwitchModeAction mySwitchModeAction;
 
   /**
-   * @deprecated Use {@link XDebuggerEvaluationDialog#XDebuggerEvaluationDialog(XDebugSessionProxy, XDebuggerEditorsProvider, XExpression, XSourcePosition, boolean)} instead
+   * Use {@link XDebuggerEvaluationDialog#XDebuggerEvaluationDialog(XDebugSessionProxy, XDebuggerEditorsProvider, XExpression, XSourcePosition, boolean)} instead
    */
-  @Deprecated
+  @ApiStatus.Obsolete
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    @NotNull XDebuggerEditorsProvider editorsProvider,
                                    @NotNull XExpression text,

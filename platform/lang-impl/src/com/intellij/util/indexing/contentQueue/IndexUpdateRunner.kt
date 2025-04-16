@@ -186,6 +186,7 @@ class IndexUpdateRunner(
         repeat(INDEXING_PARALLELIZATION) { workerNo ->
           launch {
             try {
+              var i = 0
               for (fileIndexingRequest in channel) {
                 while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
                   delay(1)
@@ -198,7 +199,10 @@ class IndexUpdateRunner(
                     processRequestTask(fileIndexingRequest)
                   }
 
-                yield()
+                i++
+                if (i % 10 == 0) {
+                  yield()
+                }
               }
             }
             //FIXME RC: for profiling, remove afterwards

@@ -2038,6 +2038,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LOG.assertTrue(success || isReleased);
   }
 
+  /**
+   * Sets a callback invoked after every repaint request.
+   * <p>
+   *   The callback is only invoked if the component is showing and the request has a non-empty rectangle.
+   *   In other words, it's invoked when the repaint request is likely to be followed by an actual painting operation.
+   * </p>
+   * <p>
+   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
+   * </p>
+   * <p>
+   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
+   * </p>
+   * @param callback the callback, {@code null} removes the callback
+   */
+  @ApiStatus.Internal
+  public void setRepaintCallback(@Nullable Runnable callback) {
+    myEditorComponent.setRepaintCallback(callback);
+  }
+
+  /**
+   * Sets a callback invoked after every paint operation.
+   * <p>
+   *   The callback must be fast, non-intrusive, and should not throw any exceptions.
+   * </p>
+   * <p>
+   *   This is an internal hack, which is why it doesn't follow the usual add-listener pattern.
+   * </p>
+   * @param callback the callback, {@code null} removes the callback
+   */
+  @ApiStatus.Internal
+  public void setPaintCallback(@Nullable Runnable callback) {
+    myView.setPaintCallback(callback);
+  }
+
   @Override
   public boolean isStickySelection() {
     return myState.isStickySelection();

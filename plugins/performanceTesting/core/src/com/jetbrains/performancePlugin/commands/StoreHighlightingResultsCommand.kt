@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
@@ -42,12 +43,15 @@ class StoreHighlightingResultsCommand(text: String, line: Int) : PlaybackCommand
       writeIntentReadAction {
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
         require(psiFile != null)
+
+        var description: String
         DaemonCodeAnalyzerImpl.getHighlights(editor.document, null, project).forEach { highlight ->
           assert(editor.document.textLength > highlight.actualStartOffset) {
             "Highlight start offset ${editor.document.textLength} less than document text length ${highlight.actualStartOffset}"
           }
+          description = if (highlight.description == null) "" else highlight.description.replace("\n", "")
           fileForStoringHighlights
-            .appendText("${highlight.severity}☆${highlight.description}☆${editor.document.getLineNumber(highlight.actualStartOffset)}☆${highlight.toolId}" + "\n")
+            .appendText("${highlight.severity}☆$description☆${editor.document.getLineNumber(highlight.actualStartOffset)}☆${highlight.toolId}" + "\n")
         }
       }
     }

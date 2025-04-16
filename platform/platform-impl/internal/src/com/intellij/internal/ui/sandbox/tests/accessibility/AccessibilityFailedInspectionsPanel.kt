@@ -17,34 +17,15 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
       group("AccessibleStateSetContainsFocusableInspection") {
         row {
           // not focusable
-          val button = object : JButton() {
-            override fun getAccessibleContext(): AccessibleContext {
-              return object : AccessibleJButton() {
-                override fun getAccessibleText(): AccessibleText? {
-                  return null
-                }
-
-                override fun isEnabled(): Boolean {
-                  return true
-                }
-
-                override fun isShowing(): Boolean {
-                  return true
-                }
-
-                override fun isVisible(): Boolean {
-                  return true
-                }
-              }
+          button("Not Focusable") {}
+            .accessibleName("Button")
+            .accessibleDescription("Button description")
+            .applyToComponent {
+              isEnabled = false
+              isFocusable = false
+              accessibleContext.accessibleDescription = "not focusable"
             }
-            override fun isFocusable(): Boolean {
-              return false
-            }
-          }
-          button.accessibleContext.accessibleDescription = "AccessibleStateSetContainsFocusableInspection"
-          cell(button)
-
-          button("Normal Button") {}
+          button("Focusable") {}
         }
       }
       group("AccessibleActionNotNullInspection") {
@@ -62,114 +43,76 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
           component.accessibleContext.accessibleDescription = "Checkbox description"
           cell(component)
 
-          checkBox("Normal checkbox")
+          checkBox("Normal check box")
         }
-        group("AccessibleNameAndDescriptionNotEqualInspection") {
-          row {
-            //stateSet is full and name is null
-            val button = JButton()
-            button.accessibleContext.accessibleDescription = "button"
-            button.accessibleContext.accessibleName = "button"
-            cell(button)
+      }
+      group("AccessibleValueNotNullInspection") {
+        row {
+          // stateSet is full and name is null
+          val bar = object : JProgressBar() {
+            override fun getAccessibleContext(): AccessibleContext {
+              return object : AccessibleJComponent() {
+                override fun getAccessibleRole(): AccessibleRole {
+                  return AccessibleRole.PROGRESS_BAR
+                }
 
-            button("Normal Button") {}
-          }
-        }
-        group("AccessibleValueNotNullInspection") {
-          row {
-            // stateSet is full and name is null
-            val bar = object : JProgressBar() {
-              override fun getAccessibleContext(): AccessibleContext {
-                return object : AccessibleJComponent() {
-                  override fun getAccessibleRole(): AccessibleRole {
-                    return AccessibleRole.PROGRESS_BAR
-                  }
-
-                  override fun getAccessibleValue(): AccessibleValue? {
-                    return null
-                  }
+                override fun getAccessibleValue(): AccessibleValue? {
+                  return null
                 }
               }
             }
-            bar.accessibleContext.accessibleDescription = "checkbox role and action null"
-            cell(bar)
-
-            val label = JLabel("Normal progress bar")
-            val progressBar = JProgressBar()
-            label.labelFor = progressBar
-            cell(progressBar)
-            cell(label)
           }
+          bar.accessibleContext.accessibleDescription = "checkbox role and action null"
+          cell(bar)
+
+          val label = JLabel("Normal progress bar")
+          val progressBar = JProgressBar()
+          label.labelFor = progressBar
+          cell(progressBar)
+          cell(label)
         }
-        group("2 Failed Inspections") {
-          row {
-            //password role and text null
-            val password = object : JPasswordField() {
-              override fun getAccessibleContext(): AccessibleContext {
-                return object : AccessibleJPasswordField() {
-                  override fun getAccessibleText(): AccessibleText? {
-                    return null
-                  }
+      }
+      group("AccessibleTextNotNullInspection") {
+        row {
+          //password role and text null
+          val password = object : JPasswordField() {
+            override fun getAccessibleContext(): AccessibleContext {
+              return object : AccessibleJPasswordField() {
+                override fun getAccessibleText(): AccessibleText? {
+                  return null
                 }
               }
             }
-            password.accessibleContext.accessibleDescription = "password role and text null"
-            cell(password)
-
-            val label = JLabel("Normal password field")
-            val passwordField = JPasswordField()
-            label.labelFor = passwordField
-            cell(passwordField)
-            cell(label)
           }
+          password.accessibleContext.accessibleDescription = "password role and text null"
+          cell(password)
+
+          val label = JLabel("Normal password field")
+          val passwordField = JPasswordField()
+          label.labelFor = passwordField
+          cell(passwordField)
+          cell(label)
         }
-        group("3 Failed Inspections") {
-          row {
-            //password role and text null
-            val button = object : JButton() {
-              override fun getAccessibleContext(): AccessibleContext {
-                return object : AccessibleJButton() {
-                  override fun getAccessibleText(): AccessibleText? {
-                    return null
-                  }
-
-                  override fun isEnabled(): Boolean {
-                    return true
-                  }
-
-                  override fun isShowing(): Boolean {
-                    return true
-                  }
-
-                  override fun isVisible(): Boolean {
-                    return true
-                  }
-
-                  override fun getAccessibleName(): String {
-                    return ""
-                  }
-
-                  override fun getAccessibleAction(): AccessibleAction? {
-                    return null
-                  }
+      }
+      group("AccessibleNameNotEmptyForFocusableComponentsInspection") {
+        row {
+          //stateSet is full and name is null
+          val button = object : JButton() {
+            override fun getAccessibleContext(): AccessibleContext {
+              return object : AccessibleJComponent() {
+                override fun getAccessibleName(): String? {
+                  return null
                 }
               }
-
-              override fun isFocusable(): Boolean {
-                return true
-              }
             }
-            button.accessibleContext.accessibleDescription = "password role and text null"
-            cell(button)
-
-            val label = JLabel("Normal password field")
-            val passwordField = JPasswordField()
-            label.labelFor = passwordField
-            cell(passwordField)
-            cell(label)
           }
-        }
+          button.isEnabled = true
+          button.isFocusable = true
+          button.accessibleContext.accessibleDescription = "stateSet is full and name is null"
+          cell(button)
 
+          button("Normal Button") {}
+        }
       }
     }
   }

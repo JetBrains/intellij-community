@@ -1874,6 +1874,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/functionDeclaration.kt");
             }
 
+            @TestMetadata("functionRightBrace.kt")
+            public void testFunctionRightBrace() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/functionRightBrace.kt");
+            }
+
             @TestMetadata("functionWithBodyExpression.kt")
             public void testFunctionWithBodyExpression() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/functionWithBodyExpression.kt");
@@ -2049,6 +2054,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
             }
 
+            @TestMetadata("kt69624.kt")
+            public void testKt69624() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/kt69624.kt");
+            }
+
             @TestMetadata("kt7046localVarInInline.kt")
             public void testKt7046localVarInInline() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
@@ -2067,6 +2077,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @TestMetadata("ktij26694.kt")
             public void testKtij26694() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/ktij26694.kt");
+            }
+
+            @TestMetadata("lambdaRightBrace.kt")
+            public void testLambdaRightBrace() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/lambdaRightBrace.kt");
             }
 
             @TestMetadata("lambdaToString.kt")

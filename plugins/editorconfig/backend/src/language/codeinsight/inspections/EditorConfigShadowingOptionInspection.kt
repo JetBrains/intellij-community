@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOption
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOptionQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigOption
-import org.editorconfig.language.psi.EditorConfigSection
-import org.editorconfig.language.psi.EditorConfigVisitor
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.findShadowedSections
 
 internal class EditorConfigShadowingOptionInspection : LocalInspectionTool() {

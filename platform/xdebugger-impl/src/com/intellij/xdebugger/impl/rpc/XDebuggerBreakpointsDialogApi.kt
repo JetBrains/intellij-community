@@ -7,6 +7,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -18,7 +19,7 @@ interface XDebuggerBreakpointsDialogApi : RemoteApi<Unit> {
   //   When all the be controls and LUX will be split, we can trigger this dialog showing on the frontend side.
   // TODO: pass current breakpoint through this Flow of requests
   // TODO: pass clientId, otherwise dialog will be shown for all clients in CWM
-  suspend fun showDialogRequests(projectId: ProjectId): Flow<Unit>
+  suspend fun showDialogRequests(projectId: ProjectId): Flow<ShowBreakpointDialogRequest>
 
   companion object {
     @JvmStatic
@@ -27,3 +28,7 @@ interface XDebuggerBreakpointsDialogApi : RemoteApi<Unit> {
     }
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class ShowBreakpointDialogRequest(val breakpointId: XBreakpointId?)

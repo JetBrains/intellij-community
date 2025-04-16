@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight.quickfixes
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigEnumerationPattern
+import com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigElementFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigEnumerationPattern
-import org.editorconfig.language.services.EditorConfigElementFactory
 import org.jetbrains.annotations.Nls
 
 class EditorConfigRemoveBracesQuickFix : LocalQuickFix {

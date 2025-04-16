@@ -67,23 +67,40 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   /**
    * @see [com.intellij.openapi.project.ex.ProjectManagerEx]
    */
-  fun addAll(descriptors: Sequence<IdeaPluginDescriptorImpl>, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
+  fun initAndAddAll(
+    descriptors: Sequence<IdeaPluginDescriptorImpl>,
+    overrideUseIfCompatible: Boolean,
+    productBuildNumber: BuildNumber,
+    isPluginDisabled: (PluginId) -> Boolean,
+    isPluginBroken: (PluginId, version: String?) -> Boolean,
+  ) {
     for (descriptor in descriptors) {
-      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber)
+      val initError = descriptor.initialize(
+        getBuildNumber = { productBuildNumber },
+        isPluginDisabled = isPluginDisabled,
+        isPluginBroken = isPluginBroken
+      )
+      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber, initError = initError)
     }
   }
 
   @TestOnly
-  fun addAll(descriptors: List<IdeaPluginDescriptorImpl>) {
+  fun initAndAddAll(
+    descriptors: List<IdeaPluginDescriptorImpl>,
+    isPluginDisabled: (PluginId) -> Boolean,
+    isPluginBroken: (PluginId, version: String?) -> Boolean,
+  ) {
     val productBuildNumber = BuildNumber.fromString("2042.42")!!
-    for (descriptor in descriptors) {
-      add(descriptor = descriptor, overrideUseIfCompatible = false, productBuildNumber = productBuildNumber)
-    }
+    initAndAddAll(descriptors = descriptors.asSequence(),
+                  overrideUseIfCompatible = false,
+                  productBuildNumber = productBuildNumber,
+                  isPluginDisabled = isPluginDisabled,
+                  isPluginBroken = isPluginBroken)
   }
 
-  private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
+  private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber, initError: PluginLoadingError?) {
     val pluginId = descriptor.pluginId
-    descriptor.isIncomplete?.let { error ->
+    initError?.let { error ->
       addIncompletePlugin(plugin = descriptor, error = error.takeIf { !it.isDisabledError })
       return
     }
@@ -164,15 +181,15 @@ internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescrip
          descriptor.moduleDependencies.plugins.isEmpty() &&
          descriptor.pluginId != PluginManagerCore.CORE_ID &&
          descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-         !hasModuleDependencies(descriptor)
+         !hasJavaOrPlatformAliasDependency(descriptor)
 }
 
-private fun hasModuleDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
+private fun hasJavaOrPlatformAliasDependency(descriptor: IdeaPluginDescriptorImpl): Boolean {
   for (dependency in descriptor.dependencies) {
     val dependencyPluginId = dependency.pluginId
     if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
         PluginManagerCore.JAVA_MODULE_ID == dependencyPluginId ||
-        PluginManagerCore.isModuleDependency(dependencyPluginId)) {
+        PluginManagerCore.looksLikePlatformPluginAlias(dependencyPluginId)) {
       return true
     }
   }

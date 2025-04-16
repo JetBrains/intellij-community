@@ -2,6 +2,8 @@
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.editorconfig.common.EditorConfigBundle;
+import com.intellij.editorconfig.common.plugin.EditorConfigFileType;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -10,8 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
-import org.editorconfig.language.filetype.EditorConfigFileType;
-import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

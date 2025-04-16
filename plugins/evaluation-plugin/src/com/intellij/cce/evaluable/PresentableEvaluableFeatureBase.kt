@@ -1,10 +1,13 @@
 package com.intellij.cce.evaluable
 
 import com.intellij.cce.actions.ProjectActionsEnvironment
+import com.intellij.cce.core.Language
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluation.EvaluationEnvironment
 import com.intellij.cce.evaluation.EvaluationRootInfo
+import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.SetupSdkPreferences
 import com.intellij.cce.evaluation.StopEvaluationException
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.interpreter.PresentableFeatureInvoker
@@ -18,12 +21,19 @@ import com.intellij.openapi.project.Project
  * allowing to use easily customizable evaluation report format for project-based evaluations.
  */
 abstract class PresentableEvaluableFeatureBase<T : EvaluationStrategy>(name: String) : PresentableFeature<T>(name) {
+  open val setupSdkPreferences: SetupSdkPreferences = SetupSdkPreferences(
+    resolveDeps = false
+  )
+
   /**
    * how to prepare the context before the feature invocation
    */
   abstract fun getGenerateActionsProcessor(strategy: T, project: Project): GenerateActionsProcessor
 
   abstract fun getFeatureInvoker(project: Project, strategy: T): PresentableFeatureInvoker
+
+  open fun getSetupSteps(project: Project, language: Language, strategy: T): List<EvaluationStep> =
+    defaultSetupSteps(project, language, setupSdkPreferences)
 
   override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment {
     val actions = actions(config)
@@ -37,6 +47,7 @@ abstract class PresentableEvaluableFeatureBase<T : EvaluationStrategy>(name: Str
         EvaluationRootInfo(true),
         project,
         getGenerateActionsProcessor(strategy, project),
+        getSetupSteps(project, Language.resolve(actions.language), strategy),
         name,
         featureInvoker = CustomizableFeatureWrapper(getFeatureInvoker(project, strategy), layoutManager(outputWorkspace))
       )

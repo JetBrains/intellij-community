@@ -3,14 +3,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -24,8 +22,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWit
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.MODIFIER_KEYWORDS_ARRAY
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
@@ -34,84 +33,93 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 
-internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
-        namedFunctionVisitor(fun(function) {
-            val funKeyword = function.funKeyword ?: return
-            val modifierList = function.modifierList ?: return
-            val overrideKeyword = modifierList.getModifier(OVERRIDE_KEYWORD)
-            if (overrideKeyword == null) return
-            if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
-            if (KotlinPsiHeuristics.hasNonSuppressAnnotations(function)) return
+internal class KotlinRedundantOverrideInspection : KotlinApplicableInspectionBase.Simple<KtNamedFunction, Unit>(), CleanupLocalInspectionTool {
+    override fun getProblemDescription(element: KtNamedFunction, context: Unit): @InspectionMessage String =
+        KotlinBundle.message("redundant.overriding.method")
 
-            val qualifiedExpression = function.qualifiedExpression() ?: return
-            val superExpression = qualifiedExpression.receiverExpression as? KtSuperExpression ?: return
-            if (superExpression.superTypeQualifier != null) return
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> =
+        namedFunctionVisitor { function -> visitTargetElement(function, holder, isOnTheFly) }
 
-            val superCallElement = qualifiedExpression.selectorExpression as? KtCallElement ?: return
-            if (!isSameFunctionName(superCallElement, function)) return
-            if (!isSameArguments(superCallElement, function)) return
+    override fun isApplicableByPsi(element: KtNamedFunction): Boolean {
+        val modifierList = element.modifierList ?: return false
+        if (modifierList.getModifier(OVERRIDE_KEYWORD) == null) return false
+        if (MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return false
+        if (KotlinPsiHeuristics.hasNonSuppressAnnotations(element)) return false
 
-            analyze(superCallElement) {
-                val symbol = function.symbol
-                val superCallInfo = superCallElement.resolveToCall() ?: return
-                val superFunctionCallOrNull = superCallInfo.singleFunctionCallOrNull() ?: return
-                val superFunctionSymbol = superFunctionCallOrNull.symbol
-                val superFunctionIsAny = superFunctionSymbol.callableId in CALLABLE_IDS_OF_ANY
+        val qualifiedExpression = element.qualifiedExpression() ?: return false
+        val superExpression = qualifiedExpression.receiverExpression as? KtSuperExpression ?: return false
+        if (superExpression.superTypeQualifier != null) return false
 
-                if (function.containingClassOrObject?.isData() == true) {
-                    if (superFunctionIsAny) return
-                    val allSuperOverriddenSymbols = superFunctionCallOrNull.symbol.allOverriddenSymbolsWithSelf
-                    if (allSuperOverriddenSymbols.any { it.callableId in CALLABLE_IDS_OF_ANY }) return
+        val superCallElement = qualifiedExpression.selectorExpression as? KtCallElement ?: return false
+        if (!isSameFunctionName(superCallElement, element)) return false
+        if (!isSameArguments(superCallElement, element)) return false
+
+        return true
+    }
+
+    override fun getApplicableRanges(element: KtNamedFunction): List<TextRange> {
+        val funKeyword = element.funKeyword ?: return emptyList()
+        val overrideKeyword = element.modifierList?.getModifier(OVERRIDE_KEYWORD) ?: return emptyList()
+        return ApplicabilityRange.multiple(element) { listOf(funKeyword, overrideKeyword) }
+    }
+
+    override fun createQuickFix(element: KtNamedFunction, context: Unit): KotlinModCommandQuickFix<KtNamedFunction> =
+        RedundantOverrideFix
+
+    override fun KaSession.prepareContext(element: KtNamedFunction): Unit? {
+        val symbol = element.symbol
+        val qualifiedExpression = element.qualifiedExpression()
+        val superCallElement = qualifiedExpression?.selectorExpression as? KtCallElement ?: return null
+        val superCallInfo = superCallElement.resolveToCall() ?: return null
+        val superFunctionCallOrNull = superCallInfo.singleFunctionCallOrNull() ?: return null
+        val superFunctionSymbol = superFunctionCallOrNull.symbol
+        val superFunctionIsAny = superFunctionSymbol.callableId in CALLABLE_IDS_OF_ANY
+
+        if (element.containingClassOrObject?.isData() == true) {
+            if (superFunctionIsAny) return null
+            val allSuperOverriddenSymbols = superFunctionCallOrNull.symbol.allOverriddenSymbolsWithSelf
+            if (allSuperOverriddenSymbols.any { it.callableId in CALLABLE_IDS_OF_ANY }) return null
+        }
+
+        if (hasDerivedProperty(element, symbol)) return null
+
+        val superCallValueParameters = superFunctionCallOrNull.partiallyAppliedSymbol.signature.valueParameters
+        val functionValueParameters = symbol.valueParameters
+
+        if (functionValueParameters.size == superCallValueParameters.size &&
+            functionValueParameters.zip(superCallValueParameters)
+                .any {
+                    val functionParameterType = it.first.returnType
+                    val superParameterType = it.second.returnType
+                    val typesMatch = functionParameterType.semanticallyEquals(superParameterType)
+                    !typesMatch
                 }
+        ) return null
 
-                if (function.hasDerivedProperty(symbol)) return
+        val allFunctionOverriddenSymbols: Sequence<KaCallableSymbol> = symbol.allOverriddenSymbols
+        // do nothing when the overridden function is from Any (e.g. `kotlin/Any.equals`)
+        // and super function is abstract
+        if (superFunctionIsAny && allFunctionOverriddenSymbols.any { it.modality == KaSymbolModality.ABSTRACT }) {
+            return null
+        }
 
-                val superCallValueParameters = superFunctionCallOrNull.partiallyAppliedSymbol.signature.valueParameters
-                val functionValueParameters = symbol.valueParameters
+        if (allFunctionOverriddenSymbols.any { it.isPackageVisibleNonJavaSymbol() }) {
+            return null
+        }
 
-                if (functionValueParameters.size == superCallValueParameters.size &&
-                    functionValueParameters.zip(superCallValueParameters)
-                        .any {
-                            val functionParameterType = it.first.returnType
-                            val superParameterType = it.second.returnType
-                            val typesMatch = functionParameterType.semanticallyEquals(superParameterType)
-                            !typesMatch
-                        }
-                ) return
+        if (isAmbiguouslyDerived(allFunctionOverriddenSymbols)) {
+            return null
+        }
 
-                val allFunctionOverriddenSymbols: Sequence<KaCallableSymbol> = symbol.allOverriddenSymbols
-                // do nothing when the overridden function is from Any (e.g. `kotlin/Any.equals`)
-                // and super function is abstract
-                if (superFunctionIsAny && allFunctionOverriddenSymbols.any { it.modality == KaSymbolModality.ABSTRACT }) {
-                    return
-                }
+        if (isOverridingDelegatedImplementation(element, allFunctionOverriddenSymbols)) {
+            return null
+        }
 
-                if (allFunctionOverriddenSymbols.any { it.isPackageVisibleNonJavaSymbol() }) {
-                    return
-                }
-
-                if (function.isAmbiguouslyDerived(allFunctionOverriddenSymbols)) {
-                    return
-                }
-            }
-
-            val range = TextRange(overrideKeyword.startOffset, funKeyword.endOffset).shiftLeft(function.startOffset)
-            val descriptor = holder.manager.createProblemDescriptor(
-                function,
-                range,
-                KotlinBundle.message("redundant.overriding.method"),
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                isOnTheFly,
-                RedundantOverrideFix()
-            )
-            holder.registerProblem(descriptor)
-        })
+        return Unit
+    }
 
     private fun KaCallableSymbol.isPackageVisibleNonJavaSymbol(): Boolean {
         if (!origin.isJavaSourceOrLibrary()) return false
@@ -152,71 +160,78 @@ internal class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), C
         return function.name == superCallMethodName
     }
 
-    context(KaSession)
-    private fun KtNamedFunction.hasDerivedProperty(functionSymbol: KaFunctionSymbol): Boolean {
-        val functionName = nameAsName ?: return false
+    private fun KaSession.hasDerivedProperty(function: KtNamedFunction, functionSymbol: KaFunctionSymbol): Boolean {
+        val functionName = function.nameAsName ?: return false
         if (!canBePropertyAccessor(functionName.asString())) return false
         val functionType = functionSymbol.returnType
         val isSetter = functionType.isUnitType
-        val valueParameters = valueParameters
+        val valueParameters = function.valueParameters
         val singleValueParameter = valueParameters.singleOrNull()
         if (isSetter && singleValueParameter == null || !isSetter && valueParameters.isNotEmpty()) return false
         val propertyType = if (isSetter) singleValueParameter!!.returnType else functionType
         val nonNullablePropertyType = propertyType.withNullability(KaTypeNullability.NON_NULLABLE)
         return propertyNamesByAccessorName(functionName).any {
             val propertyName = it.asString()
-            containingClassOrObject?.declarations?.find { d ->
+            function.containingClassOrObject?.declarations?.find { d ->
                 d is KtProperty && d.name == propertyName && d.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
                     .semanticallyEquals(nonNullablePropertyType)
             } != null
         }
     }
 
-    context(KaSession)
-    private fun KtNamedFunction.isAmbiguouslyDerived(allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>): Boolean {
+    private fun KaSession.isAmbiguouslyDerived(
+        allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
+    ): Boolean {
         // less than 2 functions
         if (allFunctionOverriddenSymbols.take(2).count() < 2) return false
 
-        // Two+ functions
+        // 2+ functions
         // At least one default in interface or abstract in class, or just something from Java
-        if (allFunctionOverriddenSymbols.any { overriddenSymbol ->
-                val javaSourceOrLibrary = overriddenSymbol.origin.isJavaSourceOrLibrary()
-
-                val kind = (overriddenSymbol.containingDeclaration as? KaNamedClassSymbol)?.classKind
-                javaSourceOrLibrary || when (kind) {
-                    KaClassKind.CLASS -> overriddenSymbol.modality == KaSymbolModality.ABSTRACT
-                    KaClassKind.INTERFACE -> overriddenSymbol.modality != KaSymbolModality.ABSTRACT
-                    else -> false
-                }
-
-            }
-        ) {
-            return true
-        }
-
-        val superTypeListEntries = containingClassOrObject?.superTypeListEntries
-        val delegatedSuperTypeEntries =
-            superTypeListEntries?.filterIsInstance<KtDelegatedSuperTypeEntry>()?.ifEmpty { return false } ?: return false
-        val delegatedSuperDeclarationTypes =
-            delegatedSuperTypeEntries.mapNotNull { it.typeReference?.type }
         return allFunctionOverriddenSymbols.any { overriddenSymbol ->
-            val type = (overriddenSymbol.containingSymbol as? KaNamedClassSymbol)?.defaultType ?: return@any false
-            delegatedSuperDeclarationTypes.any { type.isSubtypeOf(it) }
+            val javaSourceOrLibrary = overriddenSymbol.origin.isJavaSourceOrLibrary()
+
+            val kind = (overriddenSymbol.containingDeclaration as? KaNamedClassSymbol)?.classKind
+            javaSourceOrLibrary || when (kind) {
+                KaClassKind.CLASS -> overriddenSymbol.modality == KaSymbolModality.ABSTRACT
+                KaClassKind.INTERFACE -> overriddenSymbol.modality != KaSymbolModality.ABSTRACT
+                else -> false
+            }
         }
     }
 
-    private class RedundantOverrideFix : KotlinModCommandQuickFix<KtNamedFunction>() {
-        override fun getName(): String = KotlinBundle.message("redundant.override.fix.text")
-
-        override fun getFamilyName(): String = name
-
-        override fun applyFix(
-            project: Project,
-            element: KtNamedFunction,
-            updater: ModPsiUpdater
-        ) {
-            element.delete()
+    /**
+     * Don't mark an override unused if it overrides an implementation by delegation.
+     *
+     * Members from interfaces implemented by delegation and their super interfaces are affected.
+     * Explicit overrides in this case replace the overrides from delegation and are not unused.
+     */
+    private fun KaSession.isOverridingDelegatedImplementation(
+        function: KtNamedFunction,
+        allFunctionOverriddenSymbols: Sequence<KaCallableSymbol>,
+    ): Boolean {
+        val superTypeListEntries = function.containingClassOrObject?.superTypeListEntries
+        val delegatedSuperTypeEntries =
+            superTypeListEntries.orEmpty().filterIsInstance<KtDelegatedSuperTypeEntry>().ifEmpty { return false }
+        val delegatedSuperDeclarationTypes =
+            delegatedSuperTypeEntries.mapNotNull { it.typeReference?.type }
+        return allFunctionOverriddenSymbols.any { overriddenSymbol ->
+            val containingSymbolType = (overriddenSymbol.containingSymbol as? KaNamedClassSymbol)?.defaultType ?: return@any false
+            delegatedSuperDeclarationTypes.any { delegatedIFaceType -> delegatedIFaceType.isSubtypeOf(containingSymbolType) }
         }
+    }
+}
+
+private object RedundantOverrideFix : KotlinModCommandQuickFix<KtNamedFunction>() {
+    override fun getName(): String = KotlinBundle.message("redundant.override.fix.text")
+
+    override fun getFamilyName(): String = name
+
+    override fun applyFix(
+        project: Project,
+        element: KtNamedFunction,
+        updater: ModPsiUpdater
+    ) {
+        element.delete()
     }
 }
 

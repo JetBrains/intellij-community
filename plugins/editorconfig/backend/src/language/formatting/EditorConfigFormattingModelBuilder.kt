@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.formatting
 
+import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigElementTypes
 import com.intellij.formatting.*
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import org.editorconfig.language.EditorConfigLanguage
-import org.editorconfig.language.psi.EditorConfigElementTypes
 
 class EditorConfigFormattingModelBuilder : FormattingModelBuilder {
   override fun createModel(formattingContext: FormattingContext): FormattingModel {

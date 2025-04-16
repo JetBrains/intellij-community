@@ -117,8 +117,7 @@ public final class IdentifierHighlighterPass {
     }
 
     if (!myEditor.isDisposed()) {
-      boolean virtSpace = EditorUtil.isCaretInVirtualSpace(myEditor);
-      List<HighlightInfo> infos = virtSpace || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
+      List<HighlightInfo> infos = EditorUtil.isCaretInVirtualSpace(myEditor) || isCaretOverCollapsedFoldRegion() ? Collections.emptyList() : getHighlights();
       PsiFile hostFile = InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile);
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(hostFile.getTextRange(), infos, (MarkupModelEx)hostEditor.getMarkupModel(), getId(), hostSession);
@@ -321,9 +320,12 @@ public final class IdentifierHighlighterPass {
     if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty() && myCodeBlockMarkerRanges.isEmpty()) {
       return Collections.emptyList();
     }
-    Set<Pair<Object, TextRange>> existingMarkupTooltips = new HashSet<>();
+    Set<Pair<String, TextRange>> existingMarkupTooltips = new HashSet<>();
     for (RangeHighlighter highlighter : myEditor.getMarkupModel().getAllHighlighters()) {
-      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), highlighter.getTextRange()));
+      Object tooltip = highlighter.getErrorStripeTooltip();
+      if (tooltip instanceof String stringTip) {
+        existingMarkupTooltips.add(Pair.create(stringTip, highlighter.getTextRange()));
+      }
     }
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());
@@ -334,16 +336,20 @@ public final class IdentifierHighlighterPass {
       result.add(createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
     if (CodeInsightSettings.getInstance().HIGHLIGHT_BRACES) {
-      myCodeBlockMarkerRanges.forEach(range -> result.add(createHighlightInfo(range, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+      for (TextRange range : myCodeBlockMarkerRanges) {
+        result.add(createHighlightInfo(range, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips));
+      }
     }
 
     return result;
   }
 
-  private @NotNull HighlightInfo createHighlightInfo(@NotNull TextRange range, @NotNull HighlightInfoType type, @NotNull Set<Pair<Object, TextRange>> existingMarkupTooltips) {
+  private @NotNull HighlightInfo createHighlightInfo(@NotNull TextRange range,
+                                                     @NotNull HighlightInfoType type,
+                                                     @NotNull Set<? extends Pair<String, TextRange>> existingMarkupTooltips) {
     int start = range.getStartOffset();
     String tooltip = start <= myEditor.getDocument().getTextLength() ? HighlightHandlerBase.getLineTextErrorStripeTooltip(myEditor.getDocument(), start, false) : null;
-    String unescapedTooltip = existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip;
+    String unescapedTooltip = existingMarkupTooltips.contains(new Pair<>(tooltip, range)) ? null : tooltip;
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
     if (unescapedTooltip != null) {
       builder.unescapedToolTip(unescapedTooltip);
@@ -355,8 +361,8 @@ public final class IdentifierHighlighterPass {
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-      if (info == null) continue;
-      if (info.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || info.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE) {
+      if (info != null &&
+          (info.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || info.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE)) {
         highlighter.dispose();
       }
     }

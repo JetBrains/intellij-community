@@ -19,6 +19,13 @@ interface XBreakpointTypeProxy {
   val index: Int
   val title: String
   val enabledIcon: Icon
+  val disabledIcon: Icon
+  val suspendNoneIcon: Icon
+  val mutedEnabledIcon: Icon
+  val mutedDisabledIcon: Icon
+  val pendingIcon: Icon?
+  val inactiveDependentIcon: Icon
+  val temporaryIcon: Icon?
   val isLineBreakpoint: Boolean
 
   val isSuspendThreadSupported: Boolean
@@ -27,7 +34,7 @@ interface XBreakpointTypeProxy {
   val defaultSuspendPolicy: SuspendPolicy
 
   fun setDefaultSuspendPolicy(policy: SuspendPolicy)
-  fun getVisibleStandardPanels(): EnumSet<XBreakpointType.StandardPanels>
+  fun getVisibleStandardPanels(): Set<XBreakpointType.StandardPanels>
   fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
@@ -47,6 +54,20 @@ interface XBreakpointTypeProxy {
       get() = breakpointType.title
     override val enabledIcon: Icon
       get() = breakpointType.enabledIcon
+    override val disabledIcon: Icon
+      get() = breakpointType.disabledIcon
+    override val suspendNoneIcon: Icon
+      get() = breakpointType.suspendNoneIcon
+    override val mutedEnabledIcon: Icon
+      get() = breakpointType.mutedEnabledIcon
+    override val mutedDisabledIcon: Icon
+      get() = breakpointType.mutedDisabledIcon
+    override val pendingIcon: Icon?
+      get() = breakpointType.pendingIcon
+    override val inactiveDependentIcon: Icon
+      get() = breakpointType.inactiveDependentIcon
+    override val temporaryIcon: Icon?
+      get() = (breakpointType as? XLineBreakpointType<*>)?.temporaryIcon
     override val isLineBreakpoint: Boolean
       get() = breakpointType is XLineBreakpointType<*>
     override val isSuspendThreadSupported: Boolean

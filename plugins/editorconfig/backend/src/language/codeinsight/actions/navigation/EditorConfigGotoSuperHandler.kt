@@ -3,14 +3,14 @@ package org.editorconfig.language.codeinsight.actions.navigation
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigFlatOptionKey
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigFlatOptionKey
-import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.reference.findParents
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 

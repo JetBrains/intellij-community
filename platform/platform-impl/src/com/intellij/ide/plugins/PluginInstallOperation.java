@@ -330,8 +330,8 @@ public final class PluginInstallOperation {
     for (IdeaPluginDependency dependency : dependencies) {
       PluginId depPluginId = dependency.getPluginId();
 
-      if (PluginManagerCore.isModuleDependency(depPluginId)) {
-        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.INSTANCE.findPluginByModuleDependency(depPluginId);
+      if (PluginManagerCore.looksLikePlatformPluginAlias(depPluginId)) {
+        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.findPluginByPlatformAlias(depPluginId);
         PluginId pluginIdByModule = descriptorByModule != null ?
                                     descriptorByModule.getPluginId() :
                                     getCachedPluginId(depPluginId.getIdString());

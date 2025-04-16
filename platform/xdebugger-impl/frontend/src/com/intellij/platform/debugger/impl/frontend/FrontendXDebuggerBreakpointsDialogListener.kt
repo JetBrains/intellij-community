@@ -19,10 +19,10 @@ private val LOG = fileLogger()
 
 internal fun subscribeOnBreakpointsDialogRequest(project: Project) {
   project.service<FrontendXDebuggerBreakpointsDialogListenerCoroutineScope>().cs.launch {
-    XDebuggerBreakpointsDialogApi.getInstance().showDialogRequests(project.projectId()).collect {
+    XDebuggerBreakpointsDialogApi.getInstance().showDialogRequests(project.projectId()).collect { breakpointRequest ->
       withContext(Dispatchers.EDT) {
         runCatching {
-          BreakpointsDialogFactory.getInstance(project).showDialogImpl(null)
+          BreakpointsDialogFactory.getInstance(project).showDialogImpl(breakpointRequest.breakpointId)
         }.getOrLogException(LOG)
       }
     }

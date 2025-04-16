@@ -82,9 +82,9 @@ public class ChangeInfoImpl implements ChangeInfo {
     }
   }
 
-  static @NotNull PsiTreeChangeEventImpl createEvent(PsiFile file, int offset) {
-    PsiTreeChangeEventImpl e = new PsiTreeChangeEventImpl(file.getManager());
-    e.setFile(file);
+  static @NotNull PsiTreeChangeEventImpl createEvent(@NotNull PsiFile psiFile, int offset) {
+    PsiTreeChangeEventImpl e = new PsiTreeChangeEventImpl(psiFile.getManager());
+    e.setFile(psiFile);
     e.setOffset(offset);
     return e;
   }

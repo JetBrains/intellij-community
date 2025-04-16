@@ -106,7 +106,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private var myWriteActionListener: WriteActionListener? = null
   private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
   private var myLockAcquisitionListener: LockAcquisitionListener? = null
-  private var mySuspendingWriteActionListener: SuspendingWriteActionListener? = null
+  private var myWriteLockReacquisitionListener: WriteLockReacquisitionListener? = null
   private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
 
   private val myWriteActionsStack = Stack<Class<*>>()
@@ -554,17 +554,17 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
-    if (mySuspendingWriteActionListener != null)
+  override fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
+    if (myWriteLockReacquisitionListener != null)
       error("SuspendingWriteActionListener already registered")
-    mySuspendingWriteActionListener = listener
+    myWriteLockReacquisitionListener = listener
   }
 
   @ApiStatus.Internal
-  override fun removeSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
-    if (mySuspendingWriteActionListener != listener)
+  override fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
+    if (myWriteLockReacquisitionListener != listener)
       error("SuspendingWriteActionListener is not registered")
-    mySuspendingWriteActionListener = null
+    myWriteLockReacquisitionListener = null
   }
 
   @ApiStatus.Internal
@@ -716,7 +716,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       runWithTemporaryThreadLocal(ts) { action() }
     }
     finally {
-      mySuspendingWriteActionListener?.beforeWriteLockReacquired()
+      myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
       ts.acquire(getWritePermit(ts))
       myWriteAcquired = Thread.currentThread()
       myWriteStackBase = prevBase

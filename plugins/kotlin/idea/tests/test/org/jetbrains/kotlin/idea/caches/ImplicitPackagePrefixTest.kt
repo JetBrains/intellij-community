@@ -37,6 +37,11 @@ class ImplicitPackagePrefixTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals("", prefix())
     }
 
+    fun testNestedChild() {
+        myFixture.tempDirFixture.createFile("foo/foo.kt", "package com.example.foo")
+        assertEquals("com.example", prefix())
+    }
+
     fun testUpdateOnCreate() {
         myFixture.configureByText("foo.kt", "package com.example.foo")
         assertEquals("com.example.foo", prefix())

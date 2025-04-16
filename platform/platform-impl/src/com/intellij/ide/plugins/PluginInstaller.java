@@ -247,7 +247,7 @@ public final class PluginInstaller {
   ) {
     try {
       var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
+        return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(file, null);
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {
@@ -403,7 +403,7 @@ public final class PluginInstaller {
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
         //  so load first, then enable
-        targetDescriptor.setEnabled(true);
+        targetDescriptor.setMarkedForLoading(true);
         var result = DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
         PluginEnabler.HEADLESS.enable(Set.of(targetDescriptor));
         return result;
@@ -430,8 +430,8 @@ public final class PluginInstaller {
       var pluginId = dependency.getPluginId();
       if (installedDependencies.contains(pluginId) ||
           model.isLoaded(pluginId) ||
-          PluginManagerCore.isModuleDependency(pluginId) ||
-          PluginManagerCore.INSTANCE.findPluginByModuleDependency(pluginId) != null) {
+          PluginManagerCore.looksLikePlatformPluginAlias(pluginId) ||
+          PluginManagerCore.findPluginByPlatformAlias(pluginId) != null) {
         continue;
       }
 

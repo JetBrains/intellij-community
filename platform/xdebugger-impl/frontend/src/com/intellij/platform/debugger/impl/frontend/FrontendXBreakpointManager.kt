@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
@@ -8,54 +9,61 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.breakpoints.XBreakpointType
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointItem
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
+import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.rpc.XBreakpointApi
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
+import java.util.concurrent.ConcurrentMap
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-  val breakpoints: StateFlow<Set<XBreakpointProxy>> = channelFlow {
-    XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).collectLatest { breakpointDtos ->
-      // TODO: do we need to reuse breakpoint coroutine scopes?
-      supervisorScope {
-        val breakpointProxies = breakpointDtos.mapTo(mutableSetOf()) {
-          FrontendXBreakpointProxy(
-            project = project,
-            cs = this,
-            dto = it,
-            onBreakpointChange = {
-              breakpointsChanged.tryEmit(Unit)
-            }
-          )
-        }
-        send(breakpointProxies)
-        breakpointsChanged.tryEmit(Unit)
-      }
-      awaitCancellation()
-    }
-  }.stateIn(cs, SharingStarted.Eagerly, emptySet())
+  private val breakpoints: ConcurrentMap<XBreakpointId, FrontendXBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
 
+  private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
+
+  // TODO[IJPL-160384]: support persistance between sessions
   override val breakpointsDialogSettings: XBreakpointsDialogState?
-    get() = null // TODO: add persistance
+    get() = _breakpointsDialogSettings
+
   override val allGroups: Set<String>
     get() = setOf() // TODO: implement groups
 
+
   override val dependentBreakpointManager: XDependentBreakpointManagerProxy = FrontendXDependentBreakpointManagerProxy()
 
+  init {
+    cs.launch {
+      XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).collectLatest { breakpointDtos ->
+        val breakpointsToRemove = breakpoints.keys - breakpointDtos.map { it.id }.toSet()
+        removeBreakpoints(breakpointsToRemove)
+
+        val newBreakpoints = breakpointDtos.filter { it.id !in breakpoints }
+        for (breakpointDto in newBreakpoints) {
+          breakpoints[breakpointDto.id] = FrontendXBreakpointProxy(project, cs, breakpointDto, onBreakpointChange = {
+            breakpointsChanged.tryEmit(Unit)
+          })
+        }
+      }
+    }
+  }
+
+  private fun removeBreakpoints(breakpointsToRemove: Collection<XBreakpointId>) {
+    for (breakpointToRemove in breakpointsToRemove) {
+      val removedBreakpoint = breakpoints.remove(breakpointToRemove)
+      removedBreakpoint?.dispose()
+    }
+  }
+
   override fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState) {
-    // TODO: add persistance
+    _breakpointsDialogSettings = settings
   }
 
   override fun setDefaultGroup(group: String) {
@@ -63,7 +71,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   }
 
   override fun getAllBreakpointItems(): List<BreakpointItem> {
-    return breakpoints.value.map { proxy ->
+    return breakpoints.values.map { proxy ->
       XBreakpointItem(proxy, this)
     }
   }
@@ -86,5 +94,12 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   override fun getLastRemovedBreakpoint(): XBreakpointProxy? {
     // TODO: Send through RPC
     return null
+  }
+
+  override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
+    removeBreakpoints(setOf(breakpoint.id))
+    cs.launch {
+      XBreakpointApi.getInstance().removeBreakpoint(breakpoint.id)
+    }
   }
 }

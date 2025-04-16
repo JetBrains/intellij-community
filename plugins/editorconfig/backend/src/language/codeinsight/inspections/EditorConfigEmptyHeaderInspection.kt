@@ -3,11 +3,11 @@ package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigHeader
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigInsertStarQuickFix
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveSectionQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigVisitor
 
 internal fun EditorConfigHeader.isEmptyHeader(): Boolean = this.textMatches("[]")
 

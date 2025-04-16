@@ -13325,6 +13325,9 @@ f:com.intellij.openapi.projectRoots.impl.SdkListCellRenderer
 - <init>(java.lang.String,Z):V
 com.intellij.openapi.projectRoots.impl.UnknownSdkBlockingCollector
 - a:collectSdksBlocking():com.intellij.openapi.projectRoots.impl.UnknownSdkSnapshot
+f:com.intellij.openapi.projectRoots.impl.UnknownSdkCheckerService
+- <init>(com.intellij.openapi.project.Project):V
+- f:checkUnknownSdks():V
 c:com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
 - com.intellij.openapi.projectRoots.impl.UnknownSdkBlockingCollector
 - <init>(com.intellij.openapi.project.Project):V

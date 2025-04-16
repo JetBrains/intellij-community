@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 
 class CopyImageAction : DumbAwareAction() {

@@ -7,9 +7,9 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.editorconfig.common.syntax.EditorConfigLanguage
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiFile
-import org.editorconfig.language.EditorConfigLanguage
 
 class EditorConfigAppendInsertionHandler(
   private val suffix: String,

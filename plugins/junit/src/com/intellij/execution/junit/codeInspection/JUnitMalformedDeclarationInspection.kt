@@ -562,12 +562,13 @@ private class JUnitMalformedSignatureVisitor(
       annotationMemberValue.forEach { attributeValue ->
         for (reference in attributeValue.references) {
           if (reference is MethodSourceReference) {
-            val resolve = reference.resolve()
-            if (resolve !is PsiMethod) {
+            containingClass.findMethodsByName(reference.element.toUElement(UExpression::class.java)!!.evaluate().toString(), true)
+            val parametrizedMethod = reference.fastResolveFor(method)
+            if (parametrizedMethod !is PsiMethod) {
               return checkAbsentSourceProvider(containingClass, attributeValue, reference.value, method)
             }
             else {
-              val sourceProvider: PsiMethod = resolve
+              val sourceProvider: PsiMethod = parametrizedMethod
               val uSourceProvider = sourceProvider.toUElementOfType<UMethod>() ?: return
               return checkSourceProvider(uSourceProvider, containingClass, attributeValue, method)
             }

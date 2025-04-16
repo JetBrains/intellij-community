@@ -476,10 +476,12 @@ class JbSettingsImporter(private val configDirPath: Path,
     importOptions.isHeadless = true
     importOptions.headlessProgressIndicator = progressIndicator
     importOptions.importSettings = object : ConfigImportSettings {
-      override fun processPluginsToMigrate(newConfigDir: Path,
-                                           oldConfigDir: Path,
-                                           bundledPlugins: MutableList<IdeaPluginDescriptor>,
-                                           nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
+      override fun processPluginsToMigrate(
+        newConfigDir: Path,
+        oldConfigDir: Path,
+        bundledPlugins: MutableList<IdeaPluginDescriptor>, // FIXME wrong arg name
+        nonBundledPlugins: MutableList<IdeaPluginDescriptor>, // FIXME wrong arg name
+      ) {
         nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
         bundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
       }

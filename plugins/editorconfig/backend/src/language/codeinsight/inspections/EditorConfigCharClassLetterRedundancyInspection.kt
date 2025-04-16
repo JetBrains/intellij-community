@@ -3,12 +3,12 @@ package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassLetter
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigCharClassPattern
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import com.intellij.openapi.util.TextRange
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigSanitizeCharClassQuickFix
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigCharClassLetter
-import org.editorconfig.language.psi.EditorConfigCharClassPattern
-import org.editorconfig.language.psi.EditorConfigVisitor
 
 class EditorConfigCharClassLetterRedundancyInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {

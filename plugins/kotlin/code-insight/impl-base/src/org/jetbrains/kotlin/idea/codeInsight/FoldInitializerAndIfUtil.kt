@@ -1,12 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -29,12 +33,14 @@ data class FoldInitializerAndIfExpressionData(
     val variableDeclaration: KtVariableDeclaration,
     val ifNullExpression: KtExpression,
     val typeChecked: KtTypeReference? = null,
-    val variableTypeString: String?
+    val variableTypeString: String?,
+    val couldBeVal: Boolean = false,
 )
 
 context(KaSession)
+@ApiStatus.Internal
 @OptIn(KaExperimentalApi::class)
-fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boolean = false): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null
 
     val operationExpression = element.condition as? KtOperationExpression ?: return null
@@ -71,14 +77,18 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         if (!checkedType.isPossiblySubTypeOf(variableType)) return null
     }
 
-
     if (statement.expressionType?.isNothingType != true) return null
 
     if (ReferencesSearch.search(variableDeclaration, LocalSearchScope(statement)).findFirst() != null) {
         return null
     }
 
-    val type = calculateType(variableDeclaration, element, initializer)?.let { type ->
+    val couldBeVal = variableDeclaration.isVar &&
+            variableDeclaration
+                .diagnostics(KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS)
+                .any { it is KaFirDiagnostic.CanBeVal }
+
+    val type = calculateType(variableDeclaration, element, initializer, couldBeVal && enforceNonNullableTypeIfPossible)?.let { type ->
         if (type is KaErrorType) null
         else type.render(position = Variance.OUT_VARIANCE)
     }
@@ -88,10 +98,12 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         variableDeclaration,
         statement,
         typeReference,
-        type
+        type,
+        couldBeVal
     )
 }
 
+@ApiStatus.Internal
 fun joinLines(
     element: KtIfExpression,
     variableDeclaration: KtVariableDeclaration,
@@ -126,7 +138,8 @@ context(KaSession)
 private fun calculateType(
     declaration: KtVariableDeclaration,
     element: KtIfExpression,
-    initializer: KtExpression
+    initializer: KtExpression,
+    enforceNonNullableType: Boolean
 ) = when {
     // for var with no explicit type, add it so that the actual change won't change
     declaration.isVar && declaration.typeReference == null -> {
@@ -146,7 +159,7 @@ private fun calculateType(
     }
 
     // for val with explicit type, change it to non-nullable
-    !declaration.isVar && declaration.typeReference != null ->
+    declaration.typeReference != null && (!declaration.isVar || declaration.isVar && enforceNonNullableType) ->
         initializer.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
 
     else -> null
@@ -178,4 +191,10 @@ private fun createElvisExpression(
 private fun PsiChildRange.withoutLastStatement(): PsiChildRange {
     val newLast = last!!.siblings(forward = false, withItself = false).first { it !is PsiWhiteSpace }
     return PsiChildRange(first, newLast)
+}
+
+@ApiStatus.Internal
+fun KtValVarKeywordOwner.replaceVarWithVal(): PsiElement? {
+    val varKeyword = valOrVarKeyword ?: return null
+    return varKeyword.replace(KtPsiFactory(project).createValKeyword())
 }

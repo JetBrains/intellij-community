@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.coroutines.runSuspend
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.containers.Stack
 import com.jetbrains.rd.util.forEachReversed
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
@@ -390,7 +389,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   private var myWriteActionListener: WriteActionListener? = null
   private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
   private var myLockAcquisitionListener: LockAcquisitionListener? = null
-  private var mySuspendingWriteActionListener: SuspendingWriteActionListener? = null
+  private var myWriteLockReacquisitionListener: WriteLockReacquisitionListener? = null
   private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
 
   private val myWriteActionsStack = Collections.synchronizedList(ArrayList<Class<*>>())
@@ -493,13 +492,24 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
         return ComputationStateContextElement(newComputationState) to object : AccessToken() {
           override fun finish() {
+            var isWriteActionPendingOnCurrentLevel: Boolean
             do {
               val currentPendingWaArray = myWriteActionPending.get()
 
               @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog") // the suggested method adds useless nullability
               val newArray = Arrays.copyOf(currentPendingWaArray, currentPendingWaArray.size - 1)
+
+              isWriteActionPendingOnCurrentLevel = newArray.last().get() > 0
             }
             while (!myWriteActionPending.compareAndSet(currentPendingWaArray, newArray))
+
+            /**
+             * We need to cancel read actions because after the change of level we might get a pending WA which needs to run asap.
+             * See the comment in [isWriteActionPending]
+             */
+            if (isWriteActionPendingOnCurrentLevel) {
+              myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
+            }
             statesOfWIThread.get()?.removeLast()
             cleanup.finish()
           }
@@ -803,17 +813,17 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
-    if (mySuspendingWriteActionListener != null)
+  override fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
+    if (myWriteLockReacquisitionListener != null)
       error("SuspendingWriteActionListener already registered")
-    mySuspendingWriteActionListener = listener
+    myWriteLockReacquisitionListener = listener
   }
 
   @ApiStatus.Internal
-  override fun removeSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
-    if (mySuspendingWriteActionListener != listener)
+  override fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
+    if (myWriteLockReacquisitionListener != listener)
       error("SuspendingWriteActionListener is not registered")
-    mySuspendingWriteActionListener = null
+    myWriteLockReacquisitionListener = null
   }
 
   @ApiStatus.Internal
@@ -893,23 +903,27 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
     val permit = computationState.getThisThreadPermit()
 
-    when (permit) {
-      null -> {
-        val writeIntent = computationState.acquireWriteIntentPermit()
-        return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
+    try {
+      when (permit) {
+        null -> {
+          val writeIntent = computationState.acquireWriteIntentPermit()
+          return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
+        }
+        is ParallelizablePermit.Read -> {
+          error("WriteAction can not be called from ReadAction")
+        }
+        is ParallelizablePermit.WriteIntent -> {
+          checkWriteFromRead("Write", "Write Intent")
+          return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, listener)
+        }
+        is ParallelizablePermit.Write -> {
+          checkWriteFromRead("Write", "Write")
+          return PreparatoryWriteIntent(permit.writePermit, false, computationState, listener)
+        }
       }
-      is ParallelizablePermit.Read -> {
-        endPendingWriteAction(computationState)
-        error("WriteAction can not be called from ReadAction")
-      }
-      is ParallelizablePermit.WriteIntent -> {
-        checkWriteFromRead("Write", "Write Intent")
-        return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, listener)
-      }
-      is ParallelizablePermit.Write -> {
-        checkWriteFromRead("Write", "Write")
-        return PreparatoryWriteIntent(permit.writePermit, false, computationState, listener)
-      }
+    } catch (e : Throwable) {
+      endPendingWriteAction(computationState)
+      throw e
     }
   }
 
@@ -1004,7 +1018,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       action()
     }
     finally {
-      mySuspendingWriteActionListener?.beforeWriteLockReacquired()
+      myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
       val newWritePermit = runSuspend {
         rootWriteIntentPermit.acquireWritePermit()
       }
@@ -1022,18 +1036,27 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
   override fun isWriteActionInProgress(): Boolean = myWriteAcquired != null
 
+
+  /**
+   * **DISCLAIMER: THE CONCEPT BELOW IS NOT HOW IT WORKS IN THE PLATFORM**
+   *
+   * In an ideal world, it would be more correct to check all write actions starting from the level of the context lock.
+   * I.e., the following:
+   * ```
+   * writeAction {} // pending
+   * modalProgress {}
+   * readAction { } // does not start, because  same-level WA is pending
+   * ```
+   * This solution would ensure that we don't waste computation power on useless read action that will be overwritten by a same level pending write action.
+   *
+   * **^^^ THIS IS NOT HOW IT WORKS IN THE PLATFORM**
+   *
+   * Unfortunately, the IJ Platform does not follow the principle of structured concurrency. Historically, we have a lot of modal computations
+   * that may depend on the non-modal read action to complete. For example, our code for saving, which may wait until previously scheduled `RefreshSession`s finish.
+   * So we chose to permit ALL read actions if there is not top-level pending WA.
+   */
   override fun isWriteActionPending(): Boolean {
-    // Here, we must not check lower-level write actions to permit read actions inside modality.
-    // However, we should check for higher-level write actions: this would ensure mutual exclusiveness of WA and RA
-    var level = getComputationState().level()
-    val pendingArray = myWriteActionPending.get()
-    while (level < pendingArray.size) {
-      if (pendingArray[level].get() > 0) {
-        return true
-      }
-      level++
-    }
-    return false
+    return myWriteActionPending.get().last().get() > 0
   }
 
   override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()

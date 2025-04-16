@@ -3,13 +3,13 @@ package org.editorconfig.language.codeinsight.quickfixes
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.editorconfig.common.EditorConfigBundle
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValueList
+import com.intellij.editorconfig.common.syntax.psi.impl.EditorConfigElementFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.codeinsight.inspections.findBadCommas
-import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigOptionValueList
-import org.editorconfig.language.services.EditorConfigElementFactory
 import org.jetbrains.annotations.Nls
 
 class EditorConfigCleanupValueListQuickFix : LocalQuickFix {

@@ -91,3 +91,13 @@ kotlin {
   }
   // KOTLIN__MARKER_END
 }
+
+kotlin {
+  sourceSets {
+    wasmJsMain {
+      dependencies {
+        implementation("org.jetbrains.kotlinx:kotlinx-browser:0.3")
+      }
+    }
+  }
+}

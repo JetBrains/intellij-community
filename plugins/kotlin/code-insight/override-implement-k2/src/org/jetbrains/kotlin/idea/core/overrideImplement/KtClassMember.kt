@@ -28,9 +28,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunction
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaContextParameterOwnerSymbol
@@ -46,11 +46,13 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasValueModifier
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addIfNotNull
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -220,8 +222,29 @@ fun generateClassWithMembers(
             }
             primaryConstructor?.addModifier(KtTokens.ACTUAL_KEYWORD)
         }
-        MemberGenerateMode.EXPECT -> if (targetClass == null) {
-            newClass.addModifier(KtTokens.EXPECT_KEYWORD)
+        MemberGenerateMode.EXPECT -> {
+            if (targetClass == null) {
+                newClass.addModifier(KtTokens.EXPECT_KEYWORD)
+            }
+
+            val actuals = mutableSetOf<String>()
+            symbol.psi?.forEachDescendantOfType<KtPrimaryConstructor> {
+                if (it.hasActualModifier()) {
+                    actuals.addIfNotNull(it.name)
+                }
+            }
+            newClass.forEachDescendantOfType<KtPrimaryConstructor> { primaryConstructor ->
+                if (primaryConstructor.name !in actuals) {
+                    primaryConstructor.delete()
+                } else {
+                    val klass = primaryConstructor.parent as KtClass
+                    if (!klass.areConstructorPropertiesAllowed()) {
+                        primaryConstructor.valueParameters.forEach { param ->
+                            param.valOrVarKeyword?.delete()
+                        }
+                    }
+                }
+            }
         }
 
         MemberGenerateMode.OVERRIDE -> {
@@ -230,6 +253,8 @@ fun generateClassWithMembers(
     }
     return newClass
 }
+
+private fun KtClassOrObject.areConstructorPropertiesAllowed(): Boolean = this is KtClass && (isAnnotation() || isInline())
 
 context(KaSession)
 @KaExperimentalApi
@@ -249,7 +274,7 @@ private fun createRenderer(
             ) {
                 if (symbol is KaConstructorSymbol &&
                     !symbol.isPrimary &&
-                    (symbol.containingSymbol as? KaClassSymbol)?.declaredMemberScope?.constructors?.any { it.isPrimary } == true) {
+                    (symbol.containingSymbol as? KaClassSymbol)?.declaredMemberScope?.constructors?.any { it.isPrimary && (mode == MemberGenerateMode.ACTUAL || mode == MemberGenerateMode.EXPECT && it.isActual) } == true) {
                     printer.append(" : this()")
                 }
             }
@@ -258,6 +283,10 @@ private fun createRenderer(
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter { annotation, _ -> keepAnnotation(annotation, containingKtFile) }
             }
+        }
+
+        if (mode == MemberGenerateMode.EXPECT) {
+            superTypesArgumentRenderer = KaSuperTypesCallArgumentsRenderer.NO_ARGS
         }
 
         modifiersRenderer = modifiersRenderer.with {
@@ -273,33 +302,10 @@ private fun createRenderer(
                 }
             }
 
-            if (mode != MemberGenerateMode.ACTUAL) {
+            if (mode == MemberGenerateMode.OVERRIDE) {
                 modalityProvider = modalityProvider.onlyIf { s -> s != topDeclarationSymbol }
             }
 
-            valueParameterRenderer = object: KaValueParameterSymbolRenderer {
-                // to delete when KT-75386 is fixed
-                override fun renderSymbol(
-                    analysisSession: KaSession,
-                    symbol: KaValueParameterSymbol,
-                    declarationRenderer: KaDeclarationRenderer,
-                    printer: PrettyPrinter,
-                ) {
-                    printer {
-                        if (symbol.generatedPrimaryConstructorProperty != null) {
-                            val mutabilityKeyword = if (symbol.isVal) KtTokens.VAL_KEYWORD else KtTokens.VAR_KEYWORD
-                            printer.append(mutabilityKeyword.value).append(" ")
-                        }
-                        " = ".separated(
-                            {
-                                declarationRenderer.callableSignatureRenderer
-                                    .renderCallableSignature(analysisSession, symbol, keyword = null, declarationRenderer, printer)
-                            },
-                            { declarationRenderer.parameterDefaultValueRenderer.renderDefaultValue(analysisSession, symbol, printer) },
-                        )
-                    }
-                }
-            }
             propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
 
             val containingSymbol = targetClass?.symbol as? KaClassSymbol
@@ -355,7 +361,7 @@ private fun createRenderer(
                                 add(KtTokens.INLINE_KEYWORD)
                             }
                         }
-                        if (symbol.isData) add(KtTokens.DATA_KEYWORD)
+                        if (mode != MemberGenerateMode.EXPECT && symbol.isData) add(KtTokens.DATA_KEYWORD)
                         if (symbol.isFun) add(KtTokens.FUN_KEYWORD)
                         if (symbol.isInner) add(KtTokens.INNER_KEYWORD)
                     }
@@ -519,18 +525,49 @@ private fun generateClass(
 ): KtClassOrObject {
     val factory = KtPsiFactory(project)
     val classText = symbol.render(renderer)
-    val klass = if (symbol.classKind.isObject) factory.createObject(classText) else factory.createClass(classText)
+    val klass = when (symbol.classKind) {
+        KaClassKind.COMPANION_OBJECT -> {
+            factory.createCompanionObject(classText)
+        }
+
+        KaClassKind.OBJECT, KaClassKind.ANONYMOUS_OBJECT -> {
+            factory.createObject(classText)
+        }
+
+        else -> {
+            factory.createClass(classText)
+        }
+    }
+    val constructorSymbol = symbol.declaredMemberScope.constructors.find { it.isPrimary }
+    if (constructorSymbol != null) {
+        val primaryConstructor = klass.primaryConstructor
+        if (primaryConstructor != null) {
+            constructorSymbol.valueParameters.forEachIndexed { index, symbol ->
+                if (symbol.generatedPrimaryConstructorProperty != null) {
+                    val mutabilityKeyword = if (symbol.isVal) factory.createValKeyword() else factory.createVarKeyword()
+                    val parameter = primaryConstructor.valueParameters[index]
+                    parameter.addBefore(mutabilityKeyword, parameter.nameIdentifier)
+                }
+            }
+        }
+    }
     symbol.combinedDeclaredMemberScope.declarations.mapNotNull { declaration ->
         if (declaration.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED) {
             // ignore generated Enum#values()
             return@mapNotNull null
         }
+
+        if (mode == MemberGenerateMode.EXPECT && !declaration.isActual && declaration !is KaEnumEntrySymbol) {
+            return@mapNotNull null
+        }
+
         when (declaration) {
             is KaNamedFunctionSymbol, is KaConstructorSymbol -> {
                 generateFunction(project, declaration, renderer, mode, getBodyType(null, declaration, null, mode))
             }
             is KaPropertySymbol -> {
-                if (declaration.psi !is KtParameter) {
+                if (declaration.psi !is KtParameter ||
+                    declaration.isActual && mode == MemberGenerateMode.EXPECT && !klass.areConstructorPropertiesAllowed()) {
                     generateProperty(project, declaration, renderer, mode, getBodyType(null, declaration, null, mode))
                 } else {
                     null
@@ -548,7 +585,8 @@ private fun generateClass(
         }
     }.forEach { declaration ->
         if (declaration !is KtPrimaryConstructor) {
-            if (klass.declarations.any { it is KtEnumEntry }) {
+            val hasEnumConstants = klass.declarations.any { it is KtEnumEntry }
+            if (hasEnumConstants) {
                 val body = klass.body
                 val rBrace = body?.rBrace
                 if (rBrace != null) {
@@ -559,6 +597,12 @@ private fun generateClass(
                     }
                 }
             }
+
+            if (klass is KtClass && klass.isEnum() && !hasEnumConstants && declaration !is KtEnumEntry) {
+                val body = klass.getOrCreateBody()
+                body.addBefore(factory.createSemicolon(), body.rBrace)
+            }
+
             klass.addDeclaration(declaration)
         }
     }

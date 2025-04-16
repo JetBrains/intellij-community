@@ -2,9 +2,9 @@
 package org.editorconfig.language.util
 
 import com.intellij.codeInsight.template.impl.TemplateImpl
+import com.intellij.editorconfig.common.syntax.psi.EditorConfigSection
 import com.intellij.openapi.diagnostic.logger
 import org.editorconfig.language.codeinsight.completion.templates.EditorConfigTemplateBuilder
-import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor

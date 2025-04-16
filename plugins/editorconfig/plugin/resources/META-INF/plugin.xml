@@ -23,6 +23,7 @@
   -->
   <depends>com.intellij.modules.lang</depends>
   <content>
+    <module name="intellij.editorconfig.common" loading="embedded"/>
     <module name="intellij.editorconfig.backend" loading="embedded"/>
   </content>
 </idea-plugin>

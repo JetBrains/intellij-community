@@ -130,6 +130,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "@lib//:maven-resolver-provider",
     "//java/java-syntax:syntax",
+    "//platform/lang-impl",
   ],
   runtime_deps = [
     ":tests_test_resources",

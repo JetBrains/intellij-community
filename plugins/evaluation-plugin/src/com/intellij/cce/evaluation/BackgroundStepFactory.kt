@@ -41,9 +41,7 @@ class BackgroundStepFactory(
 
   override fun setupRegistryStep(): EvaluationStep = SetupRegistryStep(config.interpret.registry)
 
-  override fun setupSdkStep(): EvaluationStep? = environment.setupSdk
-
-  override fun checkSdkConfiguredStep(): EvaluationStep? = environment.checkSdk
+  override fun setupEnvironmentSteps(): List<EvaluationStep> = environment.setupSteps
 
   override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep()
 

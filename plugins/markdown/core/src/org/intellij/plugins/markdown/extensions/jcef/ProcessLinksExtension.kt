@@ -41,7 +41,10 @@ internal class ProcessLinksExtension(private val panel: MarkdownHtmlPanel): Mark
         return false
       }
     }
-    MarkdownLinkOpener.getInstance().openLink(panel.project, link)
+    if (Registry.`is`("markdown.open.link.fallback"))
+      MarkdownLinkOpener.getInstance().openLink(panel.project, link)
+    else
+      MarkdownLinkOpener.getInstance().openLink(panel.project, link, panel.virtualFile)
     return false
   }
 

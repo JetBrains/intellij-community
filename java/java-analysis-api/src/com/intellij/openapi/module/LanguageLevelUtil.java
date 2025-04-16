@@ -18,7 +18,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class LanguageLevelUtil {
@@ -56,15 +55,13 @@ public final class LanguageLevelUtil {
   }
 
   /**
-   * @param api The language level to get the next from.
+   * @deprecated Please use {@link LanguageLevel#next()} instead.
+   * @param languageLevel The language level to get the next from.
    * @return Next {@link LanguageLevel} that is not in preview or null if there is no language level.
    */
-  public static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel api) {
-    List<LanguageLevel> levels = LanguageLevel.getEntries();
-    for (LanguageLevel level : levels.subList(api.ordinal() + 1, levels.size())) {
-      if (!level.isPreview()) return level;
-    }
-    return null;
+  @Deprecated(forRemoval = true)
+  public static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.next();
   }
 
   /**
@@ -88,11 +85,13 @@ public final class LanguageLevelUtil {
    */
   @Deprecated(forRemoval = true)
   public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
-    return JdkApiCompatabilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
+    LanguageLevel firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
+    if (firstCompatibleLanguageLevel == null) return null;
+    return firstCompatibleLanguageLevel.previous();
   }
 
   /**
-   * @deprecated Please use {@link JdkApiCompatabilityCache} to check for incompatible APIs.
+   * @deprecated Please use {@link JdkApiCompatibilityService} to check for incompatible APIs.
    */
   @Deprecated(forRemoval = true)
   public static Set<String> loadSignatureList(@NotNull URL resource) {
@@ -108,10 +107,10 @@ public final class LanguageLevelUtil {
   /**
    * For serialization of forbidden api.
    *
-   * @deprecated Please don't use this, this API was moved to {@link JdkApiCompatabilityCache} and is for internal use only.
+   * @deprecated Please don't use this, this API was moved to {@link JdkApiCompatibilityService} and is for internal use only.
    */
   @Deprecated(forRemoval = true)
   public static @Nullable String getSignature(@Nullable PsiMember member) {
-    return JdkApiCompatabilityCache.getInstance().getSignature(member);
+    return JdkApiCompatibilityService.getInstance().getSignature(member);
   }
 }

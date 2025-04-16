@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.syntax.i18n` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_test")
 
 jvm_provided_library(
   name = "multiplatformSupport_provided",
@@ -15,8 +15,29 @@ jvm_library(
   plugins = ["@lib//:expects-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/util",
+    "@lib//:jetbrains-annotations",
     ":multiplatformSupport_provided",
   ]
+)
+
+jvm_library(
+  name = "i18n_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":i18n"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+    "@lib//:junit5",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+
+jvm_test(
+  name = "i18n_test",
+  runtime_deps = [":i18n_test_lib"]
 )
 ### auto-generated section `build intellij.platform.syntax.i18n` end

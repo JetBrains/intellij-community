@@ -17,7 +17,13 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
 
   val pluginAliases: List<PluginId>
 
+  val packagePrefix: String?
+
   val actions: List<ActionElement>
+
+  val appContainerDescriptor: ContainerDescriptor
+  val projectContainerDescriptor: ContainerDescriptor
+  val moduleContainerDescriptor: ContainerDescriptor
 
   /**
    * Qualified extension point name -> list of extension descriptors.
@@ -27,12 +33,15 @@ interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
   val extensions: Map<String, List<ExtensionDescriptor>>
 
   val useCoreClassLoader: Boolean
+  val isUseIdeaClassLoader: Boolean
 
   /**
    * If false, the classloader of this descriptor uses core (platform) classloader as a fallback, otherwise, the system classloader is used instead.
    * TODO seems to be unused currently: there are no production plugin descriptor files with this attribute specified
    */
   val isIndependentFromCoreClassLoader: Boolean
+
+  var isMarkedForLoading: Boolean
 }
 
 internal val IdeaPluginDescriptorEx.isRequiredContentModule: Boolean

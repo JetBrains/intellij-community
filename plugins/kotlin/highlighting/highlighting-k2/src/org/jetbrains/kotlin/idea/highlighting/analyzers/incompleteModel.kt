@@ -12,7 +12,6 @@ import kotlin.reflect.KClass
 val ignoreIncompleteModeDiagnostics: Set<KClass<out KaFirDiagnostic<out PsiElement>>> = setOf(
     ValReassignment::class,
     ValReassignmentViaBackingFieldError::class,
-    ValReassignmentViaBackingFieldWarning::class,
     MissingConstructorKeyword::class,
     NoConstructor::class,
     InnerClassConstructorNoReceiver::class,

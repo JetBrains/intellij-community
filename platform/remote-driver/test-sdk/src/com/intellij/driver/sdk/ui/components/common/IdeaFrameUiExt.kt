@@ -2,8 +2,10 @@ package com.intellij.driver.sdk.ui.components.common
 
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.elements.fileChooser
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 
 private const val TOOL_WINDOW_ROOT_COMPONENT_CLASS = "com.intellij.toolWindow.InternalDecoratorImpl"
 
@@ -44,7 +46,7 @@ fun IdeaFrameUI.toolWindow(name: String, action: UiComponent.() -> Unit = {}) = 
 
 fun IdeaFrameUI.invokeOpenFileAction(file: Path) {
   driver.invokeAction("OpenFile", now = false)
-  fileChooser({ byTitle("Open File or Project") }).openPath(file)
+  fileChooser({ byTitle("Open File or Project") }).waitFound(10.seconds).openPath(file)
 }
 
 fun IdeaFrameUI.requireProject() = checkNotNull(project) { "no project" }

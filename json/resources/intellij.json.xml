@@ -37,6 +37,9 @@
 
     <!-- Typing -->
     <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
+    <applicationSettings service="com.intellij.json.editor.JsonEditorOptions"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.json.editor.JSONRemoteSettingInfoProvider"/>
+
     <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"/>
 
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>

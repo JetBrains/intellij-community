@@ -25,6 +25,7 @@ jvm_library(
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
     "//platform/indexing-api:indexing",
