@@ -127,10 +127,10 @@ abstract class BaseJunitAnnotationReference(
   private fun fastResolveFor(literal: UExpression, scope: UClass): PsiElement? {
     val methodName = literal.evaluate() as String? ?: return null
     val psiClazz = scope.javaPsi
-    var clazzMethods = psiClazz.findMethodsByName(methodName, true)
+    val clazzMethods = psiClazz.findMethodsByName(methodName, true)
     if (clazzMethods.isEmpty() && (scope.isInterface || PsiUtil.isAbstractClass(psiClazz))) {
       val methods = ClassInheritorsSearch.search(psiClazz, psiClazz.resolveScope, false)
-        .asIterable()
+        .findAll()
         .flatMap { aClazz -> aClazz.findMethodsByName(methodName, false).toList() }
           return filteredMethod(methods.toTypedArray(), scope, literal.getParentOfType(UMethod::class.java))
     }
