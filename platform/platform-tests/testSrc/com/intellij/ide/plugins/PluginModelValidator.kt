@@ -348,11 +348,6 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
         }
         is DependenciesElement.ModuleDependency -> {
           val moduleName = child.moduleName
-
-          if (moduleName == "intellij.platform.commercial.verifier") {
-            continue
-          }
-
           val moduleInfo = moduleNameToInfo.get(moduleName)
           if (moduleInfo == null) {
             val moduleDescriptorFileInfo = sourceModuleNameToFileInfo.get(moduleName)
@@ -369,10 +364,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
                 continue
               }
             }
-            if (!moduleName.startsWith("kotlin.")) {
-              // kotlin modules are loaded via conditional includes and the test cannot detect them
-              registerError("Module not found: $moduleName")
-            }
+            registerError("Module not found: $moduleName")
             continue
           }
 
