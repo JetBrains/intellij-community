@@ -6469,6 +6469,12 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-80427
+  public void testNoneTypeType() {
+    doTest("type[None]",
+           "expr = type(None)");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

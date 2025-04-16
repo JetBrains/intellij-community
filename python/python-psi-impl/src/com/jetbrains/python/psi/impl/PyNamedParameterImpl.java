@@ -32,6 +32,8 @@ import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+
 
 public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub> implements PyNamedParameter, ContributedReferenceHost {
   public PyNamedParameterImpl(ASTNode astNode) {
@@ -195,7 +197,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           final PyExpression defaultValue = getDefaultValue();
           if (defaultValue != null) {
             final PyType type = context.getType(defaultValue);
-            if (type != null && !(type instanceof PyNoneType)) {
+            if (type != null && !isNoneType(type)) {
               if (type instanceof PyTupleType) {
                 return PyUnionType.createWeakType(type);
               }
@@ -347,7 +349,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           final PyExpression rhs = node.getRightExpression();
 
           if (isReferenceToParameter(lhs) ^ isReferenceToParameter(rhs) &&
-              (lhs != null && context.getType(lhs) instanceof PyNoneType) ^ (rhs != null && context.getType(rhs) instanceof PyNoneType)) {
+              (lhs != null && isNoneType(context.getType(lhs))) ^ (rhs != null && isNoneType(context.getType(rhs)))) {
             noneComparison.set(true);
           }
         }
@@ -363,7 +365,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
     if (!usedAttributes.isEmpty()) {
       final PyStructuralType structuralType = new PyStructuralType(usedAttributes, true);
-      return noneComparison.get() ? PyUnionType.union(structuralType, PyNoneType.INSTANCE) : structuralType;
+      return noneComparison.get() ? PyUnionType.union(structuralType, PyBuiltinCache.getInstance(this).getNoneType()) : structuralType;
     }
 
     return null;

@@ -43,6 +43,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -60,6 +61,7 @@ import java.util.*;
 
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public abstract class IntroduceHandler implements RefactoringActionHandler {
   protected static PsiElement findAnchor(List<? extends PsiElement> occurrences) {
@@ -206,7 +208,7 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
     PyType type = context.getType(expression);
-    if (type != null && type != PyNoneType.INSTANCE) {
+    if (type != null && !isNoneType(type)) {
       String typeName = type.getName();
       if (typeName != null) {
         if (type instanceof PyLiteralStringType) { // we don't want to suggest "L" for inferred LiteralStrings

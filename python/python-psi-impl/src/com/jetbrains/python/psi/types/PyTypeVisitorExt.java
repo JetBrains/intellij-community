@@ -19,10 +19,6 @@ public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
     return visitPyTypeParameterType(paramSpecType);
   }
 
-  public T visitPyNoneType(@NotNull PyNoneType noneType) {
-    return visitPyType(noneType);
-  }
-
   public T visitPyGenericType(@NotNull PyCollectionType genericType) {
     return visitPyClassType(genericType);
   }

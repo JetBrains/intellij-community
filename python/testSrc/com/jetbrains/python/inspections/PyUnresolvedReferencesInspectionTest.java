@@ -812,7 +812,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-39078
   public void testNoneAttribute() {
     doTestByText("a = None\n" +
-                 "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
+                 "a.<warning descr=\"Unresolved attribute reference 'append' for class 'None'\">append</warning>(10)");
   }
 
   // PY-30190

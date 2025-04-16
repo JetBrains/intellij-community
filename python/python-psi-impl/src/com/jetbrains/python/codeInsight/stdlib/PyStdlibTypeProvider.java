@@ -68,7 +68,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (!referenceExpression.isQualified()) {
       final String name = referenceExpression.getReferencedName();
       if (PyNames.NONE.equals(name)) {
-        return PyNoneType.INSTANCE;
+        return PyBuiltinCache.getInstance(referenceExpression).getNoneType();
       }
       else if (PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
         return PyBuiltinCache.getInstance(referenceExpression).getBoolType();

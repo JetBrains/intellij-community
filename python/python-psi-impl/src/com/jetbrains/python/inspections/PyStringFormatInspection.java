@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyStringFormatInspection extends PyInspection {
 
@@ -613,7 +614,7 @@ public final class PyStringFormatInspection extends PyInspection {
         .collect(
           Collectors.summarizingInt(
             callType -> {
-              if (callType instanceof PyNoneType) {
+              if (isNoneType(callType)) {
                 return 1;
               }
               else if (callType instanceof PyClassType) {
@@ -629,7 +630,7 @@ public final class PyStringFormatInspection extends PyInspection {
                     allForSure = allForSure && elementsCount != -1;
                     maxNumber = Math.max(maxNumber, elementsCount);
                   }
-                  else if (!(member instanceof PyNoneType)) {
+                  else if (!isNoneType(member)) {
                     allForSure = false;
                   }
                 }

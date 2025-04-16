@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
 import com.jetbrains.python.psi.types.*
@@ -89,7 +90,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
                                                                                                 "None")))
         val key = PyEvaluator.evaluate(callExpression.getArgument(0, "key", PyExpression::class.java), String::class.java)
         val defaultArgument = callExpression.getArgument(1, "default", PyExpression::class.java)
-        val default = if (defaultArgument != null) context.getType(defaultArgument) else PyNoneType.INSTANCE
+        val default = if (defaultArgument != null) context.getType(defaultArgument) else builtinCache.noneType
         val valueTypeAndTotality = type.fields[key]
         return PyCallableTypeImpl(parameters,
                                   when {

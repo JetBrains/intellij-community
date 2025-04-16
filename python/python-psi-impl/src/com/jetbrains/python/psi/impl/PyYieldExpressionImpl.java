@@ -32,7 +32,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       if (generatorDesc != null) {
         return generatorDesc.returnType();
       }
-      return PyNoneType.INSTANCE;
+      return PyBuiltinCache.getInstance(this).getNoneType();
     }
     else {
       return getSendType(context);
@@ -42,7 +42,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
   @Override
   public @Nullable PyType getYieldType(@NotNull TypeEvalContext context) {
     final PyExpression expr = getExpression();
-    final PyType type = expr != null ? context.getType(expr) : PyNoneType.INSTANCE;
+    final PyType type = expr != null ? context.getType(expr) : PyBuiltinCache.getInstance(this).getNoneType();
 
     if (isDelegating()) {
       return PyTargetExpressionImpl.getIterationType(type, expr, this, context);
@@ -61,7 +61,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
         }
       }
     }
-    
+
     if (isDelegating()) {
       final PyExpression e = getExpression();
       final PyType type = e != null ? context.getType(e) : null;
@@ -69,7 +69,7 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
       if (generatorDesc != null) {
         return generatorDesc.sendType();
       }
-      return PyNoneType.INSTANCE;
+      return PyBuiltinCache.getInstance(this).getNoneType();
     }
     return null;
   }

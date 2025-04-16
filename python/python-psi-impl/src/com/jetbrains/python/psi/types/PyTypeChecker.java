@@ -39,6 +39,7 @@ import java.util.*;
 import static com.jetbrains.python.PyNames.FUNCTION;
 import static com.jetbrains.python.psi.PyUtil.*;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyTypeChecker {
   private PyTypeChecker() {
@@ -200,11 +201,6 @@ public final class PyTypeChecker {
       if (match.isPresent()) {
         return match;
       }
-    }
-
-    // remove after making PyNoneType inheriting PyClassType
-    if (expected instanceof PyNoneType) {
-      return Optional.of(actual instanceof PyNoneType);
     }
 
     if (expected instanceof PyModuleType) {

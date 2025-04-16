@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 /**
  * Implements reference expression PSI.
@@ -197,7 +198,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     final PyType typeFromTargets = getTypeFromTargets(context);
-    if (qualified && typeFromTargets instanceof PyNoneType) {
+    if (qualified && isNoneType(typeFromTargets)) {
       return null;
     }
     final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
@@ -397,7 +398,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyTargetExpression) {
       final String name = ((PyTargetExpression)target).getName();
       if (PyNames.NONE.equals(name)) {
-        return PyNoneType.INSTANCE;
+        return PyBuiltinCache.getInstance(target).getNoneType();
       }
       if (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name)) {
         return PyBuiltinCache.getInstance(target).getBoolType();
@@ -629,4 +630,3 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
   }
 }
-

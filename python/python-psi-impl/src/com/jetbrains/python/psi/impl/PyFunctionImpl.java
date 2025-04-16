@@ -155,10 +155,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return PyTypingTypeProvider.removeNarrowedTypeIfNeeded(derefType(returnTypeRef, typeProvider));
       }
     }
-    
+
     return getInferredReturnType(context);
   }
-  
+
   @Override
   public @Nullable PyType getInferredReturnType(@NotNull TypeEvalContext context) {
     PyType inferredType = null;
@@ -308,14 +308,14 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
     return false;
   }
-  
+
   public static class YieldCollector extends PyRecursiveElementVisitor {
     public List<PyYieldExpression> getYieldExpressions() {
       return myYieldExpressions;
     }
 
     private final List<PyYieldExpression> myYieldExpressions = new ArrayList<>();
-    
+
     @Override
     public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
       myYieldExpressions.add(node);
@@ -361,16 +361,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (point instanceof PyReturnStatement returnStatement) {
         hasReturn = true;
         final PyExpression expr = returnStatement.getExpression();
-        types.add(expr != null ? context.getType(expr) : PyNoneType.INSTANCE);
+        types.add(expr != null ? context.getType(expr) : PyBuiltinCache.getInstance(this).getNoneType());
       } 
       else {
-        types.add(PyNoneType.INSTANCE);
+        types.add(PyBuiltinCache.getInstance(this).getNoneType());
       }
     }
 
     if ((isGeneratedStub() || PyKnownDecoratorUtil.hasAbstractDecorator(this, context)) && !hasReturn) {
       if (PyUtil.isInitMethod(this)) {
-        return PyNoneType.INSTANCE;
+        return PyBuiltinCache.getInstance(this).getNoneType();
       }
       return null;
     }
@@ -420,12 +420,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
         return ControlFlowUtil.Operation.CONTINUE;
       }
-      
+
       void walkCFG(int startInstruction) {
         ControlFlowUtil.iteratePrev(startInstruction, flow, this::checkInstruction);
       }
     }
-    
+
     ReturnPointCollector collector = new ReturnPointCollector();
     collector.walkCFG(flow.length - 1);
     return collector.returnPoints;

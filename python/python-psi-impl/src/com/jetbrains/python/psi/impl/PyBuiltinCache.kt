@@ -32,6 +32,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
+import com.jetbrains.python.psi.resolve.ResolveImportUtil
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.*
@@ -41,22 +42,23 @@ import org.jetbrains.annotations.NonNls
 /**
  * Provides access to Python builtins via skeletons.
  */
-class PyBuiltinCache {
+class PyBuiltinCache(
+  val builtinsFile: PyFile? = null,
+  private val myTypeshedFile: PyFile? = null,
+  private val myExceptionsFile: PyFile? = null
+) {
   /**
    * Stores the most often used types, returned by nNNType.
    */
   private val myTypeCache = mutableMapOf<String?, PyClassTypeImpl?>()
 
-  var builtinsFile: PyFile? = null
-  private var myExceptionsFile: PyFile? = null
   private var myModStamp: Long = -1
 
-  constructor()
-
-  constructor(builtins: PyFile?, exceptions: PyFile?) {
-    builtinsFile = builtins
-    myExceptionsFile = exceptions
-  }
+  constructor(project: Project, sdk: Sdk) : this(
+    builtinsFile = getBuiltinsForSdk(project, sdk),
+    myTypeshedFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPESHED_MODULE)),
+    myExceptionsFile = getExceptionsForSdk(project, sdk)
+  )
 
   val isValid: Boolean
     get() = builtinsFile?.isValid() == true
@@ -69,20 +71,20 @@ class PyBuiltinCache {
    */
   fun getByName(name: @NonNls String?): PsiElement? {
     if (builtinsFile != null) {
-      val element = builtinsFile!!.getElementNamed(name)
+      val element = builtinsFile.getElementNamed(name)
       if (element != null) {
         return element
       }
     }
     if (myExceptionsFile != null) {
-      return myExceptionsFile!!.getElementNamed(name)
+      return myExceptionsFile.getElementNamed(name)
     }
     return null
   }
 
   fun getClass(name: @NonNls String): PyClass? {
     if (builtinsFile != null) {
-      return builtinsFile!!.findTopLevelClass(name)
+      return builtinsFile.findTopLevelClass(name)
     }
     return null
   }
@@ -91,9 +93,9 @@ class PyBuiltinCache {
     var pyClass: PyClassTypeImpl?
     synchronized(myTypeCache) {
       if (builtinsFile != null) {
-        if (builtinsFile!!.modificationStamp != myModStamp) {
+        if (builtinsFile.modificationStamp != myModStamp) {
           myTypeCache.clear()
-          myModStamp = builtinsFile!!.modificationStamp
+          myModStamp = builtinsFile.modificationStamp
         }
       }
       pyClass = myTypeCache[name]
@@ -197,6 +199,35 @@ class PyBuiltinCache {
   val typeType: PyClassType?
     get() = getObjectType("type")
 
+
+  val noneType: PyClassType?
+    get() {
+      val name = "NoneType"
+      var pyClass: PyClassTypeImpl?
+      synchronized(myTypeCache) {
+        pyClass = myTypeCache[name]
+      }
+      if (pyClass == null) {
+        val cls = if (myTypeshedFile != null)
+          ResolveImportUtil.resolveChildren(
+            myTypeshedFile, name, myTypeshedFile, false, true, false, false
+          ).getOrNull(0)?.element as PyClass?
+        else
+          null
+        if (cls != null) { // null may happen during testing
+          pyClass = PyClassTypeImpl(cls, false)
+          pyClass.assertValid(name)
+          synchronized(myTypeCache) {
+            myTypeCache.put(name, pyClass)
+          }
+        }
+      }
+      else {
+        pyClass.assertValid(name)
+      }
+      return pyClass
+    }
+
   /**
    * @param target an element to check.
    * @return true iff target is inside the __builtins__.py
@@ -214,11 +245,10 @@ class PyBuiltinCache {
   }
 
   companion object {
-    const val BUILTIN_FILE: String = "__builtin__.py"
-    const val BUILTIN_FILE_3K: String = "builtins.py"
-    const val TYPES_FILE: String = "types.py"
-    const val TYPESHED_FILE: String = "_typeshed.__init__.py"
-    private const val EXCEPTIONS_FILE = "exceptions.py"
+    const val BUILTIN_MODULE: String = "__builtin__"
+    const val BUILTIN_MODULE_3K: String = "builtins"
+    const val TYPESHED_MODULE: String = "_typeshed"
+    private const val EXCEPTIONS_MODULE = "exceptions"
 
     private val DUD_INSTANCE = PyBuiltinCache()
 
@@ -278,35 +308,30 @@ class PyBuiltinCache {
       return sdk
     }
 
-    fun getFileForSdk(file: String, project: Project, sdk: Sdk): PyFile? {
-      return getSkeletonFile(project, sdk, file)
-    }
-
     @JvmStatic
     fun getBuiltinsForSdk(project: Project, sdk: Sdk): PyFile? {
-      return getSkeletonFile(project, sdk, getBuiltinsFileName(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)))
+      return getFileForSdk(project, sdk, QualifiedName.fromDottedString(getBuiltinsModuleName(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk))))
     }
 
     @JvmStatic
     fun getBuiltinsFileName(level: LanguageLevel): String {
-      return if (level.isPython2) BUILTIN_FILE else BUILTIN_FILE_3K
+      return getBuiltinsModuleName(level) + PyNames.DOT_PY
+    }
+
+    @JvmStatic
+    fun getBuiltinsModuleName(level: LanguageLevel): String {
+      return if (level.isPython2) BUILTIN_MODULE else BUILTIN_MODULE_3K
     }
 
     fun getExceptionsForSdk(project: Project, sdk: Sdk): PyFile? {
-      return getSkeletonFile(project, sdk, EXCEPTIONS_FILE)
+      return getFileForSdk(project, sdk, QualifiedName.fromDottedString(EXCEPTIONS_MODULE))
     }
 
-    private fun getSkeletonFile(project: Project, sdk: Sdk, name: String): PyFile? {
-      var name = name
-      val sdkType = sdk.sdkType
+    private fun getFileForSdk(project: Project, sdk: Sdk, moduleName: QualifiedName): PyFile? {
+      val sdkType = sdk.getSdkType()
       if (PyNames.PYTHON_SDK_ID_NAME == sdkType.name) {
-        val index = name.indexOf(".")
-        if (index != -1) {
-          name = name.substring(0, index)
-        }
-        val results = resolveQualifiedName(QualifiedName.fromComponents(name),
-                                                                     fromSdk(project, sdk))
-        return results.firstOrNull() as PyFile?
+        val results = resolveQualifiedName(moduleName, fromSdk(project, sdk))
+        return results.firstOrNull()?.let { PyUtil.turnDirIntoInit(it) } as? PyFile
       }
       return null
     }

@@ -11,6 +11,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
@@ -69,7 +70,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
       // we could not suggest `None` because it could be a reference to an empty collection
       // so we could push only non-`None` assertions
-      pushAssertion(node, !myPositive, context -> PyNoneType.INSTANCE);
+      pushAssertion(node, !myPositive, context -> PyBuiltinCache.getInstance(node).getNoneType());
     }
   }
 
@@ -116,15 +117,15 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
 
     if (PyLiteralType.isNone(lhs)) {
-      pushAssertion(rhs, myPositive, context -> PyNoneType.INSTANCE);
+      pushAssertion(rhs, myPositive, context -> PyBuiltinCache.getInstance(rhs).getNoneType());
       return;
     }
 
     if (PyLiteralType.isNone(rhs)) {
-      pushAssertion(lhs, myPositive, context -> PyNoneType.INSTANCE);
+      pushAssertion(lhs, myPositive, context -> PyBuiltinCache.getInstance(lhs).getNoneType());
       return;
     }
-    
+
     pushAssertion(lhs, myPositive, context -> getLiteralType(rhs, context));
   }
 
@@ -134,7 +135,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         PyExpression[] elements = tupleExpr.getElements();
         List<PyType> types = new ArrayList<>(elements.length);
         for (PyExpression element : elements) {
-          PyType type = PyLiteralType.isNone(element) ? PyNoneType.INSTANCE : getLiteralType(element, context);
+          PyType type = PyLiteralType.isNone(element) ? PyBuiltinCache.getInstance(element).getNoneType() : getLiteralType(element, context);
           if (type == null) {
             return null;
           }

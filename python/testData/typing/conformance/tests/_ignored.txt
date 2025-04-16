@@ -67,7 +67,6 @@ protocols_variance.py
 qualifiers_annotated.py
 specialtypes_any.py
 specialtypes_never.py
-specialtypes_none.py
 specialtypes_promotions.py
 specialtypes_type.py
 tuples_type_compat.py

@@ -7,6 +7,7 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import org.jetbrains.annotations.ApiStatus
@@ -193,7 +194,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     }
 
     private fun createFromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? {
-      if (isNone(expression)) return PyNoneType.INSTANCE
+      if (isNone(expression)) return PyBuiltinCache.getInstance(expression).noneType
 
       if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))

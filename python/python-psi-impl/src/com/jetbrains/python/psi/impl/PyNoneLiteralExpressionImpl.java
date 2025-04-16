@@ -18,7 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
-import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNone
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return isEllipsis() ? null : PyNoneType.INSTANCE;
+    return isEllipsis() ? null : PyBuiltinCache.getInstance(this).getNoneType();
   }
 
   @Override

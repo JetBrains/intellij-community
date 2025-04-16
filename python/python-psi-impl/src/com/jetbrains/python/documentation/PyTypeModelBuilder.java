@@ -30,6 +30,8 @@ import java.util.*;
 
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.highlightExpressionText;
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledSpan;
+import static com.jetbrains.python.documentation.PyDocumentationLink.toClass;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public class PyTypeModelBuilder {
   private final Map<PyType, TypeModel> myVisited = Maps.newHashMap();
@@ -396,7 +398,7 @@ public class PyTypeModelBuilder {
       boolean foundNone = false;
       PyType optional = null;
       for (PyType member : members) {
-        if (PyNoneType.INSTANCE.equals(member)) {
+        if (isNoneType(member)) {
           foundNone = true;
         }
         else if (member != null) {
@@ -495,6 +497,11 @@ public class PyTypeModelBuilder {
       return HtmlChunk.raw(StringUtil.notNullize(expressionText));
     }
 
+    @Override
+    protected @NotNull HtmlChunk toClass(@NotNull String qualifiedName, @Nls @NotNull String linkText, @Nullable TextAttributesKey style) {
+      return HtmlChunk.raw(linkText);
+    }
+
     public String getString() {
       return myBody.toString();
     }
@@ -583,6 +590,12 @@ public class PyTypeModelBuilder {
     protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
       return highlightExpressionText(expressionText, expression);
     }
+
+    @Override
+    protected @NotNull HtmlChunk toClass(@NotNull String qualifiedName, @Nls @NotNull String linkText, @Nullable TextAttributesKey style) {
+      final var result = PyDocumentationLink.toClass(qualifiedName, linkText);
+      return style != null ? styledSpan(result, style) : result;
+    }
   }
 
   private static class TypeToDescriptionVisitor extends TypeNameVisitor {
@@ -604,6 +617,11 @@ public class PyTypeModelBuilder {
     @Override
     protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
       return HtmlChunk.raw(StringUtil.notNullize(expressionText));
+    }
+
+    @Override
+    protected @NotNull HtmlChunk toClass(@NotNull String qualifiedName, @Nls @NotNull String linkText, @Nullable TextAttributesKey style) {
+      return HtmlChunk.raw(linkText);
     }
 
     public @NotNull String getDescription() {
@@ -673,6 +691,8 @@ public class PyTypeModelBuilder {
     protected abstract @NotNull HtmlChunk className(@Nls String name);
 
     protected abstract @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression);
+
+    protected abstract @NotNull HtmlChunk toClass(@NotNull String qualifiedName, @NotNull @Nls String linkText, @Nullable TextAttributesKey style);
 
     @Override
     public void collectionOf(CollectionOf collectionOf) {
@@ -776,7 +796,7 @@ public class PyTypeModelBuilder {
       if (type.bitwiseOrUnionAllowed) {
         type.type.accept(this);
         add(styled(" | ", PyHighlighter.PY_OPERATION_SIGN));
-        add(styled("None", PyHighlighter.PY_KEYWORD)); //NON-NLS
+        add(toClass(PyNames.TYPE_NONE, PyNames.NONE, PyHighlighter.PY_KEYWORD)); //NON-NLS
       }
       else {
         add(escaped("Optional")); //NON-NLS

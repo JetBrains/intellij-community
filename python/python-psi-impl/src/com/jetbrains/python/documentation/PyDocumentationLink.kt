@@ -25,9 +25,9 @@ import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyNoneType
 import com.jetbrains.python.psi.types.PyTypeParser
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isNoneType
 import org.jetbrains.annotations.Nls
 
 object PyDocumentationLink {
@@ -44,16 +44,27 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
-  fun toPossibleClass(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk =
-    when (val type = PyTypeParser.getTypeByName(anchor, typeName, context)) {
-      is PyClassType -> styledReference(toClass(type.pyClass, typeName), type.pyClass)
-      is PyNoneType -> styledSpan(typeName, PyHighlighter.PY_KEYWORD)
+  fun toPossibleClass(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
+    val type = PyTypeParser.getTypeByName(anchor, typeName, context)
+    return when {
+      type is PyClassType -> {
+        val text = toClass(type.pyClass, typeName)
+        if (type.isNoneType)
+          styledSpan(text, PyHighlighter.PY_KEYWORD)
+        else
+          styledReference(text, type.pyClass)
+      }
       else -> HtmlChunk.text(typeName)
     }
+  }
 
   @JvmStatic
   fun toClass(pyClass: PyClass, linkText: @Nls String): HtmlChunk {
-    val qualifiedName = pyClass.qualifiedName
+    return toClass(pyClass.qualifiedName.orEmpty(), linkText)
+  }
+
+  @JvmStatic
+  fun toClass(qualifiedName: String, linkText: @Nls String): HtmlChunk {
     return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName", linkText)
   }
 

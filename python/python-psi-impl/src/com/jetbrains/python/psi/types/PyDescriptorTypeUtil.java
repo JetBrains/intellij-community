@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.ApiStatus;
@@ -57,13 +58,14 @@ public final class PyDescriptorTypeUtil {
       if (qualifierType instanceof PyClassType classType) {
         PyType instanceArgumentType;
         PyType instanceTypeArgument;
+        final var noneType = PyBuiltinCache.getInstance(expression).getNoneType();
         if (classType.isDefinition()) {
-          instanceArgumentType = PyNoneType.INSTANCE;
+          instanceArgumentType = noneType;
           instanceTypeArgument = classType;
         }
         else {
           instanceArgumentType = classType;
-          instanceTypeArgument = PyNoneType.INSTANCE;
+          instanceTypeArgument = noneType;
         }
         List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
         PyType type  = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
@@ -77,7 +79,7 @@ public final class PyDescriptorTypeUtil {
                                                                     @NotNull PyType attributeType,
                                                                     @NotNull TypeEvalContext context) {
     PyExpression qualifier = expression.getQualifier();
-    PyType objectArgumentType = PyNoneType.INSTANCE;
+    PyType objectArgumentType = PyBuiltinCache.getInstance(expression).getNoneType();
     PyType valueArgumentType = null; // We don't use the actual type of value here as we want to match the overload by object type only
 
     if (qualifier != null && attributeType instanceof PyCallableType) {

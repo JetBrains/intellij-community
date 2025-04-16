@@ -53,6 +53,7 @@ import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
 import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
 
@@ -302,7 +303,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       return Ref.create(PyTypeUtil.toKeywordContainerType(param, type));
     }
     if (PyNames.NONE.equals(param.getDefaultValueText())) {
-      return Ref.create(PyUnionType.union(type, PyNoneType.INSTANCE));
+      return Ref.create(PyUnionType.union(type, PyBuiltinCache.getInstance(param).getNoneType()));
     }
     return Ref.create(type);
   }
@@ -1109,13 +1110,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType classType) {
-        if (classType.isDefinition()) {
+        if (classType.isDefinition() || isNoneType(classType)) {
           final PyType instanceType = classType.toInstance();
           return Ref.create(instanceType);
         }
-      }
-      else if (type instanceof PyNoneType) {
-        return Ref.create(type);
       }
     }
     return null;
@@ -1130,7 +1128,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         if (indexExpr != null) {
           final Ref<PyType> typeRef = getType(indexExpr, context);
           if (typeRef != null) {
-            return Ref.create(PyUnionType.union(typeRef.get(), PyNoneType.INSTANCE));
+            return Ref.create(PyUnionType.union(typeRef.get(), PyBuiltinCache.getInstance(element).getNoneType()));
           }
         }
         return Ref.create();
@@ -2076,11 +2074,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final String qName = classType.getClassQName();
       if (qName == null) return null;
       if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
-      
+
       PyType yieldType = null;
-      PyType sendType = PyNoneType.INSTANCE;
-      PyType returnType = PyNoneType.INSTANCE;
-      
+      final var noneType = PyBuiltinCache.getInstance(classType.getPyClass()).getNoneType();
+      PyType sendType = noneType;
+      PyType returnType = noneType;
+
       if (genericType != null) {
         yieldType = ContainerUtil.getOrElse(genericType.getElementTypes(), 0, yieldType);
         if (GENERATOR.equals(qName) || ASYNC_GENERATOR.equals(qName)) {
@@ -2101,7 +2100,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (async) {
         var idx = SYNC_TYPES.indexOf(className);
         if (idx == -1) return this;
-        return new GeneratorTypeDescriptor(ASYNC_TYPES.get(idx), yieldType, sendType, PyNoneType.INSTANCE);
+        return new GeneratorTypeDescriptor(ASYNC_TYPES.get(idx), yieldType, sendType, returnType);
       }
       else {
         var idx = ASYNC_TYPES.indexOf(className);
@@ -2264,7 +2263,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     public @NotNull Stack<PyQualifiedNameOwner> getTypeAliasStack() {
       return myTypeAliasStack;
     }
-    
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;

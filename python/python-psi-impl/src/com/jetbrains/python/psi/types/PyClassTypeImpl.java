@@ -36,6 +36,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+
 
 public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
@@ -662,6 +664,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Override
   public @Nullable String getName() {
+    if (isNoneType(this)) return PyNames.NONE;
     return getPyClass().getName();
   }
 

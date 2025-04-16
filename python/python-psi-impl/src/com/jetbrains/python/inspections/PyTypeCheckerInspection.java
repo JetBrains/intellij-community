@@ -21,6 +21,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GeneratorTyp
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -33,6 +34,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
@@ -116,7 +118,7 @@ public class PyTypeCheckerInspection extends PyInspection {
             }
           }
 
-          PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyNoneType.INSTANCE;
+          PyType actual = returnExpr != null ? tryPromotingType(returnExpr, expected) : PyBuiltinCache.getInstance(node).getNoneType();
 
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
@@ -134,7 +136,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
       ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (!(owner instanceof PyFunction function)) return;
-      
+
       final PyAnnotation annotation = function.getAnnotation();
       final String typeCommentAnnotation = function.getTypeCommentAnnotation();
       if (annotation == null && typeCommentAnnotation == null) return;
@@ -157,7 +159,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       final PyType expectedYieldType = generatorDesc.yieldType();
       final PyType expectedSendType = generatorDesc.sendType();
-      
+
       final PyType thisYieldType = node.getYieldType(myTypeEvalContext);
 
       final PyExpression yieldExpr = node.getExpression();
@@ -170,18 +172,18 @@ public class PyTypeCheckerInspection extends PyInspection {
           .fix(new PyMakeFunctionReturnTypeQuickFix(function, myTypeEvalContext))
           .register();
       }
-      
+
       if (yieldExpr != null && node.isDelegating()) {
         final PyType delegateType = myTypeEvalContext.getType(yieldExpr);
         var delegateDesc = GeneratorTypeDescriptor.create(delegateType);
         if (delegateDesc == null) return;
-        
+
         if (delegateDesc.isAsync()) {
           String delegateName = PythonDocumentationProvider.getTypeName(delegateType, myTypeEvalContext);
           registerProblem(yieldExpr, PyPsiBundle.message("INSP.type.checker.yield.from.async.generator", delegateName, delegateName));
           return;
         }
-        
+
         // Reversed because SendType is contravariant
         if (!PyTypeChecker.match(delegateDesc.sendType(), expectedSendType, myTypeEvalContext)) {
           String expectedName = PythonDocumentationProvider.getVerboseTypeName(expectedSendType, myTypeEvalContext);
@@ -312,9 +314,10 @@ public class PyTypeCheckerInspection extends PyInspection {
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
         final PyType expected = getExpectedReturnStatementType(node, myTypeEvalContext);
-        final boolean returnsNone = expected instanceof PyNoneType;
-        final boolean returnsOptional = PyTypeChecker.match(expected, PyNoneType.INSTANCE, myTypeEvalContext);
-        
+        final PyType noneType = PyBuiltinCache.getInstance(node).getNoneType();
+        final boolean returnsNone = isNoneType(expected);
+        final boolean returnsOptional = PyTypeChecker.match(expected, noneType, myTypeEvalContext);
+
         if (expected != null && !returnsOptional && !PyUtil.isEmptyFunction(node)) {
           final List<PyStatement> returnPoints = node.getReturnPoints(myTypeEvalContext);
           final boolean hasImplicitReturns = exists(returnPoints, it -> !(it instanceof PyReturnStatement));
@@ -482,8 +485,8 @@ public class PyTypeCheckerInspection extends PyInspection {
                                       unfilledPositionalVarargs);
     }
 
-    
-    
+
+
     private void analyzeParamSpec(@NotNull PyParamSpecType paramSpec, @NotNull List<PyExpression> arguments,
                                   @NotNull PyTypeChecker.GenericSubstitutions substitutions,
                                   @NotNull List<AnalyzeArgumentResult> result,
@@ -642,7 +645,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     private final @NotNull List<UnexpectedArgumentForParamSpec> myUnexpectedArgumentForParamSpecs;
 
     private final @NotNull List<UnfilledParameterFromParamSpec> myUnfilledParameterFromParamSpecs;
-    
+
     private final @NotNull List<UnfilledPositionalVararg> myUnfilledPositionalVarargs;
 
     AnalyzeCalleeResults(@NotNull PyCallableType callableType,
@@ -773,5 +776,5 @@ public class PyTypeCheckerInspection extends PyInspection {
 
   record UnfilledPositionalVararg(@NotNull String varargName, @NotNull String expectedTypes) {
   }
-  
+
 }

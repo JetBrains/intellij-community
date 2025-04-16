@@ -483,7 +483,8 @@ public final class PyTypeParser {
         return EMPTY_RESULT;
       }
       else if (PyNames.NONE.equals(name)) {
-        return new ParseResult(PyNoneType.INSTANCE, range);
+        final var type = builtinCache.getNoneType();
+        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
       else if ("integer".equals(name) || PyNames.TYPE_LONG.equals(name)) {
         final PyClassType type = builtinCache.getIntType();

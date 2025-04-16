@@ -80,8 +80,7 @@ public abstract class PropertyBunch<MType> {
   }
 
   private static boolean isBuiltinFile(@NotNull PsiFile file) {
-    final String name = file.getName();
-    return PyBuiltinCache.BUILTIN_FILE.equals(name) || PyBuiltinCache.BUILTIN_FILE_3K.equals(name);
+    return PyNames.BUILTINS_MODULES.contains(file.getName());
   }
 
   /**

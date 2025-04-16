@@ -3,7 +3,7 @@ from typing import dataclass_transform, TypeVar, Generic
 T = TypeVar("T")
 
 @dataclass_transform()
-def deco(cls):
+def deco(cls: T) -> T:
   ...
 
 class MyDescriptor(Generic[T]):

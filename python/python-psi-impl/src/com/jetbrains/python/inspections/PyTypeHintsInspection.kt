@@ -1097,7 +1097,7 @@ class PyTypeHintsInspection : PyInspection() {
             typeArgumentTypes.add(Ref.deref(typeRef))
           }
           is PyNoneLiteralExpression -> {
-            typeArgumentTypes.add(if (it.isEllipsis) null else PyNoneType.INSTANCE)
+            typeArgumentTypes.add(if (it.isEllipsis) null else PyBuiltinCache.getInstance(node).noneType)
           }
           else -> {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))

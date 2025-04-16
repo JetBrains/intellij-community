@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private static final Key<Map<Project, PythonSdkPathCache>> KEY = Key.create("PythonPathCache");
 
@@ -108,8 +107,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     while (true) {
       PyBuiltinCache pyBuiltinCache = myBuiltins.get();
       if (pyBuiltinCache == null || !pyBuiltinCache.isValid()) {
-        PyBuiltinCache newCache = new PyBuiltinCache(PyBuiltinCache.getBuiltinsForSdk(myProject, mySdk),
-                                                     PyBuiltinCache.getExceptionsForSdk(myProject, mySdk));
+        PyBuiltinCache newCache = new PyBuiltinCache(myProject, mySdk);
         if (myBuiltins.compareAndSet(pyBuiltinCache, newCache)) {
           return newCache;
         }

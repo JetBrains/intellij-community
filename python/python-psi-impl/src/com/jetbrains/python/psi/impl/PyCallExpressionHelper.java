@@ -35,6 +35,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
  */
@@ -475,7 +477,7 @@ public final class PyCallExpressionHelper {
     else if (qualifierType instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)qualifierType).getMembers();
 
-      if (ContainerUtil.all(members, type -> type == null || type instanceof PyNoneType || type instanceof PyClassType)) {
+      if (ContainerUtil.all(members, type -> type == null || isNoneType(type) || type instanceof PyClassType)) {
         return StreamEx
           .of(members)
           .select(PyClassType.class)
