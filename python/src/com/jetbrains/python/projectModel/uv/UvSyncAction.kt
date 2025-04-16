@@ -24,7 +24,7 @@ class UvSyncAction : AnAction() {
     val project = e.project ?: return
     project.trackActivityBlocking(UvActivityKey) {
       project.coroutineScope.launchTracked {
-        UvProjectResolver.syncAllProjectModelRoots(project = project)
+        UvProjectModelService.syncAllProjectModelRoots(project = project)
       }
     }
   }

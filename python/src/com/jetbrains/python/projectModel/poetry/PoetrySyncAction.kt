@@ -24,7 +24,7 @@ class PoetrySyncAction : AnAction() {
     val project = e.project ?: return
     project.trackActivityBlocking(PoetryActivityKey) {
       project.coroutineScope.launchTracked {
-        PoetryProjectResolver.syncAllProjectModelRoots(project = project)
+        PoetryProjectModelService.syncAllProjectModelRoots(project = project)
       }
     }
   }

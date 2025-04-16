@@ -95,8 +95,8 @@ class PyPoetryOpenIntegrationTest {
       ModuleAssertions.assertModules(project, "project")
 
       multiprojectFixture.awaitProjectConfiguration(project) {
-        PoetryProjectResolver.linkAllProjectModelRoots(project, project.basePath!!)
-        PoetryProjectResolver.syncAllProjectModelRoots(project)
+        PoetryProjectModelService.linkAllProjectModelRoots(project, project.basePath!!)
+        PoetryProjectModelService.syncAllProjectModelRoots(project)
       }
 
       ModuleAssertions.assertModules(project, "project", "project1", "project2")

@@ -26,7 +26,7 @@ class PoetryLinkAction : AnAction() {
     val basePath = project.basePath ?: return
     project.trackActivityBlocking(PoetryLinkActivityKey) {
       project.coroutineScope.launchTracked {
-        PoetryProjectResolver.linkAllProjectModelRoots(project, basePath)
+        PoetryProjectModelService.linkAllProjectModelRoots(project, basePath)
       }
     }
   }

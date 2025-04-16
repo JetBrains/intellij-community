@@ -104,7 +104,7 @@ class PyUvSyncIntegrationTest {
   
   suspend fun syncAllProjects(project: Project) {
     multiprojectFixture.awaitProjectConfiguration(project) {
-      UvProjectResolver.syncAllProjectModelRoots(project)
+      UvProjectModelService.syncAllProjectModelRoots(project)
     }
   }
 }

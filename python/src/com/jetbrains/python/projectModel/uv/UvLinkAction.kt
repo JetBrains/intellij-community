@@ -26,7 +26,7 @@ class UvLinkAction : AnAction() {
     val basePath = project.basePath ?: return
     project.trackActivityBlocking(UvLinkActivityKey) {
       project.coroutineScope.launchTracked {
-        UvProjectResolver.linkAllProjectModelRoots(project, basePath)
+        UvProjectModelService.linkAllProjectModelRoots(project, basePath)
       }
     }
   }

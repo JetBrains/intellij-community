@@ -100,8 +100,8 @@ class PyUvOpenIntegrationTest {
       ModuleAssertions.assertModules(project, "project")
 
       multiprojectFixture.awaitProjectConfiguration(project) {
-        UvProjectResolver.linkAllProjectModelRoots(project, project.basePath!!)
-        UvProjectResolver.syncAllProjectModelRoots(project)
+        UvProjectModelService.linkAllProjectModelRoots(project, project.basePath!!)
+        UvProjectModelService.syncAllProjectModelRoots(project)
       }
 
       ModuleAssertions.assertModules(project, "project", "project1", "project2")

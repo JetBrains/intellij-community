@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.projectModel.uv
+package com.jetbrains.python.projectModel.poetry
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.jetbrains.python.projectModel.BaseProjectModelResolver
+import com.jetbrains.python.projectModel.BaseProjectModelService
 import com.jetbrains.python.projectModel.ProjectModelSettings
 import com.jetbrains.python.projectModel.ProjectModelSyncListener
 import com.jetbrains.python.projectModel.PythonProjectRootResolver
@@ -17,21 +17,21 @@ import kotlin.reflect.KClass
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
-object UvProjectResolver : BaseProjectModelResolver<UvEntitySource>() {
+object PoetryProjectModelService : BaseProjectModelService<PoetryEntitySource>() {
   override val projectRootResolver: PythonProjectRootResolver
-    get() = UvProjectRootResolver
+    get() = PoetryRootResolver
 
   override val systemName: @NlsSafe String
-    get() = "Uv"
+    get() = "Poetry"
 
-  override fun getSettings(project: Project): ProjectModelSettings = project.service<UvSettings>()
+  override fun getSettings(project: Project): ProjectModelSettings = project.service<PoetrySettings>()
 
-  override fun getSyncListener(project: Project): ProjectModelSyncListener = project.messageBus.syncPublisher(UvSyncListener.TOPIC)
+  override fun getSyncListener(project: Project): ProjectModelSyncListener = project.messageBus.syncPublisher(PoetrySyncListener.TOPIC)
 
   override fun createEntitySource(project: Project, singleProjectRoot: Path): EntitySource {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    return UvEntitySource(singleProjectRoot.toVirtualFileUrl(fileUrlManager))
+    return PoetryEntitySource(singleProjectRoot.toVirtualFileUrl(fileUrlManager))
   }
 
-  override fun getEntitySourceClass(): KClass<out EntitySource> = UvEntitySource::class
+  override fun getEntitySourceClass(): KClass<out EntitySource> = PoetryEntitySource::class
 }

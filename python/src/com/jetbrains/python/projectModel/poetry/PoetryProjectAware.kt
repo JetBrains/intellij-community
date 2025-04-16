@@ -43,7 +43,7 @@ class PoetryProjectAware(
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     project.coroutineScope.launchTracked { 
-      PoetryProjectResolver.syncProjectModelRoot(project, Path.of(projectId.externalProjectPath))
+      PoetryProjectModelService.syncProjectModelRoot(project, Path.of(projectId.externalProjectPath))
     }
   }
 

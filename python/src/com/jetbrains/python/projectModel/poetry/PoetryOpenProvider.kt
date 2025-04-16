@@ -25,11 +25,11 @@ class PoetryOpenProvider() : AbstractOpenProjectProvider() {
     val projectDirectory = getProjectDirectory(projectFile) 
     val projectRootPath = projectDirectory.toNioPathOrNull() ?: Path.of(projectDirectory.path)
     project.service<PoetrySettings>().addLinkedProject(projectRootPath)
-    PoetryProjectResolver.syncProjectModelRoot(project, projectRootPath)
+    PoetryProjectModelService.syncProjectModelRoot(project, projectRootPath)
   }
 
   override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    PoetryProjectResolver.forgetProjectModelRoot(project, Path.of(externalProjectPath))
+    PoetryProjectModelService.forgetProjectModelRoot(project, Path.of(externalProjectPath))
   }
   
   companion object {
