@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
+import com.intellij.util.BitUtil
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.toSimpleTextAttributes
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -30,12 +31,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.awt.event.InputEvent
 import javax.swing.Icon
 
 private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun actionPerformed(e: AnActionEvent) {
+    val onlyPlatformThreads = BitUtil.isSet(e.modifiers, InputEvent.ALT_MASK)
+
     val project = e.project
     if (project == null) {
       return
@@ -44,7 +48,7 @@ private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecific
     sessionProxy.coroutineScope.launch {
       val dtosWillBeSerialized = FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith
       val maxItems = if (dtosWillBeSerialized) Registry.intValue("debugger.thread.dump.max.items.frontend") else Int.MAX_VALUE
-      val (threadDumpsDtoChannel, filters) = JavaDebuggerSessionApi.getInstance().dumpThreads(sessionProxy.id, maxItems) ?: return@launch
+      val (threadDumpsDtoChannel, filters) = JavaDebuggerSessionApi.getInstance().dumpThreads(sessionProxy.id, maxItems, onlyPlatformThreads) ?: return@launch
       val threadDumpsChannel = threadDumpsDtoChannel.map(::threadDumpData)
 
       withContext(Dispatchers.EDT) {

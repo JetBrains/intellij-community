@@ -52,14 +52,14 @@ class ThreadDumpAction {
     }
 
     @ApiStatus.Internal
-    suspend fun buildThreadDump(context: DebuggerContextImpl, dumpItemsChannel: SendChannel<List<MergeableDumpItem>>) {
+    suspend fun buildThreadDump(context: DebuggerContextImpl, onlyPlatformThreads: Boolean, dumpItemsChannel: SendChannel<List<MergeableDumpItem>>) {
 
       suspend fun fallback() =
         dumpItemsChannel.send(
           buildJavaPlatformThreadDump(context).toDumpItems()
         )
 
-      if (!Registry.`is`("debugger.thread.dump.extended")) {
+      if (onlyPlatformThreads || !Registry.`is`("debugger.thread.dump.extended")) {
         fallback()
         return
       }
