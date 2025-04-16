@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
@@ -67,6 +68,8 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     (coroutineScope == null ? bus.simpleConnect() : bus.connect(coroutineScope)).subscribe(PsiModificationTracker.TOPIC, () -> {
       myClassCache.clear();
       myPackageCache.clear();
+      myCachedTemporaryScopes.get().clear();
+      myCachedTemporaryScopes.remove();
     });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
@@ -84,7 +87,7 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(final @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    if (myTemporaryScopeCacheEnabled.get() && myClassCache.get(scope) == null) {
+    if (myTemporaryScopeCacheEnabled.get()) {
       myCachedTemporaryScopes.get().add(scope);
     }
     Map<String, Optional<PsiClass>> map = myClassCache.computeIfAbsent(scope, scope1 -> CollectionFactory.createConcurrentWeakValueMap());
@@ -512,16 +515,20 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @ApiStatus.Internal
   @Override
-  public <T, E extends Throwable> T withTemporaryScopeCaches(@NotNull ThrowableComputable<T, E> computation) throws E {
+  public <T> T withTemporaryScopeCaches(Callable<T> callable) {
     Boolean previousValue = myTemporaryScopeCacheEnabled.get();
     myTemporaryScopeCacheEnabled.set(Boolean.TRUE);
     try {
-      return computation.compute();
+      return callable.call();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
     finally {
       for (GlobalSearchScope scope : myCachedTemporaryScopes.get()) {
         myClassCache.remove(scope);
       }
+      myCachedTemporaryScopes.get().clear();
       myCachedTemporaryScopes.remove();
       myTemporaryScopeCacheEnabled.set(previousValue);
     }
