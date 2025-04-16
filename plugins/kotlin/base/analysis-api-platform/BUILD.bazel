@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//platform/util",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/indexing-api:indexing",
     "//java/java-psi-api:psi",

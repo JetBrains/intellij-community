@@ -2054,6 +2054,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                 runTest("testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
             }
 
+            @TestMetadata("kt69624.kt")
+            public void testKt69624() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt69624.kt");
+            }
+
             @TestMetadata("kt7046localVarInInline.kt")
             public void testKt7046localVarInInline() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
