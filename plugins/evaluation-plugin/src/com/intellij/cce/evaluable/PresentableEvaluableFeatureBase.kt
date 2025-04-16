@@ -30,7 +30,7 @@ abstract class PresentableEvaluableFeatureBase<T : EvaluationStrategy>(name: Str
    */
   abstract fun getGenerateActionsProcessor(strategy: T, project: Project): GenerateActionsProcessor
 
-  abstract fun getFeatureInvoker(project: Project, strategy: T): PresentableFeatureInvoker
+  abstract fun getFeatureInvoker(project: Project, language: Language, strategy: T): PresentableFeatureInvoker
 
   open fun getSetupSteps(project: Project, language: Language, strategy: T): List<EvaluationStep> =
     defaultSetupSteps(project, language, setupSdkPreferences)
@@ -38,6 +38,7 @@ abstract class PresentableEvaluableFeatureBase<T : EvaluationStrategy>(name: Str
   override fun prepareEnvironment(config: Config, outputWorkspace: EvaluationWorkspace): EvaluationEnvironment {
     val actions = actions(config)
     val strategy = config.strategy<T>()
+    val language = Language.resolve(actions.language)
     return ProjectActionsEnvironment.open(actions.projectPath) { project ->
       ProjectActionsEnvironment(
         strategy,
@@ -47,9 +48,9 @@ abstract class PresentableEvaluableFeatureBase<T : EvaluationStrategy>(name: Str
         EvaluationRootInfo(true),
         project,
         getGenerateActionsProcessor(strategy, project),
-        getSetupSteps(project, Language.resolve(actions.language), strategy),
+        getSetupSteps(project, language, strategy),
         name,
-        featureInvoker = CustomizableFeatureWrapper(getFeatureInvoker(project, strategy), layoutManager(outputWorkspace))
+        featureInvoker = CustomizableFeatureWrapper(getFeatureInvoker(project, language, strategy), layoutManager(outputWorkspace))
       )
     }
   }

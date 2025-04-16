@@ -2,6 +2,8 @@ package com.intellij.cce.interpreter
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.core.Suggestion
+import com.intellij.cce.core.SuggestionSource
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluable.AIA_PROBLEMS
 import com.intellij.cce.evaluation.data.Binding
@@ -57,6 +59,13 @@ interface BoundEvalData {
       desc.problemIndices(props).map { desc.data.valueId(it) }
     }
     lookup = lookup.copy(additionalInfo = lookup.additionalInfo + mapOf(AIA_PROBLEMS to problems.joinToString("\n")))
+
+    // we add artificial suggestion to be able to set `isRelevant` for precision and recall metrics
+    if (lookup.suggestions.isEmpty()) {
+      lookup = lookup.copy(suggestions = listOf(
+        Suggestion(expectedText, expectedText, SuggestionSource.INTELLIJ)
+      ))
+    }
 
     // we have to calculate position after everything else has been added to the lookup since a position relies on metric calculation
     val selectedPosition = if (problems.isNotEmpty()) -1 else 0
