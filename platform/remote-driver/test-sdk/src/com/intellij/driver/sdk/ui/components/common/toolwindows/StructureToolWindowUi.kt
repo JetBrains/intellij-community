@@ -28,6 +28,7 @@ fun Finder.structureToolWindowButton(@Language("xpath") xpath: String? = null): 
 class StructureToolWindowUi(data: ComponentData) : UiComponent(data) {
   fun waitAndGetStructureTree(message: String? = null, waitForText: ((UiText) -> Boolean)? = null): JTreeUiComponent {
     val structureTree = structureTree.waitFound(10.seconds)
+    structureTree.expandAll()
     waitForText?.let { structureTree.waitAnyTexts(message = message, timeout = 10.seconds, predicate = it) }
     return structureTree
   }
