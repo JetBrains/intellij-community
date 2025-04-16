@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 
-import static com.intellij.openapi.editor.rd.LocalEditorSupportKt.assertLocalEditorSupport;
+import static com.intellij.openapi.editor.rd.LocalEditorSupportUtil.assertLocalEditorSupport;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.

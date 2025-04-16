@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiFunction;
 
 import static com.intellij.idea.AppModeAssertions.checkFrontend;
-import static com.intellij.openapi.editor.rd.LocalEditorSupportKt.isLocalEditorSupport;
+import static com.intellij.openapi.editor.rd.LocalEditorSupportUtil.isLocalEditorSupport;
 
 @ApiStatus.Internal
 public final class BackgroundHighlightingUtil {
