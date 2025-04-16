@@ -86,21 +86,21 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
       NON_DEFAULT_FONT_SIZE,
       TerminalFontOptions.getInstance().getSettings().fontSize,
       DEFAULT_TERMINAL_FONT_SIZE,
-    ) { a, b -> sameFontSizes(a, b) }
+    ) { it.floatValue }
 
     addIfNotDefault(
       metrics,
       NON_DEFAULT_LINE_SPACING,
       TerminalFontOptions.getInstance().getSettings().lineSpacing,
       DEFAULT_TERMINAL_LINE_SPACING,
-    ) { a, b -> sameLineSpacings(a, b) }
+    ) { it.floatValue }
 
     addIfNotDefault(
       metrics,
       NON_DEFAULT_COLUMN_SPACING,
       TerminalFontOptions.getInstance().getSettings().columnSpacing,
       DEFAULT_TERMINAL_COLUMN_SPACING,
-    ) { a, b -> sameColumnSpacings(a, b) }
+    ) { it.floatValue }
 
     return metrics
   }
@@ -161,9 +161,9 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     }
   }
 
-  private fun <T> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId1<T>, curValue: T, defaultValue: T, equality: (T, T) -> Boolean) {
-    if (!equality(curValue, defaultValue)) {
-      metrics.add(event.metric(curValue))
+  private fun <T, V> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId1<T>, curValue: V, defaultValue: V, extractor: (V) -> T) {
+    if (curValue != defaultValue) {
+      metrics.add(event.metric(extractor(curValue)))
     }
   }
 

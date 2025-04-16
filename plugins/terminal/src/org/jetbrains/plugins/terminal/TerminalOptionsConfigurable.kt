@@ -153,14 +153,14 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .columns(4)
             .bindText(
               getter = { fontSettings.lineSpacing.spacingToString() },
-              setter = { fontSettings = fontSettings.copy(lineSpacing = it.parseSpacing()) },
+              setter = { fontSettings = fontSettings.copy(lineSpacing = it.parseLineSpacing()) },
             )
           textField()
             .label(message("settings.column.width"))
             .columns(4)
             .bindText(
               getter = { fontSettings.columnSpacing.spacingToString() },
-              setter = { fontSettings = fontSettings.copy(columnSpacing = it.parseSpacing()) },
+              setter = { fontSettings = fontSettings.copy(columnSpacing = it.parseColumnSpacing()) },
             )
         }
 
@@ -323,17 +323,22 @@ private fun fontComboBox(): FontComboBox = FontComboBox().apply {
   isMonospacedOnly = true
 }
 
-private fun Float.fontSizeToString(): String = formatWithOneDecimalDigit()
+private fun TerminalFontSize.fontSizeToString(): String = floatValue.formatWithOneDecimalDigit()
 
-private fun String.parseFontSize(): Float =
+private fun String.parseFontSize(): TerminalFontSize = TerminalFontSize.ofFloat(
   try {
     toFloat().coerceIn(EditorFontsConstants.getMinEditorFontSize().toFloat()..EditorFontsConstants.getMaxEditorFontSize().toFloat())
   }
   catch (_: Exception) {
     EditorFontsConstants.getDefaultEditorFontSize().toFloat()
   }
+)
 
-private fun Float.spacingToString(): String = formatWithOneDecimalDigit()
+private fun TerminalLineSpacing.spacingToString(): String = floatValue.formatWithOneDecimalDigit()
+private fun TerminalColumnSpacing.spacingToString(): String = floatValue.formatWithOneDecimalDigit()
+
+private fun String.parseLineSpacing(): TerminalLineSpacing = TerminalLineSpacing.ofFloat(parseSpacing())
+private fun String.parseColumnSpacing(): TerminalColumnSpacing = TerminalColumnSpacing.ofFloat(parseSpacing())
 
 private fun Float.formatWithOneDecimalDigit(): String = String.format(Locale.ROOT, "%.1f", this)
 

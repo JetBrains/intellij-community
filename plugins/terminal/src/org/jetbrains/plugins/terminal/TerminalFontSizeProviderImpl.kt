@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -37,7 +36,7 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposab
   override fun getFontSize2D(): Float {
     var size = fontSize
     if (size == null) {
-      size = getDefaultScaledFontSize()
+      size = getDefaultScaledFontSize().floatValue
       fontSize = size
     }
     return size
@@ -45,7 +44,7 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposab
 
   override fun setFontSize(newSize: Float) {
     val oldSize = fontSize
-    if (oldSize == null || !sameFontSizes(oldSize, newSize)) {
+    if (oldSize == null || TerminalFontSize.ofFloat(oldSize) != TerminalFontSize.ofFloat(newSize)) {
       fontSize = newSize
       for (listener in listeners) {
         listener.fontChanged()
@@ -54,11 +53,11 @@ internal class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposab
   }
 
   override fun resetFontSize() {
-    setFontSize(getDefaultScaledFontSize())
+    setFontSize(getDefaultScaledFontSize().floatValue)
   }
 
-  private fun getDefaultScaledFontSize(): Float {
-    return UISettingsUtils.getInstance().scaleFontSize(TerminalFontOptions.getInstance().getSettings().fontSize)
+  private fun getDefaultScaledFontSize(): TerminalFontSize {
+    return TerminalFontOptions.getInstance().getSettings().fontSize.scale()
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalFontSizeProvider.Listener) {
