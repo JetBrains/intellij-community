@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
-import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
 
 internal class ReplaceNotNullAssertionWithElvisReturnInspection :
     KotlinApplicableInspectionBase.Simple<KtPostfixExpression, ReplaceNotNullAssertionWithElvisReturnInspection.Context>() {
@@ -43,7 +43,7 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
         val operationReference = element.operationReference
         if (operationReference.getReferencedNameElementType() != KtTokens.EXCLEXCL) return false
 
-        if ((element.getTopmostParentOfType<KtParenthesizedExpression>() ?: element).parent is KtReturnExpression) return false
+        if ((element.getOutermostParenthesizerOrThis()).parent is KtReturnExpression) return false
 
         return element.getParentOfTypes(
             strict = true,

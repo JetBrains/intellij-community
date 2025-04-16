@@ -14324,6 +14324,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/onReturn3.kt");
         }
 
+        @TestMetadata("parenthesizedAnonymousFunction.kt")
+        public void testParenthesizedAnonymousFunction() throws Exception {
+            runTest("testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/parenthesizedAnonymousFunction.kt");
+        }
+
         @TestMetadata("unnecessaryNotNullAssertion.kt")
         public void testUnnecessaryNotNullAssertion() throws Exception {
             runTest("testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/unnecessaryNotNullAssertion.kt");

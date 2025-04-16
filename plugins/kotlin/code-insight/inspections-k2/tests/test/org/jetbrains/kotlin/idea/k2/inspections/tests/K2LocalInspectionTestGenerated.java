@@ -15299,6 +15299,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/onReturn3.kt");
         }
 
+        @TestMetadata("parenthesizedAnonymousFunction.kt")
+        public void testParenthesizedAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/parenthesizedAnonymousFunction.kt");
+        }
+
         @TestMetadata("unnecessaryNotNullAssertion.kt")
         public void testUnnecessaryNotNullAssertion() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceNotNullAssertionWithElvisReturn/unnecessaryNotNullAssertion.kt");
