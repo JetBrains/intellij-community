@@ -134,9 +134,34 @@ class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehavi
     }
   }
 
+  private static final class CustomStrategy implements Strategy {
+    private final @NotNull ChangeEditorFontSizeStrategy myStrategy;
+
+    private CustomStrategy(@NotNull ChangeEditorFontSizeStrategy strategy) { myStrategy = strategy; }
+
+    @Override
+    public float getFontSize() {
+      return myStrategy.getDefaultFontSize();
+    }
+
+    @Override
+    public void setFontSize(float fontSize) {
+      myStrategy.setFontSize(fontSize);
+    }
+
+    @Override
+    public String getText(float fontSize) {
+      return myStrategy.getDefaultFontSizeText();
+    }
+  }
+
   @ApiStatus.Internal
   public static Strategy getStrategy(EditorEx editor, boolean forceGlobal) {
     if (editor instanceof EditorImpl) {
+      var customStrategy = editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
+      if (customStrategy != null) {
+        return new CustomStrategy(customStrategy);
+      }
       if (forceGlobal) {
         return new AllEditorsStrategy(editor);
       }

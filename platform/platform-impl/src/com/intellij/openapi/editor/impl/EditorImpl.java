@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
@@ -5783,6 +5784,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           boolean isWheelFontChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()
                                                 && !UISettings.getInstance().getPresentationMode();
           float shift = e.getWheelRotation();
+
+          var strategy = getUserData(ChangeEditorFontSizeStrategy.KEY);
+          if (strategy != null) {
+            strategy.setFontSize(strategy.getFontSize() - shift);
+            return;
+          }
+
           float size = myScheme.getEditorFontSize2D();
           if (isWheelFontChangePersistent) {
             size = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
