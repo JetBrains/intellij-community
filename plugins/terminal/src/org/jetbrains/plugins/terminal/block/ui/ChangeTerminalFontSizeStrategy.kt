@@ -22,4 +22,6 @@ object ChangeTerminalFontSizeStrategy: ChangeEditorFontSizeStrategy {
   @Suppress("DialogTitleCapitalization")
   override val defaultFontSizeText: String
     get() = IdeBundle.message("action.reset.font.size", defaultFontSize)
+
+  override val overridesChangeFontSizeActions: Boolean = true
 }

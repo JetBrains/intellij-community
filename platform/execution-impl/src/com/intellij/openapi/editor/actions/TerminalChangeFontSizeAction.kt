@@ -5,9 +5,10 @@ import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.terminal.JBTerminalWidget
+import com.intellij.terminal.TerminalFontSizeProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,6 +32,13 @@ sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAware
       val terminalWidget = getTerminalWidget(e)
       if (terminalWidget != null) {
         return ClassicTerminalChangeFontHandler(terminalWidget)
+      }
+      val editor = e.getData(CommonDataKeys.EDITOR)
+      if (editor != null) {
+        val strategy = editor.getUserData(TerminalFontSizeProvider.KEY)
+        if (strategy != null) {
+          return ReworkedTerminalChangeFontHandler(strategy)
+        }
       }
       return null
     }
@@ -57,5 +65,15 @@ internal class ClassicTerminalChangeFontHandler(private val widget: JBTerminalWi
 
   override fun resetTerminalFontSize() {
     widget.settingsProvider.resetTerminalFontSize()
+  }
+}
+
+internal class ReworkedTerminalChangeFontHandler(private val provider: TerminalFontSizeProvider) : TerminalChangeFontHandler {
+  override fun changeSize(step: Float) {
+    provider.setFontSize(provider.getFontSize() + step)
+  }
+
+  override fun resetTerminalFontSize() {
+    provider.resetFontSize()
   }
 }
