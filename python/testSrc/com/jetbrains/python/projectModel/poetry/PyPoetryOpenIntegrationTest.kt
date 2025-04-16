@@ -73,6 +73,24 @@ class PyPoetryOpenIntegrationTest {
   }
 
   @Test
+  fun `project with top-level poetry-lock is automatically linked`() = timeoutRunBlocking(timeout = 20.seconds) {
+    val projectPath = testRoot.resolve("project")
+    
+    projectPath.createFile("poetry.lock").writeText("""""")
+
+    projectPath.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "project"
+    """.trimIndent())
+
+    multiprojectFixture.openProject(projectPath).useProjectAsync { project ->
+      ModuleAssertions.assertModules(project, "project")
+      CollectionAssertions.assertEqualsUnordered(listOf(projectPath),
+                                                 project.service<PoetrySettings>().getLinkedProjects())
+    }
+  }
+
+  @Test
   fun `test poetry monorepo without root pyproject_toml`() = timeoutRunBlocking(timeout = 20.seconds) {
     val projectPath = testRoot.resolve("project")
     projectPath.createFile("libs/project1/pyproject.toml").writeText("""
