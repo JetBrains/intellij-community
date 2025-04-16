@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.impl.ExpirableTokenProvider
 import com.intellij.openapi.application.EDT
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.time.Duration
@@ -62,6 +64,19 @@ class TerminalHyperlinkHighlighter private constructor(
         }
       }
     })
+    // Some unnecessary defensive coding here: invokeOnCompletion may be invoked at a tricky moment,
+    // therefore, we avoid calling the hyperlinkSupport getter from the completion handler just in case.
+    // Also, it's very much likely that we don't even need to remove the listener,
+    // as the lifetime of this entire thing matches the lifetime of the editor.
+    // However, it's better to write unnecessarily correct code than to figure out later that it unexpectedly broke.
+    val hyperlinkSupport = hyperlinkSupport
+    val listener: (HyperlinkInfo) -> Unit = {
+      ReworkedTerminalUsageCollector.logHyperlinkFollowed()
+    }
+    hyperlinkSupport.addEditorHyperlinkListener(listener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      hyperlinkSupport.removeEditorHyperlinkListener(listener)
+    }
   }
 
   private fun rehighlightAll() {
