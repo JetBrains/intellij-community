@@ -13,11 +13,11 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
@@ -39,16 +39,8 @@ internal class IncompleteDestructuringInspection :
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("incomplete.destructuring.declaration.text")
 
-    override fun getApplicableRanges(element: KtDestructuringDeclaration): List<TextRange> {
-        val lPar = element.lPar ?: return emptyList()
-        val rPar = element.rPar ?: return emptyList()
-        return listOf(
-            TextRange(
-                lPar.textRangeIn(element).startOffset,
-                rPar.textRangeIn(element).endOffset,
-            )
-        )
-    }
+    override fun getApplicableRanges(element: KtDestructuringDeclaration): List<TextRange> =
+        ApplicabilityRanges.destructuringDeclarationParens(element)
 
     @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtDestructuringDeclaration): Context? {

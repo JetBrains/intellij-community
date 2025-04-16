@@ -83,4 +83,12 @@ object ApplicabilityRanges {
 
         return listOf(textRange)
     }
+
+    fun destructuringDeclarationParens(element: KtDestructuringDeclaration): List<TextRange> {
+        val lPar = element.lPar ?: return emptyList()
+        val rPar = element.rPar ?: return emptyList()
+        return listOf(
+            lPar.textRangeIn(element).union(rPar.textRangeIn(element))
+        )
+    }
 }
