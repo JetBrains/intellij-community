@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
+import com.intellij.platform.debugger.impl.frontend.storage.currentPresentation
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XSourcePosition
@@ -15,47 +16,48 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.rpc.XExecutionStackApi
-import com.intellij.xdebugger.impl.rpc.XStackFrameDto
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
 
 internal class FrontendXStackFrame(
-  private val frameDto: XStackFrameDto,
+  val id: XStackFrameId,
   private val project: Project,
   private val suspendContextLifetimeScope: CoroutineScope,
+  private val sourcePosition: XSourcePositionDto?,
+  private val customBackgroundInfo: XStackFrameCustomBackgroundInfo?,
+  private val equalityObject: XStackFrameEqualityObject?,
+  private val evaluatorDto: XDebuggerEvaluatorDto,
+  private val captionInfo: XStackFrameCaptionInfo,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
   private val evaluator by lazy {
-    createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, frameDto.evaluator, frameDto.stackFrameId)
+    createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
   }
 
   private val xValueContainer = FrontendXValueContainer(project, suspendContextLifetimeScope, false) {
-    XExecutionStackApi.getInstance().computeVariables(frameDto.stackFrameId)
+    XExecutionStackApi.getInstance().computeVariables(id)
   }
 
-  val id: XStackFrameId get() = frameDto.stackFrameId
-  val fileId: VirtualFileId? get() = frameDto.sourcePosition?.fileId
+  val fileId: VirtualFileId? get() = sourcePosition?.fileId
 
   // TODO[IJPL-177087]: collapse these two into a three-state value? (NoCustomBackground/WithCustomBackground(null)/WithCustomBackground(color)?
   //  Is it worth it?
   val requiresCustomBackground: Boolean
-    get() = frameDto.customBackgroundInfo != null
+    get() = customBackgroundInfo != null
   val customBackgroundColor: java.awt.Color?
-    get() = frameDto.customBackgroundInfo?.backgroundColor?.color()
+    get() = customBackgroundInfo?.backgroundColor?.color()
 
   override fun getSourcePosition(): XSourcePosition? {
-    return frameDto.sourcePosition?.sourcePosition()
+    return sourcePosition?.sourcePosition()
   }
 
-  override fun getEqualityObject(): Any? = frameDto.equalityObject
+  override fun getEqualityObject(): Any? = equalityObject
 
   override fun computeChildren(node: XCompositeNode) {
     xValueContainer.computeChildren(node)
   }
 
   override fun isDocumentEvaluator(): Boolean {
-    return frameDto.evaluator.canEvaluateInDocument
+    return evaluatorDto.canEvaluateInDocument
   }
 
   override fun getEvaluator(): XDebuggerEvaluator? = evaluator
@@ -69,7 +71,7 @@ internal class FrontendXStackFrame(
     //  and in this collection trigger XDebuggerFramesList.repaint.
     //  ...
     //  But maybe there are easier solutions
-    val (fragments, iconId, tooltipText) = frameDto.initialPresentation
+    val (fragments, iconId, tooltipText) = suspendContextLifetimeScope.currentPresentation(id) ?: return
     component.setIcon(iconId?.icon())
     component.setToolTipText(tooltipText)
     for ((text, attributes) in fragments) {
@@ -82,11 +84,11 @@ internal class FrontendXStackFrame(
   }
 
   override fun hasSeparatorAbove(): Boolean {
-    return frameDto.captionInfo.hasSeparatorAbove
+    return captionInfo.hasSeparatorAbove
   }
 
   override fun getCaptionAboveOf(): @NlsContexts.Separator String? {
-    return frameDto.captionInfo.caption
+    return captionInfo.caption
   }
 
   override fun equals(other: Any?): Boolean {
