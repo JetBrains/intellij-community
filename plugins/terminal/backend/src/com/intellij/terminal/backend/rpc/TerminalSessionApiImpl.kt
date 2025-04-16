@@ -18,7 +18,7 @@ internal class TerminalSessionApiImpl : TerminalSessionApi {
     return getSession(sessionId).getOutputFlow()
   }
 
-  private suspend fun getSession(sessionId: TerminalSessionId): TerminalSession {
+  private fun getSession(sessionId: TerminalSessionId): TerminalSession {
     return TerminalSessionsManager.getInstance().getSession(sessionId)
            ?: error("Failed to find TerminalSession with ID: $sessionId")
   }
