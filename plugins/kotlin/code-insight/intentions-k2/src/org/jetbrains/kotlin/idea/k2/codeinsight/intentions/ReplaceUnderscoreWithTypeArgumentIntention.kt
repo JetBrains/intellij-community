@@ -53,7 +53,7 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         val call = (typeArgumentList.parent as? KtCallExpression)?.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val argumentsTypes = call.typeArgumentsMapping.map { it.value }.toTypedArray()
         val resolvedElementIndex = typeArgumentList.arguments.indexOf(this)
-        return argumentsTypes[resolvedElementIndex]
+        return if (resolvedElementIndex < argumentsTypes.size) argumentsTypes[resolvedElementIndex] else null
     }
 
     override fun invoke(
