@@ -19,11 +19,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.KotlinNameSuggester
-import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
-import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtVisitor
-import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
 internal class IncompleteDestructuringInspection :
@@ -70,7 +66,7 @@ internal class IncompleteDestructuringInspection :
             .map { (name, type) -> "$name: $type" }
             .ifEmpty { names }
             .drop(currentEntries.size)
-            .let { psiFactory.createDestructuringDeclaration("val (${it.joinToString()}) = TODO()").entries }
+            .let { psiFactory.createDestructuringDeclaration("val (${it.joinToString(separator = ",")}) = TODO()").entries }
 
         return Context(additionalEntries)
     }
