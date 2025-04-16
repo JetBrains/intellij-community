@@ -44,7 +44,6 @@ class PluginSetTestBuilder(private val path: Path) {
       customDisabledPlugins = disabledPluginIds.toSet(),
       customExpiredPlugins = expiredPluginIds.toSet(),
       customBrokenPluginVersions = brokenPlugins.mapValues { it.value.toSet() }.toMap(),
-      customEssentialPlugins = emptyList(),
       productBuildNumber = { buildNumber },
     )
   }

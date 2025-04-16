@@ -24,11 +24,10 @@ internal fun loadAndInitDescriptorInTest(
 
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val context = DescriptorListLoadingContext(
-    customBrokenPluginVersions = emptyMap(),
-    productBuildNumber = { buildNumber },
     customDisabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
-    customEssentialPlugins = emptyList(),
-    customExpiredPlugins = emptySet()
+    customExpiredPlugins = emptySet(),
+    customBrokenPluginVersions = emptyMap(),
+    productBuildNumber = { buildNumber }
   )
   val result = runBlocking {
     loadDescriptorFromFileOrDirInTests(

@@ -25,7 +25,6 @@ class DescriptorListLoadingContext(
   customDisabledPlugins: Set<PluginId>? = null,
   customExpiredPlugins: Set<PluginId>? = null,
   customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
-  customEssentialPlugins: List<PluginId>? = null,
   @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,

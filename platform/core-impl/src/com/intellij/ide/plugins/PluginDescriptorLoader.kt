@@ -411,8 +411,8 @@ suspend fun loadDescriptors(zipPoolDeferred: Deferred<ZipEntryResolverPool>, mai
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val result = DescriptorListLoadingContext(
-    isMissingSubDescriptorIgnored = true,
     isMissingIncludeIgnored = isUnitTestMode,
+    isMissingSubDescriptorIgnored = true,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
   ).use { context ->
     context to loadDescriptors(
@@ -1093,8 +1093,8 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @RequiresBackgroundThread
 fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(
-    isMissingSubDescriptorIgnored = true,
     productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
+    isMissingSubDescriptorIgnored = true,
   )
 
   val path = file.toString()

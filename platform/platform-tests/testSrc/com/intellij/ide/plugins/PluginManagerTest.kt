@@ -30,7 +30,6 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Map
 import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamWriter
@@ -289,11 +288,13 @@ class PluginManagerTest {
     @Throws(IOException::class, XMLStreamException::class)
     private fun loadAndInitializeDescriptors(testDataName: String, isBundled: Boolean): PluginManagerState {
       val file = Path.of(testDataPath, testDataName)
-      val buildNumber = BuildNumber.fromString("2042.42")
-      val parentContext = DescriptorListLoadingContext(mutableSetOf<PluginId>(), mutableSetOf<PluginId>(),
-                                                       Map.of<PluginId, MutableSet<String?>>(), mutableListOf<PluginId>(),
-                                                       { buildNumber!! }, false, false, false)
-
+      val buildNumber = BuildNumber.fromString("2042.42")!!
+      val parentContext = DescriptorListLoadingContext(
+        customDisabledPlugins = setOf(),
+        customExpiredPlugins = setOf(),
+        customBrokenPluginVersions = mapOf(),
+        productBuildNumber = { buildNumber }
+      )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)
       val moduleMap = HashMap<String?, XmlElement?>()
