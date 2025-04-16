@@ -42,7 +42,7 @@ import kotlin.coroutines.CoroutineContext
  *    channel.close()
  *  }
  * ```
- * Notice that logger is not cancelled, but shuts down by itself, which allows it to flush all buffered messages.
+ * Notice that logger is not canceled, but shuts down by itself, which allows it to flush all buffered messages.
  * */
 interface Resource<out T> {
   suspend fun <U> use(body: suspend CoroutineScope.(T) -> U): U
