@@ -5,6 +5,7 @@ import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.terminal.JBTerminalWidget
 import org.jetbrains.annotations.ApiStatus
@@ -12,15 +13,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    val settingsProvider = getTerminalWidget(e)?.settingsProvider ?: return
-    val newFontSize = settingsProvider.terminalFontSize + myStep
-    if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
-      settingsProvider.terminalFontSize = newFontSize
-    }
+    getHandler(e)?.changeSize(myStep)
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = getTerminalWidget(e) != null
+    e.presentation.isEnabled = getHandler(e) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -30,8 +27,35 @@ sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAware
   class DecreaseEditorFontSize : TerminalChangeFontSizeAction(-1f)
 
   companion object {
-    fun getTerminalWidget(e: AnActionEvent): JBTerminalWidget? {
+    internal fun getHandler(e: AnActionEvent): TerminalChangeFontHandler? {
+      val terminalWidget = getTerminalWidget(e)
+      if (terminalWidget != null) {
+        return ClassicTerminalChangeFontHandler(terminalWidget)
+      }
+      return null
+    }
+
+    private fun getTerminalWidget(e: AnActionEvent): JBTerminalWidget? {
       return e.dataContext.getData(JBTerminalWidget.TERMINAL_DATA_KEY)
     }
+  }
+}
+
+internal sealed interface TerminalChangeFontHandler {
+  fun changeSize(step: Float)
+  fun resetTerminalFontSize()
+}
+
+internal class ClassicTerminalChangeFontHandler(private val widget: JBTerminalWidget) : TerminalChangeFontHandler {
+  override fun changeSize(step: Float) {
+    val settingsProvider = widget.settingsProvider
+    val newFontSize = settingsProvider.terminalFontSize + step
+    if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
+      settingsProvider.terminalFontSize = newFontSize
+    }
+  }
+
+  override fun resetTerminalFontSize() {
+    widget.settingsProvider.resetTerminalFontSize()
   }
 }
