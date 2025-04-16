@@ -27,13 +27,8 @@ public final class IntelliJProjectUtil {
     "community.platform.platform-api.ide",
   };
 
-  private final static CachedValue<Boolean> isIntelliJPlatformProjectValue = new CachedValue<>(storage -> {
-    for (String ideaProjectMarkerName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
-      if (storage.resolve(new ModuleId(ideaProjectMarkerName)) != null) {
-        return true;
-      }
-    }
-    return false;
+  private static final CachedValue<Boolean> isIntelliJPlatformProjectValue = new CachedValue<>(storage -> {
+    return ContainerUtil.exists(IDEA_PROJECT_MARKER_MODULE_NAMES, marker -> storage.resolve(new ModuleId(marker)) != null);
   });
 
   public static boolean isIntelliJPlatformProject(@Nullable Project project) {
