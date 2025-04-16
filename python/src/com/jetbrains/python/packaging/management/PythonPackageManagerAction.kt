@@ -73,7 +73,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    * Execution success callback, refreshes the environment and re-runs the inspection check.
    * Might be overridden by subclasses.
    */
-  protected open suspend fun onSuccess(manager: T, document: Document?) {
+  private suspend fun onSuccess(manager: T, document: Document?) {
     withBackgroundProgress(manager.project, PyBundle.message("python.sdk.scanning.installed.packages")) {
       manager.refreshEnvironment()
       document?.reloadIntentions(manager.project)
@@ -124,7 +124,7 @@ private fun Editor.getPythonPackageManager(): PythonPackageManager? {
 }
 
 internal inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {
-  return editor()?.getPythonPackageManager().let { it as? T }
+  return editor()?.getPythonPackageManager() as? T
 }
 
 /**
