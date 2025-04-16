@@ -5,14 +5,14 @@ import com.intellij.openapi.util.getPathMatcher
 import com.jetbrains.python.projectModel.ModuleDependency
 import com.jetbrains.python.projectModel.ModuleDescriptor
 import com.jetbrains.python.projectModel.ProjectModelRoot
-import com.jetbrains.python.projectModel.PythonProjectRootResolver
+import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
 import java.nio.file.Path
 import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
-object UvProjectRootResolver : PythonProjectRootResolver {
+object UvProjectModelResolver : PythonProjectModelResolver {
   override fun discoverProjectRoot(directory: Path): ProjectModelRoot? {
     if (!directory.resolve(UvConstants.PYPROJECT_TOML).exists()) {
       return null

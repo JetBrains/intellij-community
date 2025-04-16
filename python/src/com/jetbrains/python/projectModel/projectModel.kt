@@ -58,7 +58,7 @@ data class ModuleDescriptor(val name: String, val root: Path, val moduleDependen
 
 data class ModuleDependency(val name: String, val path: Path)
 
-interface PythonProjectRootResolver {
+interface PythonProjectModelResolver {
   fun discoverProjectRoot(directory: Path): ProjectModelRoot?
   
   @OptIn(ExperimentalPathApi::class)

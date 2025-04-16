@@ -10,7 +10,7 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.jetbrains.python.projectModel.BaseProjectModelService
 import com.jetbrains.python.projectModel.ProjectModelSettings
 import com.jetbrains.python.projectModel.ProjectModelSyncListener
-import com.jetbrains.python.projectModel.PythonProjectRootResolver
+import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import java.nio.file.Path
 import kotlin.reflect.KClass
 
@@ -18,8 +18,8 @@ import kotlin.reflect.KClass
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
 object UvProjectModelService : BaseProjectModelService<UvEntitySource>() {
-  override val projectRootResolver: PythonProjectRootResolver
-    get() = UvProjectRootResolver
+  override val projectModelResolver: PythonProjectModelResolver
+    get() = UvProjectModelResolver
 
   override val systemName: @NlsSafe String
     get() = "Uv"

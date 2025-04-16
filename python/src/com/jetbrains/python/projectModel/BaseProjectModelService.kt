@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 abstract class BaseProjectModelService<E : EntitySource> {
   abstract val systemName: @NlsSafe String
 
-  abstract val projectRootResolver: PythonProjectRootResolver
+  abstract val projectModelResolver: PythonProjectModelResolver
 
   abstract fun getSettings(project: Project): ProjectModelSettings
 
@@ -35,7 +35,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
   
   suspend fun linkAllProjectModelRoots(project: Project, basePath: @SystemIndependent @NonNls String) {
     val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.projects", systemName)) {
-      projectRootResolver.discoverProjectGraph(Path.of(basePath)).roots.map { it.root }
+      projectModelResolver.discoverProjectGraph(Path.of(basePath)).roots.map { it.root }
     }
     getSettings(project).setLinkedProjects(allProjectRoots)
   }
@@ -80,7 +80,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
     listener.onStart(projectRoot)
     try {
       val source = createEntitySource(project, projectRoot)
-      val graph = projectRootResolver.discoverProjectGraph(projectRoot)
+      val graph = projectModelResolver.discoverProjectGraph(projectRoot)
       if (graph.roots.isEmpty()) {
         return
       }
