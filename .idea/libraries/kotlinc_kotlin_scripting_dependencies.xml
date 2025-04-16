@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.2.0-ij251-98">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.2.0-ij251-109">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.0-ij251-98/kotlin-scripting-dependencies-2.2.0-ij251-98.jar">
-          <sha256sum>448f6491fbc4c55833ac31833af8d2aa17d6985cbf1fae0b9fab6b6a86caf105</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.0-ij251-109/kotlin-scripting-dependencies-2.2.0-ij251-109.jar">
+          <sha256sum>c1fa13f7c737cef9b5da63875ef7e55cd68097648422ea843840bb903ededf77</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.0-ij251-98/kotlin-scripting-dependencies-2.2.0-ij251-98.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.0-ij251-109/kotlin-scripting-dependencies-2.2.0-ij251-109.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.0-ij251-98/kotlin-scripting-dependencies-2.2.0-ij251-98-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.2.0-ij251-109/kotlin-scripting-dependencies-2.2.0-ij251-109-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
