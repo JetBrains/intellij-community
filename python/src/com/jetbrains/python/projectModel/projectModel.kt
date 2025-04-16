@@ -60,25 +60,37 @@ data class ModuleDependency(val name: String, val path: Path)
 
 interface PythonProjectRootResolver {
   fun discoverProjectRoot(directory: Path): ProjectModelRoot?
+  
+  @OptIn(ExperimentalPathApi::class)
+  fun discoverProjectGraph(ijProjectRoot: Path): ProjectModelGraph {
+    val roots = mutableListOf<ProjectModelRoot>()
+    ijProjectRoot.visitFileTree {
+      onPreVisitDirectory { dir, _ ->
+        val buildSystemRoot = discoverProjectRoot(dir)
+        if (buildSystemRoot != null) {
+          roots.add(buildSystemRoot)
+          return@onPreVisitDirectory FileVisitResult.SKIP_SUBTREE
+        }
+        return@onPreVisitDirectory FileVisitResult.CONTINUE
+      }
+    }
+
+    // TODO make sure that roots doesn't leave ijProjectRoot boundaries
+    val clusteredRoots = mergeRootsReferringToEachOther(roots)
+    return ProjectModelGraph(clusteredRoots)
+  }
 }
 
-@OptIn(ExperimentalPathApi::class)
-fun readProjectModelGraph(ijProjectRoot: Path, resolver: PythonProjectRootResolver): ProjectModelGraph {
-  val roots = mutableListOf<ProjectModelRoot>()
-  ijProjectRoot.visitFileTree {
-    onPreVisitDirectory { dir, _ ->
-      val buildSystemRoot = resolver.discoverProjectRoot(dir)
-      if (buildSystemRoot != null) {
-        roots.add(buildSystemRoot)
-        return@onPreVisitDirectory FileVisitResult.SKIP_SUBTREE
-      }
-      return@onPreVisitDirectory FileVisitResult.CONTINUE
-    }
-  }
+interface ProjectModelSettings {
+  fun getLinkedProjects(): List<Path>
+  fun setLinkedProjects(projects: List<Path>)
+  fun removeLinkedProject(projectRoot: Path)
+  fun addLinkedProject(projectRoot: Path)
+}
 
-  // TODO make sure that roots doesn't leave ijProjectRoot boundaries
-  val clusteredRoots = mergeRootsReferringToEachOther(roots)
-  return ProjectModelGraph(clusteredRoots)
+interface ProjectModelSyncListener {
+  fun onStart(projectRoot: Path): Unit = Unit
+  fun onFinish(projectRoot: Path): Unit = Unit
 }
 
 private fun mergeRootsReferringToEachOther(roots: MutableList<ProjectModelRoot>): MutableList<ProjectModelRoot> {

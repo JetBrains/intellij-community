@@ -42,7 +42,7 @@ class UvProjectAware(
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     project.coroutineScope.launchTracked { 
-      UvProjectResolver.syncUvProject(project, Path.of(projectId.externalProjectPath))
+      UvProjectResolver.syncProjectModelRoot(project, Path.of(projectId.externalProjectPath))
     }
   }
 

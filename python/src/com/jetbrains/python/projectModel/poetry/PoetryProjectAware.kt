@@ -5,12 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
+import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -48,7 +43,7 @@ class PoetryProjectAware(
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     project.coroutineScope.launchTracked { 
-      PoetryProjectResolver.syncPoetryProject(project, Path.of(projectId.externalProjectPath))
+      PoetryProjectResolver.syncProjectModelRoot(project, Path.of(projectId.externalProjectPath))
     }
   }
 

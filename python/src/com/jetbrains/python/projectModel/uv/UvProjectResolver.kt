@@ -3,138 +3,35 @@ package com.jetbrains.python.projectModel.uv
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.projectModel.ModuleDescriptor
-import com.jetbrains.python.projectModel.readProjectModelGraph
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.SystemIndependent
+import com.jetbrains.python.projectModel.BaseProjectModelResolver
+import com.jetbrains.python.projectModel.ProjectModelSettings
+import com.jetbrains.python.projectModel.ProjectModelSyncListener
+import com.jetbrains.python.projectModel.PythonProjectRootResolver
 import java.nio.file.Path
+import kotlin.reflect.KClass
 
 /**
  * Syncs the project model described in pyproject.toml files with the IntelliJ project model.
  */
-object UvProjectResolver {
-  suspend fun linkAllUvProjects(project: Project, basePath: @SystemIndependent @NonNls String) {
-    val uvSettings = project.service<UvSettings>()
-    val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.uv.projects")) {
-      readProjectModelGraph(Path.of(basePath), UvProjectRootResolver).roots.map { it.root }
-    }
-    uvSettings.setLinkedProjects(allProjectRoots)
-  }
+object UvProjectResolver : BaseProjectModelResolver<UvEntitySource>() {
+  override val projectRootResolver: PythonProjectRootResolver
+    get() = UvProjectRootResolver
 
-  suspend fun syncAllUvProjects(project: Project) {
-    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.all.uv.projects")) {
-      // TODO progress bar, listener with events
-      project.service<UvSettings>().getLinkedProjects().forEach {
-        syncUvProjectImpl(project, it)
-      }
-    }
-  }
+  override val systemName: @NlsSafe String
+    get() = "Uv"
 
-  suspend fun syncUvProject(project: Project, projectRoot: Path) {
-    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.syncing.uv.projects.at", projectRoot)) {
-      syncUvProjectImpl(project, projectRoot)
-    }
-  }
+  override fun getSettings(project: Project): ProjectModelSettings = project.service<UvSettings>()
 
-  suspend fun forgetUvProject(project: Project, projectRoot: Path) {
-    withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.unlinking.uv.projects.at", projectRoot)) {
-      project.service<UvSettings>().removeLinkedProject(projectRoot)
-      forgetUvProjectImpl(project, projectRoot)
-    }
-  }
+  override fun getSyncListener(project: Project): ProjectModelSyncListener = project.messageBus.syncPublisher(UvSyncListener.TOPIC)
 
-  private suspend fun forgetUvProjectImpl(project: Project, projectRoot: Path) {
+  override fun createEntitySource(project: Project, singleProjectRoot: Path): EntitySource {
     val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-    project.workspaceModel.update("Forgetting a uv project at $projectRoot") { storage ->
-      storage.replaceBySource({ it == source }, MutableEntityStorage.Companion.create())
-    }
+    return UvEntitySource(singleProjectRoot.toVirtualFileUrl(fileUrlManager))
   }
 
-  /**
-   * Synchronizes the uv project by creating and updating module entities in the workspace model of the given project.
-   *
-   * @param project The IntelliJ IDEA project that needs synchronization.
-   * @param projectRoot The root path of the uv project tree to be synchronized.
-   */
-  private suspend fun syncUvProjectImpl(project: Project, projectRoot: Path) {
-    val listener = project.messageBus.syncPublisher(UvSyncListener.Companion.TOPIC)
-    listener.onStart(projectRoot)
-    try {
-      val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-      val source = UvEntitySource(projectRoot.toVirtualFileUrl(fileUrlManager))
-      val graph = readProjectModelGraph(projectRoot, UvProjectRootResolver)
-      if (graph.roots.isEmpty()) {
-        return
-      }
-      val storage = createProjectModel(project, graph.roots.flatMap { it.modules }, source)
-
-      project.workspaceModel.update("Uv sync at ${projectRoot}") { mutableStorage ->
-        // Fake module entity is added by default if nothing was discovered
-        if (projectRoot == project.baseNioPath) {
-          removeFakeModuleEntity(project, mutableStorage)
-        }
-        mutableStorage.replaceBySource({ it == source }, storage)
-      }
-    }
-    finally {
-      listener.onFinish(projectRoot)
-    }
-  }
-
-  private fun createProjectModel(
-    project: Project,
-    graph: List<ModuleDescriptor>,
-    source: UvEntitySource,
-  ): EntityStorage {
-    val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val storage = MutableEntityStorage.create()
-    for (module in graph) {
-      val existingModuleEntity = project.workspaceModel.currentSnapshot
-        .entitiesBySource { it == source }
-        .filterIsInstance<ModuleEntity>()
-        .find { it.name == module.name }
-      val existingSdkEntity = existingModuleEntity
-        ?.dependencies
-        ?.find { it is SdkDependency } as? SdkDependency
-      val sdkDependency = existingSdkEntity ?: InheritedSdkDependency
-      storage addEntity ModuleEntity(module.name, emptyList(), source) {
-        dependencies += sdkDependency
-        dependencies += ModuleSourceDependency
-        for (moduleName in module.moduleDependencies) {
-          dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
-        }
-        contentRoots = listOf(ContentRootEntity(module.root.toVirtualFileUrl(fileUrlManager), emptyList(), source))
-      }
-    }
-    return storage
-  }
-
-  /**
-   * Removes the default IJ module created for the root of the project 
-   * (that's going to be replaced with another module managed by uv).
-   */
-  fun removeFakeModuleEntity(project: Project, storage: MutableEntityStorage) {
-    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val basePathUrl = project.baseNioPath?.toVirtualFileUrl(virtualFileUrlManager) ?: return
-    val contentRoots = storage
-      .entitiesBySource { it !is UvEntitySource }
-      .filterIsInstance<ContentRootEntity>()
-      .filter { it.url == basePathUrl }
-      .toList()
-    for (entity in contentRoots) {
-      storage.removeEntity(entity.module)
-      storage.removeEntity(entity)
-    }
-  }
-
-  private val Project.baseNioPath: Path?
-    get() = basePath?.let { Path.of(it) }
+  override fun getEntitySourceClass(): KClass<out EntitySource> = UvEntitySource::class
 }

@@ -64,7 +64,7 @@ class PyPoetrySyncIntegrationTest {
   
   suspend fun syncAllProjects(project: Project) {
     multiprojectFixture.awaitProjectConfiguration(project) {
-      PoetryProjectResolver.syncAllPoetryProjects(project)
+      PoetryProjectResolver.syncAllProjectModelRoots(project)
     }
   }
 }

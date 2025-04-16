@@ -2,9 +2,10 @@
 package com.jetbrains.python.projectModel.uv
 
 import com.intellij.util.messages.Topic
+import com.jetbrains.python.projectModel.ProjectModelSyncListener
 import java.nio.file.Path
 
-interface UvSyncListener {
+interface UvSyncListener : ProjectModelSyncListener {
   companion object {
     @Topic.ProjectLevel
     val TOPIC: Topic<UvSyncListener> = Topic(UvSyncListener::class.java, Topic.BroadcastDirection.NONE)
@@ -12,6 +13,6 @@ interface UvSyncListener {
 
   // Add onFailure
   // Add onCancel
-  fun onStart(projectRoot: Path): Unit = Unit
-  fun onFinish(projectRoot: Path): Unit = Unit
+  override fun onStart(projectRoot: Path): Unit = Unit
+  override fun onFinish(projectRoot: Path): Unit = Unit
 }

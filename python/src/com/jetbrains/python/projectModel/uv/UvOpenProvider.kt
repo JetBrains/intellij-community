@@ -25,11 +25,11 @@ class UvOpenProvider() : AbstractOpenProjectProvider() {
     val projectDirectory = getProjectDirectory(projectFile) 
     val projectRootPath = projectDirectory.toNioPathOrNull() ?: Path.of(projectDirectory.path)
     project.service<UvSettings>().addLinkedProject(projectRootPath)
-    UvProjectResolver.syncUvProject(project, projectRootPath)
+    UvProjectResolver.syncProjectModelRoot(project, projectRootPath)
   }
 
   override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    UvProjectResolver.forgetUvProject(project, Path.of(externalProjectPath))
+    UvProjectResolver.forgetProjectModelRoot(project, Path.of(externalProjectPath))
   }
 
   companion object {

@@ -13,7 +13,6 @@ import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.poetry.PoetryLinkAction.CoroutineScopeService.Companion.coroutineScope
-import com.jetbrains.python.projectModel.poetry.PoetryProjectResolver.linkAllPoetryProjects
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 
@@ -27,7 +26,7 @@ class PoetryLinkAction : AnAction() {
     val basePath = project.basePath ?: return
     project.trackActivityBlocking(PoetryLinkActivityKey) {
       project.coroutineScope.launchTracked {
-        linkAllPoetryProjects(project, basePath)
+        PoetryProjectResolver.linkAllProjectModelRoots(project, basePath)
       }
     }
   }

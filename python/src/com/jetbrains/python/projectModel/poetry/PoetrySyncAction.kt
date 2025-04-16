@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.ActivityKey
@@ -25,7 +24,7 @@ class PoetrySyncAction : AnAction() {
     val project = e.project ?: return
     project.trackActivityBlocking(PoetryActivityKey) {
       project.coroutineScope.launchTracked {
-        PoetryProjectResolver.syncAllPoetryProjects(project = project)
+        PoetryProjectResolver.syncAllProjectModelRoots(project = project)
       }
     }
   }

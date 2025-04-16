@@ -13,7 +13,6 @@ import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.projectModel.uv.UvLinkAction.CoroutineScopeService.Companion.coroutineScope
-import com.jetbrains.python.projectModel.uv.UvProjectResolver.linkAllUvProjects
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 
@@ -27,7 +26,7 @@ class UvLinkAction : AnAction() {
     val basePath = project.basePath ?: return
     project.trackActivityBlocking(UvLinkActivityKey) {
       project.coroutineScope.launchTracked {
-        linkAllUvProjects(project, basePath)
+        UvProjectResolver.linkAllProjectModelRoots(project, basePath)
       }
     }
   }
