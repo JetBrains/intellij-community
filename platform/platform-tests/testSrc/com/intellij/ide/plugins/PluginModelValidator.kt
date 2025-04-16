@@ -150,7 +150,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
   fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
     val moduleDescriptorFileInfos = sourceModules
-      .filterNot { it.name.startsWith("fleet.") || validationOptions.modulesToSkip.contains(it.name) }
+      .filterNot { validationOptions.modulesToSkip.contains(it.name) }
       .mapNotNull { module ->
         try {
           createFileInfo(module)
