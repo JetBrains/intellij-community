@@ -28,6 +28,11 @@ public interface HighlightVisitor extends PossiblyDumbAware {
     return false;
   }
 
+  /**
+   * The main highlighting method, which is called for each PSI element within the range to be highlighted.
+   * Please make sure the implementation of this method is creating highlighters with the text range lying within the current PSI element passed to the visitor,
+   * to minimize annoying flickering and inconsistencies.
+   */
   void visit(@NotNull PsiElement element);
 
   boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
