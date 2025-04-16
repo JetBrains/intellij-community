@@ -173,6 +173,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return myTopmostReadAction.get()
   }
 
+  override fun <T> relaxPreventiveLockingActions(action: () -> T): T {
+    return action()
+  }
+
   override fun getLockingProhibitedAdvice(): String? {
     return myLockingProhibited.get()?.second
   }

@@ -6,6 +6,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
+import com.intellij.diagnostic.ThreadDumpService
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -16,6 +23,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assumptions
@@ -25,6 +35,23 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class PlatformUtilitiesTest {
+
+  @Test
+  fun `relaxing preventive actions leads to absence of lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withContext(Dispatchers.ui(kind = UiDispatcherKind.RELAX)) {
+      assertThat(application.isWriteIntentLockAcquired).isFalse
+      getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
+        assertThat(application.isWriteIntentLockAcquired).isTrue
+      }
+      getGlobalThreadingSupport().relaxPreventiveLockingActions {
+        getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
+          assertThat(application.isWriteIntentLockAcquired).isFalse
+        }
+      }
+
+    }
+
+  }
 
   @Test
   fun `invokeAndWaitRelaxed does not take lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
