@@ -161,6 +161,10 @@
               id="Images.CopyImageAction"
               icon="AllIcons.Actions.Copy">
       </action>
+      <action class="org.intellij.images.scientific.action.RotateImageAction"
+              id="Images.RotateImageAction"
+              icon="AllIcons.Actions.Refresh">
+      </action>
       <group id="Images.ImageOperationsGroup"
              class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
     </group>
