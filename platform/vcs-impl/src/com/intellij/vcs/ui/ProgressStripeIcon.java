@@ -3,11 +3,10 @@ package com.intellij.vcs.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +17,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
-
-import static com.intellij.ui.JBColor.namedColor;
 
 @ApiStatus.Internal
 public abstract class ProgressStripeIcon implements Icon {
@@ -57,14 +53,6 @@ public abstract class ProgressStripeIcon implements Icon {
   }
 
   private static final class GradientIcon extends ProgressStripeIcon {
-    private static final Color DARK = new ProgressStripeColor(namedColor("ProgressBar.indeterminateStartColor",
-                                                                         new JBColor(new Color(0x4d9ff8),
-                                                                                     new Color(0x6a6a6a))), Gray.xD4);
-    @SuppressWarnings("UseJBColor")
-    private static final Color LIGHT = new ProgressStripeColor(namedColor("ProgressBar.indeterminateEndColor",
-                                                                          new JBColor(new Color(0x90c2f8),
-                                                                                      new Color(0x838383))),
-                                                               new Color(0x989a9e));
     private static final int GRADIENT = 128;
     private static final int GRADIENT_HEIGHT = 3;
 
@@ -79,8 +67,11 @@ public abstract class ProgressStripeIcon implements Icon {
 
     @Override
     public void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
-      Color dark = DARK;
-      Color light = LIGHT;
+      // See DarculaProgressBarUI and MacIntelliJProgressBarUI
+      Color dark = UIUtil.isGraphite() ? Gray.xD4 : JBUI.CurrentTheme.ProgressBar.INDETERMINATE_START;
+      //noinspection UseJBColor
+      Color light = UIUtil.isGraphite() ? new Color(0x989a9e) : JBUI.CurrentTheme.ProgressBar.INDETERMINATE_END;
+
       g2.setPaint(new GradientPaint(x + shift, y, dark, x + shift + JBUIScale.scale(GRADIENT), y, light));
       g2.fill(new Rectangle(x + shift, y, JBUIScale.scale(GRADIENT), getIconHeight()));
       g2.setPaint(new GradientPaint(x + shift + JBUIScale.scale(GRADIENT), y, light, x + shift + 2 * JBUIScale.scale(GRADIENT), y, dark));
@@ -90,17 +81,6 @@ public abstract class ProgressStripeIcon implements Icon {
     @Override
     public int getIconHeight() {
       return JBUIScale.scale(GRADIENT_HEIGHT);
-    }
-
-    private static final class ProgressStripeColor extends JBColor {
-      private ProgressStripeColor(@NotNull JBColor defaultColor, @NotNull Color graphiteColor) {
-        super((Supplier<? extends Color>)() -> {
-          if (UIUtil.isUnderAquaBasedLookAndFeel() && !StartupUiUtil.isUnderDarcula() && UIUtil.isGraphite()) {
-            return graphiteColor;
-          }
-          return defaultColor;
-        });
-      }
     }
   }
 
