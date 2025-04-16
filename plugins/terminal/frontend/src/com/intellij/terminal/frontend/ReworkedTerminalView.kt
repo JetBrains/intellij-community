@@ -365,6 +365,7 @@ internal class ReworkedTerminalView(
     result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
 
     result.putUserData(ChangeEditorFontSizeStrategy.KEY, ChangeTerminalFontSizeStrategy)
+    result.putUserData(TerminalFontSizeProvider.KEY, TerminalFontSizeProviderImpl.getInstance())
 
     val fontSettingsListener = object : TerminalFontOptionsListener {
       override fun fontOptionsChanged() {

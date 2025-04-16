@@ -3,11 +3,17 @@
     <action class="com.intellij.execution.wsl.target.WslSyncAction" internal="true" text="WSL Sync"/>
     <action class="com.intellij.execution.wsl.proxy.WslProxyAction" internal="true"/>
     <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
-            use-shortcut-of="EditorIncreaseFontSize"/>
+            use-shortcut-of="EditorIncreaseFontSize">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="TerminalDecreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$DecreaseEditorFontSize"
-            use-shortcut-of="EditorDecreaseFontSize"/>
+            use-shortcut-of="EditorDecreaseFontSize">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="TerminalResetFontSize" class="com.intellij.openapi.editor.actions.TerminalResetFontSizeAction"
-            use-shortcut-of="EditorResetFontSize"/>
+            use-shortcut-of="EditorResetFontSize">
+      <override-text place="GoToAction"/>
+    </action>
 
     <action id="RunToolbarWidgetAction" class="com.intellij.execution.runToolbar.RunToolbarWidgetAction"/>
 

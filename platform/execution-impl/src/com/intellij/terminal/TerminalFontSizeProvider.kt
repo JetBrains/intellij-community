@@ -2,10 +2,15 @@
 package com.intellij.terminal
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface TerminalFontSizeProvider {
+  companion object {
+    @JvmField val KEY: Key<TerminalFontSizeProvider> = Key.create("TerminalFontSizeProvider")
+  }
+
   fun getFontSize(): Float
 
   /**

@@ -13,4 +13,5 @@ interface ChangeEditorFontSizeStrategy {
   var fontSize: Float
   val defaultFontSize: Float
   @get:NlsActions.ActionText val defaultFontSizeText: String
+  val overridesChangeFontSizeActions: Boolean
 }
