@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument
 import org.intellij.images.scientific.utils.BinarizationThresholdConfig
 import org.intellij.images.scientific.utils.ScientificUtils
+import org.intellij.images.scientific.utils.ScientificUtils.ROTATION_ANGLE_KEY
 import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import org.intellij.images.scientific.utils.launchBackground
 import java.awt.image.BufferedImage
@@ -27,9 +28,11 @@ class BinarizeImageAction : AnAction() {
     val originalImage = imageFile.getUserData(ScientificUtils.ORIGINAL_IMAGE_KEY) ?: return
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     val thresholdConfig = BinarizationThresholdConfig.getInstance()
+    val currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
 
     launchBackground {
-      val binarizedImage = applyBinarization(originalImage, thresholdConfig.threshold)
+      val rotatedOriginal = if (currentAngle != 0) ScientificUtils.rotateImage(originalImage, currentAngle) else originalImage
+      val binarizedImage = applyBinarization(rotatedOriginal, thresholdConfig.threshold)
       saveImageToFile(imageFile, binarizedImage)
       document.value = binarizedImage
       ScientificImageActionsCollector.logBinarizeImageInvoked(this@BinarizeImageAction)
