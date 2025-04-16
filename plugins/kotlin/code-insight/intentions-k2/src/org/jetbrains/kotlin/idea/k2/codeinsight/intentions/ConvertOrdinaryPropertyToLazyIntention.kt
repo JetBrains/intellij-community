@@ -20,7 +20,7 @@ private val KOTLIN_RUN = FqName("kotlin.run")
 internal class ConvertOrdinaryPropertyToLazyIntention :
     KotlinApplicableModCommandAction<KtProperty, ConvertOrdinaryPropertyToLazyIntention.Context>(KtProperty::class) {
 
-    data class Context(
+    internal class Context(
         val isRunCall: Boolean,
     )
 
