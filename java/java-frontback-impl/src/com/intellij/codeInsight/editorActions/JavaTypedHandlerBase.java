@@ -2,9 +2,12 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -17,9 +20,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,23 +34,37 @@ import java.util.Set;
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 
-public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate {
+public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   private boolean myJavaLTTyped;
 
-  protected AbstractBasicJavaTypedHandler() {
+  protected JavaTypedHandlerBase() {
   }
 
-  protected abstract boolean isJavaFile(@NotNull PsiFile file);
+  private static boolean isJavaFile(@NotNull PsiFile file) {
+    return file instanceof PsiJavaFile;
+  }
 
-  protected abstract boolean isJspFile(@NotNull PsiFile file);
+  private static boolean isJspFile(@NotNull PsiFile file) {
+    return file instanceof JspFile;
+  }
 
-  protected abstract void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor);
+  protected void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor) {
 
-  protected abstract void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor);
+  }
 
-  protected abstract boolean isLanguageLevel5OrHigher(@NotNull PsiFile file);
+  protected void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
 
-  protected abstract @NotNull Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  }
+
+  private static boolean isLanguageLevel5OrHigher(@NotNull PsiFile file) {
+    return PsiUtil.isLanguageLevel5OrHigher(file);
+  }
+
+  private static @NotNull Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file),
+                                                  JavaPsiBundle.message("command.name.insert.block.statement"), null);
+    return Result.STOP;
+  }
 
 
   /**
@@ -53,16 +72,22 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
    *
    * @return true if the '=' char was processed
    */
-  public abstract boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore);
+  public boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
+    return false;
+  }
 
   /**
    * Automatically insert parentheses around the ?: when necessary.
    *
    * @return true if question mark was handled
    */
-  protected abstract boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore);
+  protected boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
+    return false;
+  }
 
-  protected abstract boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  protected boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return false;
+  }
 
   @Override
   public @NotNull Result beforeCharTyped(final char c,

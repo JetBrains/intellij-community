@@ -51,5 +51,7 @@
                               implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
 
     <java.definitions id="java-backend" implementation="com.intellij.codeInsight.JavaDefinitionService"/>
+
+    <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter"/>
   </extensions>
 </idea-plugin>

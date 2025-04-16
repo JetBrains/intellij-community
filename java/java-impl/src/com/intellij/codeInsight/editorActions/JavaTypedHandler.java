@@ -6,10 +6,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt;
-import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -18,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -32,30 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
-
-  @Override
-  protected boolean isJavaFile(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile;
-  }
-
-  @Override
-  protected boolean isJspFile(@NotNull PsiFile file) {
-    return file instanceof JspFile;
-  }
-
-  @Override
-  protected boolean isLanguageLevel5OrHigher(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
-  }
-
-  @Override
-  protected @NotNull Result processWhileAndIfStatementBody(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    CommandProcessor.getInstance().executeCommand(project, () -> new JavaSmartEnterProcessor().process(project, editor, file),
-                                                  JavaPsiBundle.message("command.name.insert.block.statement"), null);
-    return Result.STOP;
-  }
-
+public final class JavaTypedHandler extends JavaTypedHandlerBase {
   @Override
   public boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
