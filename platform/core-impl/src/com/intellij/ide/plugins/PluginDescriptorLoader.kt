@@ -197,7 +197,7 @@ private fun loadDescriptorFromStream(
     useCoreClassLoader = useCoreClassLoader,
   )
   context.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
-  initMainDescriptorByRaw(
+  loadPluginSubDescriptors(
     descriptor = descriptor,
     pathResolver = pathResolver,
     context = context,
@@ -209,7 +209,7 @@ private fun loadDescriptorFromStream(
 }
 
 @VisibleForTesting
-fun initMainDescriptorByRaw(
+fun loadPluginSubDescriptors(
   descriptor: IdeaPluginDescriptorImpl,
   pathResolver: PathResolver,
   context: DescriptorListLoadingContext,
