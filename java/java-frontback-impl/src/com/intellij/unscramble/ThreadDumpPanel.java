@@ -8,6 +8,7 @@ import com.intellij.execution.ui.NoStackTraceFoldingPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ExporterToTextFile;
+import com.intellij.ide.actions.ExportToTextFileToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.notification.NotificationGroup;
@@ -49,7 +50,7 @@ import java.util.List;
  * @author Jeka
  * @author Konstantin Bulenkov
  */
-public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoStackTraceFoldingPanel {
+public final class ThreadDumpPanel extends JPanel implements NoStackTraceFoldingPanel {
   private final JBList<DumpItem> myThreadList;
   private final EditorNotificationPanel myNotificationPanel = new EditorNotificationPanel(EditorNotificationPanel.Status.Info);
   private final List<DumpItem> myThreadDump;
@@ -57,7 +58,6 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private Comparator<DumpItem> currentComparator = DumpItem.BY_INTEREST;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
-  private final ExporterToTextFile myExporterToTextFile;
   private int myDumpItemsTruncated = 0;
   private int myMergedDumpItemsTruncated = 0;
 
@@ -90,7 +90,6 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     myFilterField = createSearchTextField();
     myFilterPanel = createFilterPanel();
     myThreadList = createThreadList(consoleView);
-    myExporterToTextFile = createDumpToFileExporter(project, myThreadDump);
 
     configureToolbar(project, consoleView, toolbarActions);
 
@@ -164,7 +163,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     toolbarActions.add(filterAction);
     toolbarActions.add(new CopyToClipboardAction(project));
     toolbarActions.add(new SortThreadsAction());
-    toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
+    toolbarActions.add(new ExportToTextFileToolbarAction(createDumpToFileExporter(project, myThreadDump)));
     toolbarActions.add(new MergeStacktracesAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false);
@@ -183,11 +182,6 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     splitter.setFirstComponent(leftPanel);
     splitter.setSecondComponent(consoleView.getComponent());
     add(splitter, BorderLayout.CENTER);
-  }
-
-  @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myExporterToTextFile);
   }
 
   private void sortAndUpdateThreadDumpItemList() {
