@@ -6343,6 +6343,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/basic4.kt");
         }
 
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/enumEntry.kt");
+        }
+
         @TestMetadata("fewerArguments.kt")
         public void testFewerArguments() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/fewerArguments.kt");

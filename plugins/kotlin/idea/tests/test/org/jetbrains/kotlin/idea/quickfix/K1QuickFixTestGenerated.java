@@ -502,6 +502,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addConstructorParameterFromSuperTypeCall/basic4.kt");
         }
 
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("testData/quickfix/addConstructorParameterFromSuperTypeCall/enumEntry.kt");
+        }
+
         @TestMetadata("fewerArguments.kt")
         public void testFewerArguments() throws Exception {
             runTest("testData/quickfix/addConstructorParameterFromSuperTypeCall/fewerArguments.kt");
