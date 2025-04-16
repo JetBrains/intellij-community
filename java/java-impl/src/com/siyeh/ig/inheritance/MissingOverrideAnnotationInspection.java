@@ -6,7 +6,7 @@ import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.module.JdkApiCompatibilityCache;
+import com.intellij.openapi.module.JdkApiCompatibilityService;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -216,7 +216,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       @Contract("_, _, _,null -> true")
       private static boolean ignoreSuperMethod(PsiMethod method, PsiClass methodClass, PsiMethod superMethod, PsiClass superClass) {
         return !InheritanceUtil.isInheritorOrSelf(methodClass, superClass, true) ||
-               JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
+               JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(superMethod, PsiUtil.getLanguageLevel(method)) != null;
       }
   }
 

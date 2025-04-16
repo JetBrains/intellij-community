@@ -24,13 +24,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * Stores a compatibility matrix for JDK APIs. The matrix is generated from {@code @since} tags in the JDK source code.
  */
 @Service(Service.Level.APP)
-public final class JdkApiCompatibilityCache {
-  private static final Logger LOG = Logger.getInstance(JdkApiCompatibilityCache.class);
+public final class JdkApiCompatibilityService {
+  private static final Logger LOG = Logger.getInstance(JdkApiCompatibilityService.class);
 
   private final Map<LanguageLevel, List<String>> cache = new ConcurrentHashMap<>();
 
-  public static JdkApiCompatibilityCache getInstance() {
-    return ApplicationManager.getApplication().getService(JdkApiCompatibilityCache.class);
+  public static JdkApiCompatibilityService getInstance() {
+    return ApplicationManager.getApplication().getService(JdkApiCompatibilityService.class);
   }
 
   /**
@@ -97,7 +97,7 @@ public final class JdkApiCompatibilityCache {
     return cache.computeIfAbsent(languageLevel, level -> {
       String featureString = level.toJavaVersion().toFeatureString();
       List<String> result = Collections.emptyList();
-      URL resource = JdkApiCompatibilityCache.class.getResource("api" + featureString + ".txt");
+      URL resource = JdkApiCompatibilityService.class.getResource("api" + featureString + ".txt");
       if (resource != null) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
           result = FileUtil.loadLines(reader);

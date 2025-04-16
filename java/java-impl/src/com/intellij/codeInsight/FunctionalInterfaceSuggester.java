@@ -5,7 +5,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
-import com.intellij.openapi.module.JdkApiCompatibilityCache;
+import com.intellij.openapi.module.JdkApiCompatibilityService;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -151,7 +151,7 @@ public final class FunctionalInterfaceSuggester {
       @Override
       public boolean processInReadAction(PsiMember member) {
         if (member instanceof PsiClass &&
-            JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
+            JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
           if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
             return true;
           }
