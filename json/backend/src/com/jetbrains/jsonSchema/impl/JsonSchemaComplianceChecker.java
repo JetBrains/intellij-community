@@ -18,6 +18,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +95,7 @@ public class JsonSchemaComplianceChecker {
     }
   }
 
+  @ApiStatus.Internal
   protected void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
     if (checker == null || checker.isCorrect()) return;
     // compute intersecting ranges - we'll solve warning priorities based on this information
