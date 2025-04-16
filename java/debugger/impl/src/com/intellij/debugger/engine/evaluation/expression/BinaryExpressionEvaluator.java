@@ -76,8 +76,7 @@ class BinaryExpressionEvaluator implements Evaluator {
         char v2 = ((CharValue)rightResult).charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 + v2);
       }
-      if ((leftResult instanceof StringReference) || (rightResult instanceof StringReference) ||
-          (leftResult == null && rightResult == null && CommonClassNames.JAVA_LANG_STRING.equals(expectedType))) {
+      if (CommonClassNames.JAVA_LANG_STRING.equals(expectedType)) {
         String v1 = DebuggerUtils.getValueAsString(context, leftResult);
         String v2 = DebuggerUtils.getValueAsString(context, rightResult);
         return DebuggerUtilsEx.mirrorOfString(v1 + v2, context);
