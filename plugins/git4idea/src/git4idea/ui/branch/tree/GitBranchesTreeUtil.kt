@@ -14,6 +14,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 object GitBranchesTreeUtil {
+  internal const val FILTER_DEBOUNCE_MS: Long = 100L
 
   fun JTree.overrideBuiltInAction(actionKey: String, override: (ActionEvent) -> Boolean) {
     val originalAction = actionMap[actionKey]

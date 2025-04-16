@@ -7,6 +7,7 @@ import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -26,6 +27,7 @@ import com.intellij.util.containers.FList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -45,6 +47,13 @@ import git4idea.ui.branch.popup.createIncomingLabel
 import git4idea.ui.branch.popup.createOutgoingLabel
 import git4idea.ui.branch.popup.updateIncomingCommitLabel
 import git4idea.ui.branch.popup.updateOutgoingCommitLabel
+import git4idea.ui.branch.tree.GitBranchesTreeUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Graphics
@@ -386,11 +395,24 @@ internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable
   }
 }
 
+@OptIn(FlowPreview::class)
 private class BranchesFilteringSpeedSearch(
   private val tree: FilteringBranchesTreeBase,
   private val searchTextField: SearchTextField,
 ) : FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>(tree, searchTextField) {
+  // null is the initial state - actual value is usually a non-null string
+  private val filterPattern = MutableStateFlow<String?>(null)
+
   private var bestMatch: BestMatch? = null
+
+  init {
+    tree.tree.launchOnShow("Branches Tree Filterer") {
+      // need EDT because of RA in TreeUtil.promiseVisit
+      withContext(Dispatchers.EDT) {
+        filterPattern.filterNotNull().debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collect(::refilter)
+      }
+    }
+  }
 
   override fun checkMatching(node: BranchTreeNode): FilteringTree.Matching =
     if (node.getNodeDescriptor() is BranchNodeDescriptor.Group) FilteringTree.Matching.NONE
@@ -414,8 +436,12 @@ private class BranchesFilteringSpeedSearch(
   override fun getMatcher(): MinusculeMatcher? = super.getMatcher() as MinusculeMatcher?
 
   override fun onSearchPatternUpdated(pattern: String?) {
+    filterPattern.tryEmit(pattern.orEmpty())
+  }
+
+  override fun refilter(pattern: String?) {
     bestMatch = null
-    super.onSearchPatternUpdated(pattern)
+    super.refilter(pattern)
     updateSpeedSearchBackground()
   }
 

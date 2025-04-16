@@ -13,6 +13,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
@@ -94,6 +95,11 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
   }
 
   protected void onSearchPatternUpdated(@Nullable String pattern) {
+    refilter(pattern);
+  }
+
+  @VisibleForTesting
+  public void refilter(@Nullable String pattern) {
     TreePath[] paths = getTreeComponent().getSelectionModel().getSelectionPaths();
     myFilteringTree.getSearchModel().refilter();
     myFilteringTree.expandTreeOnSearchUpdateComplete(pattern);
