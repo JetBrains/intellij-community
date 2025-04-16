@@ -12,6 +12,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalFontSizeProvider
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
@@ -32,6 +34,7 @@ import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalFontOptions
 import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
+import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
@@ -343,18 +346,31 @@ internal class ReworkedTerminalView(
     result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
     result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
 
+    result.putUserData(ChangeEditorFontSizeStrategy.KEY, ChangeTerminalFontSizeStrategy)
+
     val fontSettingsListener = object : TerminalFontOptionsListener {
       override fun fontOptionsChanged() {
         result.applyFontSettings(settings)
         result.reinitSettings()
-        if (result.component.isShowing) { // to avoid sending the resize event twice, for the regular and alternate buffer editors
-          sendResizeEvent()
-        }
+        result.resizeIfShowing()
       }
     }
     TerminalFontOptions.getInstance().addListener(fontSettingsListener, parentDisposable)
 
+    TerminalFontSizeProviderImpl.getInstance().addListener(parentDisposable, object : TerminalFontSizeProvider.Listener {
+      override fun fontChanged() {
+        result.setFontSize(TerminalFontSizeProviderImpl.getInstance().getFontSize())
+        result.resizeIfShowing()
+      }
+    })
+
     return result
+  }
+
+  private fun EditorImpl.resizeIfShowing() {
+    if (component.isShowing) { // to avoid sending the resize event twice, for the regular and alternate buffer editors
+      sendResizeEvent()
+    }
   }
 
   override fun dispose() {}
