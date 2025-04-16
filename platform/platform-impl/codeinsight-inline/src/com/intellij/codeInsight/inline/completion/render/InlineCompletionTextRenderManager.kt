@@ -66,10 +66,10 @@ import java.util.*
  *
  * See [Renderer.softWrapManager], [Renderer.applySoftWrapping]
  *
- * When the editor is resized, all the completion is re-rendered in such a case. See [recreateRenderer].
+ * When the editor is resized, all the completion is re-rendered in such a case. See [rerender].
  */
-@ApiStatus.Experimental
-internal class InlineCompletionTextRenderManager private constructor(
+@ApiStatus.Internal
+class InlineCompletionTextRenderManager private constructor(
   private val editor: Editor,
   private val renderOffset: Int,
   private val onDispose: () -> Unit
@@ -97,14 +97,17 @@ internal class InlineCompletionTextRenderManager private constructor(
   ): RenderedInlineCompletionElementDescriptor {
     check(isActive) { "Cannot render an element since the renderer is already disposed." }
     elementsCounter++
+    val renderRequest = Request(text, attributes, initialOffset, isActive = true)
     disposable.whenDisposed {
+      renderRequest.isActive = false
+
       ThreadingAssertions.assertEventDispatchThread()
       elementsCounter--
       if (elementsCounter == 0) {
         cleanUp()
       }
     }
-    requests += Request(text, attributes, initialOffset)
+    requests += renderRequest
     return renderer.append(text, attributes, initialOffset)
   }
 
@@ -116,20 +119,27 @@ internal class InlineCompletionTextRenderManager private constructor(
     onDispose()
   }
 
-  private fun recreateRenderer() {
+  private fun rerender() {
     Disposer.dispose(renderer)
     renderer = Renderer(editor, renderOffset)
     for (request in requests) {
-      renderer.append(request.text, request.attributes, request.initialOffset)
+      if (request.isActive) {
+        renderer.append(request.text, request.attributes, request.initialOffset)
+      }
     }
   }
 
-  private class Request(val text: String, val attributes: TextAttributes, val initialOffset: Int)
+  private class Request(
+    val text: String,
+    val attributes: TextAttributes,
+    val initialOffset: Int,
+    var isActive: Boolean,
+  )
 
   private inner class UpdateOnResizeListener : VisibleAreaListener {
     override fun visibleAreaChanged(e: VisibleAreaEvent) {
       if (e.oldRectangle.width != e.newRectangle.width && renderer.isSoftWrappingEnabled()) {
-        recreateRenderer()
+        rerender()
       }
     }
   }
@@ -490,6 +500,16 @@ internal class InlineCompletionTextRenderManager private constructor(
       return renderer.append(text, attributes, offset, disposable)
     }
 
+    @ApiStatus.Internal
+    @RequiresEdt
+    fun requestRerendering(editor: Editor) {
+      ThreadingAssertions.assertEventDispatchThread()
+      val storage = editor.getUserData(STORAGE_KEY) ?: return
+      storage.allEntries().sortedBy { it.first }.forEach { (_, renderer) ->
+        renderer.rerender()
+      }
+    }
+
     private class Storage<K : Any, V : Any> {
       private val map = mutableMapOf<K, V>()
 
@@ -500,6 +520,8 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
 
       fun isEmpty(): Boolean = map.isEmpty()
+
+      fun allEntries(): List<Pair<K, V>> = map.entries.map { it.key to it.value }
     }
   }
 }
