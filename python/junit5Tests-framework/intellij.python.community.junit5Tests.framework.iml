@@ -32,5 +32,44 @@
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module-library" exported="" scope="TEST">
+      <library name="uk.webcompere.system.stubs.jupiter" type="repository">
+        <properties maven-id="uk.org.webcompere:system-stubs-jupiter:2.1.8">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8.jar">
+              <sha256sum>9a24867a51f5d22db67d9052a06bc5dd2e9a3e273bc2ee9814620f2d9f25d0a8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8.jar">
+              <sha256sum>9c27322cfc7043c75384ad444007b0880ca18fe7231d69bfa69616bc773cafe1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4.jar">
+              <sha256sum>74768731219a5b2e0cc9d2b1c9e2092e0622242e41b1925a6ba7346e160731bc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4.jar">
+              <sha256sum>e1dae7efc5562c29ad3b625b90e6864208de69bad5632c3f93a547f17622ac51</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-jupiter/2.1.8/system-stubs-jupiter-2.1.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/uk/org/webcompere/system-stubs-core/2.1.8/system-stubs-core-2.1.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.17.4/byte-buddy-1.17.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.17.4/byte-buddy-agent-1.17.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
   </component>
 </module>
