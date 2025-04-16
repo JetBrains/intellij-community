@@ -68,12 +68,16 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
             }
         ) return null
 
-        val (isNullable, returnLabelName) = when (parent) {
+        return when (parent) {
             is KtNamedFunction -> {
                 val returnType = parent.getReturnType(analysisSession = this) ?: return null
                 val isNullable = returnType.canBeNull
                 if (!returnType.isUnitType && !isNullable) return null
-                isNullable to null
+
+                Context(
+                    returnNull = isNullable,
+                    returnLabelName = null,
+                )
             }
 
             is KtLambdaExpression -> {
@@ -81,13 +85,15 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
                 val returnType = functionLiteral.getReturnType(analysisSession = this) ?: return null
                 if (!returnType.isUnitType) return null
                 val lambdaLabelName = functionLiteral.bodyBlockExpression?.getParentLambdaLabelName() ?: return null
-                false to lambdaLabelName
+
+                Context(
+                    returnNull = false,
+                    returnLabelName = lambdaLabelName,
+                )
             }
 
-            else -> return null
+            else -> null
         }
-
-        return Context(isNullable, returnLabelName)
     }
 
     override fun getProblemDescription(
