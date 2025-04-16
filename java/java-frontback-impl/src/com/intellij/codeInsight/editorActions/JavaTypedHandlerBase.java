@@ -6,6 +6,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -20,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,7 +45,8 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   private static boolean isJspFile(@NotNull PsiFile file) {
-    return file instanceof JspFile;
+    // avoid dependency on jsp openapi until we have xml psi on
+    return file.getLanguage() instanceof XMLLanguage;
   }
 
   protected void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor) {
