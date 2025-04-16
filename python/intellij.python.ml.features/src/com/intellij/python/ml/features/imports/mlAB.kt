@@ -37,6 +37,9 @@ internal class FinalImportRankingStatusService {
       else
         FinalImportRankingStatus.Disabled(mlModel == null, registryOption)
     }
+
+  val shouldLoadModel: Boolean
+    get() = getRegistryOption() == RegistryOption.ENABLED || (getRegistryOption() == RegistryOption.IN_EXPERIMENT && mlEnabledOnBucket)
 }
 
 internal sealed class FinalImportRankingStatus(
