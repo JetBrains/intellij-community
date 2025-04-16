@@ -65,12 +65,13 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
     installSupplyTo(getTreeComponent());
   }
 
-  protected void onSearchFieldUpdated(String pattern) {
+  protected void onSearchPatternUpdated(@Nullable String pattern) {
     TreePath[] paths = getTreeComponent().getSelectionModel().getSelectionPaths();
     myFilteringTree.getSearchModel().refilter();
     myFilteringTree.expandTreeOnSearchUpdateComplete(pattern);
     getTreeComponent().getSelectionModel().setSelectionPaths(paths);
     myFilteringTree.onSpeedSearchUpdateComplete(pattern);
+    updateSelection();
   }
 
   public void select(@NotNull T node) {
@@ -118,8 +119,7 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
         myUpdating = false;
       }
     }
-    onSearchFieldUpdated(filter);
-    updateSelection();
+    onSearchPatternUpdated(filter);
   }
 
   @Override

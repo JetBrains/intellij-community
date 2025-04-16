@@ -13358,7 +13358,7 @@ c:com.intellij.ui.FilteringSpeedSearch
 - iterate(javax.swing.tree.DefaultMutableTreeNode,Z,Z):java.util.Iterator
 - noHits():V
 - p:onMatchingChecked(java.lang.Object,java.lang.Iterable,com.intellij.ui.FilteringTree$Matching):V
-- p:onSearchFieldUpdated(java.lang.String):V
+- p:onSearchPatternUpdated(java.lang.String):V
 - p:onUpdatePattern(java.lang.String):V
 - select(javax.swing.tree.DefaultMutableTreeNode):V
 - update():V
