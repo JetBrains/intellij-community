@@ -58,8 +58,9 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PyCondaFlavorData.class;
   }
 
+  @RequiresBackgroundThread
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     // There is no such thing as "conda homepath" since conda doesn't store python path
     return Collections.emptyList();
   }

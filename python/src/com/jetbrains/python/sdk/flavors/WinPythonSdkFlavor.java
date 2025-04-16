@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,7 +86,8 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
   @RequiresBackgroundThread
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
+  protected final @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(final @Nullable Module module,
+                                                                               final @Nullable UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
     findInCandidatePaths(candidates, "python.exe", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getCommunityHelpersRoot().getParent().toString());
@@ -127,6 +130,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return path != null && isPythonFromStore(path); // Python from store might be non-executable, but still usable
   }
 
+  @RequiresBackgroundThread
   private boolean isPythonFromStore(@NotNull Path path) {
     String pathStr = path.toString();
     if (myAppxCache.getValue().contains(pathStr)) {
@@ -161,8 +165,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     }
   }
 
-  public static void findInPath(Collection<? super String> candidates, String exeName) {
-    final String path = System.getenv("PATH");
+  @RequiresBackgroundThread
+  private static void findInPath(@NotNull Collection<? super @NotNull String> candidates, @NotNull String exeName) {
+    final String path = PathEnvironmentVariableUtil.getPathVariableValue(); //can be Path or PATH
     if (path == null) return;
     for (String pathEntry : StringUtil.split(path, ";")) {
       if (pathEntry.startsWith("\"") && pathEntry.endsWith("\"")) {

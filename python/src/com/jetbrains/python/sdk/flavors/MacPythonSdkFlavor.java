@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,9 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empt
     return PyFlavorData.Empty.class;
   }
 
+  @RequiresBackgroundThread
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     Set<Path> candidates = new HashSet<>();
     collectPythonInstallations(Path.of("/Library/Frameworks/Python.framework/Versions"), candidates);
     collectPythonInstallations(Path.of("/System/Library/Frameworks/Python.framework/Versions"), candidates);

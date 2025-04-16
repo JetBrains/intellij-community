@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.sdk.BasePySdkExtKt;
@@ -42,8 +43,9 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     return PyFlavorData.Empty.class;
   }
 
+  @RequiresBackgroundThread
   @Override
-  public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
+  protected @NotNull Collection<@NotNull Path> suggestLocalHomePathsImpl(@Nullable Module module, @Nullable UserDataHolder context) {
     return ReadAction.compute(() -> {
       final var candidates = new ArrayList<Path>();
 
@@ -67,10 +69,6 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
         return PythonSdkUtil.isVirtualEnv(path.toString());
       });
     });
-  }
-
-  public static @NotNull Path getDefaultLocation() {
-    return VirtualEnvReader.getInstance().getVEnvRootDir();
   }
 
   @Override
