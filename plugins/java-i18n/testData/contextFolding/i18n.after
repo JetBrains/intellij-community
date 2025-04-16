@@ -1,2 +1,0 @@
-com.example.welcomeMessage2=Welcome to <fold text='"our App"' expand='false'>{0}</fold> by <fold text='BUNDLE_NAME' expand='false'>{1}</fold>
-com.example.welcomeMessage3=Welcome
