@@ -19,7 +19,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 2)
+  private val GROUP = EventLogGroup(GROUP_ID, 3)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -44,6 +44,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                TerminalCommandUsageStatistics.subCommandField,
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
+
+  private val hyperlinkFollowedEvent = GROUP.registerEvent("terminal.hyperlink.followed",)
 
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown"
@@ -177,5 +179,9 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
       DURATION_FIELD with duration,
       OS_VERSION_FIELD with osVersion,
     )
+  }
+
+  fun logHyperlinkFollowed() {
+    hyperlinkFollowedEvent.log()
   }
 }
