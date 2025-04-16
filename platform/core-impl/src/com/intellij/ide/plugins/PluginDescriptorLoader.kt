@@ -467,7 +467,7 @@ private suspend fun logPlugins(
   val disabledPlugins = HashSet<PluginId>()
   for (descriptor in plugins) {
     val pluginId = descriptor.pluginId
-    val target = if (!descriptor.isEnabled) {
+    val target = if (!PluginManagerCore.isLoaded(descriptor)) {
       if (!context.isPluginDisabled(pluginId)) {
         // plugin will be logged as part of "Problems found loading plugins"
         continue
