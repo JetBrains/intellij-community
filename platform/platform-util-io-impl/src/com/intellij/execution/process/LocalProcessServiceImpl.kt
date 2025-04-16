@@ -42,7 +42,7 @@ class LocalProcessServiceImpl : LocalProcessService {
     val process = builder.start()
 
     if(options.winSuspendedProcessCallback != null && process !is WinConPtyProcess) {
-      logger<ProcessServiceImpl>().error("Windows suspended process callback is only applicable for a WinConPtyProcess instance")
+      logger<LocalProcessServiceImpl>().error("Windows suspended process callback is only applicable for a WinConPtyProcess instance")
     }
 
     return process
