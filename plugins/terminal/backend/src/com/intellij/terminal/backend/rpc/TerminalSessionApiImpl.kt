@@ -1,6 +1,6 @@
 package com.intellij.terminal.backend.rpc
 
-import com.intellij.platform.kernel.backend.findValueEntity
+import com.intellij.terminal.backend.TerminalSessionsManager
 import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
@@ -19,7 +19,7 @@ internal class TerminalSessionApiImpl : TerminalSessionApi {
   }
 
   private suspend fun getSession(sessionId: TerminalSessionId): TerminalSession {
-    return sessionId.eid.findValueEntity<TerminalSession>()?.value
-           ?: error("Failed to find TerminalSession with ID: ${sessionId.eid}")
+    return TerminalSessionsManager.getInstance().getSession(sessionId)
+           ?: error("Failed to find TerminalSession with ID: $sessionId")
   }
 }
