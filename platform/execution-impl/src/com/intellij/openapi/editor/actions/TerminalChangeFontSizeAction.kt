@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     val settingsProvider = getTerminalWidget(e)?.settingsProvider ?: return
-    val newFontSize = settingsProvider.terminalFontSize2D + myStep
+    val newFontSize = settingsProvider.terminalFontSize + myStep
     if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
       settingsProvider.terminalFontSize = newFontSize
     }
