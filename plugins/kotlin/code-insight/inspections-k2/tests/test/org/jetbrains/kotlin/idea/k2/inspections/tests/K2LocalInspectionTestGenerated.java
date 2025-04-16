@@ -7896,6 +7896,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
             }
 
+            @TestMetadata("dontReplaceMapGetValuesCaptured.kt")
+            public void testDontReplaceMapGetValuesCaptured() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceMapGetValuesCaptured.kt");
+            }
+
             @TestMetadata("dontReplaceOverridenNotProperty.kt")
             public void testDontReplaceOverridenNotProperty() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceOverridenNotProperty.kt");

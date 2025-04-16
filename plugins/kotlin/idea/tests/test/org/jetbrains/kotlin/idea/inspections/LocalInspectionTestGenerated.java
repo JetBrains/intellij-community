@@ -19322,6 +19322,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
             }
 
+            @TestMetadata("dontReplaceMapGetValuesCaptured.kt")
+            public void testDontReplaceMapGetValuesCaptured() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceMapGetValuesCaptured.kt");
+            }
+
             @TestMetadata("dontReplaceOverridenNotProperty.kt")
             public void testDontReplaceOverridenNotProperty() throws Exception {
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceOverridenNotProperty.kt");
