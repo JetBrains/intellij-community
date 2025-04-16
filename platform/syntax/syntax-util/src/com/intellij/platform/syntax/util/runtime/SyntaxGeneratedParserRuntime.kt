@@ -204,7 +204,7 @@ final class SyntaxGeneratedParserRuntime(
     fun getExpected(position: Int, expected: Boolean): String {
       val list = if (expected) variants else unexpected
       val strings = HashSet<String>(list.size)
-      for (i in 0..list.size - 1) {
+      for (i in 0 until list.size) {
         val variant: Variant = list.get(i)
         if (position == variant.position) {
           val text: String = variant.`object`.toString()
@@ -220,17 +220,21 @@ final class SyntaxGeneratedParserRuntime(
             .asSequence()
             .sorted()
             .take(MAX_VARIANTS_TO_DISPLAY)
-            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}")
+            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}") { s ->
+              if (s[0] == '<' || s[0].isJavaIdentifierStart()) s else "'$s'"
+            }
         }
         strings.size > 1 -> {
-          val sorted = strings.sorted()
+          val sorted = strings.sorted().map { s -> if (s[0] == '<' || s[0].isJavaIdentifierStart()) s else "'$s'" }
           val last = sorted.last()
           sorted
             .dropLast(1)
-            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.or")} $last")
+            .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.or")} $last") 
         }
         else -> {
-          strings.singleOrNull().orEmpty()
+          strings.singleOrNull()?.let {
+            if (it[0] == '<' || it[0].isJavaIdentifierStart()) it else "'$it'"
+          }.orEmpty()
         }
       }
     }

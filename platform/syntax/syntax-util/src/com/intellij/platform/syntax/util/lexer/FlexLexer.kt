@@ -3,6 +3,7 @@ package com.intellij.platform.syntax.util.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.Throws
 
 @ApiStatus.Experimental
 interface FlexLexer {
@@ -11,6 +12,7 @@ interface FlexLexer {
   fun getTokenStart(): Int
   fun getTokenEnd(): Int
 
+  @Throws(Exception::class)
   fun advance(): SyntaxElementType?
   fun reset(buf: CharSequence, start: Int, end: Int, initialState: Int)
 }

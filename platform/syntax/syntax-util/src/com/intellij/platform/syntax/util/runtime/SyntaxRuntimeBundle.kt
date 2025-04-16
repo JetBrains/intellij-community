@@ -10,7 +10,7 @@ import kotlin.jvm.JvmStatic
 object SyntaxRuntimeBundle {
   private const val BUNDLE: @NonNls String = "messages.SyntaxRuntimeBundle"
     
-  private val bundle = ResourceBundle("com.intellij.platform.syntax.runtime.SyntaxRuntimeBundle", BUNDLE, this, emptyMap())
+  private val bundle = ResourceBundle("com.intellij.platform.syntax.util.runtime.SyntaxRuntimeBundle", BUNDLE, this, emptyMap())
   
   @JvmStatic
   fun message(key: @PropertyKey(resourceBundle = BUNDLE) String, vararg params: Any): @Nls String {
