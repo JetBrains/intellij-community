@@ -51,7 +51,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   private long myLastWatcherPing = myLastUiUpdate;
 
   @Obsolete
-  public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title,
+  public PotemkinProgress(@NotNull @NlsContexts.ModalProgressTitle String title,
                           @Nullable Project project,
                           @Nullable JComponent parentComponent,
                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
@@ -136,7 +136,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     }
   }
 
-  private void progressFinished() {
+  void progressFinished() {
     getDialog().hideImmediately();
     myEventStealer.dispatchInvocationEvents();
   }

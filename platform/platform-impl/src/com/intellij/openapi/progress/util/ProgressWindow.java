@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   protected final @Nullable Project myProject;
   final boolean myShouldShowCancel;
 
-  private @ProgressTitle String myTitle;
+  private @Nls String myTitle;
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
@@ -346,7 +347,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void setTitle(@NotNull @ProgressTitle String title) {
+  public void setTitle(@NotNull @Nls String title) {
     if (!title.equals(myTitle)) {
       myTitle = title;
 

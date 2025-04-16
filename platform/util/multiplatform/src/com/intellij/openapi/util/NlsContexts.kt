@@ -190,4 +190,9 @@ class NlsContexts {
   @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
   @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class ProgressTitle
+
+  @NlsContext(prefix = "modal.progress.title")
+  @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
+  @Nls(capitalization = Nls.Capitalization.Title)
+  annotation class ModalProgressTitle
 }

@@ -32,6 +32,8 @@ f:com.intellij.openapi.util.NlsContexts
 - java.lang.annotation.Annotation
 @:com.intellij.openapi.util.NlsContexts$ListItem
 - java.lang.annotation.Annotation
+@:com.intellij.openapi.util.NlsContexts$ModalProgressTitle
+- java.lang.annotation.Annotation
 @:com.intellij.openapi.util.NlsContexts$NotificationContent
 - java.lang.annotation.Annotation
 @:com.intellij.openapi.util.NlsContexts$NotificationSubtitle

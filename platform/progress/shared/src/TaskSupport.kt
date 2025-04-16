@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import kotlinx.coroutines.CoroutineScope
@@ -20,14 +21,14 @@ interface TaskSupport {
 
   suspend fun <T> withModalProgressInternal(
     owner: ModalTaskOwner,
-    title: @ProgressTitle String,
+    title: @ModalProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T
 
   fun <T> runWithModalProgressBlockingInternal(
     owner: ModalTaskOwner,
-    title: @ProgressTitle String,
+    title: @ModalProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T

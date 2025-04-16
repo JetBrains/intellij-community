@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.NlsContexts.ModalProgressTitle
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -46,6 +47,7 @@ import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
@@ -64,7 +66,7 @@ private val LOG = logger<PlatformTaskSupport>()
 @Internal
 class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   data class ProgressStartedEvent(
-    val title: @ProgressTitle String,
+    val title: @Nls String,
     val cancellation: TaskCancellation,
     val context: CoroutineContext,
     val updates: Flow<ProgressState>, // finite
@@ -74,7 +76,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   val progressStarted: SharedFlow<ProgressStartedEvent> = _progressStarted.asSharedFlow()
 
-  private suspend fun progressStarted(title: @ProgressTitle String, cancellation: TaskCancellation, updates: Flow<ProgressState>) {
+  private suspend fun progressStarted(title: @Nls String, cancellation: TaskCancellation, updates: Flow<ProgressState>) {
     val context = coroutineContext
     _progressStarted.emit(ProgressStartedEvent(title, cancellation, context, updates.finishWhenJobCompletes(context.job)))
   }
@@ -326,7 +328,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   override suspend fun <T> withModalProgressInternal(
     owner: ModalTaskOwner,
-    title: @ProgressTitle String,
+    title: @ModalProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T {
@@ -344,7 +346,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   override fun <T> runWithModalProgressBlockingInternal(
     owner: ModalTaskOwner,
-    title: @ProgressTitle String,
+    title: @ModalProgressTitle String,
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T = prepareThreadContext { ctx ->
@@ -515,7 +517,7 @@ internal fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellati
 
 private class ModalIndicatorDescriptor(
   val owner: ModalTaskOwner,
-  val title: @ProgressTitle String,
+  val title: @ModalProgressTitle String,
   val cancellation: TaskCancellation,
 )
 
