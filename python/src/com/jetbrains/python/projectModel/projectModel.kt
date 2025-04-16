@@ -8,47 +8,11 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.visitFileTree
 
 /**
- * Represents a "forest" of non-overlapping project roots managed by a particular build-system, such as Poetry.
- *
- * For instance, in the following structure
- * ```
- * root/
- *   project1/
- *     pyproject.toml
- *     lib1/
- *       pyproject.toml
- *     lib2/
- *       pyproject.toml
- *   project2/
- *     pyproject.toml
- * ```
- * `./project1` and `./project2` are considered project model roots, but not `./project1/lib1` or `./project1/lib2`
- * because they are already under `project1`.
+ * Represents a graph of modules residing under a common root directory.
+ * These modules might depend on each other, but it's not a requirement.
+ * The root itself can be a valid module root, but it's not a requirement.
  */
-data class ProjectModelGraph(val roots: List<ProjectModelRoot>)
-
-/**
- * Represents a tree of project modules residing under a single detectable project root (e.g. containing a root pyproject.toml).
- * These modules might optionally depend on each other, but it's not a requirement.
- *
- * In the following structure:
- *
- * ```
- * root/
- *   project1/
- *     pyproject.toml
- *     lib1/
- *       pyproject.toml
- *     lib2/
- *       pyproject.toml
- *   project2/
- *     pyproject.toml
- * ```
- *
- * the project model root for `./project1` contains module descriptors for `./project1/pyproject.toml`,
- * `./project1/lib1/pyproject.toml` and `./project1/lib2/pyproject.toml`.
- */
-data class ProjectModelRoot(val root: Path, val modules: List<ModuleDescriptor>)
+data class ProjectModelGraph(val root: Path, val modules: List<ModuleDescriptor>)
 
 /**
  * Defines a project module in a particular directory with its unique name, and a set of module dependencies
@@ -59,16 +23,51 @@ data class ModuleDescriptor(val name: String, val root: Path, val moduleDependen
 data class ModuleDependency(val name: String, val path: Path)
 
 interface PythonProjectModelResolver {
-  fun discoverProjectRoot(directory: Path): ProjectModelRoot?
-  
+  /**
+   * If the `root` directory is considered a project root in a particular project management system
+   * (e.g. it contains pyproject.toml or other such marker files), traverse it and return a subgraph describing modules
+   * declared inside this root.
+   * All these module roots should reside withing the `root` directory but their dependencies might be outside it.
+   * The root directory of the graph should be `root`.
+   *
+   * For instance, in the following layout (assuming that pyproject.toml indicates a valid project root)
+   * ```
+   * libs/
+   *   project1/
+   *     pyproject.toml
+   *   project2/
+   *     pyproject.toml
+   * ```
+   * this method should return `null` for `libs/` but module graphs containing *only* modules `project1` and `project2`
+   * for the directories `project1/` and `project2` respectively, even if there is a dependency between them.
+   */
+  fun discoverProjectRootSubgraph(root: Path): ProjectModelGraph?
+
+  /**
+   * Find all project model graphs within the given directory (presumably the root directory of an IJ project).
+   * All these graphs are supposed to be independent components, i.e., they don't depend on each other's modules.
+   * The roots of these modules might not themselves be valid modules, but just plain directories.
+   *
+   * For instance, in the following layout
+   * ```
+   * libs/
+   *   project1/
+   *     pyproject.toml
+   *   project2/
+   *     pyproject.toml
+   * ```
+   * If `project1` depends on `project2` (or vice-versa), this methods should return a single graph with its 
+   * root in `libs/` containing modules for both `project1` and `project2`.
+   * If these two projects are independents, there will be two graphs for `project1` and `project2` respectively.
+   */
   @OptIn(ExperimentalPathApi::class)
-  fun discoverProjectGraph(ijProjectRoot: Path): ProjectModelGraph {
-    val roots = mutableListOf<ProjectModelRoot>()
-    ijProjectRoot.visitFileTree {
+  fun discoverIndependentProjectGraphs(root: Path): List<ProjectModelGraph> {
+    val graphs = mutableListOf<ProjectModelGraph>()
+    root.visitFileTree {
       onPreVisitDirectory { dir, _ ->
-        val buildSystemRoot = discoverProjectRoot(dir)
+        val buildSystemRoot = discoverProjectRootSubgraph(dir)
         if (buildSystemRoot != null) {
-          roots.add(buildSystemRoot)
+          graphs.add(buildSystemRoot)
           return@onPreVisitDirectory FileVisitResult.SKIP_SUBTREE
         }
         return@onPreVisitDirectory FileVisitResult.CONTINUE
@@ -76,8 +75,7 @@ interface PythonProjectModelResolver {
     }
 
     // TODO make sure that roots doesn't leave ijProjectRoot boundaries
-    val clusteredRoots = mergeRootsReferringToEachOther(roots)
-    return ProjectModelGraph(clusteredRoots)
+    return mergeRootsReferringToEachOther(graphs)
   }
 }
 
@@ -93,7 +91,7 @@ interface ProjectModelSyncListener {
   fun onFinish(projectRoot: Path): Unit = Unit
 }
 
-private fun mergeRootsReferringToEachOther(roots: MutableList<ProjectModelRoot>): MutableList<ProjectModelRoot> {
+private fun mergeRootsReferringToEachOther(roots: MutableList<ProjectModelGraph>): List<ProjectModelGraph> {
   fun commonAncestorPath(paths: Iterable<Path>): Path {
     val normalized = paths.map { it.normalize() }
     return normalized.reduce { p1, p2 -> FileUtil.findAncestor(p1, p2)!! }
@@ -108,7 +106,7 @@ private fun mergeRootsReferringToEachOther(roots: MutableList<ProjectModelRoot>)
   }
 
   val expandedProjectRootsByRootPath = expandedProjectRoots.sortedBy { it.root }
-  val mergedProjectRoots = mutableListOf<ProjectModelRoot>()
+  val mergedProjectRoots = mutableListOf<ProjectModelGraph>()
   for (root in expandedProjectRootsByRootPath) {
     if (mergedProjectRoots.isEmpty()) {
       mergedProjectRoots.add(root)

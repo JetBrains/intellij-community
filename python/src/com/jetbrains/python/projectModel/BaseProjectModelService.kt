@@ -35,7 +35,7 @@ abstract class BaseProjectModelService<E : EntitySource> {
   
   suspend fun linkAllProjectModelRoots(project: Project, basePath: @SystemIndependent @NonNls String) {
     val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.projects", systemName)) {
-      projectModelResolver.discoverProjectGraph(Path.of(basePath)).roots.map { it.root }
+      projectModelResolver.discoverIndependentProjectGraphs(Path.of(basePath)).map { it.root }
     }
     getSettings(project).setLinkedProjects(allProjectRoots)
   }
@@ -80,11 +80,11 @@ abstract class BaseProjectModelService<E : EntitySource> {
     listener.onStart(projectRoot)
     try {
       val source = createEntitySource(project, projectRoot)
-      val graph = projectModelResolver.discoverProjectGraph(projectRoot)
-      if (graph.roots.isEmpty()) {
+      val graph = projectModelResolver.discoverIndependentProjectGraphs(projectRoot)
+      if (graph.isEmpty()) {
         return
       }
-      val storage = createProjectModel(project, graph.roots.flatMap { it.modules }, source)
+      val storage = createProjectModel(project, graph.flatMap { it.modules }, source)
       project.workspaceModel.update("$systemName sync at ${projectRoot}") { mutableStorage ->
         // Fake module entity is added by default if nothing was discovered
         if (projectRoot == project.baseNioPath) {

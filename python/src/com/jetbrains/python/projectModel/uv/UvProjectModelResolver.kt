@@ -4,7 +4,7 @@ package com.jetbrains.python.projectModel.uv
 import com.intellij.openapi.util.getPathMatcher
 import com.jetbrains.python.projectModel.ModuleDependency
 import com.jetbrains.python.projectModel.ModuleDescriptor
-import com.jetbrains.python.projectModel.ProjectModelRoot
+import com.jetbrains.python.projectModel.ProjectModelGraph
 import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
@@ -13,11 +13,11 @@ import kotlin.io.path.*
 
 @OptIn(ExperimentalPathApi::class)
 object UvProjectModelResolver : PythonProjectModelResolver {
-  override fun discoverProjectRoot(directory: Path): ProjectModelRoot? {
-    if (!directory.resolve(UvConstants.PYPROJECT_TOML).exists()) {
+  override fun discoverProjectRootSubgraph(root: Path): ProjectModelGraph? {
+    if (!root.resolve(UvConstants.PYPROJECT_TOML).exists()) {
       return null
     }
-    val rootUvProject = readUvPyProjectToml(directory / "pyproject.toml")
+    val rootUvProject = readUvPyProjectToml(root / "pyproject.toml")
     if (rootUvProject == null) {
       return null
     }
@@ -25,7 +25,7 @@ object UvProjectModelResolver : PythonProjectModelResolver {
     val workspaceExcludeMatchers = rootUvProject.workspaceExcludeGlobs.map { getPathMatcher(it) }
     // TODO check if we can speed up traversal by not traversing further into workspace member directories
     // Can workspace members contain editable path dependencies inside?
-    val allUvProjects: List<UvPyProjectToml> = directory
+    val allUvProjects: List<UvPyProjectToml> = root
       .walk()
       .filter { it.name == UvConstants.PYPROJECT_TOML }
       .mapNotNull(::readUvPyProjectToml)
@@ -38,14 +38,14 @@ object UvProjectModelResolver : PythonProjectModelResolver {
       workspaceMembers = allUvProjects
         .filter { uvProject ->
           if (uvProject == rootUvProject) return@filter true
-          val relProjectPath = uvProject.root.relativeTo(directory)
+          val relProjectPath = uvProject.root.relativeTo(root)
           return@filter workspaceExcludeMatchers.none { it.matches(relProjectPath) } 
                         && workspaceMemberMatchers.any { it.matches(relProjectPath) }
         }.associateBy { it.projectName }
     }
     
-    return ProjectModelRoot(
-      root = directory,
+    return ProjectModelGraph(
+      root = root,
       modules = allUvProjects
         .map { uvProject -> 
           val pathDependencies = uvProject.editablePathDependencies.map { ModuleDependency(it.key, it.value) }
