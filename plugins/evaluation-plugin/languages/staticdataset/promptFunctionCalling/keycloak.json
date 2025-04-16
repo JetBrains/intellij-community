@@ -498,6 +498,102 @@
           }
         },
         "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "8c5b0cb5-8ee5-445c-b387-d5ca962e0fd3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What are the file contents of DefaultSecurityHeadersProvider",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "read_file"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d787470b-8401-4374-9b2d-0c0884b0232b",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Give me the content of the first 10 lines from file DefaultSecurityHeadersProvider",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "read_file"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "efd920b2-f574-4d46-8459-f6be9d9faca3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Give me all imports from file DefaultSecurityHeadersProvider",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "read_file"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "9c2ecb5a-b3bb-4525-96de-123fe51aacec",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What is this project about?",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "list_files_in_folder"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "003a39ef-6970-4b0c-a74c-3bd8f9b91c5d",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What is the content of src directory?",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "list_files_in_folder"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "f749dc22-bc9f-4151-acbd-6f01890f2b36",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Are there any files in the test directory?",
+            "chatSessionModes": "CODEBASE",
+            "expectedFunctions": "list_files_in_folder"
+          }
+        },
+        "type": "CALL_FEATURE"
       }
     ]
   }
