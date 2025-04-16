@@ -14,14 +14,14 @@ class AccessibleValueNotNullInspectionTest {
   @Test
   fun `valid role and value not null`() {
     val bar = JProgressBar()
-    val result = AccessibleValueNotNullInspection().passesInspection(bar)
+    val result = AccessibleValueNotNullInspection().passesInspection(bar.accessibleContext)
     Assertions.assertTrue(result)
   }
 
   @Test
   fun `invalid role and value not null`() {
     val button = JButton()
-    val result = AccessibleValueNotNullInspection().passesInspection(button)
+    val result = AccessibleValueNotNullInspection().passesInspection(button.accessibleContext)
     Assertions.assertTrue(result)
   }
 
@@ -30,14 +30,17 @@ class AccessibleValueNotNullInspectionTest {
     val bar = object : JProgressBar() {
       override fun getAccessibleContext(): AccessibleContext {
         return object : AccessibleJComponent() {
-          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PROGRESS_BAR
-
-          override fun getAccessibleValue(): AccessibleValue? = null
+          override fun getAccessibleRole(): AccessibleRole {
+            return AccessibleRole.PROGRESS_BAR
+          }
+          override fun getAccessibleValue(): AccessibleValue? {
+            return null
+          }
 
         }
       }
     }
-    val result = AccessibleValueNotNullInspection().passesInspection(bar)
+    val result = AccessibleValueNotNullInspection().passesInspection(bar.accessibleContext)
     Assertions.assertFalse(result)
   }
 

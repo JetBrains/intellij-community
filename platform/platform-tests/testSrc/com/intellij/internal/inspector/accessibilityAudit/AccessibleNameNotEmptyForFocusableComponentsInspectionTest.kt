@@ -10,66 +10,68 @@ class AccessibleNameNotEmptyForFocusableComponentsInspectionTest {
   @Test
   fun `stateSet is full and name is not null or empty`() {
     val button = object : JButton() {
-      override fun isShowing(): Boolean = true
+      override fun isShowing(): Boolean {
+        return true // imitate a real showing button
+      }
     }
-    button.accessibleContext.accessibleName = "name"
     button.isEnabled = true
-    button.isVisible = true
+    button.isFocusable = true
 
-    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(button)
+    val context = button.accessibleContext
+    context.accessibleName = "name"
+
+    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(context)
     Assertions.assertTrue(result)
   }
 
   @Test
   fun `stateSet is full and name is empty`() {
     val button = object : JButton() {
-      override fun isShowing(): Boolean = true
+      override fun isShowing(): Boolean {
+        return true // imitate a real showing button
+      }
     }
-    button.accessibleContext.accessibleName = ""
     button.isEnabled = true
-    button.isVisible = true
+    button.isFocusable = true
 
-    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(button)
+    val context = button.accessibleContext
+    context.accessibleName = ""
+
+    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(context)
     Assertions.assertFalse(result)
+  }
+
+  @Test
+  fun `no focusable in stateSet`() {
+    val button = object : JButton() {
+      override fun isShowing(): Boolean {
+        return true // imitate a real showing button
+      }
+    }
+    button.isEnabled = true
+    button.isFocusable = false
+
+    val context = button.accessibleContext
+    context.accessibleName = ""
+
+    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(context)
+    Assertions.assertTrue(result)
   }
 
   @Test
   fun `stateSet is full and name is null`() {
     val button = object : JButton() {
-      override fun isShowing(): Boolean = true
+      override fun isShowing(): Boolean {
+        return true // imitate a real showing button
+      }
     }
-    button.accessibleContext.accessibleName = null
     button.isEnabled = true
-    button.isVisible = true
+    button.isFocusable = true
 
-    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(button)
+    val context = button.accessibleContext
+    context.accessibleName = null
+
+    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(context)
     Assertions.assertFalse(result)
   }
-
-  @Test
-  fun `no visible in stateSet and name not empty`() {
-    val button = object : JButton() {
-      override fun isShowing(): Boolean = true
-    }
-    button.accessibleContext.accessibleName = "name"
-    button.isEnabled = true
-    button.isVisible = false
-
-    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(button)
-    Assertions.assertTrue(result)
-  }
-
-  @Test
-  fun `no focusable in stateSet and name not empty`() {
-    val button = object : JButton() {
-      override fun isShowing(): Boolean = true
-    }
-    button.accessibleContext.accessibleName = "name"
-    button.isEnabled = true
-    button.isFocusable = false
-
-    val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(button)
-    Assertions.assertTrue(result)
-  }
-
 }

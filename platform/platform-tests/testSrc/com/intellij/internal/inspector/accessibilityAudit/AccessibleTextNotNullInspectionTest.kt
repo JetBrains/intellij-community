@@ -14,7 +14,7 @@ class AccessibleTextNotNullInspectionTest {
   @Test
   fun `valid role and text not null`() {
     val text = JPasswordField()
-    val result = AccessibleTextNotNullInspection().passesInspection(text)
+    val result = AccessibleTextNotNullInspection().passesInspection(text.accessibleContext)
     Assertions.assertTrue(result)
   }
 
@@ -23,12 +23,16 @@ class AccessibleTextNotNullInspectionTest {
     val button = object : JPasswordField() {
       override fun getAccessibleContext(): AccessibleContext {
         return object : AccessibleJComponent() {
-          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PASSWORD_TEXT
-          override fun getAccessibleText(): AccessibleText? = null
+          override fun getAccessibleRole(): AccessibleRole {
+            return AccessibleRole.PASSWORD_TEXT
+          }
+          override fun getAccessibleText(): AccessibleText? {
+            return null
+          }
         }
       }
     }
-    val result = AccessibleTextNotNullInspection().passesInspection(button)
+    val result = AccessibleTextNotNullInspection().passesInspection(button.accessibleContext)
     Assertions.assertFalse(result)
 
   }
@@ -36,7 +40,7 @@ class AccessibleTextNotNullInspectionTest {
   @Test
   fun `invalid role`() {
     val button = JButton()
-    val result = AccessibleTextNotNullInspection().passesInspection(button)
+    val result = AccessibleTextNotNullInspection().passesInspection(button.accessibleContext)
     Assertions.assertTrue(result)
   }
 }

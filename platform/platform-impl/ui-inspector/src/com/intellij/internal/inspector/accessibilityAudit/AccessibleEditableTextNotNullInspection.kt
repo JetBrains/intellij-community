@@ -2,7 +2,7 @@
 package com.intellij.internal.inspector.accessibilityAudit
 
 import org.jetbrains.annotations.ApiStatus
-import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleState
 
@@ -12,8 +12,7 @@ class AccessibleEditableTextNotNullInspection : UiInspectorAccessibilityInspecti
   override val propertyName: String = "AccessibleEditableText"
   override val severity: Severity = Severity.WARNING
 
-  override fun passesInspection(accessible: Accessible?): Boolean {
-    val context = accessible?.accessibleContext ?: return true
+  override fun passesInspection(context: AccessibleContext): Boolean {
     if ((context.accessibleRole == AccessibleRole.TEXT ||
         context.accessibleRole == AccessibleRole.PASSWORD_TEXT) &&
         context.accessibleStateSet.contains(AccessibleState.EDITABLE)) {

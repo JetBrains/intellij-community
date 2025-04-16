@@ -9,40 +9,33 @@ class AccessibleNameAndDescriptionNotEqualInspectionTest {
   @Test
   fun `name and description not equal`() {
     val button = JButton()
-    button.accessibleContext.accessibleName = "name"
-    button.accessibleContext.accessibleDescription = "description"
+    val context = button.accessibleContext
+    context.accessibleName = "name"
+    context.accessibleDescription = "description"
 
-    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(button)
+    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(context)
     Assertions.assertTrue(result)
   }
 
   @Test
   fun `name and description are equal`() {
     val button = JButton()
-    button.accessibleContext.accessibleName = "same"
-    button.accessibleContext.accessibleDescription = "same"
+    val context = button.accessibleContext
+    context.accessibleName = "same"
+    context.accessibleDescription = "same"
 
-    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(button)
+    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(context)
     Assertions.assertFalse(result)
   }
 
   @Test
   fun `name and description are empty`() {
     val button = JButton()
-    button.accessibleContext.accessibleName = ""
-    button.accessibleContext.accessibleDescription = ""
+    val context = button.accessibleContext
+    context.accessibleName = ""
+    context.accessibleDescription = ""
 
-    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(button)
-    Assertions.assertTrue(result)
-  }
-
-  @Test
-  fun `name and description are null`() {
-    val button = JButton()
-    button.accessibleContext.accessibleName = null
-    button.accessibleContext.accessibleDescription = null
-
-    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(button)
+    val result = AccessibleNameAndDescriptionNotEqualInspection().passesInspection(context)
     Assertions.assertTrue(result)
   }
 }
