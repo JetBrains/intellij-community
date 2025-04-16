@@ -31,8 +31,7 @@ class ImportsRankingModelService : MLModelSuspendableService<MLModel<Double>, Do
 
 private class QuickfixRankingModelLoading : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val rankingStatus = service<FinalImportRankingStatusService>().status
-    if (rankingStatus is FinalImportRankingStatus.Disabled) return
+    if (!service<FinalImportRankingStatusService>().shouldLoadModel) return
     try {
       service<ImportsRankingModelService>().loadModel()
     } catch (e: RuntimeException) {
