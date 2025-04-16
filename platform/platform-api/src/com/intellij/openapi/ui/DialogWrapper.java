@@ -198,6 +198,7 @@ public abstract class DialogWrapper {
   private boolean myValidationStarted;
   private boolean myKeepPopupsOpen;
   @Nls private @NonNls @Nullable String invocationPlace = null;
+  private boolean disposeInWriteIntentReadAction = true;
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -523,7 +524,7 @@ public abstract class DialogWrapper {
     }
 
     // Can be called very early when there is no application yet
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && disposeInWriteIntentReadAction) {
       //maybe readaction
       WriteIntentReadAction.run((Runnable)() -> Disposer.dispose(myDisposable));
     }
@@ -1186,6 +1187,11 @@ public abstract class DialogWrapper {
    */
   protected @NotNull Action getHelpAction() {
     return myHelpAction;
+  }
+
+  @ApiStatus.Internal // maybe experimental?
+  public void setShouldDisposeInWriteIntentReadAction(boolean useWriteIntentReadActionForDisposal) {
+    disposeInWriteIntentReadAction = useWriteIntentReadActionForDisposal;
   }
 
   protected boolean isProgressDialog() {
