@@ -112,3 +112,10 @@ data class ModuleLibraryFile(
    */
   @JvmField val size: Int = 0,
 )
+
+@Serializable
+data class PluginContentReport(
+  @JvmField val mainModule: String,
+  @JvmField val os: String? = null,
+  @JvmField val content: List<FileEntry> = emptyList(),
+)
