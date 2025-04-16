@@ -6,11 +6,14 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
+import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.gotoByName.ChooseByNameModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -25,12 +28,16 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
@@ -53,8 +60,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class TreeFileChooserDialog extends DialogWrapper implements TreeFileChooser {
 
@@ -135,6 +142,35 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       @Override
       public List<TreeStructureProvider> getProviders() {
         return myDisableStructureProviders ? null : super.getProviders();
+      }
+
+      @Override
+      public Object getParentElement(@NotNull Object element) {
+        AbstractProjectNode abstractProjectNode = (AbstractProjectNode)getRootElement();
+        if (element == abstractProjectNode) {
+          return null;
+        }
+
+        PsiDirectory psiDirectory = null;
+        if (element instanceof PsiFileNode) {
+          PsiFile psiFileNode = ((PsiFileNode)element).getValue();
+          if (psiFileNode != null) psiDirectory = psiFileNode.getParent();
+        } else if (element instanceof PsiDirectoryNode) {
+          PsiDirectory psiDirectoryNode = ((PsiDirectoryNode)element).getValue();
+          if (psiDirectoryNode != null) {
+            if (psiDirectoryNode.getVirtualFile().equals(myProject.getBaseDir())) return abstractProjectNode;
+            psiDirectory = psiDirectoryNode.getParent();
+          }
+        }
+        if (psiDirectory == null) return getDefaultParentElement(element);
+        return new PsiDirectoryNode(myProject, psiDirectory, abstractProjectNode.getSettings());
+      }
+
+      public Object getDefaultParentElement(@NotNull Object element) {
+        if (element instanceof AbstractTreeNode) {
+          return ((AbstractTreeNode<?>)element).getParent();
+        }
+        return null;
       }
     };
 
@@ -272,8 +308,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myModel != null) {
-        myModel.select(file, myTree, path -> {
-        });
+        myModel.select(new PsiFileNode(myProject, file, null), myTree, path -> { });
       }
     }, ModalityState.stateForComponent(getWindow()));
   }
