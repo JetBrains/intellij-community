@@ -6,9 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface TerminalFontSizeProvider {
-  fun getFontSize(): Int
-
-  fun getFontSize2D(): Float
+  fun getFontSize(): Float
 
   /**
    * Sets temporary font size without changing the size in the settings.

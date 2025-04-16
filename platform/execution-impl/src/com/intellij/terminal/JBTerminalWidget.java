@@ -157,11 +157,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   /**
-   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize2D()} instead
+   * @deprecated use {@link JBTerminalSystemSettingsProviderBase#getTerminalFontSize()} instead
    */
   @Deprecated
   public float getFontSize2D() {
-    return getSettingsProvider().getTerminalFontSize2D();
+    return getSettingsProvider().getTerminalFontSize();
   }
 
   /**
