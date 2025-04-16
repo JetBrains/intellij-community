@@ -4,12 +4,15 @@ package com.intellij.platform.execution.serviceView;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewActionProvider.getSelectedView;
 
-final class JumpToServicesAction extends DumbAwareAction {
+final class JumpToServicesAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
