@@ -254,6 +254,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new FileScope(project, virtualFile, displayName);
   }
 
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  public static @NotNull GlobalSearchScope fileWeakScope(@NotNull Project project, @NotNull VirtualFile virtualFile, final @Nullable @Nls String displayName) {
+    return new FileWeakScope(project, virtualFile, displayName);
+  }
+
   /**
    * Please consider using {@link #filesWithLibrariesScope} or {@link #filesWithoutLibrariesScope} for optimization
    */
