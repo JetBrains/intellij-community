@@ -104,7 +104,7 @@ class PartialBodyResolveFilter(
 
             if (!nameFilter.isEmpty) {
                 val smartCastPlaces = potentialSmartCastPlaces(statement) { it.affectsNames(nameFilter) }
-                if (smartCastPlaces.isNotEmpty()) {
+                if (!smartCastPlaces.isEmpty()) {
                     //TODO: do we really need correct resolve for ALL smart cast places?
                     smartCastPlaces.values
                         .flatten()

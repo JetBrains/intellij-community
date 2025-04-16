@@ -66,7 +66,7 @@ enum class ExtractionTarget(val targetName: String) {
         }
 
         fun checkSignatureAndParent(descriptor: IExtractableCodeDescriptor<*>): Boolean {
-            if (descriptor.parameters.isNotEmpty()) return false
+            if (!descriptor.parameters.isEmpty()) return false
             if (descriptor.isUnitReturnType()) return false
 
             val parent = descriptor.extractionData.targetSibling.parent

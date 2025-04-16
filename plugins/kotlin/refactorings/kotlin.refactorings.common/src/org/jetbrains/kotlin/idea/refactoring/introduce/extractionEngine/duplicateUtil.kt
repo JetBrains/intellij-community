@@ -43,7 +43,7 @@ fun KotlinPsiRange.preview(project: Project, editor: Editor): RangeHighlighter? 
         .getFoldRegionsAtOffset(editor, startOffset)
         .filter { !it.isExpanded }
 
-    if (foldedRegions.isNotEmpty()) {
+    if (!foldedRegions.isEmpty()) {
         editor.foldingModel.runBatchFoldingOperation {
             foldedRegions.forEach { it.isExpanded = true }
         }
