@@ -77,7 +77,7 @@ public final class ListPluginComponent extends JPanel {
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
   public IdeaPluginDescriptor myUpdateDescriptor;
-  IdeaPluginDescriptor myInstalledDescriptorForMarketplace;
+  PluginUiModel myInstalledDescriptorForMarketplace;
 
   private final JBLabel myNameComponent = new JBLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
@@ -263,10 +263,10 @@ public final class ListPluginComponent extends JPanel {
         ColorButton.setWidth72(myInstallButton);
 
         if (PluginDetailsPageComponent.isMultiTabs()) {
-          myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace;
+          myInstalledDescriptorForMarketplace = installedDescriptorForMarketplace != null ? new PluginUiModelAdapter(installedDescriptorForMarketplace) : null;
           myInstallButton.setVisible(showInstall);
 
-          if (NewUiUtil.isDeleted(myInstalledDescriptorForMarketplace)) {
+          if (myInstalledDescriptorForMarketplace != null && myInstalledDescriptorForMarketplace.isDeleted()) {
             if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
               myInstallButton.setVisible(true);
               myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
@@ -276,7 +276,7 @@ public final class ListPluginComponent extends JPanel {
             else {
               myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
 
-              myPluginModel.addUninstalled(new PluginUiModelAdapter(myInstalledDescriptorForMarketplace));
+              myPluginModel.addUninstalled(myInstalledDescriptorForMarketplace);
             }
           }
           else {
@@ -310,7 +310,7 @@ public final class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
         }
         else {
-          createEnableDisableButton(this::getPluginDescriptor);
+          createEnableDisableButton(this::getPluginModel);
           updateEnabledStateUI();
         }
       }
@@ -338,9 +338,9 @@ public final class ListPluginComponent extends JPanel {
     return new InstallButton(false, myPlugin.getRequiresUpgrade());
   }
 
-  private void createEnableDisableButton(@NotNull Supplier<? extends IdeaPluginDescriptor> descriptorFunction) {
+  private void createEnableDisableButton(@NotNull Supplier<PluginUiModel> modelFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
-      PluginUiModelAdapter pluginToSwitch = new PluginUiModelAdapter(descriptorFunction.get());
+      PluginUiModel pluginToSwitch = modelFunction.get();
       if (myPluginModel.getState(myPlugin).isDisabled()) {
         myPluginModel.enable(pluginToSwitch);
       }
@@ -757,7 +757,8 @@ public final class ListPluginComponent extends JPanel {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
           if (PluginDetailsPageComponent.isMultiTabs() && myInstallButton.isVisible()) {
-            myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+            IdeaPluginDescriptor foundPlugin = PluginManagerCore.findPlugin(myPlugin.getPluginId());
+            myInstalledDescriptorForMarketplace = foundPlugin != null ? new PluginUiModelAdapter(foundPlugin) : null;
             if (myInstalledDescriptorForMarketplace != null) {
               if (myMarketplace) {
                 myInstallButton.setVisible(false);
@@ -768,7 +769,7 @@ public final class ListPluginComponent extends JPanel {
                 fullRepaint();
               }
               else {
-                myPlugin = new PluginUiModelAdapter(myInstalledDescriptorForMarketplace);
+                myPlugin = myInstalledDescriptorForMarketplace;
                 myInstalledDescriptorForMarketplace = null;
                 updateButtons();
               }
@@ -1010,7 +1011,7 @@ public final class ListPluginComponent extends JPanel {
     }
 
     Function<ListPluginComponent, IdeaPluginDescriptor> function =
-      getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplace;
+      getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplaceOld;
     SelectionBasedPluginModelAction.addActionsTo(group,
                                                  action -> createEnableDisableAction(action, selection, function),
                                                  () -> createUninstallAction(selection, function));
@@ -1128,7 +1129,7 @@ public final class ListPluginComponent extends JPanel {
     }
     else if (!restart && !update) {
       Function<ListPluginComponent, IdeaPluginDescriptor> function =
-        getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplace;
+        getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplaceOld;
 
       DumbAwareAction action;
 
@@ -1161,12 +1162,20 @@ public final class ListPluginComponent extends JPanel {
     return myPlugin;
   }
 
-  public IdeaPluginDescriptor getInstalledDescriptorForMarketplace() {
+  public PluginUiModel getInstalledDescriptorForMarketplace() {
     return myInstalledDescriptorForMarketplace;
   }
 
+  @Deprecated
+  /*
+    Compatibility method, going to be removed soon
+   */
+  public IdeaPluginDescriptor getInstalledDescriptorForMarketplaceOld() {
+    return myInstalledDescriptorForMarketplace.getDescriptor();
+  }
+
   public IdeaPluginDescriptor getDescriptorForActions() {
-    return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin.getDescriptor() : myInstalledDescriptorForMarketplace;
+    return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin.getDescriptor() : myInstalledDescriptorForMarketplace.getDescriptor();
   }
 
   public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
