@@ -76,7 +76,7 @@ public final class ListPluginComponent extends JPanel {
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
-  public IdeaPluginDescriptor myUpdateDescriptor;
+  public @Nullable PluginUiModel myUpdateDescriptor;
   PluginUiModel myInstalledDescriptorForMarketplace;
 
   private final JBLabel myNameComponent = new JBLabel();
@@ -116,7 +116,7 @@ public final class ListPluginComponent extends JPanel {
     myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(pluginUiModel.getPluginId());
-    pluginModelFacade.getModel().addComponent(this);
+    pluginModelFacade.addComponent(this);
 
     setOpaque(true);
     setBorder(JBUI.Borders.empty(10));
@@ -526,7 +526,12 @@ public final class ListPluginComponent extends JPanel {
     return myChooseUpdateButton;
   }
 
+  @Deprecated
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
+    setUpdateDescriptor(descriptor == null ? null : new PluginUiModelAdapter(descriptor));
+  }
+
+  public void setUpdateDescriptor(@Nullable PluginUiModel descriptor) {
     if (myMarketplace && myInstalledDescriptorForMarketplace == null) {
       return;
     }
@@ -541,7 +546,7 @@ public final class ListPluginComponent extends JPanel {
 
     PluginUiModel plugin = getDescriptorForActions();
 
-    if (descriptor == null) {
+    if (myUpdateDescriptor == null) {
       if (myVersion != null) {
         myVersion.setText(plugin.getVersion());
       }
@@ -558,11 +563,11 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(NewUiUtil.getUpdateVersionText(plugin.getVersion(), descriptor.getVersion()));
+        myVersion.setText(NewUiUtil.getUpdateVersionText(plugin.getVersion(), myUpdateDescriptor.getVersion()));
       }
-      if (plugin.getProductCode() == null && descriptor.getProductCode() != null &&
-          !plugin.isBundled() && !LicensePanel.isEA2Product(descriptor.getProductCode()) &&
-          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(descriptor)) {
+      if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
+          !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(myUpdateDescriptor.getDescriptor())) {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));
@@ -573,7 +578,7 @@ public final class ListPluginComponent extends JPanel {
         }
 
         myUpdateLicensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
-                                                   () -> myUpdateDescriptor, true,
+                                                   () -> myUpdateDescriptor.getDescriptor(), true,
                                                    true);
       }
       if (myUpdateButton == null) {
@@ -923,7 +928,7 @@ public final class ListPluginComponent extends JPanel {
       PluginModelFacade.removeProgress(getDescriptorForActions(), myIndicator);
       myIndicator = null;
     }
-    myPluginModel.getModel().removeComponent(this);
+    myPluginModel.removeComponent(this);
   }
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
@@ -1172,6 +1177,10 @@ public final class ListPluginComponent extends JPanel {
    */
   public IdeaPluginDescriptor getInstalledDescriptorForMarketplaceOld() {
     return myInstalledDescriptorForMarketplace.getDescriptor();
+  }
+
+  public IdeaPluginDescriptor getUpdatePluginDescriptor(){
+    return myUpdateDescriptor != null ? myUpdateDescriptor.getDescriptor() : null;
   }
 
   public PluginUiModel getDescriptorForActions() {

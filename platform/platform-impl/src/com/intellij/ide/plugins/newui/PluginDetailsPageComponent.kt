@@ -846,7 +846,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun showPlugin(component: ListPluginComponent?, multiSelection: Boolean) {
-    if (showComponent == component && (component == null || updateDescriptor === component.myUpdateDescriptor)) {
+    if (showComponent == component && (component == null || updateDescriptor === component.getUpdatePluginDescriptor())) {
       return
     }
     showComponent = component
@@ -933,7 +933,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
 
       if (syncLoading) {
-        showPluginImpl(component.pluginDescriptor, component.myUpdateDescriptor)
+        showPluginImpl(component.pluginDescriptor, component.getUpdatePluginDescriptor())
         pluginCardOpened(component.pluginDescriptor, component.group)
       }
     }
@@ -947,7 +947,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
         if (showComponent == component) {
           stopLoading()
-          showPluginImpl(component.pluginDescriptor, component.myUpdateDescriptor)
+          showPluginImpl(component.pluginDescriptor, component.getUpdatePluginDescriptor())
           pluginCardOpened(component.pluginDescriptor, component.group)
         }
       }

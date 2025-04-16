@@ -29,8 +29,8 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     getController(model).disable(model)
   }
 
-  fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?, modalityState: ModalityState) {
-    getController(model).installOrUpdatePlugin(component, model, updateDescriptor, modalityState)
+  fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState) {
+    getController(model).installOrUpdatePlugin(component, model, updateDescriptor?.getDescriptor(), modalityState)
   }
 
   fun addUninstalled(model: PluginUiModel) {
@@ -59,6 +59,14 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   
   fun finishInstall(model: PluginUiModel, installedDescriptor: com.intellij.ide.plugins.IdeaPluginDescriptorImpl?, success: Boolean, showErrors: Boolean, restartRequired: Boolean) {
     pluginModel.finishInstall(model.getDescriptor(), installedDescriptor, success, showErrors, restartRequired)
+  }
+
+  fun addComponent(component: ListPluginComponent) {
+    pluginModel.addComponent(component)
+  }
+
+  fun removeComponent(component: ListPluginComponent) {
+    pluginModel.removeComponent(component)
   }
   
   companion object {

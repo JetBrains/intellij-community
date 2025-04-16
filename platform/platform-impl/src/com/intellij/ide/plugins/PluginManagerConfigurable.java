@@ -1460,7 +1460,7 @@ public final class PluginManagerConfigurable
   private static void clearUpdates(@NotNull PluginsGroupComponent panel) {
     for (UIPluginGroup group : panel.getGroups()) {
       for (ListPluginComponent plugin : group.plugins) {
-        plugin.setUpdateDescriptor(null);
+        plugin.setUpdateDescriptor((IdeaPluginDescriptor)null);
       }
     }
   }
