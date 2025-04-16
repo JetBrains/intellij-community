@@ -6,7 +6,7 @@ import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
@@ -32,37 +32,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
   override fun loadState(newState: State) {
     state = newState
 
-    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.cursorShape.migration") {
-      val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
-      state.cursorShape = previousCursorShape
-    }
-
-    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.terminalEngine.migration") {
-      // If migration is happened in IDE backend, let's skip it.
-      // Because we should receive the correct terminal engine value from the frontend and use it.
-      // Otherwise, there can be a race when migration is performed both on backend and frontend simultaneously.
-      if (AppMode.isRemoteDevHost()) return@runOnceForApp
-
-      // The initial state of the terminal engine value should be composed out of registry values
-      // used previously to determine what terminal to use.
-      val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
-      val isNewTerminalValue = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
-
-      // Order of conditions is important!
-      // New Terminal registry prevails, even if reworked registry is enabled.
-      state.terminalEngine = when {
-        isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
-        isReworkedValue -> TerminalEngine.REWORKED
-        else -> TerminalEngine.CLASSIC
-      }
-
-      thisLogger().info("Initialized TerminalOptionsProvider.terminalEngine value from registry to ${state.terminalEngine}")
-
-      // Trigger sending the updated terminal engine value to the backend
-      coroutineScope.launch {
-        saveSettingsForRemoteDevelopment(application)
-      }
-    }
+    performSettingsMigrationOnce()
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -246,10 +216,56 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       }
     }
 
+  private fun performSettingsMigrationOnce() {
+    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.migration.2025.1.1") {
+      // If the settings update is happened in IDE backend, let's skip it.
+      // Because we should receive the values from the frontend and use it.
+      // Otherwise, there can be a race when updating is performed both on backend and frontend simultaneously.
+      if (AppMode.isRemoteDevHost()) return@runOnceForApp
+
+      try {
+        migrateCursorShape()
+        migrateTerminalEngine()
+      }
+      finally {
+        // Trigger sending the updated values to the backend
+        coroutineScope.launch {
+          saveSettingsForRemoteDevelopment(application)
+        }
+      }
+    }
+  }
+
+  private fun migrateCursorShape() {
+    val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
+    state.cursorShape = previousCursorShape
+
+    LOG.info("Initialized TerminalOptionsProvider.cursorShape value to ${state.cursorShape}")
+  }
+
+  private fun migrateTerminalEngine() {
+    // The initial state of the terminal engine value should be composed out of registry values
+    // used previously to determine what terminal to use.
+    val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
+    val isNewTerminalValue = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+
+    // Order of conditions is important!
+    // New Terminal registry prevails, even if reworked registry is enabled.
+    state.terminalEngine = when {
+      isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
+      isReworkedValue -> TerminalEngine.REWORKED
+      else -> TerminalEngine.CLASSIC
+    }
+
+    LOG.info("Initialized TerminalOptionsProvider.terminalEngine value to ${state.terminalEngine}")
+  }
+
   companion object {
     val instance: TerminalOptionsProvider
       @JvmStatic
       get() = service()
+
+    private val LOG = logger<TerminalOptionsProvider>()
 
     internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
   }
