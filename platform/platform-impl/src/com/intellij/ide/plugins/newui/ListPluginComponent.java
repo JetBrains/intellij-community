@@ -509,7 +509,7 @@ public final class ListPluginComponent extends JPanel {
         myMetricsPanel.remove(myVersion);
       }
 
-      String version = NewUiUtil.getUpdateVersionText(installedPluginDescriptor.getVersion(), getPluginDescriptor().getVersion());
+      String version = NewUiUtil.getUpdateVersionText(installedPluginDescriptor.getVersion(), myPlugin.getVersion());
       String size = PluginUiModelKt.presentableSize(myPlugin);
       myVersion = createRatingLabel(myMetricsPanel,
                                     null,
@@ -539,7 +539,7 @@ public final class ListPluginComponent extends JPanel {
 
     myUpdateDescriptor = descriptor;
 
-    IdeaPluginDescriptor plugin = getDescriptorForActions();
+    PluginUiModel plugin = getDescriptorForActions();
 
     if (descriptor == null) {
       if (myVersion != null) {
@@ -579,7 +579,7 @@ public final class ListPluginComponent extends JPanel {
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
         myUpdateButton.addActionListener(
-          e -> myPluginModel.getModel().installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
+          e -> myPluginModel.installOrUpdatePlugin(this, plugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
       }
       else {
         myUpdateButton.setEnabled(true);
@@ -625,8 +625,8 @@ public final class ListPluginComponent extends JPanel {
     }
 
     if (calcColor && (!myMarketplace || myInstalledDescriptorForMarketplace != null)) {
-      IdeaPluginDescriptor plugin = getDescriptorForActions();
-      boolean disabled = myPluginModel.getModel().isUninstalled(plugin) || !myPluginModel.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState();
+      PluginUiModel plugin = getDescriptorForActions();
+      boolean disabled = myPluginModel.isUninstalled(plugin) || !myPluginModel.isPluginInstallingOrUpdating(myPlugin) && !isEnabledState();
       if (disabled) {
         nameForeground = otherForeground = DisabledColor;
       }
@@ -650,10 +650,10 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void updateErrors() {
-    IdeaPluginDescriptor plugin = getDescriptorForActions();
-    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myPluginModel.getModel().getErrors(plugin);
+    PluginUiModel plugin = getDescriptorForActions();
+    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myPluginModel.getErrors(plugin);
     boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
-    updateIcon(hasErrors, myPluginModel.getModel().isUninstalled(plugin) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
+    updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
     updateNameComponentIcon();
 
     if (myAlignButton != null) {
@@ -674,7 +674,7 @@ public final class ListPluginComponent extends JPanel {
         myErrorPanel.add(myErrorComponent, BorderLayout.CENTER);
       }
       if (!myIsNotFreeInFreeMode) {
-        myErrorComponent.setErrors(errors, () -> myPluginModel.getModel().enableRequiredPlugins(plugin));
+        myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
       }
       else {
         HelpTooltip helpTooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip();
@@ -733,12 +733,12 @@ public final class ListPluginComponent extends JPanel {
     }
     else {
       OneLineProgressIndicator indicator = new OneLineProgressIndicator(false);
-      indicator.setCancelRunnable(() -> myPluginModel.getModel().finishInstall(getDescriptorForActions(), null, false, false, true));
+      indicator.setCancelRunnable(() -> myPluginModel.finishInstall(getDescriptorForActions(), null, false, false, true));
       myLayout.setProgressComponent(indicator.createBaselineWrapper());
       myIndicator = indicator;
     }
 
-    MyPluginModel.addProgress(getDescriptorForActions(), myIndicator);
+    PluginModelFacade.addProgress(getDescriptorForActions(), myIndicator);
 
     if (repaint) {
       fullRepaint();
@@ -855,7 +855,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void doUpdateEnabledState() {
-    if (!myPluginModel.getModel().isUninstalled(getDescriptorForActions())) {
+    if (!myPluginModel.isUninstalled(getDescriptorForActions())) {
       updateEnabledStateUI();
     }
     updateErrors();
@@ -867,12 +867,12 @@ public final class ListPluginComponent extends JPanel {
   private void updateEnabledStateUI() {
     if (myEnableDisableButton instanceof JCheckBox) {
       ((JCheckBox)myEnableDisableButton).setSelected(
-        myPluginModel.getModel().isEnabled(getDescriptorForActions()));
+        myPluginModel.isEnabled(getDescriptorForActions()));
     }
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
-    myPluginModel.getModel().addUninstalled(getDescriptorForActions());
+    myPluginModel.addUninstalled(getDescriptorForActions());
     updateColors(mySelection);
     removeButtons(needRestartForUninstall);
 
@@ -891,7 +891,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isEnabledState() {
-    return myPluginModel.getModel().isEnabled(getDescriptorForActions());
+    return myPluginModel.isEnabled(getDescriptorForActions());
   }
 
   public boolean isMarketplace() {
@@ -920,7 +920,7 @@ public final class ListPluginComponent extends JPanel {
 
   public void close() {
     if (myIndicator != null) {
-      MyPluginModel.removeProgress(getDescriptorForActions(), myIndicator);
+      PluginModelFacade.removeProgress(getDescriptorForActions(), myIndicator);
       myIndicator = null;
     }
     myPluginModel.getModel().removeComponent(this);
@@ -1174,8 +1174,8 @@ public final class ListPluginComponent extends JPanel {
     return myInstalledDescriptorForMarketplace.getDescriptor();
   }
 
-  public IdeaPluginDescriptor getDescriptorForActions() {
-    return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin.getDescriptor() : myInstalledDescriptorForMarketplace.getDescriptor();
+  public PluginUiModel getDescriptorForActions() {
+    return !myMarketplace || myInstalledDescriptorForMarketplace == null ? myPlugin : myInstalledDescriptorForMarketplace;
   }
 
   public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {

@@ -34,4 +34,12 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
   override fun getIcon(model: PluginUiModel, big: Boolean, error: Boolean, disabled: Boolean): javax.swing.Icon {
     return localPluginModel.getIcon(model.getDescriptor(), big, error, disabled)
   }
+  
+  override fun enableRequiredPlugins(model: PluginUiModel) {
+    localPluginModel.enableRequiredPlugins(model.getDescriptor())
+  }
+  
+  override fun isEnabled(model: PluginUiModel): Boolean {
+    return localPluginModel.isEnabled(model.getDescriptor())
+  }
 }
