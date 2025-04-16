@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -95,11 +94,6 @@ internal class ReplaceNotNullAssertionWithElvisReturnInspection :
         element: KtPostfixExpression,
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("replace.with.return")
-
-    override fun getProblemHighlightType(
-        element: KtPostfixExpression,
-        context: Context,
-    ): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
     override fun createQuickFix(
         element: KtPostfixExpression,
