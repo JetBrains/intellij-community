@@ -55,19 +55,13 @@ public final class LanguageLevelUtil {
   }
 
   /**
+   * @deprecated Please use {@link LanguageLevel#next()} instead.
    * @param languageLevel The language level to get the next from.
    * @return Next {@link LanguageLevel} that is not in preview or null if there is no language level.
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    return LanguageLevel.forFeature(languageLevel.feature() + 1);
-  }
-
-  /**
-   * @param languageLevel The language level to get the previous from.
-   * @return Previous {@link LanguageLevel} that is not in preview or null if there is no language level.
-   */
-  public static @Nullable LanguageLevel getPrevLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    return LanguageLevel.forFeature(languageLevel.feature() - 1);
+    return languageLevel.next();
   }
 
   /**
@@ -93,7 +87,7 @@ public final class LanguageLevelUtil {
   public static @Nullable LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
     LanguageLevel firstCompatibleLanguageLevel = JdkApiCompatibilityCache.getInstance().firstCompatibleLanguageLevel(member, languageLevel);
     if (firstCompatibleLanguageLevel == null) return null;
-    return getPrevLanguageLevel(firstCompatibleLanguageLevel);
+    return firstCompatibleLanguageLevel.previous();
   }
 
   /**

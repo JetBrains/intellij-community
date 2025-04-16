@@ -239,7 +239,7 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   }
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
-    val targetLanguageLevel = LanguageLevelUtil.getNextLanguageLevel(sinceLanguageLevel) ?: run {
+    val targetLanguageLevel = sinceLanguageLevel.next() ?: run {
       logger.error("Unable to get the next language level for $sinceLanguageLevel")
       return
     }

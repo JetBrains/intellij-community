@@ -73,7 +73,7 @@ public final class JdkApiCompatibilityCache {
       membersToCheck.addAll(Arrays.asList(method.findSuperMethods()));
     }
 
-    LanguageLevel incompatibleLevelForContext = LanguageLevelUtil.getNextLanguageLevel(contextLanguageLevel);
+    LanguageLevel incompatibleLevelForContext = contextLanguageLevel.next();
     LanguageLevel lowestCompatibleLanguageLevel = null;
     for (PsiMember checkMember : membersToCheck) {
       String signature = getSignature(checkMember);
@@ -119,7 +119,7 @@ public final class JdkApiCompatibilityCache {
   private LanguageLevel getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
     if (languageLevel == null) return null;
     if (getIntroducedApis(languageLevel).contains(signature)) return languageLevel;
-    return getIntroducedApiLevel(signature, LanguageLevelUtil.getNextLanguageLevel(languageLevel));
+    return getIntroducedApiLevel(signature, languageLevel.next());
   }
 
   /**
