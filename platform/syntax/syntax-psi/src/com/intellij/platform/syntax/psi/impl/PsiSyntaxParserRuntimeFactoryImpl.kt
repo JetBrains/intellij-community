@@ -9,13 +9,14 @@ import com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 
 internal class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language) : SyntaxParserRuntimeFactory {
 
-  override fun buildParserUtils(builder: SyntaxTreeBuilder): SyntaxGeneratedParserRuntime {
+  override fun buildParserRuntime(builder: SyntaxTreeBuilder, extendedState: SyntaxGeneratedParserRuntime.ParserUserState?): SyntaxGeneratedParserRuntime {
     val languageInformer = LanguageSyntaxDefinitions.INSTANCE.forLanguage(language)
     return SyntaxGeneratedParserRuntime(
       syntaxBuilder = builder,
       isCaseSensitive = language.isCaseSensitive,
       braces = languageInformer.getPairedBraces(),
       maxRecursionDepth = 1000,
+      parserUserState = extendedState
     )
   }
 }

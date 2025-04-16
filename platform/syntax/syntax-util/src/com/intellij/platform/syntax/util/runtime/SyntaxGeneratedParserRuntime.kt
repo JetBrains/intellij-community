@@ -125,6 +125,7 @@ final class SyntaxGeneratedParserRuntime(
   private val syntaxBuilder: SyntaxTreeBuilder,
   private val isCaseSensitive: Boolean,
   private val braces: Collection<BracePair>?,
+  val parserUserState: ParserUserState? = null, 
 ) {
 
   private val error: ErrorState = ErrorState()
@@ -140,6 +141,8 @@ final class SyntaxGeneratedParserRuntime(
     parser = parse
     errorState.initState(this, extendsSets)
   }
+
+  interface ParserUserState {}
 
   fun interface Parser {
     fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean
