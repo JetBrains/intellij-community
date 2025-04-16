@@ -8933,6 +8933,7 @@ c:com.intellij.ui.speedSearch.SpeedSearch
 - activate():V
 - addChangeListener(java.beans.PropertyChangeListener):V
 - backspace():V
+- p:createNewMatcher(java.lang.String):com.intellij.util.text.Matcher
 - p:doActivate():V
 - findAndSelectElement(java.lang.String):V
 - getEnteredPrefix():java.lang.String

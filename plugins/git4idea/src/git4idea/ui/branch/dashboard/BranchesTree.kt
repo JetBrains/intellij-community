@@ -390,7 +390,6 @@ private class BranchesFilteringSpeedSearch(
   private val tree: FilteringBranchesTreeBase,
   private val searchTextField: SearchTextField,
 ) : FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>(tree, searchTextField) {
-  private var matcher = BranchesTreeMatcher(searchTextField.text)
   private var bestMatch: BestMatch? = null
 
   override fun checkMatching(node: BranchTreeNode): FilteringTree.Matching =
@@ -398,25 +397,24 @@ private class BranchesFilteringSpeedSearch(
     else super.checkMatching(node)
 
   override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: FilteringTree.Matching) {
+    val matcher = matcher ?: return
     if (result == FilteringTree.Matching.NONE) return
     val text = tree.getText(userObject) ?: return
     val singleMatch = matchingFragments?.singleOrNull() ?: return
 
-    val matchingDegree = matcher.matchingDegree(text, valueStartCaseMatch = false, fragments = FList.singleton(singleMatch))
+    val matchingDegree = matcher.matchingDegree(text, false, FList.singleton(singleMatch))
     if (matchingDegree > (bestMatch?.matchingDegree ?: 0)) {
       val node = tree.searchModel.getNode(userObject)
       bestMatch = BestMatch(matchingDegree, node)
     }
   }
 
-  override fun getMatcher(): MinusculeMatcher = matcher
+  override fun createNewMatcher(searchText: String?): MinusculeMatcher = BranchesTreeMatcher(searchText)
 
-  override fun updatePattern(string: String?) {
-    super.updatePattern(string)
-    onUpdatePattern(string)
-  }
+  override fun getMatcher(): MinusculeMatcher? = super.getMatcher() as MinusculeMatcher?
 
   override fun onSearchPatternUpdated(pattern: String?) {
+    bestMatch = null
     super.onSearchPatternUpdated(pattern)
     updateSpeedSearchBackground()
   }
@@ -434,8 +432,9 @@ private class BranchesFilteringSpeedSearch(
   }
 
   override fun updateSelection() {
+    val matcher = matcher
     val bestMatch = bestMatch
-    if (bestMatch == null) {
+    if (matcher == null || bestMatch == null) {
       super.updateSelection()
     }
     else {
@@ -454,11 +453,6 @@ private class BranchesFilteringSpeedSearch(
   private fun scrollToSelected() {
     val innerTree = tree.tree
     innerTree.selectionPath?.let { TreeUtil.scrollToVisible(innerTree, it, false) }
-  }
-
-  override fun onUpdatePattern(text: String?) {
-    matcher = BranchesTreeMatcher(text)
-    bestMatch = null
   }
 }
 
