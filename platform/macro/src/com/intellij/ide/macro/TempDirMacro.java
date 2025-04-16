@@ -38,7 +38,10 @@
    private static boolean isLocalWindowsTarget(@NotNull DataContext dataContext) {
      var contextPath = MacroManager.CONTEXT_PATH.getData(dataContext);
      if (contextPath != null) {
-       return JEelUtils.toEelPath(contextPath).getOs() == EelPath.OS.WINDOWS;
+       var eelPath = JEelUtils.toEelPath(contextPath);
+       if (eelPath != null) {
+         return eelPath.getOs() == EelPath.OS.WINDOWS;
+       }
      }
      return SystemInfo.isWindows;
    }

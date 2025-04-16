@@ -20,5 +20,6 @@ object JEelUtils {
   }
 
   @JvmStatic
-  fun toEelPath(path: Path): EelPath = path.asEelPath()
+  fun toEelPath(path: Path): EelPath? = runCatching { path.asEelPath() }.getOrNull()
+
 }

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -374,8 +373,8 @@ public class Tool implements SchemeElement {
         commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
       else {
-        EelPath eelPath = JEelUtils.toEelPath(exePath);
-        commandLine.withExePath(eelPath.toString());
+        var eelPath = JEelUtils.toEelPath(exePath);
+        commandLine.withExePath(eelPath != null ? eelPath.toString() : exePathStr);
       }
     }
     catch (Macro.ExecutionCancelledException ignored) {
@@ -437,7 +436,11 @@ public class Tool implements SchemeElement {
 
     @Override
     public @NotNull String convertPath(@NotNull String path) {
-      return !path.isEmpty() ? JEelUtils.toEelPath(Path.of(path)).toString() : path;
+      if (!path.isEmpty()) {
+        var eelPath = JEelUtils.toEelPath(Path.of(path));
+        if (eelPath != null) return eelPath.toString();
+      }
+      return path;
     }
 
     @Override
