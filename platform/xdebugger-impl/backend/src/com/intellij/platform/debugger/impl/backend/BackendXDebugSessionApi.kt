@@ -11,6 +11,7 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
@@ -163,9 +164,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val sourcePosition = sourcePositionDto.sourcePosition()
     return computeVariants(handler, sourcePosition).map { variant ->
       val id = variant.storeGlobally(scope, session)
-      val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
-      val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
-      XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+      readAction {
+        val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+        val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
+        XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+      }
     }
   }
 
