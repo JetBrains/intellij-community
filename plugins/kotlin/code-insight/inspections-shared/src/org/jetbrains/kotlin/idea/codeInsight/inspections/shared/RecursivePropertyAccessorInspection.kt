@@ -13,25 +13,32 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.RecursivePropertyAccessUtil
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RecursivePropertyAccessorInspection.Context
 import org.jetbrains.kotlin.idea.codeInsight.RecursivePropertyAccessUtil.isRecursivePropertyAccess
+import org.jetbrains.kotlin.idea.codeInsight.RecursivePropertyAccessUtil.isInsidePropertyAccessorWithBackingField
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RecursivePropertyAccessorInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.simpleNameExpressionVisitor
 
 class RecursivePropertyAccessorInspection : KotlinApplicableInspectionBase<KtSimpleNameExpression, Context>() {
-    enum class Context { RECURSIVE_PROPERTY_ACCESS, RECURSIVE_SYNTHETIC_PROPERTY_ACCESS }
+    class Context (
+        val accessType: AccessType,
+        val hasBackingField: Boolean,
+    )
 
-    private fun getProblemDescription(context: Context): @InspectionMessage String = when (context) {
-        Context.RECURSIVE_PROPERTY_ACCESS -> KotlinBundle.message("recursive.property.accessor")
-        Context.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS -> KotlinBundle.message("recursive.synthetic.property.accessor")
+    enum class AccessType { RECURSIVE_PROPERTY_ACCESS, RECURSIVE_SYNTHETIC_PROPERTY_ACCESS }
+
+    private fun getProblemDescription(context: Context): @InspectionMessage String = when (context.accessType) {
+        AccessType.RECURSIVE_PROPERTY_ACCESS -> KotlinBundle.message("recursive.property.accessor")
+        AccessType.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS -> KotlinBundle.message("recursive.synthetic.property.accessor")
     }
 
-    private fun createQuickFix(element: KtSimpleNameExpression): KotlinModCommandQuickFix<KtSimpleNameExpression>? {
-        // Skip if the property is an extension property.
-        val isExtensionProperty = element.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
-        if (isExtensionProperty) return null
+    private fun createQuickFix(element: KtSimpleNameExpression, context: Context): KotlinModCommandQuickFix<KtSimpleNameExpression>? {
+        // Skip if the property doesn't have a backing field
+        if (!context.hasBackingField) return null
 
         return object : KotlinModCommandQuickFix<KtSimpleNameExpression>() {
             override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.field.fix.text")
@@ -47,7 +54,7 @@ class RecursivePropertyAccessorInspection : KotlinApplicableInspectionBase<KtSim
 
     override fun InspectionManager.createProblemDescriptor(
         element: KtSimpleNameExpression, context: Context, rangeInElement: TextRange?, onTheFly: Boolean
-    ): ProblemDescriptor = createQuickFix(element)?.let {
+    ): ProblemDescriptor = createQuickFix(element, context)?.let {
         createProblemDescriptor(
             /* psiElement = */ element,
             /* rangeInElement = */ rangeInElement,
@@ -73,8 +80,14 @@ class RecursivePropertyAccessorInspection : KotlinApplicableInspectionBase<KtSim
     }
 
     override fun KaSession.prepareContext(element: KtSimpleNameExpression): Context? {
-        if (element.isRecursivePropertyAccess(false)) return Context.RECURSIVE_PROPERTY_ACCESS
-        if (RecursivePropertyAccessUtil.isRecursiveSyntheticPropertyAccess(element)) return Context.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS
-        return null
+        val accessType = when {
+            element.isRecursivePropertyAccess(false) -> AccessType.RECURSIVE_PROPERTY_ACCESS
+            RecursivePropertyAccessUtil.isRecursiveSyntheticPropertyAccess(element) -> AccessType.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS
+            else -> return null
+        }
+        return Context(
+            accessType,
+            hasBackingField = isInsidePropertyAccessorWithBackingField(element),
+        )
     }
 }

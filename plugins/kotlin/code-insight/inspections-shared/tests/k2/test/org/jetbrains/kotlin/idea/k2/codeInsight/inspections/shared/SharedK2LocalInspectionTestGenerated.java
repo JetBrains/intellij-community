@@ -1499,9 +1499,134 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/recursivePropertyAccessor/extensionProperty.kt");
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/simple.kt");
+        @TestMetadata("memberBlockGetterSameInstanceHidden.kt")
+        public void testMemberBlockGetterSameInstanceHidden() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberBlockGetterSameInstanceHidden.kt");
+        }
+
+        @TestMetadata("memberBockGetter.kt")
+        public void testMemberBockGetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberBockGetter.kt");
+        }
+
+        @TestMetadata("memberExpressionGetter.kt")
+        public void testMemberExpressionGetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberExpressionGetter.kt");
+        }
+
+        @TestMetadata("memberExpressionGetterInitializer.kt")
+        public void testMemberExpressionGetterInitializer() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberExpressionGetterInitializer.kt");
+        }
+
+        @TestMetadata("memberExtensionOverloadExplicitDifferentReceiver.kt")
+        public void testMemberExtensionOverloadExplicitDifferentReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberExtensionOverloadExplicitDifferentReceiver.kt");
+        }
+
+        @TestMetadata("memberExtensionOverloadExplicitSameReceiver.kt")
+        public void testMemberExtensionOverloadExplicitSameReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberExtensionOverloadExplicitSameReceiver.kt");
+        }
+
+        @TestMetadata("memberExtensionOverloadImplicitSameReceiver.kt")
+        public void testMemberExtensionOverloadImplicitSameReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberExtensionOverloadImplicitSameReceiver.kt");
+        }
+
+        @TestMetadata("memberNoGetter.kt")
+        public void testMemberNoGetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberNoGetter.kt");
+        }
+
+        @TestMetadata("memberOtherInstanceBlockGetter.kt")
+        public void testMemberOtherInstanceBlockGetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberOtherInstanceBlockGetter.kt");
+        }
+
+        @TestMetadata("memberOtherInstanceBlockGetterImplicitReceiver.kt")
+        public void testMemberOtherInstanceBlockGetterImplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberOtherInstanceBlockGetterImplicitReceiver.kt");
+        }
+
+        @TestMetadata("memberOtherInstanceExpressionGetter.kt")
+        public void testMemberOtherInstanceExpressionGetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberOtherInstanceExpressionGetter.kt");
+        }
+
+        @TestMetadata("memberOtherInstanceExpressionGetterImplicitReceiver.kt")
+        public void testMemberOtherInstanceExpressionGetterImplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberOtherInstanceExpressionGetterImplicitReceiver.kt");
+        }
+
+        @TestMetadata("memberOtherInstanceNoGetter.kt")
+        public void testMemberOtherInstanceNoGetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberOtherInstanceNoGetter.kt");
+        }
+
+        @TestMetadata("memberOtherInstanceNoGetterImplicitReceiver.kt")
+        public void testMemberOtherInstanceNoGetterImplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberOtherInstanceNoGetterImplicitReceiver.kt");
+        }
+
+        @TestMetadata("memberVarRecursionInSetter.kt")
+        public void testMemberVarRecursionInSetter() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/memberVarRecursionInSetter.kt");
+        }
+
+        @TestMetadata("nonRecursiveSetterExplicit.kt")
+        public void testNonRecursiveSetterExplicit() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/nonRecursiveSetterExplicit.kt");
+        }
+
+        @TestMetadata("nonRecursiveSetterImplicit.kt")
+        public void testNonRecursiveSetterImplicit() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/nonRecursiveSetterImplicit.kt");
+        }
+
+        @TestMetadata("overridenPropertyAndSuper.kt")
+        public void testOverridenPropertyAndSuper() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/overridenPropertyAndSuper.kt");
+        }
+
+        @TestMetadata("recursiveNode.kt")
+        public void testRecursiveNode() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/recursiveNode.kt");
+        }
+
+        @TestMetadata("topLevelExtensionOverloadsDifferentExplicitReceiver.kt")
+        public void testTopLevelExtensionOverloadsDifferentExplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelExtensionOverloadsDifferentExplicitReceiver.kt");
+        }
+
+        @TestMetadata("topLevelExtensionOverloadsDifferentImplicitReceiver.kt")
+        public void testTopLevelExtensionOverloadsDifferentImplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelExtensionOverloadsDifferentImplicitReceiver.kt");
+        }
+
+        @TestMetadata("topLevelExtensionOverloadsSameExplicitReceiver.kt")
+        public void testTopLevelExtensionOverloadsSameExplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelExtensionOverloadsSameExplicitReceiver.kt");
+        }
+
+        @TestMetadata("topLevelExtensionOverloadsSameImplicitReceiver.kt")
+        public void testTopLevelExtensionOverloadsSameImplicitReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelExtensionOverloadsSameImplicitReceiver.kt");
+        }
+
+        @TestMetadata("topLevelGetterDifferentInstance.kt")
+        public void testTopLevelGetterDifferentInstance() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelGetterDifferentInstance.kt");
+        }
+
+        @TestMetadata("topLevelWithField.kt")
+        public void testTopLevelWithField() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelWithField.kt");
+        }
+
+        @TestMetadata("topLevelWithGetterAndField.kt")
+        public void testTopLevelWithGetterAndField() throws Exception {
+            runTest("../testData/inspectionsLocal/recursivePropertyAccessor/topLevelWithGetterAndField.kt");
         }
     }
 
