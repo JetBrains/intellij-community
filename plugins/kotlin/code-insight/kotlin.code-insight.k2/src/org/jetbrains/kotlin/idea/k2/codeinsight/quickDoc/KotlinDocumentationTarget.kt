@@ -11,9 +11,7 @@ import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -26,7 +24,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendHighlighted
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
@@ -94,6 +95,11 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
       element is KtClass && element.isEnum() -> {
           return buildString {
               renderEnumSpecialFunction(originalElement, element, quickNavigation)
+          }
+      }
+      element is KtLightMethod && element.kotlinOrigin is KtClass && (element.kotlinOrigin as KtClass).isEnum() -> {
+          return buildString {
+              renderEnumSpecialFunction(originalElement, element.kotlinOrigin as KtClass, quickNavigation)
           }
       }
       element is KtEnumEntry && !quickNavigation -> {
@@ -207,31 +213,65 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val symbol = referenceExpression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
-                val containingClass = symbol.containingDeclaration as? KaClassSymbol
-                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
-                val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
-                    val navigationElement = superClass.psi?.navigationElement
-                    if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {
-                        null //no need to search documentation in decompiled code
-                    } else {
-                        navigationElement?.findDescendantOfType<KDoc> { doc ->
-                            doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
-                        }
-                    }
-                }
-
-                renderKotlinSymbol(symbol, element, false, false) {
-                    if (!quickNavigation && kdoc != null) {
-                        description {
-                            renderKDoc(kdoc.getDefaultSection())
-                        }
-                    }
-                }
+                renderEnumSpecialSymbol(this, symbol, name, element, quickNavigation)
                 return
+            }
+        }
+    } else {
+        val psiReferenceExpression =
+            originalElement?.takeIf { it.language != KotlinLanguage.INSTANCE }?.getNonStrictParentOfType<PsiReferenceExpression>()
+        if (psiReferenceExpression != null) {
+            val psiMember = psiReferenceExpression.resolve() as? PsiMember
+            val memberName = psiMember?.name
+            if (psiMember != null && memberName != null) {
+                analyze(element) {
+                    val symbol = element.classSymbol ?: return@analyze
+                    // TODO: Replace with `psiMember.callableSymbol` when KT-76834 is fixed
+                    val callableSymbol = symbol.staticMemberScope.callables {
+                        val name = it.asString()
+                        name == memberName || JvmAbi.getterName(name) == memberName
+                    }.firstOrNull()
+
+                    if (callableSymbol is KaDeclarationSymbol) {
+                        renderEnumSpecialSymbol(this, callableSymbol, memberName, element, quickNavigation)
+                        return
+                    }
+                }
             }
         }
     }
     renderKotlinDeclaration(element, quickNavigation)
+}
+
+private fun StringBuilder.renderEnumSpecialSymbol(
+    session: KaSession,
+    symbol: KaDeclarationSymbol,
+    name: String,
+    element: KtClass,
+    quickNavigation: Boolean
+) {
+    with(session) {
+        val containingClass = symbol.containingDeclaration as? KaClassSymbol
+        val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
+        val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
+            val navigationElement = superClass.psi?.navigationElement
+            if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {
+                null //no need to search documentation in decompiled code
+            } else {
+                navigationElement?.findDescendantOfType<KDoc> { doc ->
+                    doc.getChildrenOfType<KDocSection>().any { it.findTagByName(name) != null }
+                }
+            }
+        }
+
+        renderKotlinSymbol(symbol, element, false, false) {
+            if (!quickNavigation && kdoc != null) {
+                description {
+                    renderKDoc(kdoc.getDefaultSection())
+                }
+            }
+        }
+    }
 }
 
 private fun findElementWithText(element: PsiElement?, text: String): PsiElement? {
