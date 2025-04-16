@@ -200,6 +200,11 @@ public final class PsiDiamondTypeUtil {
           }
         }
       }
+
+      if (copy != null && copy.getContainingFile() != null) {
+        ResolveScopeManager resolveScopeManager = ResolveScopeManager.getInstance(context.getProject());
+        resolveScopeManager.markFileForWeakScope(copy.getContainingFile().getViewProvider().getVirtualFile());
+      }
       final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
       if (context instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);

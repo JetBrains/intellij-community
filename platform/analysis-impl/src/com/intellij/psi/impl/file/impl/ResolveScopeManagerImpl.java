@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.codeInsight.multiverse.*;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -14,6 +17,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
@@ -28,6 +32,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +48,8 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
 
   private final Map<Pair<VirtualFile, CodeInsightContext>, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
+
+  private static final Key<Boolean> USE_WEAK_FILE_SCOPE = Key.create("virtual.file.use.weak.scope");
 
   ResolveScopeManagerImpl(Project project) {
     myProject = project;
@@ -84,7 +91,12 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
       }
     }
     if (original != null && !scope.contains(key.first)) {
-      scope = scope.union(GlobalSearchScope.fileScope(myProject, key.first));
+      if (key.first.getUserData(USE_WEAK_FILE_SCOPE) == Boolean.TRUE) {
+        scope = scope.union(GlobalSearchScope.fileWeakScope(myProject, key.first, null));
+      }
+      else {
+        scope = scope.union(GlobalSearchScope.fileScope(myProject, key.first));
+      }
     }
     return scope;
   }
@@ -228,6 +240,13 @@ final class ResolveScopeManagerImpl extends ResolveScopeManager implements Dispo
 
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     return projectFileIndex.getModuleForFile(notNullVFile);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Override
+  public void markFileForWeakScope(@NotNull VirtualFile file) {
+    file.putUserData(USE_WEAK_FILE_SCOPE, Boolean.TRUE);
   }
 
   @Override
