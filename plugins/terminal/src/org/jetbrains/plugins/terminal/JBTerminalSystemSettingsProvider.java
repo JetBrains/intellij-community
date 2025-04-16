@@ -52,12 +52,12 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   @Override
   public float getLineSpacing() {
-    return TerminalFontOptions.getInstance().getSettings().getLineSpacing();
+    return TerminalFontOptions.getInstance().getSettings().getLineSpacing().getFloatValue();
   }
 
   @Override
   public float getColumnSpacing() {
-    return TerminalFontOptions.getInstance().getSettings().getColumnSpacing();
+    return TerminalFontOptions.getInstance().getSettings().getColumnSpacing().getFloatValue();
   }
 
   @Override
