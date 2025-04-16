@@ -27,11 +27,11 @@ abstract class BaseProjectModelService<E : EntitySource> {
 
   abstract fun getSettings(project: Project): ProjectModelSettings
 
-  abstract fun getSyncListener(project: Project): ProjectModelSyncListener
+  protected abstract fun getSyncListener(project: Project): ProjectModelSyncListener
 
-  abstract fun createEntitySource(project: Project, singleProjectRoot: Path): EntitySource
+  protected abstract fun createEntitySource(project: Project, singleProjectRoot: Path): EntitySource
 
-  abstract fun getEntitySourceClass(): KClass<out EntitySource>
+  protected abstract fun getEntitySourceClass(): KClass<out EntitySource>
   
   suspend fun linkAllProjectModelRoots(project: Project, basePath: @SystemIndependent @NonNls String) {
     val allProjectRoots = withBackgroundProgress(project = project, title = PyBundle.message("python.project.model.progress.title.discovering.projects", systemName)) {
@@ -69,12 +69,6 @@ abstract class BaseProjectModelService<E : EntitySource> {
     }
   }
 
-  /**
-   * Synchronizes the poetry project by creating and updating module entities in the workspace model of the given project.
-   *
-   * @param project The IntelliJ IDEA project that needs synchronization.
-   * @param projectRoot The root path of the poetry project tree to be synchronized.
-   */
   private suspend fun syncProjectModelRootImpl(project: Project, projectRoot: Path) {
     val listener = getSyncListener(project)
     listener.onStart(projectRoot)
