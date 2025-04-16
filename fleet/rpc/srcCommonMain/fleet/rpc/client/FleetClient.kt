@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
-import kotlin.jvm.Volatile
+import kotlin.concurrent.Volatile
 
 class FleetClient internal constructor(
   val connectionStatus: StateFlow<ConnectionStatus<IRpcClient>>,

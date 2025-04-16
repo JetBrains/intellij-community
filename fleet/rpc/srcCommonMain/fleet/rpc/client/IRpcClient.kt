@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
-import kotlin.jvm.Volatile
+import kotlin.concurrent.Volatile
 
 data class Call(val route: UID,
                 val service: InstanceId,
