@@ -91,7 +91,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
-    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), watchesInVariables);
+    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables) {
@@ -103,7 +103,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
-    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), watchesInVariables, vertical);
+    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables, vertical);
   }
 
   protected XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical) {
@@ -115,7 +115,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
    */
   @Deprecated
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
-    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), watchesInVariables, vertical, withToolbar);
+    this(XDebugSessionProxyKeeperKt.asProxy(session), watchesInVariables, vertical, withToolbar);
   }
 
   public XWatchesViewImpl(@NotNull XDebugSessionProxy session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {

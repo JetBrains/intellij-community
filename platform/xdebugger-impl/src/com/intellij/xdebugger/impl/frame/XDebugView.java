@@ -58,7 +58,7 @@ public abstract class XDebugView implements Disposable {
    */
   @ApiStatus.Obsolete
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
-    processSessionEvent(event, XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    processSessionEvent(event, XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {

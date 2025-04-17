@@ -36,7 +36,7 @@ public class XVariablesView extends XVariablesViewBase {
    */
   @Deprecated
   public XVariablesView(@NotNull XDebugSessionImpl session) {
-    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    this(XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   public XVariablesView(@NotNull XDebugSessionProxy proxy) {
@@ -162,7 +162,7 @@ public class XVariablesView extends XVariablesViewBase {
     @ApiStatus.Obsolete
     public static @Nullable InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session == null) return null;
-     return get(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+     return get(XDebugSessionProxyKeeperKt.asProxy(session));
     }
 
     @ApiStatus.Internal
@@ -179,7 +179,7 @@ public class XVariablesView extends XVariablesViewBase {
     @ApiStatus.Obsolete
     public static void set(@Nullable XDebugSession session, InlineVariablesInfo info) {
       if (session != null) {
-        set(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), info);
+        set(XDebugSessionProxyKeeperKt.asProxy(session), info);
       }
     }
 

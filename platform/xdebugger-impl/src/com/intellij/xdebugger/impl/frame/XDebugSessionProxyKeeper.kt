@@ -7,9 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class XDebugSessionProxyKeeper {
+internal class XDebugSessionProxyKeeper {
   private val proxyMap = mutableMapOf<XDebugSession, XDebugSessionProxy>()
 
   fun getOrCreateProxy(session: XDebugSession): XDebugSessionProxy {
@@ -25,3 +24,7 @@ class XDebugSessionProxyKeeper {
     fun getInstance(project: Project): XDebugSessionProxyKeeper = project.service()
   }
 }
+
+@ApiStatus.Internal
+fun XDebugSession.asProxy(): XDebugSessionProxy = XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(this)
+

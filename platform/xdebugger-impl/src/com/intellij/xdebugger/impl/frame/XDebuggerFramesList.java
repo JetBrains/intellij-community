@@ -102,7 +102,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   }
 
   public XDebuggerFramesList(@NotNull Project project, @NotNull XDebugSession session) {
-    this(project, XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(session));
+    this(project, XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   @ApiStatus.Internal
