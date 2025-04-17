@@ -1015,8 +1015,8 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    Function<ListPluginComponent, IdeaPluginDescriptor> function =
-      getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplaceOld;
+    Function<ListPluginComponent, PluginUiModel> function =
+      getDescriptorFunction ? ListPluginComponent::getPluginModel : ListPluginComponent::getInstalledDescriptorForMarketplace;
     SelectionBasedPluginModelAction.addActionsTo(group,
                                                  action -> createEnableDisableAction(action, selection, function),
                                                  () -> createUninstallAction(selection, function));
@@ -1133,8 +1133,8 @@ public final class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
-      Function<ListPluginComponent, IdeaPluginDescriptor> function =
-        getDescriptorFunction ? ListPluginComponent::getPluginDescriptor : ListPluginComponent::getInstalledDescriptorForMarketplaceOld;
+      Function<ListPluginComponent, PluginUiModel> function =
+        getDescriptorFunction ? ListPluginComponent::getPluginModel : ListPluginComponent::getInstalledDescriptorForMarketplace;
 
       DumbAwareAction action;
 
@@ -1169,14 +1169,6 @@ public final class ListPluginComponent extends JPanel {
 
   public PluginUiModel getInstalledDescriptorForMarketplace() {
     return myInstalledDescriptorForMarketplace;
-  }
-
-  @Deprecated
-  /*
-    Compatibility method, going to be removed soon
-   */
-  public IdeaPluginDescriptor getInstalledDescriptorForMarketplaceOld() {
-    return myInstalledDescriptorForMarketplace.getDescriptor();
   }
 
   public IdeaPluginDescriptor getUpdatePluginDescriptor(){
@@ -1216,14 +1208,14 @@ public final class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<? extends ListPluginComponent> selection,
-                                                                                                                      @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel.getModel(), action, true, selection, function, () -> {
+                                                                                                                      @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, true, selection, function, () -> {
     });
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                                                              @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
-    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel.getModel(), true, this, selection, function, () -> {
+                                                                                                              @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
+    return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, true, this, selection, function, () -> {
     });
   }
 

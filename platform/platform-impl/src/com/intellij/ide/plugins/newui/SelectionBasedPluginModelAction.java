@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,29 +25,30 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.util.containers.ContainerUtil.*;
 
-abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends IdeaPluginDescriptor> extends DumbAwareAction {
+abstract class SelectionBasedPluginModelAction<C extends JComponent> extends DumbAwareAction {
 
-  protected final @NotNull MyPluginModel myPluginModel;
+  protected final @NotNull PluginModelFacade myPluginModel;
   protected final boolean myShowShortcut;
   private final @NotNull List<? extends C> mySelection;
-  private final @NotNull Function<? super C, ? extends D> myPluginDescriptor;
+  private final @NotNull Function<? super C, PluginUiModel> myPluginDescriptorGetter;
 
   protected SelectionBasedPluginModelAction(@NotNull @Nls String text,
-                                            @NotNull MyPluginModel pluginModel,
+                                            @NotNull PluginModelFacade pluginModel,
                                             boolean showShortcut,
                                             @NotNull List<? extends C> selection,
-                                            @NotNull Function<? super C, ? extends D> pluginDescriptor) {
+                                            @NotNull Function<? super C, PluginUiModel> pluginModelGetter) {
     super(text);
 
     myPluginModel = pluginModel;
     myShowShortcut = showShortcut;
     mySelection = selection;
-    myPluginDescriptor = pluginDescriptor;
+    myPluginDescriptorGetter = pluginModelGetter;
   }
 
   protected final void setShortcutSet(@NotNull ShortcutSet shortcutSet,
@@ -54,10 +56,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     setShortcutSet(show ? shortcutSet : CustomShortcutSet.EMPTY);
   }
 
-  protected final @NotNull Map<C, D> getSelection() {
-    LinkedHashMap<C, D> map = new LinkedHashMap<>();
+  protected final @NotNull Map<C, PluginUiModel> getSelection() {
+    LinkedHashMap<C, PluginUiModel> map = new LinkedHashMap<>();
     for (C component : mySelection) {
-      D descriptor = myPluginDescriptor.apply(component);
+      PluginUiModel descriptor = myPluginDescriptorGetter.apply(component);
       if (descriptor != null) {
         map.put(component, descriptor);
       }
@@ -65,28 +67,32 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     return Collections.unmodifiableMap(map);
   }
 
-  protected final @NotNull Collection<? extends D> getAllDescriptors() {
+  protected final @NotNull Collection<PluginUiModel> getAllDescriptors() {
     return getSelection().values();
   }
 
-  static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C, IdeaPluginDescriptor> {
+  protected final @NotNull Collection<IdeaPluginDescriptor> getAllDescriptorsOld() {
+    return map(getSelection().values(), model -> model.getDescriptor());
+  }
+
+  static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
     private static final CustomShortcutSet SHORTCUT_SET = new CustomShortcutSet(KeyEvent.VK_SPACE);
 
     private final @NotNull PluginEnableDisableAction myAction;
     private final @NotNull Runnable myOnFinishAction;
 
-    EnableDisableAction(@NotNull MyPluginModel pluginModel,
+    EnableDisableAction(@NotNull PluginModelFacade pluginModel,
                         @NotNull PluginEnableDisableAction action,
                         boolean showShortcut,
                         @NotNull List<? extends C> selection,
-                        @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
+                        @NotNull Function<? super C, PluginUiModel> pluginModelGetter,
                         @NotNull Runnable onFinishAction) {
       super(action.getPresentableText(),
             pluginModel,
             showShortcut,
             selection,
-            pluginDescriptor);
+            pluginModelGetter);
 
       myAction = action;
       myOnFinishAction = onFinishAction;
@@ -94,9 +100,9 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Collection<? extends IdeaPluginDescriptor> descriptors = getAllDescriptors();
-      Set<PluginId> pluginIds = map2SetNotNull(descriptors, IdeaPluginDescriptor::getPluginId);
-      List<PluginEnabledState> states = map(pluginIds, myPluginModel::getState);
+      Collection<PluginUiModel> descriptors = getAllDescriptors();
+      Set<PluginId> pluginIds = map2SetNotNull(descriptors, PluginUiModel::getPluginId);
+      List<PluginEnabledState> states = map(pluginIds, myPluginModel.getModel()::getState);
 
       boolean allEnabled = all(states, PluginEnabledState.ENABLED::equals);
       boolean isForceEnableAll = myAction == PluginEnableDisableAction.ENABLE_GLOBALLY &&
@@ -105,7 +111,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       boolean disabled = pluginIds.isEmpty() ||
                          !all(states, myAction::isApplicable) ||
                          myAction == PluginEnableDisableAction.DISABLE_GLOBALLY &&
-                         exists(pluginIds, myPluginModel::isRequiredPluginForProject);
+                         exists(pluginIds, myPluginModel.getModel()::isRequiredPluginForProject);
 
       boolean enabled = !disabled;
       e.getPresentation().setEnabledAndVisible(isForceEnableAll || enabled);
@@ -127,12 +133,12 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPluginModel.setEnabledState(getAllDescriptors(), myAction);
+      myPluginModel.getModel().setEnabledState(getAllDescriptorsOld(), myAction);
       myOnFinishAction.run();
     }
   }
 
-  static final class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C, IdeaPluginDescriptorImpl> {
+  static final class UninstallAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
 
     private static final ShortcutSet SHORTCUT_SET;
 
@@ -147,31 +153,30 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     private final @NotNull Runnable myOnFinishAction;
     private final boolean myDynamicTitle;
 
-    UninstallAction(@NotNull MyPluginModel pluginModel,
+    UninstallAction(@NotNull PluginModelFacade pluginModel,
                     boolean showShortcut,
                     @NotNull JComponent uiParent,
                     @NotNull List<? extends C> selection,
-                    @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor,
+                    @NotNull Function<? super C, ? extends PluginUiModel> pluginModelGetter,
                     @NotNull Runnable onFinishAction) {
       //noinspection unchecked
-      super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, IdeaPluginDescriptor>)pluginDescriptor)
+      super(IdeBundle.message(isBundledUpdate(selection, (Function<Object, PluginUiModel>)pluginModelGetter)
                               ? "plugins.configurable.uninstall.bundled.update"
                               : "plugins.configurable.uninstall"),
             pluginModel,
             showShortcut,
             selection,
-            pluginDescriptor.andThen(descriptor -> descriptor instanceof IdeaPluginDescriptorImpl ?
-                                                   (IdeaPluginDescriptorImpl)descriptor :
-                                                   null));
+            pluginModelGetter.andThen(model -> model.getDescriptor() instanceof IdeaPluginDescriptorImpl ?
+                                               model : null));
 
       myUiParent = uiParent;
       myOnFinishAction = onFinishAction;
-      myDynamicTitle = selection.size() == 1 && pluginDescriptor.apply(selection.iterator().next()) == null;
+      myDynamicTitle = selection.size() == 1 && pluginModelGetter.apply(selection.iterator().next()) == null;
     }
 
-    private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, IdeaPluginDescriptor> pluginDescriptor) {
+    private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, @Nullable PluginUiModel> pluginDescriptor) {
       for (Object o : selection) {
-        if (!MyPluginModel.isBundledUpdate(pluginDescriptor.apply(o))) {
+        if (!MyPluginModel.isBundledUpdate(pluginDescriptor.apply(o).getDescriptor())) {
           return false;
         }
       }
@@ -180,17 +185,17 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Collection<? extends IdeaPluginDescriptorImpl> descriptors = getAllDescriptors();
+      Collection<PluginUiModel> descriptors = getAllDescriptors();
 
       if (myDynamicTitle) {
         e.getPresentation().setText(IdeBundle.message(
-          descriptors.size() == 1 && MyPluginModel.isBundledUpdate(descriptors.iterator().next())
+          descriptors.size() == 1 && MyPluginModel.isBundledUpdate(descriptors.iterator().next().getDescriptor())
           ? "plugins.configurable.uninstall.bundled.update"
           : "plugins.configurable.uninstall"));
       }
 
       boolean disabled = descriptors.isEmpty() ||
-                         exists(descriptors, IdeaPluginDescriptor::isBundled) ||
+                         exists(descriptors, PluginUiModel::isBundled) ||
                          exists(descriptors, myPluginModel::isUninstalled);
       e.getPresentation().setEnabledAndVisible(!disabled);
 
@@ -204,22 +209,22 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Map<C, IdeaPluginDescriptorImpl> selection = getSelection();
+      Map<C, PluginUiModel> selection = getSelection();
       ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
       Map<PluginId, IdeaPluginDescriptorImpl> plugins = PluginManagerCore.INSTANCE.buildPluginIdMap();
 
-      List<IdeaPluginDescriptorImpl> toDeleteWithAsk = new ArrayList<>();
-      List<IdeaPluginDescriptorImpl> toDelete = new ArrayList<>();
+      List<PluginUiModel> toDeleteWithAsk = new ArrayList<>();
+      List<PluginUiModel> toDelete = new ArrayList<>();
 
-      for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
-        IdeaPluginDescriptorImpl descriptor = entry.getValue();
-        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor, applicationInfo, plugins);
+      for (Map.Entry<C, PluginUiModel> entry : selection.entrySet()) {
+        PluginUiModel descriptor = entry.getValue();
+        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor.getDescriptor(), applicationInfo, plugins);
         if (dependents.isEmpty()) {
           toDeleteWithAsk.add(descriptor);
         }
         else {
-          boolean bundledUpdate = MyPluginModel.isBundledUpdate(descriptor);
-          if (askToUninstall(getUninstallDependentsMessage(descriptor, dependents, bundledUpdate), entry.getKey(), bundledUpdate)) {
+          boolean bundledUpdate = MyPluginModel.isBundledUpdate(descriptor.getDescriptor());
+          if (askToUninstall(getUninstallDependentsMessage(descriptor.getDescriptor(), dependents, bundledUpdate), entry.getKey(), bundledUpdate)) {
             toDelete.add(descriptor);
           }
         }
@@ -228,17 +233,17 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       boolean runFinishAction = false;
 
       if (!toDeleteWithAsk.isEmpty()) {
-        boolean bundledUpdate = toDeleteWithAsk.size() == 1 && MyPluginModel.isBundledUpdate(toDeleteWithAsk.get(0));
+        boolean bundledUpdate = toDeleteWithAsk.size() == 1 && MyPluginModel.isBundledUpdate(toDeleteWithAsk.get(0).getDescriptor());
         if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
-          for (IdeaPluginDescriptorImpl descriptor : toDeleteWithAsk) {
-            myPluginModel.uninstallAndUpdateUi(descriptor);
+          for (PluginUiModel descriptor : toDeleteWithAsk) {
+            myPluginModel.getModel().uninstallAndUpdateUi(descriptor.getDescriptor());
           }
           runFinishAction = true;
         }
       }
 
-      for (IdeaPluginDescriptorImpl descriptor : toDelete) {
-        myPluginModel.uninstallAndUpdateUi(descriptor);
+      for (PluginUiModel descriptor : toDelete) {
+        myPluginModel.getModel().uninstallAndUpdateUi(descriptor.getDescriptor());
       }
 
       if (runFinishAction || !toDelete.isEmpty()) {
@@ -247,15 +252,15 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
 
     private static @NotNull
-    @Nls String getUninstallAllMessage(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors, boolean bundledUpdate) {
+    @Nls String getUninstallAllMessage(@NotNull Collection<PluginUiModel> descriptors, boolean bundledUpdate) {
       if (descriptors.size() == 1) {
-        IdeaPluginDescriptorImpl descriptor = descriptors.iterator().next();
+        PluginUiModel descriptor = descriptors.iterator().next();
         return IdeBundle.message("prompt.uninstall.plugin", descriptor.getName(), bundledUpdate ? 1 : 0);
       }
       return IdeBundle.message("prompt.uninstall.several.plugins", descriptors.size());
     }
 
-    private static @NotNull @Nls String getUninstallDependentsMessage(@NotNull IdeaPluginDescriptorImpl descriptor,
+    private static @NotNull @Nls String getUninstallDependentsMessage(@NotNull IdeaPluginDescriptor descriptor,
                                                                       @NotNull List<? extends IdeaPluginDescriptor> dependents,
                                                                       boolean bundledUpdate) {
       String listOfDeps = join(dependents,

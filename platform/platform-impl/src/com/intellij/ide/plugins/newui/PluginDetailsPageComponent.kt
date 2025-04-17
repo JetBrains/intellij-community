@@ -431,11 +431,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createEnableDisableAction(action: PluginEnableDisableAction): SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.EnableDisableAction(
-      pluginModel,
+      PluginModelFacade(pluginModel),
       action,
       false,
       java.util.List.of(this),
-      { it.descriptorForActions },
+      { it.descriptorForActions?.let { PluginUiModelAdapter(it) } },
       { updateNotifications() },
     )
   }
@@ -1232,8 +1232,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createUninstallAction(): SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.UninstallAction(
-      pluginModel, false, this, java.util.List.of(this),
-      { obj: PluginDetailsPageComponent -> obj.descriptorForActions },
+      PluginModelFacade(pluginModel), false, this, java.util.List.of(this),
+      { obj: PluginDetailsPageComponent -> obj.descriptorForActions?.let { PluginUiModelAdapter(it) } },
       {
         updateNotifications()
       })
