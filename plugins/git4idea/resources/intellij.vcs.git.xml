@@ -681,7 +681,6 @@
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
                                  location="confirmations"/>
 
-    <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
     <projectService serviceImplementation="git4idea.config.GitPullSettings"/>

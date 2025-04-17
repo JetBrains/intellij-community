@@ -26,9 +26,16 @@ import java.util.Objects;
 
 /**
  * Git VCS settings
+ * <br>
+ * Note that even though settings are located in a shared module, they are synced in the backend -> frontend direction only.
+ * Even though setters are visible, they should not be called on the frontend.
+ * See {@link git4idea.config.GitRemoteSettingsInfoProvider} for details
  */
-@State(name = "Git.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = GitVcsSettings.SETTINGS_KEY, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
+  @ApiStatus.Internal
+  public static final String SETTINGS_KEY = "Git.Settings";
+
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
   private final Project project;
@@ -298,6 +305,11 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setAddSuffixToCherryPicks(boolean value) {
     getState().setAddSuffixToCherryPicksOfPublishedCommits(value);
+  }
+
+  @Override
+  public void noStateLoaded() {
+    loadState(new GitVcsOptions());
   }
 
   @Tag("push-target-info")
