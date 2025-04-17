@@ -98,7 +98,7 @@ open class EditorComposite internal constructor(
   val file: VirtualFile,
   model: Flow<EditorCompositeModel>,
   @JvmField internal val project: Project,
-  @JvmField internal val coroutineScope: CoroutineScope,
+  @JvmField @Internal val coroutineScope: CoroutineScope,
 ) : FileEditorComposite, Disposable {
   private val clientId: ClientId = ClientId.current
 
@@ -422,7 +422,8 @@ open class EditorComposite internal constructor(
   override val allProviders: List<FileEditorProvider>
     get() = providerSequence.toList()
 
-  internal val providerSequence: Sequence<FileEditorProvider>
+  @get:Internal
+  val providerSequence: Sequence<FileEditorProvider>
     get() = fileEditorWithProviders.value.asSequence().map { it.provider }
 
   private fun createTabbedPaneWrapper(
