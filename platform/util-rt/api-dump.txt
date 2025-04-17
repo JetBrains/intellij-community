@@ -264,8 +264,6 @@ com.intellij.openapi.util.io.FileUtilRt$RepeatableIOOperation
 f:com.intellij.openapi.util.text.StringHash
 - s:buz(java.lang.CharSequence):J
 - s:calc(java.lang.String):J
-- s:calc(B[]):J
-- s:murmur(java.lang.CharSequence):I
 - s:murmur(java.lang.CharSequence,I):I
 f:com.intellij.openapi.util.text.StringUtilRt
 - s:charsEqualIgnoreCase(C,C):Z
