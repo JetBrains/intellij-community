@@ -625,7 +625,7 @@ object PluginManagerCore {
 
   @Internal
   fun initializePlugins(
-    context: DescriptorListLoadingContext,
+    loadingContext: DescriptorListLoadingContext,
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
     checkEssentialPlugins: Boolean,
@@ -633,7 +633,7 @@ object PluginManagerCore {
     parentActivity: Activity?,
   ): PluginManagerState {
     val pluginErrorsById = loadingResult.copyPluginErrors()
-    val globalErrors = context.copyGlobalErrors()
+    val globalErrors = loadingContext.copyGlobalErrors()
     if (loadingResult.duplicateModuleMap != null) {
       for ((key, value) in loadingResult.duplicateModuleMap!!) {
         globalErrors.add(Supplier {
@@ -668,17 +668,17 @@ object PluginManagerCore {
       pluginErrorsById[loadingError.plugin.pluginId] = loadingError
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
       val disabledDependencyId = loadingError.disabledDependency
-      if (disabledDependencyId != null && context.isPluginDisabled(disabledDependencyId)) {
+      if (disabledDependencyId != null && loadingContext.isPluginDisabled(disabledDependencyId)) {
         pluginsToEnable[disabledDependencyId] = idMap[disabledDependencyId]!!.getName()
       }
     }
 
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(disabler = { descriptor ->
-      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, context::isPluginDisabled, pluginErrorsById)
+      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, loadingContext::isPluginDisabled, pluginErrorsById)
       if (loadingError != null) {
         registerLoadingError(loadingError)
       }
-      if (loadingError != null || context.isPluginExpired(descriptor.getPluginId())) {
+      if (loadingError != null || loadingContext.isPluginExpired(descriptor.getPluginId())) {
         descriptor.isMarkedForLoading = false
       }
       !descriptor.isMarkedForLoading
@@ -892,7 +892,7 @@ object PluginManagerCore {
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
       val initResult = initializePlugins(
-        context = context,
+        loadingContext = context,
         loadingResult = loadingResult,
         coreLoader = coreLoader,
         checkEssentialPlugins = !isUnitTestMode,

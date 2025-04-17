@@ -401,7 +401,7 @@ class PluginManagerTest {
         isPluginBroken = parentContext::isPluginBroken
       )
       return PluginManagerCore.initializePlugins(
-        context = parentContext,
+        loadingContext = parentContext,
         loadingResult = result,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
         checkEssentialPlugins = false,
