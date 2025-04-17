@@ -22,18 +22,11 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext(
-  customDisabledPlugins: Set<PluginId>? = null,
-  customExpiredPlugins: Set<PluginId>? = null,
-  customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
   val getProductBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
-  private val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
-  private val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
-  private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
-
   private val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 
   // synchronization will ruin parallel loading, so, string pool is local for thread

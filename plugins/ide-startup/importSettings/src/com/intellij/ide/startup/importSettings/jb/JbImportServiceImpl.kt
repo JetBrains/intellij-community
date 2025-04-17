@@ -39,7 +39,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -274,9 +273,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       PathManager.getConfigDir().parent,
       PathManager.getConfigDir().fileSystem.getPath(PathManager.getDefaultConfigPathFor("X")).parent
     )
-    val context = DescriptorListLoadingContext(customDisabledPlugins = Collections.emptySet(),
-                                               customBrokenPluginVersions = emptyMap(),
-                                               getProductBuildNumber = { PluginManagerCore.buildNumber })
+    val context = DescriptorListLoadingContext(getProductBuildNumber = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
       if (!parentDir.exists() || !parentDir.isDirectory()) {
         logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")

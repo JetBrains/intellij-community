@@ -1164,8 +1164,6 @@ fun loadAndInitDescriptorsFromOtherIde(
     brokenPluginVersionsOverride = brokenPluginVersions,
   )
   return DescriptorListLoadingContext(
-    customDisabledPlugins = Collections.emptySet(),
-    customBrokenPluginVersions = brokenPluginVersions,
     getProductBuildNumber = { productBuildNumber ?: PluginManagerCore.buildNumber },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
@@ -1231,8 +1229,6 @@ fun loadAndInitDescriptorsFromClassPathInTest(
     getProductBuildNumber = { buildNumber },
   )
   val loadingContext = DescriptorListLoadingContext(
-    customDisabledPlugins = Collections.emptySet(),
-    customBrokenPluginVersions = Collections.emptyMap(),
     getProductBuildNumber = { buildNumber },
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
