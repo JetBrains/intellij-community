@@ -212,6 +212,10 @@ class SyntaxGeneratedParserRuntime(
           }
         }
       }
+      
+      fun isIdentifierStart(ch: Char): Boolean {
+        return ch.isLetter() || ch == '$' || ch == '_'
+      }
 
       return when {
         strings.size > MAX_VARIANTS_TO_DISPLAY -> {
@@ -220,11 +224,11 @@ class SyntaxGeneratedParserRuntime(
             .sorted()
             .take(MAX_VARIANTS_TO_DISPLAY)
             .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}") { s ->
-              if (s[0] == '<' || s[0].isJavaIdentifierStart()) s else "'$s'"
+              if (s[0] == '<' || isIdentifierStart(s[0])) s else "'$s'"
             }
         }
         strings.size > 1 -> {
-          val sorted = strings.sorted().map { s -> if (s[0] == '<' || s[0].isJavaIdentifierStart()) s else "'$s'" }
+          val sorted = strings.sorted().map { s -> if (s[0] == '<' || isIdentifierStart(s[0])) s else "'$s'" }
           val last = sorted.last()
           sorted
             .dropLast(1)
@@ -232,7 +236,7 @@ class SyntaxGeneratedParserRuntime(
         }
         else -> {
           strings.singleOrNull()?.let {
-            if (it[0] == '<' || it[0].isJavaIdentifierStart()) it else "'$it'"
+            if (it[0] == '<' || isIdentifierStart(it[0])) it else "'$it'"
           }.orEmpty()
         }
       }
