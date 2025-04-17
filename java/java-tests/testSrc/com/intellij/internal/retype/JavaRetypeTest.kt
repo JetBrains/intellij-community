@@ -55,15 +55,15 @@ class JavaRetypeTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun doTestWithLookup() {
-    val autopopupOldValue = TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
-    val filePath = "retype/${getTestName(false)}.java"
-    myFixture.configureByFile(filePath)
-    RetypeSession(project, myFixture.editor as EditorImpl, 50, null, 0).start()
-    while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
-      IdeEventQueue.getInstance().flushQueue()
+    TestModeFlags.runWithFlag(CompletionAutoPopupHandler.ourTestingAutopopup, true) {
+      val filePath = "retype/${getTestName(false)}.java"
+      myFixture.configureByFile(filePath)
+      RetypeSession(project, myFixture.editor as EditorImpl, 50, null, 0).start()
+      while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
+        IdeEventQueue.getInstance().flushQueue()
+      }
+      myFixture.checkResultByFile(filePath)
     }
-    myFixture.checkResultByFile(filePath)
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, autopopupOldValue)
   }
 
   private fun doTestWithoutLookup() {

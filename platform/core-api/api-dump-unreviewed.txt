@@ -5352,6 +5352,8 @@ f:com.intellij.testFramework.TestModeFlags
 - s:get(com.intellij.openapi.util.Key):java.lang.Object
 - s:is(com.intellij.openapi.util.Key):Z
 - s:reset(com.intellij.openapi.util.Key):V
+- s:runWithFlag(com.intellij.openapi.util.Key,java.lang.Object,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:runWithFlag(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Runnable):V
 - s:set(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object
 - s:set(com.intellij.openapi.util.Key,java.lang.Object,com.intellij.openapi.Disposable):V
 com.intellij.testIntegration.TestFramework

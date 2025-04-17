@@ -1146,7 +1146,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class Foo <caret>");
     type("ext");
 
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false);
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false, getTestRootDisposable());
     edt(() -> myFixture.completeBasic());
     assertNull(String.valueOf(myFixture.getLookupElementStrings()), getLookup());
     myFixture.checkResult("class Foo extends <caret>");
@@ -1156,7 +1156,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class Foo {<caret>}");
     type("pr");
 
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false);
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false, getTestRootDisposable());
     edt(() -> myFixture.completeBasic());
     myFixture.checkResult("class Foo {pr<caret>}");
 
