@@ -71,10 +71,8 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
     arranger: LookupArranger,
   ): LookupImpl {
     hideActiveLookup()
-    var lookup = LOOKUP_PROVIDER_EP.extensionList.firstNotNullOfOrNull { it.createLookup(editor, arranger, session) }
-    if (lookup == null) {
-      lookup = createLookup(editor, arranger, session)
-    }
+
+    val lookup = createLookup(editor, arranger, session)
     LOOKUP_CUSTOMIZATION_EP.extensionList.forEach { ex ->
       ex.customizeLookup(lookup)
     }
@@ -100,16 +98,13 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
     myActiveLookup?.hide()
     myActiveLookup = null
   }
+
   protected abstract fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl
 }
 
 @ApiStatus.Experimental
 @Internal
 val LOOKUP_CUSTOMIZATION_EP: ExtensionPointName<LookupCustomizer> = ExtensionPointName("com.intellij.lookup.customizer")
-
-@ApiStatus.Experimental
-@Internal
-val LOOKUP_PROVIDER_EP: ExtensionPointName<LookupProvider> = ExtensionPointName.create("com.intellij.lookup.provider")
 
 /**
  * Represents a customization mechanism for a lookup interface. Classes implementing this
@@ -122,18 +117,6 @@ val LOOKUP_PROVIDER_EP: ExtensionPointName<LookupProvider> = ExtensionPointName.
 @Internal
 interface LookupCustomizer {
   fun customizeLookup(lookupImpl: LookupImpl)
-}
-
-/**
- * Allows overriding LookupImpl for certain editors.
- * Can be used to customize behavior and look of the lookup, for example,
- * to display the lookup not as a hint, but using some other UI,
- * like embed it inside some window, change its position or background color.
- */
-@ApiStatus.Experimental
-@Internal
-interface LookupProvider {
-  fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl?
 }
 
 @Internal

@@ -23,7 +23,6 @@
 
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
     <extensionPoint name="lookup.customizer" interface="com.intellij.codeInsight.lookup.impl.LookupCustomizer" dynamic="true"/>
-    <extensionPoint name="lookup.provider" interface="com.intellij.codeInsight.lookup.impl.LookupProvider" dynamic="true"/>
     <extensionPoint name="lookup.displayStrategy" interface="com.intellij.codeInsight.lookup.impl.LookupDisplayStrategy" dynamic="true"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider" dynamic="true"/>
     <extensionPoint name="lookup.vetoPolicy" interface="com.intellij.codeInsight.lookup.impl.LookupImplVetoPolicy" dynamic="true"/>
