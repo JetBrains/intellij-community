@@ -71,7 +71,7 @@ class TerminalHyperlinkHighlighter private constructor(
     // However, it's better to write unnecessarily correct code than to figure out later that it unexpectedly broke.
     val hyperlinkSupport = hyperlinkSupport
     val listener: (HyperlinkInfo) -> Unit = {
-      ReworkedTerminalUsageCollector.logHyperlinkFollowed()
+      ReworkedTerminalUsageCollector.logHyperlinkFollowed(it.javaClass)
     }
     hyperlinkSupport.addEditorHyperlinkListener(listener)
     coroutineScope.coroutineContext.job.invokeOnCompletion {

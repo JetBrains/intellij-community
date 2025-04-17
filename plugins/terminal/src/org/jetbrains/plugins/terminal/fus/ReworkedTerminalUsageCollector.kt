@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -28,6 +29,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val EVENT_ID_FIELD = EventFields.Int("event_id")
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
   private val TEXT_LENGTH_FIELD = EventFields.Int("text_length")
+  private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -45,7 +47,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
 
-  private val hyperlinkFollowedEvent = GROUP.registerEvent("terminal.hyperlink.followed",)
+  private val hyperlinkFollowedEvent = GROUP.registerEvent("terminal.hyperlink.followed", HYPERLINK_INFO_CLASS)
 
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown"
@@ -181,7 +183,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  fun logHyperlinkFollowed() {
-    hyperlinkFollowedEvent.log()
+  fun logHyperlinkFollowed(javaClass: Class<HyperlinkInfo>) {
+    hyperlinkFollowedEvent.log(javaClass)
   }
 }
