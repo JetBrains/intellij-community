@@ -5,7 +5,7 @@ import com.intellij.PathJavaTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class JavadocTypedHandlerFunctionalTest extends LightPlatformCodeInsightTestCase {
+public abstract class AbstractJavadocTypedHandlerFunctionalTest extends LightPlatformCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/javadocTypedHandler/";
 
   public void testEmptyTag() {

@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class JavadocTypedHandlerTest {
+public abstract class AbstractJavadocTypedHandlerTest {
 
   private static final String CARET_MARKER = "<caret>";
   
