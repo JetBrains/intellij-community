@@ -91,7 +91,6 @@
 - setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 - <init>(I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):V
-- b:<init>(I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - f:getParserUserState():com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState
 - f:init(kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V

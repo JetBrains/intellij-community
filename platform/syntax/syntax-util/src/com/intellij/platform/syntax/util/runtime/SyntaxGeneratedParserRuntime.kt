@@ -125,7 +125,7 @@ class SyntaxGeneratedParserRuntime(
   private val isCaseSensitive: Boolean,
   private val braces: Collection<BracePair>?,
   internal val LOG: Logger,
-  val parserUserState: ParserUserState? = null, 
+  val parserUserState: ParserUserState?, 
 ) {
 
   private val error: ErrorState = ErrorState()
