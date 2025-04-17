@@ -647,7 +647,6 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     // Gateway will be removed soon
     result.add(async {
       loadCoreProductPlugin(
-        path = PluginManagerCore.PLUGIN_XML_PATH,
         context = context,
         pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
         useCoreClassLoader = platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader(),
@@ -935,7 +934,7 @@ fun CoroutineScope.loadCorePlugin(
   if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
     result.add(async(Dispatchers.IO) {
       val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
-      loadCoreProductPlugin(path = PluginManagerCore.PLUGIN_XML_PATH, context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
+      loadCoreProductPlugin(context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
     })
     return true
   }
@@ -943,7 +942,7 @@ fun CoroutineScope.loadCorePlugin(
   result.add(async(Dispatchers.IO) {
     val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
     val reader = getResourceReader(path, classLoader) ?: return@async null
-    loadCoreProductPlugin(path = path, context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
+    loadCoreProductPlugin(context = context, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
   })
   return false
 }
@@ -968,7 +967,6 @@ private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStream
 }
 
 private fun loadCoreProductPlugin(
-  path: String,
   context: DescriptorListLoadingContext,
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
