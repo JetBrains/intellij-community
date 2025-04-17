@@ -95,6 +95,9 @@ class FlowDbSource(
 
   override val latest: DB
     get() = stateFlow.value
+
+  override fun toString(): String =
+    "FlowDbSource(${debugName})"
 }
 
 
