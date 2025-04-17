@@ -2,6 +2,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.editorconfig.common"/>
   </dependencies>
   <actions resource-bundle="messages.EditorConfigBundle">
