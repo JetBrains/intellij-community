@@ -23,6 +23,7 @@ import javax.swing.Icon
 @Serializable
 sealed interface SeItemPresentation {
   val text: String
+  val itemDescription: String? get() = null
 }
 
 @ApiStatus.Internal
@@ -31,15 +32,18 @@ class SeSimpleItemPresentation(
   val iconId: IconId? = null,
   val textChunk: SerializableTextChunk? = null,
   val selectedTextChunk: SerializableTextChunk? = null,
-  val description: @NlsSafe String? = null) : SeItemPresentation {
-    override val text: @Nls String get() = textChunk?.text ?: ""
+  val description: @NlsSafe String? = null,
+  override val itemDescription: String? = null,
+) : SeItemPresentation {
+  override val text: @Nls String get() = textChunk?.text ?: ""
 
-  constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null) : this(
+  constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null, itemDescription: String? = null) : this(
     iconId,
     text?.let { SerializableTextChunk(it, null, 0) },
     null,
-    description)
-  }
+    description,
+    itemDescription)
+}
 
 @ApiStatus.Internal
 sealed interface SeActionItemPresentation : SeItemPresentation {
@@ -51,6 +55,7 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
     val text: @Nls String,
     val location: @Nls String? = null,
     private var _switcherState: Boolean? = null,
+    val itemDescription: String? = null,
   ) {
     val switcherState: Boolean? get() = _switcherState
     fun toggleStateIfSwitcher() {
@@ -72,6 +77,7 @@ data class SeRunnableActionItemPresentation(
   val selectedIconId: IconId? = null,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
+  override val itemDescription: String? get() = commonData.itemDescription
 
   @ApiStatus.Internal
   @Serializable
@@ -89,6 +95,7 @@ data class SeOptionActionItemPresentation(
   val isBooleanOption: Boolean = false,
 ) : SeActionItemPresentation {
   override val text: String get() = commonData.text
+  override val itemDescription: String? get() = commonData.itemDescription
 }
 
 @ApiStatus.Internal
@@ -96,15 +103,17 @@ data class SeOptionActionItemPresentation(
 class SeTargetItemPresentation(
   private val backgroundColorId: ColorId?,
   private val iconId: IconId?,
-  val presentableText: @Nls String,
+  val presentableText: @NlsSafe String,
   val presentableTextMatchedRanges: List<SerializableRange>?,
   private val presentableTextFgColorId: ColorId?,
-  val containerText: @Nls String?,
+  val containerText: @NlsSafe String?,
   val containerTextMatchedRanges: List<SerializableRange>?,
-  val locationText: @Nls String?,
+  val locationText: @NlsSafe String?,
   private val locationIconId: IconId?,
+  val presentableDescription: @NlsSafe String?,
 ) : SeItemPresentation {
   override val text: String get() = presentableText
+  override val itemDescription: String? get() = presentableDescription
 
   val backgroundColor: Color? get() = backgroundColorId?.color()
   val icon: Icon? get() = iconId?.icon()
@@ -119,7 +128,7 @@ class SeTargetItemPresentation(
   }
 
   companion object {
-    fun create(tp: TargetPresentation, matchers: ItemMatchers?): SeTargetItemPresentation =
+    fun create(tp: TargetPresentation, matchers: ItemMatchers?, itemDescription: String?): SeTargetItemPresentation =
       SeTargetItemPresentation(backgroundColorId = tp.backgroundColor?.rpcId(),
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
@@ -128,7 +137,8 @@ class SeTargetItemPresentation(
                                containerText = tp.containerText,
                                containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
-                               locationIconId = tp.locationIcon?.rpcId())
+                               locationIconId = tp.locationIcon?.rpcId(),
+                               presentableDescription = itemDescription)
 
     private fun ItemMatchers.calcMatchedRanges(text: String?): List<SerializableRange>? {
       text ?: return null
@@ -141,6 +151,7 @@ class SeTargetItemPresentation(
 @Serializable
 class SeTextSearchItemPresentation(
   override val text: @NlsSafe String,
+  override val itemDescription: @NlsSafe String?,
   val textChunks: List<SerializableTextChunk>,
   private val backgroundColorId: ColorId?,
   val fileString: @NlsSafe String,

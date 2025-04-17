@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -24,9 +25,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 @Internal
-class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers: ItemMatchers?, private val weight: Int) : SeItem {
+class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers: ItemMatchers?, private val weight: Int, val itemDescription: String?) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers)
+  override suspend fun presentation(): SeItemPresentation = SeTargetItemPresentation.create(legacyItem.presentation, matchers, itemDescription)
 }
 
 @Internal
@@ -45,14 +46,14 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
 
-      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object: AsyncProcessor<FoundItemDescriptor<Any>> {
+      contributorWrapper.fetchWeightedElements(inputQuery, indicator, object : AsyncProcessor<FoundItemDescriptor<Any>> {
         override suspend fun process(t: FoundItemDescriptor<Any>): Boolean {
           val weight = t.weight
           val legacyItem = t.item as? ItemWithPresentation<*> ?: return true
           val matchers = (contributorWrapper.contributor as? PSIPresentationBgRendererWrapper)
             ?.getNonComponentItemMatchers({ _ -> defaultMatchers }, t.item)
 
-          return collector.put(SeTargetItem(legacyItem, matchers, weight))
+          return collector.put(SeTargetItem(legacyItem, matchers, weight, getInfoLeftText(legacyItem)))
         }
       })
     }
@@ -62,6 +63,12 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     val legacyItem = (item as? SeTargetItem)?.legacyItem ?: return false
     return contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
   }
+
+  fun getInfoLeftText(legacyItem: ItemWithPresentation<*>): String? =
+    (contributorWrapper.contributor as? SearchEverywhereExtendedInfoProvider)
+      ?.createExtendedInfo()
+      ?.leftText
+      ?.invoke(legacyItem)
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
     val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)

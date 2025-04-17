@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
@@ -18,11 +19,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int) : SeItem {
+class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, val itemDescription: String?) : SeItem {
   override fun weight(): Int = weight
 
   override suspend fun presentation(): SeItemPresentation =
     SeTextSearchItemPresentation(item.presentableText,
+                                 itemDescription,
                                  item.presentation.text.map { chunk ->
                                    SerializableTextChunk(
                                      chunk.text,
@@ -51,7 +53,7 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
           val weight = t.weight
           val legacyItem = t.item as? SearchEverywhereItem ?: return true
 
-          return collector.put(SeTextSearchItem(legacyItem, weight))
+          return collector.put(SeTextSearchItem(legacyItem, weight, getInfoLeftText(legacyItem)))
         }
       })
     }
@@ -63,6 +65,12 @@ class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContrib
       contributorWrapper.contributor.processSelectedItem (legacyItem, modifiers, searchText)
     }
   }
+
+  fun getInfoLeftText(item: SearchEverywhereItem): String? =
+    (contributorWrapper.contributor as? SearchEverywhereExtendedInfoProvider)
+      ?.createExtendedInfo()
+      ?.leftText
+      ?.invoke(item)
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

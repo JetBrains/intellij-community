@@ -3,17 +3,21 @@ package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
+import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
@@ -44,16 +48,18 @@ import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.BorderLayout
 import java.awt.Point
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.*
+import javax.swing.event.ListSelectionEvent
 import javax.swing.text.Document
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
-class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
+class SePopupContentPane(private val project: Project?, private val vm: SePopupVm) : JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -63,6 +69,9 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   private val resultListModel = SeResultListModel { resultList.selectionModel }
   private val resultList: JBList<SeResultListRow> = JBList(resultListModel)
   private val resultsScrollPane = createListPane(resultList)
+
+  private var extendedInfoPanel: JComponent = JPanel(BorderLayout())
+  private var extendedInfoComponent: ExtendedInfoComponent? = null
 
   init {
     layout = GridLayout()
@@ -89,10 +98,16 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
 
     resultList.setFocusable(false)
 
+    extendedInfoComponent = createExtendedInfoComponent()
+    if (extendedInfoComponent != null) {
+      extendedInfoPanel.add(extendedInfoComponent!!.component)
+    }
+
     RowsGridBuilder(this)
       .row().cell(headerPane, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
+      .row().cell(extendedInfoPanel, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
 
     textField.launchOnShow("Search Everywhere text field text binding") {
       withContext(Dispatchers.EDT) {
@@ -293,6 +308,16 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   private fun installScrollingActions() {
     ScrollingUtil.installMoveUpAction(resultList, textField)
     ScrollingUtil.installMoveDownAction(resultList, textField)
+
+    resultList.addListSelectionListener { e: ListSelectionEvent ->
+      val index = resultList.selectedIndex
+      if (index != -1) {
+        val firstItem = (resultListModel[index] as? SeResultListItemRow)?.item
+        if (firstItem != null) {
+          extendedInfoComponent?.updateElement(firstItem, this@SePopupContentPane)
+        }
+      }
+    }
   }
 
   private fun initSearchActions() {
@@ -478,6 +503,18 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
 
   private fun closePopup() {
     vm.closePopup()
+  }
+
+  private fun createExtendedInfoComponent(): ExtendedInfoComponent? {
+    val leftText = fun(element: Any): String? {
+      if (element is SeItemData) {
+        return element.presentation.itemDescription
+      }
+      return null
+    }
+
+    // or should be in another place?
+    return ExtendedInfoComponent(project, ExtendedInfo(leftText) { null })
   }
 
   override fun dispose() {}

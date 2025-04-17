@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 object SeTopHitItemPresentationProvider {
   private val iconSize get() = JBUIScale.scale(16)
 
-  suspend fun getPresentation(item: Any, project: Project): SeItemPresentation =
+  suspend fun getPresentation(item: Any, project: Project, itemDescription: String?): SeItemPresentation =
     readAction {
       when (item) {
          is AnAction -> {
@@ -43,7 +43,9 @@ object SeTopHitItemPresentationProvider {
              icon = toSize(icon, iconSize, iconSize)
            }
 
-           SeSimpleItemPresentation((icon ?: EmptyIcon.ICON_16).rpcId(), text)
+           SeSimpleItemPresentation(iconId = (icon ?: EmptyIcon.ICON_16).rpcId(),
+                                    text = text,
+                                    itemDescription = itemDescription)
          }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
@@ -64,13 +66,17 @@ object SeTopHitItemPresentationProvider {
             SeOptionActionItemPresentation(SeActionItemPresentation.Common(text + " TOP_HIT", _switcherState = item.isOptionEnabled),
                                            isBooleanOption = true)
           }
-          else SeSimpleItemPresentation(EmptyIcon.ICON_16.rpcId(), textChunk, selectedTextChunk)
+          else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
+                                        textChunk = textChunk,
+                                        selectedTextChunk = selectedTextChunk,
+                                        itemDescription = itemDescription)
         }
         else -> {
           val presentation: ItemPresentation? = item as? ItemPresentation ?: (item as? NavigationItem)?.presentation
 
-          SeSimpleItemPresentation((presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
-                                   presentation?.presentableText ?: item.toString())
+          SeSimpleItemPresentation(iconId = (presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
+                                   text = presentation?.presentableText ?: item.toString(),
+                                   itemDescription = itemDescription)
         }
       }
     }

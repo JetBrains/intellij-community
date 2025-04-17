@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers.topHit
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
@@ -20,9 +21,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project) : SeItem {
+class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project, val itemDescription: String?) : SeItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project)
+  override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project, itemDescription)
 }
 
 @ApiStatus.Internal
@@ -44,7 +45,7 @@ open class SeTopHitItemsProvider(
 
       contributorWrapper.fetchElements(inputQuery, indicator, object : AsyncProcessor<Any> {
         override suspend fun process(t: Any): Boolean {
-          return collector.put(SeTopHitItem(t, weight, project))
+          return collector.put(SeTopHitItem(t, weight, project, getInfoLeftText(t)))
         }
       })
     }
@@ -56,6 +57,12 @@ open class SeTopHitItemsProvider(
       contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
+
+  fun getInfoLeftText(item: Any): String? =
+    (contributorWrapper.contributor as? SearchEverywhereExtendedInfoProvider)
+      ?.createExtendedInfo()
+      ?.leftText
+      ?.invoke(item)
 
   override fun dispose() {
     Disposer.dispose(contributorWrapper)

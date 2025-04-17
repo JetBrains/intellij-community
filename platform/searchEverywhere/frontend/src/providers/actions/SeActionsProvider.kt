@@ -34,7 +34,7 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val filter = SeActionsFilter.from(params.filter)
     processItems(params.inputQuery, filter.includeDisabled) { value ->
-      val item = SeActionItem(value)
+      val item = SeActionItem(value, null)
       collector.put(item)
     }
   }
@@ -87,7 +87,9 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
 }
 
 @ApiStatus.Internal
-class SeActionItem(val matchedValue: MatchedValue): SeItem {
+class SeActionItem(val matchedValue: MatchedValue, val matchedValueDescription: String?): SeItem {
   override fun weight(): Int = matchedValue.matchingDegree
-  override suspend fun presentation(): SeItemPresentation = SeActionPresentationProvider.get(matchedValue)
+  override suspend fun presentation(): SeItemPresentation {
+    return SeActionPresentationProvider.get(matchedValue, matchedValueDescription)
+  }
 }

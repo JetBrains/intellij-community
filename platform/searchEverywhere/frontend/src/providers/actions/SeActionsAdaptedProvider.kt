@@ -3,6 +3,8 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.CheckBoxSearchEverywhereToggleAction
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.Nls
 
 
 @Internal
-class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEverywhereContributor): SeItemsProvider {
+class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEverywhereContributor) : SeItemsProvider {
   override val id: String get() = ID
   override val displayName: @Nls String
     get() = legacyContributor.fullGroupName
@@ -29,7 +31,7 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
 
     coroutineScope {
       legacyContributor.fetchWeightedElements(this, inputQuery) {
-        collector.put(SeActionItem(it.item))
+        collector.put(SeActionItem(it.item, getInfoLeftText(it.item)))
       }
     }
   }
@@ -38,6 +40,9 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
     return legacyContributor.processSelectedItem(legacyItem, modifiers, searchText)
   }
+
+  fun getInfoLeftText(item: MatchedValue): String? =
+    legacyContributor.createExtendedInfo()?.leftText?.invoke(item)
 
   override fun dispose() {
     Disposer.dispose(legacyContributor)

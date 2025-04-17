@@ -36,7 +36,8 @@ import javax.swing.JPanel
 @NlsSafe
 private val DEFAULT_TEXT = "<html><br></html>"
 
-internal class ExtendedInfoComponent(private val project: Project?, private val advertisement: ExtendedInfo) {
+@ApiStatus.Internal
+class ExtendedInfoComponent(private val project: Project?, private val advertisement: ExtendedInfo) {
   private val text = JBLabel()
     .apply {
       font = RelativeFont.NORMAL

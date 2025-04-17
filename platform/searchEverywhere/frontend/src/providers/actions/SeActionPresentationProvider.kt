@@ -31,10 +31,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SeActionPresentationProvider {
-  suspend fun get(matchedValue: GotoActionModel.MatchedValue): SeItemPresentation {
+  suspend fun get(matchedValue: GotoActionModel.MatchedValue, matchedValueDescription: String?): SeItemPresentation {
     val value = matchedValue.value
     if (value is GotoActionModel.ActionWrapper) {
-      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = ""))
+      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", itemDescription = matchedValueDescription))
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -89,7 +89,7 @@ object SeActionPresentationProvider {
     }
     else if (value is OptionDescription) {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
-      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = hit))
+      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = hit, itemDescription = matchedValueDescription),)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
