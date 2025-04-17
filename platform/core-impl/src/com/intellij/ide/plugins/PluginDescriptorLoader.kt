@@ -447,8 +447,8 @@ internal fun CoroutineScope.scheduleLoading(
   }
   // logging is not as a part of plugin set job for performance reasons
   launch {
-    val (loadingContext, loadingResult) = resultDeferred.await()
-    logPlugins(pluginSetDeferred.await().allPlugins, loadingContext, loadingResult, logSupplier = {
+    val (_, loadingResult) = resultDeferred.await()
+    logPlugins(pluginSetDeferred.await().allPlugins, initContext, loadingResult, logSupplier = {
       // make sure that logger is ready to use (not a console logger)
       logDeferred?.await()
       LOG
@@ -459,7 +459,7 @@ internal fun CoroutineScope.scheduleLoading(
 
 private suspend fun logPlugins(
   plugins: Collection<IdeaPluginDescriptorImpl>,
-  loadingContext: DescriptorListLoadingContext,
+  initContext: PluginInitializationContext,
   loadingResult: PluginLoadingResult,
   logSupplier: suspend () -> Logger,
 ) {
@@ -474,7 +474,7 @@ private suspend fun logPlugins(
   for (descriptor in plugins) {
     val pluginId = descriptor.pluginId
     val target = if (!PluginManagerCore.isLoaded(descriptor)) {
-      if (!loadingContext.isPluginDisabled(pluginId)) {
+      if (!initContext.isPluginDisabled(pluginId)) {
         // plugin will be logged as part of "Problems found loading plugins"
         continue
       }
@@ -492,7 +492,7 @@ private suspend fun logPlugins(
 
   for ((pluginId, descriptor) in loadingResult.getIncompleteIdMap()) {
     // log only explicitly disabled plugins
-    if (loadingContext.isPluginDisabled(pluginId) && !disabledPlugins.contains(pluginId)) {
+    if (initContext.isPluginDisabled(pluginId) && !disabledPlugins.contains(pluginId)) {
       appendPlugin(descriptor, disabled)
     }
   }
