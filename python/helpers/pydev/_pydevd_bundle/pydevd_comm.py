@@ -106,6 +106,7 @@ from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 from _pydevd_bundle.pydevd_tables import exec_table_command
+from _pydevd_bundle.pydevd_tables import exec_image_table_command
 
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
@@ -144,7 +145,7 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
     CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
     CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,
-    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
+    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_IMAGE_COMMAND_START_LOAD, CMD_IMAGE_COMMAND_CHUNK_LOAD, CMD_SET_USER_TYPE_RENDERERS)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -1416,6 +1417,68 @@ class InternalTableCommand(InternalThreadCommand):
         return exec_table_command(self.init_command, self.command_type,
                                   self.start_index, self.end_index, self.format,
                                   frame.f_globals, frame.f_locals)
+
+
+#=======================================================================================================================
+# DebugImageViewerAction
+#=======================================================================================================================
+class InternalTableImageCommandBase(InternalThreadCommand):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type):
+        super().__init__(thread_id)
+        self.sequence = sequence
+        self.frame_id = frame_id
+        self.init_command = init_command
+        self.command_type = command_type
+
+    def do_it(self, dbg):
+        try:
+            frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
+            success, res = self.exec_command(frame)
+
+            if success:
+                cmd = NetCommand(self.get_command_id(), self.sequence, res)
+                dbg.writer.add_command(cmd)
+            else:
+                cmd = dbg.cmd_factory.make_error_message(self.sequence, str(res))
+                dbg.writer.add_command(cmd)
+        except Exception as e:
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, get_exception_traceback_str())
+            dbg.writer.add_command(cmd)
+
+    def get_command_id(self):
+        raise NotImplementedError()
+
+    def exec_command(self, frame):
+        return exec_image_table_command(self.init_command, self.command_type,
+                                        self.get_offset(), self.get_image_id(),
+                                        frame.f_globals, frame.f_locals)
+
+    def get_offset(self):
+        return None
+
+    def get_image_id(self):
+        return None
+
+
+class InternalTableImageStartCommand(InternalTableImageCommandBase):
+    def get_command_id(self):
+        return CMD_IMAGE_COMMAND_START_LOAD
+
+
+class InternalTableImageChunkCommand(InternalTableImageCommandBase):
+    def __init__(self, sequence, thread_id, frame_id, init_command, command_type, offset, image_id):
+        super().__init__(sequence, thread_id, frame_id, init_command, command_type)
+        self._offset = offset
+        self._image_id = image_id
+
+    def get_command_id(self):
+        return CMD_IMAGE_COMMAND_CHUNK_LOAD
+
+    def get_offset(self):
+        return self._offset
+
+    def get_image_id(self):
+        return self._image_id
 
 
 #=======================================================================================================================

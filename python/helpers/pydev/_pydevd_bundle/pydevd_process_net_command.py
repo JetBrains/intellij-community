@@ -64,6 +64,8 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS,
                                         CMD_DATAVIEWER_ACTION, InternalDataViewerAction,
                                         CMD_TABLE_EXEC, InternalTableCommand,
                                         CMD_INTERRUPT_DEBUG_CONSOLE,
+                                        CMD_IMAGE_COMMAND_START_LOAD, InternalTableImageStartCommand,
+                                        CMD_IMAGE_COMMAND_CHUNK_LOAD, InternalTableImageChunkCommand,
                                         CMD_SET_USER_TYPE_RENDERERS)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
                                              dict_keys, STATE_RUN,
@@ -950,6 +952,22 @@ def process_net_command(py_db, cmd_id, seq, text):
                         format = parameters[6]
 
                     int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
+                    py_db.post_internal_command(int_cmd, thread_id)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_IMAGE_COMMAND_START_LOAD:
+                try:
+                    thread_id, frame_id, init_command, command_type = text.split('\t')
+                    int_cmd = InternalTableImageStartCommand(seq, thread_id, frame_id, init_command, command_type)
+                    py_db.post_internal_command(int_cmd, thread_id)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_IMAGE_COMMAND_CHUNK_LOAD:
+                try:
+                    thread_id, frame_id, init_command, command_type, offset, image_id = text.split('\t')
+                    int_cmd = InternalTableImageChunkCommand(seq, thread_id, frame_id, init_command, command_type, int(offset), image_id)
                     py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()
