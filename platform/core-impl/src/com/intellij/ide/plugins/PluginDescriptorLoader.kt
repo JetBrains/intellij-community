@@ -1196,6 +1196,7 @@ fun loadAndInitDescriptorsFromOtherIde(
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): PluginLoadingResult {
+  val initContext = ProductPluginInitContext()
   return DescriptorListLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { loadingContext ->
     val result = PluginLoadingResult()
     result.initAndAddAll(
@@ -1207,8 +1208,8 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
       ),
       overrideUseIfCompatible = false,
       productBuildNumber = loadingContext.getProductBuildNumber(),
-      isPluginDisabled = loadingContext::isPluginDisabled,
-      isPluginBroken = loadingContext::isPluginBroken
+      isPluginDisabled = initContext::isPluginDisabled,
+      isPluginBroken = initContext::isPluginBroken
     )
     result
   }
