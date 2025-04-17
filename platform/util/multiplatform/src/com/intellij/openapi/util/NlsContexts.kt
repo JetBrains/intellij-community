@@ -42,7 +42,7 @@ class NlsContexts {
   /**
    * Notifications
    */
-  @NlsContext(prefix = "notification.title")
+  @NlsContext(prefix = "notification.on.tool.window.title")
   @Target(TYPE, TYPE_PARAMETER, VALUE_PARAMETER, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER)
   @Nls(capitalization = Nls.Capitalization.Sentence)
   annotation class NotificationTitle
