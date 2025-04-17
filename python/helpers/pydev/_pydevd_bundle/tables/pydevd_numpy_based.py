@@ -19,10 +19,10 @@ NP_ROWS_TYPE = "int64"
 
 CSV_FORMAT_SEPARATOR = '~'
 
-is_pd = False
+is_pd_can_be_imported = False
 try:
     import pandas as pd
-    is_pd = True
+    is_pd_can_be_imported = True
 except:
     pass
 
@@ -41,7 +41,7 @@ def get_shape(table):
             shape = table.dense_shape.numpy()
         else:
             shape = table.shape
-    except ImportError:
+    except Exception:
         shape = table.shape
 
     if len(shape) == 1:
@@ -57,8 +57,9 @@ def get_head(table):
 
 def get_column_types(table):
     # type: (np.ndarray) -> str
+    is_pandas = __is_pandas_can_be_used_for_array(table)
     table = __create_table(table)
-    cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    cols_types = [str(t) for t in table.dtypes] if is_pandas else table.get_cols_types()
 
     return NP_ROWS_TYPE + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
@@ -185,6 +186,7 @@ class _NpTable:
         html.append('</tbody>\n')
         return html
 
+    # TODO: won't work for not-CPU-stored arrays
     def to_csv(self, na_rep = "None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
         csv_stream = io.StringIO()
         if float_format is None or float_format == 'null':
@@ -280,16 +282,17 @@ def __create_table(command, start_index=None, end_index=None, format=None):
         import tensorflow as tf
         if isinstance(np_array, tf.SparseTensor):
             np_array = tf.sparse.to_dense(tf.sparse.reorder(np_array))
-    except ImportError:
+    except Exception:
         pass
     try:
         import torch
         if isinstance(np_array, torch.Tensor):
             np_array = np_array.to_dense()
-    except ImportError:
+    except Exception:
         pass
 
-    if is_pd:
+    is_pandas = __is_pandas_can_be_used_for_array(np_array)
+    if is_pandas:
         sorting_arr = __sort_df(pd.DataFrame(np_array), sort_keys)
         if start_index is not None and end_index is not None:
             return sorting_arr.iloc[start_index:end_index]
@@ -306,22 +309,23 @@ def __compute_data(arr, fun, format=None):
         import tensorflow as tf
         if data.dtype == tf.bfloat16:
             data = tf.convert_to_tensor(data.numpy().astype(np.float32))
-    except (ImportError, AttributeError):
+    except Exception:
         pass
 
     jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options = None, None, None, None
-    if is_pd:
+    is_pandas = __is_pandas_can_be_used_for_array(arr)
+    if is_pandas:
         jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options = __set_pd_options(format)
 
     if is_sort_command:
         arr['data'] = data
         data = arr
 
-    format = pd.get_option('display.float_format') if is_pd else format
+    format = pd.get_option('display.float_format') if is_pandas else format
 
     data = fun(data, format)
 
-    if is_pd:
+    if is_pandas:
         __reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options)
 
     return data
@@ -380,3 +384,16 @@ def __define_format_function(format):
         return lambda x: format % x
     else:
         return None
+
+def __is_pandas_can_be_used_for_array(array):
+    is_cpu_stored = True
+    try:
+        device = str(array.device).lower()
+        # check mac
+        if "cpu" in device:
+            is_cpu_stored = True
+        else:
+            is_cpu_stored = False
+    except:
+        pass
+    return is_pd_can_be_imported and is_cpu_stored
