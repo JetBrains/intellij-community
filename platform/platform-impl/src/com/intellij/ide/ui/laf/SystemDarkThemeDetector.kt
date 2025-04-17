@@ -15,6 +15,8 @@ import com.sun.jna.platform.win32.WinReg
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.util.Locale
 import java.util.function.BiConsumer
 import java.util.function.Consumer
@@ -30,6 +32,7 @@ sealed class SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
+        SystemInfo.isLinux -> LinuxDetector(syncFunction)
         else -> EmptyDetector()
       }
     }
@@ -148,6 +151,110 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
     }
     catch (e: Throwable) {}
     return false
+  }
+}
+/**
+* Inspired by the LinuxThemeDetector implementation from the Platform-Tools repository by kdroidFilter.
+* Repository: https://github.com/kdroidFilter/Platform-Tools
+**/
+private class LinuxDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+  override val detectionSupported: Boolean
+    get() = SystemInfo.isLinux
+
+  companion object {
+    // Commands for theme detection
+    @NonNls private const val MONITORING_CMD = "gsettings monitor org.gnome.desktop.interface"
+    @NonNls private val GET_CMD = arrayOf(
+      "gsettings get org.gnome.desktop.interface gtk-theme",
+      "gsettings get org.gnome.desktop.interface color-scheme"
+    )
+    private val darkThemeRegex = ".*dark.*".toRegex(RegexOption.IGNORE_CASE)
+
+    @Volatile
+    private var detectorThread: Thread? = null
+  }
+
+  init {
+    startMonitoring()
+  }
+
+  override fun isDark(): Boolean {
+    return try {
+      val runtime = Runtime.getRuntime()
+      for (cmd in GET_CMD) {
+        val process = runtime.exec(cmd)
+        BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+          val line = reader.readLine()
+          if (line != null && isDarkTheme(line)) {
+            return true
+          }
+        }
+      }
+      false
+    } catch (e: Exception) {
+      false
+    }
+  }
+
+  private fun startMonitoring() {
+    if (detectorThread?.isAlive == true) return
+
+    detectorThread = object : Thread("GTK Theme Detector Thread") {
+      private var lastValue: Boolean = isDark()
+
+      override fun run() {
+        val runtime = Runtime.getRuntime()
+        val process = try {
+          runtime.exec(MONITORING_CMD)
+        } catch (e: Exception) {
+          return
+        }
+
+        BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+          while (!isInterrupted) {
+            val line = reader.readLine() ?: break
+            if (!line.contains("gtk-theme", ignoreCase = true) &&
+                !line.contains("color-scheme", ignoreCase = true)
+            ) {
+              continue
+            }
+
+            val currentIsDark = isDarkThemeFromLine(line) ?: isDark()
+
+            if (currentIsDark != lastValue) {
+              lastValue = currentIsDark
+              ApplicationManager.getApplication().invokeLater(
+                { syncFunction.accept(currentIsDark, null) },
+                ModalityState.any()
+              )
+            }
+          }
+          if (process.isAlive) {
+            process.destroy()
+          }
+        }
+      }
+    }.apply {
+      isDaemon = true
+      start()
+    }
+  }
+
+  private fun isDarkThemeFromLine(line: String): Boolean? {
+    val tokens = line.split("\\s+".toRegex())
+    if (tokens.size < 2) {
+      return null
+    }
+    val value = tokens[1].lowercase().replace("'", "")
+    return if (value.isNotBlank()) {
+      isDarkTheme(value)
+    } else {
+      null
+    }
+  }
+
+  private fun isDarkTheme(text: String): Boolean {
+    return darkThemeRegex.matches(text)
   }
 }
 
