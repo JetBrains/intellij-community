@@ -539,7 +539,7 @@ private suspend fun loadDescriptors(
     extraListDeferred = loadDescriptorsFromProperty(context, zipPool)
   }
 
-  val buildNumber = context.productBuildNumber()
+  val buildNumber = context.getProductBuildNumber()
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
@@ -1088,7 +1088,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @RequiresBackgroundThread
 fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(
-    productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
+    getProductBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
     isMissingSubDescriptorIgnored = true,
   )
 
@@ -1151,7 +1151,7 @@ fun loadAndInitDescriptorsFromOtherIde(
   return DescriptorListLoadingContext(
     customDisabledPlugins = Collections.emptySet(),
     customBrokenPluginVersions = brokenPluginVersions,
-    productBuildNumber = { productBuildNumber ?: PluginManagerCore.buildNumber },
+    getProductBuildNumber = { productBuildNumber ?: PluginManagerCore.buildNumber },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
   ).use { context ->
@@ -1172,7 +1172,7 @@ fun loadAndInitDescriptorsFromOtherIde(
         )
       }, isMainProcess()),
       overrideUseIfCompatible = false,
-      productBuildNumber = context.productBuildNumber(),
+      productBuildNumber = context.getProductBuildNumber(),
       isPluginDisabled = context::isPluginDisabled,
       isPluginBroken = context::isPluginBroken,
     )
@@ -1191,7 +1191,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
         isMainProcess = isMainProcess(),
       ),
       overrideUseIfCompatible = false,
-      productBuildNumber = context.productBuildNumber(),
+      productBuildNumber = context.getProductBuildNumber(),
       isPluginDisabled = context::isPluginDisabled,
       isPluginBroken = context::isPluginBroken
     )
@@ -1211,7 +1211,7 @@ fun testLoadAndInitDescriptorsFromClassPath(
   val context = DescriptorListLoadingContext(
     customDisabledPlugins = Collections.emptySet(),
     customBrokenPluginVersions = Collections.emptyMap(),
-    productBuildNumber = { buildNumber },
+    getProductBuildNumber = { buildNumber },
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
   result.initAndAddAll(

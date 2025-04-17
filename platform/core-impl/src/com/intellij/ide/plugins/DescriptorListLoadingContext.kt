@@ -25,7 +25,7 @@ class DescriptorListLoadingContext(
   customDisabledPlugins: Set<PluginId>? = null,
   customExpiredPlugins: Set<PluginId>? = null,
   customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
-  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
+  val getProductBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
@@ -55,7 +55,7 @@ class DescriptorListLoadingContext(
     get() {
       var result = field
       if (result == null) {
-        result = productBuildNumber().asStringWithoutProductCode()
+        result = getProductBuildNumber().asStringWithoutProductCode()
         field = result
       }
       return result

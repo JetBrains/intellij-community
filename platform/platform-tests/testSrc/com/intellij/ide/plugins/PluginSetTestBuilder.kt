@@ -44,7 +44,7 @@ class PluginSetTestBuilder(private val path: Path) {
       customDisabledPlugins = disabledPluginIds.toSet(),
       customExpiredPlugins = expiredPluginIds.toSet(),
       customBrokenPluginVersions = brokenPlugins.mapValues { it.value.toSet() }.toMap(),
-      productBuildNumber = { buildNumber },
+      getProductBuildNumber = { buildNumber },
     )
   }
 
@@ -58,7 +58,7 @@ class PluginSetTestBuilder(private val path: Path) {
         result.initAndAddAll(
           descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, context, ZipFilePoolImpl()) },
           overrideUseIfCompatible = false,
-          productBuildNumber = context.productBuildNumber(),
+          productBuildNumber = context.getProductBuildNumber(),
           isPluginDisabled = context::isPluginDisabled,
           isPluginBroken = context::isPluginBroken,
         )

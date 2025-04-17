@@ -27,7 +27,7 @@ internal fun loadAndInitDescriptorInTest(
     customDisabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
     customExpiredPlugins = emptySet(),
     customBrokenPluginVersions = emptyMap(),
-    productBuildNumber = { buildNumber }
+    getProductBuildNumber = { buildNumber }
   )
   val result = runBlocking {
     loadDescriptorFromFileOrDirInTests(

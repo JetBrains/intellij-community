@@ -155,7 +155,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
   val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
                                              customBrokenPluginVersions = emptyMap(),
-                                             productBuildNumber = { buildNumber })
+                                             getProductBuildNumber = { buildNumber })
 
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!

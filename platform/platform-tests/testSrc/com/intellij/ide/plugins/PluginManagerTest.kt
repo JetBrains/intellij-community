@@ -299,7 +299,7 @@ class PluginManagerTest {
         customDisabledPlugins = setOf(),
         customExpiredPlugins = setOf(),
         customBrokenPluginVersions = mapOf(),
-        productBuildNumber = { buildNumber }
+        getProductBuildNumber = { buildNumber }
       )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)

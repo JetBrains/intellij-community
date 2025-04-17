@@ -276,7 +276,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     )
     val context = DescriptorListLoadingContext(customDisabledPlugins = Collections.emptySet(),
                                                customBrokenPluginVersions = emptyMap(),
-                                               productBuildNumber = { PluginManagerCore.buildNumber })
+                                               getProductBuildNumber = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
       if (!parentDir.exists() || !parentDir.isDirectory()) {
         logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")
