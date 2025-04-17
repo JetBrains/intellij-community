@@ -1,17 +1,14 @@
 #  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
 import io
-import base64
+import uuid
+from _pydevd_bundle.tables.images.pydevd_image_loader import IMAGE_DATA_STORAGE
+from _pydevd_bundle.tables.images.pydevd_image_loader import DEFAULT_IMAGE_FORMAT
+from _pydevd_bundle.tables.images.pydevd_image_loader import RGB_MODE
+from _pydevd_bundle.tables.images.pydevd_image_loader import RGBA_MODE
+from _pydevd_bundle.tables.images.pydevd_image_loader import GRAYSCALE_MODE
 
-
-DEFAULT_IMAGE_FORMAT = 'PNG'
-DEFAULT_ENCODING = 'utf-8'
-GRAYSCALE_MODE = 'L'
-RGB_MODE = 'RGB'
-RGBA_MODE = 'RGBA'
-
-
-def get_bytes(arr):
+def create_image(arr):
     # type: (np.ndarray) -> str
     try:
         from PIL import Image
@@ -41,10 +38,18 @@ def get_bytes(arr):
             mode = RGBA_MODE
         else:
             mode = RGB_MODE
+
         bytes_buffer = io.BytesIO()
-        image = Image.fromarray(arr_to_convert, mode=mode)
-        image.save(bytes_buffer, format=DEFAULT_IMAGE_FORMAT)
-        return base64.b64encode(bytes_buffer.getvalue()).decode(DEFAULT_ENCODING)
+        try:
+            image = Image.fromarray(arr_to_convert, mode=mode)
+            image.save(bytes_buffer, format=DEFAULT_IMAGE_FORMAT)
+            bytes_data = bytes_buffer.getvalue()
+            image_id = str(uuid.uuid4())
+            IMAGE_DATA_STORAGE[image_id] = bytes_data
+            return image_id
+        finally:
+            bytes_buffer.close()
+
     except ImportError:
         return "Error: Pillow library is not installed."
     except (TypeError, ValueError):
