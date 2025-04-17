@@ -3563,6 +3563,24 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = MyClass(1)
       """);
+    doTest("Base", """
+      from typing import Any, Self
+
+
+      class Meta(type):
+          def __call__(self, *args: Any, **kwds: Any) -> 'Derived': ...
+
+
+      class Base(metaclass=Meta):
+          def __new__(cls, *args: Any, **kwds: Any) -> Self: ...
+
+
+      class Derived(Base):
+          ...
+
+
+      expr = Base()
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

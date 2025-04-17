@@ -943,7 +943,8 @@ public final class PyCallExpressionHelper {
       .anyMatch(callableType -> {
         if (isReturnTypeAnnotated(callableType, context)) {
           PyType callType = callSite != null ? callableType.getCallType(context, callSite) : callableType.getReturnType(context);
-          return !(callType instanceof PyClassType classType && classType.getPyClass() == type.getPyClass());
+          PyClassLikeType expectedType = type.toInstance();
+          return PyTypeUtil.toStream(callType).anyMatch(subType -> subType == null || !PyTypeChecker.match(expectedType, subType, context));
         }
         return false;
       });
