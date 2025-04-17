@@ -64,6 +64,11 @@ interface PluginUiModel {
    * Java compatibility method. Going to be removed after refactoring is done.
    */
   fun getDescriptor(): IdeaPluginDescriptor = this.getPluginDescriptor()
+
+  companion object {
+    @JvmStatic
+    fun getDescriptorOrNull(model: PluginUiModel?): IdeaPluginDescriptor? = model?.getPluginDescriptor()
+  }
 }
 
 fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {

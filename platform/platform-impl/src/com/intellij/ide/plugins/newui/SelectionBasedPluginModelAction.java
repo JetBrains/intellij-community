@@ -72,7 +72,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
   }
 
   protected final @NotNull Collection<IdeaPluginDescriptor> getAllDescriptorsOld() {
-    return map(getSelection().values(), model -> model.getDescriptor());
+    return map(getSelection().values(), PluginUiModel::getDescriptorOrNull);
   }
 
   static final class EnableDisableAction<C extends JComponent> extends SelectionBasedPluginModelAction<C> {
@@ -166,7 +166,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
             pluginModel,
             showShortcut,
             selection,
-            pluginModelGetter.andThen(model -> model.getDescriptor() instanceof IdeaPluginDescriptorImpl ?
+            pluginModelGetter.andThen(model -> PluginUiModel.getDescriptorOrNull(model) instanceof IdeaPluginDescriptorImpl ?
                                                model : null));
 
       myUiParent = uiParent;
@@ -176,7 +176,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     private static boolean isBundledUpdate(@NotNull List<?> selection, Function<Object, @Nullable PluginUiModel> pluginDescriptor) {
       for (Object o : selection) {
-        if (!MyPluginModel.isBundledUpdate(pluginDescriptor.apply(o).getDescriptor())) {
+        if (!MyPluginModel.isBundledUpdate(PluginUiModel.getDescriptorOrNull(pluginDescriptor.apply(o)))) {
           return false;
         }
       }
@@ -189,7 +189,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
       if (myDynamicTitle) {
         e.getPresentation().setText(IdeBundle.message(
-          descriptors.size() == 1 && MyPluginModel.isBundledUpdate(descriptors.iterator().next().getDescriptor())
+          descriptors.size() == 1 && MyPluginModel.isBundledUpdate(PluginUiModel.getDescriptorOrNull(descriptors.iterator().next()))
           ? "plugins.configurable.uninstall.bundled.update"
           : "plugins.configurable.uninstall"));
       }
@@ -233,7 +233,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       boolean runFinishAction = false;
 
       if (!toDeleteWithAsk.isEmpty()) {
-        boolean bundledUpdate = toDeleteWithAsk.size() == 1 && MyPluginModel.isBundledUpdate(toDeleteWithAsk.get(0).getDescriptor());
+        boolean bundledUpdate = toDeleteWithAsk.size() == 1 && MyPluginModel.isBundledUpdate(PluginUiModel.getDescriptorOrNull(toDeleteWithAsk.get(0)));
         if (askToUninstall(getUninstallAllMessage(toDeleteWithAsk, bundledUpdate), myUiParent, bundledUpdate)) {
           for (PluginUiModel descriptor : toDeleteWithAsk) {
             myPluginModel.getModel().uninstallAndUpdateUi(descriptor.getDescriptor());
