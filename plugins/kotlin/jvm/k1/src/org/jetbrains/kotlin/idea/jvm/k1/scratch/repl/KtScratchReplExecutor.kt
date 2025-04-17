@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.jvm.k1.scratch.repl
 
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.application.runReadAction
@@ -56,7 +56,7 @@ class KtScratchReplExecutor(file: org.jetbrains.kotlin.idea.jvm.k1.scratch.K1Kot
 
         try {
             if (callback != null) {
-                processHandler.addProcessListener(object : ProcessAdapter() {
+                processHandler.addProcessListener(object : ProcessListener {
                     override fun processTerminated(event: ProcessEvent) {
                         callback()
                     }
