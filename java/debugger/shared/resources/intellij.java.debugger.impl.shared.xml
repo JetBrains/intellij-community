@@ -7,6 +7,9 @@
     <xdebugger.xValueCustomDescriptorSerializerProvider
       implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorSerializerProvider"/>
     <postStartupActivity implementation="com.intellij.java.debugger.impl.shared.SharedDebuggerInitializationProjectActivity"/>
+    <registryKey defaultValue="1000"
+                 description="Maximum number of dump items that can be serialized to pass to the frontend"
+                 key="debugger.thread.dump.max.items.frontend"/>
   </extensions>
   <actions resource-bundle="messages.JavaDebuggerSharedBundle">
     <action id="DumpThreads" class="com.intellij.java.debugger.impl.shared.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">

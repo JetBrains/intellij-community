@@ -18,6 +18,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
@@ -41,7 +42,8 @@ private class ThreadDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecific
     }
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     sessionProxy.coroutineScope.launch {
-      val maxItems = if (FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith) 500 else Int.MAX_VALUE
+      val dtosWillBeSerialized = FrontendApplicationInfo.getFrontendType() !is FrontendType.Monolith
+      val maxItems = if (dtosWillBeSerialized) Registry.intValue("debugger.thread.dump.max.items.frontend") else Int.MAX_VALUE
       val (threadDumpsDtoChannel, filters) = JavaDebuggerSessionApi.getInstance().dumpThreads(sessionProxy.id, maxItems) ?: return@launch
       val threadDumpsChannel = threadDumpsDtoChannel.map(::threadDumpData)
 
