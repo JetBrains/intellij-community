@@ -7,18 +7,22 @@ import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import java.awt.Rectangle
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
   private var forgetJob: Job? = null
+  private val internalScroll = AtomicBoolean(false)
+  private val visibleArea
+    get() = editor.scrollingModel.visibleAreaOnScrollingFinished
 
   init {
     editor.document.addDocumentListener(object : DocumentListener {
@@ -30,7 +34,14 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
         forgetToKeepCell()
       }
     }, this)
-
+    editor.scrollingModel.addVisibleAreaListener(
+      {
+        if (it.oldRectangle.y == it.newRectangle.y)
+          return@addVisibleAreaListener
+        if (!internalScroll.get()) {
+          forgetToKeepCell()
+        }
+      }, this)
   }
 
   /**
@@ -38,6 +49,9 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
    */
   fun rememberRunNextCellScrollKeep(intervalPointer: NotebookIntervalPointer) {
     forgetJob?.cancel()
+    forgetJob = null
+    forgetToKeepCell()
+
     intervalPointer.get() ?: return
     editor.putUserData(RUN_NEXT_CELL_SCROLL_KEEPER_INTERVAL, intervalPointer)
   }
@@ -46,6 +60,8 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
    * Keep position to save cell or upper part of it visible during any changes
    */
   fun forgetToKeepCell() {
+    forgetJob?.cancel()
+    forgetJob = null
     editor.removeUserData(RUN_NEXT_CELL_SCROLL_KEEPER_INTERVAL)
   }
 
@@ -62,18 +78,14 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
 
   fun scrollToAppearCell(intervalPointer: NotebookIntervalPointer) {
     val y = calculateScrollToMakeCellVisible(intervalPointer) ?: return
-    editor.scrollingModel.withoutAnimation {
-      editor.scrollingModel.scrollVertically(y)
-    }
+    scrollToY(y)
   }
 
   fun scrollToKeepCell(maximumHeight: Int? = null): Boolean {
     val intervalPointer = editor.getUserData(RUN_NEXT_CELL_SCROLL_KEEPER_INTERVAL) ?: return false
 
     val y = calculateScrollToMakeCellVisible(intervalPointer, maximumHeight) ?: return false
-    editor.scrollingModel.withoutAnimation {
-      editor.scrollingModel.scrollVertically(y)
-    }
+    scrollToY(y)
     return true
   }
 
@@ -84,45 +96,26 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
   private fun calculateRangeToKeepCellVisible(intervalPointer: NotebookIntervalPointer, maximumHeight: Int? = null): Rectangle? {
     val editorCell = NotebookCellInlayManager.get(editor)?.getCell(intervalPointer)
     val bounds = editorCell?.view?.calculateBounds() ?: return null
-    val visibleAreaHeight = (editor.scrollingModel.visibleArea.height * MAXIMUM_HEIGH_OF_SCROLL_KEEPING_CELL).toInt()
+    val visibleAreaHeight = (visibleArea.height * MAXIMUM_HEIGH_OF_SCROLL_KEEPING_CELL).toInt()
     val height = minOf(maximumHeight ?: Int.MAX_VALUE, visibleAreaHeight, bounds.height)
     return Rectangle(bounds.x, bounds.y, bounds.width, height)
   }
 
-  private fun checkAndGetHeightOfIntersection(): Int? {
-    val intervalPointer = editor.getUserData(RUN_NEXT_CELL_SCROLL_KEEPER_INTERVAL) ?: return null
-    val cellRectangle = calculateRangeToKeepCellVisible(intervalPointer)
-    if (cellRectangle == null) {
-      forgetToKeepCell()
-      return null
-    }
-    val visibleArea = editor.scrollingModel.visibleArea
-    val intersection = visibleArea.intersects(cellRectangle)
-    if (!intersection) {
-      forgetToKeepCell()
-      return null
-    }
-    return visibleArea.intersection(cellRectangle).height
-  }
-
   private fun calculateScrollToMakeCellVisible(intervalPointer: NotebookIntervalPointer, maximumHeight: Int? = null): Int? {
     val cellRectangle = calculateRangeToKeepCellVisible(intervalPointer, maximumHeight) ?: return null
-    val visibleArea = editor.scrollingModel.visibleArea
-    visibleArea.y
-    val bottomVisibleY = visibleArea.y + visibleArea.height
-
-    cellRectangle.y
-    val bottomCellY = cellRectangle.y + cellRectangle.height
-
-    val scrollToPosition = maxOf(0, bottomCellY - visibleArea.height)
-    if (bottomCellY > bottomVisibleY) {
-      return scrollToPosition
+    val visibleArea = visibleArea
+    if (visibleArea.contains(cellRectangle)) {
+      //View screen already contains required cell
+      return null
     }
-    return null
+
+    val bottomCellY = cellRectangle.y + cellRectangle.height
+    val scrollToPosition = maxOf(0, bottomCellY - visibleArea.height)
+    return scrollToPosition
   }
 
   fun getPosition(useCaretPositon: Boolean = true): Position {
-    val visibleArea = editor.scrollingModel.getVisibleAreaOnScrollingFinished()
+    val visibleArea = visibleArea
 
     val topLeftCornerOffset = if (useCaretPositon) {
       val caretY = editor.visualLineToY(editor.caretModel.visualPosition.line)
@@ -143,12 +136,25 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
 
   fun restorePosition(position: Position) {
     val (topLeftCornerOffset, viewportShift) = position
-    val scrollingModel = editor.scrollingModel
     val newY = editor.offsetToXY(topLeftCornerOffset).y - viewportShift
-    if (editor.scrollingModel.visibleArea.y == newY)
+    if (visibleArea.y == newY)
       return
-    scrollingModel.withoutAnimation {
-      scrollVertically(newY)
+    scrollToY(-newY)
+  }
+
+  private fun scrollToY(newY: Int) {
+    if (visibleArea.y == newY)
+      return
+    EDT.assertIsEdt()
+    val scrollingModel = editor.scrollingModel
+    try {
+      internalScroll.set(true)
+      scrollingModel.disableAnimation()
+      scrollingModel.scrollVertically(newY)
+    }
+    finally {
+      internalScroll.set(false)
+      scrollingModel.enableAnimation()
     }
   }
 
@@ -158,11 +164,10 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
         return@compute task()
       }
       val position = getPosition(false)
-      val height = checkAndGetHeightOfIntersection()
       val (r, newOffset) = getOffsetProvider(position).use { offsetProvider ->
         task() to offsetProvider.getOffset()
       }
-      if (scrollToKeepCell(height)) {
+      if (scrollToKeepCell(null)) {
         return@compute r
       }
       restorePosition(Position(newOffset, position.viewportShift))
@@ -195,15 +200,6 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
     fun getOffset(): Int
   }
 
-  private fun ScrollingModel.withoutAnimation(task: ScrollingModel.() -> Unit) {
-    disableAnimation()
-    try {
-      task()
-    }
-    finally {
-      enableAnimation()
-    }
-  }
 
   data class Position(val topLeftCornerOffset: Int, val viewportShift: Int)
 
