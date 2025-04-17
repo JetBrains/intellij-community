@@ -406,7 +406,11 @@ private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: Descripto
   return list
 }
 
-suspend fun loadAndInitDescriptors(zipPoolDeferred: Deferred<ZipEntryResolverPool>, mainClassLoaderDeferred: Deferred<ClassLoader>?): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
+suspend fun loadAndInitDescriptors(
+  zipPoolDeferred: Deferred<ZipEntryResolverPool>,
+  mainClassLoaderDeferred: Deferred<ClassLoader>?,
+  initContext: PluginInitializationContext,
+): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val result = DescriptorListLoadingContext(
@@ -416,6 +420,7 @@ suspend fun loadAndInitDescriptors(zipPoolDeferred: Deferred<ZipEntryResolverPoo
   ).use { loadingContext ->
     loadingContext to loadAndInitDescriptors(
       loadingContext = loadingContext,
+      initContext = initContext,
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,
       zipPoolDeferred = zipPoolDeferred,
@@ -431,12 +436,13 @@ internal fun CoroutineScope.scheduleLoading(
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
   logDeferred: Deferred<Logger>?,
 ): Deferred<PluginSet> {
+  val initContext = ProductPluginInitContext()
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
-    loadAndInitDescriptors(zipPoolDeferred, mainClassLoaderDeferred)
+    loadAndInitDescriptors(zipPoolDeferred, mainClassLoaderDeferred, initContext)
   }
   val pluginSetDeferred = async {
     val (loadingContext, loadingResult) = resultDeferred.await()
-    PluginManagerCore.initializeAndSetPlugins(loadingContext, loadingContext, loadingResult)
+    PluginManagerCore.initializeAndSetPlugins(loadingContext, initContext, loadingResult)
   }
   // logging is not as a part of plugin set job for performance reasons
   launch {
@@ -516,6 +522,7 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
  */
 private suspend fun loadAndInitDescriptors(
   loadingContext: DescriptorListLoadingContext,
+  initContext: PluginInitializationContext,
   isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
   isRunningFromSources: Boolean,
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
@@ -544,10 +551,10 @@ private suspend fun loadAndInitDescriptors(
 
   val isMainProcess = isMainProcess()
   loadingResult.initAndAddAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber,
-                              isPluginDisabled = loadingContext::isPluginDisabled, isPluginBroken = loadingContext::isPluginBroken)
+                              isPluginDisabled = initContext::isPluginDisabled, isPluginBroken = initContext::isPluginBroken)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
   loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber,
-                              isPluginDisabled = loadingContext::isPluginDisabled, isPluginBroken = loadingContext::isPluginBroken)
+                              isPluginDisabled = initContext::isPluginDisabled, isPluginBroken = initContext::isPluginBroken)
 
   if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
@@ -558,8 +565,8 @@ private suspend fun loadAndInitDescriptors(
       }, isMainProcess),
       overrideUseIfCompatible = false,
       productBuildNumber = buildNumber,
-      isPluginDisabled = loadingContext::isPluginDisabled,
-      isPluginBroken = loadingContext::isPluginBroken
+      isPluginDisabled = initContext::isPluginDisabled,
+      isPluginBroken = initContext::isPluginBroken
     )
   }
   return loadingResult

@@ -73,7 +73,8 @@ object PluginAutoUpdater {
       ZipFilePoolImpl().use { pool ->
         val result = loadAndInitDescriptors(
           CompletableDeferred(pool),
-          CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader)
+          CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader),
+          ProductPluginInitContext()
         )
         result.second
       }
