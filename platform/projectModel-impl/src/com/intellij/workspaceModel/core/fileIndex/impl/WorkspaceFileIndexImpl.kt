@@ -347,6 +347,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     return getDirectoriesByPackageName(packageName, true).filtering { scope.contains(it) }
   }
 
+  override fun getFilesByPackageName(packageName: String): Query<VirtualFile> {
+    return getMainIndexData().getFilesByPackageName(packageName)
+  }
+
   private fun getMainIndexData(): WorkspaceFileIndexData {
     when (indexData) {
       EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {

@@ -129,7 +129,8 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
   }
 
   private static PsiElementFinder createMockFinder() {
-    Set<String> ignoredMethods = ContainerUtil.newHashSet("getClassesFilter", "processPackageDirectories", "getClasses");
+    Set<String> ignoredMethods = ContainerUtil.newHashSet("getClassesFilter", "processPackageDirectories", 
+                                                          "processPackageFiles", "getClasses");
     Method[] methods = ContainerUtil.findAllAsArray(
       PsiElementFinder.class.getDeclaredMethods(),
       m -> !ignoredMethods.contains(m.getName()) && !Modifier.isPrivate(m.getModifiers()) && !Modifier.isStatic(m.getModifiers()));

@@ -61,6 +61,12 @@ interface WorkspaceFileIndexData {
   fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile>
 
   /**
+   * Returns a query producing directories which correspond to [packageName].
+   * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getFilesByPackageName] instead.
+   */
+  fun getFilesByPackageName(packageName: String): Query<VirtualFile>
+
+  /**
    * Reset caches which cannot be updated incrementally.
    */
   fun resetCustomContributors()

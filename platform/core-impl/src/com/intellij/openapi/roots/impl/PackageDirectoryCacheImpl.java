@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
@@ -28,9 +29,9 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
 
-  public PackageDirectoryCacheImpl(@NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> fillDirectoriesByPackage,
+  public PackageDirectoryCacheImpl(@NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> fillFilesAndDirectoriesByPackage,
                                    @NotNull BiPredicate<? super @NotNull VirtualFile, ? super @NotNull String> packageDirectoryFilter) {
-    myFillDirectoriesByPackage = fillDirectoriesByPackage;
+    myFillDirectoriesByPackage = fillFilesAndDirectoriesByPackage;
     myPackageDirectoryFilter = packageDirectoryFilter;
   }
 
@@ -55,6 +56,12 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
   public @NotNull List<VirtualFile> getDirectoriesByPackageName(final @NotNull String packageName) {
     PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageDirectories);
+  }
+
+  @Override
+  public @NotNull List<VirtualFile> getFilesByPackageName(final @NotNull String packageName) {
+    PackageInfo info = getPackageInfo(packageName);
+    return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageFiles);
   }
 
   private @Nullable PackageInfo getPackageInfo(@NotNull String packageName) {
@@ -82,7 +89,8 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
       myFillDirectoriesByPackage.accept(packageName, result);
 
       if (!result.isEmpty()) {
-        myDirectoriesByPackageNameCache.put(packageName, info = new PackageInfo(packageName, result));
+        Map<Boolean, List<VirtualFile>> map = result.stream().collect(Collectors.partitioningBy(VirtualFile::isDirectory));
+        myDirectoriesByPackageNameCache.put(packageName, info = new PackageInfo(packageName, map.get(true), map.get(false)));
       }
       else {
         myNonExistentPackages.add(packageName);
@@ -111,11 +119,15 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
   private final class PackageInfo {
     final @NotNull String myQname;
     final @NotNull List<? extends VirtualFile> myPackageDirectories;
+    final @NotNull List<? extends VirtualFile> myPackageFiles;
     final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages;
 
-    PackageInfo(@NotNull String qname, @NotNull List<? extends VirtualFile> packageDirectories) {
+    PackageInfo(@NotNull String qname, 
+                @NotNull List<? extends VirtualFile> packageDirectories,
+                @NotNull List<? extends VirtualFile> packageFiles) {
       myQname = qname;
       myPackageDirectories = packageDirectories;
+      myPackageFiles = packageFiles;
       mySubPackages = NotNullLazyValue.volatileLazy(() -> {
         MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {

@@ -96,6 +96,13 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
 
   /**
+   * Returns a query producing single file source root files which correspond to [packageName].
+   * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getFilesByPackageName] instead.
+   */
+  @ApiStatus.Experimental
+  fun getFilesByPackageName(packageName: String): Query<VirtualFile>
+
+  /**
    * Initialize the index data. The index must not be accessed before this function is called.
    */
   suspend fun initialize()

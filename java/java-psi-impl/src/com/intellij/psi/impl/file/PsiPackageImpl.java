@@ -47,6 +47,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
+  private volatile CachedValue<Collection<PsiFile>> myFiles;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
   private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
@@ -70,11 +71,28 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
   }
 
+  @Override
+  public @Unmodifiable @NotNull Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope) {
+    if (myFiles == null) {
+      myFiles = createCachedFiles();
+    }
+    return ContainerUtil.filter(myFiles.getValue(), d -> scope.contains(d.getVirtualFile()));
+  }
+
   private @NotNull CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
       getFacade().processPackageDirectories(this, allScope(), processor, includeLibrarySources);
+      return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
+    }, false);
+  }
+
+  private @NotNull CachedValue<Collection<PsiFile>> createCachedFiles() {
+    return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+      Collection<PsiFile> result = new ArrayList<>();
+      Processor<PsiFile> processor = Processors.cancelableCollectProcessor(result);
+      getFacade().processPackageFiles(this, allScope(), processor);
       return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
     }, false);
   }

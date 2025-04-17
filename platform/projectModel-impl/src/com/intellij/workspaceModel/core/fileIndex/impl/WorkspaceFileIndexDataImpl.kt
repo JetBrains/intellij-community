@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -54,7 +53,6 @@ internal class WorkspaceFileIndexDataImpl(
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityPointer<WorkspaceEntity>>()
   private val dirtyFiles = HashSet<VirtualFile>()
-  private val singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(project)
   @Volatile
   private var hasDirtyEntities = false
 
@@ -69,7 +67,7 @@ internal class WorkspaceFileIndexDataImpl(
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
 
-    packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
+    packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageFilesAndDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
     if (librariesAndSdkContributors != null) {
@@ -337,24 +335,18 @@ internal class WorkspaceFileIndexDataImpl(
   
   private fun isPackageDirectory(dir: VirtualFile, packageName: String): Boolean = getPackageName(dir) == packageName
 
-  private fun fillPackageDirectories(packageName: String, result: MutableList<in VirtualFile>) {
+  private fun fillPackageFilesAndDirectories(packageName: String, result: MutableList<in VirtualFile>) {
     val addedRoots = HashSet<VirtualFile>()
     fileSetsByPackagePrefix[packageName]?.values()?.forEach { fileSet ->
       val root = fileSet.root
       if (root.isValid) {
-        // supporting single file source
-        if (root.isFile) {
-          val singleFileSourceDir = singleFileSourcesTracker.getSourceDirectoryIfExists(root)
-          if (singleFileSourceDir != null && singleFileSourceDir.isValid && addedRoots.add(singleFileSourceDir)) result.add(singleFileSourceDir)
-        }
-        else {
-          if (addedRoots.add(root)) result.add(root)
-          if (root.fileSystem.protocol == StandardFileSystems.JAR_PROTOCOL) {
-            root.findChild("META-INF")?.findChild("versions")?.children?.forEach { versionRoot -> 
-              val version = versionRoot.name.toIntOrNull()
-              if (version != null && version >= 9) {
-                if (addedRoots.add(versionRoot)) result.add(versionRoot)
-              }
+        // single file source roots could be added here as well
+        if (addedRoots.add(root)) result.add(root)
+        if (root.fileSystem.protocol == StandardFileSystems.JAR_PROTOCOL) {
+          root.findChild("META-INF")?.findChild("versions")?.children?.forEach { versionRoot -> 
+            val version = versionRoot.name.toIntOrNull()
+            if (version != null && version >= 9) {
+              if (addedRoots.add(versionRoot)) result.add(versionRoot)
             }
           }
         }
@@ -385,8 +377,6 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTime {
-    if (!dir.isDirectory) return@addMeasuredTime null
-
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true)) {
                     is WorkspaceFileSetWithCustomData<*> -> info.takeIf { it.data is JvmPackageRootDataInternal }
                     is MultipleWorkspaceFileSets -> info.find(JvmPackageRootDataInternal::class.java)
@@ -413,6 +403,10 @@ internal class WorkspaceFileIndexDataImpl(
     else query.filtering {
       getFileInfo(it, true, true, true, false, true) !is WorkspaceFileInternalInfo.NonWorkspace
     }
+  }
+
+  override fun getFilesByPackageName(packageName: String): Query<VirtualFile> {
+    return CollectionQuery(packageDirectoryCache.getFilesByPackageName(packageName))
   }
 
   override fun onLowMemory() {

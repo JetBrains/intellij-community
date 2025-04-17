@@ -422,6 +422,21 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return true;
   }
 
+  public void processPackageFiles(@NotNull PsiPackage psiPackage,
+                                  @NotNull GlobalSearchScope scope,
+                                  @NotNull Processor<? super PsiFile> consumer) {
+    for (PsiElementFinder finder : filteredFinders()) {
+      try {
+        if (!finder.processPackageFiles(psiPackage, scope, consumer)) {
+          return;
+        }
+      }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
+      }
+    }
+  }
+
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     Map<String, PsiPackage> result = new LinkedHashMap<>();
     for (PsiElementFinder finder : filteredFinders()) {

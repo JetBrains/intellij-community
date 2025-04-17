@@ -33,15 +33,17 @@ public final class ProjectPackageIndexImpl extends PackageIndex {
   }
 
   @Override
+  public Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
+    return myDirectoryIndex.getFilesByPackageName(packageName);
+  }
+
+  @Override
   public @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
   @Override
   public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
-    if (!dir.isDirectory()) {
-      LOG.error(dir.getPresentableUrl() + " is not a directory");
-    }
     return myDirectoryIndex.getPackageName(dir);
   }
 }

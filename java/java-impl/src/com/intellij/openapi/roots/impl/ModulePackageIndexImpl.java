@@ -41,10 +41,12 @@ public final class ModulePackageIndexImpl extends ModulePackageIndex {
   }
 
   @Override
+  public Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
+    return new FilteredQuery<>(myDirectoryIndex.getFilesByPackageName(packageName), myDirCondition);
+  }
+
+  @Override
   public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
-    if (!dir.isDirectory()) {
-      LOG.error(dir.getPresentableUrl() + " is not a directory");
-    }
     return myDirectoryIndex.getPackageName(dir);
   }
 }
