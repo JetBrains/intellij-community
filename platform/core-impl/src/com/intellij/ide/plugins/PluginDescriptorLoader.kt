@@ -223,13 +223,13 @@ fun loadPluginSubDescriptors(
       val jarFile = moduleDir?.resolve("${module.name}.jar")
       if (jarFile != null && Files.exists(jarFile)) {
         val subRaw = loadModuleFromSeparateJar(pool, jarFile, subDescriptorFile, context)
-        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
+        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
         subDescriptor.jarFiles = Collections.singletonList(jarFile)
         module.descriptor = subDescriptor
       }
       else {
         val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile)
-        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
+        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
         module.descriptor = subDescriptor
         val customRoots = pathResolver.resolveCustomModuleClassesRoots(module.name)
         if (customRoots.isNotEmpty()) {
@@ -242,7 +242,7 @@ fun loadPluginSubDescriptors(
         it.consume(createXmlStreamReader(module.descriptorContent))
         it.getBuilder()
       }
-      val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
+      val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
         subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
       }
@@ -792,7 +792,7 @@ private fun loadPluginDescriptor(
       subRaw
     }
 
-    val subDescriptor = descriptor.createSub(subBuilder = subRaw, descriptorPath = subDescriptorFile, context = context, module = module)
+    val subDescriptor = descriptor.createSub(subBuilder = subRaw, descriptorPath = subDescriptorFile, module = module)
     if (classPath != null) {
       subDescriptor.jarFiles = classPath
     }
@@ -1028,7 +1028,7 @@ private fun loadContentModuleDescriptors(
     }
 
     val raw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile)
-    val subDescriptor = descriptor.createSub(subBuilder = raw, descriptorPath = subDescriptorFile, context = context, module = module)
+    val subDescriptor = descriptor.createSub(subBuilder = raw, descriptorPath = subDescriptorFile, module = module)
     val customModuleClassesRoots = pathResolver.resolveCustomModuleClassesRoots(moduleName)
     if (customModuleClassesRoots.isNotEmpty()) {
       subDescriptor.jarFiles = customModuleClassesRoots
@@ -1065,7 +1065,7 @@ private fun loadProductModule(
       it.getBuilder()
     }
   }
-  val subDescriptor = containerDescriptor.createSub(moduleRaw, subDescriptorFile, context, module)
+  val subDescriptor = containerDescriptor.createSub(moduleRaw, subDescriptorFile, module)
   subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()
   module.descriptor = subDescriptor
   return true
@@ -1330,7 +1330,7 @@ private fun loadDescriptorFromResource(
       for (module in descriptor.content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
         val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile)
-        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
+        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
         if (runFromSources && subDescriptor.packagePrefix == null) {
           // no package in run from sources - load module from main classpath
           subDescriptor.jarFiles = Collections.emptyList()

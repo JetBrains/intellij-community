@@ -376,7 +376,7 @@ class IdeaPluginDescriptorImpl private constructor(
       checkCycle(configFile, visitedFiles)
       visitedFiles.add(configFile)
       try {
-        val subDescriptor = createSub(raw, configFile, context, module = null)
+        val subDescriptor = createSub(raw, configFile, module = null)
         subDescriptor.resolvePluginDependencies(context, pathResolver, dataLoader, visitedFiles)
         dependency.setSubDescriptor(subDescriptor)
       } finally {
@@ -692,17 +692,6 @@ fun IdeaPluginDescriptorImpl.initialize(context: DescriptorListLoadingContext): 
   context.productBuildNumber,
   context::isPluginDisabled,
   context::isPluginBroken,
-)
-
-internal fun IdeaPluginDescriptorImpl.createSub(
-  subBuilder: PluginDescriptorBuilder,
-  descriptorPath: String,
-  context: DescriptorListLoadingContext,
-  module: PluginContentDescriptor.ModuleItem?,
-): IdeaPluginDescriptorImpl = createSub(
-  subBuilder,
-  descriptorPath,
-  module
 )
 
 @ApiStatus.Internal
