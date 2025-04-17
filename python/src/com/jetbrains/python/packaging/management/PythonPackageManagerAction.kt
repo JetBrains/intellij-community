@@ -15,7 +15,7 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
@@ -43,14 +43,14 @@ import kotlin.text.Regex.Companion.escape
  * @param V The result type of the background jobs performed by this action.
  */
 abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
-  val errorSink: ErrorSink = ShowingMessageErrorSync
-  val scope: CoroutineScope = service<PythonSdkCoroutineService>().cs
-  val context: CoroutineContext = Dispatchers.IO
+  protected val errorSink: ErrorSink = ShowingMessageErrorSync
+  protected val scope: CoroutineScope = service<PythonSdkCoroutineService>().cs
+  protected val context: CoroutineContext = Dispatchers.IO
 
   /**
    * The regex pattern that matches the file names that this action is applicable to.
    */
-  open val fileNamesPattern: Regex = """^${escape(PY_PROJECT_TOML)}$""".toRegex()
+  protected open val fileNamesPattern: Regex = """^${escape(PY_PROJECT_TOML)}$""".toRegex()
 
   /**
    * Retrieves the manager instance associated with the given action event, see [AnActionEvent.getPythonPackageManager]
@@ -81,9 +81,21 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    * Might be overridden by subclasses.
    */
   private suspend fun onSuccess(manager: T, document: Document?) {
-    withBackgroundProgress(manager.project, PyBundle.message("python.sdk.scanning.installed.packages")) {
-      manager.refreshEnvironment()
-      document?.reloadIntentions(manager.project)
+    manager.refreshEnvironment()
+    document?.reloadIntentions(manager.project)
+  }
+
+  private suspend fun executeScenarioWithinProgress(manager: T, e: AnActionEvent, document: Document?): Result<V, PyError> {
+    return reportSequentialProgress(2) { reporter ->
+      reporter.itemStep {
+        execute(e, manager)
+      }.onSuccess {
+        reporter.itemStep(PyBundle.message("python.sdk.scanning.installed.packages")) {
+          onSuccess(manager, document)
+        }
+      }.onFailure {
+        errorSink.emit(it)
+      }
     }
   }
 
@@ -91,29 +103,22 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    * This action saves the current document on fs because tools are command line tools, and they need actual files to be up to date
    * Handles errors via [errorSink]
    */
-  private fun T.executeActionJob(e: AnActionEvent) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val manager = getManager(e) ?: return
+
     val document = e.editor()?.document
 
     runInEdt {
       document?.let {
-          FileDocumentManager.getInstance().saveDocument(document)
+        FileDocumentManager.getInstance().saveDocument(document)
       }
     }
 
     scope.launch(context) {
-      runSynchronized(e.presentation.text) {
-        execute(e, this@executeActionJob)
-      }.onSuccess {
-        onSuccess(this@executeActionJob, document)
-      }.onFailure {
-        errorSink.emit(it)
+      manager.runSynchronized(e.presentation.text) {
+        executeScenarioWithinProgress(manager, e, document)
       }
     }
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val manager = getManager(e)
-    manager?.executeActionJob(e)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
