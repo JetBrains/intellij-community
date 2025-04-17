@@ -402,7 +402,7 @@ private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: C
       WriteAction.run<RuntimeException> {
         try {
           ProjectRootManagerEx.getInstanceEx(project)
-            .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED)
+            .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
         }
         finally {
           project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
