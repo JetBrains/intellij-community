@@ -52,7 +52,7 @@ class PluginDescriptorManualTest {
     val urls = Files.newDirectoryStream(dir).use { stream ->
       stream.map { it.toUri().toURL() }
     }
-    val descriptors = testLoadAndInitDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
+    val descriptors = loadAndInitDescriptorsFromClassPathInTest(URLClassLoader(urls.toTypedArray(), null))
     // core and com.intellij.workspace
     Assertions.assertThat(descriptors).hasSize(1)
   }

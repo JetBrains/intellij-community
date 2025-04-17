@@ -432,7 +432,7 @@ class PluginDescriptorTest {
       Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
       Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
     )
-    assertThat(testLoadAndInitDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
+    assertThat(loadAndInitDescriptorsFromClassPathInTest(URLClassLoader(urls, null))).hasSize(1)
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out
@@ -448,10 +448,10 @@ class PluginDescriptorTest {
       override fun getResource(name: String) = null
       override fun getResources(name: String) = EnumerationAdapter(listOf(url))
     }
-    assertThat(testLoadAndInitDescriptorsFromClassPath(TestLoader("", "/spaces%20spaces/"))).hasSize(1)
-    assertThat(testLoadAndInitDescriptorsFromClassPath(TestLoader("", "/spaces spaces/"))).hasSize(1)
-    assertThat(testLoadAndInitDescriptorsFromClassPath(TestLoader("jar:", "/jar%20spaces.jar!/"))).hasSize(1)
-    assertThat(testLoadAndInitDescriptorsFromClassPath(TestLoader("jar:", "/jar spaces.jar!/"))).hasSize(1)
+    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("", "/spaces%20spaces/"))).hasSize(1)
+    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("", "/spaces spaces/"))).hasSize(1)
+    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar%20spaces.jar!/"))).hasSize(1)
+    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar spaces.jar!/"))).hasSize(1)
   }
 
   // todo equals of IdeaPluginDescriptorImpl is also dependent on sub-descriptor location (depends optional)
