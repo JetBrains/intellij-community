@@ -333,8 +333,8 @@ class IdeaPluginDescriptorImpl private constructor(
     return null
   }
 
-  internal fun resolvePluginDependencies(context: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
-    resolvePluginDependencies(context, pathResolver, dataLoader, ArrayList(3))
+  internal fun resolvePluginDependencies(loadingContext: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
+    resolvePluginDependencies(loadingContext, pathResolver, dataLoader, ArrayList(3))
 
   private fun resolvePluginDependencies(context: DescriptorListLoadingContext,
                                         pathResolver: PathResolver,

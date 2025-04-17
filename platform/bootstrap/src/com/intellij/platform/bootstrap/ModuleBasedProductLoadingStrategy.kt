@@ -69,7 +69,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
   override fun loadPluginDescriptors(
     scope: CoroutineScope,
-    context: DescriptorListLoadingContext,
+    loadingContext: DescriptorListLoadingContext,
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
@@ -85,9 +85,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       platformPrefix.startsWith("CodeServer") ||
       java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
     val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
-    scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, context, pathResolver, useCoreClassLoader, mainClassLoader, result)
-    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, context, zipPool))
-    result.addAll(loadBundledPluginDescriptors(scope, context, zipPool))
+    scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, loadingContext, pathResolver, useCoreClassLoader, mainClassLoader, result)
+    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool))
+    result.addAll(loadBundledPluginDescriptors(scope, loadingContext, zipPool))
     return result
   }
 
@@ -141,7 +141,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           deferredDescriptors.add(scope.async {
             loadDescriptorFromFileOrDir(
               file = file,
-              context = context,
+              loadingContext = context,
               pool = zipFilePool,
             )
           })

@@ -32,7 +32,7 @@ internal fun loadAndInitDescriptorInTest(
   val result = runBlocking {
     loadDescriptorFromFileOrDirInTests(
       file = dir,
-      context = context,
+      loadingContext = context,
       isBundled = isBundled,
     )
   }
