@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
@@ -105,7 +106,7 @@ class FrontendXValue private constructor(
   }
 
   override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
-    // TODO
+    thisLogger().error("#computeInlineDebuggerData should not be called for FrontendXValue, XValueApi.computeInlineData")
     return super.computeInlineDebuggerData(callback)
   }
 

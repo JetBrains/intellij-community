@@ -16,6 +16,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.CoroutineUtilsKt;
 import com.intellij.xdebugger.impl.XSourceKind;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
@@ -154,9 +155,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         }
       };
 
-      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(callback::computed);
-      }
+      CoroutineUtilsKt.updateInlineDebuggerData(session, getValueContainer(), callback);
     }
     catch (Exception ignore) {
     }

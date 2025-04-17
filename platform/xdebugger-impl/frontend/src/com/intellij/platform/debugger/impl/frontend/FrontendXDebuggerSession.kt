@@ -34,9 +34,9 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XSourceKind
-import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -146,7 +146,11 @@ class FrontendXDebuggerSession private constructor(
     }
   }
 
+  override val currentSuspendContextCoroutineScope: CoroutineScope?
+    get() = suspendContext.value?.lifetimeScope
+
   init {
+    DebuggerInlayListener.getInstance(project).startListening()
     sessionDto.sessionDataDto.initialSuspendData?.applyToCurrents()
     cs.launch {
       sessionDto.sessionEvents.toFlow().collect { event ->
@@ -192,9 +196,7 @@ class FrontendXDebuggerSession private constructor(
       is XDebuggerSessionEvent.SessionResumed,
       is XDebuggerSessionEvent.BeforeSessionResume,
         -> {
-        val context = suspendContext.value
-        suspendContext.value = null
-        context?.cancel()
+        suspendContext.getAndUpdate { null }?.cancel()
         currentExecutionStack.value = null
         currentStackFrame.value = null
       }
@@ -219,7 +221,7 @@ class FrontendXDebuggerSession private constructor(
     val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
                                                     FrontendXStackFramesStorage())
     val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
-    suspendContext.value = currentSuspendContext
+    suspendContext.getAndUpdate { currentSuspendContext }?.cancel()
     executionStackDto?.let {
       currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
         suspendContext.value?.activeExecutionStack = it

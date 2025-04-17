@@ -64,6 +64,7 @@ interface XDebugSessionProxy {
   val currentStateHyperlinkListener: HyperlinkListener?
   val currentEvaluator: XDebuggerEvaluator?
   val smartStepIntoHandlerEntry: XSmartStepIntoHandlerEntry?
+  val currentSuspendContextCoroutineScope: CoroutineScope?
 
   fun getCurrentPosition(): XSourcePosition?
   fun getTopFramePosition(): XSourcePosition?
@@ -155,6 +156,9 @@ interface XDebugSessionProxy {
         override val popupTitle: String get() = handler.popupTitle
       }
     }
+
+    override val currentSuspendContextCoroutineScope: CoroutineScope?
+      get() = (session as XDebugSessionImpl).currentSuspendCoroutineScope
 
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition
