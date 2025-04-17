@@ -171,4 +171,8 @@ public class CodeStyleConfigurableWrapper
   public @Nullable Runnable enableSearch(String option) {
     return myPanel != null ? () -> myPanel.highlightOptions(option) : null;
   }
+
+  public CodeStyleSettingsProvider getSettingsProvider() {
+    return myProvider;
+  }
 }

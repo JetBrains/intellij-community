@@ -32,10 +32,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.PostFormatPopupCustomization;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +111,7 @@ public final class FileInEditorProcessor {
         }
         if ((!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)
             && !isExternalFormatterInUse()) {
-          showHint(myEditor, new FormattedMessageBuilder());
+          showHint(myEditor, new FormattedMessageBuilder(myEditor, myFile));
         }
       });
     }
@@ -296,6 +298,15 @@ public final class FileInEditorProcessor {
   }
 
   private final class FormattedMessageBuilder extends MessageBuilder {
+    Editor myEditor;
+    PostFormatPopupCustomization myPostFormatPopupCustomization;
+
+    private FormattedMessageBuilder(Editor editor, PsiFile file) {
+      myEditor = editor;
+      myPostFormatPopupCustomization = ContainerUtil.find(PostFormatPopupCustomization.getEP_NAME().getExtensionsIfPointIsRegistered(),
+                                                          it -> it.isApplicableFor(file, myProject));
+    }
+
     @Override
     public @NotNull String getMessage() {
       HtmlBuilder builder = new HtmlBuilder();
@@ -338,18 +349,27 @@ public final class FileInEditorProcessor {
           builder.append(notifications.getSecondFormatNotification()).br();
         }
       }
+      builder.append(getFooter());
+      return builder.wrapWith("html").toString();
+    }
+
+    private @NotNull HtmlChunk.Element getFooter() {
+      if (myPostFormatPopupCustomization != null) {
+        return HtmlChunk.span().addRaw(myPostFormatPopupCustomization.getPopupFooterMessage(myFile, myProject));
+      }
 
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowReformatFileDialog"));
       String color = ColorUtil.toHtmlColor(JBColor.gray);
 
-      builder.append(HtmlChunk.span("color:"+color)
-                              .child(HtmlChunk.raw(LangBundle.message("formatter.in.editor.link.show.reformat.dialog"))).addText(shortcutText));
-
-      return builder.wrapWith("html").toString();
+      return HtmlChunk.span("color:" + color)
+        .child(HtmlChunk.raw(LangBundle.message("formatter.in.editor.link.show.reformat.dialog"))).addText(shortcutText);
     }
 
     @Override
     public @NotNull Runnable getHyperlinkRunnable() {
+      if (myPostFormatPopupCustomization != null) {
+        return () -> myPostFormatPopupCustomization.handleFooterHyperlinkClick(myFile, myProject);
+      }
       return new ShowReformatDialogRunnable(myEditor);
     }
   }
