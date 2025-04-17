@@ -791,6 +791,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/override/AfterValKeywordInConstructorParameter.kt");
             }
 
+            @TestMetadata("ContextParameters.kt")
+            public void testContextParameters() throws Exception {
+                runTest("../../completion/testData/handlers/basic/override/ContextParameters.kt");
+            }
+
             @TestMetadata("ContextReceiver.kt")
             public void testContextReceiver() throws Exception {
                 runTest("../../completion/testData/handlers/basic/override/ContextReceiver.kt");

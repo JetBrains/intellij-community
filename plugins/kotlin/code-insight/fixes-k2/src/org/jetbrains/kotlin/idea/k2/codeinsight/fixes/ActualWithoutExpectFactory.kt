@@ -10,9 +10,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
@@ -23,6 +26,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.createFileForDeclaration
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
+import org.jetbrains.kotlin.idea.core.overrideImplement.generateClassWithMembers
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getTypeDescription
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
@@ -32,29 +36,63 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import kotlin.collections.plus
 
 internal object ActualWithoutExpectFactory {
 
     val fixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ActualWithoutExpect ->
         val declaration = diagnostic.declaration.psi as? KtNamedDeclaration ?: return@IntentionBased emptyList()
         val compatibility = diagnostic.compatibility
-        if (compatibility.isNotEmpty() && declaration !is KtFunction) return@IntentionBased emptyList()
+        val hasVisibilityProblem = compatibility.isNotEmpty()
+        if (hasVisibilityProblem && declaration !is KtFunction) return@IntentionBased emptyList()
         val (actualDeclaration, expectedContainingClass) = findFirstActualWithExpectedClass(declaration)
-        if (compatibility.isNotEmpty() && actualDeclaration !is KtFunction) return@IntentionBased emptyList()
+        if (hasVisibilityProblem && actualDeclaration !is KtFunction) return@IntentionBased emptyList()
         // If there is already an expected class, we suggest only for its module,
         // otherwise we suggest for all relevant expected modules
         val expectedModules = expectedContainingClass?.module?.let { listOf(it) } ?: actualDeclaration.module?.implementedModules ?: return@IntentionBased emptyList()
-        expectedModules.mapNotNull {
-            val fileToCreateDeclaration = findExistingFileToCreateDeclaration(actualDeclaration.containingKtFile, declaration, it)
+        expectedModules.mapNotNull { expectedModule ->
+            val fileToCreateDeclaration = findExistingFileToCreateDeclaration(actualDeclaration.containingKtFile, declaration, expectedModule)
             when (actualDeclaration) {
                 is KtProperty, is KtParameter, is KtFunction -> {
-                    CreateExpectedCallableMemberFix(actualDeclaration, expectedContainingClass, fileToCreateDeclaration, it)
+                    if (hasVisibilityProblem && findExpectWithConflictingVisibility(
+                            actualDeclaration,
+                            fileToCreateDeclaration,
+                            expectedContainingClass
+                        ) != null) {
+                        return@mapNotNull null
+                    }
+                    CreateExpectedCallableMemberFix(actualDeclaration, expectedContainingClass, fileToCreateDeclaration, expectedModule)
                 }
+                is KtClassOrObject -> CreateExpectedClassFix(actualDeclaration, expectedContainingClass, fileToCreateDeclaration, expectedModule)
                 else -> null
             }
         }
+    }
+
+    private fun KaSession.findExpectWithConflictingVisibility(
+        actualDeclaration: KtCallableDeclaration,
+        fileToCreateDeclaration: KtFile?,
+        expectedContainingClass: KtClassOrObject?
+    ): KtFunction? {
+        if (fileToCreateDeclaration != null && actualDeclaration is KtFunction) {
+            fun KaSession.types(decl: KtFunction): List<KaType?> =
+                (decl.valueParameters.map { it.typeReference } + listOf(decl.receiverTypeReference) + decl.contextReceivers.map { it.typeReference() }).map { it?.type }
+
+            val types = types(actualDeclaration)
+            val sameSignatureFunction = (expectedContainingClass ?: fileToCreateDeclaration).findDescendantOfType<KtFunction> { decl ->
+                //check only signatures without visibility, naming, ect
+                decl.name == actualDeclaration.name &&
+                        decl.valueParameters.size == actualDeclaration.valueParameters.size &&
+                        (decl.receiverTypeReference != null) == (actualDeclaration.receiverTypeReference != null) &&
+                        decl.contextReceivers.size == actualDeclaration.contextReceivers.size &&
+                        types(decl).zip(types).all { (t1, t2) -> if (t2 == null) t1 == null else t1?.semanticallyEquals(t2) == true }
+            }
+            return sameSignatureFunction
+        }
+        return null
     }
 
     private fun findExistingFileToCreateDeclaration(
@@ -173,6 +211,34 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
     private fun getOrCreateImplementationFile(): KtFile? {
         val declaration = element as? KtNamedDeclaration ?: return null
         return targetFile ?: createFileForDeclaration(module, declaration)
+    }
+}
+
+class CreateExpectedClassFix(
+    declaration: KtClassOrObject,
+    targetExpectedClass: KtClassOrObject?,
+    targetFile: KtFile?,
+    commonModule: Module,
+) : CreateExpectedFix<KtNamedDeclaration>(declaration, targetExpectedClass, commonModule, targetFile) {
+    @OptIn(KaExperimentalApi::class)
+    override fun generate(
+        project: Project,
+        targetExpectedClass: KtClassOrObject?,
+        declaration: KtNamedDeclaration,
+    ): KtNamedDeclaration? {
+        if (!isCorrectAndHaveAccessibleModifiers(declaration, true)) return null
+
+        return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
+            val classSymbol = declaration.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
+
+            generateClassWithMembers(
+                project = declaration.project,
+                ktClassMember = null,
+                symbol = classSymbol,
+                targetClass = targetExpectedClass,
+                mode = MemberGenerateMode.EXPECT,
+            )
+        }
     }
 }
 
