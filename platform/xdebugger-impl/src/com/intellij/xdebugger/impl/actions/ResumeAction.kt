@@ -18,7 +18,11 @@ open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
       return
     }
     val session = DebuggerUIUtil.getSessionProxy(e)
-    if (session != null && !session.isStopped) {
+    if (session == null) {
+      e.presentation.isEnabled = false
+      return
+    }
+    if (!session.isStopped) {
       e.presentation.isEnabled = session.isPaused && !session.isReadOnly
     }
     else {
