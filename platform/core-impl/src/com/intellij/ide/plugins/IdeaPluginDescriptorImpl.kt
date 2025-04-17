@@ -299,7 +299,11 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun initialize(getBuildNumber: () -> BuildNumber, isPluginDisabled: (PluginId) -> Boolean, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginLoadingError? {
+  internal fun initialize(
+    getBuildNumber: () -> BuildNumber,
+    isPluginDisabled: (PluginId) -> Boolean,
+    isPluginBroken: (PluginId, version: String?) -> Boolean,
+  ): PluginLoadingError? {
     assert(type == Type.PluginMainDescriptor)
     if (isPluginDisabled(id)) {
       return onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
@@ -688,8 +692,8 @@ class IdeaPluginDescriptorImpl private constructor(
 }
 
 @ApiStatus.Internal
-fun IdeaPluginDescriptorImpl.initialize(context: DescriptorListLoadingContext): PluginLoadingError? = initialize(
-  context.getProductBuildNumber,
+fun IdeaPluginDescriptorImpl.initialize(context: PluginInitializationContext): PluginLoadingError? = initialize(
+  context::productBuildNumber,
   context::isPluginDisabled,
   context::isPluginBroken,
 )
