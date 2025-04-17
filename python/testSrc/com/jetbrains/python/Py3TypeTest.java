@@ -3510,7 +3510,7 @@ public class Py3TypeTest extends PyTestCase {
       
       
       class Meta(type):
-          def call(cls, *args, **kwargs) -> object: ...
+          def call(cls, p) -> object: ...
       
           __call__ = call
       
@@ -3519,14 +3519,14 @@ public class Py3TypeTest extends PyTestCase {
           def __new__(cls, p) -> Self: ...
       
       
-      expr = MyClass()
+      expr = MyClass(1)
       """);
     doTest("MyClass", """
       from typing import Self
       
       
       class Meta(type):
-          def __call__(cls): ...
+          def __call__(cls, p: int): ...
       
       
       class MyClass(metaclass=Meta):
@@ -3558,7 +3558,7 @@ public class Py3TypeTest extends PyTestCase {
       
       
       class MyClass(metaclass=Meta):
-          def __new__(cls, p1, p2) -> Self: ...
+          def __new__(cls, x) -> Self: ...
       
       
       expr = MyClass(1)
