@@ -86,6 +86,10 @@ internal abstract class GitBranchesTreeModel(
 
   final override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
+  override fun isLeaf(node: Any?): Boolean = node is GitReference
+                                               || node is RefUnderRepository
+                                               || (node is GitRefType && getCorrespondingTree(node).isEmpty())
+
   protected abstract fun getChildren(parent: Any?): List<Any>
 
   fun updateTags() {
@@ -106,6 +110,8 @@ internal abstract class GitBranchesTreeModel(
   protected open fun getRecentBranches(): Collection<GitLocalBranch>? = null
 
   protected abstract fun getTags(): Collection<GitTag>
+
+  protected fun areRefTreesEmpty() = (GitBranchType.entries + GitTagType).all { getCorrespondingTree(it).isEmpty() }
 
   protected fun getCorrespondingTree(refType: GitRefType): Map<String, Any> = when (refType) {
     GitBranchType.REMOTE -> remoteBranchesTree.tree

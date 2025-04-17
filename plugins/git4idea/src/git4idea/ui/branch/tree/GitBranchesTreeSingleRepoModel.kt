@@ -37,10 +37,6 @@ internal open class GitBranchesTreeSingleRepoModel(
 
   override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.branches.remoteBranches
 
-  override fun isLeaf(node: Any?): Boolean = node is GitReference
-                                             || node is RefUnderRepository
-                                             || (node is GitRefType && getCorrespondingTree(node).isEmpty())
-
   override fun getTags() = repository.tags.keys
 
   override fun getChildren(parent: Any?): List<Any> {
@@ -83,6 +79,6 @@ internal open class GitBranchesTreeSingleRepoModel(
   protected open fun notHaveFilteredNodes(): Boolean {
     return nameMatcher != null
            && actionsTree.isEmpty()
-           && recentCheckoutBranchesTree.isEmpty() && localBranchesTree.isEmpty() && remoteBranchesTree.isEmpty() && tagsTree.isEmpty()
+           && areRefTreesEmpty()
   }
 }
