@@ -31,7 +31,9 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelExecApiHelpers
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -74,10 +76,14 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
 
-      val processOptions = eelApi.exec.execute(if (isWindows()) "cmd.exe" else "/bin/sh")
-        .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
-        .workingDirectory(Path(myConfiguration.runnerParameters.workingDirPath).asEelPath())
-        .args(getArgs(eelApi)).let {
+      val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
+      val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
+      val workingDir = Path(myConfiguration.runnerParameters.workingDirPath).asEelPath()
+      val args = getArgs(eelApi)
+      val processOptions = eelApi.exec.execute(exe)
+        .env(env)
+        .workingDirectory(workingDir)
+        .args(args).let {
           if (!isWindows()) {
             it.ptyOrStdErrSettings(Pty(-1, -1, true))
           }
@@ -92,7 +98,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
           throw ExecutionException(result.error.message)
         }
         is EelResult.Ok -> {
-          KillableColoredProcessHandler.Silent(result.value.convertToJavaProcess(), processOptions.toString(), Charsets.UTF_8, emptySet())
+          KillableColoredProcessHandler.Silent(result.value.convertToJavaProcess(), "$exe ${args.joinToString(" ")}", Charsets.UTF_8, emptySet())
         }
 
       }

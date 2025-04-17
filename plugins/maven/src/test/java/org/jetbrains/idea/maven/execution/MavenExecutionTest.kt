@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.maven.testFramework.MavenExecutionTestCase
 import com.intellij.openapi.util.Disposer
@@ -30,7 +31,8 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
                          """.trimIndent())
     importProjectAsync()
     assertFalse(projectPath.resolve("target").exists())
-    execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
+    val info = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
+    assertTrue("Console should print command line", info.system.contains("-Didea.version="))
     assertTrue(projectPath.resolve("target").exists())
   }
 
@@ -57,8 +59,11 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
     assertExcludes("project", "target")
   }
 
-  private fun execute(params: MavenRunnerParameters) {
+  private fun execute(params: MavenRunnerParameters): ExecutionInfo {
     val sema = Semaphore()
+    val stdout = StringBuilder()
+    val stderr = StringBuilder()
+    val system = StringBuilder()
     sema.down()
     edt<RuntimeException> {
       MavenRunConfigurationType.runConfiguration(
@@ -67,7 +72,18 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
         ProgramRunner.Callback { descriptor ->
           descriptor.processHandler!!.addProcessListener(object : ProcessListener {
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-              println(event.text)
+              if (outputType !is ProcessOutputType) {
+                fail("output type is wrong")
+              }
+              else {
+                if (outputType.isStdout)
+                  stdout.append(event.text)
+                else if (outputType.isStderr)
+                  stderr.append(event.text)
+                else
+                  system.append(event.text)
+              }
+
             }
 
             override fun processTerminated(event: ProcessEvent) {
@@ -80,5 +96,8 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
         }, false)
     }
     sema.waitFor()
+    return ExecutionInfo(system.toString(), stdout.toString(), stderr.toString())
   }
 }
+
+data class ExecutionInfo(val system: String, val stdout: String, val stderr: String)
