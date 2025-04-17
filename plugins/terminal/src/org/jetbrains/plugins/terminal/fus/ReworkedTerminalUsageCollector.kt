@@ -47,7 +47,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
 
-  private val hyperlinkFollowedEvent = GROUP.registerEvent("terminal.hyperlink.followed", HYPERLINK_INFO_CLASS)
+  private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
 
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown"
