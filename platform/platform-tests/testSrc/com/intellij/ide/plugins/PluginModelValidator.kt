@@ -5,7 +5,6 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.openapi.application.PathManager.getHomePath
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.ReadModuleContext
@@ -21,10 +20,13 @@ import com.intellij.util.io.jackson.obj
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.opentest4j.MultipleFailuresError
 import java.io.StringWriter
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -68,16 +70,13 @@ data class PluginValidationOptions(
 )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
-  val modules = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
-    .modules
-    .map { ModuleWrap(it) }
-
-  return validatePluginModel(modules, validationOptions)
+  val project = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
+  return validatePluginModel(project, projectPath, validationOptions)
 }
 
-fun validatePluginModel(sourceModules: List<PluginModelValidator.Module>, 
+fun validatePluginModel(project: JpsProject, projectHomePath: Path,
                         validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
-  return PluginModelValidator(sourceModules, validationOptions).validate()
+  return PluginModelValidator(project, projectHomePath, validationOptions).validate()
 }
 
 class PluginValidationResult internal constructor(
@@ -121,28 +120,24 @@ class PluginValidationResult internal constructor(
   }
 }
 
-class PluginModelValidator(private val sourceModules: List<Module>, private val validationOptions: PluginValidationOptions) {
-  sealed interface Module {
-    val name: String
-
-    val sourceRoots: Sequence<Path>
-    
-    val testSourceRoots: Sequence<Path>
-  }
-
+class PluginModelValidator(
+  private val project: JpsProject,
+  private val projectHomePath: Path,
+  private val validationOptions: PluginValidationOptions
+) {
   private val pluginIdToInfo = LinkedHashMap<String, ModuleInfo>()
   private val pluginAliases = HashSet<String>()
   private val _errors = mutableListOf<PluginValidationError>()
   private val xIncludeLoader =
     LoadFromSourceXIncludeLoader(
       pathsIncludedFromLibrariesViaXiInclude = validationOptions.pathsIncludedFromLibrariesViaXiInclude, 
-      modules = sourceModules,
+      project = project,
       directoriesToIndex = listOf("META-INF", "idea", ""),
     )
 
   fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
-    val moduleDescriptorFileInfos = sourceModules
+    val moduleDescriptorFileInfos = project.modules.asSequence()
       .filterNot { validationOptions.modulesToSkip.contains(it.name) }
       .mapNotNull { module ->
         try {
@@ -491,6 +486,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     val fileName = "${moduleName.replace('/', '.')}.xml"
     val result = loadFileInModule(sourceModule = module.sourceModule, fileName = fileName)
     if (result == null) {
+      val resourceRootPath = module.sourceModule.getSourceRoots(JavaResourceRootType.RESOURCE).firstOrNull()?.path
       reportError(
         message = "Module ${module.sourceModule.name} doesn't have descriptor file",
         sourceModule = referencingModuleInfo.sourceModule,
@@ -498,23 +494,23 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
           "expectedFile" to fileName,
           "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
         ),
-        fix = """
-              Create file $fileName in ${pathToShortString(module.sourceModule.sourceRoots.first())}
+        fix = resourceRootPath?.let { """
+              Create file $fileName in ${projectHomePath.relativize(resourceRootPath).invariantSeparatorsPathString}
               with content:
               
               <idea-plugin package="REPLACE_BY_MODULE_PACKAGE">
               </idea-plugin>
             """
+        }
       )
     }
     return result
   }
 
-  private fun createFileInfo(module: Module): ModuleDescriptorFileInfo? {
-    for (sourceRoot in module.sourceRoots) {
-      val metaInf = sourceRoot.resolve("META-INF")
-      val moduleXml = metaInf.resolve("${module.name}.xml")
-      if (Files.exists(moduleXml)) {
+  private fun createFileInfo(module: JpsModule): ModuleDescriptorFileInfo? {
+    for (sourceRoot in module.productionSourceRoots) {
+      val moduleXml = sourceRoot.findFile("META-INF/${module.name}.xml")
+      if (moduleXml != null) {
         reportError(
           "Module descriptor must be in the root of module root",
           module,
@@ -530,8 +526,8 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     val pluginFileName = customRootPluginXmlFileName ?: "plugin.xml"
 
     val pluginDescriptors =
-      module.sourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
-        val pluginDescriptorFile: Path = sourceRoot.resolve("META-INF").resolve(pluginFileName)
+      module.productionSourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
+        val pluginDescriptorFile = sourceRoot.findFile("META-INF/$pluginFileName") ?: return@mapNotNullTo null 
         loadRawPluginDescriptor(pluginDescriptorFile)?.let { pluginDescriptorFile to it }
       }
 
@@ -543,8 +539,8 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     }
     
     val moduleDescriptors =
-      module.sourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
-        val moduleDescriptorFile: Path = sourceRoot.resolve("${module.name}.xml")
+      module.productionSourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
+        val moduleDescriptorFile = sourceRoot.findFile("${module.name}.xml") ?: return@mapNotNullTo null
         loadRawPluginDescriptor(moduleDescriptorFile)?.let { moduleDescriptorFile to it }
       }
 
@@ -574,7 +570,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
     val testModuleDescriptors =
       module.testSourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
-        val moduleDescriptorFile: Path = sourceRoot.resolve("${module.name}._test.xml")
+        val moduleDescriptorFile = sourceRoot.findFile("${module.name}._test.xml") ?: return@mapNotNullTo null
         loadRawPluginDescriptor(moduleDescriptorFile)?.let { moduleDescriptorFile to it }
       }
 
@@ -620,9 +616,9 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
     return rawPluginDescriptor
   }
 
-  private fun loadFileInModule(sourceModule: Module, fileName: String): ModuleDescriptorFileInfo? {
-    for (sourceRoot in sourceModule.sourceRoots) {
-      val moduleDescriptorFile = sourceRoot.resolve(fileName)
+  private fun loadFileInModule(sourceModule: JpsModule, fileName: String): ModuleDescriptorFileInfo? {
+    for (sourceRoot in sourceModule.productionSourceRoots) {
+      val moduleDescriptorFile = sourceRoot.findFile(fileName) ?: continue
       val moduleDescriptor = loadRawPluginDescriptor(moduleDescriptorFile) ?: continue
       return ModuleDescriptorFileInfo(
         sourceModule = sourceModule,
@@ -635,7 +631,7 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
   private fun reportError(
     message: String,
-    sourceModule: Module,
+    sourceModule: JpsModule,
     params: Map<String, Any?> = mapOf(),
     fix: String? = null,
   ) {
@@ -653,24 +649,8 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
   private fun paramValueToString(value: Any?): String {
     return when (value) {
-      is Path -> pathToShortString(value)
+      is Path -> projectHomePath.relativize(value).invariantSeparatorsPathString
       else -> value.toString()
-    }
-  }
-
-  private val emptyPath by lazy {
-    Path.of("/")
-  }
-
-  private val homePath by lazy {
-    Path.of(getHomePath())
-  }
-
-  private fun pathToShortString(file: Path): String {
-    return when {
-      file === emptyPath -> ""
-      homePath.fileSystem === file.fileSystem -> homePath.relativize(file).toString()
-      else -> file.toString()
     }
   }
 
@@ -684,17 +664,17 @@ class PluginModelValidator(private val sourceModules: List<Module>, private val 
 
 private class LoadFromSourceXIncludeLoader(
   private val pathsIncludedFromLibrariesViaXiInclude: Set<String>, 
-  private val modules: List<PluginModelValidator.Module>,
+  private val project: JpsProject,
   private val directoriesToIndex: List<String>,
 ) : XIncludeLoader {
   private val shortXmlPathToFullPaths = collectXmlFilesInIndexedDirectories()
 
   private fun collectXmlFilesInIndexedDirectories(): Map<String, List<Path>> {
     val shortNameToPaths = LinkedHashMap<String, MutableList<Path>>()
-    for (module in modules) {
-      for (sourceRoot in module.sourceRoots) {
+    for (module in project.modules) {
+      for (sourceRoot in module.productionSourceRoots) {
         for (directoryName in directoriesToIndex) {
-          val directory = if (directoryName == "") sourceRoot else sourceRoot.resolve(directoryName)
+          val directory = if (directoryName == "") sourceRoot.path else sourceRoot.path.resolve(directoryName)
           if (directory.isDirectory()) {
             val prefix = if (directoryName == "") "" else "$directoryName/" 
             for (xmlFile in directory.listDirectoryEntries("*.xml")) {
@@ -725,9 +705,9 @@ private class LoadFromSourceXIncludeLoader(
       shortXmlPathToFullPaths[path] ?: emptyList()
     }
     else {
-      modules.asSequence()
-        .flatMap { it.sourceRoots }
-        .map { it.resolve(path) }
+      project.modules.asSequence()
+        .flatMap { it.productionSourceRoots }
+        .mapNotNullTo(ArrayList()) { it.findFile(path) }
         .filterTo(ArrayList()) { it.exists() }
     }
     val file = files.firstOrNull()
@@ -741,7 +721,7 @@ private class LoadFromSourceXIncludeLoader(
 internal data class ModuleInfo(
   @JvmField val pluginId: String?,
   @JvmField val name: String?,
-  @JvmField val sourceModule: PluginModelValidator.Module,
+  @JvmField val sourceModule: JpsModule,
   @JvmField val descriptorFile: Path,
   @JvmField val packageName: String?,
 
@@ -759,7 +739,7 @@ internal data class ModuleInfo(
 internal data class Reference(@JvmField val name: String, @JvmField val isPlugin: Boolean, @JvmField val moduleInfo: ModuleInfo?)
 
 private data class ModuleDescriptorFileInfo(
-  @JvmField val sourceModule: PluginModelValidator.Module,
+  @JvmField val sourceModule: JpsModule,
 
   @JvmField val moduleDescriptor: RawPluginDescriptor? = null,
   @JvmField val moduleDescriptorFile: Path? = null,
@@ -796,29 +776,18 @@ private fun writeDependencies(items: List<Reference>, writer: JsonGenerator) {
   }
 }
 
-internal class PluginValidationError(message: String, val sourceModule: PluginModelValidator.Module) : RuntimeException(message)
+internal class PluginValidationError(message: String, val sourceModule: JpsModule) : RuntimeException(message)
 
 internal fun hasContentOrDependenciesInV2Format(descriptor: RawPluginDescriptor): Boolean {
   return descriptor.contentModules.isNotEmpty() || descriptor.dependencies.isNotEmpty()
 }
 
-private data class ModuleWrap(private val module: JpsModule) : PluginModelValidator.Module {
-  override val name: String
-    get() = module.name
+private val JpsModule.productionSourceRoots: Sequence<JpsModuleSourceRoot>
+  get() = sourceRoots.asSequence().filter { !it.rootType.isForTests }
 
-  override val sourceRoots: Sequence<Path>
-    get() {
-      return module.sourceRoots
-        .asSequence()
-        .filter { !it.rootType.isForTests }
-        .map { it.path }
-    }
+private val JpsModule.testSourceRoots: Sequence<JpsModuleSourceRoot>
+  get() = sourceRoots.asSequence().filter { it.rootType.isForTests }
 
-  override val testSourceRoots: Sequence<Path>
-    get() {
-      return module.sourceRoots
-        .asSequence()
-        .filter { it.rootType.isForTests }
-        .map { it.path }
-    }
+private fun JpsModuleSourceRoot.findFile(relativePath: String): Path? {
+  return JpsJavaExtensionService.getInstance().findSourceFile(this, relativePath)
 }

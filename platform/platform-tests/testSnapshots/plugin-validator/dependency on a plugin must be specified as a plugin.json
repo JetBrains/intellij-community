@@ -2,7 +2,7 @@
 [1]: ------------------------------
 Dependency on plugin must be specified using `plugin` and not `module` (
   entry=ModuleDependency(moduleName=intellij.dependent),
-  referencingDescriptorFile=/dependent/META-INF/plugin.xml
+  referencingDescriptorFile=dependent/META-INF/plugin.xml
 )
 
 Proposed fix:

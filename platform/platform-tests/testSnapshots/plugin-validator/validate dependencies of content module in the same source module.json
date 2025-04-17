@@ -2,6 +2,6 @@
 [1]: ------------------------------
 Module not found: com.intellij.diagram (
   entry=ModuleDependency(moduleName=com.intellij.diagram),
-  referencingDescriptorFile=/intellij.angularJs/intellij.angularJs.diagram.xml
+  referencingDescriptorFile=intellij.angularJs/intellij.angularJs.diagram.xml
 )
 -----------------------------------
