@@ -1094,6 +1094,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @Throws(IOException::class)
 @RequiresBackgroundThread
 fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
+  val initContext = ProductPluginInitContext(buildNumberOverride = buildNumber)
   val loadingContext = DescriptorListLoadingContext(
     getProductBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
     isMissingSubDescriptorIgnored = true,
@@ -1106,7 +1107,7 @@ fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): Id
       loadingContext = loadingContext,
       pool = NonShareableJavaZipFilePool(),
       pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-    )?.apply { initialize(context = loadingContext) }
+    )?.apply { initialize(context = initContext) }
     if (descriptor != null) {
       return descriptor
     }
@@ -1128,7 +1129,7 @@ fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): Id
         @Suppress("SSBasedInspection")
         return runBlocking {
           loadFromPluginDir(dir = rootDir, loadingContext = loadingContext, pool = NonShareableJavaZipFilePool(), isUnitTestMode = PluginManagerCore.isUnitTestMode)
-            ?.apply { initialize(context = loadingContext) }
+            ?.apply { initialize(context = initContext) }
         }
       }
     }
