@@ -24,5 +24,10 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
+    <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.venv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" scope="TEST" />
   </component>
 </module>
