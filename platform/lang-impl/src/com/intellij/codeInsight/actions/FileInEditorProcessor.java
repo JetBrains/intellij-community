@@ -303,7 +303,7 @@ public final class FileInEditorProcessor {
 
     private FormattedMessageBuilder(Editor editor, PsiFile file) {
       myEditor = editor;
-      myPostFormatPopupCustomization = ContainerUtil.find(PostFormatPopupCustomization.getEP_NAME().getExtensionsIfPointIsRegistered(),
+      myPostFormatPopupCustomization = ContainerUtil.find(PostFormatPopupCustomization.getEP_NAME().getExtensionList(),
                                                           it -> it.isApplicableFor(file, myProject));
     }
 

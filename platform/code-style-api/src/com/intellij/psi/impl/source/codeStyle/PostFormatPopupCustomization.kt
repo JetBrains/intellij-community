@@ -5,12 +5,14 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
  * The `PostFormatPopupCustomization` extension allows customizing
  * the appearance of the popup displayed after code formatting.
  */
+@ApiStatus.Internal
 interface PostFormatPopupCustomization {
   companion object {
     @JvmStatic

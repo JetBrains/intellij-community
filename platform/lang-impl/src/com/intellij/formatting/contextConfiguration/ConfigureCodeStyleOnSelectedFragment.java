@@ -25,10 +25,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.impl.source.codeStyle.AdjustCodeStyleSettingsHandler;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +88,14 @@ public final class ConfigureCodeStyleOnSelectedFragment implements IntentionActi
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
     assert settingsProvider != null;
+    AdjustCodeStyleSettingsHandler handler = ContainerUtil.find(
+      AdjustCodeStyleSettingsHandler.getEP_NAME().getExtensionList(),
+      it -> it.isApplicableFor(file, project)
+    );
+    if (handler != null) {
+      handler.handleAdjustCodestyleAction(file, project);
+      return;
+    }
 
     //reformat before calculating settings to show
     //to avoid considering that arbitrary first setting affects formatting for this fragment

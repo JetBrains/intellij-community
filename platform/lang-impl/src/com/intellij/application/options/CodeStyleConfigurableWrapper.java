@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,6 +173,7 @@ public class CodeStyleConfigurableWrapper
     return myPanel != null ? () -> myPanel.highlightOptions(option) : null;
   }
 
+  @ApiStatus.Internal
   public CodeStyleSettingsProvider getSettingsProvider() {
     return myProvider;
   }
