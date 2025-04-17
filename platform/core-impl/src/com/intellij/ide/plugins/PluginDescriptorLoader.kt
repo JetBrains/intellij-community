@@ -406,7 +406,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
   return list
 }
 
-suspend fun loadDescriptors(zipPoolDeferred: Deferred<ZipEntryResolverPool>, mainClassLoaderDeferred: Deferred<ClassLoader>?): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
+suspend fun loadAndInitDescriptors(zipPoolDeferred: Deferred<ZipEntryResolverPool>, mainClassLoaderDeferred: Deferred<ClassLoader>?): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val result = DescriptorListLoadingContext(
@@ -414,7 +414,7 @@ suspend fun loadDescriptors(zipPoolDeferred: Deferred<ZipEntryResolverPool>, mai
     isMissingSubDescriptorIgnored = true,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
   ).use { context ->
-    context to loadDescriptors(
+    context to loadAndInitDescriptors(
       context = context,
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,
@@ -432,7 +432,7 @@ internal fun CoroutineScope.scheduleLoading(
   logDeferred: Deferred<Logger>?,
 ): Deferred<PluginSet> {
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
-    loadDescriptors(zipPoolDeferred, mainClassLoaderDeferred)
+    loadAndInitDescriptors(zipPoolDeferred, mainClassLoaderDeferred)
   }
   val pluginSetDeferred = async {
     val (context, loadingResult) = resultDeferred.await()
@@ -514,7 +514,7 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
 /**
  * Returns enabled plugins only.
  */
-private suspend fun loadDescriptors(
+private suspend fun loadAndInitDescriptors(
   context: DescriptorListLoadingContext,
   isUnitTestMode: Boolean = PluginManagerCore.isUnitTestMode,
   isRunningFromSources: Boolean,

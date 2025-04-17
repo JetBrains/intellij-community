@@ -71,7 +71,7 @@ object PluginAutoUpdater {
 
     val currentDescriptors = span("loading existing descriptors") {
       ZipFilePoolImpl().use { pool ->
-        val result = loadDescriptors(
+        val result = loadAndInitDescriptors(
           CompletableDeferred(pool),
           CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader)
         )
