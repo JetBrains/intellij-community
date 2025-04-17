@@ -10,6 +10,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -27,6 +29,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
+  val data: UserDataHolderEx = UserDataHolderBase()
+
   abstract var installedPackages: List<PythonPackage>
 
   abstract val repositoryManager: PythonRepositoryManager

@@ -5,14 +5,16 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
+
+private val MUTEX_KEY = Key.create<Mutex>("${PythonPackageManagerJobService::class.java.name}.mutex")
 
 /**
  * This service allows asynchronous and potentially long-running tasks tied to a specific [PythonPackageManager] instance (per SDK)
@@ -29,10 +31,11 @@ import java.util.concurrent.ConcurrentMap
  */
 @Service(Service.Level.PROJECT)
 internal class PythonPackageManagerJobService {
-  private val mutexes: ConcurrentMap<PythonPackageManager, Mutex> = ConcurrentHashMap()
 
   private fun getMutex(manager: PythonPackageManager): Mutex {
-    return this.mutexes.getOrPut(manager) { Mutex() }
+    return synchronized(manager.data) {
+      manager.data.getOrCreateUserData(MUTEX_KEY) { Mutex() }
+    }
   }
 
   fun isRunLocked(manager: PythonPackageManager): Boolean = getMutex(manager).isLocked
