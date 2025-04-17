@@ -31,8 +31,7 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
                          """.trimIndent())
     importProjectAsync()
     assertFalse(projectPath.resolve("target").exists())
-    val info = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
-    assertTrue("Console should print command line", info.system.contains("-Didea.version="))
+    execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
     assertTrue(projectPath.resolve("target").exists())
   }
 
@@ -59,7 +58,8 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
     assertExcludes("project", "target")
   }
 
-  private fun execute(params: MavenRunnerParameters): ExecutionInfo {
+
+  protected fun execute(params: MavenRunnerParameters): ExecutionInfo {
     val sema = Semaphore()
     val stdout = StringBuilder()
     val stderr = StringBuilder()
