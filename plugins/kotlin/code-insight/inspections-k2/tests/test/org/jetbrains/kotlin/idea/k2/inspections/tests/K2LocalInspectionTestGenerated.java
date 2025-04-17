@@ -15545,11 +15545,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             public void testUsedAsExpression() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/usedAsExpression.kt");
             }
-
-            @TestMetadata("version12.kt")
-            public void testVersion12() throws Exception {
-                runTest("../../../idea/tests/testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/version12.kt");
-            }
         }
     }
 

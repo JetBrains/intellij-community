@@ -13012,11 +13012,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testUsedAsExpression() throws Exception {
                 runTest("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/usedAsExpression.kt");
             }
-
-            @TestMetadata("version12.kt")
-            public void testVersion12() throws Exception {
-                runTest("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/version12.kt");
-            }
         }
     }
 
