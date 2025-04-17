@@ -12,7 +12,13 @@ import java.nio.file.Path
 
 
 fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
-  val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet())
+  val loadingContext = DescriptorListLoadingContext()
+  val initContext = PluginInitializationContext.build(
+    disabledPlugins = emptySet(),
+    expiredPlugins = emptySet(),
+    brokenPluginVersions = emptyMap(),
+    getProductBuildNumber = { PluginManagerCore.buildNumber }
+  )
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
@@ -26,7 +32,7 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
     it.consume(input, path.toString())
     it.getBuilder()
   }
-  context.patchPlugin(rawBuilder)
+  loadingContext.patchPlugin(rawBuilder)
   if (id != null) {
     rawBuilder.id = id.idString
   }
@@ -35,28 +41,36 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
   loadPluginSubDescriptors(
     descriptor = result,
     pathResolver = pathResolver,
-    loadingContext = context,
+    loadingContext = loadingContext,
     dataLoader = dataLoader,
     pluginDir = path,
     pool = ZipFilePoolImpl(),
   )
-  return result.apply { initialize(context = context) }
+  return result.apply { initialize(context = initContext) }
 }
 
 fun readAndInitDescriptorFromBytesForTest(
   path: Path,
   isBundled: Boolean,
   data: ByteArray,
-  context: DescriptorListLoadingContext,
+  loadingContext: DescriptorListLoadingContext,
+  initContext: PluginInitializationContext,
   pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): IdeaPluginDescriptorImpl {
-  val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
-    context.patchPlugin(it.getBuilder())
+    loadingContext.patchPlugin(it.getBuilder())
     it.build()
   }
   val result = IdeaPluginDescriptorImpl(raw = raw, pluginPath = path, isBundled = isBundled)
-  loadPluginSubDescriptors(descriptor = result, pathResolver = pathResolver, loadingContext = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
-  return result.apply { initialize(context = context) }
+  loadPluginSubDescriptors(
+    descriptor = result,
+    pathResolver = pathResolver,
+    loadingContext = loadingContext,
+    dataLoader = dataLoader,
+    pluginDir = path,
+    pool = ZipFilePoolImpl()
+  )
+  return result.apply { initialize(context = initContext) }
 }

@@ -295,10 +295,13 @@ class PluginManagerTest {
     private fun loadAndInitializeDescriptors(testDataName: String, isBundled: Boolean): PluginManagerState {
       val file = Path.of(testDataPath, testDataName)
       val buildNumber = BuildNumber.fromString("2042.42")!!
-      val parentContext = DescriptorListLoadingContext(
-        customDisabledPlugins = setOf(),
-        customExpiredPlugins = setOf(),
-        customBrokenPluginVersions = mapOf(),
+      val loadingContext = DescriptorListLoadingContext(
+        getProductBuildNumber = { buildNumber }
+      )
+      val initContext = PluginInitializationContext.build(
+        disabledPlugins = emptySet(),
+        expiredPlugins = emptySet(),
+        brokenPluginVersions = emptyMap(),
         getProductBuildNumber = { buildNumber }
       )
       val root = readXmlAsModel(Files.newInputStream(file))
@@ -387,22 +390,22 @@ class PluginManagerTest {
           pluginPath = Path.of(Strings.trimStart(url, "file://"))
         }
         val descriptor = readAndInitDescriptorFromBytesForTest(
-          pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver!!, LocalFsDataLoader(pluginPath))
+          pluginPath, isBundled, elementAsBytes(element), loadingContext, initContext, pathResolver!!, LocalFsDataLoader(pluginPath))
         list.add(descriptor)
         descriptor.jarFiles = mutableListOf<Path>()
       }
-      parentContext.close()
+      loadingContext.close()
       val result = PluginLoadingResult(false)
       result.initAndAddAll(
         descriptors = list.asSequence(),
         overrideUseIfCompatible = false,
         productBuildNumber = BuildNumber.fromString("2042.42")!!,
-        isPluginDisabled = parentContext::isPluginDisabled,
-        isPluginBroken = parentContext::isPluginBroken
+        isPluginDisabled = initContext::isPluginDisabled,
+        isPluginBroken = initContext::isPluginBroken
       )
       return PluginManagerCore.initializePlugins(
-        loadingContext = parentContext,
-        initContext = parentContext,
+        loadingContext = loadingContext,
+        initContext = initContext,
         loadingResult = result,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
         checkEssentialPlugins = false,
