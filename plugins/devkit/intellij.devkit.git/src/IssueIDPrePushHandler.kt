@@ -17,15 +17,13 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.extension
 import kotlin.io.path.invariantSeparatorsPathString
 
-internal abstract class IssueIDPrePushHandler : PrePushHandler {
-  abstract val paths: List<String>
+internal abstract class AbstractIntelliJProjectPrePushHandler : PrePushHandler {
+  open val paths: List<String> = listOf()
   open val pathsToIgnore = listOf("/test/", "/testData/")
-  abstract val commitMessageRegex: Regex
-  open val ignorePattern: Regex = Regex("(?!.*)")
 
   abstract fun isAvailable(): Boolean
 
-  internal fun containSources(files: Collection<VirtualFile>) =
+  fun containSources(files: Collection<VirtualFile>) =
     files.asSequence()
       .map { file -> Path.of(file.path) }
       .any { path ->
@@ -35,31 +33,17 @@ internal abstract class IssueIDPrePushHandler : PrePushHandler {
         && pathsToIgnore.none { siPath.contains(it) }
       }
 
-  fun commitMessageIsCorrect(message: String): Boolean = message.matches(commitMessageRegex) || message.matches(ignorePattern)
+  private fun handlerIsApplicable(project: Project): Boolean =
+    isAvailable() && IntelliJProjectUtil.isIntelliJPlatformProject(project)
 
-  companion object {
-    private val fileExtensionsNotToTrack = setOf("iml", "md")
-
-    private fun <T> invokeAndWait(modalityState: ModalityState, computable: () -> T): T {
-      val ref = AtomicReference<T>()
-      ApplicationManager.getApplication().invokeAndWait({ ref.set(computable.invoke()) }, modalityState)
-      return ref.get()
-    }
-  }
-
-  private fun handlerIsApplicable(project: Project): Boolean = isAvailable() && IntelliJProjectUtil.isIntelliJPlatformProject(project)
-
-  override fun handle(project: Project, pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result {
-    if (!handlerIsApplicable(project)) return PrePushHandler.Result.OK
-
-    return if (pushDetails.any { it.isTargetBranchProtected(project) && it.hasCommitsToEdit(indicator.modalityState) })
+  override fun handle(project: Project, pushDetails: MutableList<PushInfo>, indicator: ProgressIndicator): PrePushHandler.Result =
+    if (handlerIsApplicable(project) && pushDetails.any { isTargetBranchProtected(project, it) && it.complyTheRule(project, indicator.modalityState) }) {
       PrePushHandler.Result.ABORT_AND_CLOSE
-    else PrePushHandler.Result.OK
-  }
+    } else {
+      PrePushHandler.Result.OK
+    }
 
-  private fun PushInfo.isTargetBranchProtected(project: Project) = GitSharedSettings.getInstance(project).isBranchProtected(pushSpec.target.presentation)
-
-  private fun PushInfo.hasCommitsToEdit(modalityState: ModalityState): Boolean {
+  protected fun PushInfo.complyTheRule(project: Project, modalityState: ModalityState): Boolean {
     val commitsToWarnAbout = commits.asSequence()
       .filter(::breaksMessageRules)
       .map { it.id.toShortString() to it.subject }
@@ -67,6 +51,35 @@ internal abstract class IssueIDPrePushHandler : PrePushHandler {
 
     if (commitsToWarnAbout.isEmpty()) return false
 
+    return doCommitsViolateRule(project, commitsToWarnAbout, modalityState)
+  }
+
+  abstract fun doCommitsViolateRule(project: Project, commitsToWarnAbout: List<Pair<String, String>>, modalityState: ModalityState): Boolean
+
+  protected open fun isTargetBranchProtected(project: Project, pushInfo: PushInfo): Boolean =
+    GitSharedSettings.getInstance(project).isBranchProtected(pushInfo.pushSpec.target.presentation)
+
+  protected open fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean =
+    containSources(commit.changes.mapNotNull { it.virtualFile })
+
+  companion object {
+    internal val fileExtensionsNotToTrack = setOf("iml", "md")
+
+    internal fun <T> invokeAndWait(modalityState: ModalityState, computable: () -> T): T {
+      val ref = AtomicReference<T>()
+      ApplicationManager.getApplication().invokeAndWait({ ref.set(computable.invoke()) }, modalityState)
+      return ref.get()
+    }
+  }
+}
+
+internal abstract class IssueIDPrePushHandler : AbstractIntelliJProjectPrePushHandler() {
+  abstract val commitMessageRegex: Regex
+  open val ignorePattern: Regex = Regex("(?!.*)")
+
+  override val pathsToIgnore = listOf("/test/", "/testData/")
+
+  override fun doCommitsViolateRule(project: Project, commitsToWarnAbout: List<Pair<String, String>>, modalityState: ModalityState): Boolean {
     val commitsInfo = commitsToWarnAbout.joinToString("<br/>") { hashAndSubject ->
       "${hashAndSubject.first}: ${hashAndSubject.second}"
     }
@@ -86,6 +99,10 @@ internal abstract class IssueIDPrePushHandler : PrePushHandler {
     return !commitAsIs
   }
 
-  private fun breaksMessageRules(commit: VcsFullCommitDetails) =
-    containSources(commit.changes.mapNotNull { it.virtualFile }) && !commitMessageIsCorrect(commit.fullMessage)
+  fun commitMessageIsCorrect(message: String): Boolean =
+    message.matches(commitMessageRegex) || message.matches(ignorePattern)
+
+  override fun breaksMessageRules(commit: VcsFullCommitDetails): Boolean {
+    return super.breaksMessageRules(commit) && !commitMessageIsCorrect(commit.fullMessage)
+  }
 }
