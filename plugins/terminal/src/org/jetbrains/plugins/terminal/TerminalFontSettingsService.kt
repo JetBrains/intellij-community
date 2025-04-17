@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
+import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -63,6 +64,14 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
     // then overwrite the subset that the terminal settings provide
     newPreferences.clearFonts()
     newPreferences.addFontFamily(settings.fontFamily)
+    // These two are not really used by the terminal at the moment,
+    // but are needed so that the families are saved,
+    // otherwise migration in com.intellij.openapi.editor.colors.impl.AppFontOptions.copyState
+    // will be triggered, and that can mess up the saved settings completely (IJPL-184027).
+    val regularSubFamily = FontFamilyService.getRecommendedSubFamily(settings.fontFamily)
+    newPreferences.regularSubFamily = regularSubFamily
+    val boldSubFamily = FontFamilyService.getRecommendedBoldSubFamily(settings.fontFamily, regularSubFamily)
+    newPreferences.boldSubFamily = boldSubFamily
     newPreferences.setFontSize(settings.fontFamily, settings.fontSize.floatValue)
     newPreferences.lineSpacing = settings.lineSpacing.floatValue
     // then apply the settings that aren't a part of FontPreferences
