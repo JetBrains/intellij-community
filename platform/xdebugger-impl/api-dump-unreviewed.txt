@@ -740,7 +740,7 @@ c:com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
-- a:showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
+- showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
 f:com.intellij.xdebugger.impl.inline.InlineWatch
 - <init>(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition):V
 - f:getExpression():com.intellij.xdebugger.XExpression

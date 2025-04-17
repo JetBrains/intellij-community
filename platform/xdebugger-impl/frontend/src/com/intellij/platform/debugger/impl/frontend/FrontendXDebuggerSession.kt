@@ -33,6 +33,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.*
@@ -275,7 +276,13 @@ class FrontendXDebuggerSession private constructor(
   override fun getTopFramePosition(): XSourcePosition? = topSourcePosition.value
 
   override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
-    TODO("Not yet implemented")
+    // TODO Support XSourceKind
+    return frame.sourcePosition
+  }
+
+  override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
+    // TODO Support XSourceKind
+    return frame.sourcePosition
   }
 
   override fun getCurrentExecutionStack(): XExecutionStack? {

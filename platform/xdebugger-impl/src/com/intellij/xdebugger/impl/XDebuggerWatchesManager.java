@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
@@ -166,7 +167,7 @@ public final class XDebuggerWatchesManager {
 
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
                                 @NotNull Editor mainEditor,
-                                @NotNull XDebugSession session,
+                                @NotNull XDebugSessionProxy session,
                                 @Nullable XExpression expression) {
     InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(presentationPosition, session, mainEditor, expression);
     inplaceEditor.show();
