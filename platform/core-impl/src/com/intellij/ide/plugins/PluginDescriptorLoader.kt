@@ -1099,11 +1099,12 @@ fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): Id
 
   val path = file.toString()
   if (path.endsWith(".jar", ignoreCase = true)) {
-    @Suppress("SSBasedInspection")
-    val descriptor = runBlocking {
-      loadDescriptorFromJar(file = file, context = context, pool = NonShareableJavaZipFilePool(), pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)
-        ?.apply { initialize(context = context) }
-    }
+    val descriptor = loadDescriptorFromJar(
+      file = file,
+      context = context,
+      pool = NonShareableJavaZipFilePool(),
+      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+    )?.apply { initialize(context = context) }
     if (descriptor != null) {
       return descriptor
     }
