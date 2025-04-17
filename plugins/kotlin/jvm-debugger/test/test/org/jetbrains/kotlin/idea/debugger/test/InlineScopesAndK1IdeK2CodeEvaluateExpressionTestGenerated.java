@@ -2028,6 +2028,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/jvmNameConstEvaluation.kt");
             }
 
+            @TestMetadata("jvmSpecifiedNamesInlining.kt")
+            public void testJvmSpecifiedNamesInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/jvmSpecifiedNamesInlining.kt");
+            }
+
             @TestMetadata("kClass.kt")
             public void testKClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/kClass.kt");
