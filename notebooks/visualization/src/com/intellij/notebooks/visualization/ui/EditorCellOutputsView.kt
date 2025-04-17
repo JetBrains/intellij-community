@@ -294,6 +294,7 @@ class EditorCellOutputsView(
     // DS-1972 Without revalidation, the component would be just invalidated and would be rendered only after anything else requests
     // for repainting the editor.
     newComponent.component.revalidate()
+    inlay?.update()
   }
 
   private fun <A, B> Iterator<A>.zip(other: Iterator<B>): Iterator<Pair<A, B>> = object : Iterator<Pair<A, B>> {

@@ -196,7 +196,7 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public int calcHeightInPixels(@NotNull Inlay inlay) {
-      return Math.max(getHeight(), 0);
+      return Math.max(getPreferredHeight(), 0);
     }
 
     @Override
