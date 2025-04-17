@@ -24,14 +24,14 @@ import org.jetbrains.annotations.VisibleForTesting
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
-  private val sessions = MutableStateFlow<List<FrontendXDebuggerSession>>(listOf())
+  private val sessionsFlow = MutableStateFlow<List<FrontendXDebuggerSession>>(listOf())
   private val synchronousExecutor = Channel<suspend () -> Unit>(capacity = Integer.MAX_VALUE)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val currentSession: StateFlow<FrontendXDebuggerSession?> =
     channelFlow {
       XDebuggerManagerApi.getInstance().currentSession(project.projectId())
-        .combine(sessions) { currentSessionId, sessions ->
+        .combine(sessionsFlow) { currentSessionId, sessions ->
           currentSessionId to sessions
         }
         .collectLatest { (currentSessionId, sessions) ->
@@ -42,6 +42,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   internal val breakpointsManager = FrontendXBreakpointManager(project, cs)
+  internal val sessions get() = sessionsFlow.value
 
   init {
     cs.launch {
@@ -67,7 +68,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
           }
           is XDebuggerManagerSessionEvent.ProcessStopped -> {
             synchronousExecutor.trySend {
-              sessions.update { sessions ->
+              sessionsFlow.update { sessions ->
                 val sessionToRemove = sessions.firstOrNull { it.id == event.sessionId }
                 if (sessionToRemove != null) {
                   project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStopped(sessionToRemove)
@@ -81,7 +82,7 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
           }
           is XDebuggerManagerSessionEvent.CurrentSessionChanged -> {
             synchronousExecutor.trySend {
-              val sessions = sessions.value
+              val sessions = sessionsFlow.value
               val previousSession = sessions.firstOrNull { it.id == event.previousSession }
               val currentSession = sessions.firstOrNull { it.id == event.currentSession }
               project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).activeSessionChanged(previousSession, currentSession)
@@ -93,12 +94,12 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
   }
 
   internal fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {
-    return sessions.value.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
+    return sessionsFlow.value.firstOrNull { it.sessionTab?.runContentDescriptor === descriptor }?.id
   }
 
   private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto): XDebugSessionProxy {
     val newSession = FrontendXDebuggerSession.create(project, cs, sessionDto)
-    val old = sessions.getAndUpdate {
+    val old = sessionsFlow.getAndUpdate {
       it + newSession
     }
     assert(old.none { it.id == sessionDto.id }) { "Session with id ${sessionDto.id} already exists" }

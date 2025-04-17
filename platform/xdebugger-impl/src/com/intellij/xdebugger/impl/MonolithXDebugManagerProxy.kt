@@ -51,6 +51,13 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     }
   }
 
+  override fun getSessions(project: Project): List<XDebugSessionProxy> {
+    val managerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
+    return managerImpl.debugSessions.map {
+      XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(it)
+    }
+  }
+
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
   }

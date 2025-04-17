@@ -26,6 +26,7 @@ interface XDebugManagerProxy {
   fun getCurrentSessionProxy(project: Project): XDebugSessionProxy?
   fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId?
   fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?>
+  fun getSessions(project: Project): List<XDebugSessionProxy>
 
   fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy
 
