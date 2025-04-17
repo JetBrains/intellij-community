@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
@@ -16,11 +17,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
@@ -105,6 +102,25 @@ class FrontendXValue private constructor(
 
   override fun canNavigateToTypeSourceAsync(): Promise<Boolean?>? {
     return canNavigateToTypeSourceAsync()?.asCompletableFuture()?.asPromise()
+  }
+
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
+    // TODO
+    return super.computeInlineDebuggerData(callback)
+  }
+
+  override fun computeSourcePosition(navigatable: XNavigatable) {
+    cs.launch(Dispatchers.EDT) {
+      val sourcePosition: XSourcePositionDto? = XValueApi.getInstance().computeSourcePosition(xValueDto.id)
+      navigatable.setSourcePosition(sourcePosition?.sourcePosition())
+    }
+  }
+
+  override fun computeTypeSourcePosition(navigatable: XNavigatable) {
+    cs.launch(Dispatchers.EDT) {
+      val sourcePosition: XSourcePositionDto? = XValueApi.getInstance().computeTypeSourcePosition(xValueDto.id)
+      navigatable.setSourcePosition(sourcePosition?.sourcePosition())
+    }
   }
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {

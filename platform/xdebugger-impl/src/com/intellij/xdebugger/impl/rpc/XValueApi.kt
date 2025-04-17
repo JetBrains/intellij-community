@@ -22,6 +22,9 @@ interface XValueApi : RemoteApi<Unit> {
 
   suspend fun computeExpression(xValueId: XValueId): XExpressionDto?
 
+  suspend fun computeSourcePosition(xValueId: XValueId): XSourcePositionDto?
+  suspend fun computeTypeSourcePosition(xValueId: XValueId): XSourcePositionDto?
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XValueApi {

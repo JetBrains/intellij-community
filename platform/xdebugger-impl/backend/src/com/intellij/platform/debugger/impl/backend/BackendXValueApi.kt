@@ -10,11 +10,14 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
+import com.intellij.xdebugger.frame.XNavigatable
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.ui.tree.actions.computeSourcePositionWithTimeout
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -80,6 +83,26 @@ internal class BackendXValueApi : XValueApi {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
     val xExpression = xValueModel.xValue.calculateEvaluationExpression().asCompletableFuture().await() ?: return null
     return xExpression.toRpc()
+  }
+
+  override suspend fun computeSourcePosition(xValueId: XValueId): XSourcePositionDto? {
+    return computePosition(xValueId) { xValue, navigatable ->
+      xValue.computeSourcePosition(navigatable)
+    }
+  }
+
+  override suspend fun computeTypeSourcePosition(xValueId: XValueId): XSourcePositionDto? {
+    return computePosition(xValueId) { xValue, navigatable ->
+      xValue.computeTypeSourcePosition(navigatable)
+    }
+  }
+
+  private suspend fun computePosition(xValueId: XValueId, compute: (XValue, XNavigatable)-> Unit): XSourcePositionDto? {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
+    val sourcePosition = computeSourcePositionWithTimeout { navigatable ->
+      compute(xValueModel.xValue, navigatable)
+    }
+    return sourcePosition?.toRpc()
   }
 }
 
