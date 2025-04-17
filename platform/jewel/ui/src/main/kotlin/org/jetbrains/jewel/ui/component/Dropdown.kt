@@ -33,6 +33,7 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -53,10 +54,8 @@ import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.dropdownStyle
 
-@Deprecated(
-    message = "Use ListComboBox instead. This component will be removed in a future release.",
-    level = DeprecationLevel.WARNING,
-)
+@ScheduledForRemoval(inVersion = "2025.2")
+@Deprecated(message = "Use ListComboBox instead. This component will be removed in a future release.")
 @Composable
 public fun Dropdown(
     modifier: Modifier = Modifier,
@@ -172,6 +171,8 @@ public fun Dropdown(
     }
 }
 
+@ScheduledForRemoval(inVersion = "2025.2")
+@Deprecated(message = "Use ListComboBox instead. Dropdown will be removed in a future release.")
 @Immutable
 @JvmInline
 public value class DropdownState(public val state: ULong) : FocusableComponentState {

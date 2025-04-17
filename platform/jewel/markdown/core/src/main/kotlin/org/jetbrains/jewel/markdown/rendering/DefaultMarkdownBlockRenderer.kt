@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
@@ -76,32 +78,47 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
             for (block in blocks) {
-                render(block, enabled, onUrlClick, onTextClick)
+                render(block, enabled, onUrlClick, onTextClick, Modifier)
             }
         }
     }
 
     @Composable
-    override fun render(block: MarkdownBlock, enabled: Boolean, onUrlClick: (String) -> Unit, onTextClick: () -> Unit) {
+    override fun render(
+        block: MarkdownBlock,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
         when (block) {
-            is BlockQuote -> render(block, rootStyling.blockQuote, enabled, onUrlClick, onTextClick)
-            is FencedCodeBlock -> render(block, rootStyling.code.fenced)
-            is IndentedCodeBlock -> render(block, rootStyling.code.indented)
-            is Heading -> render(block, rootStyling.heading, enabled, onUrlClick, onTextClick)
-            is HtmlBlock -> render(block, rootStyling.htmlBlock)
-            is OrderedList -> render(block, rootStyling.list.ordered, enabled, onUrlClick, onTextClick)
-            is UnorderedList -> render(block, rootStyling.list.unordered, enabled, onUrlClick, onTextClick)
-            is ListItem -> render(block, enabled, onUrlClick, onTextClick)
-            is Paragraph -> render(block, rootStyling.paragraph, enabled, onUrlClick, onTextClick)
-            ThematicBreak -> renderThematicBreak(rootStyling.thematicBreak)
+            is BlockQuote -> render(block, rootStyling.blockQuote, enabled, onUrlClick, onTextClick, modifier)
+            is FencedCodeBlock -> render(block, rootStyling.code.fenced, enabled, modifier)
+            is IndentedCodeBlock -> render(block, rootStyling.code.indented, enabled, modifier)
+            is Heading -> render(block, rootStyling.heading, enabled, onUrlClick, onTextClick, modifier)
+            is HtmlBlock -> render(block, rootStyling.htmlBlock, enabled, modifier)
+            is OrderedList -> render(block, rootStyling.list.ordered, enabled, onUrlClick, onTextClick, modifier)
+            is UnorderedList -> render(block, rootStyling.list.unordered, enabled, onUrlClick, onTextClick, modifier)
+            is ListItem -> render(block, enabled, onUrlClick, onTextClick, modifier)
+            is Paragraph -> render(block, rootStyling.paragraph, enabled, onUrlClick, onTextClick, modifier)
+            ThematicBreak -> renderThematicBreak(rootStyling.thematicBreak, enabled, modifier)
             is CustomBlock -> {
                 rendererExtensions
                     .find { it.blockRenderer?.canRender(block) == true }
                     ?.blockRenderer
-                    ?.render(block, blockRenderer = this, inlineRenderer, enabled, onUrlClick, onTextClick)
+                    ?.render(
+                        block = block,
+                        blockRenderer = this,
+                        inlineRenderer = inlineRenderer,
+                        enabled = enabled,
+                        modifier = modifier,
+                        onUrlClick = onUrlClick,
+                        onTextClick = onTextClick,
+                    )
             }
         }
     }
@@ -113,6 +130,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
         val textColor =
@@ -124,7 +142,8 @@ public open class DefaultMarkdownBlockRenderer(
 
         Text(
             modifier =
-                Modifier.focusProperties { canFocus = false }
+                modifier
+                    .focusProperties { canFocus = false }
                     .clickable(interactionSource = interactionSource, indication = null, onClick = onTextClick),
             text = renderedContent,
             style = mergedStyle,
@@ -138,14 +157,15 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         when (block.level) {
-            1 -> render(block, styling.h1, enabled, onUrlClick, onTextClick)
-            2 -> render(block, styling.h2, enabled, onUrlClick, onTextClick)
-            3 -> render(block, styling.h3, enabled, onUrlClick, onTextClick)
-            4 -> render(block, styling.h4, enabled, onUrlClick, onTextClick)
-            5 -> render(block, styling.h5, enabled, onUrlClick, onTextClick)
-            6 -> render(block, styling.h6, enabled, onUrlClick, onTextClick)
+            1 -> render(block, styling.h1, enabled, onUrlClick, onTextClick, modifier)
+            2 -> render(block, styling.h2, enabled, onUrlClick, onTextClick, modifier)
+            3 -> render(block, styling.h3, enabled, onUrlClick, onTextClick, modifier)
+            4 -> render(block, styling.h4, enabled, onUrlClick, onTextClick, modifier)
+            5 -> render(block, styling.h5, enabled, onUrlClick, onTextClick, modifier)
+            6 -> render(block, styling.h6, enabled, onUrlClick, onTextClick, modifier)
             else -> error("Heading level ${block.level} not supported:\n$block")
         }
     }
@@ -157,6 +177,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
         Heading(
@@ -166,6 +187,7 @@ public open class DefaultMarkdownBlockRenderer(
             styling.underlineWidth,
             styling.underlineColor,
             styling.underlineGap,
+            modifier,
         )
     }
 
@@ -177,8 +199,9 @@ public open class DefaultMarkdownBlockRenderer(
         underlineWidth: Dp,
         underlineColor: Color,
         underlineGap: Dp,
+        modifier: Modifier,
     ) {
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Column(modifier = modifier.padding(paddingValues)) {
             val textColor = textStyle.color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
             val mergedStyle = textStyle.merge(TextStyle(color = textColor))
             Text(text = renderedContent, style = mergedStyle, modifier = Modifier.focusProperties { canFocus = false })
@@ -202,9 +225,11 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         Column(
-            Modifier.drawBehind {
+            modifier
+                .drawBehind {
                     val isLtr = layoutDirection == Ltr
                     val lineWidthPx = styling.lineWidth.toPx()
                     val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
@@ -222,7 +247,7 @@ public open class DefaultMarkdownBlockRenderer(
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
             CompositionLocalProvider(LocalContentColor provides styling.textColor) {
-                render(block.children, enabled, onUrlClick, onTextClick)
+                render(block.children, enabled, onUrlClick, onTextClick, Modifier)
             }
         }
     }
@@ -234,10 +259,11 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         when (block) {
-            is OrderedList -> render(block, styling.ordered, enabled, onUrlClick, onTextClick)
-            is UnorderedList -> render(block, styling.unordered, enabled, onUrlClick, onTextClick)
+            is OrderedList -> render(block, styling.ordered, enabled, onUrlClick, onTextClick, modifier)
+            is UnorderedList -> render(block, styling.unordered, enabled, onUrlClick, onTextClick, modifier)
         }
     }
 
@@ -248,6 +274,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val itemSpacing =
             if (block.isTight) {
@@ -256,7 +283,7 @@ public open class DefaultMarkdownBlockRenderer(
                 styling.itemVerticalSpacing
             }
 
-        Column(modifier = Modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
+        Column(modifier = modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
             for ((index, item) in block.children.withIndex()) {
                 Row {
                     val number = block.startFrom + index
@@ -273,7 +300,7 @@ public open class DefaultMarkdownBlockRenderer(
 
                     Spacer(Modifier.width(styling.numberContentGap))
 
-                    render(item, enabled, onUrlClick, onTextClick)
+                    render(item, enabled, onUrlClick, onTextClick, Modifier)
                 }
             }
         }
@@ -286,6 +313,7 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val itemSpacing =
             if (block.isTight) {
@@ -294,7 +322,7 @@ public open class DefaultMarkdownBlockRenderer(
                 styling.itemVerticalSpacing
             }
 
-        Column(modifier = Modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
+        Column(modifier = modifier.padding(styling.padding), verticalArrangement = Arrangement.spacedBy(itemSpacing)) {
             for (item in block.children) {
                 Row {
                     Text(
@@ -308,34 +336,47 @@ public open class DefaultMarkdownBlockRenderer(
 
                     Spacer(Modifier.width(styling.bulletContentGap))
 
-                    render(item, enabled, onUrlClick, onTextClick)
+                    render(item, enabled, onUrlClick, onTextClick, Modifier)
                 }
             }
         }
     }
 
     @Composable
-    override fun render(block: ListItem, enabled: Boolean, onUrlClick: (String) -> Unit, onTextClick: () -> Unit) {
-        Column(verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
-            render(block.children, enabled, onUrlClick, onTextClick)
+    override fun render(
+        block: ListItem,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
+            render(block.children, enabled, onUrlClick, onTextClick, Modifier)
         }
     }
 
     @Composable
-    override fun render(block: CodeBlock, styling: MarkdownStyling.Code) {
+    override fun render(block: CodeBlock, styling: MarkdownStyling.Code, enabled: Boolean, modifier: Modifier) {
         when (block) {
-            is FencedCodeBlock -> render(block, styling.fenced)
-            is IndentedCodeBlock -> render(block, styling.indented)
+            is FencedCodeBlock -> render(block, styling.fenced, enabled, modifier)
+            is IndentedCodeBlock -> render(block, styling.indented, enabled, modifier)
         }
     }
 
     @Composable
-    override fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented) {
+    override fun render(
+        block: IndentedCodeBlock,
+        styling: MarkdownStyling.Code.Indented,
+        enabled: Boolean,
+        modifier: Modifier,
+    ) {
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier.background(styling.background, styling.shape)
+            modifier
+                .background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
-                .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
+                .thenIf(styling.fillWidth) { fillMaxWidth() }
+                .thenIf(!enabled) { alpha(.5f) },
         ) {
             Text(
                 text = block.content,
@@ -350,13 +391,20 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: FencedCodeBlock, styling: MarkdownStyling.Code.Fenced) {
+    override fun render(
+        block: FencedCodeBlock,
+        styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
+        modifier: Modifier,
+    ) {
         val mimeType = block.mimeType ?: MimeType.Known.UNKNOWN
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier.background(styling.background, styling.shape)
+            modifier
+                .background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
-                .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
+                .thenIf(styling.fillWidth) { fillMaxWidth() }
+                .thenIf(!enabled) { alpha(.5f) },
         ) {
             Column(Modifier.padding(styling.padding)) {
                 if (styling.infoPosition.verticalAlignment == Alignment.Top) {
@@ -369,7 +417,7 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                renderWithMimeType(block, mimeType, styling)
+                renderCodeWithMimeType(block, mimeType, styling, enabled)
 
                 if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
@@ -385,20 +433,22 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    public open fun renderWithMimeType(
+    internal open fun renderCodeWithMimeType(
         block: FencedCodeBlock,
         mimeType: MimeType,
         styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
     ) {
         val content = block.content
-        val highlightedCode by
-            LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+        val highlighter = LocalCodeHighlighter.current
+        val highlightedCode by highlighter.highlight(content, mimeType).collectAsState(AnnotatedString(content))
         Text(
             text = highlightedCode,
             style = styling.editorTextStyle,
             modifier =
                 Modifier.focusProperties { canFocus = false }
-                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true)
+                    .thenIf(!enabled) { alpha(.5f) },
         )
     }
 
@@ -422,17 +472,17 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak) {
+    override fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak, enabled: Boolean, modifier: Modifier) {
         Divider(
             orientation = Orientation.Horizontal,
-            modifier = Modifier.padding(styling.padding).fillMaxWidth(),
+            modifier = modifier.padding(styling.padding).fillMaxWidth(),
             color = styling.lineColor,
             thickness = styling.lineWidth,
         )
     }
 
     @Composable
-    override fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock) {
+    override fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock, enabled: Boolean, modifier: Modifier) {
         // HTML blocks are intentionally not rendered
     }
 

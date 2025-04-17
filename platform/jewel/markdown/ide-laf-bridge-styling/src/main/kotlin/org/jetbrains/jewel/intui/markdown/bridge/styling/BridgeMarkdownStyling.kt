@@ -44,13 +44,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 public fun MarkdownStyling.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling =
-        InlinesStyling.create(
-            baseTextStyle,
-            defaultEditorTextStyle
-                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColor)
-                .toSpanStyle(),
-        ),
+    inlinesStyling: InlinesStyling = InlinesStyling.create(baseTextStyle, editorTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.create(inlinesStyling),
     heading: Heading = Heading.create(baseTextStyle),
@@ -335,6 +329,59 @@ public fun HtmlBlock.Companion.create(
 
 public fun InlinesStyling.Companion.create(
     textStyle: TextStyle = defaultTextStyle,
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
+    inlineCode: SpanStyle =
+        editorTextStyle
+            .merge(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColor, color = textStyle.color)
+            .toSpanStyle(),
+    link: SpanStyle = SpanStyle(color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor()),
+    linkDisabled: SpanStyle = SpanStyle(color = JBUI.CurrentTheme.Link.Foreground.DISABLED.toComposeColor()),
+    linkHovered: SpanStyle =
+        SpanStyle(
+            color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor(),
+            textDecoration = TextDecoration.Underline,
+        ),
+    linkFocused: SpanStyle =
+        SpanStyle(
+            color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
+            background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
+            textDecoration = TextDecoration.Underline,
+        ),
+    linkPressed: SpanStyle =
+        SpanStyle(
+            color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
+            background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
+            textDecoration = TextDecoration.Underline,
+        ),
+    linkVisited: SpanStyle = SpanStyle(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
+    emphasis: SpanStyle = SpanStyle(fontStyle = FontStyle.Italic),
+    strongEmphasis: SpanStyle = SpanStyle(fontWeight = FontWeight.Bold),
+    inlineHtml: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                color = JBUI.CurrentTheme.Label.disabledForeground().toComposeColor(),
+                background = Color.Unspecified,
+            )
+            .toSpanStyle(),
+): InlinesStyling =
+    InlinesStyling(
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkHovered = linkHovered,
+        linkFocused = linkFocused,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+    )
+
+@Deprecated("Use the variant without renderInlineHtml instead", level = DeprecationLevel.HIDDEN)
+public fun InlinesStyling.Companion.create(
+    textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
         defaultEditorTextStyle
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColor)
@@ -362,7 +409,7 @@ public fun InlinesStyling.Companion.create(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = true,
+    @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,
@@ -376,7 +423,6 @@ public fun InlinesStyling.Companion.create(
         emphasis = emphasis,
         strongEmphasis = strongEmphasis,
         inlineHtml = inlineHtml,
-        renderInlineHtml = renderInlineHtml,
     )
 
 private val defaultTextStyle

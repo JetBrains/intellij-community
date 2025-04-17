@@ -3,20 +3,13 @@
 package org.jetbrains.jewel.samples.ideplugin.dialog
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 internal class ComponentShowcaseDialogAction : DumbAwareAction() {
-    init {
-        ApplicationManager.getApplication()
-            .invokeLater({ initializeComposeMainDispatcherChecker() }, ModalityState.any())
-    }
-
     override fun actionPerformed(event: AnActionEvent) {
         val project = checkNotNull(event.project) { "Project not available" }
         val scope = project.service<ProjectScopeProviderService>().scope

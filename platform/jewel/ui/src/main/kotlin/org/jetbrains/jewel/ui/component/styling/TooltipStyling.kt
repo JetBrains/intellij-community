@@ -133,7 +133,7 @@ public class TooltipMetrics(
     public companion object {
         public fun defaults(
             contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
-            showDelay: Duration = 1200.milliseconds,
+            showDelay: Duration = 500.milliseconds, // ide.tooltip.initialReshowDelay
             cornerSize: CornerSize = CornerSize(4.dp),
             borderWidth: Dp = 1.dp,
             shadowSize: Dp = 12.dp,

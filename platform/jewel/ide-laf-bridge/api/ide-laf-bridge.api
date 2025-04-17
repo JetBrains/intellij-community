@@ -36,6 +36,7 @@ public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {
 	public static final fun retrieveIntAsDp-3F_vd3o (Ljava/lang/String;Landroidx/compose/ui/unit/Dp;)F
 	public static synthetic fun retrieveIntAsDp-3F_vd3o$default (Ljava/lang/String;Landroidx/compose/ui/unit/Dp;ILjava/lang/Object;)F
 	public static final fun retrieveIntAsDpOrUnspecified (Ljava/lang/String;)F
+	public static final fun retrievePlatformTextStyle ()Landroidx/compose/ui/text/PlatformTextStyle;
 	public static final fun retrieveTextStyle-WdJyH8Q (Ljava/lang/String;JJZIJ)Landroidx/compose/ui/text/TextStyle;
 	public static synthetic fun retrieveTextStyle-WdJyH8Q$default (Ljava/lang/String;JJZIJILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveTextStyle-tD9LlGs (Ljava/lang/String;Ljava/lang/String;JZIJ)Landroidx/compose/ui/text/TextStyle;
@@ -64,7 +65,7 @@ public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundE
 	public fun <init> (Ljava/util/List;Ljava/lang/String;)V
 }
 
-public final class org/jetbrains/jewel/bridge/JewelComposePanelKt {
+public final class org/jetbrains/jewel/bridge/JewelComposePanelWrapperKt {
 	public static final fun JewelComposeNoThemePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
 	public static synthetic fun JewelComposeNoThemePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
 	public static final fun JewelComposePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;

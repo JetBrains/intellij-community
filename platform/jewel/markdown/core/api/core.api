@@ -262,7 +262,7 @@ public abstract interface class org/jetbrains/jewel/markdown/extensions/Markdown
 
 public abstract interface class org/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension {
 	public abstract fun canRender (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;)Z
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;ZLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
 }
 
 public abstract interface class org/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineProcessorExtension {
@@ -341,6 +341,15 @@ public class org/jetbrains/jewel/markdown/rendering/DefaultInlineMarkdownRendere
 	public fun <init> (Ljava/util/List;)V
 	protected final fun getDelimitedNodeRendererExtensions ()Ljava/util/List;
 	public fun renderAsAnnotatedString (Ljava/lang/Iterable;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/text/AnnotatedString;
+	protected fun renderEmphasis (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$Emphasis;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/TextStyle;)V
+	protected fun renderHardLineBreak (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;Landroidx/compose/ui/text/TextStyle;)V
+	protected fun renderImage (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$Image;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLandroidx/compose/ui/text/TextStyle;)V
+	protected fun renderInlineCode (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$Code;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLandroidx/compose/ui/text/TextStyle;)V
+	protected fun renderInlineHtml (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$HtmlInline;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLandroidx/compose/ui/text/TextStyle;)V
+	protected fun renderLink (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$Link;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/TextStyle;)V
+	protected fun renderSoftLineBreak (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;Landroidx/compose/ui/text/TextStyle;)V
+	protected fun renderStrongEmphasis (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$StrongEmphasis;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;Landroidx/compose/ui/text/TextStyle;)V
+	protected fun renderText (Landroidx/compose/ui/text/AnnotatedString$Builder;Lorg/jetbrains/jewel/markdown/InlineMarkdown$Text;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLandroidx/compose/ui/text/TextStyle;)V
 }
 
 public class org/jetbrains/jewel/markdown/rendering/DefaultMarkdownBlockRenderer : org/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer {
@@ -353,22 +362,21 @@ public class org/jetbrains/jewel/markdown/rendering/DefaultMarkdownBlockRenderer
 	public fun getRendererExtensions ()Ljava/util/List;
 	public fun getRootStyling ()Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;
 	public fun plus (Lorg/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension;)Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;
-	public fun render (Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$BlockQuote;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$IndentedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Indented;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading$HN;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$HtmlBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$HtmlBlock;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$OrderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Ordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$UnorderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Unordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListItem;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Paragraph;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Paragraph;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun renderThematicBreak (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$ThematicBreak;Landroidx/compose/runtime/Composer;I)V
-	public fun renderWithMimeType-EWr_ITI (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Ljava/lang/String;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$BlockQuote;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$IndentedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Indented;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading$HN;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$HtmlBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$HtmlBlock;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$OrderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Ordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$UnorderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Unordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListItem;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Paragraph;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Paragraph;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun renderThematicBreak (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$ThematicBreak;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
 }
 
 public abstract interface class org/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer {
@@ -382,7 +390,8 @@ public final class org/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer
 public final class org/jetbrains/jewel/markdown/rendering/InlinesStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling$Companion;
-	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Z)V
+	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;)V
+	public synthetic fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Z)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getEmphasis ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getInlineCode ()Landroidx/compose/ui/text/SpanStyle;
@@ -393,7 +402,6 @@ public final class org/jetbrains/jewel/markdown/rendering/InlinesStyling {
 	public final fun getLinkHovered ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getLinkPressed ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getLinkVisited ()Landroidx/compose/ui/text/SpanStyle;
-	public final fun getRenderInlineHtml ()Z
 	public final fun getStrongEmphasis ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getTextLinkStyles ()Landroidx/compose/ui/text/TextLinkStyles;
 	public final fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
@@ -411,21 +419,21 @@ public abstract interface class org/jetbrains/jewel/markdown/rendering/MarkdownB
 	public abstract fun getRendererExtensions ()Ljava/util/List;
 	public abstract fun getRootStyling ()Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;
 	public abstract fun plus (Lorg/jetbrains/jewel/markdown/extensions/MarkdownRendererExtension;)Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;
-	public abstract fun render (Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$BlockQuote;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$IndentedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Indented;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading$HN;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$HtmlBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$HtmlBlock;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$OrderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Ordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$UnorderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Unordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListItem;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Paragraph;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Paragraph;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public abstract fun renderThematicBreak (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$ThematicBreak;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$BlockQuote;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$BlockQuote;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$IndentedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Indented;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading$HN;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$HtmlBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$HtmlBlock;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$OrderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Ordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock$UnorderedList;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List$Unordered;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$ListItem;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Paragraph;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Paragraph;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public abstract fun renderThematicBreak (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$ThematicBreak;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer$Companion {
@@ -803,10 +811,9 @@ public final class org/jetbrains/jewel/markdown/scrolling/AutoScrollingUtilKt {
 public class org/jetbrains/jewel/markdown/scrolling/ScrollSyncMarkdownBlockRenderer : org/jetbrains/jewel/markdown/rendering/DefaultMarkdownBlockRenderer {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Ljava/util/List;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$IndentedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Indented;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading$HN;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Paragraph;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Paragraph;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
-	public fun renderWithMimeType-EWr_ITI (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCodeBlock;Ljava/lang/String;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Fenced;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$IndentedCodeBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Code$Indented;ZLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Heading;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Heading$HN;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Paragraph;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling$Paragraph;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;I)V
 }
 
 public abstract class org/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer {

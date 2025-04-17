@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +14,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.dp
@@ -24,8 +28,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.UIBundle
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -33,6 +38,7 @@ import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 import org.jetbrains.jewel.ui.util.isDark
@@ -50,25 +56,24 @@ internal fun ComposeShowcase() {
     Title()
     Text("This is Compose bundled inside IntelliJ Platform!")
     Row {
-      val scrollState = rememberScrollState()
-      Column(
-        verticalArrangement = Arrangement.spacedBy(15.dp),
-        modifier = Modifier.weight(1f).verticalScroll(scrollState)
+      VerticallyScrollableContainer(
+        modifier = Modifier.weight(1f)
       ) {
-        CheckBox()
-        RadioButton()
-        Buttons()
-        Label()
-        SelectableText()
-        Tabs()
-        LinkLabels()
-        TextFieldSimple()
-        TextFieldWithButton()
-        TooltipAreaSimple()
+        Column(
+          verticalArrangement = Arrangement.spacedBy(15.dp),
+        ) {
+          CheckBox()
+          RadioButton()
+          Buttons()
+          Label()
+          SelectableText()
+          Tabs()
+          LinkLabels()
+          TextFieldSimple()
+          TextFieldWithButton()
+          TooltipAreaSimple()
+        }
       }
-
-      val adapter = rememberScrollbarAdapter(scrollState)
-      androidx.compose.foundation.VerticalScrollbar(adapter)
     }
   }
 }
@@ -176,7 +181,7 @@ private fun Buttons() {
           .onFocusEvent { focused = it.isFocused }
           .background(if (focused) JBUI.CurrentTheme.Focus.focusColor().toComposeColor() else Color.Unspecified, RoundedCornerShape(4.dp))
       ) {
-        Icon("expui/image/fitContent.svg", contentDescription = null, iconClass = AllIcons::class.java)
+        Icon(AllIconsKeys.General.FitContent, contentDescription = null, iconClass = AllIcons::class.java)
       }
       Text("← Click me #$state3")
     }
@@ -219,7 +224,7 @@ private fun LinkLabels() {
 
 @Composable
 private fun TextFieldSimple() {
-  var textFieldState by remember { mutableStateOf("") }
+  val textFieldState = rememberTextFieldState()
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -227,9 +232,6 @@ private fun TextFieldSimple() {
     Text("Text field:")
     TextField(
       textFieldState,
-      onValueChange = {
-        textFieldState = it
-      },
       modifier = Modifier.padding(5.dp)
     )
   }
@@ -238,14 +240,13 @@ private fun TextFieldSimple() {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TextFieldWithButton() {
-
-  var textFieldState by remember { mutableStateOf("") }
+  val textFieldState = rememberTextFieldState()
   var fileExists by remember { mutableStateOf(true) }
 
   LaunchedEffect(textFieldState) {
     delay(300)
     withContext(IO) {
-      fileExists = textFieldState.isEmpty() || File(textFieldState).exists()
+      fileExists = textFieldState.text.isEmpty() || File(textFieldState.text.toString()).exists()
     }
   }
 
@@ -253,7 +254,7 @@ private fun TextFieldWithButton() {
     val descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
     descriptor.title = UIBundle.message("file.chooser.default.title")
     FileChooser.chooseFile(descriptor, null, null) {
-      textFieldState = it.path
+      textFieldState.edit { replace(0, textFieldState.text.length, it.path) }
     }
   }
 
@@ -267,8 +268,7 @@ private fun TextFieldWithButton() {
   ) {
     Text("Choose file or folder:")
     TextField(
-      value = textFieldState,
-      onValueChange = { textFieldState = it },
+      textFieldState,
       modifier = Modifier
         .padding(5.dp)
         .height(28.dp)
@@ -289,7 +289,7 @@ private fun TextFieldWithButton() {
         ) {
           IconButton({ chooseFile() }, Modifier.size(18.dp).pointerHoverIcon(PointerIcon.Hand).focusProperties { canFocus = false }) {
             AllIcons.General.OpenDisk
-            Icon("expui/inline/browse.svg", openFileChooserHint, iconClass = AllIcons::class.java)
+            Icon(AllIconsKeys.General.OpenDisk, openFileChooserHint, iconClass = AllIcons::class.java)
           }
         }
       },

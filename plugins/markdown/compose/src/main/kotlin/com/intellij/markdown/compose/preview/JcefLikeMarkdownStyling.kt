@@ -97,8 +97,7 @@ private fun createInlinesStyling(
     color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
     background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
   ),
-  linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
-  renderInlineHtml = false,
+  linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor())
 )
 
 private fun createParagraphStyling(inlinesStyling: InlinesStyling): Paragraph = Paragraph(inlinesStyling)

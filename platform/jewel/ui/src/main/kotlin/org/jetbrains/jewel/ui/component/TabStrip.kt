@@ -78,7 +78,7 @@ public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = M
                     )
                     .selectableGroup()
         ) {
-            tabs.forEach { TabImpl(isActive = tabStripState.isActive, tabData = it) }
+            tabs.forEach { tabData -> TabImpl(isActive = tabStripState.isActive, tabData = tabData, tabStyle = style) }
         }
 
         AnimatedVisibility(

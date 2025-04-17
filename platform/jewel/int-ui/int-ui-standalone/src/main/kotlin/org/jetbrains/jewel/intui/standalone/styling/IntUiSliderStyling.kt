@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
@@ -13,21 +12,18 @@ import org.jetbrains.jewel.ui.component.styling.SliderColors
 import org.jetbrains.jewel.ui.component.styling.SliderMetrics
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
 
-@Composable
 public fun SliderStyle.Companion.light(
     colors: SliderColors = SliderColors.light(),
     metrics: SliderMetrics = SliderMetrics.defaults(),
     thumbShape: Shape = CircleShape,
 ): SliderStyle = SliderStyle(colors, metrics, thumbShape)
 
-@Composable
 public fun SliderStyle.Companion.dark(
     colors: SliderColors = SliderColors.dark(),
     metrics: SliderMetrics = SliderMetrics.defaults(),
     thumbShape: Shape = CircleShape,
 ): SliderStyle = SliderStyle(colors, metrics, thumbShape)
 
-@Composable
 public fun SliderColors.Companion.light(
     track: Color = IntUiLightTheme.colors.gray(10),
     trackFilled: Color = IntUiLightTheme.colors.blue(6),
@@ -63,7 +59,6 @@ public fun SliderColors.Companion.light(
         thumbBorderHovered,
     )
 
-@Composable
 public fun SliderColors.Companion.dark(
     track: Color = IntUiDarkTheme.colors.gray(4),
     trackFilled: Color = IntUiDarkTheme.colors.blue(7),
@@ -99,7 +94,6 @@ public fun SliderColors.Companion.dark(
         thumbBorderHovered,
     )
 
-@Composable
 public fun SliderMetrics.Companion.defaults(
     trackHeight: Dp = 4.dp,
     thumbSize: DpSize = DpSize(14.dp, 14.dp),
