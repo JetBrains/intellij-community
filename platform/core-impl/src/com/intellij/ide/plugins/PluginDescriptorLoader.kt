@@ -1224,6 +1224,12 @@ fun testLoadAndInitDescriptorsFromClassPath(
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(loader)
   val buildNumber = BuildNumber.fromString("2042.42")!!
+  val initContext = PluginInitializationContext.build(
+    disabledPlugins = emptySet(),
+    expiredPlugins = emptySet(),
+    brokenPluginVersions = emptyMap(),
+    getProductBuildNumber = { buildNumber },
+  )
   val loadingContext = DescriptorListLoadingContext(
     customDisabledPlugins = Collections.emptySet(),
     customBrokenPluginVersions = Collections.emptyMap(),
@@ -1251,8 +1257,8 @@ fun testLoadAndInitDescriptorsFromClassPath(
     ),
     overrideUseIfCompatible = false,
     productBuildNumber = buildNumber,
-    isPluginDisabled = loadingContext::isPluginDisabled,
-    isPluginBroken = loadingContext::isPluginBroken
+    isPluginDisabled = initContext::isPluginDisabled,
+    isPluginBroken = initContext::isPluginBroken
   )
   return result.enabledPlugins
 }
