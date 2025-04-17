@@ -18,7 +18,7 @@ class CommunityPluginModelTest {
         "com.intellij.modules.python-in-mini-ide-capable", //defined in the ultimate part
         "com.intellij.modules.rider", //defined in the ultimate part
       ),
-      modulesToSkip = setOf(
+      modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
         "intellij.android.device-explorer",
       ),
       pathsIncludedFromLibrariesViaXiInclude = setOf(

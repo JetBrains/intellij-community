@@ -53,21 +53,25 @@ data class PluginValidationOptions(
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
   val referencedPluginIdsOfExternalPlugins: Set<String> = emptySet(),
   val pathsIncludedFromLibrariesViaXiInclude: Set<String> = emptySet(),
-  val modulesToSkip: Set<String> = emptySet(),
-  
+
   /**
    * Describes different core plugins (with ID `com.intellij`) located in the project sources. 
    * All of them are checked, but only the first one is used when checking dependencies from other plugins.  
    */
   val corePluginDescriptions: List<CorePluginDescription> = COMMUNITY_CORE_PLUGINS,
-  
+
   /**
    * Set of modules containing `plugin.xml` files which should be ignored because they correspond to smaller editions of plugins,
    * and other module contains `plugin.xml` file with the same ID. 
    * It's better to avoid such configurations, and include all optional parts as content modules in a single `plugin.xml`. 
    */
   val mainModulesOfAlternativePluginVariants: Set<String> = emptySet(),
-)
+
+  /**
+   * Set of modules where a descriptor file named after the module is placed in META-INF directory, not in the resource root.
+   */
+  val modulesWithIncorrectlyPlacedModuleDescriptor: Set<String> = emptySet(),
+  )
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
   val project = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
@@ -138,7 +142,6 @@ class PluginModelValidator(
   fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
     val moduleDescriptorFileInfos = project.modules.asSequence()
-      .filterNot { validationOptions.modulesToSkip.contains(it.name) }
       .mapNotNull { module ->
         try {
           createFileInfo(module)
@@ -508,17 +511,19 @@ class PluginModelValidator(
   }
 
   private fun createFileInfo(module: JpsModule): ModuleDescriptorFileInfo? {
-    for (sourceRoot in module.productionSourceRoots) {
-      val moduleXml = sourceRoot.findFile("META-INF/${module.name}.xml")
-      if (moduleXml != null) {
-        reportError(
-          "Module descriptor must be in the root of module root",
-          module,
-          mapOf(
-            "module" to module.name,
-            "moduleDescriptor" to moduleXml,
-          ),
-        )
+    if (module.name !in validationOptions.modulesWithIncorrectlyPlacedModuleDescriptor) {
+      for (sourceRoot in module.productionSourceRoots) {
+        val moduleXml = sourceRoot.findFile("META-INF/${module.name}.xml")
+        if (moduleXml != null) {
+          reportError(
+            "Module descriptor must be in the root of module root",
+            module,
+            mapOf(
+              "module" to module.name,
+              "moduleDescriptor" to moduleXml,
+            ),
+          )
+        }
       }
     }
 
