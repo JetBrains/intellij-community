@@ -33,6 +33,7 @@ internal object AndroidStudioReleasesReader {
 
     private fun createBaseTypeSpec(className: ClassName, releases: ApiAndroidStudioReleases, resourceDirs: Set<File>) =
         TypeSpec.objectBuilder(className)
+            .addModifiers(KModifier.INTERNAL)
             .superclass(
                 ClassName.bestGuess("org.jetbrains.jewel.samples.ideplugin.releasessample.ContentSource")
                     .parameterizedBy(ContentItemClassName)
@@ -70,7 +71,7 @@ internal object AndroidStudioReleasesReader {
                 add("    versionName = \"%L\",\n", release.version)
                 add("    build = \"%L\",\n", release.build)
                 add("    platformBuild = \"%L\",\n", release.platformBuild)
-                add("    platformVersion = \"%L\",\n", release.platformVersion)
+                add("    platformVersion = \"%L\",\n", release.platformVersion ?: "N/A")
                 add("    channel = %L,\n", readChannel(release.channel))
                 add("    releaseDate = LocalDate(%L),\n", translateDate(release.date))
                 add("    key = \"%L\",\n", release.build)

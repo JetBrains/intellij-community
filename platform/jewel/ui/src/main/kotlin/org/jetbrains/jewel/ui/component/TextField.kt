@@ -15,10 +15,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,7 +30,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.offset
 import kotlin.math.max
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
@@ -76,7 +73,6 @@ import org.jetbrains.jewel.ui.theme.textFieldStyle
  * @param undecorated Whether to show the text field without decorations
  * @see com.intellij.ui.components.JBTextField
  */
-@Suppress("DuplicatedCode") // The dupe is scheduled for removal
 @Composable
 public fun TextField(
     state: TextFieldState,
@@ -136,64 +132,44 @@ public fun TextField(
     )
 }
 
-@ScheduledForRemoval(inVersion = "Before 1.0")
-@Deprecated("Please use TextField(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
-@Composable
-public fun TextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    readOnly: Boolean = false,
-    outline: Outline = Outline.None,
-    placeholder: @Composable (() -> Unit)? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    undecorated: Boolean = false,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions(),
-    onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextFieldStyle = JewelTheme.textFieldStyle,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-) {
-    var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
-    val textFieldValue = textFieldValueState.copy(text = value)
-    var lastTextValue by remember(value) { mutableStateOf(value) }
-
-    @Suppress("DEPRECATION")
-    TextField(
-        value = textFieldValue,
-        onValueChange = { newTextFieldValueState ->
-            textFieldValueState = newTextFieldValueState
-
-            val stringChangedSinceLastInvocation = lastTextValue != newTextFieldValueState.text
-            lastTextValue = newTextFieldValueState.text
-
-            if (stringChangedSinceLastInvocation) {
-                onValueChange(newTextFieldValueState.text)
-            }
-        },
-        modifier = modifier,
-        enabled = enabled,
-        readOnly = readOnly,
-        outline = outline,
-        placeholder = placeholder,
-        trailingIcon = trailingIcon,
-        leadingIcon = leadingIcon,
-        undecorated = undecorated,
-        visualTransformation = visualTransformation,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        onTextLayout = onTextLayout,
-        style = style,
-        interactionSource = interactionSource,
-    )
-}
-
-@Suppress("DuplicatedCode") // This is scheduled for removal
-@ScheduledForRemoval(inVersion = "Before 1.0")
-@Deprecated("Please use TextField(state) instead. If you want to observe text changes, use snapshotFlow { state.text }")
+/**
+ * A single-line text input component that follows the standard visual styling.
+ * > **Note:** you should prefer the state-based variant whenever possible. When the `TextFieldState`-based variant will
+ * > reach feature parity with this variant, we'll deprecate this variant and, after some time, remove it.
+ *
+ * Provides a text input field for single-line text entry with optional leading and trailing icons, placeholder text,
+ * and various text input features. The component supports standard text editing capabilities and platform-specific key
+ * bindings.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/input-field.html)
+ *
+ * **Usage example:**
+ * [`TextFields.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/TextFields.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBTextField`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBTextField.java)
+ * and [`JTextField`](https://docs.oracle.com/javase/tutorial/uiswing/components/textfield.html)
+ *
+ * @param value The state object controlling the text content and selection
+ * @param onValueChange A lambda invoked when the internal state changes
+ * @param modifier Modifier to be applied to the text field
+ * @param enabled Controls whether the text field can be interacted with
+ * @param readOnly Controls whether the text can be modified
+ * @param outline The outline style to be applied to the text field
+ * @param placeholder Content to display when the text field is empty
+ * @param leadingIcon Optional icon to display before the text
+ * @param trailingIcon Optional icon to display after the text
+ * @param undecorated Whether to show the text field without decorations
+ * @param visualTransformation Transforms text input before it appears in the text field
+ * @param keyboardOptions Options controlling keyboard input behavior
+ * @param keyboardActions Handler for keyboard actions
+ * @param onTextLayout Callback for text layout changes
+ * @param style The visual styling configuration for the text field
+ * @param textStyle The typography style to be applied to the text
+ * @param interactionSource Source of interactions for this text field
+ * @see com.intellij.ui.components.JBTextField
+ */
+@ExperimentalJewelApi
 @Composable
 public fun TextField(
     value: TextFieldValue,

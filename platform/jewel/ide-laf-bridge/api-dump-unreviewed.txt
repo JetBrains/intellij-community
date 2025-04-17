@@ -28,6 +28,7 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:retrieveIntAsDp-3F_vd3o(java.lang.String,androidx.compose.ui.unit.Dp):F
 - bs:retrieveIntAsDp-3F_vd3o$default(java.lang.String,androidx.compose.ui.unit.Dp,I,java.lang.Object):F
 - sf:retrieveIntAsDpOrUnspecified(java.lang.String):F
+- sf:retrievePlatformTextStyle():androidx.compose.ui.text.PlatformTextStyle
 - sf:retrieveTextStyle-WdJyH8Q(java.lang.String,J,J,Z,I,J):androidx.compose.ui.text.TextStyle
 - bs:retrieveTextStyle-WdJyH8Q$default(java.lang.String,J,J,Z,I,J,I,java.lang.Object):androidx.compose.ui.text.TextStyle
 - sf:retrieveTextStyle-tD9LlGs(java.lang.String,java.lang.String,J,Z,I,J):androidx.compose.ui.text.TextStyle
@@ -50,7 +51,7 @@ f:org.jetbrains.jewel.bridge.JewelBridgeException$KeysNotFoundException
 - org.jetbrains.jewel.bridge.JewelBridgeException
 - sf:$stable:I
 - <init>(java.util.List,java.lang.String):V
-f:org.jetbrains.jewel.bridge.JewelComposePanelKt
+f:org.jetbrains.jewel.bridge.JewelComposePanelWrapperKt
 - sf:JewelComposeNoThemePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent
 - bs:JewelComposeNoThemePanel$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):javax.swing.JComponent
 - sf:JewelComposePanel(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):javax.swing.JComponent

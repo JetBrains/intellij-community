@@ -377,7 +377,7 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectableColumnOnKeyEven
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyColumnKt {
-	public static final fun SelectableLazyColumn (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function1;Landroidx/compose/foundation/layout/Arrangement$Vertical;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/foundation/gestures/FlingBehavior;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SelectableLazyColumn (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/foundation/layout/PaddingValues;ZLkotlin/jvm/functions/Function1;Landroidx/compose/foundation/layout/Arrangement$Vertical;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/foundation/gestures/FlingBehavior;Lorg/jetbrains/jewel/foundation/lazy/tree/KeyActions;Lorg/jetbrains/jewel/foundation/lazy/tree/PointerEventActions;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/SelectableLazyItemScope : androidx/compose/foundation/lazy/LazyItemScope {
@@ -439,10 +439,12 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyListState :
 	public final fun getLayoutInfo ()Landroidx/compose/foundation/lazy/LazyListLayoutInfo;
 	public final fun getLazyListState ()Landroidx/compose/foundation/lazy/LazyListState;
 	public fun getSelectedKeys ()Ljava/util/Set;
+	public final fun isKeyboardNavigating ()Z
 	public fun isScrollInProgress ()Z
 	public fun scroll (Landroidx/compose/foundation/MutatePriority;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun scrollToItem (IZILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun scrollToItem$default (Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;IZILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun setKeyboardNavigating (Z)V
 	public final fun setLastActiveItemIndex (Ljava/lang/Integer;)V
 	public fun setSelectedKeys (Ljava/util/Set;)V
 }
@@ -905,7 +907,6 @@ public final class org/jetbrains/jewel/foundation/theme/JewelTheme$Companion {
 	public final fun getGlobalColors (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 	public final fun getName (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
-	public final fun getTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun isDark (Landroidx/compose/runtime/Composer;I)Z
 	public final fun isSwingCompatMode (Landroidx/compose/runtime/Composer;I)Z
 }
@@ -943,8 +944,6 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette {
 	public final fun grayOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public final fun green-vNxB06k (I)J
 	public final fun greenOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
-	public final fun grey-vNxB06k (I)J
-	public final fun greyOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public fun hashCode ()I
 	public final fun lookup-ijrfgN4 (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public final fun orange-vNxB06k (I)J

@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.unit.Dp
@@ -21,14 +20,12 @@ public val ComboBoxStyle.Companion.Default: IntUiDefaultComboBoxStyleFactory
     get() = IntUiDefaultComboBoxStyleFactory
 
 public object IntUiDefaultComboBoxStyleFactory {
-    @Composable
     public fun light(
         colors: ComboBoxColors = ComboBoxColors.Default.light(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.default(),
         icons: ComboBoxIcons = ComboBoxIcons.defaults(),
     ): ComboBoxStyle = ComboBoxStyle(colors, metrics, icons)
 
-    @Composable
     public fun dark(
         colors: ComboBoxColors = ComboBoxColors.Default.dark(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.default(),
@@ -40,14 +37,12 @@ public val ComboBoxStyle.Companion.Undecorated: IntUiUndecoratedComboBoxStyleFac
     get() = IntUiUndecoratedComboBoxStyleFactory
 
 public object IntUiUndecoratedComboBoxStyleFactory {
-    @Composable
     public fun light(
         colors: ComboBoxColors = ComboBoxColors.Undecorated.light(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.undecorated(),
         icons: ComboBoxIcons = ComboBoxIcons.defaults(),
     ): ComboBoxStyle = ComboBoxStyle(colors, metrics, icons)
 
-    @Composable
     public fun dark(
         colors: ComboBoxColors = ComboBoxColors.Undecorated.dark(),
         metrics: ComboBoxMetrics = ComboBoxMetrics.undecorated(),
@@ -59,7 +54,6 @@ public val ComboBoxColors.Companion.Default: IntUiDefaultComboBoxColorsFactory
     get() = IntUiDefaultComboBoxColorsFactory
 
 public object IntUiDefaultComboBoxColorsFactory {
-    @Composable
     public fun light(
         background: Color = IntUiLightTheme.colors.gray(14),
         backgroundDisabled: Color = IntUiLightTheme.colors.gray(13),
@@ -97,7 +91,6 @@ public object IntUiDefaultComboBoxColorsFactory {
             borderHovered = borderHovered,
         )
 
-    @Composable
     public fun dark(
         background: Color = IntUiDarkTheme.colors.gray(2),
         backgroundDisabled: Color = background,
@@ -140,7 +133,6 @@ public val ComboBoxColors.Companion.Undecorated: IntUiUndecoratedComboBoxColorsF
     get() = IntUiUndecoratedComboBoxColorsFactory
 
 public object IntUiUndecoratedComboBoxColorsFactory {
-    @Composable
     public fun light(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
@@ -173,7 +165,6 @@ public object IntUiUndecoratedComboBoxColorsFactory {
             borderHovered = Color.Transparent,
         )
 
-    @Composable
     public fun dark(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
@@ -208,10 +199,10 @@ public object IntUiUndecoratedComboBoxColorsFactory {
 }
 
 public fun ComboBoxMetrics.Companion.default(
-    arrowAreaSize: DpSize = DpSize(23.dp, 24.dp),
-    minSize: DpSize = DpSize(49.dp, 24.dp),
+    arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
+    minSize: DpSize = DpSize(77.dp, 28.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+    contentPadding: PaddingValues = PaddingValues(9.dp, 1.dp, 6.dp, 1.dp),
     popupContentPadding: PaddingValues = PaddingValues(vertical = 6.dp),
     borderWidth: Dp = 1.dp,
     maxPopupHeight: Dp = 200.dp,
@@ -227,10 +218,10 @@ public fun ComboBoxMetrics.Companion.default(
     )
 
 public fun ComboBoxMetrics.Companion.undecorated(
-    arrowAreaSize: DpSize = DpSize(23.dp, 24.dp),
-    minSize: DpSize = DpSize(49.dp, 24.dp),
+    arrowAreaSize: DpSize = DpSize(28.dp, 28.dp),
+    minSize: DpSize = DpSize(77.dp, 28.dp),
     cornerSize: CornerSize = CornerSize(4.dp),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+    contentPadding: PaddingValues = PaddingValues(9.dp, 1.dp, 6.dp, 1.dp),
     popupContentPadding: PaddingValues = PaddingValues(vertical = 6.dp),
     borderWidth: Dp = 0.dp,
     maxPopupHeight: Dp = 200.dp,
