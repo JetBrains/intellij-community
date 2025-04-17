@@ -251,7 +251,7 @@ fun loadPluginSubDescriptors(
     }
   }
 
-  descriptor.resolvePluginDependencies(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
+  descriptor.loadPluginDependencyDescriptors(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
 }
 
 @TestOnly
@@ -806,7 +806,7 @@ private fun loadPluginDescriptor(
     module.descriptor = subDescriptor
   }
 
-  descriptor.resolvePluginDependencies(loadingContext = loadingContext, pathResolver = pluginPathResolver, dataLoader = dataLoader)
+  descriptor.loadPluginDependencyDescriptors(loadingContext = loadingContext, pathResolver = pluginPathResolver, dataLoader = dataLoader)
   descriptor.jarFiles = fileItems.map { it.file }
   return descriptor
 }
@@ -995,7 +995,7 @@ private fun loadCoreProductPlugin(
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
   loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, loadingContext = loadingContext, dataLoader = dataLoader)
-  descriptor.resolvePluginDependencies(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
+  descriptor.loadPluginDependencyDescriptors(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
 
@@ -1357,7 +1357,7 @@ private fun loadDescriptorFromResource(
     else {
       loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, loadingContext = loadingContext, dataLoader = dataLoader)
     }
-    descriptor.resolvePluginDependencies(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
+    descriptor.loadPluginDependencyDescriptors(loadingContext = loadingContext, pathResolver = pathResolver, dataLoader = dataLoader)
     return descriptor
   }
   catch (e: CancellationException) {

@@ -75,7 +75,7 @@ class IdeaPluginDescriptorImpl private constructor(
     ContentModuleDescriptor,
 
     /**
-     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [resolvePluginDependencies]. See [createSub].
+     * Descriptor instantiated as a sub-descriptor of some [PluginMainDescriptor] _or_ another [DependsSubDescriptor] in [loadPluginDependencyDescriptors]. See [createSub].
      *
      * `descriptorPath` is _not_ null, `moduleName` and `moduleLoadingRule` properties are `null`.
      */
@@ -333,13 +333,13 @@ class IdeaPluginDescriptorImpl private constructor(
     return null
   }
 
-  internal fun resolvePluginDependencies(loadingContext: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
-    resolvePluginDependencies(loadingContext, pathResolver, dataLoader, ArrayList(3))
+  internal fun loadPluginDependencyDescriptors(loadingContext: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
+    loadPluginDependencyDescriptors(loadingContext, pathResolver, dataLoader, ArrayList(3))
 
-  private fun resolvePluginDependencies(context: DescriptorListLoadingContext,
-                                        pathResolver: PathResolver,
-                                        dataLoader: DataLoader,
-                                        visitedFiles: MutableList<String>) {
+  private fun loadPluginDependencyDescriptors(context: DescriptorListLoadingContext,
+                                              pathResolver: PathResolver,
+                                              dataLoader: DataLoader,
+                                              visitedFiles: MutableList<String>) {
     for (dependency in pluginDependencies) {
       // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
       val configFile = dependency.configFile ?: continue
@@ -381,7 +381,7 @@ class IdeaPluginDescriptorImpl private constructor(
       visitedFiles.add(configFile)
       try {
         val subDescriptor = createSub(raw, configFile, module = null)
-        subDescriptor.resolvePluginDependencies(context, pathResolver, dataLoader, visitedFiles)
+        subDescriptor.loadPluginDependencyDescriptors(context, pathResolver, dataLoader, visitedFiles)
         dependency.setSubDescriptor(subDescriptor)
       } finally {
         visitedFiles.removeLast()
