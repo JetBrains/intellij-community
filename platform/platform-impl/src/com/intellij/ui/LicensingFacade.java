@@ -38,8 +38,8 @@ public final class LicensingFacade {
    * {@code null} value is returned if expiration date is not applicable for the product or the license has not been obtained.
    */
   public @Nullable Date getExpirationDate(String productCode) {
-    final Map<String, Date> result = expirationDates;
-    return result != null? result.get(productCode) : null;
+    var result = expirationDates;
+    return result != null ? result.get(productCode) : null;
   }
 
   public @Nullable String getLicensedToMessage() {
@@ -51,8 +51,8 @@ public final class LicensingFacade {
   }
 
   public @NotNull List<String> getLicenseRestrictionsMessages() {
-    final List<String> result = restrictions;
-    return result != null? result : Collections.emptyList();
+    var result = restrictions;
+    return result != null ? result : Collections.emptyList();
   }
 
   public boolean isEvaluationLicense() {
@@ -60,12 +60,12 @@ public final class LicensingFacade {
   }
 
   public boolean isApplicableForProduct(@NotNull Date releaseDate) {
-    final Date expDate = expirationDate;
+    var expDate = expirationDate;
     return isPerpetualForProduct(releaseDate) || (expDate == null || releaseDate.before(expDate));
   }
 
   public boolean isPerpetualForProduct(@NotNull Date releaseDate) {
-    final Date result = perpetualFallbackDate;
+    var result = perpetualFallbackDate;
     return result != null && releaseDate.before(result);
   }
 
@@ -97,14 +97,11 @@ public final class LicensingFacade {
    *   JetBrains Marketplace online documentation</a> for more information
    */
   public @Nullable String getConfirmationStamp(String productCode) {
-    final Map<String, String> result = confirmationStamps;
-    return result != null? result.get(productCode) : null;
+    var result = confirmationStamps;
+    return result != null ? result.get(productCode) : null;
   }
 
-  /** @deprecated use {@link #getInstance()} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile LicensingFacade INSTANCE;
+  private static volatile LicensingFacade INSTANCE;
 
   public static @Nullable LicensingFacade getInstance() {
     return INSTANCE;

@@ -13751,7 +13751,6 @@ c:com.intellij.ui.LanguageTextField$SimpleDocumentCreator
 - createDocument(java.lang.String,com.intellij.lang.Language,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Document
 - customizePsiFile(com.intellij.psi.PsiFile):V
 f:com.intellij.ui.LicensingFacade
-- s:INSTANCE:com.intellij.ui.LicensingFacade
 - ai_enabled:Z
 - confirmationStamps:java.util.Map
 - expirationDate:java.util.Date
