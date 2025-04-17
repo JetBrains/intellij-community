@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.Gson;
@@ -25,21 +25,11 @@ public final class LicensingFacade {
   public Map<String, String> confirmationStamps;
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
-  /** @deprecated use {@link #getInstance()} instead */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile LicensingFacade INSTANCE;
   public boolean ai_enabled;
-
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile boolean isUnusedSignalled;
   /** @deprecated temporary field; use {@link #metadata} instead */
   @Deprecated(forRemoval = true)
   public String subType;
-
-  public static @Nullable LicensingFacade getInstance() {
-    return INSTANCE;
-  }
+  public String userBucket;
 
   /**
    * @param productCode the product code to look up the expiration date for
@@ -111,6 +101,15 @@ public final class LicensingFacade {
     return result != null? result.get(productCode) : null;
   }
 
+  /** @deprecated use {@link #getInstance()} instead */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile LicensingFacade INSTANCE;
+
+  public static @Nullable LicensingFacade getInstance() {
+    return INSTANCE;
+  }
+
   @ApiStatus.Internal
   public static void setInstance(@Nullable LicensingFacade instance) {
     INSTANCE = instance;
@@ -133,6 +132,9 @@ public final class LicensingFacade {
       return null;
     }
   }
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile boolean isUnusedSignalled;
 
   public static void signalUnused(boolean value) {
     isUnusedSignalled = value;

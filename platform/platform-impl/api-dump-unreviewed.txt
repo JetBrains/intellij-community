@@ -13766,6 +13766,7 @@ f:com.intellij.ui.LicensingFacade
 - productLicenses:java.util.Map
 - restrictions:java.util.List
 - subType:java.lang.String
+- userBucket:java.lang.String
 - <init>():V
 - s:fromJson(java.lang.String):com.intellij.ui.LicensingFacade
 - getConfirmationStamp(java.lang.String):java.lang.String
