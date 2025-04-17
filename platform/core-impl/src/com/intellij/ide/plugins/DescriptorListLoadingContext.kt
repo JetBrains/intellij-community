@@ -29,7 +29,7 @@ class DescriptorListLoadingContext(
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
-) : AutoCloseable, ReadModuleContext {
+) : AutoCloseable, ReadModuleContext, PluginInitializationContext {
   private val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
   private val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
   private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
@@ -73,16 +73,18 @@ class DescriptorListLoadingContext(
     })
   }
 
-  fun isPluginDisabled(id: PluginId): Boolean {
+  override val productBuildNumber: BuildNumber get() = getProductBuildNumber()
+
+  override fun isPluginDisabled(id: PluginId): Boolean {
     return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
   }
 
-  fun isPluginBroken(id: PluginId, version: String?): Boolean {
+  override fun isPluginBroken(id: PluginId, version: String?): Boolean {
     val set = brokenPluginVersions.get(id) ?: return false
     return set.contains(version)
   }
 
-  fun isPluginExpired(id: PluginId): Boolean = expiredPlugins.contains(id)
+  override fun isPluginExpired(id: PluginId): Boolean = expiredPlugins.contains(id)
 
   fun patchPlugin(builder: PluginDescriptorBuilder) {
     if (builder.version == null) {
