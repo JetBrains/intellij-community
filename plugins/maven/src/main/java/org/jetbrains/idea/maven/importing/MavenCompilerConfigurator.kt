@@ -258,7 +258,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
   }
 
   private fun collectCompilerArgs(module: Module, mavenProject: MavenProject, configData: MavenCompilerConfigurationRawData): List<String> {
-    val result = LinkedHashSet<String>()
+    val result = mutableListOf<String>()
     configData.propertyCompilerParameters?.let {
       if (it.toBoolean()) {
         result.add("-parameters")
