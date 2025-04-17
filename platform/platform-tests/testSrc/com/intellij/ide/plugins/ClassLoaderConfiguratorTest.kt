@@ -32,7 +32,6 @@ internal class ClassLoaderConfiguratorTest {
       subBuilder = emptyBuilder,
       descriptorPath = "",
       getDefaultVersion = { null },
-      recordDescriptorPath = null,
       module = PluginContentDescriptor.ModuleItem(name = "kotlin.gradle.gradle-java",
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
@@ -41,7 +40,6 @@ internal class ClassLoaderConfiguratorTest {
       subBuilder = emptyBuilder,
       descriptorPath = "",
       getDefaultVersion = { null },
-      recordDescriptorPath = null,
       module = PluginContentDescriptor.ModuleItem(name = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle",
                                                   loadingRule = ModuleLoadingRule.OPTIONAL,
                                                   configFile = null,
@@ -65,7 +63,6 @@ internal class ClassLoaderConfiguratorTest {
         subBuilder = PluginDescriptorBuilder.builder().apply { `package` = name },
         descriptorPath = "",
         getDefaultVersion = { null },
-        recordDescriptorPath = null,
         module = PluginContentDescriptor.ModuleItem(name = name, configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
       )
     }
