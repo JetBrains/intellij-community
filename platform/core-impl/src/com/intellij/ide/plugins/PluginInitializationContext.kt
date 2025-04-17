@@ -11,4 +11,20 @@ interface PluginInitializationContext {
   fun isPluginDisabled(id: PluginId): Boolean
   fun isPluginExpired(id: PluginId): Boolean
   fun isPluginBroken(id: PluginId, version: String?): Boolean
+
+  @ApiStatus.Internal
+  companion object {
+    fun build(
+      disabledPlugins: Set<PluginId>,
+      expiredPlugins: Set<PluginId>,
+      brokenPluginVersions: Map<PluginId, Set<String?>>,
+      getProductBuildNumber: () -> BuildNumber,
+    ): PluginInitializationContext =
+      object : PluginInitializationContext {
+        override val productBuildNumber: BuildNumber get() = getProductBuildNumber()
+        override fun isPluginDisabled(id: PluginId): Boolean = id in disabledPlugins
+        override fun isPluginExpired(id: PluginId): Boolean = id in expiredPlugins
+        override fun isPluginBroken(id: PluginId, version: String?): Boolean = brokenPluginVersions[id]?.contains(version) == true
+      }
+  }
 }
