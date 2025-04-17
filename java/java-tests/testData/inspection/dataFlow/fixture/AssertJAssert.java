@@ -5,6 +5,8 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Optional;
 import java.util.stream.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class Sample {
   public void aMethod2(Integer someValue) {
     Object object = methodWhichCanReturnNull(someValue);
@@ -56,6 +58,13 @@ class Sample {
     Assertions.assertThat(id.isPresent()).as("Alternative asserting id present.").isTrue();
     if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
   }
+  
+  void testArray() {
+    Object[] objects = new Object[0];
+    Assertions.assertThat(objects).contains();
+    Assertions.assertThat(objects).contains(objects);
+    Assertions.assertThat(objects).<warning descr="The call to 'contains' always fails with an exception">contains</warning>("x");
+  }
 }
 class Assertions {
   public static <T> ObjectAssert<T> assertThat(T actual) {
@@ -74,6 +83,7 @@ class ObjectAssert<T> extends AbstractAssert {
   public ObjectAssert<T> isTrue() { return this; }
   public ObjectAssert<T> isPresent() { return this; }
   public ObjectAssert<T> isNotEmpty() { return this; }
+  public ObjectAssert<T> contains(Object... values) { return this; }
   public void isEmpty() {}
 }
 class AbstractAssert extends Descriptable {}
