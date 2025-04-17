@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
@@ -33,8 +33,8 @@ private val MUTEX_KEY = Key.create<Mutex>("${PythonPackageManagerJobService::cla
 internal class PythonPackageManagerJobService {
 
   private fun getMutex(manager: PythonPackageManager): Mutex {
-    return synchronized(manager.data) {
-      manager.data.getOrCreateUserData(MUTEX_KEY) { Mutex() }
+    return synchronized(manager.sdk) {
+      manager.sdk.getOrCreateUserDataUnsafe(MUTEX_KEY) { Mutex() }
     }
   }
 
