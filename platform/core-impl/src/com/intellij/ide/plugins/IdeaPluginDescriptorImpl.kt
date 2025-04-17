@@ -706,9 +706,7 @@ internal fun IdeaPluginDescriptorImpl.createSub(
   subBuilder,
   descriptorPath,
   context::defaultVersion,
-  context.debugData?.let {
-    { desc, raw, path -> it.recordDescriptorPath(desc, raw, path) }
-  },
+  null,
   module
 )
 

@@ -196,7 +196,6 @@ private fun loadDescriptorFromStream(
     isBundled = isBundled,
     useCoreClassLoader = useCoreClassLoader,
   )
-  context.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
   loadPluginSubDescriptors(
     descriptor = descriptor,
     pathResolver = pathResolver,
@@ -764,7 +763,6 @@ private fun loadPluginDescriptor(
     it.build()
   }
   val descriptor = IdeaPluginDescriptorImpl(raw, pluginDir, isBundled = true)
-  context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = PluginManagerCore.PLUGIN_XML_PATH)
   for (module in descriptor.content.modules) {
     var classPath: List<Path>? = null
     val subDescriptorFile = module.configFile ?: "${module.name}.xml"
@@ -990,7 +988,6 @@ private fun loadCoreProductPlugin(
   }
   val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = libDir, isBundled = true, useCoreClassLoader = useCoreClassLoader)
-  context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
   loadContentModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
   descriptor.resolvePluginDependencies(context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
@@ -1327,7 +1324,6 @@ private fun loadDescriptorFromResource(
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, pluginPath = basePath, isBundled = true, useCoreClassLoader = useCoreClassLoader)
-    context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
       val runFromSources = pathResolver.isRunningFromSources || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()

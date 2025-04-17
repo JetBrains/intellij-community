@@ -64,15 +64,6 @@ class DescriptorListLoadingContext(
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
-  @JvmField
-  internal val debugData: PluginDescriptorsDebugData? =
-    if (System.getProperty("intellij.platform.plugins.record.debug.data.for.descriptors").toBoolean()) {
-      PluginDescriptorsDebugData()
-    }
-    else {
-      null
-    }
-
   internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {

@@ -7,18 +7,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedAttributeValue
 import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedContent
+import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
-import com.intellij.platform.plugins.parser.impl.elements.ClientKind
-import com.intellij.platform.plugins.parser.impl.elements.ComponentElement
-import com.intellij.platform.plugins.parser.impl.elements.ContentElement
-import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.DependsElement
-import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
-import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
-import com.intellij.platform.plugins.parser.impl.elements.ExtensionElement
-import com.intellij.platform.plugins.parser.impl.elements.OS
-import com.intellij.platform.plugins.parser.impl.elements.PreloadMode
-import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
 import com.intellij.util.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -807,11 +797,6 @@ private fun readInclude(
     null
   }
   if (loadedXInclude != null) {
-    // TODO
-    //(consumer.readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
-    //  rawPluginDescriptor = builder.raw,
-    //  path = loadedXInclude.diagnosticReferenceLocation ?: LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase),
-    //)
     consumer.pushIncludeBase(LoadPathUtil.getChildBaseDir(base = consumer.includeBase, relativePath = path))
     try {
       consumer.consume(loadedXInclude.inputStream, loadedXInclude.diagnosticReferenceLocation)

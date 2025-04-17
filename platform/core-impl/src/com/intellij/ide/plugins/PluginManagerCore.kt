@@ -624,9 +624,6 @@ object PluginManagerCore {
   }
 
   @Internal
-  var pluginDescriptorDebugData: PluginDescriptorsDebugData? = null
-
-  @Internal
   fun initializePlugins(
     context: DescriptorListLoadingContext,
     loadingResult: PluginLoadingResult,
@@ -907,7 +904,6 @@ object PluginManagerCore {
       shadowedBundledPlugins = loadingResult.shadowedBundledIds
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       nullablePluginSet = initResult.pluginSet
-      pluginDescriptorDebugData = context.debugData
       initResult.pluginSet
     }
   }

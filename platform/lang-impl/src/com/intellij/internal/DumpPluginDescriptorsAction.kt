@@ -101,9 +101,6 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
       writeStringField("id", plugin.pluginId.idString)
       writeBooleanField("enabled", plugin.isEnabled)
       writeBooleanField("bundled", plugin.isBundled)
-      writeArrayFieldStart("mainDescriptors")
-      writeIncludedPaths(plugin)
-      writeEndArray()
       if (plugin.isEnabled) {
         writeClassLoaderData(plugin.classLoader, classLoaderIds, printedClassLoaders)
       }
@@ -125,30 +122,12 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
         val descriptor = moduleItem.requireDescriptor()
         val isEnabled = descriptor in PluginManagerCore.getPluginSet().getEnabledModules()
         writeBooleanField("enabled", isEnabled)
-        writeArrayFieldStart("descriptors")
-        writeIncludedPaths(descriptor)
-        writeEndArray()
         if (isEnabled) {
           writeClassLoaderData(descriptor.classLoader, classLoaderIds, printedClassLoaders)
         }
         writeEndObject()
       }
       writeEndArray()
-    }
-
-    private fun JsonGenerator.writeIncludedPaths(plugin: IdeaPluginDescriptor) {
-      if (plugin !is IdeaPluginDescriptorImpl) {
-        writeString("unknown")
-        return
-      }
-      val debugData = PluginManagerCore.pluginDescriptorDebugData
-      if (debugData == null) {
-        writeString("not recorded")
-        return
-      }
-      for (path in debugData.getIncludedPaths(plugin)) {
-        writeString(path)
-      }
     }
 
     private fun JsonGenerator.writeClassLoaderData(classLoader: ClassLoader,
