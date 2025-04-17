@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -43,11 +42,10 @@ internal class ConvertArrayParameterToVarargIntention :
                 val typeProjection = typeArgument?.parent as? KtTypeProjection
                 if (typeProjection?.hasModifier(KtTokens.IN_KEYWORD) != false) return null
                 if (!typeProjection.hasModifier(KtTokens.OUT_KEYWORD) &&
-                    type.arrayElementType?.isPrimitive == false
+                    type.arrayElementType?.let { !it.isMarkedNullable && it.isPrimitive } == false
                 ) {
                     KotlinBundle.message("0.may.break.code", familyName)
-                }
-                else {
+                } else {
                     familyName
                 }
             }
@@ -61,7 +59,7 @@ internal class ConvertArrayParameterToVarargIntention :
     override fun KaSession.prepareContext(element: KtParameter): KtTypeReference? {
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null
         val elementType = symbol.returnType.arrayElementType ?: return null
-        val newType = elementType.withNullability(KaTypeNullability.NON_NULLABLE).render(position = Variance.IN_VARIANCE)
+        val newType = elementType.render(position = Variance.IN_VARIANCE)
         return KtPsiFactory(element.project).createType(newType)
     }
 

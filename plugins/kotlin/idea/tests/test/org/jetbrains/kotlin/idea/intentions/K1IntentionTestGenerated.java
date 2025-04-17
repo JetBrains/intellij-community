@@ -4733,6 +4733,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertArrayParameterToVararg/arrayInt.kt");
         }
 
+        @TestMetadata("arrayNullableInt.kt")
+        public void testArrayNullableInt() throws Exception {
+            runTest("testData/intentions/convertArrayParameterToVararg/arrayNullableInt.kt");
+        }
+
         @TestMetadata("arrayString.kt")
         public void testArrayString() throws Exception {
             runTest("testData/intentions/convertArrayParameterToVararg/arrayString.kt");
