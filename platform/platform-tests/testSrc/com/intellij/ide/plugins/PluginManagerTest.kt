@@ -224,7 +224,13 @@ class PluginManagerTest {
 
     private fun assertPluginPreInstalled(expectedPluginId: PluginId?, vararg descriptors: IdeaPluginDescriptorImpl) {
       val loadingResult = createPluginLoadingResult()
-      loadingResult.initAndAddAll(descriptors.toList(), isPluginDisabled = { false }, isPluginBroken = { _, _ -> false }) // TODO refactor the test
+      loadingResult.initAndAddAll(
+        descriptors = descriptors.asSequence(),
+        overrideUseIfCompatible = false,
+        productBuildNumber = BuildNumber.fromString("2042.42")!!,
+        isPluginDisabled = { false }, // TODO refactor the test
+        isPluginBroken = { _, _ -> false }
+      )
       Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
     }
 
@@ -387,7 +393,13 @@ class PluginManagerTest {
       }
       parentContext.close()
       val result = PluginLoadingResult(false)
-      result.initAndAddAll(list, isPluginDisabled = parentContext::isPluginDisabled, isPluginBroken = parentContext::isPluginBroken)
+      result.initAndAddAll(
+        descriptors = list.asSequence(),
+        overrideUseIfCompatible = false,
+        productBuildNumber = BuildNumber.fromString("2042.42")!!,
+        isPluginDisabled = parentContext::isPluginDisabled,
+        isPluginBroken = parentContext::isPluginBroken
+      )
       return PluginManagerCore.initializePlugins(
         context = parentContext,
         loadingResult = result,
