@@ -149,14 +149,6 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   }
 }
 
-// todo merge into PluginSetState?
-@ApiStatus.Internal
-data class PluginManagerState internal constructor(
-  @JvmField val pluginSet: PluginSet,
-  @JvmField val pluginIdsToDisable: Set<PluginId>,
-  @JvmField val pluginIdsToEnable: Set<PluginId>,
-)
-
 // skip our plugins as expected to be up to date whether bundled or not
 internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
   return !descriptor.isBundled &&
