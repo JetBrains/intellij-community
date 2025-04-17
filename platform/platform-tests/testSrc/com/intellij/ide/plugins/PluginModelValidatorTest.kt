@@ -47,7 +47,7 @@ class PluginModelValidatorTest {
     val modules = produceDependencyAndDependentPlugins()
     val result = validatePluginModel(modules)
     assertThat(result.errors).isEmpty()
-    assertWithMatchSnapshot(result.graphAsString())
+    assertWithMatchSnapshot(result.graphAsString(root))
   }
 
   @Test
@@ -86,7 +86,7 @@ class PluginModelValidatorTest {
     val modules = producePluginWithContentModuleInTheSameSourceModule()
     val result = validatePluginModel(modules)
     assertThat(result.errors).isEmpty()
-    assertWithMatchSnapshot(result.graphAsString())
+    assertWithMatchSnapshot(result.graphAsString(root))
   }
 
   @Test

@@ -16,6 +16,7 @@ import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
+import kotlin.io.path.invariantSeparatorsPathString
 
 private class IdGenerator {
   private val collisions = Object2IntOpenCustomHashMap(ByteArrays.HASH_STRATEGY)
@@ -26,7 +27,7 @@ private class IdGenerator {
   }
 }
 
-internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleInfo>) {
+internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleInfo>, private val projectHomePath: Path) {
   private val nodeInfoToId = LinkedHashMap<ModuleInfo, String>()
 
   private val dependencyLinks = LinkedHashMap<String, MutableList<String>>()
@@ -107,7 +108,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
         writer.writeStringField("n", getShortName(nodeName))
         writer.writeStringField("package", item.packageName)
         writer.writeStringField("sourceModule", item.sourceModule.name)
-        writer.writeStringField("descriptor", pathToShortString(item.descriptorFile).replace(File.separatorChar, '/'))
+        writer.writeStringField("descriptor", projectHomePath.relativize(item.descriptorFile).invariantSeparatorsPathString)
         item.pluginId?.let {
           writer.writeStringField("pluginId", it)
         }
