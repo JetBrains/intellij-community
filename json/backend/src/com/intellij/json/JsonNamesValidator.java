@@ -21,7 +21,7 @@ import static com.intellij.json.JsonTokenSets.JSON_KEYWORDS;
 public final class JsonNamesValidator implements NamesValidator {
 
   LexerAdapter myFlexLexer; 
-  private final Lexer myLexer = (Lexer)new JsonLexer();
+  private final Lexer myLexer = new JsonLexer();
 
   @Override
   public synchronized boolean isKeyword(@NotNull String name, Project project) {

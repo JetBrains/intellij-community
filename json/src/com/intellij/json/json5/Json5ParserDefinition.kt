@@ -31,7 +31,7 @@ val FILE: IFileElementType = object : IFileElementType(Json5Language.INSTANCE) {
                                                      language,
                                                      chameleon.getChars())
     val runtimeParserRuntime =
-      getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserUtils(syntaxBuilder.getSyntaxTreeBuilder())
+      getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
     val convertedElement = getConverter(language).convert(elementType)
     assert(convertedElement != null)
     JsonParser().parse(convertedElement!!, runtimeParserRuntime)

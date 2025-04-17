@@ -34,7 +34,7 @@ internal class JsonLinesParserDefinition : JsonParserDefinition() {
                                                          language,
                                                          chameleon.getChars())
         val runtimeParserRuntime =
-          getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserUtils(syntaxBuilder as SyntaxTreeBuilder)
+          getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserRuntime(syntaxBuilder as SyntaxTreeBuilder)
 
         JsonParser().parse(ElementTypeConverters.getConverter(language).convert(elementType)!!, runtimeParserRuntime)
         return syntaxBuilder.getTreeBuilt().getFirstChildNode()
