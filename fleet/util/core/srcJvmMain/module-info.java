@@ -9,7 +9,6 @@ module fleet.util.core {
   exports fleet.util.reducible;
   exports fleet.util.serialization;
   exports fleet.util.text;
-  exports fleet.util.text.matcher;
   exports fleet.util.tree;
 
   requires kotlin.stdlib;

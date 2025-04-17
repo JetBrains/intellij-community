@@ -31,7 +31,7 @@ internal val unicodeIdRanges = intArrayOf(
   0xB7, 0xB8, 0x387, 0x388, 0x1369, 0x1372, 0x19DA, 0x19DB, 0x2118, 0x2119, 0x212E, 0x212F, 0x309B, 0x309D
 )
 
-internal fun isTrueBasedOnRange(index: Int, ranges: IntArray): Boolean {
+fun isTrueBasedOnRange(index: Int, ranges: IntArray): Boolean {
   val part = ranges.binarySearch(index)
   val startOfRange = when {
     part >= 0 -> part
