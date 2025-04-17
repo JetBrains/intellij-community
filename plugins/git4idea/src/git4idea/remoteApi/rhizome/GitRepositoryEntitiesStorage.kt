@@ -24,7 +24,6 @@ import fleet.kernel.shared
 import git4idea.GitStandardRemoteBranch
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitTagType
-import git4idea.remoteApi.rpcId
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
@@ -40,7 +39,7 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
     if (!Registry.isRdBranchWidgetEnabled()) return
 
     val projectEntity = project.asEntityOrNull() ?: return
-    val repositories = GitRepositoryManager.getInstance(project).repositories.map { it.rpcId() }
+    val repositories = GitRepositoryManager.getInstance(project).repositories.map { it.rpcId }
 
     val reposToDelete = entities(GitRepositoryEntity.Project, projectEntity).filter { it.repositoryId !in repositories }
     if (reposToDelete.isEmpty()) return
@@ -88,7 +87,7 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
 
     val refsToInsert = mutableMapOf<GitRepositoryEntity, Set<String>>()
     if (gitRepository != null) {
-      val repoEntity = entity(GitRepositoryEntity.RepositoryIdValue, gitRepository.rpcId()) ?: return
+      val repoEntity = entity(GitRepositoryEntity.RepositoryIdValue, gitRepository.rpcId) ?: return
       refsToInsert[repoEntity] = getFavoriteRefs(gitRepository)
     }
     else {
@@ -116,9 +115,9 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
   ) {
     val projectEntity = project.asEntityOrNull() ?: return
 
-    val repositoryId = gitRepository.rpcId()
+    val repositoryId = gitRepository.rpcId
 
-    val existingRepo = entity(GitRepositoryEntity.RepositoryIdValue, gitRepository.rpcId())
+    val existingRepo = entity(GitRepositoryEntity.RepositoryIdValue, gitRepository.rpcId)
     val previousState = existingRepo?.state
     val previousFavoriteRefs = existingRepo?.favoriteRefs
 

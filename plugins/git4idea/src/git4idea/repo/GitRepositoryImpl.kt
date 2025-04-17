@@ -4,6 +4,7 @@ package git4idea.repo
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.RepositoryImpl
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -14,7 +15,9 @@ import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import git4idea.GitDisposable
 import git4idea.GitLocalBranch
 import git4idea.GitUtil
@@ -39,6 +42,7 @@ class GitRepositoryImpl private constructor(
   private val gitDir: VirtualFile,
   parentDisposable: Disposable,
 ) : RepositoryImpl(project, rootDir, parentDisposable), GitRepository {
+  private val rpcId = RepositoryId(projectId = project.projectId(), rootPath = root.rpcId())
 
   private val vcs = GitVcs.getInstance(project)
 
@@ -214,6 +218,10 @@ class GitRepositoryImpl private constructor(
 
   override fun toLogString(): String {
     return "GitRepository $root : $repoInfo"
+  }
+
+  override fun getRpcId(): RepositoryId {
+    return rpcId
   }
 
   companion object {
