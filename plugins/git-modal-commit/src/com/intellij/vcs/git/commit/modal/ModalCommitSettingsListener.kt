@@ -6,9 +6,9 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.vcs.commit.CommitModeManager
 
-internal class GitModalCommitSettingsListener() : AdvancedSettingsChangeListener {
+internal class ModalCommitSettingsListener() : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-    if (id == GitModalCommitModeProvider.SETTING_ID && oldValue != newValue) {
+    if (id == ModalCommitModeProvider.SETTING_ID && oldValue != newValue) {
       runInEdt {
         ApplicationManager.getApplication().messageBus.syncPublisher(CommitModeManager.SETTINGS).settingsChanged()
       }

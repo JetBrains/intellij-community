@@ -36,6 +36,10 @@
     <extensionPoint name="customPushOptionsPanelFactory"
                     interface="com.intellij.dvcs.push.CustomPushOptionsPanelFactory"
                     dynamic="true"/>
+
+    <extensionPoint name="commitModeProvider"
+                    interface="com.intellij.dvcs.commit.DvcsCommitModeProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <actions>
     <action id="Vcs.CopyCurrentBranchName"
