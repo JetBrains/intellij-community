@@ -268,7 +268,6 @@ class IdeaPluginDescriptorImpl private constructor(
   internal fun createSub(
     subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
-    getDefaultVersion: () -> String?,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
     subBuilder.id = id.idString
@@ -703,7 +702,6 @@ internal fun IdeaPluginDescriptorImpl.createSub(
 ): IdeaPluginDescriptorImpl = createSub(
   subBuilder,
   descriptorPath,
-  context::defaultVersion,
   module
 )
 
@@ -712,9 +710,8 @@ internal fun IdeaPluginDescriptorImpl.createSub(
 fun IdeaPluginDescriptorImpl.createSubInTest(
   subBuilder: PluginDescriptorBuilder,
   descriptorPath: String,
-  getDefaultVersion: () -> String?,
   module: PluginContentDescriptor.ModuleItem?,
-): IdeaPluginDescriptorImpl = createSub(subBuilder, descriptorPath, getDefaultVersion, module)
+): IdeaPluginDescriptorImpl = createSub(subBuilder, descriptorPath, module)
 
 @get:ApiStatus.Internal
 val IdeaPluginDescriptorImpl.isMainPluginDescriptor: Boolean get() = type == Type.PluginMainDescriptor
