@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToRawStringLiteral
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToRawStringLiteralAndRestoreCaretPosition
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 internal class ToRawStringLiteralIntention :
@@ -29,7 +29,7 @@ internal class ToRawStringLiteralIntention :
       elementContext: Unit,
       updater: ModPsiUpdater,
     ) {
-        convertToRawStringLiteral(element, actionContext, updater)
+        convertToRawStringLiteralAndRestoreCaretPosition(element, actionContext, updater)
     }
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.canBeConvertedToStringLiteral()

@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-fun convertToRawStringLiteral(element: KtStringTemplateExpression, context: ActionContext, updater: ModPsiNavigator) {
+fun convertToRawStringLiteralAndRestoreCaretPosition(
+    element: KtStringTemplateExpression, context: ActionContext, updater: ModPsiNavigator
+) {
     // Note that we must get the offset before replace element to a string literal
     // because after the conversion, element will be a dangling KtExpression.
     val startOffset = element.startOffset

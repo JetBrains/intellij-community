@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToRawStringLiteral
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToRawStringLiteralAndRestoreCaretPosition
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isFirstStringPlusExpressionWithoutNewLineInOperands
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -41,6 +41,6 @@ internal class ConvertToRawStringTemplateIntention :
       updater: ModPsiUpdater,
     ) {
         val replaced = elementContext.replacement.element?.let { element.replaced(it) } ?: return
-        convertToRawStringLiteral(replaced, actionContext, updater)
+        convertToRawStringLiteralAndRestoreCaretPosition(replaced, actionContext, updater)
     }
 }
