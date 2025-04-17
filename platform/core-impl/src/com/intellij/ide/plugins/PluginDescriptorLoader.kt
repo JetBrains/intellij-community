@@ -1154,9 +1154,15 @@ fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): 
 fun loadAndInitDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
-  brokenPluginVersions: Map<PluginId, Set<String?>>?,
+  brokenPluginVersions: Map<PluginId, Set<String>>?,
   productBuildNumber: BuildNumber?,
 ): PluginLoadingResult {
+  val initContext = ProductPluginInitContext(
+    buildNumberOverride = productBuildNumber,
+    disabledPluginsOverride = emptySet(),
+    expiredPluginsOverride = emptySet(),
+    brokenPluginVersionsOverride = brokenPluginVersions,
+  )
   return DescriptorListLoadingContext(
     customDisabledPlugins = Collections.emptySet(),
     customBrokenPluginVersions = brokenPluginVersions,
@@ -1182,8 +1188,8 @@ fun loadAndInitDescriptorsFromOtherIde(
       }, isMainProcess()),
       overrideUseIfCompatible = false,
       productBuildNumber = loadingContext.getProductBuildNumber(),
-      isPluginDisabled = loadingContext::isPluginDisabled,
-      isPluginBroken = loadingContext::isPluginBroken,
+      isPluginDisabled = initContext::isPluginDisabled,
+      isPluginBroken = initContext::isPluginBroken,
     )
     result
   }
