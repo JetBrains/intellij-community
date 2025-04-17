@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("FunctionName")
+@file:Suppress("FunctionName", "unused")
 @file:ApiStatus.Experimental
 
 package com.intellij.platform.syntax.util.runtime
@@ -11,7 +11,6 @@ import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime.Parser
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime.Hook
 import org.jetbrains.annotations.Contract
@@ -120,16 +119,16 @@ val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder?>> = object : Hook<Array
 val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
 
 @ApiStatus.Experimental
-final class SyntaxGeneratedParserRuntime(
+class SyntaxGeneratedParserRuntime(
   private val maxRecursionDepth: Int,
   private val syntaxBuilder: SyntaxTreeBuilder,
   private val isCaseSensitive: Boolean,
   private val braces: Collection<BracePair>?,
+  internal val LOG: Logger,
   val parserUserState: ParserUserState? = null, 
 ) {
 
   private val error: ErrorState = ErrorState()
-  internal val LOG: Logger = noopLogger()
 
   internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
   internal val MAX_RECURSION_LEVEL: Int get() = maxRecursionDepth
@@ -673,7 +672,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int, fram
 }
 
 @ApiStatus.Experimental
-fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = enter_section_(level, modifiers, null, null)
+fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int): SyntaxTreeBuilder.Marker = enter_section_(level, modifiers, null, null)
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int, elementType: SyntaxElementType?, frameName: String?): SyntaxTreeBuilder.Marker {
@@ -961,7 +960,7 @@ private fun SyntaxGeneratedParserRuntime.close_marker_impl_(
     frame?.let {
       val position: Int = marker.getStartTokenIndex()
       if (frame.errorReportedAt > position) {
-        frame.errorReportedAt = frame.parentFrame?.let { parentFrame -> parentFrame.errorReportedAt } ?: -1
+        frame.errorReportedAt = frame.parentFrame?.errorReportedAt ?: -1
       }
     }
     marker.rollbackTo()
