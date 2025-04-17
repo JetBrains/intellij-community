@@ -16,7 +16,6 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -52,7 +51,7 @@ suspend fun setupPoetrySdkUnderProgress(
   installPackages: Boolean,
   poetryPath: String? = null,
 ): Result<Sdk> {
-  val projectPath = newProjectPath ?: module?.basePath ?: project?.basePath
+  val projectPath = (newProjectPath ?: module?.basePath ?: project?.basePath)?.let { Path.of(it) }
                     ?: return Result.failure(FileNotFoundException("Can't find path to project or module"))
 
   val actualProject = project ?: module?.project
@@ -65,7 +64,14 @@ suspend fun setupPoetrySdkUnderProgress(
     setUpPoetry(projectPath, python, installPackages, poetryPath)
   }.getOrElse { return Result.failure(it) }
 
-  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData())
+  val sdk = createSdk(
+    sdkHomePath = pythonExecutablePath,
+    existingSdks = existingSdks,
+    associatedProjectPath = projectPath.toString(),
+    suggestedSdkName = suggestedSdkName(projectPath),
+    sdkAdditionalData = PyPoetrySdkAdditionalData(projectPath)
+  )
+  return sdk
 }
 
 internal val Sdk.isPoetry: Boolean
@@ -81,13 +87,13 @@ internal fun allModules(project: Project?): List<Module> {
   }?.sortedBy { it.name } ?: emptyList()
 }
 
-private suspend fun setUpPoetry(projectPathString: String, python: String?, installPackages: Boolean, poetryPath: String? = null): Result<Path> {
+private suspend fun setUpPoetry(projectPath: Path, python: String?, installPackages: Boolean, poetryPath: String? = null): Result<Path> {
   val poetryExecutablePathString = when (poetryPath) {
     is String -> poetryPath
     else -> {
-      val pyProjectToml = withContext(Dispatchers.IO) { StandardFileSystems.local().findFileByPath(projectPathString)?.findChild(PY_PROJECT_TOML) }
+      val pyProjectToml = withContext(Dispatchers.IO) { StandardFileSystems.local().findFileByPath(projectPath.toString())?.findChild(PY_PROJECT_TOML) }
       val init = pyProjectToml?.let { getPyProjectTomlForPoetry(it) } == null
-      setupPoetry(Path.of(projectPathString), python, installPackages, init).getOrElse { return Result.failure(it) }
+      setupPoetry(projectPath, python, installPackages, init).getOrElse { return Result.failure(it) }
     }
   }
 

@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -15,6 +14,7 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.sdk.poetry.*
+import com.jetbrains.python.ui.pyModalBlocking
 import java.awt.BorderLayout
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
@@ -43,7 +43,7 @@ class PyAddExistingPoetryEnvPanel(
       val existingSdkPaths = sdkHomes(existingSdks)
 
       val moduleSdks = allModules(project).parallelStream().flatMap { module ->
-        val sdks = runBlockingCancellable {
+        val sdks = pyModalBlocking {
           detectPoetryEnvs(module, existingSdkPaths, module.basePath)
         }.filterNot { it.isAssociatedWithAnotherModule(module) }
 
@@ -51,7 +51,7 @@ class PyAddExistingPoetryEnvPanel(
         sdks.stream()
       }.toList()
 
-      val rootSdks = runBlockingCancellable {
+      val rootSdks = pyModalBlocking {
         detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath)
       }.filterNot { it.isAssociatedWithAnotherModule(module) }
 
@@ -70,7 +70,7 @@ class PyAddExistingPoetryEnvPanel(
     return when (val sdk = sdkComboBox.selectedSdk) {
       is PyDetectedSdk -> {
         val mappedModule = sdkToModule[sdk.name] ?: module
-        runBlockingCancellable {
+        pyModalBlocking {
           setupPoetrySdkUnderProgress(project, mappedModule, existingSdks, newProjectPath,
                                       getPythonExecutable(sdk.name), false, sdk.name).onSuccess {
             PySdkSettings.instance.preferredVirtualEnvBaseSdk = getPythonExecutable(sdk.name)
