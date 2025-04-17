@@ -1113,12 +1113,14 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       @Override
       public void stop() {
         super.stop();
-        onStop(System.identityHashCode(this));
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
-            reset();
-          }
-        });
+        if (!FindKey.INSTANCE.isEnabled()) {
+          onStop(System.identityHashCode(this));
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
+              reset();
+            }
+          });
+        }
       }
     };
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
@@ -1256,6 +1258,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           }, state);
 
           return true;
+        }, () -> {
+          if (FindKey.INSTANCE.isEnabled()) {
+            onFinish();
+          }
+          return null;
         });
       }
 
@@ -1273,7 +1280,18 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       @Override
       public void onFinished() {
+        if (!FindKey.INSTANCE.isEnabled()) {
+          onFinish();
+        }
+      }
+
+      public void onFinish() {
         ApplicationManager.getApplication().invokeLater(() -> {
+          if (FindKey.INSTANCE.isEnabled()) {
+            if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
+              reset();
+            }
+          }
           if (!isCancelled()) {
             boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
@@ -1435,6 +1453,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private void onStart(int hash) {
+    if (FindKey.INSTANCE.isEnabled()) {
+      reset();
+    }
     myNeedReset.set(true);
     myLoadingHash = hash;
     header.loadingIcon.setIcon(AnimatedIcon.Default.INSTANCE);

@@ -31,7 +31,8 @@ open class FindInProjectExecutor {
         presentation: FindUsagesProcessPresentation,
         findModel: FindModel,
         filesToScanInitially: Set<VirtualFile>,
-        onResult: (UsageInfoAdapter) -> Boolean
+        onResult: (UsageInfoAdapter) -> Boolean,
+        onFinish:() -> Unit?
     ) {
         FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
             val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
@@ -39,5 +40,6 @@ open class FindInProjectExecutor {
 
             onResult(usage)
         }
+      onFinish()
     }
 }
