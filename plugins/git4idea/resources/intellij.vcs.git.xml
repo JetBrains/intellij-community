@@ -871,7 +871,6 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
-    <gitCommitModeProvider implementation="git4idea.commit.GitStagingAreaCommitModeProvider" order="first"/>
   </extensions>
 
   <extensionPoints>
@@ -892,9 +891,6 @@
                     qualifiedName="Git4Idea.gitPushNotificationCustomizer"
                     dynamic="true"
                     area="IDEA_PROJECT"/>
-    <extensionPoint interface="git4idea.commit.GitCommitModeProvider"
-                    qualifiedName="Git4Idea.gitCommitModeProvider"
-                    dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
