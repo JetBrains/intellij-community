@@ -1732,7 +1732,9 @@
                         serviceImplementation="com.intellij.util.indexing.diagnostic.StubInconsistencyReporterImpl"/>
 
     <advancedSetting id="floating.codeToolbar.hide" default="false" groupKey="group.advanced.settings.editor"/>
-    <advancedSetting id="floating.codeToolbar.show.without.selection" default="true" groupKey="group.advanced.settings.editor"/>
+    <registryKey key="floating.codeToolbar.show.without.selection"
+                 defaultValue="false"
+                 description="Show floating toolbar on Context Actions invocation (available in JavaScript, TypeScript, Vue, HTML)"/>
 
     <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
                               implementation="com.intellij.codeInsight.actions.onSave.FormatOnSaveInfoProvider"
