@@ -125,7 +125,7 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
         ProjectJdkTable.getInstance().allJdks,
         file,
         PythonSdkType.getInstance(),
-        PyPoetrySdkAdditionalData(),
+        PyPoetrySdkAdditionalData(module.basePath?.let { Path.of(it) }),
         suggestedSdkName(basePath)
       )
 

@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
@@ -13,6 +12,7 @@ import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.sdkHomes
+import com.jetbrains.python.ui.pyModalBlocking
 import java.util.function.Supplier
 
 fun createPoetryPanel(
@@ -30,7 +30,7 @@ fun createPoetryPanel(
   val panels = listOfNotNull(newPoetryPanel, existingPoetryPanel)
   val existingSdkPaths = sdkHomes(existingSdks)
   val defaultPanel = when {
-    runBlockingCancellable {
+    pyModalBlocking {
       detectPoetryEnvs(module, existingSdkPaths, project?.basePath ?: newProjectPath)
     }.any { it.isAssociatedWithModule(module) } -> existingPoetryPanel
     newPoetryPanel != null -> newPoetryPanel
