@@ -5,13 +5,14 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import kotlin.coroutines.CoroutineContext
 
 /**
  * This service allows asynchronous and potentially long-running tasks tied to a specific [PythonPackageManager] instance (per SDK)
@@ -28,59 +29,52 @@ import kotlin.coroutines.CoroutineContext
  */
 @Service(Service.Level.PROJECT)
 internal class PythonPackageManagerJobService {
-  private val deferredJobs: ConcurrentMap<PythonPackageManager, Deferred<Result<*, PyError>>> = ConcurrentHashMap()
+  private val mutexes: ConcurrentMap<PythonPackageManager, Mutex> = ConcurrentHashMap()
 
-  fun getLastExecutedJob(manager: PythonPackageManager): Deferred<Result<*, PyError>>? {
-    return deferredJobs[manager]
+  private fun getMutex(manager: PythonPackageManager): Mutex {
+    return this.mutexes.getOrPut(manager) { Mutex() }
   }
 
+  fun isRunLocked(manager: PythonPackageManager): Boolean = getMutex(manager).isLocked
+
   /**
-   * Runs a deferred job asynchronously for a given [PythonPackageManager] instance. The method ensures that only one
-   * job per manager can be active at a time. If a job is already active for the given manager, it returns null.
-   * Upon completion of the job, it performs a necessary cleanup and triggers update cycles for activity tracking.
+   * Runs a [runnable] synchronized for a given [PythonPackageManager] instance.
+   * The method ensures that only one runnable per manager can be active at a time.
+   * If a job is already active for the given manager, it locks on the manager's mutex.
+   * Upon completion of the job, it triggers update cycles for activity tracking.
    *
-   * @param [scope] the `CoroutineScope` to be used for launching the deferred job. Default is the scope from [PythonSdkCoroutineService.cs].
-   * @param [context] the `CoroutineContext` in which the coroutine is executed. Default is [Dispatchers.IO].
    * @param [runnable] a suspendable function that represents the operation to be performed, producing a [Result] with a success type [V] or a failure type [PyError].
-   * @return a [Deferred] representing the asynchronous computation of the job, or null if a job is already active for the given manager.
    */
-  fun <V> tryRunDeferredJob(
+  suspend fun <V> runSynchronized(
     manager: PythonPackageManager,
-    scope: CoroutineScope = service<PythonSdkCoroutineService>().cs,
-    context: CoroutineContext = Dispatchers.IO,
+    title: @ProgressTitle String,
     runnable: suspend () -> Result<V, PyError>,
-  ): Deferred<Result<V, PyError>>? {
+  ): Result<V, PyError> {
 
-    val job = synchronized(deferredJobs) {
-      if (deferredJobs[manager]?.isCompleted == false) return@synchronized null
+    val mutex = getMutex(manager)
 
-      scope.async(context) { runnable.invoke() }.also {
-        deferredJobs[manager] = it
+    return withBackgroundProgress(manager.project, title, cancellable = true) {
+      mutex.withLock {
+        runnable.invoke()
+      }.also {
+        ActivityTracker.getInstance().inc() // it forces the next update cycle to give all waiting/currently disabled actions a callback
       }
     }
-
-    job?.invokeOnCompletion { exception ->
-      deferredJobs.remove(manager, job)  // this cleanup line might be removed if someone needs the last deferred job result in other places
-      ActivityTracker.getInstance().inc() // it forces the next update cycle to give all waiting/currently disabled actions a callback
-    }
-
-    return job
   }
 
   companion object {
-    fun getInstance(project: Project?): PythonPackageManagerJobService? = project?.service()
+    fun getInstance(project: Project): PythonPackageManagerJobService = project.service()
   }
 }
 
-internal fun PythonPackageManager.getLastExecutedJob(): Deferred<Result<*, PyError>>? {
-  return PythonPackageManagerJobService.getInstance(this.project)?.getLastExecutedJob(this)
+internal fun PythonPackageManager.isRunLocked(): Boolean {
+  return PythonPackageManagerJobService.getInstance(this.project).isRunLocked(this)
 }
 
-internal fun <V> PythonPackageManager.tryRunDeferredJob(
-  scope: CoroutineScope = service<PythonSdkCoroutineService>().cs,
-  dispatcher: CoroutineDispatcher = Dispatchers.IO,
+internal suspend fun <V> PythonPackageManager.runSynchronized(
+  title: @ProgressTitle String,
   runnable: suspend () -> Result<V, PyError>,
-): Deferred<Result<V, PyError>>? {
-  val jobService = PythonPackageManagerJobService.getInstance(this.project) ?: return null
-  return jobService.tryRunDeferredJob(this, scope, dispatcher, runnable)
+): Result<V, PyError> {
+  val jobService = PythonPackageManagerJobService.getInstance(this.project)
+  return jobService.runSynchronized(this, title, runnable)
 }

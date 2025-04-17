@@ -6,7 +6,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -23,11 +24,15 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 import kotlin.text.Regex.Companion.escape
 
 /**
@@ -39,6 +44,8 @@ import kotlin.text.Regex.Companion.escape
  */
 abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
   val errorSink: ErrorSink = ShowingMessageErrorSync
+  val scope: CoroutineScope = service<PythonSdkCoroutineService>().cs
+  val context: CoroutineContext = Dispatchers.IO
 
   /**
    * The regex pattern that matches the file names that this action is applicable to.
@@ -65,7 +72,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
 
     with(e.presentation) {
       isVisible = manager != null
-      isEnabled = manager?.getLastExecutedJob()?.isCompleted != false
+      isEnabled = manager?.isRunLocked() == false
     }
   }
 
@@ -84,21 +91,23 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    * This action saves the current document on fs because tools are command line tools, and they need actual files to be up to date
    * Handles errors via [errorSink]
    */
-  private fun T.executeActionJob(e: AnActionEvent): Deferred<Result<V, PyError>>? = tryRunDeferredJob {
+  private fun T.executeActionJob(e: AnActionEvent) {
     val document = e.editor()?.document
 
-    document?.let {
-      writeAction {
-        FileDocumentManager.getInstance().saveDocument(document)
+    runInEdt {
+      document?.let {
+          FileDocumentManager.getInstance().saveDocument(document)
       }
     }
 
-    withBackgroundProgress(project, e.presentation.text) {
-      execute(e, this@executeActionJob)
-    }.onSuccess {
-      onSuccess(this, document)
-    }.onFailure {
-      errorSink.emit(it)
+    scope.launch(context) {
+      runSynchronized(e.presentation.text) {
+        execute(e, this@executeActionJob)
+      }.onSuccess {
+        onSuccess(this@executeActionJob, document)
+      }.onFailure {
+        errorSink.emit(it)
+      }
     }
   }
 
