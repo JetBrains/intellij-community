@@ -59,8 +59,7 @@ internal class LoggingStringPartEvaluator {
         is ULiteralExpression -> getFromLiteralExpression(expression)
         is UPolyadicExpression -> getFromPolyadicExpression(expression, context)
         is UParenthesizedExpression -> recursiveCalculateValue(expression.skipParenthesizedExprDown(), context)
-        is UQualifiedReferenceExpression -> recursiveCalculateValue(expression.selector, context.copy(depth = context.depth - 6))
-        is USimpleNameReferenceExpression -> getFromReferenceExpression(expression, context)
+        is UReferenceExpression -> getFromReferenceExpression(expression, context)
         is UCallExpression -> getFromCallExpression(expression, context)
         else -> listOf(PartHolder(null, false))
       }
@@ -122,11 +121,15 @@ internal class LoggingStringPartEvaluator {
       return result
     }
 
-    private fun getFromReferenceExpression(expression: USimpleNameReferenceExpression,
+    private fun getFromReferenceExpression(expression: UReferenceExpression,
                                            context: Context): List<PartHolder> {
       val resolvedUElement = expression.resolveToUElement()
       if (resolvedUElement is UField && resolvedUElement.isFinal) {
-        return recursiveCalculateValue(resolvedUElement.uastInitializer, context)
+        var currentContext = context
+        if (resolvedUElement.getContainingUFile() != expression.getContainingUFile()) {
+          currentContext = currentContext.copy(depth = context.depth - 3)
+        }
+        return recursiveCalculateValue(resolvedUElement.uastInitializer, currentContext)
       }
       if (resolvedUElement is ULocalVariable && isNotAssignment(resolvedUElement)) {
         return recursiveCalculateValue(resolvedUElement.uastInitializer, context)
