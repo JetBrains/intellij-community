@@ -54,6 +54,7 @@ fun loadDescriptor(file: Path, loadingContext: DescriptorListLoadingContext, poo
 @JvmOverloads
 fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+  val initContext = ProductPluginInitContext()
   val loadingContext = DescriptorListLoadingContext()
   val relativePath = "${relativeDir}${fileName}"
   if (Files.isDirectory(pluginRoot)) {
@@ -66,7 +67,7 @@ fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: Strin
       isBundled = true,
       isEssential = true,
       id = id,
-    )?.apply { initialize(context = loadingContext) }
+    )?.apply { initialize(context = initContext) }
   }
   else {
     return loadDescriptorFromJar(
@@ -78,7 +79,7 @@ fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: Strin
       isBundled = true,
       isEssential = true,
       id = id,
-    )?.apply { initialize(context = loadingContext) }
+    )?.apply { initialize(context = initContext) }
   }
 }
 
