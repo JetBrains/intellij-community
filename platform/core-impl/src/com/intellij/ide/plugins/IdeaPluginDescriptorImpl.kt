@@ -276,9 +276,9 @@ class IdeaPluginDescriptorImpl private constructor(
     subBuilder.name = name
     subBuilder.vendor = vendor
     if (subBuilder.version != null && subBuilder.version != version) {
-      LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version ?: getDefaultVersion()}")
+      LOG.warn("Sub descriptor version redefinition for plugin $id. Original value: ${subBuilder.version}, inherited value: ${version}")
     }
-    subBuilder.version = version ?: getDefaultVersion()
+    subBuilder.version = version
     if (module == null) { // resource bundle is inherited for v1 sub-descriptors only
       if (subBuilder.resourceBundleBaseName == null) {
         subBuilder.resourceBundleBaseName = resourceBundleBaseName
