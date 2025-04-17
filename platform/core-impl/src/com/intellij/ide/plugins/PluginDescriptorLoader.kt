@@ -436,7 +436,7 @@ internal fun CoroutineScope.scheduleLoading(
   }
   val pluginSetDeferred = async {
     val (loadingContext, loadingResult) = resultDeferred.await()
-    PluginManagerCore.initializeAndSetPlugins(loadingContext, loadingResult)
+    PluginManagerCore.initializeAndSetPlugins(loadingContext, loadingContext, loadingResult)
   }
   // logging is not as a part of plugin set job for performance reasons
   launch {

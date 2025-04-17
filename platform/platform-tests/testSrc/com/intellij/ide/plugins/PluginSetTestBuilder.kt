@@ -72,6 +72,7 @@ class PluginSetTestBuilder(private val path: Path) {
     val loadingResult = buildLoadingResult(context)
     return PluginManagerCore.initializePlugins(
       loadingContext = context,
+      initContext = context,
       loadingResult = loadingResult,
       coreLoader = UrlClassLoader.build().get(),
       checkEssentialPlugins = false,
