@@ -34,6 +34,6 @@ enum class Enum2(val a: Int) { /// M
     FOO(1)
 }
 
-object Obj1
+object Obj1 /// M
 
-object Obj2 {}
+object Obj2 {} /// M
