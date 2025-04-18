@@ -29,7 +29,7 @@ internal fun readDefaultTabStyle(): TabStyle {
             backgroundDisabled = normalBackground,
             backgroundPressed = selectedBackground,
             backgroundHovered = JBUI.CurrentTheme.DefaultTabs.hoverBackground().toComposeColor(),
-            backgroundSelected = retrieveColorOrUnspecified("TabbedPane.focusColor"),
+            backgroundSelected = selectedBackground,
             content = normalContent,
             contentDisabled = retrieveColorOrUnspecified("TabbedPane.disabledForeground"),
             contentPressed = normalContent,
