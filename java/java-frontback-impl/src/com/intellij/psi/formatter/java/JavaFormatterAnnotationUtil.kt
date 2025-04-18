@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java
 
+import com.intellij.codeInsight.DumbAwareAnnotationUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
@@ -9,8 +10,8 @@ import com.intellij.psi.PsiKeyword
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.formatter.FormatterUtil
+import com.intellij.psi.formatter.java.JavaFormatterAnnotationUtil.isFieldWithAnnotations
 import com.intellij.psi.impl.source.tree.JavaElementType
-import com.intellij.codeInsight.DumbAwareAnnotationUtil
 import com.intellij.psi.util.PsiTreeUtil
 
 internal object JavaFormatterAnnotationUtil {

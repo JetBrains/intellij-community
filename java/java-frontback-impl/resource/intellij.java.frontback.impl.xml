@@ -6,6 +6,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
+    <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
+
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.MethodCallSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.AntLikePropertySelectionHandler"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.CaseStatementsSelectioner"/>
@@ -53,5 +56,11 @@
     <java.definitions id="java-backend" implementation="com.intellij.codeInsight.JavaDefinitionService"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter"/>
+
+    <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
+
+    <registryKey key="java.formatter.chained.calls.pre212.compatibility"
+                 defaultValue="false"
+                 description="Format chained calls as in versions prior to 2021.2"/>
   </extensions>
 </idea-plugin>

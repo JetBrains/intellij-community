@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.ASTBlock;
@@ -320,8 +320,8 @@ public final class JavaFormatterUtil {
           return Wrap.createWrap(WrapType.NONE, false);
         }
 
-        if (isTypeAnnotation(child)) {
-          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || (isTypeAnnotation(prev) && !JavaFormatterRecordUtil.isInRecordComponent(child))) {
+        if (JavaFormatterAnnotationUtil.isTypeAnnotation(child)) {
+          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || (JavaFormatterAnnotationUtil.isTypeAnnotation(prev) && !JavaFormatterRecordUtil.isInRecordComponent(child))) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
         }

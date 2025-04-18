@@ -20,14 +20,13 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
-import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.jsp.IJspClassLevelDeclarationStatement;
+import com.intellij.psi.jsp.IJspCodeBlock;
+import com.intellij.psi.jsp.IJspJavaComment;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -72,7 +71,6 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private IElementType myType2;
   private CommonCodeStyleSettings mySettings;
   private JavaCodeStyleSettings myJavaSettings;
-  private ImportHelper myImportHelper;
 
   private JavaSpacePropertyProcessor(Block block, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     ASTNode child = AbstractJavaBlock.getTreeNode(block);
@@ -440,7 +438,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private void processClassBody() {
-    if (myChild1 instanceof JspJavaComment || myChild2 instanceof JspJavaComment) {
+    if (myChild1 instanceof IJspJavaComment || myChild2 instanceof IJspJavaComment) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
     else if (processMethod()) {
@@ -688,11 +686,12 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  private ImportHelperBase myImportHelper;
   @Override
   public void visitImportList(@NotNull PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myType1) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myType2)) {
-      if (myImportHelper == null) myImportHelper = new ImportHelper(myJavaSettings);
+      if (myImportHelper == null) myImportHelper = new ImportHelperBase(myJavaSettings);
       int emptyLines = myImportHelper.getEmptyLinesBetween(
         SourceTreeToPsiMap.treeToPsiNotNull(myChild1),
         SourceTreeToPsiMap.treeToPsiNotNull(myChild2)
@@ -907,7 +906,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     boolean lhsStatement = myChild1.getPsi() instanceof PsiStatement;
     boolean rhsStatement = myChild2.getPsi() instanceof PsiStatement;
 
-    if (myParent instanceof JspCodeBlock) {
+    if (myParent instanceof IJspCodeBlock) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
 
@@ -1727,7 +1726,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(false);
     }
 
-    if (statement instanceof JspClassLevelDeclarationStatement) {
+    if (statement instanceof IJspClassLevelDeclarationStatement) {
       processClassBody();
     }
   }

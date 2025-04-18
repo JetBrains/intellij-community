@@ -23,5 +23,7 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="module" module-name="intellij.jsp.noDeps" />
   </component>
 </module>

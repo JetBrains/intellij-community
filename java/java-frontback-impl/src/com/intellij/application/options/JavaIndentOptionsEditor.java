@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
-import com.intellij.java.JavaBundle;
+import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -35,7 +35,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
     add(myLabelIndentAbsolute, true);
 
-    myCbDontIndentTopLevelMembers = new JCheckBox(JavaBundle.message("checkbox.do.not.indent.top.level.class.members"));
+    myCbDontIndentTopLevelMembers = new JCheckBox(JavaFrontbackBundle.message("checkbox.do.not.indent.top.level.class.members"));
     add(myCbDontIndentTopLevelMembers);
 
     myCbUseRelativeIndent = new JCheckBox(ApplicationBundle.message("checkbox.use.relative.indents"));

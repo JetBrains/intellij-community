@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.java.JavaBundle;
+import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,7 +36,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   protected void init() {
     super.init();
 
-    myEnableCheckBox = new JCheckBox(JavaBundle.message("checkbox.enable.javadoc.formatting"));
+    myEnableCheckBox = new JCheckBox(JavaFrontbackBundle.message("checkbox.enable.javadoc.formatting"));
     myEnableCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -69,7 +69,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     initCustomOptions(getAlignmentGroup());
     initCustomOptions(getBlankLinesGroup());
     initCustomOptions(getInvalidTagsGroup());
-    initBooleanField("WRAP_COMMENTS", JavaBundle.message("checkbox.wrap.at.right.margin"), getOtherGroup());
+    initBooleanField("WRAP_COMMENTS", JavaFrontbackBundle.message("checkbox.wrap.at.right.margin"), getOtherGroup());
     initCustomOptions(getOtherGroup());
   }
 
@@ -157,7 +157,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
   @Override
   protected @TabTitle @NotNull String getTabTitle() {
-    return JavaBundle.message("title.javadoc");
+    return JavaFrontbackBundle.message("title.javadoc");
   }
 
   @Override
@@ -166,18 +166,18 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   public static @NlsContexts.Label String getOtherGroup() {
-    return JavaBundle.message("group.javadoc.other");
+    return JavaFrontbackBundle.message("group.javadoc.other");
   }
 
   public static @NlsContexts.Label String getInvalidTagsGroup() {
-    return JavaBundle.message("group.javadoc.invalid.tags");
+    return JavaFrontbackBundle.message("group.javadoc.invalid.tags");
   }
 
   public static @NlsContexts.Label String getBlankLinesGroup() {
-    return JavaBundle.message("group.javadoc.blank.lines");
+    return JavaFrontbackBundle.message("group.javadoc.blank.lines");
   }
 
   public static @NlsContexts.Label String getAlignmentGroup() {
-    return JavaBundle.message("group.javadoc.alignment");
+    return JavaFrontbackBundle.message("group.javadoc.alignment");
   }
 }

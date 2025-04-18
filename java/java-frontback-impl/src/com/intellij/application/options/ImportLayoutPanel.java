@@ -4,7 +4,7 @@ package com.intellij.application.options;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.java.JavaBundle;
+import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,7 +38,7 @@ import java.util.List;
  */
 public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
-    new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
+    new JBCheckBox(JavaFrontbackBundle.message("import.layout.static.imports.separately"));
   private final @Nullable JBCheckBox myCbLayoutOnDemandImportsFromSamePackageFirst;
   private final JBTable myImportLayoutTable;
 
@@ -94,7 +94,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
     ActionGroup addGroup = new DefaultActionGroup(new AddPackageAction(), new AddBlankLineAction());
     addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
-    addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
+    addGroup.getTemplatePresentation().setText(JavaFrontbackBundle.lazyMessage("button.add"));
     addGroup.getTemplatePresentation().setPopupGroup(true);
     addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
 
@@ -111,16 +111,16 @@ public abstract class ImportLayoutPanel extends JPanel {
                entry != PackageEntry.ALL_OTHER_IMPORTS_ENTRY &&
                entry != PackageEntry.ALL_MODULE_IMPORTS;
       })
-      .setButtonComparator(JavaBundle.message("button.add"),
+      .setButtonComparator(JavaFrontbackBundle.message("button.add"),
                            IdeBundle.message("action.remove"),
-                           JavaBundle.message("import.layout.panel.up.button"),
-                           JavaBundle.message("import.layout.panel.down.button"))
+                           JavaFrontbackBundle.message("import.layout.panel.up.button"),
+                           JavaFrontbackBundle.message("import.layout.panel.down.button"))
       .setPreferredSize(new Dimension(-1, JBUI.scale(180)))
       .createPanel();
 
     myCbLayoutOnDemandImportsFromSamePackageFirst =
       showLayoutOnDemandImportFromSamePackageFirstCheckbox
-      ? new JBCheckBox(JavaBundle.message("import.layout.on.demand.import.from.same.package.first"))
+      ? new JBCheckBox(JavaFrontbackBundle.message("import.layout.on.demand.import.from.same.package.first"))
       : null;
 
     List<@Nullable JBCheckBox> additionalCheckBoxes = new ArrayList<>();
@@ -133,7 +133,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   private class AddPackageAction extends DumbAwareAction {
     private AddPackageAction() {
-      super(JavaBundle.messagePointer("button.add.package"), AllIcons.Nodes.Package);
+      super(JavaFrontbackBundle.lazyMessage("button.add.package"), AllIcons.Nodes.Package);
     }
 
     @Override
@@ -144,7 +144,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   private class AddBlankLineAction extends DumbAwareAction {
     private AddBlankLineAction() {
-      super(JavaBundle.messagePointer("button.add.blank"), AllIcons.Actions.SearchNewLine);
+      super(JavaFrontbackBundle.lazyMessage("button.add.blank"), AllIcons.Actions.SearchNewLine);
     }
 
     @Override
@@ -242,8 +242,8 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public static JBTable createTableForPackageEntries(final PackageEntryTable packageTable, final ImportLayoutPanel panel) {
     final String[] names = {
-      JavaBundle.message("listbox.import.package"),
-      JavaBundle.message("listbox.import.with.subpackages"),
+      JavaFrontbackBundle.message("listbox.import.package"),
+      JavaFrontbackBundle.message("listbox.import.with.subpackages"),
     };
     // Create a model of the data.
     TableModel dataModel = new AbstractTableModel() {
@@ -276,7 +276,7 @@ public abstract class ImportLayoutPanel extends JPanel {
 
       @Override
       public String getColumnName(int column) {
-        if (panel.areStaticImportsEnabled() && column == 0) return JavaBundle.message("listbox.import.static");
+        if (panel.areStaticImportsEnabled() && column == 0) return JavaFrontbackBundle.message("listbox.import.static");
         column -= panel.areStaticImportsEnabled() ? 1 : 0;
         return names[column];
       }
@@ -361,7 +361,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = packageTable.getEntryAt(row);
 
         if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-          append(JavaBundle.message("import.layout.panel.blank.line.entry"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(JavaFrontbackBundle.message("import.layout.panel.blank.line.entry"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();
@@ -373,10 +373,10 @@ public abstract class ImportLayoutPanel extends JPanel {
           append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
           if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY || entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
-            append(JavaBundle.message("import.layout.panel.all.other.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(JavaFrontbackBundle.message("import.layout.panel.all.other.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else if (entry == PackageEntry.ALL_MODULE_IMPORTS) {
-            append(JavaBundle.message("import.layout.panel.module.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            append(JavaFrontbackBundle.message("import.layout.panel.module.imports"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
           else {
             append(entry.getPackageName() + ".*", SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
-import com.intellij.java.JavaBundle;
+import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -28,22 +28,22 @@ public class FullyQualifiedNamesInJavadocOptionProvider {
     QualifyJavadocOptions option = QualifyJavadocOptions.fromIntValue(javaSettings.CLASS_NAMES_IN_JAVADOC);
     myComboBox.setSelectedItem(option);
   }
-  
+
   public void apply(@NotNull CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     javaSettings.CLASS_NAMES_IN_JAVADOC = getSelectedIntOptionValue();
   }
-  
+
   public boolean isModified(CodeStyleSettings settings) {
     JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     return javaSettings.CLASS_NAMES_IN_JAVADOC != getSelectedIntOptionValue();
   }
-  
+
   private int getSelectedIntOptionValue() {
     QualifyJavadocOptions item = (QualifyJavadocOptions)myComboBox.getSelectedItem();
     return item.getIntOptionValue();
   }
-  
+
   public @NotNull JPanel getPanel() {
     return myPanel;
   }
@@ -57,7 +57,7 @@ public class FullyQualifiedNamesInJavadocOptionProvider {
     }
     myComboBox.setRenderer(SimpleListCellRenderer.create("", QualifyJavadocOptions::getPresentableText));
 
-    JLabel title = new JLabel(JavaBundle.message("radio.use.fully.qualified.class.names.in.javadoc"));
+    JLabel title = new JLabel(JavaFrontbackBundle.message("radio.use.fully.qualified.class.names.in.javadoc"));
     myPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
     GridBagConstraints left = new GridBagConstraints();
@@ -75,9 +75,9 @@ public class FullyQualifiedNamesInJavadocOptionProvider {
 
 enum QualifyJavadocOptions {
 
-  FQ_ALWAYS(FULLY_QUALIFY_NAMES_ALWAYS, JavaBundle.message("radio.use.fully.qualified.class.names.in.javadoc.always")),
-  SHORTEN_ALWAYS(SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, JavaBundle.message("radio.use.fully.qualified.class.names.in.javadoc.never")),
-  FQ_WHEN_NOT_IMPORTED(FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED, JavaBundle.message("radio.use.fully.qualified.class.names.in.javadoc.if.not.imported"));
+  FQ_ALWAYS(FULLY_QUALIFY_NAMES_ALWAYS, JavaFrontbackBundle.message("radio.use.fully.qualified.class.names.in.javadoc.always")),
+  SHORTEN_ALWAYS(SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, JavaFrontbackBundle.message("radio.use.fully.qualified.class.names.in.javadoc.never")),
+  FQ_WHEN_NOT_IMPORTED(FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED, JavaFrontbackBundle.message("radio.use.fully.qualified.class.names.in.javadoc.if.not.imported"));
 
   private final String myText;
   private final int myOption;

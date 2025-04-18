@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options
 
-import com.intellij.java.JavaBundle
+import com.intellij.java.frontback.impl.JavaFrontbackBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.codeStyle.ImportsLayoutSettings
@@ -29,23 +29,23 @@ open class CodeStyleImportsBaseUI(private val packages: JComponent, private val 
     panel = panel {
       group(ApplicationBundle.message("title.general")) {
         row {
-          cbUseSingleClassImports = checkBox(JavaBundle.message("checkbox.use.single.class.import")).component
+          cbUseSingleClassImports = checkBox(JavaFrontbackBundle.message("checkbox.use.single.class.import")).component
         }
         row {
-          cbUseFQClassNames = checkBox(JavaBundle.message("checkbox.use.fully.qualified.class.names")).component
+          cbUseFQClassNames = checkBox(JavaFrontbackBundle.message("checkbox.use.fully.qualified.class.names")).component
         }
         row {
-          cbInsertInnerClassImports = checkBox(JavaBundle.message("checkbox.insert.imports.for.inner.classes")).component
+          cbInsertInnerClassImports = checkBox(JavaFrontbackBundle.message("checkbox.insert.imports.for.inner.classes")).component
         }
 
         fillCustomOptions()
 
-        row(JavaBundle.message("editbox.class.count.to.use.import.with.star")) {
+        row(JavaFrontbackBundle.message("editbox.class.count.to.use.import.with.star")) {
           classCountField = textField()
             .columns(3)
             .component
         }
-        row(JavaBundle.message("editbox.names.count.to.use.static.import.with.star")) {
+        row(JavaFrontbackBundle.message("editbox.names.count.to.use.static.import.with.star")) {
           namesCountField = textField()
             .columns(3)
             .component

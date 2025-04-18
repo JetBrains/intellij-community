@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
-import com.intellij.java.JavaBundle;
+import com.intellij.java.frontback.impl.JavaFrontbackBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -24,7 +24,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private ListTableModel<InnerClassItem> doNotInsertInnerListModel;
 
   private static final ColumnInfo<?, ?>[] INNER_CLASS_COLUMNS = {
-    new MyColumnInfo(JavaBundle.message("do.not.import.inner.classes.for")) {
+    new MyColumnInfo(JavaFrontbackBundle.message("do.not.import.inner.classes.for")) {
       @Override
       public String valueOf(final InnerClassItem innerClass) {
         return innerClass.getName();
@@ -45,7 +45,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   @Override
   protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
     createDoNotImportInnerList();
-    myCbPreserveModuleImports = new JBCheckBox(JavaBundle.message("checkbox.preserve.module.import"));
+    myCbPreserveModuleImports = new JBCheckBox(JavaFrontbackBundle.message("checkbox.preserve.module.import"));
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
     JavaCodeStyleImportsUI result =
       new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myCbPreserveModuleImports, myFqnInJavadocOption.getPanel());
@@ -88,10 +88,10 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     isModified |= !javaSettings.getDoNotImportInner().equals(getInnerClassesNames());
 
     JCheckBox cbPreserveModuleImports = myCbPreserveModuleImports;
-    if (cbPreserveModuleImports != null) isModified |= isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
+    if (cbPreserveModuleImports != null) isModified |= CodeStyleImportsPanelBase.isModified(cbPreserveModuleImports, javaSettings.isPreserveModuleImports());
 
     JBCheckBox cbLayoutOnDemandImportsFromSamePackageFirst = myImportLayoutPanel.getCbLayoutOnDemandImportsFromSamePackageFirst();
-    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
+    if (cbLayoutOnDemandImportsFromSamePackageFirst != null) isModified |= CodeStyleImportsPanelBase.isModified(cbLayoutOnDemandImportsFromSamePackageFirst, javaSettings.isLayoutOnDemandImportFromSamePackageFirst());
     return isModified;
   }
 
@@ -103,7 +103,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     doNotInsertInnerListModel = new ListTableModel<>(INNER_CLASS_COLUMNS);
     mydoNotInsertInnerTable = new TableView<>(doNotInsertInnerListModel);
     mydoNotInsertInnerTable.setShowGrid(false);
-    mydoNotInsertInnerTable.getEmptyText().setText(JavaBundle.message("do.not.import.inner.classes.no.classes"));
+    mydoNotInsertInnerTable.getEmptyText().setText(JavaFrontbackBundle.message("do.not.import.inner.classes.no.classes"));
   }
 
   private List<String> getInnerClassesNames() {
