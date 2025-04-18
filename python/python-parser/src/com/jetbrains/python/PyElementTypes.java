@@ -70,6 +70,7 @@ public interface PyElementTypes {
   PyElementType IMAGINARY_LITERAL_EXPRESSION = new PyElementType("IMAGINARY_LITERAL_EXPRESSION", Companion.getINSTANCE().getImaginaryLiteralExpressionConstructor());
   PyElementType STRING_LITERAL_EXPRESSION = new PyElementType("STRING_LITERAL_EXPRESSION", Companion.getINSTANCE().getStringLiteralExpressionConstructor());
   PyElementType NONE_LITERAL_EXPRESSION = new PyElementType("NONE_LITERAL_EXPRESSION", Companion.getINSTANCE().getNoneLiteralExpressionConstructor());
+  PyElementType ELLIPSIS_LITERAL_EXPRESSION = new PyElementType("ELLIPSIS_LITERAL_EXPRESSION", Companion.getINSTANCE().getEllipsisLiteralExpressionConstructor());
   PyElementType BOOL_LITERAL_EXPRESSION = new PyElementType("BOOL_LITERAL_EXPRESSION", Companion.getINSTANCE().getBoolLiteralExpressionConstructor());
   PyElementType PARENTHESIZED_EXPRESSION = new PyElementType("PARENTHESIZED_EXPRESSION", Companion.getINSTANCE().getParenthesizedExpressionConstructor());
   PyElementType SUBSCRIPTION_EXPRESSION = new PyElementType("SUBSCRIPTION_EXPRESSION", Companion.getINSTANCE().getSubscriptionExpressionConstructor());

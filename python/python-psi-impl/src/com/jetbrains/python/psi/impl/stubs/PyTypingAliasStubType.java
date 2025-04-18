@@ -60,7 +60,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
                                                                                  // List of types is allowed only inside Callable[...]
                                                                                  PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.STRING_LITERAL_EXPRESSION,
-                                                                                 PyElementTypes.NONE_LITERAL_EXPRESSION);
+                                                                                 PyElementTypes.NONE_LITERAL_EXPRESSION,
+                                                                                 PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION);
 
   @Override
   public @Nullable PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {

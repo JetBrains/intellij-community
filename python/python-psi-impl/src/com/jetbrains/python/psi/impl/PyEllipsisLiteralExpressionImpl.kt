@@ -17,16 +17,16 @@ package com.jetbrains.python.psi.impl
 
 import com.intellij.lang.ASTNode
 import com.jetbrains.python.psi.PyElementVisitor
-import com.jetbrains.python.psi.PyNoneLiteralExpression
-import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyNoneLiteralExpressionImpl(astNode: ASTNode) : PyElementImpl(astNode), PyNoneLiteralExpression {
-  override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyType? {
-    return PyBuiltinCache.getInstance(this).noneType
+class PyEllipsisLiteralExpressionImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyEllipsisLiteralExpression {
+  override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyClassType? {
+    return PyBuiltinCache.getInstance(this).ellipsisType
   }
 
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
-    pyVisitor.visitPyNoneLiteralExpression(this)
+    pyVisitor.visitPyEllipsisLiteralExpression(this)
   }
 }

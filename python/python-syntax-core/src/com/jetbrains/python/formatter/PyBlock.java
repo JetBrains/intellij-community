@@ -1151,8 +1151,8 @@ public class PyBlock implements ASTBlock {
   private static boolean isEllipsis(@NotNull PyAstStatement statement) {
     if (statement instanceof PyAstExpressionStatement) {
       final PyAstExpression expression = ((PyAstExpressionStatement)statement).getExpression();
-      if (expression instanceof PyAstNoneLiteralExpression) {
-        return ((PyAstNoneLiteralExpression)expression).isEllipsis();
+      if (expression instanceof PyAstEllipsisLiteralExpression) {
+        return true;
       }
     }
 

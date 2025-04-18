@@ -517,7 +517,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkParamSpecDefaultValue(defaultExpression: PyExpression) {
-      if (defaultExpression is PyNoneLiteralExpression && defaultExpression.isEllipsis) return
+      if (defaultExpression is PyEllipsisLiteralExpression) return
       if (defaultExpression is PyListLiteralExpression) {
         defaultExpression.elements.forEach {
           checkIsCorrectTypeExpression(it)
@@ -1095,7 +1095,10 @@ class PyTypeHintsInspection : PyInspection() {
             typeArgumentTypes.add(Ref.deref(typeRef))
           }
           is PyNoneLiteralExpression -> {
-            typeArgumentTypes.add(if (it.isEllipsis) null else PyBuiltinCache.getInstance(node).noneType)
+            typeArgumentTypes.add(PyBuiltinCache.getInstance(node).noneType)
+          }
+          is PyEllipsisLiteralExpression -> {
+            typeArgumentTypes.add(null)
           }
           else -> {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
@@ -1190,7 +1193,7 @@ class PyTypeHintsInspection : PyInspection() {
         val first = parameters.first()
         if (!isSdkAvailable(first) || isParamSpecOrConcatenate(first, myTypeEvalContext)) return
 
-        if (first !is PyListLiteralExpression && !(first is PyNoneLiteralExpression && first.isEllipsis)) {
+        if (first !is PyListLiteralExpression && first !is PyEllipsisLiteralExpression) {
           registerProblem(first,
                           PyPsiBundle.message("INSP.type.hints.illegal.first.parameter"),
                           ProblemHighlightType.GENERIC_ERROR,
@@ -1279,7 +1282,7 @@ class PyTypeHintsInspection : PyInspection() {
       val functionTypeAnnotation = PyTypingTypeProvider.getFunctionTypeAnnotation(node) ?: return
 
       val parameterTypes = functionTypeAnnotation.parameterTypeList.parameterTypes
-      if (parameterTypes.singleOrNull().let { it is PyNoneLiteralExpression && it.isEllipsis }) return
+      if (parameterTypes.singleOrNull().let { it is PyEllipsisLiteralExpression }) return
 
       val actualParametersSize = node.parameterList.parameters.size
       val commentParametersSize = parameterTypes.size

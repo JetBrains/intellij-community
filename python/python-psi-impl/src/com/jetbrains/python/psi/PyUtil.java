@@ -1565,7 +1565,7 @@ public final class PyUtil {
     }
     if (stmt instanceof PyExpressionStatement) {
       final PyExpression expression = ((PyExpressionStatement)stmt).getExpression();
-      if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+      if (expression instanceof PyEllipsisLiteralExpression) {
         return true;
       }
     }

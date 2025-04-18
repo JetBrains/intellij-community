@@ -314,7 +314,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                                                                @NotNull PyNamedParameter param,
                                                                                @NotNull PyFunction func) {
     List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
-    if (paramTypes.size() == 1 && paramTypes.get(0) instanceof PyNoneLiteralExpression noneExpr && noneExpr.isEllipsis()) {
+    if (paramTypes.size() == 1 && paramTypes.get(0) instanceof PyEllipsisLiteralExpression) {
       return null;
     }
     int startOffset = omitFirstParamInTypeComment(func, annotation) ? 1 : 0;
@@ -1435,7 +1435,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             if (returnType instanceof PyVariadicType) {
               returnType = null;
             }
-            if (isEllipsis(parametersExpr)) {
+            if (parametersExpr instanceof PyEllipsisLiteralExpression) {
               return new PyCallableTypeImpl(null, returnType);
             }
             PyType parametersType = Ref.deref(getType(parametersExpr, context));
@@ -1456,10 +1456,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     return null;
-  }
-
-  private static boolean isEllipsis(@NotNull PyExpression parametersExpr) {
-    return parametersExpr instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)parametersExpr).isEllipsis();
   }
 
   private static @Nullable PyType getUnionType(@NotNull PsiElement element, @NotNull Context context) {
@@ -1869,7 +1865,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             if (!(operandType instanceof PyTupleType) && PyNames.TUPLE.equals(classType.getPyClass().getQualifiedName())) {
               if (indexExpr instanceof PyTupleExpression) {
                 final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
-                if (elements.length == 2 && isEllipsis(elements[1])) {
+                if (elements.length == 2 && elements[1] instanceof PyEllipsisLiteralExpression) {
                   return PyTupleType.createHomogeneous(element, indexTypes.get(0));
                 }
               }

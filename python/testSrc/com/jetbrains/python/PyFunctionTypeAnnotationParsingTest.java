@@ -8,6 +8,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.PythonVisitorFilter;
@@ -90,7 +91,7 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     final PyFunctionTypeAnnotation annotation = getParsedAnnotation();
     final List<PyExpression> paramTypes = annotation.getParameterTypeList().getParameterTypes();
     assertSize(1, paramTypes);
-    assertInstanceOf(paramTypes.get(0), PyNoneLiteralExpression.class);
+    assertInstanceOf(paramTypes.get(0), PyEllipsisLiteralExpression.class);
     final PyExpression returnType = annotation.getReturnType();
     assertNotNull(returnType);
   }

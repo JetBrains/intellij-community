@@ -365,8 +365,8 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public @NotNull PyNoneLiteralExpression createEllipsis() {
-    return createFromText(LanguageLevel.PYTHON30, PyNoneLiteralExpression.class, "...", new int[]{0, 0});
+  public @NotNull PyEllipsisLiteralExpression createEllipsis() {
+    return createFromText(LanguageLevel.PYTHON30, PyEllipsisLiteralExpression.class, "...", new int[]{0, 0});
   }
 
   @Override

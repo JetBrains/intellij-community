@@ -187,7 +187,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     @ApiStatus.Internal
     @JvmStatic
     fun isNone(expression: PyExpression): Boolean {
-      return expression is PyNoneLiteralExpression && !expression.isEllipsis ||
+      return expression is PyNoneLiteralExpression ||
              expression is PyReferenceExpression &&
              expression.name == PyNames.NONE &&
              LanguageLevel.forElement(expression).isPython2
@@ -250,6 +250,8 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
         expression is PyStringLiteralExpression ->
           if (isAcceptableStringLiteral(expression, index)) getPyClass(expression, context) else null
+
+        expression is PyEllipsisLiteralExpression -> null
 
         expression is PyLiteralExpression -> getPyClass(expression, context)
 
