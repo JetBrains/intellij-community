@@ -5,9 +5,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +32,6 @@ final class FrankensteinErrorFilter extends HighlightErrorFilter implements High
   }
 
   private static boolean isFrankenstein(@Nullable PsiFile file) {
-    return file != null && Boolean.TRUE.equals(file.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
+    return file != null && InjectedLanguageManager.getInstance(file.getProject()).isFrankensteinInjection(file);
   }
 }

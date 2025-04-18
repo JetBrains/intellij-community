@@ -3,13 +3,13 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class DuplicateCharacterInClassInspection extends LocalInspectionTool {
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
       PsiFile file = regExpClass.getContainingFile();
-      if (file == null || Boolean.TRUE.equals(file.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION))) return;
+      if (file == null || InjectedLanguageManager.getInstance(file.getProject()).isFrankensteinInjection(file)) return;
       final HashSet<Object> seen = new HashSet<>();
       for (RegExpClassElement element : regExpClass.getElements()) {
         checkForDuplicates(element, seen);
