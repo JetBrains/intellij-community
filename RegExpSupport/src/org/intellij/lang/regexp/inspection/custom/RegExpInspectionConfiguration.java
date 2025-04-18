@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.find.FindModel;
@@ -6,7 +6,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.SmartList;
+import org.intellij.lang.annotations.MagicConstant;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -160,30 +161,54 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     return result;
   }
 
-  enum RegExpFlags {
-    UNIX_LINES(Pattern.UNIX_LINES, 'd', RegExpBundle.messagePointer("regexp.dialog.flag.unix.lines")),
-    CASE_INSENSITIVE(Pattern.CASE_INSENSITIVE, 'i', RegExpBundle.messagePointer("regexp.dialog.flag.case.insensitive")),
-    COMMENTS(Pattern.COMMENTS, 'x', RegExpBundle.messagePointer("regexp.dialog.flag.comments")),
-    MULTILINE(Pattern.MULTILINE, 'm', RegExpBundle.messagePointer("regexp.dialog.flag.multiline")),
-    LITERAL(Pattern.LITERAL, null, RegExpBundle.messagePointer("regexp.dialog.flag.literal")),
-    DOTALL(Pattern.DOTALL, 's', RegExpBundle.messagePointer("regexp.dialog.flag.dotall")),
-    UNICODE_CASE(Pattern.UNICODE_CASE, 'u', RegExpBundle.messagePointer("regexp.dialog.flag.unicode.case")),
-    CANON_EQ(Pattern.CANON_EQ, null, RegExpBundle.messagePointer("regexp.dialog.flag.canonical.equivalence")),
-    UNICODE_CHARACTER_CLASS(Pattern.UNICODE_CHARACTER_CLASS, 'U', RegExpBundle.messagePointer("regexp.dialog.flag.unicode.character.class"));
+  enum RegExpFlag {
+    UNIX_LINES(Pattern.UNIX_LINES, 'd'),
+    CASE_INSENSITIVE(Pattern.CASE_INSENSITIVE, 'i'),
+    MULTILINE(Pattern.MULTILINE, 'm'),
+    DOTALL(Pattern.DOTALL, 's'),
+    UNICODE_CASE(Pattern.UNICODE_CASE, 'u'),
+    CANONICAL_EQUIVALENCE(Pattern.CANON_EQ, null),
+    UNICODE_CHARACTER_CLASS(Pattern.UNICODE_CHARACTER_CLASS, 'U'),
+    COMMENTS(Pattern.COMMENTS, 'x'),
+    LITERAL(Pattern.LITERAL, null);
 
     public final int id;
     public final @Nullable Character mnemonic;
-    private final  @NotNull Supplier<@Nls String> myMessagePointer;
 
-    RegExpFlags(int id, @Nullable Character mnemonic, @NotNull Supplier<@Nls String> supplier) {
+    RegExpFlag(int id, @Nullable Character mnemonic) {
       this.id = id;
       this.mnemonic = mnemonic;
-      this.myMessagePointer = supplier;
     }
 
-    @Nls
-    public @NotNull String getText() {
-      return myMessagePointer.get();
+    public @NotNull @Nls String getText() {
+      return switch (this) {
+        case UNIX_LINES -> RegExpBundle.message("regexp.dialog.flag.unix.lines");
+        case CASE_INSENSITIVE -> RegExpBundle.message("regexp.dialog.flag.case.insensitive");
+        case MULTILINE -> RegExpBundle.message("regexp.dialog.flag.multiline");
+        case DOTALL -> RegExpBundle.message("regexp.dialog.flag.dotall");
+        case UNICODE_CASE -> RegExpBundle.message("regexp.dialog.flag.unicode.case");
+        case CANONICAL_EQUIVALENCE -> RegExpBundle.message("regexp.dialog.flag.canonical.equivalence");
+        case UNICODE_CHARACTER_CLASS -> RegExpBundle.message("regexp.dialog.flag.unicode.character.class");
+        case COMMENTS -> RegExpBundle.message("regexp.dialog.flag.comments");
+        case LITERAL -> RegExpBundle.message("regexp.dialog.flag.literal");
+      };
+    }
+
+    public @NotNull @Nls String getDescription() {
+      String description = switch (this) {
+        case UNIX_LINES -> RegExpBundle.message("regexp.dialog.flag.unix.lines.description");
+        case CASE_INSENSITIVE -> RegExpBundle.message("regexp.dialog.flag.case.insensitive.description");
+        case MULTILINE -> RegExpBundle.message("regexp.dialog.flag.multiline.description");
+        case DOTALL -> RegExpBundle.message("regexp.dialog.flag.dotall.description");
+        case UNICODE_CASE -> RegExpBundle.message("regexp.dialog.flag.unicode.case.description");
+        case CANONICAL_EQUIVALENCE -> RegExpBundle.message("regexp.dialog.flag.canonical.equivalence.description");
+        case UNICODE_CHARACTER_CLASS -> RegExpBundle.message("regexp.dialog.flag.unicode.character.class.description");
+        case COMMENTS -> RegExpBundle.message("regexp.dialog.flag.comments.description");
+        case LITERAL -> RegExpBundle.message("regexp.dialog.flag.literal.description");
+      };
+      String html = HtmlChunk.html().child(HtmlChunk.div("width: 200px").addRaw(description)).toString();
+      System.out.println("html = " + html);
+      return html;
     }
   }
 
@@ -194,7 +219,7 @@ public class RegExpInspectionConfiguration implements Comparable<RegExpInspectio
     public @Nullable String _fileType;
     public @NotNull FindModel.SearchContext searchContext;
     public @Nullable String replacement;
-    public int flags;
+    public @MagicConstant(flagsFromClass = Pattern.class) int flags;
 
     public InspectionPattern(
       @NotNull String regExp,

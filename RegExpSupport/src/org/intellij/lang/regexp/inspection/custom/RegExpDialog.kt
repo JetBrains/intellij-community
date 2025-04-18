@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom
 
 import com.intellij.find.FindBundle
@@ -31,7 +31,7 @@ import com.intellij.util.ui.JBUI
 import org.intellij.lang.regexp.RegExpBundle
 import org.intellij.lang.regexp.RegExpFileType
 import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.InspectionPattern
-import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.RegExpFlags
+import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.RegExpFlag
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -43,7 +43,7 @@ import javax.swing.border.CompoundBorder
 
 class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaultPattern: InspectionPattern? = null) : DialogWrapper(project, true) {
   private var searchContext: FindModel.SearchContext = FindModel.SearchContext.ANY
-  private var flags: Int = 0
+  private var flags: Int = RegExpFlag.UNICODE_CASE.id
   private var replace: Boolean = false
     set(value) {
       field = value
@@ -91,6 +91,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     defaultPattern?.let { pattern ->
       searchEditor.text = pattern.regExp
       flags = pattern.flags
+      searchEditor.fileType = if ((flags and RegExpFlag.LITERAL.id) != 0) PlainTextFileType.INSTANCE else RegExpFileType.INSTANCE
       searchContext = pattern.searchContext
       fileCombo.item = pattern.fileType() ?: UnknownFileType.INSTANCE
       pattern.replacement?.let { replaceEditor.text = it }
@@ -266,7 +267,8 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-  private inner class MyToggleAction(val context: FindModel.SearchContext, val action: MyFilterAction) : ToggleAction(FindInProjectUtil.getPresentableName(context)), DumbAware {
+  private inner class MyToggleAction(val context: FindModel.SearchContext, val action: MyFilterAction)
+    : ToggleAction(FindInProjectUtil.getPresentableName(context)), DumbAware {
     override fun isSelected(e: AnActionEvent): Boolean {
       return searchContext == context
     }
@@ -282,37 +284,50 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-
   private inner class SelectRegExpFlagsAction : DumbAwareAction(RegExpBundle.messagePointer("regexp.dialog.regexp.flags"), Presentation.NULL_STRING, LayeredIcon.GEAR_WITH_DROPDOWN) {
     val myGroup: ActionGroup = DefaultActionGroup().apply {
-      RegExpFlags.entries.forEach { add(ToggleFlagAction(it)) }
+      RegExpFlag.entries.forEach {
+        if (it == RegExpFlag.LITERAL) addSeparator()
+        add(ToggleFlagAction(it))
+      }
       isPopup = true
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       JBPopupFactory.getInstance()
-        .createActionGroupPopup(RegExpBundle.message("regexp.dialog.regexp.flags"), myGroup, e.dataContext, false, null, 10)
+        .createActionGroupPopup(RegExpBundle.message("regexp.dialog.regexp.flags"), myGroup, e.dataContext, true, null, 10)
         .showUnderneathOf(filterButton)
     }
   }
 
-  private inner class ToggleFlagAction(
-    val flag: RegExpFlags,
-  ) : ToggleAction(flag.text) {
+  private inner class ToggleFlagAction(val flag: RegExpFlag) : ToggleAction(flag.text), DumbAware {
 
     init {
       templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, flag.mnemonic?.toString())
+      templatePresentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, flag.description)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    override fun isSelected(e: AnActionEvent): Boolean {
-      return flags and flag.id != 0
-    }
+    override fun isSelected(e: AnActionEvent): Boolean = (flags and flag.id) != 0
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if ((flags and flag.id != 0) == state) return
+      if (flag == RegExpFlag.LITERAL) {
+        searchEditor.fileType = if (state) PlainTextFileType.INSTANCE else RegExpFileType.INSTANCE
+      }
       flags = flags xor flag.id
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      if (flags and RegExpFlag.LITERAL.id != 0
+          && flag != RegExpFlag.CASE_INSENSITIVE
+          && flag != RegExpFlag.UNICODE_CASE
+          && flag != RegExpFlag.CANONICAL_EQUIVALENCE
+          && flag != RegExpFlag.LITERAL) {
+        e.presentation.isEnabled = false
+      }
     }
   }
 }

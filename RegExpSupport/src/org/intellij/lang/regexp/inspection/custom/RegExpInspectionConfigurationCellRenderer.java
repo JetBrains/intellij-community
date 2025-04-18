@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.RegExpFlags;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,18 +39,18 @@ public class RegExpInspectionConfigurationCellRenderer extends ColoredListCellRe
     }
     if (value.flags != 0) {
       var hasFlags = false;
-      for (RegExpFlags flag: RegExpFlags.values()) {
+      for (RegExpInspectionConfiguration.RegExpFlag flag: RegExpInspectionConfiguration.RegExpFlag.values()) {
         if (flag.mnemonic != null && (value.flags & flag.id) != 0) {
           hasFlags = true;
           append(flag.mnemonic.toString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
-      if ((value.flags & RegExpFlags.LITERAL.id) != 0) {
+      if ((value.flags & RegExpInspectionConfiguration.RegExpFlag.LITERAL.id) != 0) {
         //noinspection HardCodedStringLiteral
         append((hasFlags ? ", " : "") + "literal", SimpleTextAttributes.GRAY_ATTRIBUTES);
         hasFlags = true;
       }
-      if ((value.flags & RegExpFlags.CANON_EQ.id) != 0) {
+      if ((value.flags & RegExpInspectionConfiguration.RegExpFlag.CANONICAL_EQUIVALENCE.id) != 0) {
         //noinspection HardCodedStringLiteral
         append((hasFlags ? ", " : "") + " canon_eq", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
