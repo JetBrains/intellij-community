@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -46,13 +46,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testDelegateWithoutChangesWarnAboutSameMethodInClass() {
     assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[0], true);
-    }, "Method m() is already defined in the class <b><code>A</code></b>");
+    }, "Method <b><code>m()</code></b> is already defined in class <b><code>A</code></b>");
   }
 
   public void testDuplicatedSignatureInInheritor() {
     assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
-    }, "Method foo(int) is already defined in the class <b><code>B</code></b>");
+    }, "Method <b><code>foo(int)</code></b> is already defined in class <b><code>B</code></b>");
   }
 
   public void testConflictForUsedParametersInMethodBody() {

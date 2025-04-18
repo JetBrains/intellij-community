@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.psi.*;
@@ -234,7 +235,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
       doTest(new SimpleInfo("optional", -1, null, "1", "int"));
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      TestCase.assertEquals("Method foo(int) is already defined in the class <b><code>Test</code></b>", e.getMessage());
+      TestCase.assertEquals("Method <b><code>foo(int)</code></b> is already defined in class <b><code>Test</code></b>", e.getMessage());
       return;
     }
 

@@ -229,7 +229,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method foo() is already defined in the class <b><code>Test</code></b>", e.getMessage());
+      assertEquals("Method <b><code>foo()</code></b> is already defined in class <b><code>Test</code></b>", e.getMessage());
     }
   }
 
@@ -339,7 +339,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method foo() is already defined in the class <b><code>B</code></b>", e.getMessage());
+      assertEquals("Method <b><code>foo()</code></b> is already defined in class <b><code>B</code></b>", e.getMessage());
     }
   }
 
@@ -429,7 +429,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method Point(int, int) is already defined in the record <b><code>Point</code></b>\n" +
+      assertEquals("Constructor <b><code>Point(int, int)</code></b> is already defined in record <b><code>Point</code></b>\n" +
                    "Record component <b><code>z</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
