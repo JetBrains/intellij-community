@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.PsiFragmentImpl;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
@@ -80,15 +79,15 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
                                                                           List<InjectionInfo> list,
                                                                           boolean settingsAvailable,
                                                                           boolean unparsable) {
-        InjectorUtils.registerInjection(language, containingFile, list, registrar);
-        InjectorUtils.registerSupport(getLanguageInjectionSupport(), settingsAvailable, list.get(0).host(), language);
+        InjectorUtils.registerInjection(
+          language, containingFile, list, registrar, registrar -> {
+            registrar
+              .putInjectedFileUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage)
+              .frankensteinInjection(unparsable);
+            InjectorUtils.registerSupport(registrar, getLanguageInjectionSupport(), settingsAvailable);
+          }
+        );
         PsiLanguageInjectionHost host = list.get(0).host();
-        if (tempLanguage != null) {
-          InjectorUtils
-            .putInjectedFileUserData(host, language, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
-        }
-        InjectorUtils
-          .putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
         return Pair.create(host, language);
       }
 
