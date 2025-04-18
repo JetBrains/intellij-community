@@ -43,6 +43,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
     }
     registrar.startInjecting(language)
     injectAsOnePlace(host, registrar, language)
+    registrar.makeInspectionsLenient(true)
     registrar.doneInjecting()
   }
 
