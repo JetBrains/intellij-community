@@ -18,10 +18,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -355,6 +352,18 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
     return InjectedLanguageUtilBase.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
+  }
+
+  @Override
+  public boolean shouldInspectionsBeLenient(@NotNull PsiElement injectedContext) {
+    var file = injectedContext.getContainingFile();
+    return isInjectedViewProvider(file.getViewProvider()) && file.getUserData(LENIENT_INSPECTIONS) == Boolean.TRUE;
+  }
+
+  @Override
+  public boolean isFrankensteinInjection(@NotNull PsiElement injectedContext) {
+    var file = injectedContext.getContainingFile();
+    return isInjectedViewProvider(file.getViewProvider()) && file.getUserData(FRANKENSTEIN_INJECTION) == Boolean.TRUE;
   }
 
   @Override
