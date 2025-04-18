@@ -1033,7 +1033,6 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.RainbowCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeErrorDialogUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.SlowOperationsIssuesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector" />
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectWizard.NewProjectWizardCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.experimental.ExperimentalUiCollector"/>

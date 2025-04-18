@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
+import com.intellij.internal.statistic.eventLog.events.EventFields.StringListValidatedByInlineRegexp
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -126,7 +127,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 76)
+  private val GROUP = EventLogGroup("performance", 77)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -252,6 +253,10 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     MEM_HISTOGRAM_TOTAL1_FIELD,
     MEM_HISTOGRAM_TOTAL2_FIELD,
   )
+
+  @JvmField
+  internal val SLOW_OPERATIONS_ISSUES = GROUP.registerEvent("slow.operation.issues",
+                                                            StringListValidatedByInlineRegexp("issue_id", "[A-Z]{2,7}-\\d{1,6}"))
 
   override fun getGroup(): EventLogGroup = GROUP
 

@@ -18,8 +18,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A utility to enforce "slow operation on EDT" assertion.
@@ -251,7 +253,10 @@ public final class SlowOperations {
   public static @NotNull Set<String> reportKnownIssues() {
     Set<String> result = new HashSet<>(ourKnownIssues);
     ourKnownIssues.clear();
-    return result;
+    return result.stream()
+      .flatMap(ytCodes -> Arrays.stream(ytCodes.split(",")))
+      .map(t -> t.trim())
+      .collect(Collectors.toSet());
   }
 
   @ApiStatus.Internal
