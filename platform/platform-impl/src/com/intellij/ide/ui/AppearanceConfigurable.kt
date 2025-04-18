@@ -123,7 +123,7 @@ private val cdDnDWithAlt
 private val cdUseTransparentMode
   get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
 private val cdUseContrastToolbars
-  get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
+  get() = CheckboxDescriptor(message("checkbox.accessibility.contrast.scrollbars"), settings::useContrastScrollbars)
 private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
