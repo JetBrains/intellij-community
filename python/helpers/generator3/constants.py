@@ -692,6 +692,10 @@ MAC_SKIP_MODULES = ["test", "ctypes/test", "distutils/tests", "email/test",
 
 POSIX_SKIP_MODULES = ["vtemodule", "PAMmodule", "_snackmodule", "/quodlibet/_mmkeys"]
 
+BUILTIN_SKIP_MODULES = [
+    "_templatelib",
+]
+
 BIN_MODULE_FNAME_PAT = re.compile(r'([a-zA-Z_][0-9a-zA-Z_]*)\.(?:pyc|pyo|(?:(?:[a-zA-Z_0-9\-]+\.)?(?:so|pyd)))$')
 # possible binary module filename: letter,    alphanum                    architecture per PEP-3149
 TYPELIB_MODULE_FNAME_PAT = re.compile("([a-zA-Z_]+[0-9a-zA-Z]*)[0-9a-zA-Z-.]*\\.typelib")

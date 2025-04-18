@@ -453,6 +453,7 @@ class SkeletonGenerator(object):
         names = list(sys.builtin_module_names)
         if BUILTIN_MOD_NAME not in names:
             names.append(BUILTIN_MOD_NAME)
+        names = [n for n in names if n not in BUILTIN_SKIP_MODULES]
         if '__main__' in names:
             names.remove('__main__')
         return [BinaryModule(name, None) for name in names]
