@@ -27,13 +27,14 @@ internal object TerminalSessionTestUtil {
     project: Project,
     coroutineScope: CoroutineScope,
     size: TermSize = TermSize(80, 24),
+    extraEnvVariables: Map<String, String> = emptyMap(),
   ): TerminalSession {
     TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, coroutineScope.asDisposable())
 
     val options = ShellStartupOptions.Builder()
       .shellCommand(listOf(shellPath))
       .initialTermSize(size)
-      .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
+      .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null") + extraEnvVariables)
       .build()
     val (ttyConnector, _) = startTerminalProcess(project, options)
     val session = createTerminalSession(project, ttyConnector, size, JBTerminalSystemSettingsProviderBase(), coroutineScope)
