@@ -125,4 +125,14 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
   public @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return document;
   }
+
+  @Override
+  public boolean shouldInspectionsBeLenient(@NotNull PsiElement injectedContext) {
+    return false;
+  }
+
+  @Override
+  public boolean isFrankensteinInjection(@NotNull PsiElement injectedContext) {
+    return false;
+  }
 }

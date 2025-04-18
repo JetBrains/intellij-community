@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -68,6 +69,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   private final VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
+  private boolean isFrankensteinInjection;
+  private boolean shouldInspectionsBeLenient;
   private Thread currentThread;
 
   public InjectionRegistrarImpl(@NotNull Project project,
@@ -120,6 +123,9 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
     placeInfos = null;
     currentThread = null;
+
+    isFrankensteinInjection = false;
+    shouldInspectionsBeLenient = false;
   }
 
   @Override
@@ -152,6 +158,18 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost);
     placeInfos.add(info);
 
+    return this;
+  }
+
+  @Override
+  public @NotNull MultiHostRegistrar makeInspectionsLenient(boolean shouldInspectionsBeLenient) {
+    this.shouldInspectionsBeLenient = shouldInspectionsBeLenient;
+    return this;
+  }
+
+  @Override
+  public @NotNull MultiHostRegistrar frankensteinInjection(boolean isFrankensteinInjection) {
+    this.isFrankensteinInjection = isFrankensteinInjection;
     return this;
   }
 
@@ -258,6 +276,12 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                 placeInfos, decodedChars, fileName, myDocumentManagerBase);
     for (ASTNode node : parsedNodes) {
       PsiFile psiFile = (PsiFile)node.getPsi();
+      if (isFrankensteinInjection) {
+        psiFile.putUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+      }
+      if (shouldInspectionsBeLenient) {
+        psiFile.putUserData(InjectedLanguageManagerImpl.LENIENT_INSPECTIONS, Boolean.TRUE);
+      }
       InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
       synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         if (psiFile.getLanguage() == viewProvider.getBaseLanguage()) {
