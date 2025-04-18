@@ -253,11 +253,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
 
         HighlightInfoType type = getTagProblemInfoType(tag);
-        if (InjectedLanguageManager.getInstance(tag.getProject()).getInjectionHost(tag) != null) {
-          // disabled in injected fragments
-          return;
-        }
-
         addElementsForTagWithManyQuickFixes(tag, XmlAnalysisBundle.message("xml.inspections.element.is.not.allowed.here", name), type);
         return;
       }
@@ -296,7 +291,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   public static boolean isInjectedWithoutValidation(PsiElement element) {
-    return InjectedLanguageManager.FRANKENSTEIN_INJECTION.get(element.getContainingFile()) == Boolean.TRUE;
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
+    return injectedLanguageManager.isFrankensteinInjection(element)
+      || injectedLanguageManager.shouldInspectionsBeLenient(element);
   }
 
   public static boolean skipValidation(PsiElement context) {
