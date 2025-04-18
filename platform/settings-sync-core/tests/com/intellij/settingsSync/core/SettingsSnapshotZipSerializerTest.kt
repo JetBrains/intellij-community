@@ -26,7 +26,7 @@ internal class SettingsSnapshotZipSerializerTest : SettingsSyncTestBase() {
   fun `serialize snapshot to zip`() {
     val date = Instant.ofEpochMilli(Random.nextLong())
     val snapshot = settingsSnapshot(
-      MetaInfo(date, AppInfo(UUID.randomUUID(), BuildNumber.fromString("IU-231.1"), "john", "home", "/Users/john/ideaconfig/"))) {
+      MetaInfo(date, AppInfo(UUID.randomUUID(), BuildNumber.fromString("IU-231.1"), "FULL_NAME", "john", "home", "/Users/john/ideaconfig/"))) {
       fileState("options/laf.xml", "Laf")
       fileState("colors/my.icls", "Color Scheme")
       fileState("file.xml", "File")

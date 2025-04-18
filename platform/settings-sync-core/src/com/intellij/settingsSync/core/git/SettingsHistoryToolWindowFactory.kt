@@ -31,7 +31,7 @@ internal class SettingsHistoryToolWindowFactory(private val corotineScope: Corou
       override fun enabledStateChanged(syncEnabled: Boolean) {
         corotineScope.async {
           ProjectManager.getInstanceIfCreated()?.openProjects?.forEach { project ->
-            if (isApplicable()) {
+            if (shouldBeAvailable()) {
               val toolWindowNullable = ToolWindowManager.getInstance(project).getToolWindow(ID)
               withContext(Dispatchers.EDT) {
                 if (toolWindowNullable == null) {
@@ -42,7 +42,7 @@ internal class SettingsHistoryToolWindowFactory(private val corotineScope: Corou
                   }
                 }
                 else {
-                  toolWindowNullable.setAvailable(false)
+                  toolWindowNullable.setAvailable(true)
                 }
               }
             }
@@ -60,13 +60,15 @@ internal class SettingsHistoryToolWindowFactory(private val corotineScope: Corou
     })
   }
 
+  override fun shouldBeAvailable(project: Project): Boolean = shouldBeAvailable()
 
-  override suspend fun isApplicableAsync(project: Project): Boolean = isApplicable()
-
-  private fun isApplicable(): Boolean {
+  private fun shouldBeAvailable(): Boolean {
     return Registry.`is`("settingsSync.ui.new.toolwindow.show")
-           && SettingsSyncMain.isAvailable()
            && isSettingsSyncEnabledInSettings()
+  }
+
+  override suspend fun isApplicableAsync(project: Project): Boolean  {
+    return Registry.`is`("settingsSync.ui.new.toolwindow.show")
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

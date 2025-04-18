@@ -49,6 +49,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
   }
 
   override fun loginStateChanged() {
+    invalidateCommunicator()
   }
 
   fun createRemoteCommunicator(provider: SettingsSyncCommunicatorProvider, userId: String): SettingsSyncRemoteCommunicator? {
