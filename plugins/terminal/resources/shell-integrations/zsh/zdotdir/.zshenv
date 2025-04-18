@@ -31,26 +31,6 @@
 # * Use ${var-default} or ${var:-default} to not fail in configurations with `setopt nounset`.
 # * Use "${var}" to preserve whitespaces, ${var} will be split into words in configurations with `setopt sh_word_split`.
 
-__jetbrains_intellij_source_original_zsh_file() {
-  builtin local filename="$1"
-  builtin local original_zdotdir="${JETBRAINS_INTELLIJ_ORIGINAL_ZDOTDIR:-$HOME}"
-  builtin local original_file="$original_zdotdir/$filename"
-  if [[ -f "$original_file" ]]; then
-    builtin local intellij_zdotdir="$ZDOTDIR"
-    # prevent recursion, just in case
-    if [[ "$intellij_zdotdir" != "$original_zdotdir" ]]; then
-      # Correct ZDOTDIR before sourcing the user's file as it might rely on the value of ZDOTDIR.
-      ZDOTDIR="$original_zdotdir"
-      if [[ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]]; then
-        builtin echo "intellij: loading $original_file"
-      fi
-      builtin source "$original_file"
-      # Set back to the IntelliJ location to continue injecting IntelliJ shell integration.
-      ZDOTDIR="$intellij_zdotdir"
-    fi
-  fi
-}
-
 if [[ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]]; then
   # ${(%):-%x} expands to the current script being executed
 
@@ -63,7 +43,8 @@ if [[ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]]; then
   builtin echo "intellij: before loading ${(%):-%x}"
 fi
 
-__jetbrains_intellij_source_original_zsh_file ".zshenv"
+JETBRAINS_INTELLIJ_ORIGINAL_FILENAME_TO_SOURCE='.zshenv'
+builtin source "$JETBRAINS_INTELLIJ_ZSH_DIR/zdotdir/source-original.zsh"
 
 if [[ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]]; then
   builtin echo "intellij: after loading ${(%):-%x}"
