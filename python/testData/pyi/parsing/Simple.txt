@@ -23,7 +23,7 @@ PyiFile:Simple.pyi
     PsiWhiteSpace(' ')
     PyStatementList
       PyExpressionStatement
-        PyNoneLiteralExpression
+        PyEllipsisLiteralExpression
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')

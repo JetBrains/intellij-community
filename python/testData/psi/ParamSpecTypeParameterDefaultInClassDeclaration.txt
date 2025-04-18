@@ -27,7 +27,7 @@ PyFile:ParamSpecTypeParameterDefaultInClassDeclaration.py
     PsiWhiteSpace(' ')
     PyStatementList
       PyExpressionStatement
-        PyNoneLiteralExpression
+        PyEllipsisLiteralExpression
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')

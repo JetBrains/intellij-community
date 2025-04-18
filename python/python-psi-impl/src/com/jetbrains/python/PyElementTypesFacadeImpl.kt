@@ -118,6 +118,8 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
     get() = F { node -> PyStringLiteralExpressionImpl(node) }
   override val noneLiteralExpressionConstructor: F
     get() = F { node -> PyNoneLiteralExpressionImpl(node) }
+  override val ellipsisLiteralExpressionConstructor: F
+    get() = F { node -> PyEllipsisLiteralExpressionImpl(node) }
   override val boolLiteralExpressionConstructor: F
     get() = F { node -> PyBoolLiteralExpressionImpl(node) }
   override val parenthesizedExpressionConstructor: F

@@ -241,7 +241,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       cls: PyClass,
       field: PyTargetExpression,
       dataclassParameters: PyDataclassParameters,
-      ellipsis: PyNoneLiteralExpression,
+      ellipsis: PyEllipsisLiteralExpression,
       context: TypeEvalContext
     ): Triple<String, Boolean?, PyCallableParameter?>? {
       val fieldName = field.name ?: return null
@@ -304,7 +304,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       field: PyTargetExpression,
       fieldParams: PyDataclassFieldParameters?,
       dataclassParams: PyDataclassParameters,
-      ellipsis: PyNoneLiteralExpression,
+      ellipsis: PyEllipsisLiteralExpression,
       context: TypeEvalContext
     ): PyExpression? {
       return if (fieldParams == null) {

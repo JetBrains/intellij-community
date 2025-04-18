@@ -2882,12 +2882,9 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-80436
   public void testEllipsis() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> doTest("Any",
-                   "expr = ...")
-    );
+    doTest("ellipsis", "expr = Ellipsis");
   }
 
   // PY-25751

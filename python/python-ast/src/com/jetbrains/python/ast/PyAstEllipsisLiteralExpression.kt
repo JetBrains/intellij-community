@@ -4,8 +4,8 @@ package com.jetbrains.python.ast
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PyAstNoneLiteralExpression : PyAstLiteralExpression {
+interface PyAstEllipsisLiteralExpression : PyAstLiteralExpression {
   override fun acceptPyVisitor(pyVisitor: PyAstElementVisitor) {
-    pyVisitor.visitPyNoneLiteralExpression(this)
+    pyVisitor.visitPyEllipsisLiteralExpression(this)
   }
 }

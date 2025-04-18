@@ -142,7 +142,7 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
                                                           @NotNull String name,
                                                           @Nullable String alias);
 
-  public abstract @NotNull PyNoneLiteralExpression createEllipsis();
+  public abstract @NotNull PyEllipsisLiteralExpression createEllipsis();
 
   public abstract @NotNull PySingleStarParameter createSingleStarParameter();
 

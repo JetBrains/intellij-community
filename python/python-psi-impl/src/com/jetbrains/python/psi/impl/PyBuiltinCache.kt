@@ -42,22 +42,19 @@ import org.jetbrains.annotations.NonNls
 /**
  * Provides access to Python builtins via skeletons.
  */
-class PyBuiltinCache(
-  val builtinsFile: PyFile? = null,
-  private val myTypeshedFile: PyFile? = null,
-  private val myExceptionsFile: PyFile? = null,
+class PyBuiltinCache private constructor(
+  private val myBuiltinsFile: CachedFile? = null,
+  private val myTypesFile: CachedFile? = null,
+  private val myTypeshedFile: CachedFile? = null,
+  private val myExceptionsFile: CachedFile? = null,
 ) {
-  /**
-   * Stores the most often used types, returned by nNNType.
-   */
-  private val myTypeCache = mutableMapOf<String?, PyClassTypeImpl?>()
-
-  private var myModStamp: Long = -1
+  val builtinsFile: PyFile? = myBuiltinsFile?.file
 
   constructor(project: Project, sdk: Sdk) : this(
-    builtinsFile = getBuiltinsForSdk(project, sdk),
-    myTypeshedFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPESHED_MODULE)),
-    myExceptionsFile = getExceptionsForSdk(project, sdk)
+    myBuiltinsFile = getBuiltinsForSdk(project, sdk).toCachedFile(),
+    myTypesFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPES_MODULE)).toCachedFile(),
+    myTypeshedFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPESHED_MODULE)).toCachedFile(),
+    myExceptionsFile = getExceptionsForSdk(project, sdk).toCachedFile(),
   )
 
   val isValid: Boolean
@@ -69,51 +66,24 @@ class PyBuiltinCache(
    * @param name to look for
    * @return found element, or null.
    */
-  fun getByName(name: @NonNls String?): PsiElement? {
-    if (builtinsFile != null) {
-      val element = builtinsFile.getElementNamed(name)
-      if (element != null) {
-        return element
-      }
-    }
-    if (myExceptionsFile != null) {
-      return myExceptionsFile.getElementNamed(name)
-    }
-    return null
-  }
+  @Suppress("KotlinUnreachableCode")
+  fun getByName(name: @NonNls String?): PsiElement? =
+    builtinsFile?.getElementNamed(name)?.let { return it }
+      ?: myExceptionsFile?.file?.getElementNamed(name)
+
 
   fun getClass(name: @NonNls String): PyClass? {
-    if (builtinsFile != null) {
-      return builtinsFile.findTopLevelClass(name)
-    }
-    return null
+    return builtinsFile?.findTopLevelClass(name)
   }
 
   fun getObjectType(name: @NonNls String): PyClassTypeImpl? {
-    var pyClass: PyClassTypeImpl?
-    synchronized(myTypeCache) {
-      if (builtinsFile != null) {
-        if (builtinsFile.modificationStamp != myModStamp) {
-          myTypeCache.clear()
-          myModStamp = builtinsFile.modificationStamp
+    return myBuiltinsFile?.getClassType(name) {
+      getClass(name)
+        ?.let { pyClass ->
+          PyClassTypeImpl(pyClass, false)
+            .also { it.assertValid(name) }
         }
-      }
-      pyClass = myTypeCache[name]
     }
-    if (pyClass == null) {
-      val cls = getClass(name)
-      if (cls != null) { // null may happen during testing
-        pyClass = PyClassTypeImpl(cls, false)
-        pyClass.assertValid(name)
-        synchronized(myTypeCache) {
-          myTypeCache.put(name, pyClass)
-        }
-      }
-    }
-    else {
-      pyClass.assertValid(name)
-    }
-    return pyClass
   }
 
   val objectType: PyClassType?
@@ -204,31 +174,13 @@ class PyBuiltinCache(
 
   val noneType: PyClassType?
     get() {
-      val name = "NoneType"
-      var pyClass: PyClassTypeImpl?
-      synchronized(myTypeCache) {
-        pyClass = myTypeCache[name]
-      }
-      if (pyClass == null) {
-        val cls = if (myTypeshedFile != null)
-          ResolveImportUtil.resolveChildren(
-            myTypeshedFile, name, myTypeshedFile, false, true, false, false
-          ).getOrNull(0)?.element as PyClass?
-        else
-          null
-        if (cls != null) { // null may happen during testing
-          pyClass = PyClassTypeImpl(cls, false)
-          pyClass.assertValid(name)
-          synchronized(myTypeCache) {
-            myTypeCache.put(name, pyClass)
-          }
-        }
-      }
-      else {
-        pyClass.assertValid(name)
-      }
-      return pyClass
+      val file = myTypeshedFile ?: return null
+      // need to use `resolveNested` because `_typeshed` has `NoneType` as an import, not a class
+      return file.getClassType("NoneType", file::resolveNested)
     }
+
+  val ellipsisType: PyClassType?
+    get() = myTypesFile?.getClassType("EllipsisType")
 
   /**
    * @param target an element to check.
@@ -243,12 +195,13 @@ class PyBuiltinCache(
       return false
     }
     // files are singletons, no need to compare URIs
-    return the_file === builtinsFile || the_file === myExceptionsFile
+    return the_file === builtinsFile || the_file === myExceptionsFile?.file
   }
 
   companion object {
     const val BUILTIN_MODULE: String = "__builtin__"
     const val BUILTIN_MODULE_3K: String = "builtins"
+    const val TYPES_MODULE: String = "types"
     const val TYPESHED_MODULE: String = "_typeshed"
     private const val EXCEPTIONS_MODULE = "exceptions"
 
@@ -358,3 +311,42 @@ class PyBuiltinCache(
     }
   }
 }
+
+private class CachedFile(
+  val file: PyFile,
+  private var myModificationStamp: Long = -1,
+  /**
+   * Stores the most often used types, returned by nNNType.
+   */
+  private val myTypeCache: MutableMap<String, PyClassTypeImpl?> = mutableMapOf(),
+) {
+  fun getClassType(name: @NonNls String, typeResolver: (@NonNls String) -> PyClassTypeImpl? = ::resolveTopLevel): PyClassTypeImpl? {
+    return synchronized(this) {
+      if (myModificationStamp != file.modificationStamp) {
+        myTypeCache.clear()
+        myModificationStamp = file.modificationStamp
+      }
+      myTypeCache[name]
+        ?.also { it.assertValid(name) }
+    } ?: typeResolver(name)?.also {
+      synchronized(myTypeCache) {
+        myTypeCache.put(name, it)
+      }
+    }
+  }
+
+  fun resolveNested(name: @NonNls String): PyClassTypeImpl? {
+      val pyClass = ResolveImportUtil.resolveChildren(
+        file, name, file, false, true, false, false
+      ).getOrNull(0)?.element as? PyClass? ?: return null
+      return PyClassTypeImpl(pyClass, false)
+        .also { it.assertValid(name) }
+  }
+
+  fun resolveTopLevel(name: @NonNls String): PyClassTypeImpl? {
+    return PyClassTypeImpl((file.findTopLevelClass(name) ?: return null), false)
+  }
+}
+
+private fun PyFile?.toCachedFile() =
+  this?.let { CachedFile(this) }

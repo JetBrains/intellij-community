@@ -2263,7 +2263,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def f(x: IntGetter):
                        pass
                    
-                   box: Box[str] = ...
+                   box: Box[str]
                    f(<warning descr="Expected type 'IntGetter', got 'Box[str]' instead">box</warning>)
                    """);
   }
@@ -2285,7 +2285,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def f(x: Getter[int]):
                        pass
                    
-                   box: Box[str] = ...
+                   box: Box[str]
                    f(<warning descr="Expected type 'Getter[int]', got 'Box[str]' instead">box</warning>)
                    """);
   }
@@ -2857,6 +2857,16 @@ def foo(param: str | int) -> TypeGuard[str]:
     doTestByText("""
                    def func(p: tuple[int, *tuple[int, ...]]):
                        v: tuple[int] = <warning>p</warning>
+                   """);
+  }
+
+  // PY-80436
+  public void testEllipsis() {
+    doTestByText("""
+                   from types import EllipsisType
+                   e: EllipsisType
+                   e = ...
+                   e = Ellipsis
                    """);
   }
 }

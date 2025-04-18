@@ -102,7 +102,7 @@ PyFile:ExtendedSlices.py
       PsiElement(Py:COMMA)(',')
       PsiWhiteSpace(' ')
       PySliceItem
-        PyNoneLiteralExpression
+        PyEllipsisLiteralExpression
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')

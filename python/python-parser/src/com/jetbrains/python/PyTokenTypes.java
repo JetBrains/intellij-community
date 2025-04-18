@@ -58,6 +58,7 @@ public final class PyTokenTypes {
 
   // new keywords in Python 3
   public static final PyElementType NONE_KEYWORD = new PyElementType("NONE_KEYWORD");
+  public static final PyElementType ELLIPSIS_LITERAL = new PyElementType("ELLIPSIS_LITERAL");
   public static final PyElementType TRUE_KEYWORD = new PyElementType("TRUE_KEYWORD");
   public static final PyElementType FALSE_KEYWORD = new PyElementType("FALSE_KEYWORD");
   public static final PyElementType NONLOCAL_KEYWORD = new PyElementType("NONLOCAL_KEYWORD");
@@ -168,8 +169,8 @@ public final class PyTokenTypes {
 
   public static final TokenSet NUMERIC_LITERALS = TokenSet.create(FLOAT_LITERAL, INTEGER_LITERAL, IMAGINARY_LITERAL);
   public static final TokenSet BOOL_LITERALS = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD);
-  public static final TokenSet SCALAR_LITERALS = TokenSet.orSet(BOOL_LITERALS, NUMERIC_LITERALS, TokenSet.create(NONE_KEYWORD));
-  public static final TokenSet EXPRESSION_KEYWORDS = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NONE_KEYWORD);
+  public static final TokenSet SCALAR_LITERALS = TokenSet.orSet(BOOL_LITERALS, NUMERIC_LITERALS, TokenSet.create(NONE_KEYWORD, ELLIPSIS_LITERAL));
+  public static final TokenSet EXPRESSION_KEYWORDS = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NONE_KEYWORD, ELLIPSIS_LITERAL);
 
   public static final TokenSet AUG_ASSIGN_OPERATIONS = TokenSet.create(PLUSEQ, MINUSEQ, MULTEQ, ATEQ, DIVEQ,
       PERCEQ, EXPEQ, GTGTEQ, LTLTEQ, ANDEQ, OREQ, XOREQ, FLOORDIVEQ);

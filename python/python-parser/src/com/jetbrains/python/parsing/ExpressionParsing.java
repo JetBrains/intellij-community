@@ -50,6 +50,10 @@ public class ExpressionParsing extends Parsing {
       buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
+    else if (firstToken == PyTokenTypes.ELLIPSIS_LITERAL) {
+      buildTokenElement(PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION, myBuilder);
+      return true;
+    }
     else if (firstToken == PyTokenTypes.TRUE_KEYWORD ||
              firstToken == PyTokenTypes.FALSE_KEYWORD ||
              firstToken == PyTokenTypes.DEBUG_KEYWORD) {
@@ -580,10 +584,8 @@ public class ExpressionParsing extends Parsing {
     if (atToken(PyTokenTypes.DOT)) {
       final SyntaxTreeBuilder.Marker maybeEllipsis = myBuilder.mark();
       myBuilder.advanceLexer();
-      //duplication is intended as matchToken advances the lexer
-      //noinspection DuplicateBooleanBranch
       if (matchToken(PyTokenTypes.DOT) && matchToken(PyTokenTypes.DOT)) {
-        maybeEllipsis.done(PyElementTypes.NONE_LITERAL_EXPRESSION);
+        maybeEllipsis.done(PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION);
         return true;
       }
       maybeEllipsis.rollbackTo();

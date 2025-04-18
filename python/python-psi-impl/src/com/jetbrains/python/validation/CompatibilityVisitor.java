@@ -451,20 +451,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
-    if (node.isEllipsis()) {
-      final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
-      if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
-        return;
-      }
-      final PySliceItem sliceItem = PsiTreeUtil.getParentOfType(node, PySliceItem.class);
-      if (sliceItem != null) {
-        return;
-      }
-      registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
-                                     PyPsiBundle.message("INSP.compatibility.feature.support.ellipsis.outside.slices"),
-                                     node);
+  public void visitPyEllipsisLiteralExpression(@NotNull PyEllipsisLiteralExpression node) {
+    final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
+    if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
+      return;
     }
+    final PySliceItem sliceItem = PsiTreeUtil.getParentOfType(node, PySliceItem.class);
+    if (sliceItem != null) {
+      return;
+    }
+    registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.ellipsis.outside.slices"),
+                                   node);
   }
 
   @Override

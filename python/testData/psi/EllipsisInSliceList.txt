@@ -10,7 +10,7 @@ PyFile:EllipsisInSliceList.py
         PsiElement(Py:IDENTIFIER)('x')
       PsiElement(Py:LBRACKET)('[')
       PyTupleExpression
-        PyNoneLiteralExpression
+        PyEllipsisLiteralExpression
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')
           PsiElement(Py:DOT)('.')

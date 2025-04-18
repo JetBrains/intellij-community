@@ -2,7 +2,7 @@ FunctionTypeComment:a.functionTypeComment
   PyFunctionTypeAnnotation
     PyParameterTypeList
       PsiElement(Py:LPAR)('(')
-      PyNoneLiteralExpression
+      PyEllipsisLiteralExpression
         PsiElement(Py:DOT)('.')
         PsiElement(Py:DOT)('.')
         PsiElement(Py:DOT)('.')
