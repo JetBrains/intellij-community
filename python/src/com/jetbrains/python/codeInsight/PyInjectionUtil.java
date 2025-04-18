@@ -67,12 +67,13 @@ public final class PyInjectionUtil {
    * string concatenations or formatting.
    */
   public static @NotNull InjectionResult registerStringLiteralInjection(@NotNull PsiElement element,
-                                                               @NotNull MultiHostRegistrar registrar,
-                                                               @NotNull Language language) {
+                                                                        @NotNull MultiHostRegistrar registrar,
+                                                                        @NotNull Language language) {
     registrar.startInjecting(language);
     final InjectionResult result = processStringLiteral(element, registrar, "", "", Formatting.NONE);
     if (result.isInjected()) {
-      registrar.doneInjecting();
+      registrar.frankensteinInjection(!result.isStrict())
+        .doneInjecting();
     }
     return result;
   }

@@ -5,8 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
@@ -78,13 +76,7 @@ public final class PythonRegexpInjector implements MultiHostInjector {
 
   private static void injectRegexpLanguage(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context, boolean verbose) {
     final Language language = verbose ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
-    final PyInjectionUtil.InjectionResult result = PyInjectionUtil.registerStringLiteralInjection(context, registrar, language);
-    if (result.isInjected() && !result.isStrict()) {
-      final PsiFile file = InjectedLanguageUtil.getCachedInjectedFileWithLanguage(context, language);
-      if (file != null) {
-        file.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-      }
-    }
+    PyInjectionUtil.registerStringLiteralInjection(context, registrar, language);
   }
 
   @Override

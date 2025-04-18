@@ -6,7 +6,6 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.psi.PyElement;
@@ -25,9 +24,6 @@ public final class PyTemporaryInjector extends PyInjectorBase {
     if (result.isInjected()) {
       final TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(context.getProject());
       InjectorUtils.registerSupport(registry.getLanguageInjectionSupport(), false, context, getInjectedLanguage(context));
-      if (!result.isStrict()) {
-        InjectorUtils.putInjectedFileUserData(context, getInjectedLanguage(context), InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-      }
     }
   }
 
