@@ -130,7 +130,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
             QualifiedName.fromDottedString("_templatelib"), // find a stub file
             PyResolveImportUtil.fromFoothold(this)
           );
-
+          if (templateModules.isEmpty()) {
+            return builtinCache.getStrType();
+          }
           final PsiElement templateModule = templateModules.get(0);
           if (!(templateModule instanceof PyFile)) {
             return builtinCache.getStrType();
