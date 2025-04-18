@@ -142,7 +142,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
           }
           final PyClassType templateType = (PyClassType)templateClassElement.getType(context);
 
-          return templateType != null ? templateType : builtinCache.getStrType();
+          return templateType != null ? templateType.toInstance() : builtinCache.getStrType();
         } else
           // f-strings can't have "b" prefix, so they are always unicode
           return builtinCache.getUnicodeType(languageLevel);
