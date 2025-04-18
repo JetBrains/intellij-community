@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -94,10 +95,11 @@ public final class InjectorUtils {
     for (TextRange range : ranges) {
       list.add(new InjectionInfo(host, injectedLanguage, range));
     }
-    registerInjection(language, host.getContainingFile(), list, registrar);
-    if (support != null) {
-      registerSupport(support, true, host, language);
-    }
+    registerInjection(language, host.getContainingFile(), list, registrar, it -> {
+      if (support != null) {
+        registerSupport(it, support, true);
+      }
+    });
     return !ranges.isEmpty();
   }
 
@@ -121,12 +123,19 @@ public final class InjectorUtils {
     registerInjection(language, containingFile,
                       ContainerUtil.map(list, trinity -> new InjectionInfo(trinity.first, trinity.second, trinity.third)), registrar);
   }
+  public static void registerInjection(@Nullable Language language,
+                                       @NotNull PsiFile containingFile,
+                                       @NotNull List<InjectionInfo> list,
+                                       @NotNull MultiHostRegistrar registrar) {
+    registerInjection(language, containingFile, list, registrar, null);
+  }
 
 
   public static void registerInjection(@Nullable Language language,
                                        @NotNull PsiFile containingFile,
                                        @NotNull List<InjectionInfo> list,
-                                       @NotNull MultiHostRegistrar registrar) {
+                                       @NotNull MultiHostRegistrar registrar,
+                                       @Nullable Consumer<MultiHostRegistrar> customizeInjection) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
     // Maybe IDEA core is caching a bit too aggressively here?
     if (language == null/* && (pair.second.getLength() > 0*/) {
@@ -164,6 +173,9 @@ public final class InjectorUtils {
         injectionStarted = true;
       }
       registrar.addPlace(injectedLanguage.getPrefix(), injectedLanguage.getSuffix(), host, textRange);
+    }
+    if (customizeInjection != null) {
+      customizeInjection.accept(registrar);
     }
     if (injectionStarted) {
       registrar.doneInjecting();
@@ -249,6 +261,10 @@ public final class InjectorUtils {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #registerSupport(MultiHostRegistrar, LanguageInjectionSupport, boolean)} instead
+   */
+  @Deprecated
   public static void registerSupport(@NotNull LanguageInjectionSupport support,
                                      boolean settingsAvailable,
                                      @NotNull PsiElement element,
@@ -259,7 +275,21 @@ public final class InjectorUtils {
     }
   }
 
+  public static void registerSupport(@NotNull MultiHostRegistrar registrar,
+                                     @NotNull LanguageInjectionSupport support,
+                                     boolean settingsAvailable) {
+    registrar.putInjectedFileUserData(LanguageInjectionSupport.INJECTOR_SUPPORT, support);
+    if (settingsAvailable) {
+      registrar.putInjectedFileUserData(LanguageInjectionSupport.SETTINGS_EDITOR, support);
+    }
+  }
 
+  /**
+   * Does not work with multiple injections on the same host.
+   *
+   * @deprecated Use {@link MultiHostRegistrar#putInjectedFileUserData(Key, Object)} when registering the injection.
+   */
+  @Deprecated
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, @NotNull Key<T> key, @Nullable T value) {
     InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);
   }

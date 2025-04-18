@@ -761,7 +761,6 @@ f:com.intellij.lang.folding.LanguageFolding
 - forLanguage(com.intellij.lang.Language):com.intellij.lang.folding.FoldingBuilder
 a:com.intellij.lang.injection.InjectedLanguageManager
 - sf:FRANKENSTEIN_INJECTION:com.intellij.openapi.util.Key
-- sf:LENIENT_INSPECTIONS:com.intellij.openapi.util.Key
 - <init>():V
 - a:dropFileCaches(com.intellij.psi.PsiFile):V
 - a:enumerate(com.intellij.psi.PsiElement,com.intellij.psi.PsiLanguageInjectionHost$InjectedPsiVisitor):V
@@ -799,6 +798,7 @@ com.intellij.lang.injection.MultiHostRegistrar
 - a:doneInjecting():V
 - frankensteinInjection(Z):com.intellij.lang.injection.MultiHostRegistrar
 - makeInspectionsLenient(Z):com.intellij.lang.injection.MultiHostRegistrar
+- putInjectedFileUserData(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.lang.injection.MultiHostRegistrar
 - a:startInjecting(com.intellij.lang.Language):com.intellij.lang.injection.MultiHostRegistrar
 - startInjecting(com.intellij.lang.Language,java.lang.String):com.intellij.lang.injection.MultiHostRegistrar
 com.intellij.lang.injection.general.Injection
