@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.*;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -51,9 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @ApiStatus.Internal
 public final class InjectionRegistrarImpl implements MultiHostRegistrar {
@@ -64,13 +61,13 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   private List<PlaceInfo> placeInfos;
   private boolean cleared = true;
   private String fileExtension;
+  @SuppressWarnings("rawtypes")
+  private Map<Key, Object> myUserData;
   private final Project myProject;
   private final DocumentEx myHostDocument;
   private final VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
-  private boolean isFrankensteinInjection;
-  private boolean shouldInspectionsBeLenient;
   private Thread currentThread;
 
   public InjectionRegistrarImpl(@NotNull Project project,
@@ -123,9 +120,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
     placeInfos = null;
     currentThread = null;
-
-    isFrankensteinInjection = false;
-    shouldInspectionsBeLenient = false;
+    myUserData = null;
   }
 
   @Override
@@ -162,14 +157,15 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   }
 
   @Override
-  public @NotNull MultiHostRegistrar makeInspectionsLenient(boolean shouldInspectionsBeLenient) {
-    this.shouldInspectionsBeLenient = shouldInspectionsBeLenient;
-    return this;
-  }
-
-  @Override
-  public @NotNull MultiHostRegistrar frankensteinInjection(boolean isFrankensteinInjection) {
-    this.isFrankensteinInjection = isFrankensteinInjection;
+  public @NotNull <T> MultiHostRegistrar putInjectedFileUserData(@NotNull Key<T> key, @Nullable T data) {
+    if (myUserData == null) {
+      if (data == null) return this;
+      myUserData = new HashMap<>();
+    }
+    if (data == null)
+      myUserData.remove(key);
+    else
+      myUserData.put(key, data);
     return this;
   }
 
@@ -276,12 +272,6 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                 placeInfos, decodedChars, fileName, myDocumentManagerBase);
     for (ASTNode node : parsedNodes) {
       PsiFile psiFile = (PsiFile)node.getPsi();
-      if (isFrankensteinInjection) {
-        psiFile.putUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-      }
-      if (shouldInspectionsBeLenient) {
-        psiFile.putUserData(InjectedLanguageManagerImpl.LENIENT_INSPECTIONS, Boolean.TRUE);
-      }
       InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
       synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         if (psiFile.getLanguage() == viewProvider.getBaseLanguage()) {
@@ -290,6 +280,13 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
         }
         else {
           cacheEverything(place, documentWindow, viewProvider, psiFile);
+        }
+        if (myUserData != null && !myUserData.isEmpty()) {
+          //noinspection rawtypes
+          for (Map.Entry<Key, Object> userData : myUserData.entrySet()) {
+            //noinspection unchecked
+            psiFile.putUserData(userData.getKey(), userData.getValue());
+          }
         }
 
         DocumentWindowImpl retrieved = (DocumentWindowImpl)myDocumentManagerBase.getDocument(psiFile);

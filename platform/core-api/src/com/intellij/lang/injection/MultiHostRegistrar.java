@@ -2,6 +2,7 @@
 package com.intellij.lang.injection;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -97,7 +98,7 @@ public interface MultiHostRegistrar {
    */
   @NotNull
   default MultiHostRegistrar makeInspectionsLenient(boolean shouldInspectionsBeLenient) {
-    throw new UnsupportedOperationException();
+    return putInjectedFileUserData(InjectedLanguageManager.LENIENT_INSPECTIONS, shouldInspectionsBeLenient ? true : null);
   }
 
   /**
@@ -117,6 +118,16 @@ public interface MultiHostRegistrar {
    */
   @NotNull
   default MultiHostRegistrar frankensteinInjection(boolean isFrankensteinInjection) {
+    return putInjectedFileUserData(InjectedLanguageManager.FRANKENSTEIN_INJECTION, isFrankensteinInjection ? true : null);
+  }
+
+  /**
+   * Allows setting custom user data on the injected file.
+   *
+   * @return this
+   */
+  @NotNull
+  default <T> MultiHostRegistrar putInjectedFileUserData(Key<T> key, T data) {
     throw new UnsupportedOperationException();
   }
 

@@ -156,8 +156,10 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils
 - s:isRegexp(java.lang.String):Z
 - s:putInjectedFileUserData(com.intellij.psi.PsiElement,com.intellij.lang.Language,com.intellij.openapi.util.Key,java.lang.Object):V
 - s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar):V
+- s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar,java.util.function.Consumer):V
 - s:registerInjection(com.intellij.lang.Language,java.util.List,com.intellij.psi.PsiFile,com.intellij.lang.injection.MultiHostRegistrar):V
 - s:registerInjectionSimple(com.intellij.psi.PsiLanguageInjectionHost,org.intellij.plugins.intelliLang.inject.config.BaseInjection,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,com.intellij.lang.injection.MultiHostRegistrar):Z
+- s:registerSupport(com.intellij.lang.injection.MultiHostRegistrar,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z):V
 - s:registerSupport(org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z,com.intellij.psi.PsiElement,com.intellij.lang.Language):V
 c:org.intellij.plugins.intelliLang.inject.InjectorUtils$CommentInjectionData
 - getDisplayName():java.lang.String
@@ -173,6 +175,8 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils$InjectionInfo
 - host():com.intellij.psi.PsiLanguageInjectionHost
 - language():org.intellij.plugins.intelliLang.inject.InjectedLanguage
 - range():com.intellij.openapi.util.TextRange
+f:org.intellij.plugins.intelliLang.inject.InjectorUtilsKt
+- sf:registerSupport(com.intellij.lang.injection.MultiHostRegistrar,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z):com.intellij.lang.injection.MultiHostRegistrar
 a:org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 - sf:INJECTOR_SUPPORT:com.intellij.openapi.util.Key
 - sf:SETTINGS_EDITOR:com.intellij.openapi.util.Key

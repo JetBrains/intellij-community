@@ -25,17 +25,13 @@ public abstract class InjectedLanguageManager {
   }
 
   /**
-   * Use {@link InjectedLanguageManager#isFrankensteinInjection(PsiElement)} or {@link MultiHostRegistrar#frankensteinInjection(boolean)} instead.
-   * <p>
-   * Made public to enable custom {@link MultiHostRegistrar} implementations.
+   * @deprecated use {@link InjectedLanguageManager#isFrankensteinInjection(PsiElement)} or {@link MultiHostRegistrar#frankensteinInjection(boolean)} instead.
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
 
-  /**
-   * Use {@link InjectedLanguageManager#shouldInspectionsBeLenient(PsiElement)} or {@link MultiHostRegistrar#makeInspectionsLenient(boolean)} instead.
-   * <p>
-   * Made public to enable custom {@link MultiHostRegistrar} implementations.
-   */
+  @ApiStatus.Internal
   public static final Key<Boolean> LENIENT_INSPECTIONS = Key.create("LENIENT_INSPECTIONS");
 
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider);

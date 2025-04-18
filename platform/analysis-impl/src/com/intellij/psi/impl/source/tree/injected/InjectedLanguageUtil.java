@@ -268,6 +268,11 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return ref.get();
   }
 
+  /**
+   * Does not work with multiple injections on the same host.
+   *
+   * @deprecated Use {@link MultiHostRegistrar#putInjectedFileUserData(Key, Object)} when registering the injection.
+   */
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element,
                                                  @NotNull Language language,
                                                  @NotNull Key<T> key,
