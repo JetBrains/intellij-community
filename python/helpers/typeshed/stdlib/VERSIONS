@@ -55,7 +55,6 @@ _thread: 3.0-
 _threading_local: 3.0-
 _tkinter: 3.0-
 _tracemalloc: 3.4-
-_templatelib.pyi: 3.14
 _typeshed: 3.0-  # not present at runtime, only for type checking
 _warnings: 3.0-
 _weakref: 3.0-
@@ -255,6 +254,7 @@ ssl: 3.0-
 stat: 3.0-
 statistics: 3.4-
 string: 3.0-
+string.templatelib: 3.14
 stringprep: 3.0-
 struct: 3.0-
 subprocess: 3.0-
@@ -269,7 +269,6 @@ tabnanny: 3.0-
 tarfile: 3.0-
 telnetlib: 3.0-3.12
 tempfile: 3.0-
-templatelib.pyi: 3.14
 termios: 3.0-
 textwrap: 3.0-
 this: 3.0-
