@@ -4,6 +4,7 @@ package com.intellij.platform.whatsNew
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.l10n.LocalizationStateService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.whatsNew.WhatsNewAction.Companion.PLACE
 import com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
@@ -29,16 +31,17 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.cef.handler.CefRequestHandler
 import java.net.HttpURLConnection
 import java.net.URL
 
-internal abstract class WhatsNewContent {
+internal abstract class WhatsNewContent() {
   companion object {
     suspend fun getWhatsNewContent(): WhatsNewContent? {
       return if (WhatsNewInVisionContentProvider.getInstance().isAvailable()) {
-        WhatsNewVisionContent(WhatsNewInVisionContentProvider.getInstance().getContent().entities.first())
+        val provider = WhatsNewInVisionContentProvider.getInstance()
+        WhatsNewVisionContent(provider, provider.getContent().entities.first())
       } else {
         ExternalProductResourceUrls.getInstance().whatIsNewPageUrl?.toDecodedForm()?.let { WhatsNewUrlContent(it) }
       }
@@ -148,8 +151,12 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
   }
 }
 
-internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page) : WhatsNewContent() {
+internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionContentProvider, page: WhatsNewInVisionContentProvider.Page)
+  : WhatsNewContent() {
   companion object {
+    const val WHATS_NEW_VISION_SCHEME = "whatsnewvision"
+    const val LOCALHOST = "localhost"
+
     private const val THEME_KEY = "\$__VISION_PAGE_SETTINGS_THEME__$"
     private const val DARK_THEME = "dark"
     private const val LIGHT_THEME = "light"
@@ -157,16 +164,18 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
     private const val LANG_KEY = "\$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__$"
     private const val ZOOM_KEY = "\$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__$"
     private const val GIF_KEY = "\$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__$"
+    private const val MEDIA_BASE_PATH_KEY = "\$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
 
     private const val ZOOM_VALUE = "whatsnew.vision.zoom"
     private const val GIF_VALUE = "whatsnew.vision.gif"
+    private const val MEDIA_BASE_PATH_VALUE = "$WHATS_NEW_VISION_SCHEME://$LOCALHOST"
   }
 
   val content: String
   private val contentHash: String
   private val myActionWhiteList: Set<String>
   private val visionActionIds = setOf(GIF_VALUE, ZOOM_VALUE)
-
+  private lateinit var disposable: Disposable
   init {
     var html = page.html
     val pattern = page.publicVars.distinctBy { it.value }
@@ -182,6 +191,7 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
         LANG_KEY -> getCurrentLanguageTag()
         ZOOM_KEY -> ZOOM_VALUE
         GIF_KEY -> GIF_VALUE
+        MEDIA_BASE_PATH_KEY -> MEDIA_BASE_PATH_VALUE
         else -> it.value
       }
     }
@@ -193,7 +203,20 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
   private fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
     val request = html(content)
     request.withQueryHandler(getHandler(dataContext))
+    request.withRequestHandler(getRequestHandler(dataContext))
     return request
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun getRequestHandler(dataContext: DataContext?): CefRequestHandler? {
+    if(dataContext == null) return logger.error("dataContext is null").let { null }
+
+    val parentDisposable = disposable
+
+    val coroutineScope = GlobalScope.childScope("WhatsNewVisionContent_WhatsNewRequestHandler", Dispatchers.IO)
+      .also { Disposer.register(parentDisposable) { it.cancel() } }
+
+    return WhatsNewRequestHandler(contentProvider, coroutineScope)
   }
 
   override fun getVersion(): ContentVersion {
@@ -263,6 +286,7 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
     val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
     withContext(Dispatchers.EDT) {
       logger.info("Opening What's New in editor.")
+      disposable = Disposer.newDisposable(project)
       val editor = writeIntentReadAction { openEditor(project, title, getRequest(dataContext)) }
       editor?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
@@ -270,7 +294,6 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
 
         WhatsNewContentVersionChecker.saveLastShownContent(this@WhatsNewVisionContent)
 
-        val disposable = Disposer.newDisposable(project)
         val busConnection = application.messageBus.connect(disposable)
         busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
           override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
@@ -280,7 +303,7 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
             }
           }
         })
-      }
+      } ?: Disposer.dispose(disposable)
     }
   }
 }
