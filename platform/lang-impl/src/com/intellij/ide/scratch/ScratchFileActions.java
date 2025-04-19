@@ -118,12 +118,15 @@ public final class ScratchFileActions {
         StringUtil.isNotEmpty(context.text) ? new LanguageItem(
           null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
 
-      // extract text from the focused component, e.g. a tree or a list
+      // extract text from the focused component, e.g., a tree or a list
       ScratchImplUtil.TextExtractor textExtractor = selectionItem == null ? ScratchImplUtil.getTextExtractor(component) : null;
       LanguageItem extractItem =
         textExtractor != null && StringUtil.isEmpty(context.text) &&
         !EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR)) ?
         new LanguageItem(null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
+
+      boolean isFromConsole = e.getPlace().equals(ActionPlaces.EDITOR_POPUP)
+                              && hasSelection(e.getData(CommonDataKeys.EDITOR));
 
       Consumer<LanguageItem> consumer = o -> {
         context.language = o.language();
@@ -132,7 +135,7 @@ public final class ScratchFileActions {
           context.text = StringUtil.notNullize(textExtractor.extractText());
           context.caretOffset = 0;
         }
-        else if (o != selectionItem) {
+        else if (o != selectionItem && !isFromConsole) {
           context.text = "";
           context.caretOffset = 0;
         }
