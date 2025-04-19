@@ -284,7 +284,6 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
 
         externalSystemModuleGroup = externalProject.group
         externalSystemModuleVersion = externalProject.version
-        externalSystemModuleType = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY
       }
     }
   }
