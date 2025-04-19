@@ -6,19 +6,26 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ContributedReferenceHost;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -27,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
 
@@ -112,8 +120,34 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
-        // f-strings can't have "b" prefix, so they are always unicode
-        return builtinCache.getUnicodeType(languageLevel);
+        String prefix = PyStringLiteralCoreUtil.getPrefix(firstNode.getText());
+        if (StringUtil.containsIgnoreCase(prefix, "t")) {
+          // For t-strings, return the string.templatelib.Template type
+          if (!context.maySwitchToAST(this)) {
+            return builtinCache.getStrType();
+          }
+          final List<PsiElement> templateModules = PyResolveImportUtil.resolveQualifiedName(
+            QualifiedName.fromDottedString("string.templatelib"), // find a stub file
+            PyResolveImportUtil.fromFoothold(this)
+          );
+          if (templateModules.isEmpty()) {
+            return builtinCache.getStrType();
+          }
+          final PsiElement templateModule = templateModules.get(0);
+          if (!(templateModule instanceof PyFile)) {
+            return builtinCache.getStrType();
+          }
+          final PyClass templateClassElement = PyUtil.as(((PyFile)templateModule).findExportedName("Template"), PyClass.class);
+
+          if (templateClassElement == null) {
+            return builtinCache.getStrType();
+          }
+          final PyClassType templateType = (PyClassType)templateClassElement.getType(context);
+
+          return templateType != null ? templateType.toInstance() : builtinCache.getStrType();
+        } else
+          // f-strings can't have "b" prefix, so they are always unicode
+          return builtinCache.getUnicodeType(languageLevel);
       }
       else if (firstNode.getElementType() == PyTokenTypes.DOCSTRING) {
         return builtinCache.getStrType();
