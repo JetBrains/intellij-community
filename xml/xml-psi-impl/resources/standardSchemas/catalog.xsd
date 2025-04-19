@@ -9,11 +9,8 @@
   <xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
 
   <xs:simpleType name="pubIdChars">
-    <!-- A string of the characters defined as pubIdChar in production 13
-         of the Second Edition of the XML 1.0 Recommendation. Does not include
-         the whitespace characters because they're normalized by XML parsing. -->
     <xs:restriction base="xs:string">
-      <xs:pattern value="[a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_%]*"/>
+      <xs:pattern value="[a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_% ]*"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -74,7 +71,7 @@
         <xs:attribute name="systemId" type="xs:string"
                        use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -86,7 +83,7 @@
         <xs:attribute name="name" type="xs:anyURI"
                        use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -99,7 +96,7 @@
                        type="xs:string"
                        use="required"/>
         <xs:attribute name="rewritePrefix" type="xs:string" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -112,7 +109,7 @@
                        type="xs:string"
                        use="required"/>
         <xs:attribute name="rewritePrefix" type="xs:string" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -125,7 +122,7 @@
                        type="xs:string"
                        use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -138,7 +135,7 @@
                        type="xs:string"
                        use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -151,7 +148,7 @@
                        type="er:partialPublicIdentifier"
                        use="required"/>
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -164,7 +161,7 @@
                        type="xs:string"
                        use="required"/>
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -177,7 +174,7 @@
                        type="xs:string"
                        use="required"/>
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -187,7 +184,7 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
