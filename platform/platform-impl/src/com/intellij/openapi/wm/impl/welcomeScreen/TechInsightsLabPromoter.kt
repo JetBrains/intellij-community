@@ -11,6 +11,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_NORMAL
 import com.intellij.ui.LicensingFacade
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -73,7 +74,7 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
   }
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean {
-    if (PropertiesComponent.getInstance().getBoolean(BUTTON_CLICKED_PROPERTY)) {
+    if (PropertiesComponent.getInstance().getBoolean(BUTTON_CLICKED_PROPERTY) || !PlatformUtils.isJetBrainsProduct()) {
       return false
     }
     if (ConfigImportHelper.isFirstSession() || ConfigImportHelper.isConfigImported()) {
