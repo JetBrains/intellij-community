@@ -61,14 +61,20 @@ public fun Icons() {
                 hint = Badge(Color.Red, DotBadgeShape.Default),
             )
         }
+        val backgroundColor =
+            if (JewelTheme.isDark) {
+                JewelTheme.colorPalette.blueOrNull(4) ?: Color(0xFF375FAD)
+            } else {
+                JewelTheme.colorPalette.blueOrNull(4) ?: Color(0xFF3574F0)
+            }
         Box(
-            Modifier.size(24.dp).background(JewelTheme.colorPalette.blue(4), shape = RoundedCornerShape(4.dp)),
+            Modifier.size(24.dp).background(backgroundColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(key = AllIconsKeys.Nodes.ConfigFolder, contentDescription = "taskGroup", hint = Stroke(Color.White))
         }
         Box(
-            Modifier.size(24.dp).background(JewelTheme.colorPalette.blue(4), shape = RoundedCornerShape(4.dp)),
+            Modifier.size(24.dp).background(backgroundColor, shape = RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
