@@ -7,5 +7,4 @@ def f():
 
 
 def foo(a_new):
-    b1 = do_smth_with(a_new)
-    return b1
+    return do_smth_with(a_new)
