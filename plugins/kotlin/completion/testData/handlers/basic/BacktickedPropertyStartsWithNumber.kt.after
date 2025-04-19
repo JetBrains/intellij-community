@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+class C {
+    val `1_property` = 1
+}
+
+fun main() {
+    C().`1_property`
+}
+
+// ELEMENT: 1_property
