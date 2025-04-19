@@ -9210,6 +9210,7 @@ f:com.intellij.openapi.ui.validation.ValidationsKt
 - sf:getCHECK_NO_RESERVED_WORDS():com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:getCHECK_NO_WHITESPACES():com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:getCHECK_PROJECT_PATH():com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
+- sf:getCHECK_READABLE_DIRECTORY():com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 c:com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 - sf:Companion:com.intellij.openapi.updateSettings.UpdateStrategyCustomization$Companion
 - <init>():V
