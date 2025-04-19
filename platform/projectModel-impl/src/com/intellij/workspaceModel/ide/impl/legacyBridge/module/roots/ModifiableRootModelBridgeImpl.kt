@@ -10,6 +10,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ModifiableRootModel.Dependency
+import com.intellij.openapi.roots.ModifiableRootModel.InvalidModuleDependency
+import com.intellij.openapi.roots.ModifiableRootModel.ValidModuleDependency
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase.CollectDependentModules
@@ -315,6 +318,17 @@ internal class ModifiableRootModelBridgeImpl(
     return (mutableOrderEntries.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
   }
 
+  override fun addEntries(dependencies: List<Dependency>): List<OrderEntry> {
+    appendDependencies(dependencies.map {
+      when(it) {
+        is ValidModuleDependency -> ModuleDependency((it.module as ModuleBridge).moduleEntityId, it.exported, it.scope.toEntityDependencyScope(), productionOnTest = it.productionOnTest)
+        is InvalidModuleDependency -> ModuleDependency(ModuleId(it.moduleName), it.exported, it.scope.toEntityDependencyScope(), productionOnTest = it.productionOnTest)
+        is ModifiableRootModel.LibraryDependency -> LibraryDependency(it.library.libraryId, it.exported, it.scope.toEntityDependencyScope())
+      }
+    })
+    return mutableOrderEntries.takeLast(dependencies.size)
+  }
+
   override fun addModuleOrderEntry(module: Module): ModuleOrderEntry {
     val moduleDependency = ModuleDependency(
       module = (module as ModuleBridge).moduleEntityId,
@@ -326,13 +340,6 @@ internal class ModifiableRootModelBridgeImpl(
     appendDependency(moduleDependency)
 
     return mutableOrderEntries.lastOrNull() as? ModuleOrderEntry ?: error("Unable to find module orderEntry after adding")
-  }
-
-  override fun addModuleEntries(modules: MutableList<Module>, scope: DependencyScope, exported: Boolean) {
-    val dependencyScope = scope.toEntityDependencyScope()
-    appendDependencies(modules.map {
-      ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope, productionOnTest = false)
-    })
   }
 
   override fun addInvalidModuleEntry(name: String): ModuleOrderEntry {
