@@ -317,21 +317,21 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.UnfoldAssignmentToIfIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations.UnfoldAssignmentToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.UnfoldAssignmentToWhenIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations.UnfoldAssignmentToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.UnfoldPropertyToWhenIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations.UnfoldPropertyToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
