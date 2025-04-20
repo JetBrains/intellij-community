@@ -52,5 +52,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
   </component>
 </module>
