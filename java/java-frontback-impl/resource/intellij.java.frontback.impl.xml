@@ -8,6 +8,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.JavaWhiteSpaceFormattingStrategy"/>
+    <moveLeftRightHandler language="JAVA"
+                          implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.JavaMoveLeftRightHandler"/>
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.MethodCallSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.AntLikePropertySelectionHandler"/>
