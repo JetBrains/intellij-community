@@ -12,7 +12,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -32,11 +31,11 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
-  KtNamedDeclaration::class.java,
-  KotlinBundle.lazyMessage("add.jvmstatic.annotation")
+    KtNamedDeclaration::class.java,
+    KotlinBundle.lazyMessage("add.jvmstatic.annotation")
 ), LowPriorityAction {
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (element !is KtNamedFunction && element !is KtProperty) return null
@@ -70,27 +69,26 @@ class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
 
         val expressionsToReplaceWithQualifier =
             project.runSynchronouslyWithProgress(KotlinBundle.message("looking.for.usages.in.java.files"), true) {
-              runReadAction {
-                val searchScope = element.codeUsageScope().restrictByFileType(JavaFileType.INSTANCE)
-                ReferencesSearch
-                  .search(element, searchScope)
-                  .asIterable()
-                  .mapNotNull {
-                    val refExpr = it.element as? PsiReferenceExpression ?: return@mapNotNull null
-                    if ((refExpr.resolve() as? KtLightElement<*, *>)?.kotlinOrigin != element) return@mapNotNull null
-                    val qualifierExpr = refExpr.qualifierExpression as? PsiReferenceExpression ?: return@mapNotNull null
-                    if (qualifierExpr.qualifierExpression == null) return@mapNotNull null
-                    val instanceField = qualifierExpr.resolve() as? KtLightField ?: return@mapNotNull null
-                    if (instanceField.name != instanceFieldName) return@mapNotNull null
-                    if ((instanceField.containingClass as? KtLightClass)?.kotlinOrigin != instanceFieldContainingClass) return@mapNotNull null
-                    qualifierExpr
-                  }
-              }
+                runReadAction {
+                    val searchScope = element.codeUsageScope().restrictByFileType(JavaFileType.INSTANCE)
+                    ReferencesSearch
+                        .search(element, searchScope)
+                        .mapNotNull {
+                            val refExpr = it.element as? PsiReferenceExpression ?: return@mapNotNull null
+                            if ((refExpr.resolve() as? KtLightElement<*, *>)?.kotlinOrigin != element) return@mapNotNull null
+                            val qualifierExpr = refExpr.qualifierExpression as? PsiReferenceExpression ?: return@mapNotNull null
+                            if (qualifierExpr.qualifierExpression == null) return@mapNotNull null
+                            val instanceField = qualifierExpr.resolve() as? KtLightField ?: return@mapNotNull null
+                            if (instanceField.name != instanceFieldName) return@mapNotNull null
+                            if (instanceField.containingClass.kotlinOrigin != instanceFieldContainingClass) return@mapNotNull null
+                            qualifierExpr
+                        }
+                }
             } ?: return
 
-      runWriteAction {
-        element.addAnnotation(JvmStandardClassIds.Annotations.JvmStatic)
-        expressionsToReplaceWithQualifier.forEach { it.replace(it.qualifierExpression!!) }
-      }
+        runWriteAction {
+            element.addAnnotation(JvmStandardClassIds.Annotations.JvmStatic)
+            expressionsToReplaceWithQualifier.forEach { it.replace(it.qualifierExpression!!) }
+        }
     }
 }
