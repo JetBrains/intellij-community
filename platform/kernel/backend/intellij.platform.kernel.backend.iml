@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.2/rpc-compiler-plugin-2.1.20-0.2.jar</args>
+              <args>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.20-0.3/rpc-compiler-plugin-2.1.20-0.3.jar</args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
