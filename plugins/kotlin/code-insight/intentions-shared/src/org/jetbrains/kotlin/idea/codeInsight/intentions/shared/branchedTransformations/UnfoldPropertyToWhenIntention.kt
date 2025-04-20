@@ -4,54 +4,25 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransfor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransformations.UnfoldPropertyUtils.prepareUnfoldPropertyContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.BranchedUnfoldingUtils
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty, UnfoldPropertyToWhenIntention.Context>(KtProperty::class) {
-    class Context(val propertyExplicitType: String?)
+class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty, UnfoldPropertyUtils.Context>(KtProperty::class) {
 
     override fun invoke(
       actionContext: ActionContext,
       property: KtProperty,
-      elementContext: Context,
+      elementContext: UnfoldPropertyUtils.Context,
       updater: ModPsiUpdater
     ) {
-        val assignment = splitPropertyDeclaration(property, elementContext.propertyExplicitType) ?: return
+        val assignment = UnfoldPropertyUtils.splitPropertyDeclaration(property, elementContext.propertyExplicitType) ?: return
         BranchedUnfoldingUtils.unfoldAssignmentToWhen(assignment) { updater.moveCaretTo(it) }
-    }
-
-    /**
-     * Initially, the given [property] is in a form of `val foo: Type = initializer`. This function will update it to
-     * ```
-     * var foo: Type
-     * foo = initializer   // assignment
-     * ```
-     * and return the assignment e.g., `foo = initializer`.
-     */
-    private fun splitPropertyDeclaration(property: KtProperty, propertyTypeAsString: String?): KtBinaryExpression? {
-        val parent = property.parent
-        val initializer = property.initializer ?: return null
-        val psiFactory = KtPsiFactory(property.project)
-        val expression = psiFactory.createExpressionByPattern("$0 = $1", property.nameAsName!!, initializer)
-
-        val assignment = parent.addAfter(expression, property) as KtBinaryExpression
-        parent.addAfter(psiFactory.createNewLine(), property)
-
-        property.initializer = null
-
-        if (propertyTypeAsString != null) {
-            val typeReference = psiFactory.createType(propertyTypeAsString)
-            property.setTypeReference(typeReference)?.let { ShortenReferencesFacility.getInstance().shorten(it) }
-        }
-        return assignment
     }
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.property.initializer.with.when.expression")
@@ -63,16 +34,6 @@ class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty
         return initializer.entries.none { it.expression == null }
     }
 
-    @OptIn(KaExperimentalApi::class)
-    override fun KaSession.prepareContext(element: KtProperty): Context? {
-        val initializer = element.initializer ?: return null
-
-        if (element.typeReference != null) return Context(null)
-
-        val propertyExplicitType = analyze(initializer) {
-            val initializerType = initializer.expressionType ?: return@analyze null
-            initializerType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
-        }
-        return Context(propertyExplicitType)
-    }
+    override fun KaSession.prepareContext(element: KtProperty): UnfoldPropertyUtils.Context? =
+        prepareUnfoldPropertyContext(element)
 }
