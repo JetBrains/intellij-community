@@ -16,16 +16,17 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty, UnfoldPropertyUtils.Context>(KtProperty::class) {
 
     override fun invoke(
-      actionContext: ActionContext,
-      property: KtProperty,
-      elementContext: UnfoldPropertyUtils.Context,
-      updater: ModPsiUpdater
+        actionContext: ActionContext,
+        element: KtProperty,
+        elementContext: UnfoldPropertyUtils.Context,
+        updater: ModPsiUpdater
     ) {
-        val assignment = UnfoldPropertyUtils.splitPropertyDeclaration(property, elementContext.propertyExplicitType) ?: return
+        val assignment = UnfoldPropertyUtils.splitPropertyDeclaration(element, elementContext.propertyExplicitType) ?: return
         BranchedUnfoldingUtils.unfoldAssignmentToWhen(assignment) { updater.moveCaretTo(it) }
     }
 
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.property.initializer.with.when.expression")
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("replace.property.initializer.with.when.expression")
 
     override fun isApplicableByPsi(element: KtProperty): Boolean {
         if (!element.isLocal) return false
