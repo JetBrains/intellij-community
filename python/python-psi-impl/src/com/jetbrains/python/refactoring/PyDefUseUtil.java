@@ -22,6 +22,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.*;
@@ -75,7 +76,6 @@ public final class PyDefUseUtil {
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
                                   if (instruction instanceof PyWithContextExitInstruction withExit) {
-                                    // probably should remove acceptTypeAssertions and make context nullable
                                     if (!withExit.isSuppressingExceptions(context)) {
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
@@ -86,8 +86,7 @@ public final class PyDefUseUtil {
                                       result.add(typeGuardInstruction);
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
-                                    // not a back edge
-                                    if (instruction.num() < startNum &&
+                                    if (isNotBackEdge(instruction.num(), startNum) && 
                                         context.getOrigin() == callInstruction.getElement().getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                         ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
@@ -96,9 +95,8 @@ public final class PyDefUseUtil {
                                     }
                                   }
                                   final PsiElement element = instruction.getElement();
-                                  if (acceptTypeAssertions
-                                      && instruction instanceof ConditionalInstruction conditionalInstruction
-                                      && instruction.num() < startNum) {
+                                  if (isNotBackEdge(instruction.num(), startNum)
+                                      && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
                                     if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
@@ -133,6 +131,17 @@ public final class PyDefUseUtil {
                                   return ControlFlowUtil.Operation.NEXT;
                                 });
     return new ArrayList<>(result);
+  }
+
+  /**
+   * New analysis handles back edges separately.
+   * @see com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#getTypeByControlFlow(String, TypeEvalContext, PyExpression, ScopeOwner) 
+   */
+  private static boolean isNotBackEdge(int instNum, int startNum) {
+    if (Registry.is("python.use.better.control.flow.type.inference")) {
+      return true;
+    }
+    return instNum < startNum;
   }
 
   private static int findStartInstructionId(@NotNull PsiElement startAnchor, Instruction @NotNull [] instructions) {

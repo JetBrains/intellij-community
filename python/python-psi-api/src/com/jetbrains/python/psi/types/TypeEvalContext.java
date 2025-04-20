@@ -4,6 +4,8 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,9 +23,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 
-public final class TypeEvalContext {
+public sealed class TypeEvalContext {
 
   /**
    * This class ensures that only {@link TypeEvalContext} instances can directly invoke
@@ -45,11 +49,28 @@ public final class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  private final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
-  private final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
+  protected final Map<PyTypedElement, PyType> myEvaluated = createMap();
+  protected final Map<PyCallable, PyType> myEvaluatedReturn = createMap();
+
+  /**
+   * AssumptionContext invariant requires that if type is in the map, 
+   * it's dependencies are also in the map, so we can't use softValueMap.
+   * Temporary solution until we know assumeType works as expected.
+   * @see TypeEvalContext#assumeType(PyTypedElement, PyType, Function) 
+   */
+  private static <T> Map<T, PyType> createMap() {
+    if (Registry.is("python.use.better.control.flow.type.inference")) {
+      return new ConcurrentHashMap<>();
+    }
+    return CollectionFactory.createConcurrentSoftValueMap();
+  }
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
+  }
+
+  private TypeEvalContext(@NotNull TypeEvalConstraints constraints) {
+    myConstraints = constraints;
   }
 
   @Override
@@ -170,17 +191,55 @@ public final class TypeEvalContext {
     return myTrace != null;
   }
 
+  @ApiStatus.Internal
+  public <R> @Nullable R assumeType(@NotNull PyTypedElement element, @Nullable PyType type, @NotNull Function<TypeEvalContext, R> func) {
+    if (getKnownType(element) != null) {
+      // Temporary solution, as overwriting known type might introduce inconsistencies with its dependencies.
+      return null;
+    }
+    AssumptionContext context = new AssumptionContext(this, element, type);
+    R result = null;
+    try {
+      result = func.apply(context);
+    }
+    finally {
+      element.getManager().dropResolveCaches();
+    }
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public boolean hasAssumptions() {
+    return this instanceof AssumptionContext;
+  }
+
+  protected @Nullable PyType getKnownType(final @NotNull PyTypedElement element) {
+    final PyType cachedType = myEvaluated.get(element);
+    if (cachedType != null) {
+      assertValid(cachedType, element);
+      return cachedType;
+    }
+    return null;
+  }
+
+  protected @Nullable PyType getKnownReturnType(final @NotNull PyCallable callable) {
+    final PyType cachedType = myEvaluatedReturn.get(callable);
+    if (cachedType != null) {
+      assertValid(cachedType, callable);
+      return cachedType;
+    }
+    return null;
+  }
+
   public @Nullable PyType getType(final @NotNull PyTypedElement element) {
+    final PyType knownType = getKnownType(element);
+    if (knownType != null) {
+      return knownType == PyNullType.INSTANCE ? null : knownType;
+    }
     return RecursionManager.doPreventingRecursion(
       Pair.create(element, this),
       false,
       () -> {
-        PyType cachedType = myEvaluated.get(element);
-        if (cachedType != null) {
-          assertValid(cachedType, element);
-          return cachedType == PyNullType.INSTANCE ? null : cachedType;
-        }
-
         PyType type = element.getType(this, Key.INSTANCE);
         assertValid(type, element);
         myEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
@@ -190,16 +249,15 @@ public final class TypeEvalContext {
   }
 
   public @Nullable PyType getReturnType(final @NotNull PyCallable callable) {
+    final PyType knownReturnType = getKnownReturnType(callable);
+    if (knownReturnType != null) {
+      return knownReturnType == PyNullType.INSTANCE ? null : knownReturnType;
+    }
     return RecursionManager.doPreventingRecursion(
       Pair.create(callable, this),
       false,
       () -> {
-        PyType cachedType = myEvaluatedReturn.get(callable);
-        if (cachedType != null) {
-          assertValid(cachedType, callable);
-          return cachedType == PyNullType.INSTANCE ? null : cachedType;
-        }
-        PyType type = callable.getReturnType(this, Key.INSTANCE);
+        final PyType type = callable.getReturnType(this, Key.INSTANCE);
         assertValid(type, callable);
         myEvaluatedReturn.put(callable, type == null ? PyNullType.INSTANCE : type);
         return type;
@@ -305,5 +363,54 @@ public final class TypeEvalContext {
     }
 
     private static final PyNullType INSTANCE = new PyNullType();
+  }
+
+  private static final class AssumptionContext extends TypeEvalContext {
+    @NotNull final TypeEvalContext myParent;
+
+    private AssumptionContext(@NotNull TypeEvalContext parent, @NotNull PyTypedElement element, @Nullable PyType type) {
+      super(parent.myConstraints);
+      myParent = parent;
+      myEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
+    }
+
+    @Override
+    protected @Nullable PyType getKnownType(@NotNull PyTypedElement element) {
+      final PyType knownType = super.getKnownType(element);
+      if (knownType != null) {
+        return knownType;
+      }
+      return myParent.getKnownType(element);
+    }
+
+    @Override
+    protected @Nullable PyType getKnownReturnType(@NotNull PyCallable callable) {
+      final PyType knownReturnType = super.getKnownReturnType(callable);
+      if (knownReturnType != null) {
+        return knownReturnType;
+      }
+      return myParent.getKnownReturnType(callable);
+    }
+
+    @Override
+    public void trace(String message, Object... args) {
+      myParent.trace(message, args);
+    }
+
+    @Override
+    public void traceIndent() {
+      myParent.traceIndent();
+    }
+
+    @Override
+    public void traceUnindent() {
+      myParent.traceUnindent();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      // Otherwise, it can be equal to other AssumptionContext with same constraints
+      return this == o;
+    }
   }
 }

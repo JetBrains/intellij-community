@@ -156,9 +156,9 @@ public final class PyCallExpressionHelper {
       call,
       resolveContext,
       it -> ContainerUtil.concat(
-          getExplicitResolveResults(call, it),
-          getImplicitResolveResults(call, it),
-          getRemoteResolveResults(call, it))
+        getExplicitResolveResults(call, it),
+        getImplicitResolveResults(call, it),
+        getRemoteResolveResults(call, it))
     );
   }
 
