@@ -3350,69 +3350,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/intentions/branched/unfolding")
-        public abstract static class Unfolding extends AbstractK1IntentionTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/propertyToIf")
-            public static class PropertyToIf extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("nestedIfs.kt")
-                public void testNestedIfs() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nestedIfs.kt");
-                }
-
-                @TestMetadata("nestedIfs2.kt")
-                public void testNestedIfs2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nestedIfs2.kt");
-                }
-
-                @TestMetadata("nonLocalProperty.kt")
-                public void testNonLocalProperty() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nonLocalProperty.kt");
-                }
-
-                @TestMetadata("nonLocalProperty2.kt")
-                public void testNonLocalProperty2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nonLocalProperty2.kt");
-                }
-
-                @TestMetadata("simpleIf.kt")
-                public void testSimpleIf() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIf.kt");
-                }
-
-                @TestMetadata("simpleIf2.kt")
-                public void testSimpleIf2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIf2.kt");
-                }
-
-                @TestMetadata("simpleIfWithBlocks.kt")
-                public void testSimpleIfWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithBlocks.kt");
-                }
-
-                @TestMetadata("simpleIfWithBlocks2.kt")
-                public void testSimpleIfWithBlocks2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithBlocks2.kt");
-                }
-
-                @TestMetadata("simpleIfWithType.kt")
-                public void testSimpleIfWithType() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithType.kt");
-                }
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/when")
         public abstract static class When extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)

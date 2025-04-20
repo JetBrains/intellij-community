@@ -3619,6 +3619,65 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/propertyToIf")
+        public static class PropertyToIf extends AbstractSharedK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nestedIfs.kt")
+            public void testNestedIfs() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/nestedIfs.kt");
+            }
+
+            @TestMetadata("nestedIfs2.kt")
+            public void testNestedIfs2() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/nestedIfs2.kt");
+            }
+
+            @TestMetadata("nonLocalProperty.kt")
+            public void testNonLocalProperty() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/nonLocalProperty.kt");
+            }
+
+            @TestMetadata("nonLocalProperty2.kt")
+            public void testNonLocalProperty2() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/nonLocalProperty2.kt");
+            }
+
+            @TestMetadata("simpleIf.kt")
+            public void testSimpleIf() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/simpleIf.kt");
+            }
+
+            @TestMetadata("simpleIf2.kt")
+            public void testSimpleIf2() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/simpleIf2.kt");
+            }
+
+            @TestMetadata("simpleIfWithBlocks.kt")
+            public void testSimpleIfWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/simpleIfWithBlocks.kt");
+            }
+
+            @TestMetadata("simpleIfWithBlocks2.kt")
+            public void testSimpleIfWithBlocks2() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/simpleIfWithBlocks2.kt");
+            }
+
+            @TestMetadata("simpleIfWithType.kt")
+            public void testSimpleIfWithType() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToIf/simpleIfWithType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/intentions/unfolding/propertyToWhen")
         public static class PropertyToWhen extends AbstractSharedK2IntentionTest {
             @java.lang.Override

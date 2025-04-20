@@ -2,14 +2,13 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 object BranchedUnfoldingUtils {
-    fun unfoldAssignmentToIf(assignment: KtBinaryExpression, editor: Editor?) {
+    fun unfoldAssignmentToIf(assignment: KtBinaryExpression, moveCaretToOffset: (Int) -> Unit) {
         val op = assignment.operationReference.text
         val left = assignment.left!!
         val ifExpression = assignment.right as KtIfExpression
@@ -25,7 +24,8 @@ object BranchedUnfoldingUtils {
 
         val resultIf = assignment.replace(newIfExpression)
 
-        editor?.caretModel?.moveToOffset(resultIf.textOffset)
+        resultIf.reformat()
+        moveCaretToOffset(resultIf.textOffset)
     }
 
     fun unfoldAssignmentToWhen(assignment: KtBinaryExpression, moveCaretToOffset: (Int) -> Unit) {
