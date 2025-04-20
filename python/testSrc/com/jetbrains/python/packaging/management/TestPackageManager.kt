@@ -21,7 +21,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   private var packageDetails: PythonPackageDetails? = null
 
   override val repositoryManager: PythonRepositoryManager
-    get() = TestPythonRepositoryManager(project, sdk).withPackageNames(packageNames).withPackageDetails(packageDetails)
+    get() = TestPythonRepositoryManager(project).withPackageNames(packageNames).withPackageDetails(packageDetails)
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     return if (repositoryManager.allPackages().contains(specification.name)) {

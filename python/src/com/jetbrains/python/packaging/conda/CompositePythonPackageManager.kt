@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.project.Project
@@ -19,7 +19,7 @@ internal class CompositePythonPackageManager(
   override var installedPackages: List<PythonPackage> = emptyList()
 
   override var repositoryManager: PythonRepositoryManager =
-    CompositePythonRepositoryManager(project, managers.map { it.repositoryManager }, sdk)
+    CompositePythonRepositoryManager(project, managers.map { it.repositoryManager })
 
   private val managerNames = managers.joinToString { it.javaClass.simpleName }
 
