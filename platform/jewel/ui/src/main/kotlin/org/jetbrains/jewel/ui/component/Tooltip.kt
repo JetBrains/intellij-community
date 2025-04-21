@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -21,6 +25,8 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupPositionProviderAtPosition
+import kotlin.time.Duration
+import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -50,6 +56,12 @@ import org.jetbrains.jewel.ui.util.isDark
  * @param enabled Controls whether the tooltip can be shown. When false, it will never show
  * @param style The visual styling configuration for the tooltip
  * @param tooltipPlacement The placement strategy for positioning the tooltip relative to the content
+ * @param neverHide True if the tooltip should never be hidden, false otherwise. Defaults to false.
+ * @param autoHideDelay The delay before the tooltip is automatically hidden. Jewel offers two default values, matching
+ *   Swing behavior. [org.jetbrains.jewel.ui.component.styling.TooltipMetrics.regularDisappearDelay] is a shorter delay
+ *   (10 seconds) to be used when the tooltip text is a single line.
+ *   [org.jetbrains.jewel.ui.component.styling.TooltipMetrics.fullDisappearDelay] is a longer delay (30 seconds) to be
+ *   used when the tooltip text is multi-line.
  * @param content The component for which to show the tooltip on hover
  * @see com.intellij.ide.HelpTooltip
  */
@@ -60,10 +72,32 @@ public fun Tooltip(
     enabled: Boolean = true,
     style: TooltipStyle = JewelTheme.tooltipStyle,
     tooltipPlacement: TooltipPlacement = style.metrics.placement,
+    neverHide: Boolean = true,
+    autoHideDelay: Duration = style.metrics.regularDisappearDelay,
     content: @Composable () -> Unit,
 ) {
     TooltipArea(
-        tooltip = { if (enabled) TooltipImpl(style, tooltip) else Box {} },
+        tooltip = {
+            if (enabled) {
+                var isVisible by remember { mutableStateOf(true) }
+
+                LaunchedEffect(neverHide, autoHideDelay) {
+                    if (!neverHide && autoHideDelay != Duration.INFINITE) {
+                        delay(autoHideDelay)
+                        isVisible = false
+                    }
+                }
+
+                if (isVisible) {
+                    TooltipImpl(style, tooltip)
+                } else {
+                    // Render an empty box when not visible to allow TooltipArea to dismiss properly
+                    Box {}
+                }
+            } else {
+                Box {}
+            }
+        },
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
