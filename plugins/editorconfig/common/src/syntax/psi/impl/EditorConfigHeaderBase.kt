@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReference
 
 abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElementBase(node), EditorConfigHeader {
 
-  final override fun getReference(): PsiReference {
+  final override fun getReference(): PsiReference? {
     return ApplicationManager.getApplication().service<EditorConfigReferenceSupport>().getReference(this)
   }
 }

@@ -25,6 +25,7 @@
   <content>
     <module name="intellij.editorconfig.common"/>
     <module name="intellij.editorconfig.frontend"/>
+    <module name="intellij.editorconfig.frontend.split"/>
     <module name="intellij.editorconfig.backend"/>
   </content>
 </idea-plugin>
