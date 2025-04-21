@@ -106,7 +106,7 @@ internal class PyAddNewEnvironmentPanel internal constructor(existingSdks: List<
     val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
 
     val envPanelsFromProviders = PySdkProvider.EP_NAME.extensionList
-      .map { it.createNewEnvironmentPanel(null, null, existingSdks, newProjectPath, context) }
+      .mapNotNull { it.createNewEnvironmentPanel(null, null, existingSdks, newProjectPath, context) }
       .toTypedArray()
 
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {

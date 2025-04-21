@@ -19,7 +19,7 @@ import org.jetbrains.plugins.gradle.toml.getTomlParentSectionName
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 
-internal class KotlinGradleTomlVersionCatalogReferencesSearcher :
+class KotlinGradleTomlVersionCatalogReferencesSearcher :
     QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
     override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {

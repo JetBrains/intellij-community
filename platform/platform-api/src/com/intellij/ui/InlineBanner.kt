@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.IconButton
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -17,6 +18,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.FinalLayoutWrapper
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionListener
@@ -37,6 +39,7 @@ open class InlineBanner private constructor(
 
   override var status: EditorNotificationPanel.Status = status
     set(value) {
+      field = value
       setIcon(value.icon)
       super.status = value
     }
@@ -160,11 +163,24 @@ open class InlineBanner private constructor(
     return this
   }
 
-  fun addAction(name: @Nls String, action: Runnable): InlineBanner {
+  @ApiStatus.Internal
+  // similar to what EditorNotificationPanel does
+  fun createActionLabel(text: @NlsContexts.Label String, action: Runnable): JComponent {
+    return addActionImpl(text, action)
+  }
+
+  private fun addActionImpl(name: @Nls String, action: Runnable): LinkLabel<Runnable> {
     myActionPanel.isVisible = true
-    myActionPanel.add(object : LinkLabel<Runnable>(name, null, { _, action -> action.run() }, action) {
+    val label = object : LinkLabel<Runnable>(name, null, { _, action -> action.run() }, action) {
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
-    }, myActionPanel.componentCount - 1)
+    }
+    myActionPanel.add(label, myActionPanel.componentCount - 1)
+    return label
+  }
+
+  fun addAction(name: @Nls String, action: Runnable): InlineBanner {
+    addActionImpl(name, action)
+
     return this
   }
 

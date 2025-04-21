@@ -3,7 +3,7 @@ package com.jetbrains.env.debug.smokeTests
 
 import com.intellij.openapi.util.SystemInfo
 import com.jetbrains.env.PyEnvTestCase
-import com.jetbrains.env.debug.PyDebuggerTask
+import com.jetbrains.env.debug.tasks.PyDebuggerTask
 import org.junit.Assume
 import org.junit.Test
 

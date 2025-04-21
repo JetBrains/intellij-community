@@ -5,22 +5,21 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.name.Name
 
 internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
 
     /**
-     * Returns the [KtElement] to put an auto-import on, and the detected [org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext] around it.
+     * Returns the detected [ImportPositionTypeAndReceiver] for the given diagnostic.
      */
-    protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>?
+    protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext?
+
+    protected abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name>
 
     protected abstract fun KaSession.provideImportCandidates(
-        diagnostic: KaDiagnosticWithPsi<*>,
-        positionContext: KotlinRawPositionContext,
+        unresolvedName: Name,
+        importContext: ImportContext,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ImportCandidate>
 
@@ -30,13 +29,14 @@ internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.In
     fun KaSession.createQuickFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         return diagnostics
             .mapNotNull { diagnostic ->
-                val (expression, positionContext) = detectPositionContext(diagnostic) ?: return@mapNotNull null
+                val positionContext = detectPositionContext(diagnostic) ?: return@mapNotNull null
+                val unresolvedNames = provideUnresolvedNames(diagnostic, positionContext)
 
-                val indexProvider = KtSymbolFromIndexProvider(expression.containingKtFile)
+                val indexProvider = KtSymbolFromIndexProvider(positionContext.position.containingKtFile)
 
-                val candidates = provideImportCandidates(diagnostic, positionContext, indexProvider)
-                val data = ImportQuickFixProvider.createImportData(expression, candidates) ?: return@mapNotNull null
-                ImportQuickFixProvider.run { createImportFix(expression, data) }
+                val candidates = unresolvedNames.flatMap { provideImportCandidates(it, positionContext, indexProvider) }
+                val data = ImportQuickFixProvider.createImportData(positionContext.position, candidates) ?: return@mapNotNull null
+                ImportQuickFixProvider.run { createImportFix(positionContext.position, data) }
             }
     }
 }

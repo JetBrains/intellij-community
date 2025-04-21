@@ -6,6 +6,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyM
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -292,9 +293,6 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         project.configurations.forEachUsedKotlinLibrary {
             kotlinStdlib.dependencies.add(it)
         }
-        project.buildscript.configurations.forEachUsedKotlinLibrary {
-            kotlinStdlib.dependencies.add(it)
-        }
         if (kotlinStdlib.dependencies.isEmpty()) {
             return
         }
@@ -315,27 +313,23 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
     }
 
     private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
-        val stdlibSourcesConfiguration = "kotlinStdlibSourcesResolvableConfiguration"
-        val projectConfigurations = project.configurations
-        var kotlinStdlib =
-            projectConfigurations.findByName(stdlibSourcesConfiguration)
-
-        if (kotlinStdlib == null) {
-            kotlinStdlib = projectConfigurations.create(stdlibSourcesConfiguration) {
-                it.isCanBeConsumed = false
-            }
-            projectConfigurations.forEachUsedDependency(kotlinStdlib) {
-                kotlinStdlib.dependencies.add(it)
-            }
-            project.buildscript.configurations.forEachUsedDependency(kotlinStdlib) {
-                kotlinStdlib.dependencies.add(it)
+        JavaPluginUtil.getSourceSetContainer(project)?.forEach {
+            val compileClasspath = (it.compileClasspath as? Configuration)
+            if (compileClasspath != null && compileClasspath.isCanBeResolved) {
+                downloadSourcesForCompileClasspathKoltinSdlibDependencies(context, project, compileClasspath)
             }
         }
+    }
 
+    private fun downloadSourcesForCompileClasspathKoltinSdlibDependencies(
+        context: ModelBuilderContext,
+        project: Project,
+        compileClassPathConfiguration: Configuration?
+    ) {
         val stdlibDependencyGroups =
             setOf("org.jetbrains.kotlin", "org.jetbrains.kotlinx")
         GradleDependencyResolver(context, project, GradleDependencyDownloadPolicy.SOURCES)
-            .resolveDependencies(kotlinStdlib, stdlibDependencyGroups)
+            .resolveDependencies(compileClassPathConfiguration, stdlibDependencyGroups)
     }
 
     private fun ConfigurationContainer.forEachUsedDependency(

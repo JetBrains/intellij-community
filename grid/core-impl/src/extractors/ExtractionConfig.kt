@@ -1,13 +1,14 @@
 package com.intellij.database.extractors
 
-class ExtractionConfig(val addTableDdl: Boolean,
-                       val isTransposed: Boolean,
-                       val addComputedColumns: Boolean,
-                       val addGeneratedColumns: Boolean,
-                       val addColumnHeader: Boolean?,
-                       val addRowHeader: Boolean?,
-                       val addQuery: Boolean,
-                       val silent: Boolean
+class ExtractionConfig(
+  val addTableDdl: Boolean = false,
+  val isTransposed: Boolean = false,
+  val addComputedColumns: Boolean = false,
+  val addGeneratedColumns: Boolean = false,
+  val addColumnHeader: Boolean? = false,
+  val addRowHeader: Boolean? = false,
+  val addQuery: Boolean = false,
+  val silent: Boolean = false,
 ) {
   fun toBuilder() = ExtractionConfigBuilder()
     .setAddTableDdl(addTableDdl)

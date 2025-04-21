@@ -220,7 +220,7 @@ object EelPathUtils {
   }
 
   @JvmStatic
-  fun transferLocalContentToRemotePathIfNeeded(source: Path, remotePath: Path) {
+  fun transferFileIfNonLocal(source: Path, remotePath: Path) {
     val sourceDescriptor = source.getEelDescriptor()
 
     check(sourceDescriptor is LocalEelDescriptor)

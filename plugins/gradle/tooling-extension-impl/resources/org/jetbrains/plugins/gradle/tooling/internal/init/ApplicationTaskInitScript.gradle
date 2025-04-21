@@ -29,6 +29,7 @@ interface Properties {
 def javaExePath = JAVA_EXE_PATH
 def workingDirectory = WORKING_DIRECTORY
 def intelliJRtPath  = INTELLIJ_RT_PATH
+DEFS
 
 def isOlderThan64 = GradleVersionUtil.isCurrentGradleOlderThan("6.4")
 

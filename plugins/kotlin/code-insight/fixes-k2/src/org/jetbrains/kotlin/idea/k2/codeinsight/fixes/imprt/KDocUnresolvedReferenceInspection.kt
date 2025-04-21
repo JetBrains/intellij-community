@@ -18,9 +18,9 @@ import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 
 
@@ -43,14 +43,13 @@ internal class KDocUnresolvedReferenceInspection : AbstractKotlinInspection() {
 
         private fun createQuickFix(kDocName: KDocName): KDocUnresolvedReferenceQuickFix? {
             return analyze(kDocName) {
-                val kDocNameQualifier = kDocName.getQualifier()
-                val positionContext = KDocLinkNamePositionContext(kDocName, kDocName.mainReference, kDocName, kDocNameQualifier)
-                val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
+                val importContext = ImportContext(kDocName, ImportPositionTypeAndReceiver.KDocNameReference(kDocName.getQualifier()))
+                val indexProvider = KtSymbolFromIndexProvider(kDocName.containingKtFile)
 
                 val candidates = listOf(
-                    CallableImportCandidatesProvider(positionContext, allowInapplicableExtensions = true),
-                    ClassifierImportCandidatesProvider(positionContext),
-                ).flatMap { it.collectCandidates(indexProvider) }
+                    CallableImportCandidatesProvider(importContext, allowInapplicableExtensions = true),
+                    ClassifierImportCandidatesProvider(importContext),
+                ).flatMap { it.collectCandidates(Name.identifier(kDocName.getNameText()), indexProvider) }
 
                 val importData = ImportQuickFixProvider.createImportData(kDocName, candidates) ?: return null
                 val variants = importData.importVariants.ifEmpty { return null }

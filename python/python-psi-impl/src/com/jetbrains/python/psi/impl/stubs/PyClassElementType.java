@@ -193,6 +193,10 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
       .map(QualifiedName::getLastComponent)
       .filter(Objects::nonNull)
       .forEach(className -> sink.occurrence(PySuperClassIndex.KEY, className));
+
+    for (PyCustomClassStubType stubType : getExtensions()) {
+      stubType.indexStub(stub, sink);
+    }
   }
 
   protected @NotNull IStubElementType getStubElementType() {

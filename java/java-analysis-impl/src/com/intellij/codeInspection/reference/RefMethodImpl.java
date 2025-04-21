@@ -89,12 +89,13 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     }
 
     WritableRefEntity parentRef = (WritableRefEntity)findParentRef(sourcePsi, method, myManager);
-    if (parentRef == null) return;
-    if (!myManager.isDeclarationsFound()) {
-      parentRef.add(this);
-      return;
+    if (parentRef != null) {
+      if (!myManager.isDeclarationsFound()) {
+        parentRef.add(this);
+        return;
+      }
+      setOwner(parentRef);
     }
-    setOwner(parentRef);
 
     PsiMethod javaPsi = method.getJavaPsi();
     if (!method.isConstructor()) {
@@ -281,14 +282,10 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public void buildReferences() {
-    initializeIfNeeded();
-
-    // Work on code block to find what we're referencing...
     UMethod method = getUastElement();
     if (method == null) return;
-    if (isConstructor()) {
-      final RefClass ownerClass = getOwnerClass();
-      assert ownerClass != null;
+    final RefClass ownerClass = getOwnerClass();
+    if (isConstructor() && ownerClass != null) {
       ownerClass.initializeIfNeeded();
       addReference(ownerClass, ownerClass.getPsiElement(), method, false, true, null);
     }

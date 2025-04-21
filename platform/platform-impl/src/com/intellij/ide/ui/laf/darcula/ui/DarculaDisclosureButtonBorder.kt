@@ -30,7 +30,7 @@ class DarculaDisclosureButtonBorder : Border, UIResource {
       JBInsets.removeFrom(r, getBorderInsets(c))
 
       if (c.hasFocus()) {
-        DarculaNewUIUtil.paintComponentBorder(g2, r, DarculaUIUtil.Outline.focus, true, true, arc = DarculaDisclosureButtonUI.ARC.float)
+        DarculaNewUIUtil.paintComponentBorder(g2, r, DarculaUIUtil.Outline.focus, true, true, arc = c.arc.toFloat())
       }
     }
     finally {

@@ -2,13 +2,27 @@
 package com.jetbrains.python.requirements
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.sdk.pythonSdk
 
+@TestDataPath("\$CONTENT_ROOT/../testData/requirements/inspections")
 class UnsatisfiedRequirementInspectionTest : PythonDependencyTestCase() {
   fun testUnsatisfiedRequirement() {
     doMultiFileTest("requirements.txt")
     assertContainsElements(myFixture.availableIntentions.map { it.text }, "Install package mypy", "Install all missing packages", "Run 'pip install -e .'")
   }
+
+  fun testPyProjectTomlUnsatisfiedRequirement() {
+    doMultiFileTest("pyproject.toml")
+    val warnings = myFixture.doHighlighting(HighlightSeverity.WARNING)
+
+    listOf("mypy", "poetry-core").forEach { unsatisfiedPackage ->
+      val warning = warnings.single { it.text == unsatisfiedPackage }
+      assertEquals("Package $unsatisfiedPackage is not installed", warning.description)
+    }
+  }
+
 
   fun testEmptyRequirementsFile() {
     doMultiFileTest("requirements.txt")
@@ -19,7 +33,7 @@ class UnsatisfiedRequirementInspectionTest : PythonDependencyTestCase() {
     myFixture.copyDirectoryToProject(getTestName(false), "")
     myFixture.configureFromTempProjectFile(filename)
     myFixture.enableInspections(UnsatisfiedRequirementInspection::class.java)
-    myFixture.checkHighlighting(true, false, true)
+    myFixture.checkHighlighting(true, false, true, false)
   }
 
   override fun setUp() {

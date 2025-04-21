@@ -290,7 +290,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     // Now we have to wait for the main debuggee process to finish. Otherwise, `XDebugSession` will terminate it,
     // which causes the process to finish with a non-zero exit code or the `KeyboardInterrupt` exception.
     // This issue happens frequently with multiprocess debugging.
-    getProcessHandler().waitFor();
     handleStop(); // In case of normal debug, we stop the session
   }
 

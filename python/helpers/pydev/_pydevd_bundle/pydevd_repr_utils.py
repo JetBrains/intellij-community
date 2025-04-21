@@ -112,15 +112,15 @@ if IS_PY3K:
         def __init__(self, do_trim):
             super(PydevdRepr, self).__init__()
             self.fillvalue = '...'
-            self.maxdict = \
-            self.maxlist = \
-            self.maxtuple = \
-            self.maxset = \
-            self.maxfrozenset = \
-            self.maxdeque = \
-            self.maxarray = \
-            self.maxlong = \
-            self.maxstring = \
+            self.maxdict = MAX_REPR_ITEM_SIZE
+            self.maxlist = MAX_REPR_ITEM_SIZE
+            self.maxtuple = MAX_REPR_ITEM_SIZE
+            self.maxset = MAX_REPR_ITEM_SIZE
+            self.maxfrozenset = MAX_REPR_ITEM_SIZE
+            self.maxdeque = MAX_REPR_ITEM_SIZE
+            self.maxarray = MAX_REPR_ITEM_SIZE
+            self.maxlong = MAX_REPR_ITEM_SIZE
+            self.maxstring = MAX_REPR_ITEM_SIZE
             self.maxother = MAX_REPR_ITEM_SIZE
             self.do_trim = do_trim
 
@@ -160,8 +160,6 @@ if IS_PY3K:
                 else:
                     return "'{x}'".format(x=x)
 
-
-
         def repr_dict(self, x, level):
             n = len(x)
             if n == 0: return '{}'
@@ -193,14 +191,20 @@ if IS_PY3K:
 
             # if `__repr__` is overridden, then use `reprlib`
             if x.__class__.__repr__ != object.__repr__:
-                return super().repr_instance(x, level)
+                if self.do_trim:
+                    return super().repr_instance(x, level)
+
+                return repr(x)
 
             # if `__str__` is overridden, then return str(x)
             if x.__class__.__str__ != object.__str__:
                 return str(x)
 
-            # else use `reprlib`
-            return super().repr_instance(x, level)
+            if self.do_trim:
+                return super().repr_instance(x, level)
+
+            return '%s' % x
+
 
 else:
     def pydevd_repr_function(value, do_trim=True):

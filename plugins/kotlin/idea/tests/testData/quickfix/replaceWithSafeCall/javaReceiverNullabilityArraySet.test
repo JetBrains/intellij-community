@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Replace with safe (?.) call" "true"
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Foo?
 package p;
 
 fun test(x: Foo) {
@@ -32,6 +33,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Replace with safe (?.) call" "true"
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Foo?
 package p;
 
 fun test(x: Foo) {

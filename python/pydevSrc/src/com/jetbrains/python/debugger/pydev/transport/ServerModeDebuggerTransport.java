@@ -33,26 +33,28 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public void waitForConnect() throws IOException {
-    myServerSocket.setSoTimeout(myConnectionTimeout);
-
     synchronized (mySocketObject) {
-      mySocket = myServerSocket.accept();
-      myConnected = true;
-    }
-    try {
-      synchronized (mySocketObject) {
+      if (myServerSocket.isClosed()) {
+        return;
+      }
+      myServerSocket.setSoTimeout(myConnectionTimeout);
+      try {
+        mySocket = myServerSocket.accept();
+        myConnected = true;
+
         myDebuggerReader = new DebuggerReader(myDebugger, mySocket.getInputStream());
       }
-    }
-    catch (IOException e) {
-      try {
-        mySocket.close();
+      catch (IOException e) {
+        try {
+          if (mySocket != null) {
+            mySocket.close();
+          }
+        }
+        catch (IOException ignore) {
+        }
+        throw e;
       }
-      catch (IOException ignore) {
-      }
-      throw e;
     }
-
     // mySocket is closed in close() method on process termination
   }
 

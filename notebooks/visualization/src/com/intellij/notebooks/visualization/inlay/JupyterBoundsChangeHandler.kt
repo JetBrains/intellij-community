@@ -3,11 +3,8 @@ package com.intellij.notebooks.visualization.inlay
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.NotebookCellLinesEvent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.CustomFoldRegion
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -48,7 +45,14 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
       override fun recalculationEnds() {
         if (editor.document.isInEventsHandling)
           return
-        boundsChanged()
+
+        // WriteAction can not be called from ReadAction
+        // but deep inside boundsChanged, in EditorCellOutputView.kt:60, we are calling layout for EditorImpl that requires write action
+        // while recalculationEnds called from readAction
+        if (ApplicationManager.getApplication().isWriteAccessAllowed)
+          boundsChanged()
+        else
+          schedulePerformPostponed()
       }
     })
 
@@ -108,16 +112,8 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
 
   override fun dispose(): Unit = Unit
 
-  fun subscribe(listener: JupyterBoundsChangeListener) {
-    dispatcher.addListener(listener)
-  }
-
   fun subscribe(parentDisposable: Disposable, listener: JupyterBoundsChangeListener) {
     dispatcher.addListener(listener, parentDisposable)
-  }
-
-  fun unsubscribe(listener: JupyterBoundsChangeListener) {
-    dispatcher.removeListener(listener)
   }
 
   fun boundsChanged() {

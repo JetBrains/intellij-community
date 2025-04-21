@@ -44,12 +44,18 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
       var url = javaClass.classLoader.getResource(path)
                 ?: (javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.getPluginPath()?.normalize()?.resolve(path)?.toUri()?.toURL()
 
+      //Fixme Newest version of hack for split mode.
+      // Frontend files "jupyter-web", is now not under lib folder, but directly under jupyter-plugin.
+      if (url.toString().contains("plugins/jupyter-plugin/lib/jupyter-web/")) {
+        url = URL(url.toString().replace("plugins/jupyter-plugin/lib/jupyter-web/", "plugins/jupyter-plugin/jupyter-web/"))
+      }
+
       // In remote dev, when we run remote-front via 'split (dev-build)' run config, we have:
       // (javaClass.classLoader as PluginClassLoader).getAllParents().mapNotNull{it as? PluginClassLoader}.map() { loader -> loader.pluginDescriptor.pluginPath }
       // = out/classes/production/intellij.jupyter.plugin.frontend or out/classes/production/intellij.notebooks.plugin
       // PathUtil.getJarPathForClass(javaClass) = out/classes/production/intellij.jupyter.core
       // But our resources lie not in out/classes but in out/dev-run
-      if (url.toString().contains("out/classes/production/intellij.jupyter.plugin.frontend")) {
+      else if (url.toString().contains("out/classes/production/intellij.jupyter.plugin.frontend")) {
         url = URL(url.toString().replace("out/classes/production/intellij.jupyter.plugin.frontend", "out/dev-run/Python/plugins/jupyter-plugin"))
       }
 

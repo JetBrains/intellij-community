@@ -20,7 +20,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public final class EAPUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 8);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
   private static final StringEventField METADATA = EventFields.StringValidatedByRegexpReference("metadata", "license_metadata");
@@ -57,8 +57,8 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())) {
             result.add(newLicencingMetric(LicenceType.license, facade));
           }
-          else if (isFreeLicense()) {
-            result.add(newLicencingMetric(LicenceType.free, facade));
+          else if (!isLicenseRequired()) {
+            result.add(newLicencingMetric(LicenceType.noLicenseNeeded, facade));
           }
         }
         return result;
@@ -93,11 +93,11 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     return LICENSING.metric(data);
   }
 
-  private static boolean isFreeLicense() {
-    return PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
+  public static boolean isLicenseRequired() {
+    return !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID);
   }
 
-  private enum LicenceType {evaluation, license, free}
+  private enum LicenceType {evaluation, license, noLicenseNeeded}
 
   private enum BuildType {eap, release}
 }

@@ -42,6 +42,7 @@ val pythonVersionMapping = mapOf(
   "3.10" to "3.10.8",
   "3.11" to "3.11.0",
   "3.12" to "3.12.0",
+  "3.13" to "3.13.0"
 )
 
 val defaultPackages = listOf("virtualenv")
@@ -161,11 +162,11 @@ if (isUnix && !isMacOs) { //qt is for Linux only
   qtTags.add("qt")
 }
 
-createPython("py27", "2.7",
+createPython("python2.7", "2.7",
              listOf(),
              listOf("python2.7"))
 
-createPython("py38", "3.8",
+createPython("python3.8", "3.8",
              listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                     "pytest-xdist", "untangle", "numpy", "pandas") + qtPackages,
              listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
@@ -191,3 +192,7 @@ createPython("python3.12", "3.12",
 
 // set CONDA_PATH to conda binary location to be able to run tests
 createPython("conda", "Miniconda3-py312_25.1.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
+
+createPython("python3.13", "3.13",
+             listOf(),
+             listOf("python3.13", "python3"))

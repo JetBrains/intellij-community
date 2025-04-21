@@ -273,12 +273,29 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     /**
-     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider]. 
+     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider].
      */
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
         registerPsiQuickFixes(KaFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
-        
+
+        registerFactory(ImportQuickFixFactories.tooManyArgumentsFactory)
+        registerFactory(ImportQuickFixFactories.noValueForParameterFactory)
+        registerFactory(ImportQuickFixFactories.argumentTypeMismatchFactory)
+        registerFactory(ImportQuickFixFactories.namedParameterNotFoundFactory)
+        registerFactory(ImportQuickFixFactories.noneApplicableFactory)
+        registerFactory(ImportQuickFixFactories.wrongNumberOfTypeArgumentsFactory)
+        registerFactory(ImportQuickFixFactories.newInferenceNoInformationForParameterFactory)
+
+        registerFactory(ImportQuickFixFactories.noGetMethodFactory)
+        registerFactory(ImportQuickFixFactories.noSetMethodFactory)
+
+        registerFactory(ImportQuickFixFactories.componentFunctionMissingFactory)
+        registerFactory(ImportQuickFixFactories.componentFunctionAmbiguityFactory)
+
+        registerFactory(ImportQuickFixFactories.iteratorMissingFactory)
+        registerFactory(ImportQuickFixFactories.iteratorAmbiguityFactory)
+
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
     }

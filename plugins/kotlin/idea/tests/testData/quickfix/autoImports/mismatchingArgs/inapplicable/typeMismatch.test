@@ -1,0 +1,16 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Type mismatch: inferred type is String but Int was expected
+
+package main
+
+fun foo(i: Int) {}
+
+fun usage() {
+    <caret>foo("hello")
+}
+
+// FILE: second.kt
+package other
+
+fun foo(s: Double) {}

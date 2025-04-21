@@ -1,0 +1,17 @@
+// FILE: first.before.kt
+// "Import" "false"
+// WITH_STDLIB
+// ERROR: Not enough information to infer type variable T
+
+package main
+
+class Foo<T>
+
+fun usage() {
+    Foo/* Missing type arguments! */().<caret>let {}
+}
+
+// FILE: second.kt
+package other
+
+fun foo(second: String) {}

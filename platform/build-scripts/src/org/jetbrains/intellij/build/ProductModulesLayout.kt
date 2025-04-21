@@ -40,8 +40,6 @@ class ProductModulesLayout {
   var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
 
   /**
-   * This property is used only if [ProductModulesLayout.buildAllCompatiblePlugins] is `false`, otherwise it should be empty.
-   *
    * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed into it.
    * Zip archives of these plugins will be built and placed under [BuildContext.nonBundledPlugins] directory in the build artifacts.
    * Layouts of the plugins are specified in [pluginLayouts] list.
@@ -107,7 +105,7 @@ class ProductModulesLayout {
   var prepareCustomPluginRepositoryForPublishedPlugins: Boolean = true
 
   /**
-   * If `true` then all plugins that compatible with an IDE will be built, otherwise only [pluginModulesToPublish] are considered.
+   * If `true` then all plugins that compatible with an IDE will be built.
    * Then the plugins matching [BuildContext.pluginAutoPublishList] will be placed to [BuildContext.nonBundledPluginsToBePublished]
    * subdirectory to be uploaded to plugins.jetbrains.com upon a release.
    */

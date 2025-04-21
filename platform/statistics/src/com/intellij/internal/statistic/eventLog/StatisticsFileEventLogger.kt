@@ -7,11 +7,16 @@ import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.*
+
+@ApiStatus.Internal
+val LICENSE_CODE_KEY: Key<Char> = Key("LICENSE_CODE")
 
 open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val sessionId: String,
@@ -110,8 +115,12 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       }
       ideMode?.let { event.data["ide_mode"] = ideMode }
       productMode?.let { event.data["product_mode"] = productMode }
+      val application = ApplicationManager.getApplication()
+      application.getUserData(LICENSE_CODE_KEY)?.let {
+        event.data["auto_license_type"] = it
+      }
       writer.log(it.validatedEvent)
-      ApplicationManager.getApplication().getService(EventLogListenersManager::class.java)
+      application.getService(EventLogListenersManager::class.java)
         .notifySubscribers(recorderId, it.validatedEvent, it.rawEventId, it.rawData, false)
     }
     lastEvent = null

@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.hatch.cli
 
-import com.intellij.python.hatch.HatchRuntime
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.hatch.runtime.HatchRuntime
+import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError.ExecException
 import kotlinx.serialization.SerialName
@@ -13,22 +15,22 @@ import java.nio.file.Path
 
 @Suppress("unused")
 @Serializable
-class Environment(
+class HatchEnvironmentDetails(
   /**
    * An environment's type determines which environment plugin will be used for management.
    * The only built-in environment type is virtual, which uses virtual Python environments.
    */
-  val type: String,
+  val type: @NlsSafe String,
 
   /**
    * The python option specifies which version of Python to use, or an absolute path to a Python interpreter:
    */
-  val python: String? = null,
+  val python: @NlsSafe String? = null,
 
   /**
    * The description option is purely informational and is displayed in the output of the env show command:
    */
-  val description: String? = null,
+  val description: @NlsSafe String? = null,
 
   /**
    * A common use case is standalone environments that do not require inheritance nor the installation of the project,
@@ -40,7 +42,7 @@ class Environment(
   /**
    * All environments inherit from the environment defined by its template option, which defaults to default.
    */
-  val template: String? = null,
+  val template: @NlsSafe String? = null,
 
   val installer: String? = null,
 
@@ -101,14 +103,19 @@ class Environment(
   val envExclude: List<String>? = null,
 )
 
-typealias Environments = Map<String, Environment>
+typealias HatchDetailedEnvironments = Map<String, HatchEnvironmentDetails>
 
-private const val DEFAULT_ENV_NAME: String = "default"
+const val DEFAULT_ENV_NAME: String = "default"
+const val ENV_TYPE_VIRTUAL: String = "virtual"
 
 /**
  * Manage project environments
  */
 class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
+  companion object {
+    private val SHOW_RESPONSE_REGEX = """^\s+Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
+  }
+
   enum class CreateResult {
     Created,
     AlreadyExists,
@@ -138,7 +145,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return path to environment
    */
-  suspend fun find(envName: String? = null): Result<Path?, ExecException> {
+  suspend fun find(envName: String? = null): Result<PythonHomePath?, ExecException> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("find", *arguments) {
       when (it.exitCode) {
@@ -191,29 +198,96 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * Returns details of the specified environments.
    *
    * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
-   * @param internal Optional parameter indicating whether to include internal environments. Defaults to null.
    * @return A [Result] containing:
-   * - [Environments] if operation is successful.
+   * - [HatchDetailedEnvironments] if operation is successful.
    * - An error wrapped in [ExecException] if an execution failure occurs.
    */
-  suspend fun show(vararg envs: String, internal: Boolean? = null): Result<Environments, ExecException> {
-    val options = listOf(internal to "--internal").makeOptions()
-    return executeAndHandleErrors("show", "--json", *options, *envs) { processOutput ->
+  suspend fun showWithDetails(vararg envs: String): Result<HatchDetailedEnvironments, ExecException> {
+    return executeAndHandleErrors("show", "--json", *envs) { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdout
                    ?: return@executeAndHandleErrors Result.failure(null)
 
       val json = Json { ignoreUnknownKeys = true }
       val jsonOutput = json.parseToJsonElement(output)
-      val environments = if (internal == true) jsonOutput.jsonObject
-      else {
-        // JSON mode always shows internal environments, and there is no flag to distinguish them
-        jsonOutput.jsonObject.filterKeys { !it.startsWith("hatch-") }
-      }
+
+      // JSON mode always shows internal environments, and there is no flag to distinguish them
+      val environments = jsonOutput.jsonObject.filterKeys { !it.startsWith("hatch-") }
 
       val parsedEnvironments = environments.mapValues {
-        json.decodeFromJsonElement<Environment>(it.value)
+        json.decodeFromJsonElement<HatchEnvironmentDetails>(it.value)
       }
       Result.success(parsedEnvironments)
     }
+  }
+
+  /**
+   * Returns details of the specified environments.
+   *
+   * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
+   * @param internal Optional parameter indicating whether to include internal environments. Defaults to false.
+   * @return A [Result] containing:
+   * - [HatchDetailedEnvironments] if operation is successful.
+   * - An error wrapped in [ExecException] if an execution failure occurs.
+   */
+  suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecException> {
+    val options = listOf(internal to "--internal").makeOptions()
+
+    return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->
+      val (standaloneTable, matricesTable) = matchResult.destructured
+      val standalone = standaloneTable.parseAsciiTable()?.parseHatchEnvironments()?.map { it.first } ?: emptyList()
+      val matrices = matricesTable.parseAsciiTable()?.parseHatchEnvironments()?.mapNotNull {
+        it.second?.let { envs -> HatchMatrixEnvironment(it.first, envs) }
+      } ?: emptyList()
+      Result.success(HatchEnvironments(standalone, matrices))
+    }
+  }
+}
+
+data class HatchEnvironments(
+  val standalone: List<HatchEnvironment>,
+  val matrices: List<HatchMatrixEnvironment>,
+)
+
+data class HatchEnvironment(
+  val name: @NlsSafe String,
+  val type: @NlsSafe String,
+  val features: String? = null,
+  val dependencies: String? = null,
+  val environmentVariables: String? = null,
+  val scripts: String? = null,
+  val description: String? = null,
+) {
+  companion object {
+    val DEFAULT: HatchEnvironment = HatchEnvironment(name = DEFAULT_ENV_NAME, type = ENV_TYPE_VIRTUAL)
+  }
+}
+
+data class HatchMatrixEnvironment(
+  val hatchEnvironment: HatchEnvironment,
+  val envs: List<String>,
+)
+
+
+private fun AsciiTable.parseHatchEnvironments(): List<Pair<HatchEnvironment, List<String>?>> {
+  val nameIdx = findColumnIdx("Name") ?: error("Name column not found")
+  val typeIdx = findColumnIdx("Type") ?: error("Type column not found")
+  val featuresIdx = findColumnIdx("Features")
+  val dependenciesIdx = findColumnIdx("Dependencies")
+  val environmentVariablesIdx = findColumnIdx("Environment variables")
+  val scriptsIdx = findColumnIdx("Scripts")
+  val descriptionIdx = findColumnIdx("Description")
+  val envsIdx = findColumnIdx("Envs")
+
+  return rows.map { row ->
+    val matrixEnvironments = envsIdx?.let { idx -> row[idx].lines().map { it.trim() } }
+    HatchEnvironment(
+      name = row[nameIdx],
+      type = row[typeIdx],
+      features = row.cell(featuresIdx),
+      dependencies = row.cell(dependenciesIdx),
+      environmentVariables = row.cell(environmentVariablesIdx),
+      scripts = row.cell(scriptsIdx),
+      description = row.cell(descriptionIdx),
+    ) to matrixEnvironments
   }
 }

@@ -3,10 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.name.Name
 
 internal interface ImportCandidatesProvider {
     context(KaSession)
     fun collectCandidates(
+        name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ImportCandidate>
 }

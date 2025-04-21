@@ -1,7 +1,7 @@
 package com.intellij.notebooks.visualization.inlay
 
-import java.util.*
+import java.util.EventListener
 
-interface JupyterBoundsChangeListener : EventListener {
-  fun boundsChanged(): Unit? = Unit
+fun interface JupyterBoundsChangeListener : EventListener {
+  fun boundsChanged(): Unit?
 }

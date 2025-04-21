@@ -546,8 +546,10 @@ class NetCommand:
         as_bytes = self._as_bytes
         if self.protocol == self.HTTP_PROTOCOL:
             sock.sendall(('Content-Length: %s\r\n\r\n' % len(as_bytes)).encode('ascii'))
-
-        sock.sendall(as_bytes)
+        try:
+            sock.sendall(as_bytes)
+        except BrokenPipeError:
+            print("Connection closed unexpectedly!")
 
     @classmethod
     def _show_debug_info(cls, cmd_id, seq, text):

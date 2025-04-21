@@ -8,17 +8,17 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.util.CompletableTaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,11 +29,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -2374,21 +2371,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   private void runTask(String task) {
-    ExternalSystemTaskId taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myProject);
-    String projectPath = getProjectPath();
-    GradleExecutionSettings settings = new GradleManager().getExecutionSettingsProvider().fun(new Pair<>(myProject, projectPath));
-    settings.setTasks(Arrays.asList(task));
-    new GradleTaskManager().executeTasks(projectPath, taskId, settings, new ExternalSystemTaskNotificationListener() {
-      @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        if (stdOut) {
-          System.out.print(text);
-        }
-        else {
-          System.err.print(text);
-        }
-      }
-    });
+    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+    settings.setTaskNames(Collections.singletonList(task));
+    settings.setExternalProjectPath(getProjectPath());
+    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
+
+    var callback = new CompletableTaskCallback();
+    TaskExecutionSpec spec = TaskExecutionSpec.create(
+        myProject,
+        GradleConstants.SYSTEM_ID,
+        DefaultRunExecutor.EXECUTOR_ID,
+        settings)
+      .withCallback(callback)
+      .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+      .build();
+    ExternalSystemUtil.runTask(spec);
+    callback.await();
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,

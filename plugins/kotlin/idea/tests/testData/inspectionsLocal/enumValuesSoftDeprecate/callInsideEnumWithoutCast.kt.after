@@ -7,5 +7,3 @@ enum class EnumClass {
         for (e in entries) {}
     }
 }
-
-// IGNORE_K2

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -57,17 +58,12 @@ sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val reference: KtReference
     abstract val nameExpression: KtElement
     abstract val explicitReceiver: KtElement?
-
-    abstract val name: Name
 }
 
 sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePositionContext() {
     abstract override val reference: KtSimpleNameReference
     abstract override val nameExpression: KtSimpleNameExpression
     abstract override val explicitReceiver: KtExpression?
-
-    override val name: Name
-        get() = nameExpression.getReferencedNameAsName()
 }
 
 class KotlinImportDirectivePositionContext(
@@ -150,6 +146,22 @@ class KotlinInfixCallPositionContext(
     override val explicitReceiver: KtExpression?
 ) : KotlinSimpleNameReferencePositionContext()
 
+/**
+ * Represents an operator call - binary or unary, postfix or prefix.
+ * 
+ * [nameExpression] does not represent any name in this case - it references
+ * an operator reference, like `+`, `+=` or unary `-`.
+ * 
+ * [explicitReceiver] points to the main expression in the operator call:
+ * - the LHS in the binary call (except for the `contains` operator, where the receiver is on the RHS)
+ * - the underlying expression in the unary call
+ */
+class KotlinOperatorCallPositionContext(
+    override val position: PsiElement,
+    override val reference: KtSimpleNameReference,
+    override val nameExpression: KtSimpleNameExpression,
+    override val explicitReceiver: KtExpression?
+) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinWithSubjectEntryPositionContext(
     override val position: PsiElement,
@@ -201,31 +213,12 @@ class KotlinMemberDeclarationExpectedPositionContext(
     val classBody: KtClassBody
 ) : KotlinRawPositionContext()
 
-/**
- * A position that describes a delegated property.
- * 
- * Example: 
- * ```
- * val foo by bar
- * ```
- * 
- * [propertyDelegate] points to the delegation part (`by bar`) of the declaration.
- * 
- * Note: This position currently is NOT detected automatically by `KotlinPositionContextDetector`;
-* it should be created explicitly.
- */
-class KotlinPropertyDelegatePositionContext(
-    val propertyDelegate: KtPropertyDelegate,
-) : KotlinRawPositionContext() {
-    override val position: KtElement = propertyDelegate
-}
-
 sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext() {
     abstract override val reference: KDocReference
     abstract override val nameExpression: KDocName
     abstract override val explicitReceiver: KDocName?
 
-    override val name: Name
+    val name: Name
         get() = nameExpression.getQualifiedNameAsFqName().shortName()
 }
 
@@ -288,6 +281,9 @@ object KotlinPositionContextDetector {
         val subjectExpressionForWhenCondition = (parent as? KtWhenCondition)?.getSubjectExpression()
 
         return when {
+            nameExpression.prevSibling is PsiErrorElement ->
+                KotlinIncorrectPositionContext(position)
+
             parent is KtUserType -> {
                 detectForTypeContext(parent, position, reference, nameExpression, explicitReceiver)
             }
@@ -336,10 +332,15 @@ object KotlinPositionContextDetector {
             )
 
             parent is KtBinaryExpression && parent.operationReference == nameExpression -> {
-                KotlinInfixCallPositionContext(
-                    position, reference, nameExpression, explicitReceiver
-                )
+                if (parent.operationReference.getReferencedNameElementType() == KtTokens.IDENTIFIER) {
+                    KotlinInfixCallPositionContext(position, reference, nameExpression, explicitReceiver)
+                } else {
+                    KotlinOperatorCallPositionContext(position, reference, nameExpression, explicitReceiver)
+                }
             }
+            
+            parent is KtUnaryExpression && parent.operationReference == nameExpression ->
+                KotlinOperatorCallPositionContext(position, reference, nameExpression, explicitReceiver)
 
             explicitReceiver is KtSuperExpression -> KotlinSuperReceiverNameReferencePositionContext(
                 position = position,

@@ -159,7 +159,8 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
             }
 
-            is KotlinPropertyDelegatePositionContext, is KotlinIncorrectPositionContext -> {
+            is KotlinOperatorCallPositionContext,
+            is KotlinIncorrectPositionContext -> {
                 // do nothing, completion is not supposed to be called here
             }
 

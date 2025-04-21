@@ -13,11 +13,11 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepositoryManager(project, sdk) {
 
-  private var packageNames: List<String> = emptyList()
+  private var packageNames: Set<String> = emptySet()
   private var packageDetails: PythonPackageDetails? = null
 
   fun withPackageNames(packageNames: List<String>): TestPythonRepositoryManager {
-    this.packageNames = packageNames
+    this.packageNames = packageNames.toSet()
     return this
   }
 
@@ -41,11 +41,11 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
   override val repositories: List<PyPackageRepository>
     get() = listOf(PyEmptyPackagePackageRepository)
 
-  override fun allPackages(): List<String> {
+  override fun allPackages(): Set<String> {
     return packageNames
   }
 
-  override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
+  override fun packagesFromRepository(repository: PyPackageRepository): Set<String> {
     return packageNames
   }
 

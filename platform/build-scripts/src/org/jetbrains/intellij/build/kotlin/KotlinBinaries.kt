@@ -21,8 +21,7 @@ class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot) 
           "plugins/Kotlin/kotlinc/bin/kotlin",
           "plugins/Kotlin/kotlinc/bin/kotlinc",
           "plugins/Kotlin/kotlinc/bin/kotlinc-js",
-          "plugins/Kotlin/kotlinc/bin/kotlinc-jvm",
-          "plugins/Kotlin/kotlinc/bin/kotlin-dce-js"
+          "plugins/Kotlin/kotlinc/bin/kotlinc-jvm"
         )
       }
   }

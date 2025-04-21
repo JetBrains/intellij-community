@@ -1077,6 +1077,9 @@ f:com.intellij.icons.AllIcons$Profiler
 - sf:ExpandNode:javax.swing.Icon
 - sf:Rec:javax.swing.Icon
 - <init>():V
+f:com.intellij.icons.AllIcons$Promo
+- sf:JavaDuke:javax.swing.Icon
+- <init>():V
 f:com.intellij.icons.AllIcons$Providers
 - sf:ActiveMQ:javax.swing.Icon
 - sf:Apache:javax.swing.Icon

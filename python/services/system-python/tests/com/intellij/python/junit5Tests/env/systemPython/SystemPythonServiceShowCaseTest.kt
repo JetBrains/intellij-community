@@ -28,6 +28,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.minutes
 
 @PyEnvTestCase
 class SystemPythonServiceShowCaseTest {
@@ -39,7 +40,7 @@ class SystemPythonServiceShowCaseTest {
       val eelApi = systemPython.pythonBinary.getEelDescriptor().upgrade()
       val process = eelApi.exec.executeProcess(systemPython.pythonBinary.pathString, "--version").getOrThrow()
       val output = async {
-        process.stdout.readWholeText().getOrThrow()
+        (if (systemPython.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText().getOrThrow()
       }
       Assertions.assertEquals(0, process.exitCode.await(), "Wrong exit code")
       val versionString = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(output.await())!!

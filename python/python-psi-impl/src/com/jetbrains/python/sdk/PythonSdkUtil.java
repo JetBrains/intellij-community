@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +44,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
@@ -67,7 +71,16 @@ public final class PythonSdkUtil {
   private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
 
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
-    return PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName());
+    if (!PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName())) {
+      return false;
+    }
+
+    // PY-79923: Should explicitly filter sdks created while pro was active
+    if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) {
+      return !isRemote(sdk) || !PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+    }
+
+    return true;
   }
 
   public static @Unmodifiable List<Sdk> getAllSdks() {

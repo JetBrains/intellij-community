@@ -6,7 +6,6 @@
 // ERROR: This annotation is not repeatable
 // ERROR: This annotation is not repeatable
 // ERROR: This annotation is not repeatable
-// ERROR: Unresolved reference: SubclassOptInRequired
 
 @file:OptIn(ExperimentalSubclassOptIn::class)
 

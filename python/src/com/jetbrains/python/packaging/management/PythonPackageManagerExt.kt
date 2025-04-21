@@ -23,8 +23,8 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -140,7 +140,7 @@ private val proxyString: String?
     return null
   }
 
-fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, List<String>>> {
+fun PythonRepositoryManager.packagesByRepository(): Sequence<Pair<PyPackageRepository, Set<String>>> {
   return repositories.asSequence().map { it to packagesFromRepository(it) }
 }
 
@@ -152,6 +152,7 @@ fun PythonRepositoryManager.createSpecification(
   name: String,
   versionSpec: String? = null,
 ): PythonPackageSpecification? {
-  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> normalizePackageName(pkg) == normalizePackageName(name) } }?.first
+  val normalizePackageName = normalizePackageName(name)
+  val repository = packagesByRepository().firstOrNull { it.second.contains(normalizePackageName) }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }

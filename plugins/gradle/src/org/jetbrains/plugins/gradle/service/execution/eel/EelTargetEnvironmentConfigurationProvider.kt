@@ -4,25 +4,27 @@ package org.jetbrains.plugins.gradle.service.execution.eel
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.eel.EelTargetEnvironmentRequest
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.util.PathMapper
 import java.nio.file.Path
 
-class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnvironmentConfigurationProvider {
+class EelTargetEnvironmentConfigurationProvider(val eel: EelApi, val project: Project) : TargetEnvironmentConfigurationProvider {
 
   override val environmentConfiguration: TargetEnvironmentConfiguration by lazy { resolveEnvironmentConfiguration() }
-  override val pathMapper: PathMapper by lazy { EelPathMapper(eel) }
+  override val pathMapper: PathMapper by lazy { EelPathMapper(eel, project) }
 
   private fun resolveEnvironmentConfiguration(): TargetEnvironmentConfiguration {
     return EelTargetEnvironmentRequest.Configuration(eel)
   }
 
-  private class EelPathMapper(private val eel: EelApi) : PathMapper {
+  private class EelPathMapper(private val eel: EelApi, private val project: Project) : PathMapper {
 
     override fun isEmpty(): Boolean = false
 
@@ -34,7 +36,7 @@ class EelTargetEnvironmentConfigurationProvider(val eel: EelApi) : TargetEnviron
     override fun convertToLocal(remotePath: String): String {
       val nio = Path.of(remotePath)
       val eelPath = eel.fs.getPath(nio.toCanonicalPath())
-      return eelPath.asNioPath().toCanonicalPath()
+      return eelPath.asNioPathOrNull(project)!!.toCanonicalPath()
     }
 
     override fun canReplaceRemote(remotePath: String): Boolean {

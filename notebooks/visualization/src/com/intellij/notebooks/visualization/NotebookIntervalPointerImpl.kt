@@ -17,7 +17,8 @@ import org.jetbrains.annotations.TestOnly
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(project: Project, document: Document): NotebookIntervalPointerFactory {
-    val notebookCellLines = NotebookCellLines.get(document)
+    val provider = NotebookCellLinesProvider.getOrInstall(project, document)
+    val notebookCellLines = provider.create(document)
     val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
                                                      document,
                                                      UndoManager.getInstance(project),

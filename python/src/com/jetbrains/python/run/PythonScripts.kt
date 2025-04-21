@@ -134,11 +134,11 @@ fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<Strin
 
 /**
  * @param envs the environment variables to be modified
- * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm Professional helpers directories
+ * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm helpers directories
  * @param helpersAwareTargetRequest the request
  * @param failOnError specifies whether the method should fail if one of [pythonPathEntries] is not located within PyCharm helpers dirs
  *
- * **Note.** This method assumes that PyCharm Community and PyCharm Professional helpers are uploaded to the same root path on the target.
+ * **Note.** This method assumes that PyCharm Community and PyCharm helpers are uploaded to the same root path on the target.
  * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
  */
 fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,

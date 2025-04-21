@@ -8,7 +8,7 @@ import pydevd_tracing
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
-from _pydevd_bundle.pydevd_pep_669_tracing import process_new_breakpoint
+from _pydevd_bundle.pydevd_pep_669_tracing import add_new_breakpoint, remove_breakpoint
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_class
 from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS,
@@ -455,7 +455,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
 
                 if py_db.is_pep669_monitoring_enabled:
-                    process_new_breakpoint(breakpoint)
+                    add_new_breakpoint(breakpoint)
 
                 if py_db.plugin is not None:
                     py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
@@ -500,6 +500,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                                 existing = id_to_pybreakpoint[breakpoint_id]
                                 sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
                                     file, existing.line, existing.func_name.encode('utf-8'), breakpoint_id))
+
+                            if py_db.is_pep669_monitoring_enabled:
+                                remove_breakpoint(id_to_pybreakpoint[breakpoint_id])
 
                             del id_to_pybreakpoint[breakpoint_id]
                             py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)

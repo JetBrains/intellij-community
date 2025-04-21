@@ -59,9 +59,13 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
-    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.uv.UvPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="UvPackageVersions" shortName="UvPackageVersionsInspection"/>
-
+    <localInspection language="TOML" enabledByDefault="true"
+                     implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection"
+                     key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
+                     suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.uv.UvPackageVersionsInspection"
+                     key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python"
+                     suppressId="UvPackageVersions" shortName="UvPackageVersionsInspection"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
@@ -82,10 +86,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <completion.contributor language="Requirements"
                             implementationClass="com.jetbrains.python.requirements.RequirementsVersionCompletionContributor"/>
     <completion.contributor language="TOML"
-                            implementationClass="com.jetbrains.python.requirements.PoetryDependencyPackageNameCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.poetry.PoetryDependencyPackageNameCompletionContributor"/>
     <completion.contributor language="TOML"
-                            implementationClass="com.jetbrains.python.requirements.PoetryDependencyVersionCompletionContributor"/>
-    <localInspection language="Requirements" shortName="UnsatisfiedRequirementInspection" suppressId="UnsatisfiedRequirement" bundle="messages.PyBundle"
+                            implementationClass="com.jetbrains.python.poetry.PoetryDependencyVersionCompletionContributor"/>
+    <localInspection language="Requirements" shortName="UnsatisfiedRequirementInspection" suppressId="UnsatisfiedRequirement"
+                     bundle="messages.PyBundle"
                      key="INSP.requirement.uninstalled.name" groupKey="INSP.GROUP.requirements" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>
 
@@ -190,6 +195,14 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
+
+    <!-- Locked configurations should go first to be overwritten by real ones-->
+    <configurationType implementation="com.jetbrains.python.run.DjangoServerLockedRunConfigurationType" order="first"/>
+    <configurationType implementation="com.jetbrains.python.run.FlaskServerLockedRunConfigurationType" order="first"/>
+    <configurationType implementation="com.jetbrains.python.run.DbtRunLockedConfigurationType" order="first"/>
+    <configurationType implementation="com.jetbrains.python.run.FastAPILockedRunConfigurationType" order="first"/>
+    <facetIgnorer implementation="com.jetbrains.python.run.DjangoFacetIgnorer"/>
+
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <runConfigurationProducer implementation="com.jetbrains.python.run.PythonRunConfigurationProducer"/>
@@ -410,7 +423,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
 
     <projectService serviceInterface="com.jetbrains.python.packaging.management.PythonPackageManagerService"
-                        serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
+                    serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
 
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
@@ -471,12 +484,16 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <registryKey defaultValue="30" description="Max attempts to connect to remote debugger server"
                  restartRequired="false" key="python.debugger.remote.connect.max.attempts"/>
 
+    <registryKey defaultValue="false" description="Don't run `lock` before listing dependencies when using Poetry"
+                 restartRequired="false" key="python.poetry.list.packages.without.lock"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.pyi.PyiRelatedItemLineMarkerProvider"/>
 
-    <refactoring.invertBoolean language="Python" implementationClass="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+    <refactoring.invertBoolean language="Python"
+                               implementationClass="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
 
     <!--folding-->
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
@@ -515,8 +532,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyCompatibilityInspectionCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.codeVision.PyCodeVisionUsageCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector"/>
-    <statistics.validation.customValidationRule implementation="com.jetbrains.python.newProjectWizard.collector.PyProjectTypeValidationRule"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.jetbrains.python.newProjectWizard.collector.PyProjectTypeValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
@@ -838,7 +857,14 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <pyAddSdkProvider implementation="com.jetbrains.python.sdk.poetry.PyAddPoetrySdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
 
+    <!-- Uv -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.uv.ui.PyAddUvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
+
+    <!-- Hatch -->
+    <pySdkProvider implementation="com.jetbrains.python.hatch.sdk.HatchSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.hatch.sdk.HatchSdkFlavorProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
 
     <!-- SDK Flavors -->
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>

@@ -301,7 +301,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       String taskStateInitScript = taskState.handleCreatedTargetEnvironment(environment, progressIndicator);
       if (taskStateInitScript != null) {
         var initScriptPath = GradleInitScriptUtil.createInitScript("ijtgttaskstate", taskStateInitScript);
-        settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
+        settings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
       }
     }
     catch (ExecutionException e) {

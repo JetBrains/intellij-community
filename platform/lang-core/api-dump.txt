@@ -487,6 +487,8 @@ f:com.intellij.openapi.projectRoots.JdkUtil
 - s:checkForJre(java.lang.String):Z
 - s:checkForJre(java.nio.file.Path):Z
 - s:getJdkMainAttribute(com.intellij.openapi.projectRoots.Sdk,java.util.jar.Attributes$Name):java.lang.String
+- s:isCompatible(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.project.Project):Z
+- s:isCompatible(java.nio.file.Path,com.intellij.openapi.project.Project):Z
 - s:isExplodedModularRuntime(java.nio.file.Path):Z
 - s:isModularRuntime(java.lang.String):Z
 - s:isModularRuntime(java.nio.file.Path):Z

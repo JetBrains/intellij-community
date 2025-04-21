@@ -8,8 +8,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
@@ -18,7 +21,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.SearchTextField
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.NamedColorUtil
@@ -33,7 +35,11 @@ import com.jetbrains.python.packaging.toolwindow.packages.PyPackageSearchTextFie
 import com.jetbrains.python.packaging.toolwindow.packages.PyPackagesListController
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -42,57 +48,51 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
-  private val moduleController = PyPackagesModuleController(project).also {
-    Disposer.register(this, it)
-  }
 
-  internal val packageListController = PyPackagesListController(project, controller = this).also {
-    Disposer.register(this, it)
-  }
-
-  private val descriptionController = PyPackageInfoPanel(project).also {
-    Disposer.register(this, it)
-  }
-
-
+  private val packageSearchController = PyPackageSearchTextField(project)
+  internal val packageListController = PyPackagesListController(project, controller = this)
+  private val moduleController = PyPackagesModuleController(project)
+  private val descriptionController = PyPackageInfoPanel(project)
   private val packagingScope = PyPackageCoroutine.getIoScope(project)
 
-  private val searchTextField: SearchTextField = PyPackageSearchTextField(project)
-
-
-  // layout
-  private var mainPanel: JPanel? = null
-  private var splitter: OnePixelSplitter? = null
-  private var leftPanel: JComponent
+  private lateinit var contentPanel: JPanel
+  private lateinit var contentSplitter: OnePixelSplitter
+  private var leftPanel: JComponent = createLeftPanel()
   private val rightPanel: JComponent = descriptionController.component
 
   internal var contentVisible: Boolean
-    get() = mainPanel!!.isVisible
+    get() = contentPanel.isVisible
     set(value) {
-      mainPanel!!.isVisible = value
+      contentPanel.isVisible = value
     }
-
 
   init {
     val service = project.service<PyPackagingToolWindowService>()
-    Disposer.register(service, this)
-    withEmptyText(message("python.toolwindow.packages.no.interpreter.text"))
+    setupEmptyText()
+    initOrientation(service, true)
+    trackOrientation(service)
+    trackModules()
+    registerDisposables(service)
+  }
 
+  private fun setupEmptyText() {
+    withEmptyText(message("python.toolwindow.packages.no.interpreter.text"))
     @Suppress("DialogTitleCapitalization")
     emptyText.appendLine(message("python.sdk.popup.interpreter.settings"), SimpleTextAttributes.LINK_ATTRIBUTES, object : ActionListener {
       override fun actionPerformed(e: ActionEvent?) {
         PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, null)
       }
     })
-    leftPanel = createLeftPanel()
-
-
-
-    initOrientation(service, true)
-    trackOrientation(service)
   }
 
+  private fun registerDisposables(service: PyPackagingToolWindowService) {
+    Disposer.register(this, packageListController)
+    Disposer.register(this, moduleController)
+    Disposer.register(this, descriptionController)
+    Disposer.register(service, this)
+  }
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PyPackagesUiComponents.SELECTED_PACKAGE_DATA_CONTEXT] = descriptionController.getPackage()
@@ -104,81 +104,123 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   private fun initOrientation(service: PyPackagingToolWindowService, horizontal: Boolean) {
     val proportionKey = if (horizontal) HORIZONTAL_SPLITTER_KEY else VERTICAL_SPLITTER_KEY
-    splitter = OnePixelSplitter(!horizontal, proportionKey, 0.3f).apply {
+    contentSplitter = OnePixelSplitter(!horizontal, proportionKey, 0.3f).apply {
       firstComponent = leftPanel
       secondComponent = rightPanel
     }
-
-    val actionGroup = DefaultActionGroup()
-    val collapseAllAction = DumbAwareAction.create(message("python.toolwindow.packages.collapse.all.action"), AllIcons.Actions.Collapseall) {
-      packageListController.collapseAll()
+    contentPanel = PyPackagesUiComponents.borderPanel {
+      add(contentSplitter, BorderLayout.CENTER)
     }
-    actionGroup.add(collapseAllAction)
+    setContent(contentPanel)
+    createAndAttachToolbar(service)
+  }
 
-    val reloadReposAction = DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
-      startLoadingSdk()
-      moduleController.rebuildList()
-      service.reloadPackages()
+  private fun createAndAttachToolbar(service: PyPackagingToolWindowService) {
+    ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLWINDOW_CONTENT,
+      createActionGroup(service),
+      true
+    ).apply {
+      targetComponent = this@PyPackagingToolWindowPanel
+      layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     }
-    actionGroup.add(reloadReposAction)
+  }
 
-    actionGroup.add(ActionManager.getInstance().getAction("PyPackageToolbarAdditional"))
-    actionGroup.isPopup = false
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, actionGroup, true)
-    actionToolbar.targetComponent = this
-    actionToolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-
-    mainPanel = PyPackagesUiComponents.borderPanel {
-      val topToolbar = PyPackagesUiComponents.boxPanel {
-        border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
-        preferredSize = Dimension(preferredSize.width, 30)
-        minimumSize = Dimension(minimumSize.width, 30)
-        maximumSize = Dimension(maximumSize.width, 30)
-        add(searchTextField)
-        //actionToolbar.component.maximumSize = Dimension(70, actionToolbar.component.maximumSize.height)
-        add(actionToolbar.component)
-      }
-      add(topToolbar, BorderLayout.NORTH)
-      add(splitter!!, BorderLayout.CENTER)
+  private fun createActionGroup(service: PyPackagingToolWindowService): DefaultActionGroup {
+    return DefaultActionGroup().apply {
+      add(DumbAwareAction.create(message("python.toolwindow.packages.collapse.all.action"), AllIcons.Actions.Collapseall) {
+        packageListController.collapseAll()
+      })
+      add(DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
+        startLoadingSdk()
+        service.reloadPackages()
+      })
+      add(ActionManager.getInstance().getAction(ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID))
     }
-    setContent(mainPanel!!)
   }
 
   private fun createLeftPanel(): JComponent {
-    if (project.modules.size == 1)
-      return packageListController.component
+    val topToolbar = createTopToolbar()
+    val leftPanel = JPanel(BorderLayout()).apply {
+      add(topToolbar, BorderLayout.NORTH)
+      add(packageListController.component, BorderLayout.CENTER)
+    }
 
-    val left = JPanel(BorderLayout()).apply {
+    if (project.modules.size == 1) {
+      return leftPanel
+    }
+
+    return JPanel(BorderLayout()).apply {
       border = BorderFactory.createEmptyBorder()
+      add(OnePixelSplitter(false).apply {
+        firstComponent = moduleController.mainScrollPane
+        secondComponent = leftPanel
+        proportion = 0.2f
+      }, BorderLayout.CENTER)
     }
-
-    val splitter = OnePixelSplitter(false).apply {
-      firstComponent = moduleController.component
-      secondComponent = packageListController.component
-    }
-    splitter.proportion = 0.2f
-    left.add(splitter, BorderLayout.CENTER)
-
-    return left
   }
 
+  private fun createTopToolbar(): JComponent {
+    val actionToolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLWINDOW_CONTENT,
+      createActionGroup(project.service()),
+      true
+    ).apply {
+      targetComponent = this@PyPackagingToolWindowPanel
+    }
+
+    return PyPackagesUiComponents.boxPanel {
+      border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
+      preferredSize = Dimension(preferredSize.width, 30)
+      minimumSize = Dimension(minimumSize.width, 30)
+      maximumSize = Dimension(maximumSize.width, 30)
+      add(packageSearchController)
+      add(actionToolbar.component)
+    }
+  }
 
   private fun trackOrientation(service: PyPackagingToolWindowService) {
     service.project.messageBus.connect(service).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      var myHorizontal = true
-      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        val toolWindow = toolWindowManager.getToolWindow("Python Packages")
-        if (toolWindow == null || toolWindow.isDisposed) return
-        val isHorizontal = toolWindow.anchor.isHorizontal
+      private var isHorizontal = true
 
-        if (myHorizontal != isHorizontal) {
-          myHorizontal = isHorizontal
-          val content = toolWindow.contentManager.contents.find { it?.component is PyPackagingToolWindowPanel }
-          val panel = content?.component as? PyPackagingToolWindowPanel ?: return
-          panel.initOrientation(service, myHorizontal)
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        val toolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: return
+        if (!toolWindow.isDisposed && isHorizontal != toolWindow.anchor.isHorizontal) {
+          isHorizontal = toolWindow.anchor.isHorizontal
+          initOrientation(service, isHorizontal)
         }
       }
     })
+  }
+
+  private fun trackModules() {
+    project.messageBus.connect(moduleController).subscribe(ModuleListener.TOPIC, object : ModuleListener {
+      override fun modulesAdded(project: Project, modules: List<Module?>) = recreateModulePanel()
+
+      override fun moduleRemoved(project: Project, module: Module) = recreateModulePanel()
+    })
+  }
+
+  /**
+   * Rebuilds the module list and updates the UI by creating a new left panel.
+   * The updated left panel replaces the first component of the splitter, which
+   * displays the list of modules.
+   * Meanwhile, the second component of the splitter,
+   * such as the description or details panel, remains unchanged.
+   *
+   * <p>The splitter is a UI component used to divide the interface into two resizable
+   * sections: the left panel and the right panel.</p>
+   */
+  private fun recreateModulePanel() {
+    moduleController.refreshModuleListAndSelection()
+    val newPanel = createLeftPanel()
+    PyPackagingToolWindowService.getInstance(project).serviceScope.launch {
+      withContext(Dispatchers.EDT) {
+        leftPanel = newPanel
+        contentSplitter.firstComponent = leftPanel
+        contentSplitter.repaint()
+      }
+    }
   }
 
   fun packageSelected(selectedPackage: DisplayablePackage?) {
@@ -193,14 +235,9 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.resetSearch(installed, repos, currentSdk)
   }
 
-
   fun setEmpty() {
     packageSelected(null)
     packageListController.setLoadingState(false)
-  }
-
-  override fun dispose() {
-    packagingScope.cancel()
   }
 
   fun selectPackageName(name: String) {
@@ -212,9 +249,14 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     packageListController.startSdkInit()
   }
 
+  override fun dispose() {
+    packagingScope.cancel()
+  }
+
   companion object {
+    private const val TOOLWINDOW_ID = "Python Packages"
+    private const val ADDITIONAL_PACKAGE_TOOLBAR_ACTION_ID = "PyPackageToolbarAdditional"
     private const val HORIZONTAL_SPLITTER_KEY = "Python.PackagingToolWindow.Horizontal"
     private const val VERTICAL_SPLITTER_KEY = "Python.PackagingToolWindow.Vertical"
   }
 }
-

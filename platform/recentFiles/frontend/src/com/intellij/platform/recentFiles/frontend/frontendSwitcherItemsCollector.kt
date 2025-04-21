@@ -7,6 +7,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 
+private val LOG by lazy { fileLogger() }
 private const val SWITCHER_ELEMENTS_LIMIT = 30
 
 private val mnemonicAndMainTextComparator by lazy {
@@ -107,7 +109,16 @@ private fun updateMnemonics(windows: List<SwitcherToolWindow>, mnemonicsRegistry
       }
     }
   }
-  assert(windows.size == toolWindowsWithAlreadyAssignedMnemonics.size) { "There are ${windows.size - toolWindowsWithAlreadyAssignedMnemonics.size} missing in the resulting recent toolwindows list" }
+  if (windows.size != toolWindowsWithAlreadyAssignedMnemonics.size) {
+    val processedToolWindows = toolWindowsWithAlreadyAssignedMnemonics
+      .joinToString(separator = ", ", postfix = "\n") { it.window.id }
+    val skippedToolWindows = windows.toSet().minus(toolWindowsWithAlreadyAssignedMnemonics)
+      .filter { it !in toolWindowsWithAlreadyAssignedMnemonics }
+      .joinToString(separator = ", ", postfix = "\n") { it.window.id }
+    LOG.warn("There are ${windows.size - toolWindowsWithAlreadyAssignedMnemonics.size} excluded from the resulting toolwindows list. " +
+             "The following toolwindows were processed: ${processedToolWindows}The following toolwindows were skipped: $skippedToolWindows"
+    )
+  }
   return toolWindowsWithAlreadyAssignedMnemonics
 }
 

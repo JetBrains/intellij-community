@@ -122,6 +122,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       GPG_AGENT_CONFIGURATION_ERROR,
       GPG_AGENT_CONFIGURATION_PROPOSE,
       GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION,
+      MODAL_COMMIT_DEPRECATION,
     )
   }
 
@@ -242,5 +243,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val GPG_AGENT_CONFIGURATION_ERROR = "git.gpg.agent.configuration.error"
     const val GPG_AGENT_CONFIGURATION_PROPOSE = "git.gpg.agent.configuration.propose"
     const val GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION = "git.gpg.agent.configuration.propose.suggestion"
+    const val MODAL_COMMIT_DEPRECATION = "git.commit.modal.deprecation"
   }
 }

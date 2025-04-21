@@ -71,6 +71,8 @@ object K2UnusedSymbolUtil {
           if (name == null || name == "_") return false
           // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
           if (declaration.isFunctionTypeParameter) return false
+          //todo support implicit context parameters passing
+          if (declaration.isContextParameter) return false
           val ownerFunction = declaration.getOwnerFunction()
           if (ownerFunction is KtConstructor<*>) {
               // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
@@ -370,14 +372,18 @@ object K2UnusedSymbolUtil {
       )
       val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
       if (symbol !is KaNamedFunctionSymbol || !symbol.annotations.contains(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+          val symbolPointer = symbol?.createPointer()
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
                referenceExists(declarationContainingClass, useScope) {
-                  val refElement = it.element
-                          refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
-                          || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                   val refElement = it.element
+                   refElement is KtElement && analyze(refElement) {
+                       refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
+                               || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()
+                           ?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbolPointer?.restoreSymbol()
+                   }
               })) {
               return true
           }
@@ -396,7 +402,7 @@ object K2UnusedSymbolUtil {
 
           if (declaration is KtEnumEntry) {
               val enumClass = declarationContainingClass?.takeIf { it.isEnum() }
-              if (hasBuiltInEnumFunctionReference(enumClass, useScope)) return true
+              if (hasBuiltInEnumFunctionReference(enumClass, useScope, declaration)) return true
           }
       }
 
@@ -454,10 +460,13 @@ object K2UnusedSymbolUtil {
     return !ReferencesSearch.search(KotlinReferencesSearchParameters(psiElement, scope)).forEach(Processor<PsiReference> { !predicate.invoke(it) })
   }
   context(KaSession)
-  private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
+  private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope, declaration: KtNamedDeclaration): Boolean {
       if (enumClass == null) return false
-      val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope)
-           { hasBuiltInEnumFunctionReference(it, enumClass) }
+      val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope) {
+          analyze(declaration) {
+              hasBuiltInEnumFunctionReference(it, enumClass)
+          }
+      }
 
       return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
   }

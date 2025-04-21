@@ -37,6 +37,7 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
@@ -150,6 +151,7 @@ public final class ConfigImportHelper {
     Path tempBackup = null;
     boolean vmOptionFileChanged = false;
     @Nullable List<String> vmOptionsLines = null;
+    @Nullable List<String> currentlyDisabledPlugins = null;
     ImportOldConfigsState.InitialImportScenario importScenarioStatistics = null;
 
     try {
@@ -169,8 +171,11 @@ public final class ConfigImportHelper {
                 vmOptionsLines = Files.readAllLines(newConfigDir.resolve(VMOptions.getFileName()), VMOptions.getFileCharset());
                 vmOptionFileChanged = false;
               }
+              if (Files.isRegularFile(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))){
+                currentlyDisabledPlugins = Files.readAllLines(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME));
+              }
             }
-            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false, settings);
+            tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, true, settings);
             importScenarioStatistics = IMPORT_SETTINGS_ACTION;
           }
           else {
@@ -243,6 +248,21 @@ public final class ConfigImportHelper {
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
         setConfigImportedInThisSession();
+        if (currentlyDisabledPlugins != null) {
+          try {
+            Path newDisablePluginsFile = newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+            Set<String> newDisabledPlugins = new LinkedHashSet<>();
+            if (Files.isRegularFile(newDisablePluginsFile)) {
+              newDisabledPlugins.addAll(Files.readAllLines(newDisablePluginsFile, CharsetToolkit.getPlatformCharset()));
+            }
+            newDisabledPlugins.addAll(currentlyDisabledPlugins);
+            Files.write(newDisablePluginsFile, newDisabledPlugins, CharsetToolkit.getPlatformCharset());
+            log.info("Disabled plugins file updated with " + newDisabledPlugins.size() + " plugins");
+          }
+          catch (IOException e) {
+            log.warn("Couldn't write disabled plugins file", e);
+          }
+        }
       }
       else {
         oldConfigDir = null;
@@ -307,8 +327,8 @@ public final class ConfigImportHelper {
     var configImportOptions = new ConfigImportOptions(log);
     configImportOptions.importSettings = settings;
     configImportOptions.mergeVmOptions = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
-        
-        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit` 
+
+        /* in remote dev host mode UI cannot be shown before `Application` is initialized because it replaces the standard `awt.toolkit`
            with com.intellij.platform.impl.toolkit.IdeToolkit which depends on `Application` */
     configImportOptions.setHeadless(AppMode.isRemoteDevHost());
     return configImportOptions;
@@ -1059,6 +1079,13 @@ public final class ConfigImportHelper {
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginsFetcher.fetchBrokenPlugins(newConfigDir);
     @Nullable PluginLoadingResult oldIdeLoadingResult = null;
     try {
+      /* FIXME
+       * in production, bundledPluginPath from the options is always null, it is set only in tests.
+       * in tests, however, the behaviour is different from production, see com.intellij.ide.plugins.PluginDescriptorLoader.loadPluginDescriptorsImpl
+       * there is isUnitTestMode check that shortcuts the execution
+       * in production, if bundledPluginPath is null, the path from our IDE instance (!) bundled plugin path is used instead
+       * so it looks like in production we effectively use bundled plugin path from the current IDE, not from the old one
+       */
       oldIdeLoadingResult = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
     }
@@ -1648,25 +1675,25 @@ public final class ConfigImportHelper {
   private static String defaultConfigPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultConfigPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Preferences/" + selector
-                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
+                              : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG;
   }
 
   private static String defaultPluginsPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultPluginPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Application Support/" + selector
-                            : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
+                              : SystemProperties.getUserHome() + "/." + selector + '/' + CONFIG + '/' + PLUGINS;
   }
 
   private static String defaultSystemPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultSystemPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Caches/" + selector
-                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
+                              : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
   }
 
   private static String defaultLogsPath(String selector) {
     return newOrUnknown(selector) ? PathManager.getDefaultLogPathFor(selector) :
            SystemInfoRt.isMac ? SystemProperties.getUserHome() + "/Library/Logs/" + selector
-                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM + "/logs";
+                              : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM + "/logs";
   }
 
   private static boolean newOrUnknown(String selector) {

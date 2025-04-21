@@ -21,6 +21,7 @@ import codeop
 import traceback
 from copy import deepcopy
 
+import IPython
 from IPython.core.error import UsageError
 from IPython.core.interactiveshell import InteractiveShell, InteractiveShellABC
 from IPython.core.usage import default_banner_parts
@@ -108,7 +109,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     #   any settings the user has (such as if a dark theme is in use, then Linux is probably
     #   a better theme).
     colors_force = CBool(True)
-    colors = Unicode("NoColor")
+    colors = Unicode("nocolor" if IPython.version_info >= (9,) else "NoColor")
     # Since IPython 5 the terminal interface is not compatible with Emacs `inferior-shell` and
     # the `simple_prompt` flag is needed
     simple_prompt = CBool(True)

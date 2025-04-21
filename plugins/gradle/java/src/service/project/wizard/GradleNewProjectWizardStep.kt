@@ -105,6 +105,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     gradleVersionProperty.dependsOn(sdkProperty, deleteWhenModified = false) {
       if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
     }
+    gradleVersionProperty.dependsOn(sdkDownloadTaskProperty, deleteWhenModified = false) {
+      if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
+    }
     gradleVersionProperty.dependsOn(autoSelectGradleVersionProperty, deleteWhenModified = false) {
       if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
     }
@@ -112,6 +115,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       if (autoSelectGradleVersion) suggestGradleVersion() else gradleVersion
     }
     gradleVersionsProperty.dependsOn(sdkProperty, deleteWhenModified = false) {
+      suggestGradleVersions()
+    }
+    gradleVersionsProperty.dependsOn(sdkDownloadTaskProperty, deleteWhenModified = false) {
       suggestGradleVersions()
     }
   }

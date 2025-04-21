@@ -30,10 +30,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
+import kotlin.io.path.isSameFileAs
 
 private fun EelPlatform.toTargetPlatform(): TargetPlatform = when (this) {
   is EelPlatform.Posix -> TargetPlatform(Platform.UNIX)
@@ -195,7 +197,12 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override fun upload(relativePath: String, targetProgressIndicator: TargetProgressIndicator) {
       val from = localRoot.resolve(relativePath).normalize()
       val to = targetRootPath().resolve(relativePath).normalize()
-      if (from == to) return
+      try {
+        if (from.isSameFileAs(to)) return
+      }
+      catch (err: java.nio.file.NoSuchFileException) {
+        if (!Files.exists(from)) throw err
+      }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
       EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
     }
@@ -203,7 +210,12 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
       val from = targetRootPath().resolve(relativePath).normalize()
       val to = localRoot.resolve(relativePath).normalize()
-      if (from == to) return
+      try {
+        if (from.isSameFileAs(to)) return
+      }
+      catch (err: java.nio.file.NoSuchFileException) {
+        if (!Files.exists(from)) throw err
+      }
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
       EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
     }

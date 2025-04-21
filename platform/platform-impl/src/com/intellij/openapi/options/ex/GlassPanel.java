@@ -6,6 +6,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTabbedPane;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,16 +21,12 @@ public final class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
-  private static final JBColor SPOTLIGHT_BORDER_COLOR = JBColor.namedColor(
-    "Settings.Spotlight.borderColor",
-    ColorUtil.toAlpha(new JBColor(0xf2b181, 0xa36B4e), 100)
+  private static final String SPOTLIGHT_BACKGROUND_COLOR_KEY = "Settings.Spotlight.backgroundColor";
+  private static final String SPOTLIGHT_BORDER_COLOR_KEY = "Settings.Spotlight.borderColor";
+  private static final JBColor FALLBACK_SPOTLIGHT_BORDER_COLOR = new JBColor(
+    JBColor.namedColor("ColorPalette.Orange6", 0xE08855),
+    JBColor.namedColor("ColorPalette.Orange4", 0xA36B4E)
   );
-
-  private static final JBColor SPOTLIGHT_BACKGROUND_COLOR = JBColor.namedColor(
-    "Settings.Spotlight.backgroundColor",
-    ColorUtil.toAlpha(new JBColor(0xf7f8fA, 0x2b2d30), 50)
-  );
-
 
   public GlassPanel(JComponent containingPanel) {
     myPanel = containingPanel;
@@ -77,11 +74,13 @@ public final class GlassPanel extends JComponent {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g2.setColor(SPOTLIGHT_BACKGROUND_COLOR.getDefaultColor());
+        final Color background = getOverlayColor(surfaceComponent);
+        g2.setColor(background);
         g2.fill(mask);
 
         g2.setStroke(new BasicStroke(stroke));
-        g2.setColor(SPOTLIGHT_BORDER_COLOR.getDefaultColor());
+        final Color borderColor = UIManager.getColor(SPOTLIGHT_BORDER_COLOR_KEY);
+        g2.setColor(borderColor != null ? borderColor : FALLBACK_SPOTLIGHT_BORDER_COLOR);
         g2.draw(mask);
       }
       finally {
@@ -132,12 +131,23 @@ public final class GlassPanel extends JComponent {
     return Math.PI * component.getWidth() * component.getHeight() / 4.0;
   }
 
+  private static @NotNull Color getOverlayColor(JComponent surfaceComponent) {
+    final Color background = UIManager.getColor(SPOTLIGHT_BACKGROUND_COLOR_KEY);
+    if (background != null) return background;
+
+    final Color surfaceComponentBackground = surfaceComponent.getBackground();
+    final Color fallbackBackground =
+      ColorUtil.toAlpha(surfaceComponentBackground == null ? null : surfaceComponentBackground.darker(), 100);
+
+    return fallbackBackground;
+  }
+
   public void addSpotlight(final JComponent component) {
     myLightComponents.add(component);
     setVisible(true);
   }
 
-  public void removeSpotlight(final JComponent component){
+  public void removeSpotlight(final JComponent component) {
     myLightComponents.remove(component);
     if (myLightComponents.isEmpty()) {
       setVisible(false);

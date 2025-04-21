@@ -35,7 +35,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   private final List<ConfigurationSource> myFeatureConfigurationSources = List.of(
     new ConfigurationSource("PlatformProductivityFeatures.xml", true),  // common features that exist in all IDEs
     new ConfigurationSource("ProductivityFeaturesRegistry.xml", true),  // product specific features (IDEA, PyCharm, etc...)
-    new ConfigurationSource("IdeSpecificFeatures.xml", false)  // IDE specific features (IDEA Ultimate, PyCharm Professional, etc...)
+    new ConfigurationSource("IdeSpecificFeatures.xml", false)  // IDE specific features (IDEA Ultimate, PyCharm, etc...)
   );
 
   private boolean myAdditionalFeaturesLoaded;

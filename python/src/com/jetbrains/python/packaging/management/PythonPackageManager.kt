@@ -21,6 +21,7 @@ import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDia
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -37,7 +38,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   suspend fun installPackagesWithDialogOnError(packages: List<PythonPackageSpecification>, options: List<String>): Result<List<PythonPackage>> {
     packages.forEach { specification ->
       runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
-        installPackageCommand(specification, options)
+        withContext(Dispatchers.IO) {
+          installPackageCommand(specification, options)
+        }
       }.onFailure {
         return Result.failure(it)
       }

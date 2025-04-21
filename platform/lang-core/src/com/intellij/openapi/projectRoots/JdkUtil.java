@@ -18,6 +18,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +79,7 @@ public final class JdkUtil {
     return suggested.toString();
   }
 
+  @ApiStatus.Obsolete
   public static boolean checkForJdk(@NotNull String homePath) {
     try {
       return checkForJdk(Path.of(homePath));
@@ -85,10 +89,22 @@ public final class JdkUtil {
     }
   }
 
+  /**
+   * Check the JDK bundle.
+   *
+   * @param homePath path to a directory with JDK.
+   * @return if the JDK can be run on this machine and contains all the necessary components for an execution.
+   */
   public static boolean checkForJdk(@NotNull Path homePath) {
-    return checkForJdk(homePath, SystemInfo.isWindows);
+    return (Files.exists(homePath.resolve("bin/javac")) || Files.exists(homePath.resolve("bin/javac.exe"))) &&
+           (isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
+            Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
+            Files.isDirectory(homePath.resolve("classes")) ||           // custom build
+            Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
+            Files.exists(homePath.resolve("../Classes/classes.jar")));  // Apple JDK
   }
 
+  @Deprecated
   public static boolean checkForJdk(@NotNull Path homePath, boolean isWindows) {
     return (!isWindows && Files.exists(homePath.resolve("bin/javac")) ||
             (isWindows && Files.exists(homePath.resolve("bin/javac.exe")))) &&
@@ -97,6 +113,31 @@ public final class JdkUtil {
             Files.isDirectory(homePath.resolve("classes")) ||           // custom build
             Files.exists(homePath.resolve("jre/lib/vm.jar")) ||         // IBM JDK
             Files.exists(homePath.resolve("../Classes/classes.jar")));  // Apple JDK
+  }
+
+  /**
+   * Check compatibility between a Project and a JDK.
+   *
+   * @return if the JDK can be run on this machine.
+   */
+  public static boolean isCompatible(@NotNull Sdk sdk, @NotNull Project project) {
+    String sdkHome = sdk.getHomePath();
+    if (sdkHome == null) {
+      return false;
+    }
+    Path sdkHomePath = Path.of(sdkHome);
+    return isCompatible(sdkHomePath, project);
+  }
+
+  /**
+   * Check compatibility between a Project and a JDK located on the path.
+   *
+   * @param jdkHomePath path to a directory with JDK.
+   * @return if the JDK can be run on this machine.
+   */
+  public static boolean isCompatible(@NotNull Path jdkHomePath, @NotNull Project project) {
+    EelDescriptor jdkDescriptor = EelProviderUtil.getEelDescriptor(jdkHomePath);
+    return jdkDescriptor == EelProviderUtil.getEelDescriptor(project);
   }
 
   public static boolean checkForJre(@NotNull String homePath) {
@@ -160,6 +201,16 @@ public final class JdkUtil {
 
   public static boolean useClasspathJar() {
     return PropertiesComponent.getInstance().getBoolean("idea.dynamic.classpath.jar", true);
+  }
+
+  private static boolean isCompatibleWithOs(@NotNull EelDescriptor descriptor) {
+    EelPath.OS os = descriptor.getOperatingSystem();
+    if (SystemInfo.isWindows) {
+      return os == EelPath.OS.WINDOWS;
+    }
+    else {
+      return os == EelPath.OS.UNIX;
+    }
   }
 
   //<editor-fold desc="Deprecated stuff.">

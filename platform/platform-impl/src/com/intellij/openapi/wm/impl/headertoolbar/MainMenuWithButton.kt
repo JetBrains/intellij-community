@@ -2,8 +2,13 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.UiComponentsSearchUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
@@ -14,22 +19,22 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.messages.MessageBusConnection
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.intellij.ui.util.width
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentLinkedDeque
-import javax.swing.Icon
-import javax.swing.JFrame
+import java.awt.event.ActionEvent
+import java.util.concurrent.ConcurrentHashMap
+import javax.swing.*
+import javax.swing.event.ChangeEvent
+import kotlin.math.roundToInt
+
+private val LOG = Logger.getInstance(MainMenuWithButton::class.java)
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
 ) : NonOpaquePanel(GridLayout()) {
   val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (ShowMode.isMergedMainMenu()) toolbarMainMenu.menuCount else 0 }
   val toolbarMainMenu: MergedMainMenu = MergedMainMenu(coroutineScope = coroutineScope, frame = frame)
-  private val connection: MessageBusConnection = com.intellij.openapi.application.ApplicationManager.getApplication().messageBus.connect()
-
 
   init {
     isOpaque = false
@@ -37,25 +42,31 @@ class MainMenuWithButton(
       .row(resizable = true)
       .cell(component = toolbarMainMenu, resizableColumn = true)
       .cell(component = mainMenuButton.button)
-    connection.subscribe(ToolbarCompressedNotifier.TOPIC, object : ToolbarCompressedListener {
-      override fun onToolbarCompressed(event: ToolbarCompressedEvent) {
-        if (event.toolbar.rootPane != frame.rootPane) return
-        recalculateWidth(event.toolbar)
-      }
-    })
   }
 
   private val toolbarInsetsConst = 20
+  private var recalculateWidthJob: Job? = null
+
   fun recalculateWidth(toolbar: MainToolbar?) {
     val isMergedMenu = isMergedMainMenu()
     toolbarMainMenu.isVisible = isMergedMenu
     mainMenuButton.button.presentation.icon = getButtonIcon()
-    mainMenuButton.button.isVisible = !isMergedMenu || toolbarMainMenu.hasInvisibleItems()
+    val expandableMenu = mainMenuButton.expandableMenu
+    mainMenuButton.button.isVisible = !isMergedMenu || toolbarMainMenu.hasInvisibleItems(expandableMenu)
 
     if (!isMergedMenu) return
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    val prevJob = recalculateWidthJob
+    recalculateWidthJob = coroutineScope.launch(Dispatchers.EDT) {
+      prevJob?.join()
       var wasChanged = false
+      if (toolbarMainMenu.rootMenuItems.isEmpty() && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
+        toolbarMainMenu.getNextInvisibleItem(expandableMenu)?.let { itemToWidth ->
+          toolbarMainMenu.add(itemToWidth.first)
+        }
+        wasChanged = true
+      }
+
       val toolbarPrefWidth = toolbar?.calculatePreferredWidth() ?: return@launch
       val menuButton = mainMenuButton.button
       val parentPanelWidth = menuButton.parent?.parent?.width ?: return@launch
@@ -72,19 +83,18 @@ class MainMenuWithButton(
           if (toolbarMainMenu.rootMenuItems.size <= 1 || widthToFree <= 0) break
 
           val item = rootMenuItems[i]
-          toolbarMainMenu.addInvisibleItem(item) // Add to removed items (LIFO behavior)
+          toolbarMainMenu.addInvisibleItem(item)
           toolbarMainMenu.remove(item)
           widthToFree -= item.size.width
           wasChanged = true
         }
       }
-
       else if (availableWidth > widthLimit) {
-        while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems()) {
-          val item = toolbarMainMenu.pollNextInvisibleItem(mainMenuButton.expandableMenu) ?: break // Remove the last item (LIFO order)
-          val itemWidth = item.size.width
+        while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems(expandableMenu)) {
+          val itemToWidth = toolbarMainMenu.getNextInvisibleItem(expandableMenu) ?: break
+          val item = itemToWidth.first
+          val itemWidth = itemToWidth.second
           if (availableWidth - itemWidth < widthLimit) {
-            toolbarMainMenu.addInvisibleItem(item)
             break
           }
 
@@ -94,58 +104,114 @@ class MainMenuWithButton(
         }
       }
 
-      menuButton.isVisible = toolbarMainMenu.hasInvisibleItems()
+      menuButton.isVisible = toolbarMainMenu.hasInvisibleItems(expandableMenu)
       if (wasChanged) {
         if (toolbarMainMenu.rootMenuItems.isEmpty()) {
-          val item = toolbarMainMenu.pollNextInvisibleItem(mainMenuButton.expandableMenu)
-          toolbarMainMenu.add(item)
+          toolbarMainMenu.getNextInvisibleItem(expandableMenu)?.let {
+            toolbarMainMenu.add(it.first)
+          }
         }
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
+        toolbarMainMenu.revalidate()
+        toolbarMainMenu.repaint()
       }
-      toolbar.revalidate()
-      toolbar.repaint()
     }
   }
 
+  fun recalculateWidth() {
+    val mainToolbar = UiComponentsSearchUtil.findUiComponent(frame) { _: MainToolbar -> true }
+    if (mainToolbar == null) {
+      LOG.info("Main toolbar not found for recalculation of the menu width")
+      return
+    }
+    recalculateWidth(mainToolbar)
+  }
 
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
 
-  fun clearRemovedItems() {
-    toolbarMainMenu.clearInvisibleItems()
-  }
 }
 
 @ApiStatus.Internal
-class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
+class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
+
+  /** Cache the item's width as its real size cannot be obtained when it is not painted.
+  item.preferredSize often twice bigger than the real one (when the menu item is not painted)
+  preferred size computed by ui class is also often +20px
+   */
+  private val invisibleItems: ConcurrentHashMap<String, Pair<ActionMenu, Int>> = ConcurrentHashMap()
 
   init {
     isOpaque = false
     isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
     border = null
-  }
-
-  private val invisibleItems: ConcurrentLinkedDeque<ActionMenu> = ConcurrentLinkedDeque<ActionMenu>()
-
-  fun clearInvisibleItems() {
-    invisibleItems.clear()
+    JBUIScale.addUserScaleChangeListener {
+      val oldScale = it.oldValue as? Float ?: return@addUserScaleChangeListener
+      val newScale = it.newValue as? Float ?: return@addUserScaleChangeListener
+      if (oldScale == newScale || invisibleItems.isEmpty()) return@addUserScaleChangeListener
+      invisibleItems.forEach {
+        (name, itemToWidth) ->
+        val width = (itemToWidth.second / oldScale * newScale).roundToInt()
+        invisibleItems.put(name, Pair(itemToWidth.first, width))
+      } }
   }
 
   fun addInvisibleItem(item: ActionMenu) {
-    invisibleItems.offerLast(item) // Add to removed items (LIFO behavior)
-  }
-
-  internal fun pollNextInvisibleItem(expandableMenu: ExpandableMenu?): ActionMenu? {
-    val expandableMenuNextItem = expandableMenu?.ideMenu?.rootMenuItems?.getOrNull(rootMenuItems.size)
-    val lastItem = invisibleItems.last()
-    val matchingItem = if (lastItem.text == expandableMenuNextItem?.text) lastItem else invisibleItems.find { it.text == expandableMenuNextItem?.text }
-    matchingItem?.let {
-      invisibleItems.remove(it)
+    val name = item.text
+    var width = item.size.width
+    if (width == 0) {
+      invisibleItems[name]?.second?.let {
+        width = it
+      }
+      if (width == 0) {
+        val fontMetrics = item.getFontMetrics(item.font)
+        width = fontMetrics.stringWidth(item.text) + item.insets.width
+      }
     }
-    return matchingItem
-
+    invisibleItems.put(name, Pair(item, width))
   }
 
-  fun hasInvisibleItems(): Boolean = invisibleItems.isNotEmpty()
+  internal fun getNextInvisibleItem(expandableMenu: ExpandableMenu?): Pair<ActionMenu, Int>? {
+    val expandableMenuItems = expandableMenu?.ideMenu?.rootMenuItems
+    val expandableMenuNextItem = expandableMenuItems?.getOrNull(rootMenuItems.size)
+    if (expandableMenuNextItem == null) {
+      if (expandableMenu == null) LOG.warn("expandable menu is null, couldn't be used for merged menu next item calculation")
+      else {
+        LOG.warn("Trying to get expandable menu item with index ${rootMenuItems.size} to calculate next merged menu item, " +
+                 "but expandable menu size = ${expandableMenuItems?.size}")
+        expandableMenu.ideMenu.updateMenuActions(true)
+      }
+      return null
+    }
+    val nextItemText = expandableMenuNextItem.text
+    if (rootMenuItems.any { it.text == nextItemText}) {
+      LOG.warn("Invisible item already added: ${nextItemText}. Run update menu actions")
+      this.updateMenuActions(true)
+      return null
+    }
+    val itemToWidth = invisibleItems[nextItemText]
+    if (itemToWidth == null) {
+      LOG.warn("Invisible item not found: ${nextItemText}. Run update menu actions")
+      expandableMenu.ideMenu.updateMenuActions(true)
+      this.updateMenuActions(true)
+    }
 
-  fun getInvisibleItemsCount(): Int = invisibleItems.size
+    return itemToWidth
+  }
+
+  internal fun hasInvisibleItems(expandableMenu: ExpandableMenu?): Boolean {
+    if (expandableMenu == null) {
+      LOG.warn("expandable menu is null, couldn't be used for check is merged menu has invisible items")
+      return false
+    }
+    val menuItemCount = rootMenuItems.size
+    val expandableMenuItemCount = expandableMenu.ideMenu.rootMenuItems.size
+    if (menuItemCount == expandableMenuItemCount) return false
+    if (menuItemCount > expandableMenuItemCount || invisibleItems.isEmpty()) {
+      LOG.warn("Invisible items count mismatch: expandableMenuItemCount = $expandableMenuItemCount,  menuItemCount = $menuItemCount, invisibleItems is empty = ${invisibleItems.isEmpty()}. Run update menu actions.")
+      expandableMenu.ideMenu.updateMenuActions(true)
+      this.updateMenuActions(true)
+      return false
+    }
+    return true
+  }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
@@ -71,16 +72,12 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
-    val descriptor =
-      if (showFiles) ProjectOrFileChooserDescriptor()
-      else OpenProjectFileChooserDescriptor(true).withTitle(IdeBundle.message("title.open.project"))
     var toSelect: VirtualFile? = null
     val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (defaultProjectDirectory.isNotEmpty()) {
       toSelect = VfsUtil.findFileByIoFile(File(defaultProjectDirectory), true)
     }
-    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, toSelect == null && showFiles)
+    val descriptor = createFileChooserDescriptor(project, toSelect)
     FileChooser.chooseFiles(descriptor, project, toSelect ?: pathToSelect) { files ->
       for (file in files) {
         if (!descriptor.isFileSelectable(file)) {
@@ -95,6 +92,19 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         }
       }
     }
+  }
+
+  protected open fun createFileChooserDescriptor(
+    project: Project?,
+    fileToSelect: VirtualFile?
+  ): FileChooserDescriptor {
+    val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
+    val descriptor =
+      if (showFiles) ProjectOrFileChooserDescriptor()
+      else OpenProjectFileChooserDescriptor(true).withTitle(IdeBundle.message("title.open.project"))
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, fileToSelect == null && showFiles)
+
+    return descriptor
   }
 
   @Suppress("unused")
@@ -147,7 +157,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     override fun isChooseMultiple() = true
   }
 
-  private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
+  protected open suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
       @Suppress("TestOnlyProblems")

@@ -46,6 +46,7 @@
   - name: intellij.python.pydev
   - name: intellij.python.sdk
   - name: intellij.python.pyproject
+  - name: intellij.python.hatch
   - name: intellij.python.community.plugin
   contentModules:
   - name: intellij.python.community.plugin.minor

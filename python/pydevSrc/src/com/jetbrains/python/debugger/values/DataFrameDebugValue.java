@@ -19,6 +19,8 @@ import static com.jetbrains.python.debugger.values.DataFrameDebugValueUtilKt.get
 public final class DataFrameDebugValue extends PyDebugValue {
   private final ColumnNode treeColumns = new ColumnNode();
 
+  public static final String pyDataFrameType = "DataFrame";
+
   public DataFrameDebugValue(@NotNull String name,
                              @Nullable String type,
                              @Nullable String typeQualifier,

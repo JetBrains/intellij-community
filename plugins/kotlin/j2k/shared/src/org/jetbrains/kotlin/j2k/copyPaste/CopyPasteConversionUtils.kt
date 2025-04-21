@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.j2k.copyPaste
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import java.util.concurrent.Callable
 
 data class ConversionResult(
     val text: String,
@@ -52,13 +53,16 @@ fun ElementAndTextList.convertCodeToKotlin(
     val inputElements = this.toList().filterIsInstance<PsiElement>()
     val (results, _, converterContext) = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         ThrowableComputable {
-            runReadAction { converter.elementsToKotlin(inputElements) }
+            // A non-blocking read action is essential here 
+            // to be able to show a modal progress window right away
+            ReadAction.nonBlocking(Callable {
+                converter.elementsToKotlin(inputElements)
+            }).executeSynchronously()
         },
         KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
         true,
         project
     )
-
     val importsToAdd = mutableSetOf<FqName>()
     val convertedCodeBuilder = StringBuilder()
     val originalCodeBuilder = StringBuilder()

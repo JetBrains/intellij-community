@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -29,8 +30,14 @@ import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil.parseMavenProperties
+import java.io.IOException
+import java.net.ServerSocket
+import java.net.Socket
 import java.nio.file.Path
+import java.rmi.server.RMIClientSocketFactory
+import java.rmi.server.RMISocketFactory
 import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<EelMavenServerRemoteProcessSupport>()
 
@@ -51,6 +58,11 @@ class EelMavenServerRemoteProcessSupport(
     return "127.0.0.1"
   }
 
+  override fun getClientSocketFactory(): RMIClientSocketFactory {
+    val delegate = RMISocketFactory.getSocketFactory() ?: RMISocketFactory.getDefaultSocketFactory()
+    return RetryingSocketFactory(delegate)
+  }
+
   @OptIn(DelicateCoroutinesApi::class)
   override fun publishPort(port: Int): Int {
     MavenCoroutineScopeProvider.getCoroutineScope(myProject).launch {
@@ -61,6 +73,29 @@ class EelMavenServerRemoteProcessSupport(
 
   override fun type(): String {
     return "EEL" // TODO: which type we should use here?
+  }
+}
+
+/**
+ * This factory will retry Socket creation.
+ *
+ * WSL mirrored network has a visible delay (hundreds of ms) for ports to become available on the host machine.
+ * We use EEL to access the remote port, but because Maven Server knows nothing about port forwarding, the local port on the WSL side is
+ * still a WSL port.
+ * So we have to retry a couple of times.
+ */
+private class RetryingSocketFactory(private val delegate: RMISocketFactory) : RMISocketFactory() {
+
+  @Throws(IOException::class)
+  override fun createSocket(host: String, port: Int): Socket {
+    return connectRetrying(30.seconds.inWholeMilliseconds) {
+      delegate.createSocket(host, port)
+    }
+  }
+
+  @Throws(IOException::class)
+  override fun createServerSocket(port: Int): ServerSocket {
+    return delegate.createServerSocket(port)
   }
 }
 

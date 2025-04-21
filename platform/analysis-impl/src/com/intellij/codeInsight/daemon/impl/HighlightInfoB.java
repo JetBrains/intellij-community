@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -288,5 +289,9 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
       }
     }
     return true;
+  }
+  @NotNull
+  UnfairTextRange getRangeSoFar() {
+    return new UnfairTextRange(startOffset, endOffset);
   }
 }

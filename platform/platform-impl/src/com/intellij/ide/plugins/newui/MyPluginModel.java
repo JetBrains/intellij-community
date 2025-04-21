@@ -392,6 +392,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return;
     }
 
+    var customization = PluginInstallationCustomization.findPluginInstallationCustomization(descriptor.getPluginId());
+    if (customization != null) {
+      customization.beforeInstallOrUpdate(isUpdate);
+    }
+
     if (myInstallSource != null) {
       String pluginId = descriptor.getPluginId().getIdString();
       myInstallSource.logInstallPlugins(Collections.singletonList(pluginId));

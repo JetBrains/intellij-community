@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
 
 final class EditorActionManagerImpl extends EditorActionManager {
@@ -36,7 +36,7 @@ final class EditorActionManagerImpl extends EditorActionManager {
 
   @Override
   public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler(final @NotNull Document document) {
-    final Document doc = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
+    final Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
     final ReadonlyFragmentModificationHandler docHandler =
       doc instanceof DocumentImpl ? ((DocumentImpl)doc).getReadonlyFragmentModificationHandler() : null;
     return docHandler == null ? myReadonlyFragmentsHandler : docHandler;
@@ -44,7 +44,7 @@ final class EditorActionManagerImpl extends EditorActionManager {
 
   @Override
   public void setReadonlyFragmentModificationHandler(final @NotNull Document document, final ReadonlyFragmentModificationHandler handler) {
-    final Document doc = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
+    final Document doc = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (doc instanceof DocumentImpl) {
       ((DocumentImpl)document).setReadonlyFragmentModificationHandler(handler);
     }

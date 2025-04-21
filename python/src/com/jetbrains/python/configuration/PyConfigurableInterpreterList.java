@@ -61,7 +61,10 @@ public class PyConfigurableInterpreterList {
 
     List<Sdk> result = new ArrayList<>();
     for (Sdk sdk : getModel().getSdks()) {
-      if (!(sdk.getSdkType() instanceof PythonSdkType)) continue;
+      if (!PythonSdkUtil.isPythonSdk(sdk)) {
+        continue;
+      }
+
       if (targetModuleSitsOn != null) {
         var sdkConfig = PySdkExtKt.getTargetEnvConfiguration(sdk);
         if (!TargetConfigurationWithLocalFsAccessExKt.codeCouldProbablyBeRunWithConfig(targetModuleSitsOn, sdkConfig)) {

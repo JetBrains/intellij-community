@@ -3,7 +3,7 @@
 val nullableString: String? = "abc"
 
 val foo = <caret>if (nullableString != null) {
-    nullableString.toUpperCase().toLowerCase()
+    nullableString.uppercase().lowercase()
 } else {
     null
 }

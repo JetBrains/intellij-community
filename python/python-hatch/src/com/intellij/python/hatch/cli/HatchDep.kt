@@ -2,7 +2,7 @@
 package com.intellij.python.hatch.cli
 
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
-import com.intellij.python.hatch.HatchRuntime
+import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError.ExecException
 

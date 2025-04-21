@@ -41,7 +41,6 @@ abstract class PythonType<T : Any>(private val tag: @NonNls String) {
           ?: error("Can't get language level for $flavor , $binary")
         }
         .sortedByDescending { (_, languageLevel) -> languageLevel }
-        .filter { (_, languageLevel) -> languageLevel.isPy3K }
         .map { (path, _) -> path }
     }
     return pythons.asFlow()

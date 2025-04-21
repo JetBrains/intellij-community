@@ -4,8 +4,6 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookMarkdownCellLeftBorderRenderer
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.getLayerController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -13,7 +11,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.ui.JBColor
 import java.awt.Color
 import java.awt.geom.Line2D
 
@@ -21,28 +18,19 @@ class EditorCellFrameManager(
   private val editor: EditorImpl,
   private val view: EditorCellView,
   private val cellType: NotebookCellLines.CellType,
-): Disposable {  // PY-74106
+) : Disposable {  // PY-74106
   private var leftBorderHighlighter: RangeHighlighter? = null
   private var rightBorderLine: Line2D? = null
-
-  private val defaultFrameColor = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
-  private val highlightedFrameColor = editor.notebookAppearance.cellStripeSelectedColor.get()
-
-  private var currentColor: Color = defaultFrameColor
+  private var currentColor: Color = editor.notebookAppearance.cellFrameHoveredColor.get()
 
   private var isSelected = false
   private var isHovered = false
 
-  private val boundsChangeListener = object : JupyterBoundsChangeListener {
-    override fun boundsChanged() {
-      if (cellType == NotebookCellLines.CellType.CODE || isSelected) redrawBorders(currentColor)
-    }
+  init {
+    if (cellType == NotebookCellLines.CellType.CODE) redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
   }
 
-  init {
-    JupyterBoundsChangeHandler.Companion.get(editor).subscribe(this, boundsChangeListener)
-    if (cellType == NotebookCellLines.CellType.CODE) redrawBorders(defaultFrameColor)
-  }
+  fun redrawBorders(): Unit = redrawBorders(currentColor)
 
   fun updateCellFrameShow(selected: Boolean, hovered: Boolean) {
     isSelected = selected
@@ -51,26 +39,28 @@ class EditorCellFrameManager(
     when (cellType) {
       NotebookCellLines.CellType.MARKDOWN -> updateCellFrameShowMarkdown()
       NotebookCellLines.CellType.CODE -> updateCellFrameShowCode()
-      else -> { }
+      else -> {}
     }
   }
 
   private fun updateCellFrameShowMarkdown() {
     if (view.isUnderDiff) {
-      // under diff, it is necessary to make the selection more visible with blue frame for md cells
+      // under diff, it is necessary to make the selected cell more visible with blue frame for md cells
       updateCellFrameShowCode()
       return
     }
-    when (isSelected || isHovered) {
-      true -> redrawBorders(defaultFrameColor)
+
+    when {
+      isSelected -> redrawBorders(editor.notebookAppearance.cellFrameSelectedColor.get())
+      isHovered -> redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
       else -> clearFrame()
     }
   }
 
   private fun updateCellFrameShowCode() {
     when (isSelected) {
-      true -> redrawBorders(highlightedFrameColor)
-      else -> redrawBorders(defaultFrameColor)
+      true -> redrawBorders(editor.notebookAppearance.cellFrameSelectedColor.get())
+      else -> redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
     }
   }
 
@@ -92,19 +82,18 @@ class EditorCellFrameManager(
     addLeftBorderHighlighter(startOffset, endOffset)
   }
 
-
   private fun redrawRightBorder(layerController: EditorLayerController?) {
     layerController ?: return
     removeRightBorder(layerController)
 
     val inlays = view.input.getBlockElementsInRange()
     val upperInlayBounds = inlays.firstOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY &&
-      it.properties.isShownAbove == true }?.bounds ?: return
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && it.properties.isShownAbove
+    }?.bounds ?: return
 
     val lowerInlayBounds = inlays.lastOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY &&
-      it.properties.isShownAbove == false }?.bounds ?: return
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && !it.properties.isShownAbove
+    }?.bounds ?: return
 
     val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
     val lineStartY = (upperInlayBounds.y + upperInlayBounds.height).toDouble()
@@ -152,9 +141,7 @@ class EditorCellFrameManager(
   }
 
   override fun dispose() {
-    JupyterBoundsChangeHandler.Companion.get(editor).unsubscribe(boundsChangeListener)
     removeLeftBorder()
     removeRightBorder(editor.getLayerController())
   }
-
 }

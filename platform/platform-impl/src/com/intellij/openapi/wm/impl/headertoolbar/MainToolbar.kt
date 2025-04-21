@@ -39,6 +39,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -54,6 +55,7 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -71,7 +73,7 @@ private sealed interface MainToolbarFlavor {
 
 private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
                                                    private val headerContent: JComponent,
-                                                   frame: JFrame) : MainToolbarFlavor {
+                                                   frame: JFrame, toolbar: MainToolbar) : MainToolbarFlavor {
 
 
   private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
@@ -81,6 +83,11 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
     val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
     mainMenuButton.expandableMenu = expandableMenu
     mainMenuButton.rootPane = frame.rootPane
+    toolbar.addWidthCalculationListener(object : ToolbarWidthCalculationListener {
+      override fun onToolbarCompressed(event: ToolbarWidthCalculationEvent) {
+        mainMenuWithButton.recalculateWidth(toolbar)
+      }
+    })
   }
 
   override fun addWidget() {
@@ -102,12 +109,14 @@ class MainToolbar(
   private val isFullScreen: () -> Boolean,
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
+  private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
+  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
 
   init {
     this.background = background
     this.isOpaque = isOpaque
     flavor = if (isMenuButtonInToolbar(UISettings.shadowInstance)) {
-      MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame)
+      MenuButtonInToolbarMainToolbarFlavor(headerContent = this, coroutineScope = coroutineScope, frame = frame, toolbar = this)
     }
     else {
       DefaultMainToolbarFlavor
@@ -122,13 +131,21 @@ class MainToolbar(
       preferredSizeFunction = { component ->
         when (component) {
           is ActionToolbar -> {
-            val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+            val mainToolbarWidth = this@MainToolbar.width
+            val availableSize = Dimension(mainToolbarWidth - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+            val sizeMap = CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>())
+            val dimension = sizeMap.getValue(component)
 
-            val event = ToolbarCompressedEvent(this@MainToolbar)
-            val application = ApplicationManager.getApplication()
-            application.messageBus.syncPublisher(ToolbarCompressedNotifier.TOPIC).onToolbarCompressed(event)
-
-            CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
+            if (widthCalculationListeners.isNotEmpty()) {
+              val componentText = (component as ActionToolbar).actionGroup.templatePresentation.text
+              val cachedWidth = cachedWidths[componentText]
+              if (dimension.width != cachedWidth || cachedWidths[MAIN_TOOLBAR_ID] != mainToolbarWidth) {
+                notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
+                cachedWidths.put(componentText, dimension.width)
+                cachedWidths.put(MAIN_TOOLBAR_ID, mainToolbarWidth)
+              }
+            }
+            dimension
           }
           else -> {
             component.preferredSize
@@ -304,10 +321,24 @@ class MainToolbar(
     addMouseMotionListener(listener)
   }
 
+  internal fun addWidthCalculationListener(listener: ToolbarWidthCalculationListener) {
+    widthCalculationListeners.add(listener)
+  }
+
+  internal fun removeWidthCalculationListener(listener: ToolbarWidthCalculationListener) {
+    widthCalculationListeners.remove(listener)
+  }
+
+  private fun notifyToolbarWidthCalculation(event: ToolbarWidthCalculationEvent) {
+    widthCalculationListeners.forEach { it.onToolbarCompressed(event) }
+  }
+
+
   override fun removeNotify() {
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
+      widthCalculationListeners.clear()
     }
   }
 
@@ -382,10 +413,6 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
         }
       }
     }
-  }
-
-  override fun updateActionsOnAdd() {
-    // do nothing - called explicitly
   }
 
   fun updateActions() {

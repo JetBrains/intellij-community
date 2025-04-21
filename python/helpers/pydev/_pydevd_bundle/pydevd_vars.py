@@ -28,6 +28,7 @@ import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import VariableWithOffset, eval_expression
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 
 SENTINEL_VALUE = []
 DEFAULT_DF_FORMAT = "s"
@@ -515,7 +516,10 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
         else:
             if pydevd_save_locals.is_save_locals_available():
                 if is_complex(attr):
-                    Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
+                    if IS_PY313_OR_GREATER:
+                        Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
+                    else:
+                        Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
                     return value
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)

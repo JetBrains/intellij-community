@@ -445,7 +445,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     // now we need to initialize Eel here
-    EelApi eelApi;
+    EelApi eelApi = null;
     final var exe = myExePath;
     final var workingDirectory = myWorkingDirectory;
 
@@ -460,19 +460,10 @@ public class GeneralCommandLine implements UserDataHolder {
       return null;
     }
 
-    if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
-      eelApi = upgradeBlocking(getEelDescriptor(exePath));
-    }
-    else if (workingDirectory != null) {
-      if (getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) { // also try to compute non-local EelApi from working dir
-        eelApi = upgradeBlocking(getEelDescriptor(workingDirectory));
-      }
-      else {
-        eelApi = null;
-      }
-    }
-    else {
-      eelApi = null;
+    var eelDescriptor = getEelDescriptor(exePath);
+    if (eelDescriptor != LocalEelDescriptor.INSTANCE &&
+        (workingDirectory == null || getEelDescriptor(workingDirectory).equals(eelDescriptor))) {
+      eelApi = upgradeBlocking(eelDescriptor);
     }
     myEelApi = Ref.create(eelApi);
 

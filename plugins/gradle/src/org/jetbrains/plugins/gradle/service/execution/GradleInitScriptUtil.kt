@@ -205,6 +205,7 @@ fun loadApplicationInitScript(
   javaExePath: String,
   sourceSetName: String,
   params: String?,
+  definitions: String?,
   intelliJRtPath: String?,
   workingDirectory: String?,
   useManifestJar: Boolean,
@@ -223,6 +224,7 @@ fun loadApplicationInitScript(
       "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
       // params should be kept as is; they will be embedded into the init-script directly
       "PARAMS" to if (params.isNullOrEmpty()) "// NO PARAMS" else params,
+      "DEFS" to if (definitions.isNullOrEmpty()) "// NO DEFS" else definitions,
       "USE_MANIFEST_JAR" to useManifestJar.toString(),
       "USE_ARGS_FILE" to useArgsFile.toString(),
       "USE_CLASSPATH_FILE" to useClasspathFile.toString()

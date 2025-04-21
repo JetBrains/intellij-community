@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.imports;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -72,7 +73,8 @@ public class PyImportChooser implements ImportChooser {
 
       PsiElement importable = value.getImportable();
       if (importable != null) {
-        setIcon(importable.getIcon(0));
+        Icon icon = ReadAction.compute(() -> importable.getIcon(0));
+        setIcon(icon);
       }
       String item_name = value.getPresentableText();
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);

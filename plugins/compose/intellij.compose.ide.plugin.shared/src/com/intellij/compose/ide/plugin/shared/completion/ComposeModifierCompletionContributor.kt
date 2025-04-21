@@ -10,6 +10,7 @@ import com.intellij.compose.ide.plugin.shared.callReturnTypeFqName
 import com.intellij.compose.ide.plugin.shared.isModifierEnabledInModule
 import com.intellij.compose.ide.plugin.shared.matchingParamTypeFqName
 import com.intellij.compose.ide.plugin.shared.returnTypeFqName
+import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
@@ -57,6 +58,10 @@ abstract class ComposeModifierCompletionContributor : CompletionContributor() {
   ) {
     val element = parameters.position
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
+    // do not run on Android modules - this is covered with the Android plugin.
+    if (FacetManager.getInstance(module).allFacets.any { it.javaClass.name == "org.jetbrains.android.facet.AndroidFacet" }) {
+      return
+    }
     if (!isModifierEnabledInModule(module) || parameters.originalFile !is KtFile) {
       return
     }
@@ -70,10 +75,6 @@ abstract class ComposeModifierCompletionContributor : CompletionContributor() {
     if (!isModifierType) return
 
     ProgressManager.checkCanceled()
-
-    // this is important to avoid duplicates in Android source sets,
-    // produced by the `com.android.tools.compose.code.completion.ComposeModifierCompletionContributor`
-    resultSet.runRemainingContributors(parameters, false)
 
     fillModifierCompletionVariants(
       element = element,
@@ -157,7 +158,6 @@ fun consumerCompletionResultFromRemainingContributor(
  * In the meantime, this method checks whether the containing class/object of the function is
  * visible from the completion position. If not, then it will be filtered out from results.
  */
-@OptIn(KaExperimentalApi::class)
 private fun KtFunction.isVisibleFromCompletionPosition(completionPosition: PsiElement): Boolean {
   // This is Compose, we should always be completing in a KtFile. If not, let's just assume things
   // are visible so as not to muck with
@@ -166,7 +166,13 @@ private fun KtFunction.isVisibleFromCompletionPosition(completionPosition: PsiEl
 
   val elementToAnalyze = this.containingClassOrObject ?: this
   analyze(elementToAnalyze) {
-    val visibilityChecker = createUseSiteVisibilityChecker(useSiteFile = ktFile.symbol, position = completionPosition)
-    return visibilityChecker.isVisible(elementToAnalyze.symbol)
+    val symbolWithVisibility = elementToAnalyze.symbol
+
+    @OptIn(KaExperimentalApi::class)
+    return isVisible(
+      symbolWithVisibility,
+      useSiteFile = ktFile.symbol,
+      position = completionPosition,
+    )
   }
 }

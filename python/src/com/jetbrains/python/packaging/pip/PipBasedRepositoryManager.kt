@@ -10,12 +10,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.PyPackageVersionComparator
-import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.EmptyPythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
@@ -133,12 +133,11 @@ internal abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : 
     service<PythonSimpleRepositoryCache>().refresh()
   }
 
-  override fun allPackages(): List<String> {
-    // todo[akniazev] check if it is even needed
-    return packagesByRepository().flatMap { it.second }.distinct().toList()
+  override fun allPackages(): Set<String> {
+    return packagesByRepository().fold(emptySet()) { acc, manager -> acc + manager.second }
   }
 
-  override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
+  override fun packagesFromRepository(repository: PyPackageRepository): Set<String> {
     return if (repository is PyPIPackageRepository) service<PypiPackageCache>().packages
     else service<PythonSimpleRepositoryCache>()[repository] ?: error("No packages for requested repository in cache")
   }

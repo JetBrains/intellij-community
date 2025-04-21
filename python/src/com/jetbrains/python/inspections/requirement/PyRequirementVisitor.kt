@@ -17,10 +17,7 @@ import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.IgnoreRequirementFix
 import com.jetbrains.python.inspections.quickfix.PyGenerateRequirementsFileQuickFix
 import com.jetbrains.python.inspections.quickfix.PyInstallRequirementsFix
-import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyPackageUtil
-import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.*
@@ -65,7 +62,7 @@ class PyRequirementVisitor(
         .firstOrNull()
 
       add(providedFix ?: PyInstallRequirementsFix(null, module, sdk, unsatisfied))
-      add(IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.name }))
+      add(IgnoreRequirementFix(unsatisfied.mapTo(mutableSetOf()) { it.presentableTextWithoutVersion }))
     }
 
     registerProblem(
@@ -91,7 +88,7 @@ class PyRequirementVisitor(
     ignoredPackages: Set<String?>,
   ): List<PyRequirement> {
     val requirements = getRequirements(module) ?: return emptyList()
-    val installedPackages = manager.installedPackages.toPyPackages()
+    val installedPackages = manager.installedPackages
     val modulePackages = collectPackagesInModule(module)
 
     return requirements.filter { requirement ->
@@ -102,19 +99,23 @@ class PyRequirementVisitor(
   private fun isRequirementUnsatisfied(
     requirement: PyRequirement,
     ignoredPackages: Set<String?>,
-    installedPackages: List<PyPackage>,
-    modulePackages: List<PyPackage>,
-  ): Boolean =
-    !ignoredPackages.contains(requirement.name) &&
-    requirement.match(installedPackages) == null &&
-    requirement.match(modulePackages) == null
+    installedPackages: List<PythonPackage>,
+    modulePackages: List<PythonPackage>,
+  ): Boolean {
+    if (requirement.name in ignoredPackages.map { normalizePackageName(it ?: EMPTY_STRING) }) {
+      return false
+    }
 
-  private fun List<PythonPackage>.toPyPackages(): List<PyPackage> = map { PyPackage(it.name, it.version) }
+    val isSatisfiedInInstalled = requirement.match(installedPackages) != null
+    val isSatisfiedInModule = requirement.match(modulePackages) != null
+
+    return !(isSatisfiedInInstalled || isSatisfiedInModule)
+  }
 
   private fun getRequirements(module: Module): List<PyRequirement>? =
     PyPackageUtil.getRequirementsFromTxt(module) ?: PyPackageUtil.findSetupPyRequires(module)
 
-  private fun collectPackagesInModule(module: Module): List<PyPackage> {
+  private fun collectPackagesInModule(module: Module): List<PythonPackage> {
     return PyUtil.getSourceRoots(module).flatMap { srcRoot ->
       VfsUtil.getChildren(srcRoot).filter { file ->
         METADATA_EXTENSIONS.contains(file.extension)
@@ -124,9 +125,9 @@ class PyRequirementVisitor(
     }
   }
 
-  private fun parsePackageNameAndVersion(nameWithoutExtension: String): PyPackage? {
+  private fun parsePackageNameAndVersion(nameWithoutExtension: String): PythonPackage? {
     val components = splitNameIntoComponents(nameWithoutExtension)
-    return if (components.size >= 2) PyPackage(components[0], components[1]) else null
+    return if (components.size >= 2) PythonPackage(components[0], components[1], false) else null
   }
 
   private fun checkPackageNameInRequirements(importedExpression: PyQualifiedExpression) {
@@ -174,14 +175,8 @@ class PyRequirementVisitor(
     possiblePyPIPackageNames: String,
     requirements: Collection<PyRequirement>,
   ): Boolean =
-    requirements.map { it.name.variations() }.flatten().contains(packageName) ||
-    requirements.map { it.name.variations() }.flatten().contains(possiblePyPIPackageNames)
-
-  private fun String.variations() = listOf(
-    this,
-    this.replace("_", "-"),
-    this.replace("-", "_")
-  )
+    requirements.map { it.name }.contains(normalizePackageName(packageName)) ||
+    requirements.map { it.name }.contains(normalizePackageName(possiblePyPIPackageNames))
 
   private fun isLocalModule(packageReferenceExpression: PyExpression, module: Module): Boolean {
     val reference = packageReferenceExpression.reference ?: return false
@@ -241,6 +236,15 @@ class PyRequirementVisitor(
     val value = module.getUserData(PythonPackageManager.RUNNING_PACKAGING_TASKS)
     return value != null && value
   }
+
+  private fun PyRequirement.match(packages: Collection<PythonPackage>): PythonPackage? {
+    return packages.firstOrNull { pkg ->
+      name == pkg.name
+      && versionSpecs.all { it.matches(pkg.version) }
+    }
+  }
+
+  private fun List<PythonPackage>.toPyPackages(): List<PyPackage> = map { PyPackage(it.name, it.version) }
 
   companion object {
     private const val PACKAGE_NOT_LISTED = "INSP.requirements.package.containing.module.not.listed.in.project.requirements"

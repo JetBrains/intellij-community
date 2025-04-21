@@ -150,7 +150,8 @@ final class JavaErrorFormatUtil {
   static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
     PsiModifierList modifierList = field.getModifierList();
     TextRange range = field.getTextRange();
-    int start = modifierList == null ? range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
+    int start = modifierList == null || modifierList.getParent() != field ? 
+                range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
     int end = field.getNameIdentifier().getTextRange().getEndOffset();
     return new TextRange(start, end).shiftLeft(range.getStartOffset());
   }

@@ -1,4 +1,3 @@
-// IGNORE_K2
 // EXPECT_VARIANT_IN_ORDER "public operator fun pack.Instant.plus(period: pack.TradingPeriod): pack.Instant defined in pack in file PlusOperator.dependency.kt"
 package other
 

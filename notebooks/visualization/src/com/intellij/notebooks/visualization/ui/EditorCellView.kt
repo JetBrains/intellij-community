@@ -73,7 +73,7 @@ class EditorCellView(
   var outputs: EditorCellOutputsView? = null
     private set
 
-  private val myEditorCellFrameManager: EditorCellFrameManager? =
+  val myEditorCellFrameManager: EditorCellFrameManager? =
     if (interval.type == NotebookCellLines.CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border")) {
       EditorCellFrameManager(editor, this, NotebookCellLines.CellType.MARKDOWN)
     } else if (interval.type == NotebookCellLines.CellType.CODE && Registry.`is`("jupyter.code.cells.border")) {
@@ -82,6 +82,10 @@ class EditorCellView(
 
   var selected: Boolean = false
     set(value) {
+      if (field == value) {
+        return
+      }
+
       field = value
       updateFolding()
       updateRunButtonVisibility()

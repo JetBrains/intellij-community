@@ -33,6 +33,7 @@ internal class PyInstallRequirementsFix(
   private val sdk: Sdk,
   private val unsatisfied: List<PyRequirement>,
   private val installOptions: List<String> = emptyList(),
+  private val listener: RunningPackagingTasksListener? = null,
 ) : LocalQuickFix {
 
   override fun getFamilyName(): @Nls String = quickFixName ?: PyPsiBundle.message( "QFIX.NAME.install.requirements", unsatisfied.size)
@@ -85,7 +86,7 @@ internal class PyInstallRequirementsFix(
 
   private fun installRequirements(project: Project, requirements: List<PyRequirement>, descriptor: ProblemDescriptor) {
     val file = descriptor.psiElement.containingFile ?: return
-    val listener = RunningPackagingTasksListener(module)
+    val listener = listener ?: RunningPackagingTasksListener(module)
     val ui = PyPackageManagerUI(project, sdk, listener)
     ui.install(requirements, installOptions)
     DaemonCodeAnalyzer.getInstance(project).restart(file)

@@ -137,7 +137,7 @@ private class InProductNotificationAction(val days: Int) : LastAction(), CustomC
       }
     }
     else {
-      val dialog = InProductNotificationDialog(e.project, days)
+      val dialog = InProductNotificationDialog(e.project, days, 0)
       dialog.show()
       dialog.handleAction()
     }
@@ -217,12 +217,15 @@ private fun getDiscount() {
 }
 
 @Internal
-class InProductNotificationDialog(project: Project?, val days: Int) :
+class InProductNotificationDialog(project: Project?, val days: Int, val time: Long) :
   DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
 
   companion object {
     @JvmStatic
     fun enabled(): Boolean = Registry.`is`("edu.pack.in.product.notification.enabled", true)
+
+    @JvmStatic
+    private var showTime: Long = 0
   }
 
   init {
@@ -314,12 +317,8 @@ class InProductNotificationDialog(project: Project?, val days: Int) :
     myOKAction.putValue(Action.NAME, IdeBundle.message("in.product.notification.action.renew.button"))
     buttons.add(createJButtonForAction(myOKAction).also { it.isOpaque = false })
 
-    val listener = object : LinkListener<Any> {
-      override fun linkSelected(aSource: LinkLabel<Any?>, aLinkData: Any?) {
-        doCancelAction()
-      }
-    }
-    buttons.add(LinkLabel<Any>(IdeBundle.message("in.product.notification.action.dismiss.button"), null, listener))
+    val listener = LinkListener<Any> { aSource, aLinkData -> doCancelAction() }
+    buttons.add(LinkLabel(IdeBundle.message("in.product.notification.action.dismiss.button"), null, listener))
 
     panel.add(buttons, BorderLayout.SOUTH)
 
@@ -334,6 +333,21 @@ class InProductNotificationDialog(project: Project?, val days: Int) :
     catch (e: Exception) {
       logger<InProductNotificationDialog>().error("Image $path is not loaded: $e")
       return null
+    }
+  }
+
+  override fun show() {
+    if (time > 0) {
+      if (showTime > 0 && (time - showTime) < 360000) {
+        return
+      }
+      showTime = time
+    }
+
+    super.show()
+
+    if (time > 0) {
+      showTime = System.currentTimeMillis()
     }
   }
 

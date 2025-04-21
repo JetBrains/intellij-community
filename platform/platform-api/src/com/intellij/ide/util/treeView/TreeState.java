@@ -447,8 +447,8 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
-    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, rootPath)),
-                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath)),
+    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, rootPath), false),
+                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath), true),
                          null);
   }
 
@@ -474,10 +474,10 @@ public final class TreeState implements JDOMExternalizable {
   @ApiStatus.Internal
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull List<TreePath> expandedPaths, @NotNull List<TreePath> selectedPaths, boolean persistPresentation) {
     List<PathElement[]> expandedPathElements = !expandedPaths.isEmpty()
-      ? createPaths(tree, expandedPaths)
+      ? createPaths(tree, expandedPaths, false)
       : new ArrayList<>();
     List<PathElement[]> selectedPathElements = !selectedPaths.isEmpty()
-      ? createPaths(tree, selectedPaths)
+      ? createPaths(tree, selectedPaths, true)
       : new ArrayList<>();
     return new TreeState(expandedPathElements, selectedPathElements, persistPresentation ? createFromTree(tree) : null);
   }
@@ -521,17 +521,17 @@ public final class TreeState implements JDOMExternalizable {
     element.addContent(root);
   }
 
-  private static List<PathElement[]> createPaths(@NotNull JTree tree, @NotNull @Unmodifiable List<? extends TreePath> paths) {
+  private static List<PathElement[]> createPaths(@NotNull JTree tree, @NotNull @Unmodifiable List<? extends TreePath> paths, boolean ignoreFlattened) {
     List<PathElement[]> list = new ArrayList<>();
     for (TreePath o : paths) {
       if (o.getPathCount() > 1 || tree.isRootVisible()) {
-        list.add(createPath(tree.getModel(), o));
+        list.add(createPath(tree.getModel(), o, ignoreFlattened));
       }
     }
     return list;
   }
 
-  private static PathElement[] createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
+  private static PathElement[] createPath(@NotNull TreeModel model, @NotNull TreePath treePath, boolean ignoreFlattened) {
     Object prev = null;
     int count = treePath.getPathCount();
     ArrayList<PathElement> result = new ArrayList<>(count);
@@ -542,7 +542,7 @@ public final class TreeState implements JDOMExternalizable {
       boolean isFlattened = false;
       String id = null;
       String type = null;
-      var provider = getProvider(cur);
+      var provider = ignoreFlattened ? null : getProvider(cur);
       if (provider != null) {
         var flattened = provider.getFlattenedElements();
         if (flattened != null && !flattened.isEmpty()) {

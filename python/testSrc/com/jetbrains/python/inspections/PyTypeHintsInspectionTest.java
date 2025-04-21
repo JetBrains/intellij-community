@@ -2217,6 +2217,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-79693
+  public void testNeverAndNoReturnNotReportedAsInvalidTypeArgs() {
+    doTestByText("""
+                   from typing import Never, NoReturn
+                   
+                   class ClassA:
+                      a: NoReturn
+                      b: list[NoReturn]
+                      c: Never
+                      d: list[Never]
+                   """);
+  }
+
   // TODO remove when PY-77059 is supported
   public void testParameterizedImplicitTypeAlias() {
     doTestByText("""

@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Replace with safe (?.) call" "true"
+// ERROR: Reference has a nullable type 'Foo?', use explicit '?.invoke()' to make a function-like call instead
 package p;
 
 fun test(x: Foo) {
@@ -32,6 +33,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Replace with safe (?.) call" "true"
+// ERROR: Reference has a nullable type 'Foo?', use explicit '?.invoke()' to make a function-like call instead
 package p;
 
 fun test(x: Foo) {

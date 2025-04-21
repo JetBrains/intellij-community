@@ -48,7 +48,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pyth
                                      false,
                                      false,
                                      true,
-                                     //presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
                                      false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }

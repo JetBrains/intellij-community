@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.psi.PsiElement
@@ -41,5 +43,21 @@ abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
         if (!ranges.any { it.containsOffset(relativeCaretOffset) }) return false
 
         return getElementContext(context, element) != null
+    }
+
+    /**
+     * For injected files, [IntentionPreviewComputable.invokePreview] has special logic for setting up the preview.
+     * One needs to distinguish original injection for preview and modified copy after changes.
+     */
+    override fun generatePreview(
+        context: ActionContext?,
+        element: E
+    ): IntentionPreviewInfo {
+        val isInjection = InjectedLanguageManager.getInstance(element.project).isInjectedFragment(element.containingFile)
+        if (isInjection) {
+            return IntentionPreviewInfo.EMPTY
+        }
+
+        return super.generatePreview(context, element)
     }
 }

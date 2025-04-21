@@ -21,10 +21,10 @@ internal class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepos
   override val repositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + super.repositories
 
-  override fun allPackages(): List<String> = service<CondaPackageCache>().packages
+  override fun allPackages(): Set<String> = service<CondaPackageCache>().packages
 
-  override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
-    return if (repository is CondaPackageRepository) service<CondaPackageCache>().packages else super.packagesFromRepository(repository)
+  override fun packagesFromRepository(repository: PyPackageRepository): Set<String> {
+    return if (repository is CondaPackageRepository) service<CondaPackageCache>().packages  else super.packagesFromRepository(repository)
   }
 
   override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {

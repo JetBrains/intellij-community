@@ -29,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
@@ -208,7 +208,6 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
 
   @Override
   protected void applyEditorTo(final @NotNull RunConfigurationBase configuration) throws ConfigurationException {
-    myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
 

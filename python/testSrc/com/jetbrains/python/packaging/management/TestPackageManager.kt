@@ -7,6 +7,8 @@ import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridg
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.TestOnly
@@ -63,6 +65,11 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return this
   }
 
+  fun withPackageInstalled(packages: List<PythonPackage>): TestPythonPackageManager {
+    this.installedPackages = packages
+    return this
+  }
+
   companion object {
     private val DEFAULT_PACKAGES = listOf(
       PythonPackage(PIP_PACKAGE, EMPTY_STRING, false),
@@ -78,10 +85,17 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
 }
 
 @TestOnly
-class TestPythonPackageManagerService(): PythonPackageManagerService {
+class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()): PythonPackageManagerService {
 
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+    installedPackages.ifEmpty {
+      return TestPythonPackageManager(project, sdk)
+    }
+
     return TestPythonPackageManager(project, sdk)
+      .withPackageInstalled(installedPackages)
+      .withPackageNames(installedPackages.map { it.name })
+      .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version),PyEmptyPackagePackageRepository))
   }
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
@@ -97,6 +111,7 @@ class TestPythonPackageManagerService(): PythonPackageManagerService {
 class TestPackageManagerProvider : PythonPackageManagerProvider {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
+  private var packageInstalled: List<PythonPackage> = emptyList()
 
   fun withPackageNames(packageNames: List<String>): TestPackageManagerProvider {
     this.packageNames = packageNames
@@ -109,6 +124,6 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
   }
 
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    return TestPythonPackageManager(project, sdk).withPackageNames(packageNames).withPackageDetails(packageDetails)
+    return TestPythonPackageManager(project, sdk).withPackageNames(packageNames).withPackageDetails(packageDetails).withPackageInstalled(packageInstalled)
   }
 }

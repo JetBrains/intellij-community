@@ -58,9 +58,11 @@ public interface PyRequirement {
   }
 
   /**
-   * @return concatenated representation of name, extras and version specs so it could be easily displayed.
+   * @return concatenated representation of name, extras and version specs, so it could be easily displayed.
    */
   default @NotNull @NlsSafe String getPresentableText() {
-    return getName() + getExtras() + StringUtil.join(getVersionSpecs(), PyRequirementVersionSpec::getPresentableText, ",");
+    return getPresentableTextWithoutVersion() + getExtras() + StringUtil.join(getVersionSpecs(), PyRequirementVersionSpec::getPresentableText, ",");
   }
+
+  @NotNull @NlsSafe String getPresentableTextWithoutVersion();
 }

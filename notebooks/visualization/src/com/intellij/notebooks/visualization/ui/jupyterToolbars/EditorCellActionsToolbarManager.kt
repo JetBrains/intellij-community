@@ -3,55 +3,24 @@ package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.util.ui.update.MergingUpdateQueue
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import com.intellij.util.Alarm.ThreadToUse
-import com.intellij.util.ui.update.Update
-import com.intellij.util.ui.update.queueTracked
-
 
 class EditorCellActionsToolbarManager(
   private val editor: EditorEx,
   private val cell: EditorCell,
-): Disposable {
+) : Disposable {
   private var toolbar: JupyterCellActionsToolbar? = null
-
-  private val updateQueue = MergingUpdateQueue(
-    "Jupyter.EditorCellActionsToolbarManager",
-    100,
-    true,
-    editor.component,
-    this,
-    editor.component,
-    ThreadToUse.SWING_THREAD
-  ).apply {
-    setRestartTimerOnAdd(true)
-  }
-
-  private val boundsChangeListener = object : JupyterBoundsChangeListener {
-    override fun boundsChanged() {
-      updateQueue.queueTracked(Update.create(this@EditorCellActionsToolbarManager) {
-        updateToolbarPosition(toolbar?.targetComponent ?: return@create)
-      })
-    }
-  }
-
-  init {
-    JupyterBoundsChangeHandler.Companion.get(editor).subscribe(this, boundsChangeListener)
-  }
 
   fun showToolbar(targetComponent: JComponent) {
     if (toolbar != null) return
@@ -61,6 +30,10 @@ class EditorCellActionsToolbarManager(
     editor.contentComponent.add(toolbar, 0)
     updateToolbarPosition(targetComponent)
     refreshUI()
+  }
+
+  fun updateToolbarPosition() {
+    updateToolbarPosition(toolbar?.targetComponent ?: return)
   }
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
@@ -86,11 +59,10 @@ class EditorCellActionsToolbarManager(
   }
 
   override fun dispose() {
-    JupyterBoundsChangeHandler.Companion.get(editor).unsubscribe(boundsChangeListener)
     hideToolbar()
   }
 
-  private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when(cellType) {
+  private fun getActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when (cellType) {
     NotebookCellLines.CellType.CODE -> {
       hideDropdownIcon(ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID)
       ActionManager.getInstance().getAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
@@ -120,7 +92,7 @@ class EditorCellActionsToolbarManager(
     val panelHeight = panel.height
     val panelWidth = panel.width
 
-    val delimiterSize = when(cell.interval.ordinal) {
+    val delimiterSize = when (cell.interval.ordinal) {
       0 -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
       else -> editor.notebookAppearance.distanceBetweenCells
     }
@@ -143,10 +115,13 @@ class EditorCellActionsToolbarManager(
 
     @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
+
     @Language("devkit-action-id")
     private const val ADDITIONAL_CODE_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar.Ellipsis"
+
     @Language("devkit-action-id")
     private const val ADDITIONAL_MARKDOWN_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar"
+
     @Language("devkit-action-id")
     private const val ADDITIONAL_MARKDOWN_ELLIPSIS_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar.Ellipsis"
   }

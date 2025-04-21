@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
+import java.lang.NumberFormatException
 
 /**
  * - `false` means that lock permits are bound only to threads
@@ -25,3 +26,14 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
  */
 @get:ApiStatus.Internal
 val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
+
+/**
+ * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
+ */
+@get:ApiStatus.Internal
+val readLockCompensationTimeout: Int = try {
+  System.getProperty("ide.read.lock.compensation.timeout.ms", "250").toInt()
+}
+catch (_: NumberFormatException) {
+  -1
+}

@@ -30,6 +30,14 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
       return provider
     }
 
+    fun getOrInstall(project: Project, document: Document): NotebookCellLinesProvider {
+      val cellLinesProvider = get(document)
+      if (cellLinesProvider != null) {
+        return cellLinesProvider
+      }
+      return install(project, document) ?: error("Can't install NotebookCellLinesProvider for document")
+    }
+
     fun get(document: Document): NotebookCellLinesProvider? {
       return document.getUserData(key)
     }

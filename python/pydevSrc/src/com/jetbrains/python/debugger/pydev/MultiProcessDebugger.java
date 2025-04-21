@@ -589,13 +589,17 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
     public void disconnect() {
       myShouldAccept = false;
-      if (myServerSocket != null && !myServerSocket.isClosed()) {
-        try {
-          myServerSocket.close();
+      if (myServerSocket != null) {
+        synchronized (this) {
+          if (!myServerSocket.isClosed()) {
+            try {
+              myServerSocket.close();
+            }
+            catch (IOException ignore) {
+            }
+          }
+          myServerSocket = null;
         }
-        catch (IOException ignore) {
-        }
-        myServerSocket = null;
       }
     }
   }

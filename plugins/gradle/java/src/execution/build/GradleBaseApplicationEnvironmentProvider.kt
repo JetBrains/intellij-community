@@ -45,6 +45,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
            createEscapedParameters(params.vmParametersList.parameters, "jvmArgs")
   }
 
+  protected open fun definitionsString(params: JavaParameters): String = ""
+
   override fun createExecutionEnvironment(project: Project,
                                           executeRunConfigurationTask: ExecuteRunConfigurationTask,
                                           executor: Executor?): ExecutionEnvironment? {
@@ -92,6 +94,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val builder = GradleInitScriptParametersBuilder(runProfile, module)
       .withWorkingDirectory(workingDir)
       .withParams(argsString(params))
+      .withDefinitions(definitionsString(params))
       .withGradleTaskPath(gradlePath)
       .withRunAppTaskName(runAppTaskName)
       .withMainClass(mainClass)
@@ -154,6 +157,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
   private class GradleInitScriptParametersBuilder(val configuration: JavaRunConfigurationBase, val module: Module) {
     private var workingDirectory: String? = null
     private lateinit var params: String
+    private lateinit var definitions: String
     private lateinit var gradleTaskPath: String
     private lateinit var runAppTaskName: String
     private lateinit var mainClass: String
@@ -165,6 +169,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                             module,
                                             workingDirectory,
                                             params,
+                                            definitions,
                                             gradleTaskPath,
                                             runAppTaskName,
                                             mainClass,
@@ -180,6 +185,11 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     fun withParams(params: String): GradleInitScriptParametersBuilder {
       this.params = params
+      return this
+    }
+
+    fun withDefinitions(definitions: String): GradleInitScriptParametersBuilder {
+      this.definitions = definitions
       return this
     }
 
@@ -214,6 +224,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     override val module: Module,
     override val workingDirectory: String?,
     override val params: String,
+    override val definitions: String,
     override val gradleTaskPath: String,
     override val runAppTaskName: String,
     override val mainClass: String,

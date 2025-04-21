@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionInInjectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiFileIntentionTest
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -14,8 +15,8 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
     val idea = "idea/tests/testData/"
 
     testGroup("code-insight/intentions-k2/tests", category = INTENTIONS, testDataPath = "../../..") {
+        val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
         testClass<AbstractK2IntentionTest> {
-            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("${idea}intentions/addFullQualifier", pattern = pattern)
             model("${idea}intentions/addMissingClassKeyword", pattern = pattern)
             model("${idea}intentions/addNameToArgument", pattern = pattern)
@@ -53,7 +54,11 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/movePropertyToConstructor", pattern = pattern)
             model("${idea}intentions/branched/ifWhen/whenToIf", pattern = pattern)
             model("${idea}intentions/branched/folding/ifToReturnAsymmetrically", pattern = pattern)
-            model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
+            model(
+                "code-insight/intentions-k2/tests/testData/intentions",
+                pattern = pattern,
+                excludedDirectories = listOf("injected")
+            )
             model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
             model("${idea}intentions/invertIfCondition", pattern = pattern)
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
@@ -190,6 +195,10 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertBlockCommentToLineComment", pattern = pattern)
             model("${idea}intentions/removeSingleExpressionStringTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLambdaToMultiLine", pattern = pattern, isIgnored = true)
+        }
+
+        testClass<AbstractK2IntentionInInjectionTest> {
+            model("code-insight/intentions-k2/tests/testData/intentions/injected", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileIntentionTest> {

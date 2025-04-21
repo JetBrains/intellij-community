@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurableWithId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
+import org.jetbrains.plugins.terminal.TerminalOptionsConfigurableKt;
 import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
@@ -184,7 +185,12 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, TerminalOptionsConfigurable.class);
+        // Match the Terminal configurable by ID.
+        // Can't use matching by configurable class name because actual configurable can be wrapped in case of Remote Dev.
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable -> {
+          return configurable instanceof ConfigurableWithId withId &&
+                 TerminalOptionsConfigurableKt.TERMINAL_CONFIGURABLE_ID.equals(withId.getId());
+        }, null);
       }
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -34,7 +35,6 @@ class DynamicPluginEnabler : PluginEnabler {
     }
   }
 
-
   override fun isDisabled(pluginId: PluginId): Boolean =
     PluginEnabler.HEADLESS.isDisabled(pluginId)
 
@@ -45,7 +45,17 @@ class DynamicPluginEnabler : PluginEnabler {
     descriptors: Collection<IdeaPluginDescriptor>,
     project: Project? = null,
   ): Boolean {
-    PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+    if (descriptors.any { !PluginManagerCore.isCompatible(it) }) {
+      // mark plugins enabled and require restart
+      PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+      PluginEnabler.HEADLESS.enable(descriptors)
+
+      return false
+    }
+
+    if (LoadingState.APP_STARTED.isOccurred) {
+      PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+    }
 
     PluginEnabler.HEADLESS.enable(descriptors)
     val installedDescriptors = findInstalledPlugins(descriptors) ?: return false

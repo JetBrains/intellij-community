@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
@@ -70,6 +71,8 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
   init {
     loadingPanel.setLoadingText(CommonBundle.getLoadingTreeNodeText())
+
+    Disposer.register(this, contentPanel)
 
     contentPanel.jbCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
@@ -162,6 +165,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     htmlTabScope.cancel()
     jsRouter?.let { router ->
       contentPanel.jbCefClient.cefClient.removeMessageRouter(router)
+      router.dispose()
     }
   }
   override fun getFile(): VirtualFile = file

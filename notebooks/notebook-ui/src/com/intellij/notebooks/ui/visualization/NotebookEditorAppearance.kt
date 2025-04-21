@@ -25,6 +25,8 @@ interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEdit
     val CARET_ROW_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CARET_ROW_COLOR")
     val CELL_STRIPE_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_HOVERED_COLOR")
     val CELL_STRIPE_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_SELECTED_COLOR")
+    val CELL_FRAME_SELECTED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_FRAME_SELECTED_COLOR")
+    val CELL_FRAME_HOVERED_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_FRAME_BORDER_COLOR")
     val CELL_TOOLBAR_BORDER_COLOR: ColorKey = ColorKey.createColorKey("JUPYTER.CELL_TOOLBAR_BORDER_COLOR")
   }
 }
@@ -75,6 +77,10 @@ interface NotebookEditorAppearanceColors {
   val cellStripeHoveredColor: ObservableProperty<Color>
 
   val cellStripeSelectedColor: ObservableProperty<Color>
+
+  val cellFrameSelectedColor: ObservableProperty<Color>
+
+  val cellFrameHoveredColor: ObservableProperty<Color>
 
   val cellPopupToolbarBorderColor: ObservableProperty<Color>
 

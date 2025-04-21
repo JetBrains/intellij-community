@@ -2,4 +2,4 @@
 
 val nullableString: String? = "abc"
 
-val foo = nullableString?.toUpperCase() ?: ""
+val foo = nullableString?.uppercase() ?: ""
