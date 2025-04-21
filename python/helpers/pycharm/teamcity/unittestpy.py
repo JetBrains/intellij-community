@@ -1,6 +1,6 @@
 # coding=utf-8
 import sys
-from unittest import TestResult, TextTestRunner
+from unittest import TextTestResult, TextTestRunner
 import datetime
 import re
 
@@ -15,12 +15,11 @@ _real_stderr = sys.stderr
 _ERROR_HOLDERS_FQN = ("unittest.suite._ErrorHolder", "unittest2.suite._ErrorHolder")
 
 
-class TeamcityTestResult(TestResult):
+class TeamcityTestResult(TextTestResult):
     separator2 = "\n"
 
-    # noinspection PyUnusedLocal
-    def __init__(self, stream=_real_stdout, descriptions=None, verbosity=None):
-        super(TeamcityTestResult, self).__init__()
+    def __init__(self, stream=_real_stdout, descriptions=None, verbosity=0):
+        super(TeamcityTestResult, self).__init__(stream, descriptions, verbosity)
 
         # Some code may ask for self.failfast, see unittest2.case.TestCase.subTest
         self.failfast = getattr(self, "failfast", False)

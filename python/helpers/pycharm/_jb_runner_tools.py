@@ -18,6 +18,8 @@ if teamcity_presence_env_var not in os.environ:
 # anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
 # out and err are not in sync, so output may go to wrong test
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
+# More verbose output of testing framework to aid structured display of output in IDE.
+JB_VERBOSE = "JB_VERBOSE" in os.environ
 # getcwd resolves symlinks, but PWD is not supported by some shells
 PROJECT_DIR = os.getenv('PWD', os.getcwd())
 
