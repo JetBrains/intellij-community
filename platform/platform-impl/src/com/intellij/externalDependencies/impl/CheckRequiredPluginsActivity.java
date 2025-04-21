@@ -214,7 +214,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
       message.appendRaw("<ul>");
       for (PluginId p : notInstalledPlugins) {
-        message.appendRaw("<li>").append(p.getIdString()).append("</li>");
+        message.appendRaw("<li>").append(p.getIdString()).appendRaw("</li>");
       }
       message.appendRaw("</ul>");
 
