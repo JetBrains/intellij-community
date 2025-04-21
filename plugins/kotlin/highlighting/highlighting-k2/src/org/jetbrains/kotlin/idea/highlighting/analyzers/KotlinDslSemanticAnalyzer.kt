@@ -6,8 +6,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationList
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
@@ -31,9 +35,19 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
         val calleeExpression = element.calleeExpression ?: return null
         val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
         val dslAnnotation = with(session) {
-            val receiverType = (lambdaExpression.expressionType as? KaFunctionType)?.receiverType ?: return null
-            getDslAnnotation(receiverType) ?: return null
-        }
+            val receiverType = (lambdaExpression.expressionType as? KaFunctionType)?.receiverType
+            if (receiverType != null) {
+                getDslAnnotation(receiverType)
+            } else {
+                val functionCallOrNull = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@with null
+                val symbol = functionCallOrNull.symbol
+                // function has a dsl marker
+                firstDslAnnotationOrNull(symbol.annotations)
+                // receiver has a dsl marker
+                    ?: firstDslAnnotationOrNull(symbol.receiverParameter?.returnType?.expandedSymbol?.annotations)
+
+            }
+        } ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
         return HighlightingFactory.highlightName(
@@ -50,14 +64,24 @@ fun KtClass.getDslStyleId(): Int? {
     if (!isAnnotation() || annotationEntries.isEmpty()) {
         return null
     }
-    analyze(this) {
-        val classSymbol = namedClassSymbol?.takeIf {
-            it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
-        } ?: return null
-        val className = classSymbol.classId?.asSingleFqName() ?: return null
-        return DslStyleUtils.styleIdByFQName(className)
-    }
+    val dslAnnotation = analyze(this) {
+        getDslAnnotation(namedClassSymbol)
+    } ?: return null
+    return DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
 }
+
+private fun getDslAnnotation(namedClassSymbol: KaNamedClassSymbol?): ClassId? {
+    val classSymbol = namedClassSymbol?.takeIf {
+        it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
+    }
+    return classSymbol?.classId
+}
+
+private fun KaSession.firstDslAnnotationOrNull(annotationList: KaAnnotationList?): ClassId? =
+    annotationList?.firstNotNullOfOrNull {
+        val namedClassSymbol = it.constructorSymbol?.containingSymbol as? KaNamedClassSymbol
+        getDslAnnotation(namedClassSymbol)
+    }
 
 /**
  * Returns a dsl annotation for a given type (or for one of the supertypes), if there is one.
