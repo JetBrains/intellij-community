@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -34,6 +34,7 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
+import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.branch.calcTooltip
 import git4idea.i18n.GitBundle.message
@@ -41,7 +42,6 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesMatcherWrapper
-import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import git4idea.ui.branch.popup.createIncomingLabel
 import git4idea.ui.branch.popup.createOutgoingLabel
@@ -86,8 +86,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val branchManager = project.service<GitBranchManager>()
 
-    private val iconProvider = GitBranchesTreeIconProvider(project)
-
     private val incomingLabel = createIncomingLabel()
     private val outgoingLabel = createOutgoingLabel()
 
@@ -104,14 +102,15 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val descriptor = value.getNodeDescriptor()
 
       icon = when(descriptor) {
-        is BranchNodeDescriptor.Ref -> iconProvider.forRef(
+        is BranchNodeDescriptor.Ref -> GitBranchesTreeIconProvider.forRef(
           descriptor.refInfo.ref,
           current = descriptor.refInfo.isCurrent,
           favorite = descriptor.refInfo.isFavorite,
           selected = selected
         )
-        is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> iconProvider.forGroup()
-        is BranchNodeDescriptor.Repository -> iconProvider.forRepository(descriptor.repository)
+        is BranchNodeDescriptor.Group, is BranchNodeDescriptor.RemoteGroup -> GitBranchesTreeIconProvider.forGroup()
+        is BranchNodeDescriptor.Repository ->
+          GitBranchesTreeIconProvider.forRepository(descriptor.repository.project, descriptor.repository.rpcId)
         else -> null
       }
 

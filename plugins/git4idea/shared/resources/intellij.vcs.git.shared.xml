@@ -25,4 +25,10 @@
 
     <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Git4Idea.gitRepoIconProvider"
+                    interface="com.intellij.vcs.git.shared.ui.GitRepoIconProvider"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>
