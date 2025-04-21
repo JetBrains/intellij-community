@@ -73,7 +73,7 @@ value class Either<out T, E> internal constructor(
    */
   override fun toString(): String =
     when (value) {
-      is Error<*> -> "Error(${value.error}"
+      is Error<*> -> "Error(${value.error})"
       else -> "Value($value)"
     }
 
