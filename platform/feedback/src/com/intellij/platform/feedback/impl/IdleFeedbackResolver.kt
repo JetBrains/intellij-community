@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl
 
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.EDT
@@ -43,6 +44,11 @@ class IdleFeedbackResolver(private val cs: CoroutineScope) {
       return
     }
 
+    if (AppMode.isRemoteDevHost()) {
+      thisLogger().debug("Not showing idle feedback notification on remote-dev host")
+      return
+    }
+
     val feedbackNotifications = NotificationsManager.getNotificationsManager()
       .getNotificationsOfType(RequestFeedbackNotification::class.java, project)
     if (feedbackNotifications.isNotEmpty()) {
@@ -57,7 +63,7 @@ class IdleFeedbackResolver(private val cs: CoroutineScope) {
         return@launch
       }
 
-      val feedbackIndex = Random.Default.nextInt(suitableIdleFeedbackSurveys.size)
+      val feedbackIndex = Random.nextInt(suitableIdleFeedbackSurveys.size)
       withContext(Dispatchers.EDT) {
         suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
       }
