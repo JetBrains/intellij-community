@@ -17,10 +17,13 @@ import sys
 import traceback
 from datetime import timedelta
 
+import pytest
+
 from teamcity import diff_tools
 from teamcity import is_running_under_teamcity
 from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
 from teamcity.messages import TeamcityServiceMessages
+from teamcity.output import TeamCityMessagesPrinter
 
 diff_tools.patch_unittest_diff()
 _ASSERTION_FAILURE_KEY = '_teamcity_assertion_failure'
@@ -58,6 +61,8 @@ def pytest_configure(config):
         config.option.verbose = 2  # don't truncate assert explanations
         config._teamcityReporting = EchoTeamCityMessages(
             output_capture_enabled,
+            # never write tc messages into buffered output
+            getattr(config.pluginmanager.getplugin('capturemanager'), 'global_and_fixture_disabled'),
             coverage_controller,
             skip_passed_output,
             bool(config.getini('swapdiff') or config.option.swapdiff)
@@ -81,12 +86,13 @@ def _get_coverage_controller(config):
 
 
 class EchoTeamCityMessages(object):
-    def __init__(self, output_capture_enabled, coverage_controller, skip_passed_output, swap_diff):
+    def __init__(self, output_capture_enabled, context_manager, coverage_controller, skip_passed_output, swap_diff):
         self.coverage_controller = coverage_controller
         self.output_capture_enabled = output_capture_enabled
         self.skip_passed_output = skip_passed_output
 
-        self.teamcity = TeamcityServiceMessages()
+        output_handler = TeamCityMessagesPrinter(context_manager=context_manager)
+        self.teamcity = TeamcityServiceMessages(output_handler=output_handler)
         self.test_start_reported_mark = set()
         self.current_test_item = None
 

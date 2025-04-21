@@ -8,7 +8,7 @@ import sys
 from collections import OrderedDict
 
 import _jb_utils
-from teamcity import teamcity_presence_env_var, messages
+from teamcity import teamcity_presence_env_var, messages, output
 
 # Some runners need it to "detect" TC and start protocol
 if teamcity_presence_env_var not in os.environ:
@@ -17,6 +17,7 @@ if teamcity_presence_env_var not in os.environ:
 # Providing this env variable disables output buffering.
 # anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
 # out and err are not in sync, so output may go to wrong test
+# This also affects stack traces of tests.
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
 # More verbose output of testing framework to aid structured display of output in IDE.
 JB_VERBOSE = "JB_VERBOSE" in os.environ
@@ -89,6 +90,10 @@ class NewTeamcityServiceMessages(_old_service_messages):
     def __init__(self, *args, **kwargs):
         super(NewTeamcityServiceMessages, self).__init__(*args, **kwargs)
         NewTeamcityServiceMessages.INSTANCE = self
+        self.stderr_output_manager = output.TeamCityMessagesPrinter(
+            output=sys.stderr,
+            context_manager=self.output_handler.context_manager
+        )
 
     def message(self, messageName, **properties):
         if messageName in {"enteredTheMatrix", "testCount"}:
@@ -204,11 +209,21 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = _TREE_MANAGER_HOLDER.manager.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
             self.do_commands(commands)
-            self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
+            self.testStarted(testName, captureStandardOutput, is_suite=is_suite, metainfo=metainfo)
 
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))
+        if JB_DISABLE_BUFFERING:
+            self._print_error(details)
+            details = None
         _old_service_messages.testFailed(self, testName, message, details, comparison_failure=comparison_failure)
+
+    def _print_error(self, message):
+        if not message.endswith("\n"):
+            message += "\n"
+        if self.stderr_output_manager.output.isatty():
+            message = "\033[31m" + message + "\033[0m"
+        self.stderr_output_manager.send_message(self.encode(message))
 
     def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
         test_parts = self._test_to_list(testName)
