@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.git.shared.ref.GitRefLiterals;
 import com.intellij.vcs.log.Hash;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
@@ -361,7 +360,7 @@ public class GitPushOperation {
 
   private static boolean isBranch(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return sourceRef.startsWith(GitRefLiterals.HEADS) || GitUtil.isHashString(sourceRef, false);
+    return sourceRef.startsWith(GitBranch.REFS_HEADS_PREFIX) || GitUtil.isHashString(sourceRef, false);
   }
 
   private static boolean isHash(@NotNull GitPushNativeResult result) {

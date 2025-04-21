@@ -3,12 +3,12 @@ package com.intellij.vcs.git.shared.rhizome.repository
 
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.rpc.GitReferencesSet
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
 import git4idea.GitStandardLocalBranch
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
 
@@ -49,10 +49,10 @@ data class GitRepositoryStateEntity(override val eid: EID) : Entity {
 @ApiStatus.Internal
 data class GitRepositoryFavoriteRefsEntity(override val eid: EID) : Entity {
   val repositoryId: RepositoryId by RepositoryIdValue
-  val favoriteRefs: Set<String> by FavoriteRefs
+  val refs: GitFavoriteRefs by Refs
 
   companion object : DurableEntityType<GitRepositoryFavoriteRefsEntity>(GitRepositoryFavoriteRefsEntity::class.java.name, "com.intellij", ::GitRepositoryFavoriteRefsEntity) {
     val RepositoryIdValue: Required<RepositoryId> = requiredValue("repositoryId", RepositoryId.serializer(), Indexing.INDEXED)
-    val FavoriteRefs: Required<Set<String>> = requiredValue("favoriteRefs", SetSerializer(String.serializer()))
+    val Refs: Required<GitFavoriteRefs> = requiredValue("refs", GitFavoriteRefs.serializer())
   }
 }

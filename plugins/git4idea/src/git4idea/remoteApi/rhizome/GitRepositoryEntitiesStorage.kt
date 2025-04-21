@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.project.asEntityOrNull
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
-import com.intellij.vcs.git.shared.ref.GitRefPrefix
+import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryEntity
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryFavoriteRefsEntity
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryStateEntity
@@ -64,7 +64,7 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
     )
     val currentRef = gitRepository.info.currentBranch?.fullName
 
-    val favoriteRefsToInsert = if (afterCreation) getFavoriteRefs(gitRepository) else null
+    val favoriteRefsToInsert = if (afterCreation) collectFavorite(gitRepository) else null
 
     if (LOG.isDebugEnabled) {
       val refsString = "${refsSet.localBranches.size} local branches, ${refsSet.remoteBranches.size} remote branches, ${refsSet.tags.size} tags"
@@ -85,17 +85,17 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
 
     LOG.info("Updating favorite refs for ${gitRepository?.root ?: "all git repos"}")
 
-    val refsToInsert = mutableMapOf<GitRepositoryEntity, Set<String>>()
+    val refsToInsert = mutableMapOf<GitRepositoryEntity, GitFavoriteRefs>()
     if (gitRepository != null) {
       val repoEntity = entity(GitRepositoryEntity.RepositoryIdValue, gitRepository.rpcId) ?: return
-      refsToInsert[repoEntity] = getFavoriteRefs(gitRepository)
+      refsToInsert[repoEntity] = collectFavorite(gitRepository)
     }
     else {
       val projectEntity = project.asEntityOrNull() ?: return
       entities(GitRepositoryEntity.Project, projectEntity).forEach { repoEntity ->
         val repo = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(repoEntity.repositoryId.rootPath.virtualFile())
                    ?: return@forEach
-        refsToInsert[repoEntity] = getFavoriteRefs(repo)
+        refsToInsert[repoEntity] = collectFavorite(repo)
       }
     }
     change {
@@ -111,7 +111,7 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
     gitRepository: GitRepository,
     currentRef: String?,
     refs: GitReferencesSet,
-    favoriteRefsToInsert: Set<String>?,
+    favoriteRefs: GitFavoriteRefs?,
   ) {
     val projectEntity = project.asEntityOrNull() ?: return
 
@@ -127,10 +127,10 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
       it[GitRepositoryStateEntity.ReferencesSet] = refs
       it[GitRepositoryStateEntity.RecentBranches] = gitRepository.branches.recentCheckoutBranches
     }
-    val newFavoriteRefs = favoriteRefsToInsert?.let {
+    val newFavoriteRefs = favoriteRefs?.let {
       GitRepositoryFavoriteRefsEntity.new {
         it[GitRepositoryFavoriteRefsEntity.RepositoryIdValue] = repositoryId
-        it[GitRepositoryFavoriteRefsEntity.FavoriteRefs] = favoriteRefsToInsert
+        it[GitRepositoryFavoriteRefsEntity.Refs] = favoriteRefs
       }
     }
 
@@ -150,12 +150,12 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
   }
 
 
-  private fun SharedChangeScope.updateFavoriteRefsTx(repositoryEntity: GitRepositoryEntity, favoriteRefsToInsert: Set<String>) {
+  private fun SharedChangeScope.updateFavoriteRefsTx(repositoryEntity: GitRepositoryEntity, favoriteRefs: GitFavoriteRefs) {
     val oldFavoriteRefs = repositoryEntity.favoriteRefs
 
     val newFavoriteRefs = GitRepositoryFavoriteRefsEntity.new {
       it[GitRepositoryFavoriteRefsEntity.RepositoryIdValue] = repositoryEntity.repositoryId
-      it[GitRepositoryFavoriteRefsEntity.FavoriteRefs] = favoriteRefsToInsert
+      it[GitRepositoryFavoriteRefsEntity.Refs] = favoriteRefs
     }
     repositoryEntity.update {
       it[GitRepositoryEntity.FavoriteRefs] = newFavoriteRefs
@@ -164,15 +164,13 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
     oldFavoriteRefs.delete()
   }
 
-  private fun getFavoriteRefs(gitRepository: GitRepository): Set<String> {
+  fun collectFavorite(gitRepository: GitRepository): GitFavoriteRefs {
     val branchManager = project.service<GitBranchManager>()
-    return listOf(
-        GitBranchType.REMOTE to GitRefPrefix.REMOTES,
-        GitBranchType.LOCAL to GitRefPrefix.HEADS,
-        GitTagType to GitRefPrefix.TAGS
-      ).flatMapTo(mutableSetOf()) { (type, prefix) ->
-        branchManager.getFavoriteRefs(type, gitRepository).map(prefix::append)
-      }
+    return GitFavoriteRefs(
+      localBranches = branchManager.getFavoriteRefs(GitBranchType.LOCAL, gitRepository),
+      remoteBranches = branchManager.getFavoriteRefs(GitBranchType.REMOTE, gitRepository),
+      tags = branchManager.getFavoriteRefs(GitTagType, gitRepository),
+    )
   }
 
   internal class VcsMappingListener(private val project: Project, private val cs: CoroutineScope) : VcsRepositoryMappingListener {
