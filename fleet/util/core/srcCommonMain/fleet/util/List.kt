@@ -24,6 +24,22 @@ class ListForEach<T>(val items: List<T>) {
   }
 }
 
+private val associateNotNullToken = object {}
+
+@Suppress("UNCHECKED_CAST")
+fun <T, K, V> Iterable<T>.associateNotNull(valueSelector: (T) -> Pair<K, V>?): Map<K, V> =
+  associate { valueSelector(it) ?: (associateNotNullToken to null) }
+    .filterKeys { it != associateNotNullToken } as Map<K, V>
+
+private val associateWithNotNullToken = object {}
+
+@Suppress("UNCHECKED_CAST")
+fun <K, V> Iterable<K>.associateWithNotNull(valueSelector: (K) -> V?): Map<K, V> =
+  associateWith { valueSelector(it) ?: associateWithNotNullToken }
+    .filterKeys { it != associateWithNotNullToken } as Map<K, V>
+
+fun <T> Iterable<Set<T>>.union(): Set<T> = flatMapTo(mutableSetOf()) { it }
+
 fun <T> List<T>.forEachWithContext(body: ListForEach.Context.(T) -> Unit) =
   ListForEach(this).forEach(body)
 
