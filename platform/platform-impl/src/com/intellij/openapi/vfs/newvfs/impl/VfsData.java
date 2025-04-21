@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -343,8 +344,14 @@ public final class VfsData {
 
         FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
         int parentId = vfsPeer.getParent(fileId);
-        Segment parentSegment = owningVfsData.getSegment(parentId, false);
-        DirectoryData parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+        DirectoryData parentData;
+        if (parentId == FSRecords.NULL_FILE_ID) {// => fileId is root
+          parentData = null;
+        }
+        else {
+          Segment parentSegment = owningVfsData.getSegment(parentId, false);
+          parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+        }
 
         throw new FileAlreadyCreatedException(
           describeAlreadyCreatedFile(fileId)
