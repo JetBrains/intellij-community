@@ -5816,6 +5816,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/outerScopeMutableListOfCall.kt");
         }
 
+        @TestMetadata("setHiddenByElvisOperator.kt")
+        public void testSetHiddenByElvisOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/setHiddenByElvisOperator.kt");
+        }
+
+        @TestMetadata("setHiddenByElvisOperatorNested.kt")
+        public void testSetHiddenByElvisOperatorNested() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/setHiddenByElvisOperatorNested.kt");
+        }
+
         @TestMetadata("shadowedFunctionName.kt")
         public void testShadowedFunctionName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");

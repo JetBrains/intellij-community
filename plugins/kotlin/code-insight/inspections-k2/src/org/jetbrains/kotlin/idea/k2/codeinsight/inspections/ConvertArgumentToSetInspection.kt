@@ -11,8 +11,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
@@ -144,6 +144,22 @@ private fun KaSession.getConvertibleBinaryArguments(element: KtBinaryExpression)
     return if (canConvertArgument(argument)) listOf(argument) else emptyList()
 }
 
+/**
+ * In some cases when using the elvis operator, the [argument]'s expressionType is [Iterable]
+ * rather than [Set], even though the underlying expressions are sets.
+ * This function checks if the [argument]'s type is actually a set in that case.
+ */
+private fun KaSession.couldBeSetHiddenByElvis(argument: KtExpression): Boolean {
+    val argumentNoParens = argument.safeDeparenthesize()
+    if (argumentNoParens !is KtBinaryExpression || argumentNoParens.operationToken != KtTokens.ELVIS) return false
+    val left = argumentNoParens.left ?: return true
+    val right = argumentNoParens.right ?: return true
+    val leftSymbol = left.expressionType?.symbol ?: return true
+    val rightSymbol = right.expressionType?.symbol ?: return true
+    return (leftSymbol.classId == StandardClassIds.Set || couldBeSetHiddenByElvis(left)) &&
+            (rightSymbol.classId == StandardClassIds.Set || couldBeSetHiddenByElvis(right))
+}
+
 private fun KaSession.canConvertArgument(argument: KtExpression): Boolean {
     val argumentType = argument.expressionType ?: return false
 
@@ -153,8 +169,10 @@ private fun KaSession.canConvertArgument(argument: KtExpression): Boolean {
     // Do not suggest the fix if the argument was constructed using `arrayOf`, `listOf`, `sequenceOf` etc
     if (isLikeConstantExpressionListOf(argument)) return false
 
-    // Suggest the fix if the argument has exact type that we know is convertible
-    if (alwaysConvertibleExactTypes.any { argumentType.symbol?.classId == it }) return true
+    // Suggest the fix if the argument has exact type that we know is convertible and the argument is not "secretly" a set.
+    if (alwaysConvertibleExactTypes.any { argumentType.symbol?.classId == it }) {
+        return !couldBeSetHiddenByElvis(argument)
+    }
 
     // Suggest the fix if the argument is a `Sequence`
     return argumentType.isSubtypeOf(sequenceClassId)

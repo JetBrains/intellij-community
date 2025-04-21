@@ -4562,6 +4562,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertArgumentToSet/outerScopeMutableListOfCall.kt");
         }
 
+        @TestMetadata("setHiddenByElvisOperator.kt")
+        public void testSetHiddenByElvisOperator() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/setHiddenByElvisOperator.kt");
+        }
+
+        @TestMetadata("setHiddenByElvisOperatorNested.kt")
+        public void testSetHiddenByElvisOperatorNested() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/setHiddenByElvisOperatorNested.kt");
+        }
+
         @TestMetadata("shadowedFunctionName.kt")
         public void testShadowedFunctionName() throws Exception {
             runTest("testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");
