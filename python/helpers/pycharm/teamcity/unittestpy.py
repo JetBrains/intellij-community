@@ -276,6 +276,10 @@ class TeamcityTestResult(TextTestResult):
             if subtest_failures:
                 self.report_fail(test, "One or more subtests failed", "")
 
+        if sys.exc_info()[0] is not None:
+            # test was interrupted (e.g., SIGINT)
+            self.messages.testStopped(test_id, flowId=test_id)
+
         try:
             time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
         except KeyError:

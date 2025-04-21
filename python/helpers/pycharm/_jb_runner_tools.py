@@ -128,7 +128,15 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         is_test = messageName == "testStarted"
         if messageName == "testSuiteStarted" or is_test:
-            self._test_suites[full_name] = (full_name, current, parent, is_test)
+            self._test_suites[full_name] = (full_name, current, parent, is_test, False)
+        elif messageName == "testIgnored" and properties.get("stopped") == "true":
+            ancestors = self._test_to_list(full_name)
+            # mark ancestors as explicitly stopped
+            for i in range(len(ancestors), 0, -1):
+                ancestor = ".".join(ancestors[:i])
+                # keep old entries intact; only change was_stopped
+                old_entry = self._test_suites[ancestor]
+                self._test_suites[ancestor] = old_entry[:4] + (True,) + old_entry[5:]
         _old_service_messages.message(self, messageName, **properties)
 
     def _test_to_list(self, test_name):
@@ -257,15 +265,18 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
     def close_suites(self):
         # Go in reverse order and close all suites
-        for (test_suite, node_id, parent_node_id, is_test) in \
+        for (test_suite, node_id, parent_node_id, is_test, was_stopped) in \
                 reversed(list(self._test_suites.values())):
-            # suits are explicitly closed, but if test can't been finished, it is skipped
-            message = "testIgnored" if is_test else "testSuiteFinished"
-            _old_service_messages.message(self, message, **{
+            # suites are explicitly closed, but if test can't been finished, it was either stopped or skipped
+            message = "testIgnored" if is_test or was_stopped else "testSuiteFinished"
+            kwargs = {
                 "name": test_suite,
                 "nodeId": str(node_id),
-                "parentNodeId": str(parent_node_id)
-            })
+                "parentNodeId": str(parent_node_id),
+            }
+            if was_stopped:
+                kwargs["stopped"] = "true"
+            _old_service_messages.message(self, message, **kwargs)
         self._test_suites = OrderedDict()
 
 

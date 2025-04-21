@@ -169,6 +169,9 @@ class TeamcityServiceMessages(object):
     def testIgnored(self, testName, message='', flowId=None):
         self.message('testIgnored', name=testName, message=message, flowId=flowId)
 
+    def testStopped(self, testName, message='', flowId=None):
+        self.message('testIgnored', name=testName, message=message, flowId=flowId, stopped="true")
+
     def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         if not comparison_failure:
             self.message('testFailed', name=testName, message=message, details=details, flowId=flowId)
