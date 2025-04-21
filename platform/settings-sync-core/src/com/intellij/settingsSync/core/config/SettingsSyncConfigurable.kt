@@ -319,16 +319,19 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("enable.sync.check.server.data.progress")) {
         val (userId, userData, providerCode, providerName) = userDropDownLink.selectedItem ?: run {
           LOG.warn("No selected user")
+          showErrorOnEDT(message("enable.dialog.error.no.user"))
           enableCheckbox.isSelected = false
           return@runWithModalProgressBlocking
         }
         val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: run {
           LOG.warn("Provider '$providerName' ($providerCode) is not available")
+          showErrorOnEDT(message("enable.dialog.error.no.provider", providerName))
           enableCheckbox.isSelected = false
           return@runWithModalProgressBlocking
         }
         val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId) ?: run {
           LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
+          showErrorOnEDT(message("enable.dialog.error.cant.check", providerName))
           enableCheckbox.isSelected = false
           return@runWithModalProgressBlocking
         }
@@ -629,7 +632,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
 
 
-  private fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder,
+  private suspend fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder,
                                communicator: SettingsSyncRemoteCommunicator,
                                crossSyncAvailable: Boolean,
                                ) : Boolean {
@@ -660,12 +663,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
       is Error -> {
         if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
-          //showError(message("notification.title.update.error"), state.message)
+          showErrorOnEDT(updateResult.message)
           return false
         }
       }
     }
     return false
+  }
+
+  private suspend fun showErrorOnEDT(message: String, title: String = message("notification.title.update.error")) {
+    withContext(Dispatchers.EDT) {
+      Messages.showErrorDialog(configPanel, message, title)
+    }
   }
 
   private data class UserProviderHolder(
