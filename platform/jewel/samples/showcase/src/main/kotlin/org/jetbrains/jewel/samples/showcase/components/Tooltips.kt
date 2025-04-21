@@ -12,19 +12,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 public fun Tooltips() {
     var toggleEnabled by remember { mutableStateOf(true) }
     var enabled by remember { mutableStateOf(true) }
     var neverHide by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(toggleEnabled) {
         if (!toggleEnabled) return@LaunchedEffect
 
@@ -35,11 +35,7 @@ public fun Tooltips() {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Tooltip(
-            tooltip = { Text("This is a tooltip") },
-            enabled = enabled,
-            neverHide = neverHide
-        ) {
+        Tooltip(tooltip = { Text("This is a tooltip") }, enabled = enabled, neverHide = neverHide) {
             // Any content works — this is a button just because it's focusable
             DefaultButton({}) { Text("Hover me!") }
         }
