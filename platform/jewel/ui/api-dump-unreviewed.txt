@@ -834,9 +834,6 @@ f:org.jetbrains.jewel.ui.component.ToggleableIconButtonState
 f:org.jetbrains.jewel.ui.component.ToggleableIconButtonState$Companion
 - f:of-CAf7mdk(Z,androidx.compose.ui.state.ToggleableState,Z,Z,Z,Z):J
 - bs:of-CAf7mdk$default(org.jetbrains.jewel.ui.component.ToggleableIconButtonState$Companion,Z,androidx.compose.ui.state.ToggleableState,Z,Z,Z,Z,I,java.lang.Object):J
-f:org.jetbrains.jewel.ui.component.TooltipKt
-- sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
-- sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
 f:org.jetbrains.jewel.ui.component.Typography
 - sf:$stable:I
 - sf:DefaultLineHeightMultiplier:F
@@ -2080,20 +2077,6 @@ f:org.jetbrains.jewel.ui.component.styling.TooltipColors
 - f:getShadow-0d7_KjU():J
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.TooltipColors$Companion
-f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
-- sf:$stable:I
-- sf:Companion:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
-- equals(java.lang.Object):Z
-- f:getBorderWidth-D9Ej5fM():F
-- f:getContentPadding():androidx.compose.foundation.layout.PaddingValues
-- f:getCornerSize():androidx.compose.foundation.shape.CornerSize
-- f:getPlacement():androidx.compose.foundation.TooltipPlacement
-- f:getShadowSize-D9Ej5fM():F
-- f:getShowDelay-UwyO8pc():J
-- hashCode():I
-f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
-- f:defaults-8qf-r9M(androidx.compose.foundation.layout.PaddingValues,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
-- bs:defaults-8qf-r9M$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 f:org.jetbrains.jewel.ui.component.styling.TooltipStyle
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.TooltipStyle$Companion

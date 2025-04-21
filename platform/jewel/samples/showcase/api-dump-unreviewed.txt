@@ -107,12 +107,6 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextField
 - f:getLambda$196422499$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 - f:getLambda$2056282528$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$94388671$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
-- sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
-- <init>():V
-- f:getLambda$-1070103804$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$-186585630$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
-- f:getLambda$-408485079$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.IconsKt
 - sf:Icons(androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.samples.showcase.components.LinksKt

@@ -5,6 +5,14 @@ org.jetbrains.jewel.ui.ComponentStyling
 - a:styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
 - with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
 - with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
+e:org.jetbrains.jewel.ui.component.AutoHideBehavior
+- java.lang.Enum
+- sf:Long:org.jetbrains.jewel.ui.component.AutoHideBehavior
+- sf:Never:org.jetbrains.jewel.ui.component.AutoHideBehavior
+- sf:Normal:org.jetbrains.jewel.ui.component.AutoHideBehavior
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.AutoHideBehavior
+- s:values():org.jetbrains.jewel.ui.component.AutoHideBehavior[]
 org.jetbrains.jewel.ui.component.MenuScope
 - a:passiveItem(kotlin.jvm.functions.Function2):V
 - a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
@@ -13,6 +21,10 @@ org.jetbrains.jewel.ui.component.MenuScope
 - bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.ui.component.TooltipKt
+- sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
+- sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getExpandAnimationDuration-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J
@@ -22,6 +34,22 @@ org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackThickness-D9Ej5fM():F
 - a:getTrackThicknessExpanded-D9Ej5fM():F
+f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
+- equals(java.lang.Object):Z
+- f:getBorderWidth-D9Ej5fM():F
+- f:getContentPadding():androidx.compose.foundation.layout.PaddingValues
+- f:getCornerSize():androidx.compose.foundation.shape.CornerSize
+- f:getFullDisappearDelay-UwyO8pc():J
+- f:getPlacement():androidx.compose.foundation.TooltipPlacement
+- f:getRegularDisappearDelay-UwyO8pc():J
+- f:getShadowSize-D9Ej5fM():F
+- f:getShowDelay-UwyO8pc():J
+- hashCode():I
+f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
+- f:defaults-L5TaK9c(androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
+- bs:defaults-L5TaK9c$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 org.jetbrains.jewel.ui.icon.IconKey
 - a:getIconClass():java.lang.Class
 - a:path(Z):java.lang.String
