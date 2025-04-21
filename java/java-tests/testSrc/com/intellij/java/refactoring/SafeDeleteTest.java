@@ -118,7 +118,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
-        return element instanceof PsiNamedElement && ((PsiNamedElement)element).getName().equals("a.b.c");
+        return element instanceof PsiNamedElement named && named.getName().equals("a.b.c");
       }
 
       @Override
@@ -276,6 +276,34 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testUsageInGenerated() {
     doTest("A");
+  }
+
+  public void testImplicitClass() {
+    myDoCompare = false;
+    try {
+      doTest((rootDir, rootAfter) -> {
+        configureByExistingFile(rootDir.findFileByRelativePath("src/p/ImplicitClass.java"));
+        performAction();
+      });
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method <b><code>ImplicitClass.gasdfasdf()</code></b> has 2 usages that are not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testImplicitClass2() {
+    myDoCompare = false;
+    try {
+      doTest((rootDir, rootAfter) -> {
+        configureByExistingFile(rootDir.findFileByRelativePath("src/p/ImplicitClass.java"));
+        performAction();
+      });
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method <b><code>Inner.x()</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+    }
   }
 
   public void testLastResourceVariable() {
@@ -454,8 +482,8 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("pack1.First");
   }
 
-  private void doTest(@NonNls final String qClassName) {
-    doTest((rootDir, rootAfter) -> this.performAction(qClassName));
+  private void doTest(@NonNls String qClassName) {
+    doTest((rootDir, rootAfter) -> performAction(qClassName));
   }
 
   @Override
@@ -485,7 +513,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  private void performAction(final String qClassName) {
+  private void performAction(String qClassName) {
     final PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
     configureByExistingFile(aClass.getContainingFile().getVirtualFile());

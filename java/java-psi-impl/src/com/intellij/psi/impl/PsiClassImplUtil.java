@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 public final class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiClassImplUtil.class);
@@ -284,6 +285,9 @@ public final class PsiClassImplUtil {
     SearchScope searchScope = PsiSearchScopeUtil.USE_SCOPE_KEY.get(file);
     if (searchScope != null) return searchScope;
     PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass instanceof PsiImplicitClass) {
+      return new LocalSearchScope(containingClass);
+    }
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       // If the containing class is not final, it's possible to expose nested class through public subclass of containing class 
@@ -473,7 +477,7 @@ public final class PsiClassImplUtil {
                                                     String name,
                                                     @NotNull LanguageLevel languageLevel,
                                                     @NotNull GlobalSearchScope resolveScope) {
-    java.util.function.Function<PsiMember, PsiSubstitutor> finalSubstitutor = new java.util.function.Function<PsiMember, PsiSubstitutor>() {
+    Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
       final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
