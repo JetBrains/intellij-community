@@ -122,7 +122,7 @@
                  description="Limits size of orphan dirty files queue."/>
     <registryKey defaultValue="true" key="indexing.over.fast.attributes" restartRequired="true"
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
-    <registryKey defaultValue="false" key="indexing.double.check.files.still.in.project" restartRequired="false"
+    <registryKey defaultValue="true" key="indexing.double.check.files.still.in.project" restartRequired="false"
                  description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>

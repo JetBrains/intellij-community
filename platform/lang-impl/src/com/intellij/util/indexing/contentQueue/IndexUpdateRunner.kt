@@ -272,7 +272,7 @@ class IndexUpdateRunner(
     private val fileBasedIndex: FileBasedIndexImpl,
     private val indexingRequest: IndexingRequestToken,
   ) {
-    private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", false)
+    private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", true)
     private val indexingAttemptCount = AtomicInteger()
     private val indexingSuccessfulCount = AtomicInteger()
 
