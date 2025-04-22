@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
@@ -121,47 +122,80 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  */
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-fun isResolvableInScope(typeToCheck: KaType, scope: PsiElement, typeParameters: MutableSet<TypeParameter>): Boolean {
+fun isResolvableInScope(
+    typeToCheck: KaType,
+    scope: PsiElement,
+    typeParameters: MutableSet<TypeParameter>,
+): Boolean {
+   return getUnResolvableInScope(typeToCheck, scope, typeParameters) == null
+}
+
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+fun getUnResolvableInScope(
+    typeToCheck: KaType,
+    scope: PsiElement,
+    typeParameters: MutableSet<TypeParameter>,
+    classAccessibilityChecker: (KaClassLikeSymbol) -> Boolean = { true }
+): KaType? {
     require(scope.containingFile is KtFile)
     ((typeToCheck as? KaTypeParameterType)?.symbol?.psi as? KtTypeParameter)?.let { typeParameter ->
         val typeParameterListOwner = typeParameter.parentOfType<KtTypeParameterListOwner>()
         if (typeParameterListOwner == null || !PsiTreeUtil.isAncestor(typeParameterListOwner, scope, true)) {
             typeParameters.add(TypeParameter(typeParameter, typeParameter.collectRelevantConstraints()))
         }
-        return true
+        return null
     }
     if (typeToCheck is KaClassType) {
 
         val classSymbol = typeToCheck.symbol
-        if ((classSymbol as? KaAnonymousObjectSymbol)?.superTypes?.all { isResolvableInScope(it, scope, typeParameters) } == true) {
-            return true
+        val unresolvedInSuperType = (classSymbol as? KaAnonymousObjectSymbol)?.superTypes?.firstNotNullOfOrNull {
+            getUnResolvableInScope(
+                it,
+                scope,
+                typeParameters,
+                classAccessibilityChecker
+            )
+        }
+        if (unresolvedInSuperType != null) {
+            return unresolvedInSuperType
         }
 
-        if ((classSymbol as? KaClassSymbol)?.classId == null) {
+        if (classSymbol.classId == null) {
             //because org.jetbrains.kotlin.fir.FirVisibilityChecker.Default always return true for local classes,
             //let's be pessimistic here and prohibit local classes completely
-            return false
+            return typeToCheck
+        }
+
+        if (!classAccessibilityChecker(classSymbol)) {
+            return typeToCheck
         }
 
         val fileSymbol = (scope.containingFile as KtFile).symbol
         if (!createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, scope).isVisible(classSymbol)) {
-            return false
+            return typeToCheck
         }
 
-        typeToCheck.typeArguments.mapNotNull { it.type }.forEach {
-            if (!isResolvableInScope(it, scope, typeParameters)) return false
+        val unresolvedInTypeArguments = typeToCheck.typeArguments.mapNotNull { it.type }.firstNotNullOfOrNull {
+            getUnResolvableInScope(it, scope, typeParameters, classAccessibilityChecker)
+        }
+        if (unresolvedInTypeArguments != null) {
+            return unresolvedInTypeArguments
         }
     }
     if (typeToCheck is KaErrorType) {
-        return false
+        return typeToCheck
     }
     if (typeToCheck is KaIntersectionType) {
-        return false
+        return typeToCheck
     }
     if (typeToCheck is KaDefinitelyNotNullType) {
-        if (!isResolvableInScope(typeToCheck.original, scope, typeParameters)) return false
+        val unresolvedOriginal = getUnResolvableInScope(typeToCheck.original, scope, typeParameters, classAccessibilityChecker)
+        if (unresolvedOriginal != null) {
+            return unresolvedOriginal
+        }
     }
-    return true
+    return null
 }
 
 

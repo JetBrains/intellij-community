@@ -9,12 +9,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -28,6 +30,8 @@ import org.jetbrains.kotlin.idea.core.createFileForDeclaration
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateClassWithMembers
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.getUnResolvableInScope
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getTypeDescription
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
@@ -39,7 +43,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import kotlin.collections.plus
 
 internal object ActualWithoutExpectFactory {
 
@@ -143,7 +146,7 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         val targetExpectedClass = targetExpectedClassPointer?.element
         val expectedFile = targetExpectedClass?.containingKtFile ?: getOrCreateImplementationFile() ?: return
         val declaration = element ?: return
-        val expectPrototype = generate(project, targetExpectedClass, declaration) ?: return
+        val expectPrototype = generate(project, targetExpectedClass, expectedFile, declaration) ?: return
         val target = project.executeWriteCommand(familyName, null) {
             val initial = (when {
                 targetExpectedClass != null && expectPrototype is KtPrimaryConstructor -> targetExpectedClass.add(expectPrototype)
@@ -160,7 +163,7 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         )
     }
 
-    abstract fun generate(project: Project, targetExpectedClass: KtClassOrObject?, declaration: D): D?
+    abstract fun generate(project: Project, targetExpectedClass: KtClassOrObject?, expectedFile: KtFile, declaration: D): D?
 
     fun showInaccessibleDeclarationError(
         element: PsiElement,
@@ -172,38 +175,80 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     protected fun isCorrectAndHaveAccessibleModifiers(
         declaration: KtNamedDeclaration,
-        showErrorHint: Boolean = false,
+        expectedFile: KtFile,
     ): Boolean {
         val inaccessibleModifier = INACCESSIBLE_MODIFIERS.find { declaration.hasModifier(it) }
         if (inaccessibleModifier != null) {
-            if (showErrorHint) showInaccessibleDeclarationError(
+            showInaccessibleDeclarationError(
                 declaration,
                 KotlinBundle.message("the.declaration.has.0.modifier", inaccessibleModifier)
             )
             return false
         }
         if (declaration is KtFunction && declaration.hasBody() && declaration.containingClassOrObject?.isInterfaceClass() == true) {
-            if (showErrorHint) showInaccessibleDeclarationError(
+            showInaccessibleDeclarationError(
                 declaration,
                 KotlinBundle.message("the.function.declaration.shouldn.t.have.a.default.implementation")
             )
             return false
         }
 
-        //todo check accessibility of types in the common module
-        //if (!showErrorHint) return checkAccessibility(declaration)
-        //
-        //val types = incorrectTypes(declaration).ifEmpty { return true }
-        //showInaccessibleDeclarationError(
-        //    declaration,
-        //    KotlinBundle.message(
-        //        "some.types.are.not.accessible.from.0.1",
-        //        targetModule.name,
-        //        TypeAccessibilityChecker.typesToString(types)
-        //    )
-        //)
+        val unresolvedTypes = analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
+            fun MutableList<KaType>.processTypeParametersOwner(owner: KtTypeParameterListOwner) {
+                owner.typeParameters.forEach { addIfNotNull(it.extendsBound?.type) }
+                owner.typeConstraints.forEach { addIfNotNull(it.boundTypeReference?.type) }
+                owner.annotationEntries.forEach { addIfNotNull(it.typeReference?.type) }
+            }
+
+            val usedTypes = when (declaration) {
+                is KtConstructor<*> -> declaration.valueParameters.mapNotNull { it.typeReference?.type }
+                is KtFunction -> buildList {
+                    addIfNotNull(declaration.receiverTypeReference?.type)
+                    addIfNotNull(declaration.returnType)
+                    for (parameter in declaration.valueParameters) {
+                        addIfNotNull(parameter.returnType)
+                    }
+                    processTypeParametersOwner(declaration)
+                }
+
+                is KtProperty -> buildList {
+                    addIfNotNull(declaration.receiverTypeReference?.type)
+                    addIfNotNull(declaration.returnType)
+                    processTypeParametersOwner(declaration)
+
+                }
+                is KtClass -> buildList {
+                    if (declaration.isInline()) {
+                        declaration.primaryConstructor?.valueParameters?.forEach { addIfNotNull(it.returnType) }
+                    }
+                    processTypeParametersOwner(declaration)
+                }
+
+                else -> emptyList()
+            }.map { it.abbreviation ?: it }.distinct()
+
+            val expectedVirtualFile = expectedFile.virtualFile
+            usedTypes.mapNotNull {
+                getUnResolvableInScope(it, expectedFile, mutableSetOf()) { classSymbol ->
+                    val psi = (classSymbol.getExpectsForActual().firstOrNull() ?: classSymbol).psi
+                    val useScope = psi?.useScope
+                    psi == declaration || useScope != null && expectedVirtualFile != null && useScope.contains(expectedVirtualFile)
+                }
+            }.mapNotNull { (it as? KaClassType)?.classId?.shortClassName?.asString() }
+        }
+        if (unresolvedTypes.isNotEmpty()) {
+            showInaccessibleDeclarationError(
+                declaration,
+                KotlinBundle.message(
+                    "some.types.are.not.accessible.from.0.1",
+                    module.name,
+                    unresolvedTypes.joinToString()
+                )
+            )
+        }
 
         return true
     }
@@ -224,9 +269,10 @@ internal class CreateExpectedClassFix(
     override fun generate(
         project: Project,
         targetExpectedClass: KtClassOrObject?,
+        expectedFile: KtFile,
         declaration: KtNamedDeclaration,
     ): KtNamedDeclaration? {
-        if (!isCorrectAndHaveAccessibleModifiers(declaration, true)) return null
+        if (!isCorrectAndHaveAccessibleModifiers(declaration, expectedFile)) return null
 
         return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
             val classSymbol = declaration.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
@@ -252,9 +298,10 @@ internal class CreateExpectedCallableMemberFix(
     override fun generate(
         project: Project,
         targetExpectedClass: KtClassOrObject?,
+        expectedFile: KtFile,
         declaration: KtNamedDeclaration,
     ): KtNamedDeclaration? {
-        if (!isCorrectAndHaveAccessibleModifiers(declaration, true)) return null
+        if (!isCorrectAndHaveAccessibleModifiers(declaration, expectedFile)) return null
 
         return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
             val callableSymbol = declaration.symbol as? KaCallableSymbol ?: return@analyzeInModalWindow null
