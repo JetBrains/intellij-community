@@ -633,8 +633,6 @@
                  description="GPG Agent configuration notification proposal (see git.commit.gpg.signing.enable.embedded.pinentry)"/>
     <registryKey key="git.read.branches.from.disk" defaultValue="false"
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>
-    <registryKey key="git.branch.dashboard.filter.branch.and.root" defaultValue="true"
-                 description="When repository grouping is enabled, both branches and root are filtered simultaneously"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -830,6 +828,8 @@
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
+    <projectService serviceInterface="git4idea.ui.branch.dashboard.BranchesDashboardFilteringLogic"
+                    serviceImplementation="git4idea.ui.branch.dashboard.DefaultBranchDashboardFilteringLogic"/>
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFoldingImpl"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 

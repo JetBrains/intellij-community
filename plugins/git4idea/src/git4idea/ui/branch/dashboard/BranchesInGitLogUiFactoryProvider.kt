@@ -3,11 +3,11 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vfs.VirtualFile
@@ -106,7 +106,7 @@ internal class BranchesVcsLogUi(
     val roots = logData.roots.toSet()
     val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener {
       model.rootsToFilter = when {
-        roots.size == 1 || BranchesDashboardBehaviour.alwaysShowBranchForAllRoots() -> roots
+        roots.size == 1 || !logData.project.service<BranchesDashboardFilteringLogic>().showBranchesMatchingRootFilter() -> roots
         else -> VcsLogUtil.getAllVisibleRoots(roots, filterUi.filters)
       }
     }
@@ -218,7 +218,7 @@ internal class BranchesVcsLogUi(
         }
 
     override fun filterBy(branches: List<String>, repositories: Set<GitRepository>) {
-      if (BranchesDashboardBehaviour.filterByBranchAndRoot() && repositories.isNotEmpty()) {
+      if (logData.project.service<BranchesDashboardFilteringLogic>().filterByBranchAndRoot() && repositories.isNotEmpty()) {
         val roots = repositories.map { it.root }.takeIf { !Comparing.haveEqualElements(logData.roots, it) }
         filterUi.filterBy(branches, roots)
       }
@@ -293,9 +293,3 @@ val NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY: VcsLogUiProperties.VcsL
   object : VcsLogApplicationSettings.CustomBooleanProperty("Navigate.Log.To.Branch.on.Branch.Selection") {
     override fun defaultValue() = false
   }
-
-private object BranchesDashboardBehaviour {
-  fun alwaysShowBranchForAllRoots(): Boolean = filterByBranchAndRoot()
-
-  fun filterByBranchAndRoot(): Boolean = Registry.`is`("git.branch.dashboard.filter.branch.and.root")
-}
