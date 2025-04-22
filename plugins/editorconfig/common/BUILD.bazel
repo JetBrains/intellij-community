@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.editorconfig.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.editorconfig.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-impl:codeStyle-impl",
+  ],
+  runtime_deps = [":common_resources"]
+)
+### auto-generated section `build intellij.editorconfig.common` end

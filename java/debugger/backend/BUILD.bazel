@@ -24,6 +24,11 @@ jvm_library(
     "//java/debugger/shared:java-debugger-impl-shared",
     "//platform/kernel/rpc.backend:rpc-backend",
     "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/openapi:java-debugger",
+    "//java/java-impl:impl",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/core-ui",
+    "//java/execution/openapi:java-execution",
   ],
   runtime_deps = [":java-debugger-impl-backend_resources"]
 )

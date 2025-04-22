@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
 
 jvm_library(
   name = "buildScripts-testFramework",
   module_name = "intellij.platform.buildScripts.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "//platform/build-scripts:buildScripts",
     "@lib//:kotlin-stdlib",
@@ -26,6 +33,9 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kaml",
     "//platform/build-scripts/downloader:buildScripts-downloader",
     "//tools/reproducibleBuilds.diff:reproducibleBuilds-diff",
     "//jps/jps-builders:build",

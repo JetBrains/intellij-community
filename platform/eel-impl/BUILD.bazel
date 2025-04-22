@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.eel.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "eel-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "eel-impl",
@@ -21,6 +27,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/eel-provider",
     "//platform/core-nio-fs",
-  ]
+  ],
+  runtime_deps = [":eel-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.eel.impl` end
