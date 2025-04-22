@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
+import org.jetbrains.jewel.ui.component.AutoHideBehavior
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
@@ -35,7 +36,11 @@ public fun Tooltips() {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Tooltip(tooltip = { Text("This is a tooltip") }, enabled = enabled, neverHide = neverHide) {
+        Tooltip(
+            tooltip = { Text("This is a tooltip") },
+            enabled = enabled,
+            autoHideBehavior = if (neverHide) AutoHideBehavior.Never else AutoHideBehavior.Normal,
+        ) {
             // Any content works — this is a button just because it's focusable
             DefaultButton({}) { Text("Hover me!") }
         }
