@@ -54,17 +54,15 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.organization
 
   override val downloads: String?
-    get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).getPresentableDownloads() else null
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.getPresentableDownloads() else null
 
   override val rating: String?
-    get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).getPresentableRating() else null
-
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.getPresentableRating() else null
   override val productCode: String?
     get() = pluginDescriptor.productCode
 
   override val size: String?
-    get() = if (pluginDescriptor is PluginNode) (pluginDescriptor as PluginNode).size else null
-
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.size else null
   override val isDeleted: Boolean
     get() = NewUiUtil.isDeleted(pluginDescriptor)
     
