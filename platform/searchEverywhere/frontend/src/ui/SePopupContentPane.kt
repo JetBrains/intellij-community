@@ -234,7 +234,8 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
 
     var closePopup = false
     for (itemData in itemDataList) {
-      closePopup = closePopup || vm.itemSelected(itemData, modifiers)
+      val closeRequested = vm.itemSelected(itemData, modifiers)
+      closePopup = closePopup || closeRequested
     }
 
     if (closePopup) {
