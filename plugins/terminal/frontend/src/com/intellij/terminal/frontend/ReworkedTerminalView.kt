@@ -44,6 +44,7 @@ import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
@@ -58,6 +59,7 @@ internal class ReworkedTerminalView(
   private val project: Project,
   settings: JBTerminalSystemSettingsProviderBase,
   private val sessionFuture: CompletableFuture<TerminalSession>,
+  startupFusInfo: TerminalStartupFusInfo?,
 ) : TerminalContentView {
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
 
