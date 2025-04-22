@@ -64,10 +64,8 @@ public class PlainTextEditingTest extends EditingTestBase {
   }
 
   public void testCopyPasteWithoutUnnecessaryIndent() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    int oldValue = settings.REFORMAT_ON_PASTE;
-    settings.REFORMAT_ON_PASTE = CodeInsightSettings.INDENT_BLOCK;
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.REFORMAT_ON_PASTE = CodeInsightSettings.INDENT_BLOCK;
       doTest(PlainTextFileType.INSTANCE, () -> {
         // Move caret to the non-zero column.
         getEditor().getCaretModel().moveToOffset(3);
@@ -79,10 +77,8 @@ public class PlainTextEditingTest extends EditingTestBase {
         copy();
         paste();
       });
-    }
-    finally {
-      settings.REFORMAT_ON_PASTE = oldValue;
-    }
+      return null;
+    });
   }
 
   public void testCamelHumpsSelectionAndDigits() {
@@ -228,15 +224,11 @@ public class PlainTextEditingTest extends EditingTestBase {
     EditorEx editorEx = (EditorEx)getEditor();
     editorEx.setStickySelection(true);
     editorEx.getCaretModel().moveCaretRelatively(2, 0, false, false, false);
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean oldValue = settings.SURROUND_SELECTION_ON_QUOTE_TYPED;
-    settings.SURROUND_SELECTION_ON_QUOTE_TYPED = true;
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = true;
       type('\'');
-    }
-    finally {
-      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = oldValue;
-    }
+      return null;
+    });
     checkResultByText("ab'<selection>cd</selection>'ef");
   }
 

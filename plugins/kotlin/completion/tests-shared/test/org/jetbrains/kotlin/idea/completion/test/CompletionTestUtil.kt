@@ -50,16 +50,10 @@ fun testCompletion(
 fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
     val autoComplete = ExpectedCompletionUtils.getAutocompleteSetting(fileText) ?: false
 
-    val settings = CodeInsightSettings.getInstance()
-    val oldValue1 = settings.AUTOCOMPLETE_ON_CODE_COMPLETION
-    val oldValue2 = settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION
-    try {
+    CodeInsightSettings.runWithTemporarySettings<_,Error> { settings ->
         settings.AUTOCOMPLETE_ON_CODE_COMPLETION = autoComplete
         settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = autoComplete
         doTest()
-    } finally {
-        settings.AUTOCOMPLETE_ON_CODE_COMPLETION = oldValue1
-        settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = oldValue2
     }
 }
 
