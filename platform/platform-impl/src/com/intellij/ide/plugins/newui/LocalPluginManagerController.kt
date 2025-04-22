@@ -2,8 +2,14 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.getPluginDistDirByClass
+import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import javax.swing.JComponent
 
 class LocalPluginManagerController(private val localPluginModel: MyPluginModel) : PluginManagerController {
@@ -41,5 +47,32 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
   
   override fun isEnabled(model: PluginUiModel): Boolean {
     return localPluginModel.isEnabled(model.getDescriptor())
+  }
+
+  override fun isPluginRequiredForProject(model: PluginUiModel): Boolean {
+    return localPluginModel.isRequiredPluginForProject(model.pluginId)
+  }
+
+  override fun hasPluginRequiresUltimateButItsDisabled(models: List<PluginUiModel>): Boolean {
+    val idMap = PluginManagerCore.buildPluginIdMap()
+    return models.any { pluginRequiresUltimatePluginButItsDisabled(it.pluginId, idMap) }
+  }
+
+  override fun setEnabledState(models: List<PluginUiModel>, action: PluginEnableDisableAction) {
+    localPluginModel.setEnabledState(models.map { it.getDescriptor() }, action)
+  }
+
+  override fun getDependents(models: List<PluginUiModel>): Map<PluginUiModel, List<PluginUiModel>> {
+    val applicationInfo = ApplicationInfoEx.getInstanceEx()
+    val idMap = PluginManagerCore.buildPluginIdMap()
+    return models.associateWith { MyPluginModel.getDependents(it.getDescriptor(), applicationInfo, idMap).map(::PluginUiModelAdapter) }
+  }
+
+  override fun isBundledUpdate(model: PluginUiModel): Boolean {
+    return MyPluginModel.isBundledUpdate(model.getDescriptor())
+  }
+
+  override fun uninstallAndUpdateUi(model: PluginUiModel) {
+    return localPluginModel.uninstallAndUpdateUi(model.getDescriptor())
   }
 }
