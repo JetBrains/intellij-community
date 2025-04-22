@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
@@ -135,11 +136,10 @@ private sealed class ReadResult<out T> {
 private suspend fun yieldToPendingWriteActions() {
   // the runnable is executed on the write thread _after_ the current or pending write action
   yieldUntilRun { runnable ->
-    // Even if there is a modal dialog shown,
-    // it doesn't make sense to yield until it's finished
-    // to run a read action concurrently in background
-    // => yield until the current WA finishes in any modality.
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+    val application = ApplicationManager.getApplication()
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      application.invokeLater(runnable, ModalityState.any())
+    }
   }
 }
 

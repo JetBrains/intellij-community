@@ -8,10 +8,7 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -29,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.CheckedDisposable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -139,8 +137,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   private static void invokeLater(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication()
-      .invokeLaterOnWriteThread(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+    Application app = ApplicationManager.getApplication();
+    AppImplKt.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
+      app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
