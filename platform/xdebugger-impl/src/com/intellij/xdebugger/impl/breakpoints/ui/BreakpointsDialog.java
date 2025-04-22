@@ -503,7 +503,7 @@ public class BreakpointsDialog extends DialogWrapper {
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
         XBreakpointProxy breakpoint = item.getBreakpoint();
         if (breakpoint instanceof XBreakpointProxy.Monolith) {
-          ((XBreakpointBase<?, ?, ?>)breakpoint.getBreakpoint()).setGroup(groupName);
+          (((XBreakpointProxy.Monolith)breakpoint).getBreakpoint()).setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);

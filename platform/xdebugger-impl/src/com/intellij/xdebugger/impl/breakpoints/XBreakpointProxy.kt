@@ -21,7 +21,6 @@ import javax.swing.Icon
 @ApiStatus.Internal
 interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   val id: XBreakpointId
-  val breakpoint: Any
   val type: XBreakpointTypeProxy
   val project: Project
 
@@ -82,7 +81,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation?
 
-  class Monolith(override val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
+  class Monolith(val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     override val id: XBreakpointId = breakpoint.breakpointId
 
     override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.project, breakpoint.getType())
