@@ -117,6 +117,28 @@ class TreeBaseConstructorSafetyTest {
     """.trimIndent())
   }
 
+  @Test
+  fun `calling getExpandedPaths from setModel is safe`() {
+    sut = object : Tree(createModel("""
+      root
+        node1
+          leaf11
+          leaf12
+    """.trimIndent())) {
+      override fun setModel(newModel: TreeModel?) {
+        super.setModel(newModel)
+        expandPath(path("root", "node1"))
+        assertThat(expandedPaths).containsExactlyInAnyOrder(path("root"), path("root", "node1"))
+      }
+    }
+    assertTreeStructure("""
+      -root
+        -node1
+          leaf11
+          leaf12
+    """.trimIndent())
+  }
+
   private fun assertTreeStructure(structure: String) {
     val actualStructure = dumpTreeStructure()
     // these LFs make the output more readable

@@ -815,6 +815,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public @NotNull Set<TreePath> getExpandedPaths() {
+    if (!initialized) { // Called from a super constructor.
+      var rootPath = getRootPath();
+      if (rootPath == null || !super.isExpanded(rootPath)) return Collections.emptySet();
+      var result = new HashSet<TreePath>();
+      result.add(rootPath);
+      var more = super.getExpandedDescendants(rootPath);
+      if (more != null) {
+        while (more.hasMoreElements()) {
+          result.add(more.nextElement());
+        }
+      }
+      return result;
+    }
     return expandImpl.getExpandedPaths();
   }
 
