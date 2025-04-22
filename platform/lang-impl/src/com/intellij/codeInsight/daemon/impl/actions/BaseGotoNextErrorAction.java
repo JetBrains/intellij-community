@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -14,10 +14,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAware {
+abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements DumbAware {
 
-  public GotoNextErrorAction() {
+  private final boolean goForward;
+
+  BaseGotoNextErrorAction(boolean goForward) {
     super(false);
+    this.goForward = goForward;
   }
 
   @Override
@@ -32,12 +35,12 @@ public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAw
 
   @Override
   protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
-    return new GotoNextErrorHandler(true, GotoNextErrorUtilsKt.getTrafficHighlightSeverity(dataContext));
+    return new GotoNextErrorHandler(goForward, GotoNextErrorUtilsKt.getTrafficHighlightSeverity(dataContext));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    GotoNextErrorUtilsKt.reportTrafficHighlightStatistic(e, true);
+    GotoNextErrorUtilsKt.reportTrafficHighlightStatistic(e, goForward);
     super.actionPerformed(e);
   }
 
