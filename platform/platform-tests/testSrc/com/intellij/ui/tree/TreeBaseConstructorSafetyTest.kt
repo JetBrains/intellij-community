@@ -12,16 +12,18 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 class TreeBaseConstructorSafetyTest {
+  private val nodesByString = hashMapOf<String, DefaultMutableTreeNode>()
   private var sut: Tree? = null
 
   @AfterEach
   fun tearDown() {
     sut = null
+    nodesByString.clear()
   }
 
   @Test
   fun `by default, a non-leaf root is expanded`() {
-    createRegularTree(createModel("""
+    sut = Tree(createModel("""
       root
         node1
           leaf11
@@ -35,8 +37,27 @@ class TreeBaseConstructorSafetyTest {
     """.trimIndent())
   }
 
-  private fun createRegularTree(treeModel: TreeModel) {
-    sut = Tree(treeModel)
+  @Test
+  fun `calling setExpandedState from setModel is safe, and the updated state is kept`() {
+    sut = object : Tree(createModel("""
+      root
+        node1
+          leaf11
+          leaf12
+        leaf2
+    """.trimIndent())) {
+      override fun setModel(newModel: TreeModel?) {
+        super.setModel(newModel)
+        setExpandedState(path("root", "node1"), true)
+      }
+    }
+    assertTreeStructure("""
+      -root
+        -node1
+          leaf11
+          leaf12
+        leaf2
+    """.trimIndent())
   }
 
   private fun assertTreeStructure(structure: String) {
@@ -73,6 +94,14 @@ class TreeBaseConstructorSafetyTest {
     }
   }
 
+  private fun path(vararg elements: String): TreePath {
+    var result: TreePath = CachingTreePath(nodesByString.getValue(elements[0]))
+    for (i in 1 until elements.size) {
+      result = result.pathByAddingChild(nodesByString.getValue(elements[i]))
+    }
+    return result
+  }
+
   private fun createModel(content: String): TreeModel {
     val lines = content.split("\n").filter { it.isNotBlank() }
     val stack = ArrayDeque<DefaultMutableTreeNode>()
@@ -82,7 +111,9 @@ class TreeBaseConstructorSafetyTest {
       assertThat(indent).isGreaterThanOrEqualTo(0)
       assertThat(indent % 2).isZero()
       val level = indent / 2
-      val node = DefaultMutableTreeNode(line.trim())
+      val value = line.trim()
+      val node = DefaultMutableTreeNode(value)
+      nodesByString[value] = node
       when {
         level == currentLevel + 1 -> {
           stack.lastOrNull()?.add(node)

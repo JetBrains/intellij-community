@@ -646,7 +646,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void fireTreeExpanded(@NotNull TreePath path) {
     Object[] listeners = listenerList.getListenerList();
-    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, bulkOperationsInProgress.get() > 0);
+    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, isBulkOperationInProgress());
     if (uiTreeExpansionListener != null) {
       uiTreeExpansionListener.treeExpanded(e);
     }
@@ -664,7 +664,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void fireTreeCollapsed(@NotNull TreePath path) {
     Object[] listeners = listenerList.getListenerList();
-    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, bulkOperationsInProgress.get() > 0);
+    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, isBulkOperationInProgress());
     if (uiTreeExpansionListener != null) {
       uiTreeExpansionListener.treeCollapsed(e);
     }
@@ -677,6 +677,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         ((TreeExpansionListener)listeners[i + 1]).treeCollapsed(e);
       }
     }
+  }
+
+  private boolean isBulkOperationInProgress() {
+    return initialized && bulkOperationsInProgress.get() > 0;
   }
 
   private void fireBulkExpandStarted() {
@@ -842,6 +846,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   protected void setExpandedState(TreePath path, boolean state) {
+    if (!initialized) { // Called from the super() constructor.
+      super.setExpandedState(path, state);
+      return;
+    }
     expandImpl.setExpandedState(path, state);
   }
 
@@ -1318,6 +1326,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       var rootPath = getRootPath();
       if (model != null && rootPath != null && !model.isLeaf(rootPath.getLastPathComponent())) {
         expandedState.put(rootPath, true);
+        // Additionally, expand everything that was already expanded by base class constructors.
+        var expanded = Tree.super.getExpandedDescendants(rootPath);
+        if (expanded != null) {
+          while (expanded.hasMoreElements()) {
+            var expandedPath = expanded.nextElement();
+            expandedState.put(expandedPath, true);
+          }
+        }
       }
       // Clean up whatever mess the super() constructor left in the superclass expandedState which we don't use.
       Tree.super.clearToggledPaths();
