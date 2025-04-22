@@ -44,7 +44,8 @@ class DescriptorListLoadingContext(
 
   override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
 
-  @Volatile var defaultVersion: String? = null
+  @Volatile
+  private var defaultVersion: String? = null
     get() {
       var result = field
       if (result == null) {
@@ -53,7 +54,6 @@ class DescriptorListLoadingContext(
       }
       return result
     }
-    private set
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
