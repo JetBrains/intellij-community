@@ -8,13 +8,18 @@ import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
 import com.intellij.codeInsight.daemon.impl.GotoNextErrorUtilsKt;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements DumbAware {
+
+abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements ActionRemoteBehaviorSpecification, DumbAware {
 
   private final boolean goForward;
 
@@ -47,5 +52,14 @@ abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
+  }
+
+  @Internal
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    if (Registry.is("ide.popup.async.enabled", false)) {
+      return ActionRemoteBehavior.FrontendOnly;
+    }
+    return ActionRemoteBehavior.BackendOnly;
   }
 }
