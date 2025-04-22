@@ -405,7 +405,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         if (instruction instanceof PyRaiseInstruction) {
           return ControlFlowUtil.Operation.CONTINUE;
         }
-        if (instruction instanceof PyWithContextExitInstruction withExit && !withExit.isSuppressingExceptions(context)) {
+        if (instruction instanceof PyWithContextExitInstruction withExit) {
+          if (collectImplicitReturn && withExit.isSuppressingExceptions(context)) {
+            returnPoints.add(PsiTreeUtil.getParentOfType(withExit.getElement(), PyWithStatement.class));
+          }
           return ControlFlowUtil.Operation.CONTINUE;
         }
         final PsiElement element = instruction.getElement();
