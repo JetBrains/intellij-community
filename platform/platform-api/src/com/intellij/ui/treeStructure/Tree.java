@@ -895,6 +895,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   protected Enumeration<TreePath> getDescendantToggledPaths(TreePath parent) {
+    if (!initialized) { // Called from the super() constructor.
+      return super.getDescendantToggledPaths(parent);
+    }
     return expandImpl.getDescendantToggledPaths(parent);
   }
 
