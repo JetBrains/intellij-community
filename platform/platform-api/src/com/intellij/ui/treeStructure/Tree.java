@@ -904,6 +904,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   protected void removeDescendantToggledPaths(Enumeration<TreePath> toRemove)
   {
+    if (!initialized) { // Called from the super() constructor.
+      super.removeDescendantToggledPaths(toRemove);
+      return;
+    }
     expandImpl.removeDescendantToggledPaths(toRemove);
   }
 
