@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.getTags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -140,4 +141,9 @@ fun PluginUiModel.presentableSize(): String? {
   }
   catch (_: NumberFormatException) { }
   return null
+}
+
+@ApiStatus.Internal
+fun PluginUiModel.calculateTags(): List<String> {
+  return getTags(this.getDescriptor())
 }

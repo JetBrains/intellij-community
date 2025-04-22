@@ -9,7 +9,10 @@ import com.intellij.ide.plugins.newui.NewUiUtil
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.LicensingFacade
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import kotlin.text.startsWith
 
 /**
  * A temporary class used to eliminate "runtime" PluginDescriptor usages in the UI. It will later be replaced with frontend and backend implementations.
@@ -40,7 +43,7 @@ class PluginUiModelAdapter(
 
   override val tags: List<String>
     get() {
-      return getTags(pluginDescriptor)
+      return if (pluginDescriptor is PluginNode) pluginDescriptor.tags else emptyList()
     }
 
   override val isBundled: Boolean
