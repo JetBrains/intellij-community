@@ -306,6 +306,21 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testFileWithTwoClasses() {
+    myDoCompare = false;
+    try {
+      doTest((rootDir, rootAfter) -> {
+        configureByExistingFile(rootDir.findFileByRelativePath("src/p/TwoClasses.java"));
+        SafeDeleteHandler.invoke(getProject(), new PsiElement[]{myFile}, true);
+      });
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Class <b><code>p.Next</code></b> has 1 usage that is not safe to delete.\n"
+                   + "Class <b><code>p.TwoClasses</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+    }
+  }
+
   public void testLastResourceVariable() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
