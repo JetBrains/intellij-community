@@ -180,7 +180,7 @@ public final class LicensePanel extends NonOpaquePanel {
     if (forUpdate) {
       return;
     }
-    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), false), price -> {
+    PluginPriceService.getPrice(plugin.getProductCode(), price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
         updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), true);
       }
