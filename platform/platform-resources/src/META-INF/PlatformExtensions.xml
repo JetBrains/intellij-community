@@ -598,13 +598,22 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+    <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
+                 description="Pause dumb queue (including indexing) while scanning is in progress."/>
+    <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
+                 description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
+
     <projectService serviceInterface="com.intellij.openapi.project.IncompleteDependenciesService"
                     serviceImplementation="com.intellij.openapi.project.IncompleteDependenciesServiceImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"
                     serviceImplementation="com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl"/>
+    <registryKey defaultValue="true" key="scanning.waits.for.non.dumb.mode" restartRequired="false"
+                 description="Scanning will wait until the end of current dumb mode (if any)"/>
+    <registryKey defaultValue="true" key="scanning.hide.progress.in.smart.mode" restartRequired="false"
+                 description="Hide scanning progress indicator while scanning can continue in smart mode."/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil"
                     serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>

@@ -105,14 +105,8 @@
     <!--suppress PluginXmlCapitalization -->
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
-    <registryKey defaultValue="true" key="scanning.hide.progress.in.smart.mode" restartRequired="false"
-                 description="Hide scanning progress indicator while scanning can continue in smart mode."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
                  description="Dumb mode during scanning will be triggered as soon as IDE discovers this count of unindexed files."/>
-    <registryKey defaultValue="true" key="scanning.waits.for.non.dumb.mode" restartRequired="false"
-                 description="Scanning will wait until the end of current dumb mode (if any)"/>
-    <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"
-                 description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
                  description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
     <registryKey defaultValue="true" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
@@ -123,8 +117,6 @@
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
     <registryKey defaultValue="true" key="indexing.double.check.files.still.in.project" restartRequired="false"
                  description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
-    <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
-                 description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
                  description="Use specialized Eel API for working with remote filesystems. This may result in a significant performance improvement and better CPU utilization"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
