@@ -151,7 +151,7 @@ class FrontendXDebuggerSession private constructor(
 
   init {
     DebuggerInlayListener.getInstance(project).startListening()
-    sessionDto.sessionDataDto.initialSuspendData?.applyToCurrents()
+    sessionDto.initialSuspendData?.applyToCurrents()
     cs.launch {
       sessionDto.sessionEvents.toFlow().collect { event ->
         with(event) {
