@@ -75,7 +75,6 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -1429,19 +1428,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public @NotNull String getDefaultViewId() {
-    //noinspection SpellCheckingInspection
-    if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
-      // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
-      return ANDROID_VIEW_ID;
-    }
-    else {
-      for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {
-        if (extension.isDefaultPane(project)) {
-          return extension.getId();
-        }
+    for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {
+      if (extension.isDefaultPane(project)) {
+        return extension.getId();
       }
-      return ProjectViewPane.ID;
     }
+    return ProjectViewPane.ID;
   }
 
   private void readPaneState(@NotNull Element panesElement) {
