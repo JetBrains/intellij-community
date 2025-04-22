@@ -598,6 +598,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+    <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <projectService serviceInterface="com.intellij.openapi.project.IncompleteDependenciesService"
                     serviceImplementation="com.intellij.openapi.project.IncompleteDependenciesServiceImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
