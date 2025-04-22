@@ -1143,7 +1143,7 @@ public final class PsiUtil extends PsiUtilCore {
 
     PsiFile file = element.getContainingFile();
     // Could be non-physical 'light file' created by some JVM languages
-    PsiFile navigationFile = file == null ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
+    PsiFile navigationFile = file == null || file.isPhysical() ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
     if (navigationFile != null) {
       file = navigationFile;
     }
