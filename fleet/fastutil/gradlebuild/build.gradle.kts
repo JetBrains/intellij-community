@@ -22,6 +22,7 @@ jpsModule {
   }
 }
 
+@OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
 kotlin {
   // KOTLIN__MARKER_START
   compilerOptions.freeCompilerArgs = listOf(
@@ -29,13 +30,9 @@ kotlin {
     "-opt-in=kotlin.ExperimentalStdlibApi",
     "-Xlambdas=class",
   )
-  targets {
-    jvm {
-      withJava()
-    }
-    wasmJs {
-      browser {}
-    }
+  jvm {}
+  wasmJs {
+    browser {}
   }
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {
     tasks.named("syncCommonMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { destinationDirectory.set(layout.buildDirectory.dir("copiedSources/commonMain")) }
