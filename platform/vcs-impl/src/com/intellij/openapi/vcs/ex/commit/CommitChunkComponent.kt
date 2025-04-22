@@ -349,7 +349,6 @@ internal class CommitChunkComponent(
 }
 
 private fun adjustEditorSettings(editor: EditorEx) {
-  editor.scrollPane.border = JBUI.Borders.empty()
   editor.backgroundColor = Spec.INPUT_BACKGROUND
   editor.settings.isShowIntentionBulb = false
   editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)

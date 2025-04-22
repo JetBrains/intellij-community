@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.ex.commit
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.commit
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
@@ -32,7 +32,7 @@ internal class CommitInputBorder(
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val r = Rectangle(x, y, width, height)
-    JBInsets.removeFrom(r, JBInsets.create(1, 1))
+    JBInsets.removeFrom(r, DarculaUIUtil.paddings())
 
     DarculaNewUIUtil.fillInsideComponentBorder(g, r, c.background)
     val enabled = c.isEnabled
@@ -40,7 +40,12 @@ internal class CommitInputBorder(
     DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c as JComponent), hasFocus, enabled)
   }
 
-  override fun getBorderInsets(c: Component): Insets = JBInsets.create(Insets(3, 8, 3, 3)).asUIResource()
+  override fun getBorderInsets(c: Component): Insets {
+    return JBInsets(COMMIT_BORDER_INSET).asUIResource()
+  }
   override fun isBorderOpaque(): Boolean = true
-}
 
+  companion object {
+    const val COMMIT_BORDER_INSET: Int = 3
+  }
+}

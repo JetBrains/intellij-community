@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
@@ -18,10 +19,12 @@ import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
 import com.intellij.util.ui.JBUI.Borders.emptyRight
@@ -68,6 +71,10 @@ abstract class NonModalCommitPanel(
     setReservePlaceAutoPopupIcon(false)
   }
 
+  private val commitMessagePanel: BorderLayoutPanel = JBUI.Panels.simplePanel()
+    .andTransparent()
+    .withBackground(UISpec.COMMIT_EDITOR_COLOR)
+
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
   }
@@ -87,16 +94,31 @@ abstract class NonModalCommitPanel(
       addToLeft(toolbar.component)
     }
 
+
+    commitMessagePanel.addToCenter(commitMessage)
+
     centerPanel
       .addToTop(statusComponent)
-      .addToCenter(commitMessage)
+      .addToCenter(commitMessagePanel)
       .addToBottom(bottomPanel)
 
     mainPanel.addToCenter(centerPanel)
     mainPanel.withPreferredHeight(85)
     commitMessage.editorField.setDisposedWith(this)
+    installBorders()
 
     InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(mainPanel)
+  }
+
+  private fun installBorders() {
+    val editor = commitMessage.editorField.getEditor(true)
+
+    if (editor != null) {
+      commitMessagePanel.border = JBUI.Borders.compound(
+        commitFieldEmptyBorder(),
+        CommitInputBorder(editor, mainPanel)
+      )
+    }
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
@@ -198,3 +220,14 @@ abstract class NonModalCommitPanel(
 private fun CommitActionsPanel.getShowCommitOptionsButton(): JComponent? = ActionButtonUtil.findActionButton(this) {
   it.action is ShowCommitOptionsAction
 }
+
+private object UISpec {
+  const val COMMIT_LEFT_RIGHT_GAP = 12 - CommitInputBorder.COMMIT_BORDER_INSET
+  const val COMMIT_BUTTON_TOP_BOTTOM_GAP = 6 - CommitInputBorder.COMMIT_BORDER_INSET
+
+  val COMMIT_EDITOR_COLOR: JBColor
+    get() = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
+}
+
+private fun commitFieldEmptyBorder(): JBEmptyBorder = JBUI.Borders.empty(UISpec.COMMIT_BUTTON_TOP_BOTTOM_GAP, UISpec.COMMIT_LEFT_RIGHT_GAP)
+
