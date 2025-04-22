@@ -6,6 +6,7 @@ import com.intellij.ui.treeStructure.Tree
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.util.Collections
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
@@ -251,6 +252,27 @@ class TreeBaseConstructorSafetyTest {
         -node1
           leaf11
           leaf12
+    """.trimIndent())
+  }
+
+  @Test
+  fun `calling removeDescendantToggledPaths from setModel is safe`() {
+    sut = object : Tree(createModel("""
+      root
+        node1
+          leaf11
+          leaf12
+    """.trimIndent())) {
+      override fun setModel(newModel: TreeModel?) {
+        super.setModel(newModel)
+        expandPath(path("root", "node1"))
+        removeDescendantToggledPaths(Collections.enumeration(listOf(path("root", "node1"))))
+        assertThat(getDescendantToggledPaths(path("root")).toList()).containsOnly(path("root"))
+      }
+    }
+    assertTreeStructure("""
+      -root
+        +node1
     """.trimIndent())
   }
 
