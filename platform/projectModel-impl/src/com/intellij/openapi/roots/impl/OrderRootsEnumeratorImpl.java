@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -12,11 +13,9 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.util.JpsPathUtil;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private static final Logger LOG = Logger.getInstance(OrderRootsEnumeratorImpl.class);
@@ -131,6 +130,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @Override
   public void collectPaths(@NotNull PathsList list) {
     list.addVirtualFiles(getRoots());
+    //     list.addAll(Arrays.stream(getUrls()).map(url -> FileUtilRt.toSystemDependentName(JpsPathUtil.urlToPath(url))).toList());
   }
 
   @Override
