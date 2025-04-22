@@ -243,15 +243,6 @@ c:com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher
 f:com.intellij.xdebugger.impl.actions.DisableAllButThisBreakpointAction
 - com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
 - <init>():V
-c:com.intellij.xdebugger.impl.actions.EditBreakpointAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-c:com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>(com.intellij.openapi.editor.markup.GutterIconRenderer,java.lang.Object):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V

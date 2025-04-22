@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
@@ -30,16 +31,19 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
-    final Pair<GutterIconRenderer,Object> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
+    final Pair<GutterIconRenderer, XBreakpoint<?>> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
 
-    Object breakpoint = pair.second;
+    XBreakpoint<?> breakpoint = pair.second;
     GutterIconRenderer breakpointGutterRenderer = pair.first;
 
     if (breakpointGutterRenderer == null) return;
     editBreakpoint(project, editor, breakpoint, breakpointGutterRenderer);
   }
 
-  public void editBreakpoint(@NotNull Project project, @NotNull Editor editor, @NotNull Object breakpoint, @NotNull GutterIconRenderer breakpointGutterRenderer) {
+  public void editBreakpoint(@NotNull Project project,
+                             @NotNull Editor editor,
+                             @NotNull XBreakpoint<?> breakpoint,
+                             @NotNull GutterIconRenderer breakpointGutterRenderer) {
     if (BreakpointsDialogFactory.getInstance(project).popupRequested(breakpoint)) {
       return;
     }
