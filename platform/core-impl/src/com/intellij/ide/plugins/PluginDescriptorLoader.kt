@@ -548,7 +548,7 @@ private suspend fun loadAndInitDescriptors(
     extraListDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
   }
 
-  val buildNumber = loadingContext.getProductBuildNumber()
+  val buildNumber = initContext.productBuildNumber
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
@@ -1186,7 +1186,7 @@ fun loadAndInitDescriptorsFromOtherIde(
         )
       }, isMainProcess()),
       overrideUseIfCompatible = false,
-      productBuildNumber = loadingContext.getProductBuildNumber(),
+      productBuildNumber = initContext.productBuildNumber,
       isPluginDisabled = initContext::isPluginDisabled,
       isPluginBroken = initContext::isPluginBroken,
     )
@@ -1206,7 +1206,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
         isMainProcess = isMainProcess(),
       ),
       overrideUseIfCompatible = false,
-      productBuildNumber = loadingContext.getProductBuildNumber(),
+      productBuildNumber = initContext.productBuildNumber,
       isPluginDisabled = initContext::isPluginDisabled,
       isPluginBroken = initContext::isPluginBroken
     )

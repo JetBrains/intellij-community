@@ -59,7 +59,7 @@ class PluginSetTestBuilder(private val path: Path) {
         result.initAndAddAll(
           descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) },
           overrideUseIfCompatible = false,
-          productBuildNumber = loadingContext.getProductBuildNumber(),
+          productBuildNumber = initContext.productBuildNumber,
           isPluginDisabled = initContext::isPluginDisabled,
           isPluginBroken = initContext::isPluginBroken,
         )
