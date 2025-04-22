@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
