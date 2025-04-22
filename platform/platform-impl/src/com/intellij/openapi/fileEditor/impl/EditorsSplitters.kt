@@ -106,7 +106,7 @@ private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 @DirtyUI
 open class EditorsSplitters internal constructor(
   @Internal val manager: FileEditorManagerImpl,
-  @JvmField internal val coroutineScope: CoroutineScope,
+  @Internal @JvmField val coroutineScope: CoroutineScope,
 ) : JPanel(BorderLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"

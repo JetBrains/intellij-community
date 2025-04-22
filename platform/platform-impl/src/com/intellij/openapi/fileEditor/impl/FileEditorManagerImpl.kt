@@ -1358,7 +1358,7 @@ open class FileEditorManagerImpl(
   }
 
   @RequiresEdt
-  protected fun createCompositeInstance(
+  protected open fun createCompositeInstance(
     file: VirtualFile,
     model: Flow<EditorCompositeModel>,
     coroutineScope: CoroutineScope,
