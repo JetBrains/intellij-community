@@ -24,7 +24,7 @@ class LearnButton : JButton {
     isOpaque = false
     isContentAreaFilled = false
     isEnabled = contentEnabled
-    preferredHeight = 33
+    preferredHeight = JBUI.scale(33)
   }
   constructor(anAction: AnAction, @Nls title: String, contentEnabled: Boolean) : this(anAction.toSwingAction(title), contentEnabled) {}
 
