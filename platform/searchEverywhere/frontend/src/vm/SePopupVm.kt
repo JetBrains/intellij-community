@@ -29,6 +29,7 @@ class SePopupVm(val coroutineScope: CoroutineScope,
   val searchResults: Flow<Flow<SeResultListEvent>>
 
   val searchPattern: MutableStateFlow<String> = MutableStateFlow(initialSearchPattern ?: "")
+  val shouldSelectAllSearchPattern: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
   val tabVms: List<SeTabVm> = tabs.map {
     SeTabVm(project, coroutineScope, it, searchPattern)

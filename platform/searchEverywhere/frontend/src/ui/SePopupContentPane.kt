@@ -1,28 +1,43 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.bindTextOnShow
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
@@ -41,7 +56,7 @@ import javax.swing.*
 import javax.swing.text.Document
 
 @Internal
-class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
+class SePopupContentPane(private val project: Project, private val vm: SePopupVm) : JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -82,7 +97,8 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
 
-    textField.bindTextOnShow(vm.searchPattern, "Search Everywhere text field text binding")
+    textField.bindTextOnShow(vm.searchPattern, vm.shouldSelectAllSearchPattern, "Search Everywhere text field text binding")
+    addHistoryExtensionToTextField()
 
     vm.coroutineScope.launch {
       vm.searchResults.collectLatest { listEventFlow ->
@@ -133,7 +149,8 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       if (verticalScrollBar.model.extent > 0 && yetToScrollHeight < 50) {
         resultListModel.freezeAll()
         vm.shouldLoadMore = true
-      } else if (yetToScrollHeight > resultsScrollPane.height / 2) {
+      }
+      else if (yetToScrollHeight > resultsScrollPane.height / 2) {
         vm.shouldLoadMore = false
       }
     }
@@ -370,9 +387,59 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
     }
   }
 
+  private fun addHistoryExtensionToTextField() {
+    textField.addExtension(
+      object : ExtendableTextComponent.Extension {
+        override fun getIcon(hovered: Boolean): Icon {
+          return if (SeFrontendService.isExtendedInfoEnabled()) AllIcons.Actions.SearchWithHistory else AllIcons.Actions.Search
+        }
+
+        override fun isIconBeforeText(): Boolean {
+          return true
+        }
+
+        override fun getIconGap(): Int {
+          return scale(if (isNewUI()) 6 else 10)
+        }
+
+        override fun getActionOnClick(): Runnable? {
+          if (!SeFrontendService.isExtendedInfoEnabled()) return null
+
+          val bounds = (textField.getUI() as TextFieldWithPopupHandlerUI).getExtensionIconBounds(this)
+          val point = bounds.location
+          point.y += bounds.width + scale(2)
+          val relativePoint = RelativePoint(textField, point)
+          return Runnable { showHistoryPopup(relativePoint) }
+        }
+      })
+  }
+
+  private fun showHistoryPopup(relativePoint: RelativePoint) {
+    val items = SeFrontendService.getInstance(project).getHistoryItems()
+
+    if (items.isEmpty()) return
+
+    JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+      .setMovable(false)
+      .setRequestFocus(true)
+      .setItemChosenCallback { text: String ->
+        textField.setText(text)
+        textField.selectAll()
+      }
+      .setRenderer(GroupedItemsListRenderer(
+        object : ListItemDescriptorAdapter<String>() {
+          override fun getTextFor(value: @NlsContexts.ListItem String?): String? {
+            return value
+          }
+        }
+      ))
+      .createPopup()
+      .show(relativePoint)
+  }
+
   private fun closePopup() {
     vm.closePopup()
   }
 
-  override fun dispose() { }
+  override fun dispose() {}
 }

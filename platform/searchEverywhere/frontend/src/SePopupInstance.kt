@@ -44,6 +44,10 @@ class SePopupInstance(private val popupVm: SePopupVm,
     }
   }
 
+  fun selectAllInSearchText() {
+    popupVm.shouldSelectAllSearchPattern.value = true
+  }
+
   fun isEverywhere(): Boolean = currentTabSearchEverywhereToggleAction?.isEverywhere ?: true
 
   @ApiStatus.Internal
