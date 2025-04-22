@@ -1252,7 +1252,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   public @Nullable Rectangle getActiveGutterRendererRectangle(int lineNum, String accessibleName) {
     int firstVisibleOffset = myEditor.visualLineStartOffset(lineNum);
     int lastVisibleOffset = EditorUtil.getVisualLineEndOffset(myEditor, lineNum);
-    List<Pair<ActiveGutterRenderer, Rectangle>> rectangles = new ArrayList<>();
     Rectangle[] rectangle = {null};
     processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
       LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
