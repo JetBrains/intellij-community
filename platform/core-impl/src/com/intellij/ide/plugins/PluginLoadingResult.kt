@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.PlatformUtils
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
@@ -73,14 +72,12 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     initContext: PluginInitializationContext,
   ) {
     for (descriptor in descriptors) {
-      val initError = descriptor.initialize(initContext)
-      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = initContext.productBuildNumber, initError = initError)
+      initAndAdd(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, initContext = initContext)
     }
   }
 
-  private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber, initError: PluginLoadingError?) {
-    val pluginId = descriptor.pluginId
-    initError?.let { error ->
+  private fun initAndAdd(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
+    descriptor.initialize(initContext)?.let { error ->
       addIncompletePlugin(plugin = descriptor, error = error.takeIf { !it.isDisabledError })
       return
     }
@@ -96,6 +93,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     }
 
     // remove any error that occurred for plugin with the same `id`
+    val pluginId = descriptor.pluginId
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
     val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
@@ -111,7 +109,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       shadowedBundledIds.add(pluginId)
     }
 
-    if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, productBuildNumber) == null &&
+    if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, initContext.productBuildNumber) == null &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
       PluginManagerCore.logger.info("$descriptor overrides $prevDescriptor")
       idMap.put(pluginId, descriptor)
