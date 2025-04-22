@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
+import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
@@ -92,6 +93,11 @@ internal class ReworkedTerminalView(
 
     terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
+    // Use the same instance of the cursor painting listener for both editors to report the metric only once.
+    // Usually, the cursor will be painted in the output editor first because it is shown by default on a new session opening.
+    // But in the case of session restoration in RemDev, there can be an alternate buffer.
+    val fusCursorPaintingListener = startupFusInfo?.let { TerminalFusCursorPainterListener(it) }
+
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
     val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     configureOutputEditor(
@@ -104,6 +110,7 @@ internal class ReworkedTerminalView(
       terminalInput,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       scrollingModel = null,
+      fusCursorPaintingListener,
       withTopAndBottomInsets = false,
     )
 
@@ -122,6 +129,7 @@ internal class ReworkedTerminalView(
       terminalInput,
       coroutineScope.childScope("TerminalOutputModel"),
       scrollingModel,
+      fusCursorPaintingListener,
       withTopAndBottomInsets = true,
     )
 
@@ -261,6 +269,7 @@ internal class ReworkedTerminalView(
     terminalInput: TerminalInput,
     coroutineScope: CoroutineScope,
     scrollingModel: TerminalOutputScrollingModel?,
+    fusCursorPainterListener: TerminalFusCursorPainterListener?,
     withTopAndBottomInsets: Boolean,
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
@@ -284,7 +293,10 @@ internal class ReworkedTerminalView(
 
     TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
 
-    TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
+    val cursorPainter = TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
+    if (fusCursorPainterListener != null) {
+      cursorPainter.addListener(parentDisposable, fusCursorPainterListener)
+    }
 
     if (withTopAndBottomInsets) {
       addTopAndBottomInsets(editor)
