@@ -4,7 +4,6 @@ package com.intellij.util.indexing.contentQueue
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.ThrottledLogger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -291,14 +290,17 @@ class IndexUpdateRunner(
         return
       }
 
-      // This does not work for every language. JS, for example, expects that IDE is indexing files outside the project.
-      // See com.intellij.flex.completion.ActionScriptCompletionTest.testSOE
-      // which indexes file out/classes/production/intellij.flex/com/intellij/lang/javascript/flex/library/ECMAScript.js2
       if (doubleCheckFilesAreStillInProject && !fileIndexingRequest.isDeleteRequest) {
-        // we check workspace, not content, because content does not contain libraries
+        // WorkspaceFileIndex.getInstance(project).isInContent(file) does not contain libraries
+        // WorkspaceFileIndex.getInstance(project).isInWorkspace(file) does not contain files contributed via
+        //  indexing contributors (See com.intellij.flex.completion.ActionScriptCompletionTest.testSOE which indexes file
+        //  out/classes/production/intellij.flex/com/intellij/lang/javascript/flex/library/ECMAScript.js2)
+        // ProjectRootManager.isExcluded looks safe enough, but not exactly the same check as done by scanning.
         val excluded = readAction { ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) }
         if (excluded) {
-          LOG.debug { "File is not in workspace anymore: #${(file as VirtualFileWithId).id}" }
+          // respect user: only log file names in debug level
+          val fileDebugDetails = if (LOG.isDebugEnabled) file.name else ""
+          LOG.info("File has been excluded: $fileDebugDetails #${(file as VirtualFileWithId).id}")
           return
         }
       }
