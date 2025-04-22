@@ -130,7 +130,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
 
       if (!productLayout.productApiModules.contains("intellij.jsp.base")) {
         layout.withModule("intellij.jsp.base")
-        layout.withModule("intellij.jsp.noDeps", "app-client.jar")
       }
 
       for (moduleName in arrayOf(

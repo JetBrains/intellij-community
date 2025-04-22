@@ -555,7 +555,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/jsonpath/intellij.jsonpath.iml" filepath="$PROJECT_DIR$/plugins/jsonpath/intellij.jsonpath.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi/intellij.jsp.iml" filepath="$PROJECT_DIR$/java/jsp-openapi/intellij.jsp.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/intellij.jsp.base.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/intellij.jsp.base.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/jsp-openapi-no-deps/intellij.jsp.noDeps.iml" filepath="$PROJECT_DIR$/java/jsp-openapi-no-deps/intellij.jsp.noDeps.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/intellij.jsp.spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/intellij.jsp.spi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/intellij.junit.iml" filepath="$PROJECT_DIR$/plugins/junit/intellij.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/groovy-tests/intellij.junit.groovy.tests.iml" filepath="$PROJECT_DIR$/plugins/junit/groovy-tests/intellij.junit.groovy.tests.iml" />
