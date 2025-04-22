@@ -432,6 +432,10 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
    */
   private val myWriteIntentAcquired: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
+  /**
+   * Used to wakeup non-blocking read actions
+   */
+  private val pendingWriteActionFollowup: MutableList<Runnable> = ArrayList()
 
   override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken> {
     if (!isLockStoredInContext) {
@@ -985,6 +989,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
       myTopmostReadAction.set(currentReadState)
       if (shouldRelease) {
         fireAfterWriteActionFinished(listener, clazz)
+        drainWriteActionFollowups()
       }
     }
   }
@@ -1014,6 +1019,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     val rootWriteIntentPermit = exposedPermitData.originalWriteIntentPermit
     permit.writePermit.release()
     state.hack_setThisLevelPermit(rootWriteIntentPermit)
+    drainWriteActionFollowups()
     try {
       action()
     }
@@ -1328,11 +1334,48 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     // for now, we release only the top-level WI lock.
     // There is no evidence that this method is called in deep parallelization stacks
     state.releaseWriteIntentPermit(permit.writeIntentPermit)
+    drainWriteActionFollowups()
     try {
       return action()
     }
     finally {
       state.acquireWriteIntentPermit()
     }
+  }
+
+  /**
+   * The proof of correctness for this method should follow the path of each individual runnable.
+   * 1. The runnable can be invoked in-place if there are no write actions
+   * 2. The runnable can be invoked when the current write action finishes **if** the current write action finishes late enough to catch this update
+   * 3. The runnable can be invoked in-place if current write already finished early enough.
+   * ABA problem is irrelevant here, as the scheduled runnable will be invoked on the termination of the new write action
+   */
+  override fun runWhenWriteActionIsCompleted(action: () -> Unit) {
+    val isWriteActionDemanded = isWriteActionPendingOrRunning()
+    if (!isWriteActionDemanded) {
+      return action()
+    }
+    synchronized(pendingWriteActionFollowup) {
+      pendingWriteActionFollowup.add(action)
+    }
+    val isWriteActionDemanded2 = isWriteActionPendingOrRunning()
+    if (!isWriteActionDemanded2) {
+      drainWriteActionFollowups()
+    }
+  }
+
+  private fun drainWriteActionFollowups() {
+    val list: ArrayList<Runnable>
+    synchronized(pendingWriteActionFollowup) {
+      list = ArrayList(pendingWriteActionFollowup)
+      pendingWriteActionFollowup.clear()
+    }
+    for (runnable in list) {
+      runnable.run()
+    }
+  }
+
+  private fun isWriteActionPendingOrRunning(): Boolean {
+    return isWriteActionPending() || myWriteAcquired != null
   }
 }

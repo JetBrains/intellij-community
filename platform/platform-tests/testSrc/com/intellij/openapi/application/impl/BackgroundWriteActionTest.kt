@@ -13,6 +13,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.ui.EDT
+import io.kotest.assertions.withClue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -605,4 +606,65 @@ class BackgroundWriteActionTest {
     readAction {
     }
   }
+
+
+  @Test
+  fun `runWhenWriteActionIsCompleted executes immediately when no write action`() {
+    val executed = AtomicBoolean(false)
+
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      executed.set(true)
+    }
+
+    withClue("Action should execute immediately") {
+      assertThat(executed.get()).isTrue
+    }
+  }
+
+  @Test
+  fun `runWhenWriteActionIsCompleted is not executed when write action is running`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val executed = AtomicBoolean(false)
+
+    val job = Job(coroutineContext.job)
+    val waJob = launch {
+      backgroundWriteAction {
+        job.asCompletableFuture().join()
+      }
+    }
+    delay(100)
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      executed.set(true)
+    }
+    assertThat(executed.get()).isFalse
+    job.complete()
+    waJob.join()
+    assertThat(executed.get()).isTrue
+  }
+
+
+  @Test
+  fun `runWhenWriteActionIsCompleted is not executed when write action is pending`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val executed = AtomicBoolean(false)
+    val job = Job(coroutineContext.job)
+    launch {
+      readAction {
+        job.asCompletableFuture().join()
+      }
+    }
+    delay(50)
+    val waJob = launch {
+      backgroundWriteAction {
+      }
+    }
+    delay(50)
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
+      executed.set(true)
+    }
+    assertThat(executed.get()).isFalse
+    job.complete()
+    waJob.join()
+    assertThat(executed.get()).isTrue
+  }
+
+
 }

@@ -12,6 +12,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -1025,5 +1026,9 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   private fun throwCannotWriteException() {
     throw java.lang.IllegalStateException("Write actions are prohibited")
+  }
+
+  override fun runWhenWriteActionIsCompleted(action: () -> Unit) {
+    return SwingUtilities.invokeLater { action() }
   }
 }

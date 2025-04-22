@@ -271,4 +271,10 @@ interface ThreadingSupport {
   fun <T> releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(action: () -> T): T = action()
 
   class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
+
+  /**
+   * Defers [action] while write action is pending or in progress.
+   * [action] is guaranteed to run. It may run immediately on the current thread or after some time on an unspecified thread.
+   */
+  fun runWhenWriteActionIsCompleted(action: () -> Unit)
 }
