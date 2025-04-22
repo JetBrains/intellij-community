@@ -1098,7 +1098,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 fun loadAndInitDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val initContext = ProductPluginInitContext(buildNumberOverride = buildNumber)
   val loadingContext = DescriptorListLoadingContext(
-    getProductBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
+    getBuildNumberForDefaultDescriptorVersion = { buildNumber ?: PluginManagerCore.buildNumber },
     isMissingSubDescriptorIgnored = true,
   )
 
@@ -1165,7 +1165,7 @@ fun loadAndInitDescriptorsFromOtherIde(
     brokenPluginVersionsOverride = brokenPluginVersions,
   )
   return DescriptorListLoadingContext(
-    getProductBuildNumber = { productBuildNumber ?: PluginManagerCore.buildNumber },
+    getBuildNumberForDefaultDescriptorVersion = { productBuildNumber ?: PluginManagerCore.buildNumber },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
   ).use { loadingContext ->
@@ -1230,7 +1230,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
     getProductBuildNumber = { buildNumber },
   )
   val loadingContext = DescriptorListLoadingContext(
-    getProductBuildNumber = { buildNumber },
+    getBuildNumberForDefaultDescriptorVersion = { buildNumber },
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
   result.initAndAddAll(

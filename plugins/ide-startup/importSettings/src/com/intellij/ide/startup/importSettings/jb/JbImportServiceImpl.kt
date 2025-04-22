@@ -273,7 +273,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       PathManager.getConfigDir().parent,
       PathManager.getConfigDir().fileSystem.getPath(PathManager.getDefaultConfigPathFor("X")).parent
     )
-    val context = DescriptorListLoadingContext(getProductBuildNumber = { PluginManagerCore.buildNumber })
+    val context = DescriptorListLoadingContext(getBuildNumberForDefaultDescriptorVersion = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
       if (!parentDir.exists() || !parentDir.isDirectory()) {
         logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")

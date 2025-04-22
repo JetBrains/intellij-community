@@ -296,7 +296,7 @@ class PluginManagerTest {
       val file = Path.of(testDataPath, testDataName)
       val buildNumber = BuildNumber.fromString("2042.42")!!
       val loadingContext = DescriptorListLoadingContext(
-        getProductBuildNumber = { buildNumber }
+        getBuildNumberForDefaultDescriptorVersion = { buildNumber }
       )
       val initContext = PluginInitializationContext.build(
         disabledPlugins = emptySet(),

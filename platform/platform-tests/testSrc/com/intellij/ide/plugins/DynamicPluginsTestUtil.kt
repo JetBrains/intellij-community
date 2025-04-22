@@ -24,7 +24,7 @@ internal fun loadAndInitDescriptorInTest(
 
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val loadingContext = DescriptorListLoadingContext(
-    getProductBuildNumber = { buildNumber }
+    getBuildNumberForDefaultDescriptorVersion = { buildNumber }
   )
   val initContext = PluginInitializationContext.build(
     disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),

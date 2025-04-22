@@ -22,7 +22,7 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext(
-  private val getProductBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
+  private val getBuildNumberForDefaultDescriptorVersion: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
@@ -48,7 +48,7 @@ class DescriptorListLoadingContext(
     get() {
       var result = field
       if (result == null) {
-        result = getProductBuildNumber().asStringWithoutProductCode()
+        result = getBuildNumberForDefaultDescriptorVersion().asStringWithoutProductCode()
         field = result
       }
       return result
