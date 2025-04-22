@@ -563,7 +563,7 @@ public final class ListPluginComponent extends JPanel {
       }
       if (plugin.getProductCode() == null && myUpdateDescriptor.getProductCode() != null &&
           !plugin.isBundled() && !LicensePanel.isEA2Product(myUpdateDescriptor.getProductCode()) &&
-          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(myUpdateDescriptor.getDescriptor())) {
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(myUpdateDescriptor)) {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));
@@ -574,7 +574,7 @@ public final class ListPluginComponent extends JPanel {
         }
 
         myUpdateLicensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
-                                                   () -> myUpdateDescriptor.getDescriptor(), true,
+                                                   () -> myUpdateDescriptor, true,
                                                    true);
       }
       if (myUpdateButton == null) {

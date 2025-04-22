@@ -1086,10 +1086,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       val update = updateDescriptor
       if (update != null && update.productCode != null &&
           !LicensePanel.isEA2Product(update.productCode) &&
-          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(update)
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(PluginUiModelAdapter(update))
       ) {
         licensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
-                                           { update }, true,
+                                           { PluginUiModelAdapter(update) }, true,
                                            true)
       }
       else {
@@ -1114,7 +1114,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
       licensePanel.showBuyPluginWithText(
         message, false, false,
-        { descriptor }, false,
+        { PluginUiModelAdapter(descriptor) }, false,
         !requiresCommercialIde // if the descriptor requires a commercial IDE, we do not show the trial/price message
       )
     }
