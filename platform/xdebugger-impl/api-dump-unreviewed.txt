@@ -252,13 +252,6 @@ c:com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(com.intellij.openapi.editor.markup.GutterIconRenderer,java.lang.Object):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-a:com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
-- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- <init>():V
-- pa:doShowPopup(com.intellij.openapi.project.Project,javax.swing.JComponent,java.awt.Point,java.lang.Object):V
-- editBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.lang.Object,com.intellij.openapi.editor.markup.GutterIconRenderer):V
-- editBreakpoint(com.intellij.openapi.project.Project,javax.swing.JComponent,java.awt.Point,com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem):V
-- perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
