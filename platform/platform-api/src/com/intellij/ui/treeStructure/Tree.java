@@ -106,6 +106,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return Registry.is("ide.tree.show.expand.with.single.click.setting", true);
   }
 
+  private static boolean isCollapseRecursively() {
+    //noinspection SimplifiableConditionalExpression // no, dear inspection, using || here does NOT make the code more readable
+    return ApplicationManager.getApplication() != null // could be null, e.g. in tests
+      ? AdvancedSettings.getBoolean("ide.tree.collapse.recursively")
+      : true;
+  }
+
   public Tree() {
     this(new DefaultMutableTreeNode());
   }
@@ -119,12 +126,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     // An ugly hijacking: SmartExpander can't access advanced settings by itself, so we use the Tree constructor
     // as a convenient place to put this code somewhere where it'll be surely executed by the time it's needed.
     // We also update this setting in com.intellij.ui.tree.RecursiveExpandSettingListener.
-    //noinspection SimplifiableConditionalExpression // no, dear inspection, using || here does NOT make the code more readable
-    SmartExpander.setRecursiveCollapseEnabled(
-      ApplicationManager.getApplication() != null // could be null, e.g. in tests
-      ? AdvancedSettings.getBoolean("ide.tree.collapse.recursively")
-      : true
-    );
+    SmartExpander.setRecursiveCollapseEnabled(isCollapseRecursively());
     expandImpl = new ExpandImpl();
     myEmptyText = new StatusText(this) {
       @Override
@@ -533,7 +535,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void collapsePath(TreePath path) {
-    int row = AdvancedSettings.getBoolean("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    int row = isCollapseRecursively() ? getRowForPath(path) : -1;
     if (row < 0) {
       super.collapsePath(path);
     }
@@ -853,6 +855,16 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public boolean hasBeenExpanded(TreePath path) {
+    if (!initialized) { // Called from a super constructor.
+      // Note that this state is NOT kept after construction has finished.
+      // Keeping it would either require reflection or iterating over ALL paths,
+      // even if there are millions of them.
+      // This is because JTree doesn't have a convenient "getAllPathsThatHaveEverBeenExpanded" API.
+      // However, as this thing is barely used anywhere at all,
+      // it's OK to just consider the "has been expanded" state being reset when construction finishes.
+      // The important thing here is to ensure that this thing doesn't throw NPE if called from a super constructor.
+      return super.hasBeenExpanded(path);
+    }
     return expandImpl.hasBeenExpanded(path);
   }
 
