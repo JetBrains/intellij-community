@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentMap
+
+private val LOG = logger<FrontendXBreakpointManager>()
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -41,13 +44,19 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   init {
     cs.launch {
+      val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
       XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).collectLatest { breakpointDtos ->
         val breakpointsToRemove = breakpoints.keys - breakpointDtos.map { it.id }.toSet()
         removeBreakpoints(breakpointsToRemove)
 
         val newBreakpoints = breakpointDtos.filter { it.id !in breakpoints }
         for (breakpointDto in newBreakpoints) {
-          breakpoints[breakpointDto.id] = FrontendXBreakpointProxy(project, cs, breakpointDto, onBreakpointChange = {
+          val type = breakpointTypesManager.getTypeById(breakpointDto.typeId)
+          if (type == null) {
+            LOG.error("Breakpoint type with id ${breakpointDto.typeId} not found")
+            continue
+          }
+          breakpoints[breakpointDto.id] = FrontendXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
             breakpointsChanged.tryEmit(Unit)
           })
         }

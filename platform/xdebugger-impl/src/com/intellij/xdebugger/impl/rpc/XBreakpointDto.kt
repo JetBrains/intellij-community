@@ -3,21 +3,16 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import fleet.rpc.core.RpcFlow
@@ -38,8 +33,7 @@ data class XBreakpointDto(
   val state: RpcFlow<XBreakpointDtoState>,
   @Transient val localEditorsProvider: XDebuggerEditorsProvider? = null,
   val editorsProviderFileTypeId: String?,
-  // TODO: let's pass XBreakpointTypeId here and have a single place where all types are registered
-  val type: XBreakpointTypeDto,
+  val typeId: XBreakpointTypeId,
 )
 
 @ApiStatus.Internal
@@ -83,20 +77,6 @@ private fun CustomizedBreakpointPresentation.toRpc(): XBreakpointCustomPresentat
 
 @ApiStatus.Internal
 @Serializable
-data class XBreakpointTypeDto(
-  val id: XBreakpointTypeId,
-  val index: Int,
-  val title: String,
-  val suspendThreadSupported: Boolean,
-  val lineTypeInfo: XLineBreakpointTypeInfo?,
-  val defaultSuspendPolicy: SuspendPolicy,
-  val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
-  val customPanels: XBreakpointTypeCustomPanels,
-  val icons: XBreakpointTypeIcons,
-)
-
-@ApiStatus.Internal
-@Serializable
 data class XBreakpointTypeIcons(
   val enabledIcon: IconId,
   val disabledIcon: IconId,
@@ -125,27 +105,6 @@ enum class XBreakpointTypeSerializableStandardPanels {
   SUSPEND_POLICY, ACTIONS, DEPENDENCY
 }
 
-private fun XBreakpointType.StandardPanels.toDto(): XBreakpointTypeSerializableStandardPanels {
-  return when (this) {
-    XBreakpointType.StandardPanels.SUSPEND_POLICY -> XBreakpointTypeSerializableStandardPanels.SUSPEND_POLICY
-    XBreakpointType.StandardPanels.ACTIONS -> XBreakpointTypeSerializableStandardPanels.ACTIONS
-    XBreakpointType.StandardPanels.DEPENDENCY -> XBreakpointTypeSerializableStandardPanels.DEPENDENCY
-  }
-}
-
-@ApiStatus.Internal
-fun XBreakpointTypeSerializableStandardPanels.standardPanel(): XBreakpointType.StandardPanels {
-  return when (this) {
-    XBreakpointTypeSerializableStandardPanels.SUSPEND_POLICY -> XBreakpointType.StandardPanels.SUSPEND_POLICY
-    XBreakpointTypeSerializableStandardPanels.ACTIONS -> XBreakpointType.StandardPanels.ACTIONS
-    XBreakpointTypeSerializableStandardPanels.DEPENDENCY -> XBreakpointType.StandardPanels.DEPENDENCY
-  }
-}
-
-@ApiStatus.Internal
-@Serializable
-data class XBreakpointTypeId(val id: String)
-
 @ApiStatus.Internal
 @Serializable
 data class XLineBreakpointTypeInfo(
@@ -158,7 +117,7 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   return XBreakpointDto(
     id = breakpointId,
     initialState = getDtoState(),
-    type = type.toRpc(project),
+    typeId = XBreakpointTypeId(type.id),
     localEditorsProvider = editorsProvider,
     editorsProviderFileTypeId = editorsProvider?.fileType?.name,
     state = channelFlow {
@@ -169,46 +128,6 @@ suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   )
 }
 
-private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
-  val lineTypeInfo = if (this is XLineBreakpointType<*>) {
-    XLineBreakpointTypeInfo(priority)
-  }
-  else {
-    null
-  }
-  val index = XBreakpointType.EXTENSION_POINT_NAME.extensionList.indexOf(this)
-  val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(this)
-  val customPanels = XBreakpointTypeCustomPanels(
-    customPropertiesPanelProvider = {
-      this.createCustomPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-    },
-    customConditionsPanelProvider = {
-      this.createCustomConditionsPanel() as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-    },
-    customRightPropertiesPanelProvider = {
-      this.createCustomRightPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-    },
-    customTopPropertiesPanelProvider = {
-      this.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-    }
-  )
-  val icons = XBreakpointTypeIcons(
-    enabledIcon = enabledIcon.rpcId(),
-    disabledIcon = disabledIcon.rpcId(),
-    suspendNoneIcon = suspendNoneIcon.rpcId(),
-    mutedEnabledIcon = mutedEnabledIcon.rpcId(),
-    mutedDisabledIcon = mutedDisabledIcon.rpcId(),
-    pendingIcon = pendingIcon?.rpcId(),
-    inactiveDependentIcon = inactiveDependentIcon.rpcId(),
-    temporaryIcon = (this as? XLineBreakpointType<*>)?.temporaryIcon?.rpcId(),
-  )
-  // TODO: do we need to subscribe on [defaultState] changes?
-  return XBreakpointTypeDto(
-    XBreakpointTypeId(id), index, title, isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
-    standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
-    customPanels, icons
-  )
-}
 
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState {
   val breakpoint = this
