@@ -167,9 +167,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
     result.initAndAddAll(
       descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) },
       overrideUseIfCompatible = false,
-      productBuildNumber = buildNumber,
-      isPluginDisabled = initContext::isPluginDisabled,
-      isPluginBroken = initContext::isPluginBroken
+      initContext = initContext
     )
   }
   return result

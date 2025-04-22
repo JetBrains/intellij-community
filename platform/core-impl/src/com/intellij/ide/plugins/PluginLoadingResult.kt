@@ -70,17 +70,15 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   fun initAndAddAll(
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
     overrideUseIfCompatible: Boolean,
-    productBuildNumber: BuildNumber,
-    isPluginDisabled: (PluginId) -> Boolean,
-    isPluginBroken: (PluginId, version: String?) -> Boolean,
+    initContext: PluginInitializationContext,
   ) {
     for (descriptor in descriptors) {
       val initError = descriptor.initialize(
-        getBuildNumber = { productBuildNumber },
-        isPluginDisabled = isPluginDisabled,
-        isPluginBroken = isPluginBroken
+        getBuildNumber = initContext::productBuildNumber,
+        isPluginDisabled = initContext::isPluginDisabled,
+        isPluginBroken = initContext::isPluginBroken
       )
-      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = productBuildNumber, initError = initError)
+      add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = initContext.productBuildNumber, initError = initError)
     }
   }
 

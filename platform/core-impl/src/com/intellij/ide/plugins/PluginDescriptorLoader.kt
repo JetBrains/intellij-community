@@ -552,11 +552,9 @@ private suspend fun loadAndInitDescriptors(
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
-  loadingResult.initAndAddAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, productBuildNumber = buildNumber,
-                              isPluginDisabled = initContext::isPluginDisabled, isPluginBroken = initContext::isPluginBroken)
+  loadingResult.initAndAddAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, initContext = initContext)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, productBuildNumber = buildNumber,
-                              isPluginDisabled = initContext::isPluginDisabled, isPluginBroken = initContext::isPluginBroken)
+  loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
 
   if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
@@ -566,9 +564,7 @@ private suspend fun loadAndInitDescriptors(
         loadDescriptorsFromDir(dir = dir, loadingContext = loadingContext, isBundled = true, pool = zipPoolDeferred.await())
       }, isMainProcess),
       overrideUseIfCompatible = false,
-      productBuildNumber = buildNumber,
-      isPluginDisabled = initContext::isPluginDisabled,
-      isPluginBroken = initContext::isPluginBroken
+      initContext = initContext
     )
   }
   return loadingResult
@@ -1186,9 +1182,7 @@ fun loadAndInitDescriptorsFromOtherIde(
         )
       }, isMainProcess()),
       overrideUseIfCompatible = false,
-      productBuildNumber = initContext.productBuildNumber,
-      isPluginDisabled = initContext::isPluginDisabled,
-      isPluginBroken = initContext::isPluginBroken,
+      initContext = initContext
     )
     result
   }
@@ -1206,9 +1200,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
         isMainProcess = isMainProcess(),
       ),
       overrideUseIfCompatible = false,
-      productBuildNumber = initContext.productBuildNumber,
-      isPluginDisabled = initContext::isPluginDisabled,
-      isPluginBroken = initContext::isPluginBroken
+      initContext = initContext
     )
     result
   }
@@ -1253,9 +1245,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
       isMainProcess = isMainProcess(),
     ),
     overrideUseIfCompatible = false,
-    productBuildNumber = buildNumber,
-    isPluginDisabled = initContext::isPluginDisabled,
-    isPluginBroken = initContext::isPluginBroken
+    initContext = initContext
   )
   return result.enabledPlugins
 }

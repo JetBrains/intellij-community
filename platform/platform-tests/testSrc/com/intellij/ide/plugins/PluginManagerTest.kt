@@ -227,9 +227,12 @@ class PluginManagerTest {
       loadingResult.initAndAddAll(
         descriptors = descriptors.asSequence(),
         overrideUseIfCompatible = false,
-        productBuildNumber = BuildNumber.fromString("2042.42")!!,
-        isPluginDisabled = { false }, // TODO refactor the test
-        isPluginBroken = { _, _ -> false }
+        initContext = PluginInitializationContext.build(
+          disabledPlugins = emptySet(), // TODO refactor the test
+          expiredPlugins = emptySet(),
+          brokenPluginVersions = emptyMap(),
+          getProductBuildNumber = { BuildNumber.fromString("2042.42")!! }
+        )
       )
       Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
     }
@@ -399,9 +402,7 @@ class PluginManagerTest {
       result.initAndAddAll(
         descriptors = list.asSequence(),
         overrideUseIfCompatible = false,
-        productBuildNumber = BuildNumber.fromString("2042.42")!!,
-        isPluginDisabled = initContext::isPluginDisabled,
-        isPluginBroken = initContext::isPluginBroken
+        initContext = initContext
       )
       return PluginManagerCore.initializePlugins(
         loadingContext = loadingContext,
