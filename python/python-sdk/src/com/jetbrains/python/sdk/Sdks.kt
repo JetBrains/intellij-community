@@ -4,12 +4,18 @@ package com.jetbrains.python.sdk
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.io.Resources
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version
 import com.intellij.util.PathUtilRt
 import com.intellij.util.Url
@@ -17,6 +23,7 @@ import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.python.psi.LanguageLevel
+import org.jetbrains.annotations.ApiStatus
 import java.net.URL
 import java.nio.charset.StandardCharsets
 
@@ -170,4 +177,28 @@ object SdksKeeper {
   }
 
   private fun load() = configUrl?.let { Resources.toString(it, StandardCharsets.UTF_8) }
+}
+
+@ApiStatus.Internal
+suspend fun Sdk.setAssociationToModuleAsync(module: Module) {
+  val path = module.basePath
+  assert(path != null) { "Module $module has not paths, and can't be associated" }
+  setAssociationToPath(path)
+}
+
+@ApiStatus.Internal
+suspend fun Sdk.setAssociationToPath(path: String?) {
+  val data = getOrCreateAdditionalData().also {
+    when {
+      path != null -> it.associateWithModulePath(path)
+      else -> it.associatedModulePath = null
+    }
+  }
+
+  val modificator = sdkModificator
+  modificator.sdkAdditionalData = data
+
+  writeAction {
+    modificator.commitChanges()
+  }
 }

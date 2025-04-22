@@ -8,12 +8,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
-import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.setAssociationToModule
-import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.sdk.configurePythonSdk
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +40,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
       .getOr { return@coroutineScope it }
 
     configurePythonSdk(project, module, sdk)
-    return@coroutineScope com.jetbrains.python.Result.success(Pair(sdk, interpreterStatistics))
+    return@coroutineScope Result.success(Pair(sdk, interpreterStatistics))
   }
 
   private suspend fun getSdkAndInterpreter(module: Module): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> =

@@ -219,7 +219,7 @@ internal class PythonAddNewEnvironmentPanel(
       PROJECT_VENV -> {
         val projectPath = projectPathFlows.projectPathWithDefault.first()
         // todo just keep venv path, all the rest is in the model
-        model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), projectPath)
+        model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), projectPath, moduleOrProject)
       }
       BASE_CONDA -> model.selectCondaEnvironment(base = true).asPythonResult()
       CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -438,8 +439,12 @@ class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(pro
   val hatchExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val pipenvExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val venvPath: ObservableMutableProperty<String> = propertyGraph.property("")
-  val inheritSitePackages = propertyGraph.property(false)
-  val makeAvailable = propertyGraph.property(false)
+  val inheritSitePackages: GraphProperty<Boolean> = propertyGraph.property(false)
+
+  /**
+   * Associate SDK with particular module (if true)
+   */
+  val makeAvailableForAllProjects: GraphProperty<Boolean> = propertyGraph.property(false)
 }
 
 
