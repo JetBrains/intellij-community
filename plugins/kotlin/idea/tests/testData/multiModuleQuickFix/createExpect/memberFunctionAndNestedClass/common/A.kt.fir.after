@@ -1,0 +1,4 @@
+expect class <caret>A {
+    fun a(): M
+    class M
+}

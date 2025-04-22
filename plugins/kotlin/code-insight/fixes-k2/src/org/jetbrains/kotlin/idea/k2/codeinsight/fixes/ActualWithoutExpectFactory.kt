@@ -2,42 +2,51 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.ide.util.EditorHelper
+import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinPsiElementMemberChooserObject
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
+import org.jetbrains.kotlin.idea.base.psi.isAlwaysActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.idea.core.createFileForDeclaration
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateClassWithMembers
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.getUnResolvableInScope
-import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getTypeDescription
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtTokens.ACTUAL_KEYWORD
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -175,24 +184,30 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, KaNonPublicApi::class)
     protected fun isCorrectAndHaveAccessibleModifiers(
         declaration: KtNamedDeclaration,
         expectedFile: KtFile,
+        existingNames: Set<String>,
+        showErrorHint: Boolean
     ): Boolean {
         val inaccessibleModifier = INACCESSIBLE_MODIFIERS.find { declaration.hasModifier(it) }
         if (inaccessibleModifier != null) {
-            showInaccessibleDeclarationError(
-                declaration,
-                KotlinBundle.message("the.declaration.has.0.modifier", inaccessibleModifier)
-            )
+            if (showErrorHint) {
+                showInaccessibleDeclarationError(
+                    declaration,
+                    KotlinBundle.message("the.declaration.has.0.modifier", inaccessibleModifier)
+                )
+            }
             return false
         }
         if (declaration is KtFunction && declaration.hasBody() && declaration.containingClassOrObject?.isInterfaceClass() == true) {
-            showInaccessibleDeclarationError(
-                declaration,
-                KotlinBundle.message("the.function.declaration.shouldn.t.have.a.default.implementation")
-            )
+            if (showErrorHint) {
+                showInaccessibleDeclarationError(
+                    declaration,
+                    KotlinBundle.message("the.function.declaration.shouldn.t.have.a.default.implementation")
+                )
+            }
             return false
         }
 
@@ -213,6 +228,8 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
                     }
                     processTypeParametersOwner(declaration)
                 }
+
+                is KtParameter -> listOfNotNull(declaration.typeReference?.type)
 
                 is KtProperty -> buildList {
                     addIfNotNull(declaration.receiverTypeReference?.type)
@@ -235,19 +252,22 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
                 getUnResolvableInScope(it, expectedFile, mutableSetOf()) { classSymbol ->
                     val psi = (classSymbol.getExpectsForActual().firstOrNull() ?: classSymbol).psi
                     val useScope = psi?.useScope
-                    psi == declaration || useScope != null && expectedVirtualFile != null && useScope.contains(expectedVirtualFile)
+                    classSymbol.classId?.asSingleFqName()?.asString() in existingNames || psi == declaration || useScope != null && expectedVirtualFile != null && useScope.contains(expectedVirtualFile)
                 }
-            }.mapNotNull { (it as? KaClassType)?.classId?.shortClassName?.asString() }
+            }.mapNotNull { (it as? KaClassType)?.classId?.shortClassName?.asString() ?: (it as? KaErrorType)?.presentableText }
         }
         if (unresolvedTypes.isNotEmpty()) {
-            showInaccessibleDeclarationError(
-                declaration,
-                KotlinBundle.message(
-                    "some.types.are.not.accessible.from.0.1",
-                    module.name,
-                    unresolvedTypes.joinToString()
+            if (showErrorHint) {
+                showInaccessibleDeclarationError(
+                    declaration,
+                    KotlinBundle.message(
+                        "some.types.are.not.accessible.from.0.1",
+                        module.name,
+                        unresolvedTypes.joinToString()
+                    )
                 )
-            )
+            }
+            return false
         }
 
         return true
@@ -264,21 +284,60 @@ internal class CreateExpectedClassFix(
     targetExpectedClass: KtClassOrObject?,
     targetFile: KtFile?,
     commonModule: Module,
-) : CreateExpectedFix<KtNamedDeclaration>(declaration, targetExpectedClass, commonModule, targetFile) {
+) : CreateExpectedFix<KtClassOrObject>(declaration, targetExpectedClass, commonModule, targetFile) {
     @OptIn(KaExperimentalApi::class)
     override fun generate(
         project: Project,
         targetExpectedClass: KtClassOrObject?,
         expectedFile: KtFile,
-        declaration: KtNamedDeclaration,
-    ): KtNamedDeclaration? {
-        if (!isCorrectAndHaveAccessibleModifiers(declaration, expectedFile)) return null
+        declaration: KtClassOrObject,
+    ): KtClassOrObject? {
 
-        return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
-            val classSymbol = declaration.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
+        val klass = declaration
+        val declarationsWhichCanHaveActualModifiers = klass.collectDeclarationsForPossibleActualModifier(withSelf = false)
+        val existingClasses = findAndApplyExistingClasses(declarationsWhichCanHaveActualModifiers + klass, expectedFile)
+        if (!isCorrectAndHaveAccessibleModifiers(klass, expectedFile, existingClasses, showErrorHint = true)) return null
+
+        val (members, declarationsWithNonExistentClasses) = declarationsWhichCanHaveActualModifiers.partition {
+            isCorrectAndHaveAccessibleModifiers(it, expectedFile, existingClasses, showErrorHint = false)
+        }
+
+        if (!showUnknownTypeInDeclarationDialog(project, declarationsWithNonExistentClasses)) return null
+
+        val membersForSelection = members.filter {
+            !it.isAlwaysActual() && if (it is KtParameter) it.hasValOrVar() else true
+        }
+
+        val selectedElements = when {
+            membersForSelection.all(KtDeclaration::hasActualModifier) -> membersForSelection
+            isUnitTestMode() -> membersForSelection.filter(KtDeclaration::hasActualModifier)
+            else -> {
+                val prefix = klass.fqName?.asString()?.plus(".") ?: ""
+                chooseMembers(project, membersForSelection, prefix) ?: return null
+            }
+        }.asSequence().plus(klass).plus(members.filter(KtNamedDeclaration::isAlwaysActual)).flatMap(KtNamedDeclaration::getContainingDeclarations).toSet()
+
+        val selectedClasses = findAndApplyExistingClasses(selectedElements, expectedFile)
+        val resultDeclarations = if (selectedClasses != existingClasses) {
+            if (!isCorrectAndHaveAccessibleModifiers(klass, expectedFile, selectedClasses, showErrorHint = true)) return null
+
+            val (resultDeclarations, withErrors) = selectedElements.partition {
+                isCorrectAndHaveAccessibleModifiers(it, expectedFile, selectedClasses, showErrorHint = false)
+            }
+            if (!showUnknownTypeInDeclarationDialog(project, withErrors)) return null
+            resultDeclarations
+        } else
+            selectedElements
+
+        project.executeWriteCommand(KotlinBundle.message("repair.actual.members")) {
+            repairActualModifiers(declarationsWhichCanHaveActualModifiers + klass, resultDeclarations)
+        }
+
+        return analyzeInModalWindow(klass, KotlinBundle.message("fix.change.signature.prepare")) {
+            val classSymbol = klass.symbol as? KaClassSymbol ?: return@analyzeInModalWindow null
 
             generateClassWithMembers(
-                project = declaration.project,
+                project = klass.project,
                 ktClassMember = null,
                 symbol = classSymbol,
                 targetClass = targetExpectedClass,
@@ -286,7 +345,131 @@ internal class CreateExpectedClassFix(
             )
         }
     }
+
+    /***
+     * @return null if close without OK
+     */
+    private fun chooseMembers(project: Project, collection: Collection<KtNamedDeclaration>, prefixToRemove: String): List<KtNamedDeclaration>? {
+        val classMembers = analyzeInModalWindow(collection.first(), KotlinBundle.message("fix.change.signature.prepare")) {
+            collection.map {
+                KotlinPsiElementMemberChooserObject.getKotlinMemberChooserObject(it)
+            }
+        }
+        val filter = if (collection.any(KtDeclaration::hasActualModifier)) {
+            { declaration: KtDeclaration -> declaration.hasActualModifier() }
+        } else {
+            { true }
+        }
+        return MemberChooser(
+            classMembers.toTypedArray(),
+            true,
+            true,
+            project
+        ).run {
+            title = KotlinBundle.message("choose.actual.members.title")
+            setCopyJavadocVisible(false)
+            selectElements(classMembers.filter { filter((it.element as KtNamedDeclaration)) }.toTypedArray())
+            show()
+            if (!isOK) null else selectedElements?.map { it.element as KtNamedDeclaration }.orEmpty()
+        }
+    }
+
+    private fun repairActualModifiers(
+        originalElements: Collection<KtNamedDeclaration>,
+        selectedElements: Collection<KtNamedDeclaration>
+    ) {
+        if (originalElements.size == selectedElements.size) {
+            for (original in originalElements) {
+                original.makeActualWithParents()
+            }
+        } else {
+            for (original in originalElements) {
+                if (original in selectedElements)
+                    original.makeActualWithParents()
+                else {
+                    original.removeModifier(ACTUAL_KEYWORD)
+                }
+            }
+        }
+    }
+
+    private fun showUnknownTypeInDeclarationDialog(
+        project: Project,
+        declarationsWithNonExistentClasses: Collection<KtNamedDeclaration>
+    ): Boolean {
+        if (declarationsWithNonExistentClasses.isEmpty()) return true
+        @NlsSafe
+        val message = StringUtil.escapeXmlEntities(
+            declarationsWithNonExistentClasses.joinToString(
+                prefix = "${KotlinBundle.message("these.declarations.cannot.be.transformed")}\n",
+                separator = "\n",
+                transform = ::getExpressionShortText
+            )
+        )
+
+        ExpectActualUtils.testLog?.append("$message\n")
+        return isUnitTestMode() || showOkNoDialog(
+            KotlinBundle.message("unknown.types.title"),
+            message,
+            project
+        )
+    }
+
+    private fun KtClassOrObject.collectDeclarationsForPossibleActualModifier(withSelf: Boolean = true): List<KtNamedDeclaration> {
+        val primaryConstructorSequence: List<KtNamedDeclaration> =  primaryConstructor.let {
+            if (it != null) it.valueParameterList?.parameters.orEmpty() + listOf(it) else emptyList()
+        }
+
+        return (if (withSelf) listOf(this) else emptyList()) + primaryConstructorSequence + declarations.flatMap {
+            if (it.canAddActualModifier())
+                when (it) {
+                    is KtClassOrObject -> it.collectDeclarationsForPossibleActualModifier()
+                    is KtNamedDeclaration -> listOf(it)
+                    else -> emptyList()
+                }
+            else {
+                emptyList()
+            }
+        }
+    }
+
+    private fun KtDeclaration.canAddActualModifier() = when (this) {
+        is KtEnumEntry, is KtClassInitializer -> false
+        is KtParameter -> hasValOrVar()
+        else -> true
+    }
+
+
+    private tailrec fun KtDeclaration.makeActualWithParents() {
+        addModifier(ACTUAL_KEYWORD)
+        containingClassOrObject?.takeUnless(KtDeclaration::hasActualModifier)?.makeActualWithParents()
+    }
+
+    fun findAndApplyExistingClasses(elements: Collection<KtNamedDeclaration>, expectedFile: KtFile): Set<String> {
+
+        var existingTypeNames = mutableSetOf<String>()
+        var classes = elements.filterIsInstance<KtClassOrObject>()
+        while (classes.isNotEmpty()) {
+            val existingNames = classes.mapNotNull { it.fqName?.asString() }.toHashSet()
+            existingTypeNames = existingNames
+
+            val newExistingClasses = classes.filter { isCorrectAndHaveAccessibleModifiers(it, expectedFile, existingNames, showErrorHint = false) }
+            if (classes.size == newExistingClasses.size) return existingNames
+
+            classes = newExistingClasses
+        }
+
+        return existingTypeNames
+    }
 }
+
+private fun KtNamedDeclaration.getContainingDeclarations(): Set<KtNamedDeclaration> {
+    val additionalElements = ((this as? KtParameter)?.parent?.parent as? KtPrimaryConstructor)?.let {
+        setOf(it)
+    } ?: emptySet()
+    return setOf(this) + additionalElements + containingClassOrObject?.getContainingDeclarations().orEmpty()
+}
+
 
 internal class CreateExpectedCallableMemberFix(
     declaration: KtCallableDeclaration,
@@ -301,7 +484,7 @@ internal class CreateExpectedCallableMemberFix(
         expectedFile: KtFile,
         declaration: KtNamedDeclaration,
     ): KtNamedDeclaration? {
-        if (!isCorrectAndHaveAccessibleModifiers(declaration, expectedFile)) return null
+        if (!isCorrectAndHaveAccessibleModifiers(declaration, expectedFile, emptySet(), showErrorHint = true)) return null
 
         return analyzeInModalWindow(declaration, KotlinBundle.message("fix.change.signature.prepare")) {
             val callableSymbol = declaration.symbol as? KaCallableSymbol ?: return@analyzeInModalWindow null
