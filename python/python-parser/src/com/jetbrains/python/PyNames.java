@@ -321,7 +321,7 @@ public final @NonNls class PyNames {
     Map.entry("__contains__", _self_item_descr),
     Map.entry("__copy__", _only_self_descr),
       //_BuiltinMethodsMap.entry("__debug__", _only_self_descr);
-    Map.entry("__deepcopy__", new BuiltinDescription("(self, memodict={})")),
+    Map.entry("__deepcopy__", new BuiltinDescription("(self, memo)")),
     Map.entry("__del__", _only_self_descr),
     Map.entry("__delete__", new BuiltinDescription("(self, instance)")),
     Map.entry("__delattr__", _self_item_descr),
