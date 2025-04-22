@@ -22,6 +22,7 @@ class SeTargetItemPresentationRenderer {
     presentation.icon?.let { icon(it) }
 
     text(presentation.presentableText) {
+      presentation.presentableTextFgColor?.let { foreground = it }
       if (selected) {
         speedSearch {
           ranges = presentation.presentableTextMatchedRanges?.map { it.textRange }

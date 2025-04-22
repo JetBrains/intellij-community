@@ -80,6 +80,7 @@ class SeTargetItemPresentation(
   private val iconId: IconId?,
   val presentableText: @Nls String,
   val presentableTextMatchedRanges: List<SerializableRange>?,
+  private val presentableTextFgColorId: ColorId?,
   val containerText: @Nls String?,
   val containerTextMatchedRanges: List<SerializableRange>?,
   val locationText: @Nls String?,
@@ -90,6 +91,7 @@ class SeTargetItemPresentation(
   val backgroundColor: Color? get() = backgroundColorId?.color()
   val icon: Icon? get() = iconId?.icon()
   val locationIcon: Icon? get() = locationIconId?.icon()
+  val presentableTextFgColor: Color? get() = presentableTextFgColorId?.color()
 
   @Serializable
   data class SerializableRange(val start: Int, val end: Int) {
@@ -104,6 +106,7 @@ class SeTargetItemPresentation(
                                iconId = tp.icon?.rpcId(),
                                presentableText = tp.presentableText,
                                presentableTextMatchedRanges = matchers?.calcMatchedRanges(tp.presentableText),
+                               presentableTextFgColorId = tp.presentableTextAttributes?.foregroundColor?.rpcId(),
                                containerText = tp.containerText,
                                containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
