@@ -16,7 +16,7 @@ ${IdeBundle.message("gdpr.ai.data.collection.consent.additional.notice.1")}
 ${IdeBundle.message("gdpr.ai.data.collection.consent.additional.notice.2")}"""
 
   override fun getForcedState(): ConsentForcedState? {
-    val externalSettings = AiDataCollectionExternalSettings.findFirstDevelopedByJetBrains()
+    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
     if (externalSettings != null && externalSettings.isForciblyDisabled()) {
       val description = externalSettings.getForciblyDisabledDescription()
                         ?: IdeBundle.message("gdpr.consent.externally.disabled.warning")
@@ -31,8 +31,14 @@ interface AiDataCollectionExternalSettings {
     val EP_NAME: ExtensionPointName<AiDataCollectionExternalSettings> =
       ExtensionPointName.create("com.intellij.aiDataCollectionExternalSettings")
 
-    fun findFirstDevelopedByJetBrains(): AiDataCollectionExternalSettings? =
-      EP_NAME.findFirstSafe { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }
+    private const val AI_ASSISTANT_PLUGIN_ID = "com.intellij.ml.llm"
+
+    fun findSettingsImplementedByAiAssistant(): AiDataCollectionExternalSettings? {
+      return EP_NAME.findFirstSafe {
+        val pluginInfo = getPluginInfo(it.javaClass)
+        pluginInfo.isDevelopedByJetBrains() && pluginInfo.id == AI_ASSISTANT_PLUGIN_ID
+      }
+    }
   }
 
   fun isForciblyDisabled(): Boolean
