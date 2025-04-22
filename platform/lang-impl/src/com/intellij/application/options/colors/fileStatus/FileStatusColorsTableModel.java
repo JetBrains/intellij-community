@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class FileStatusColorsTableModel extends AbstractTableModel {
   private final EditorColorsScheme myScheme;
   private final List<FileStatusColorDescriptor> myDescriptors;
@@ -80,9 +82,20 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
-  public void resetToDefault(int rowIndex) {
-    myDescriptors.get(rowIndex).resetToDefault();
-    fireTableCellUpdated(rowIndex, 1);
+  public void resetToDefault(@NotNull FileStatusColorDescriptor descriptor) {
+    int row = myDescriptors.indexOf(descriptor);
+    if (row == -1) return;
+
+    descriptor.resetToDefault();
+    fireTableCellUpdated(row, 1);
+  }
+
+  public void setColorFor(@NotNull FileStatusColorDescriptor descriptor, @Nullable Color color) {
+    int row = myDescriptors.indexOf(descriptor);
+    if (row == -1) return;
+
+    descriptor.setColor(color);
+    fireTableCellUpdated(row, 1);
   }
 
   @Nullable FileStatusColorDescriptor getDescriptorByName(String statusName) {

@@ -3,11 +3,11 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.ui.DocumentAdapter
@@ -186,4 +186,20 @@ class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : Co
   }
 
   override fun invoke(): Boolean = AdvancedSettings.getBoolean(id)
+}
+
+class ValueComponentPredicate(initialValue: Boolean) : ComponentPredicate() {
+  private var listeners: MutableList<(Boolean) -> Unit> = mutableListOf()
+  private var value = initialValue
+
+  fun set(value: Boolean) {
+    this.value = value
+    listeners.forEach { it(value) }
+  }
+
+  override fun addListener(listener: (Boolean) -> Unit) {
+    listeners += listener
+  }
+
+  override fun invoke(): Boolean = value
 }

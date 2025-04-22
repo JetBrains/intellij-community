@@ -7,6 +7,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -18,7 +19,7 @@ import java.awt.*;
 @ApiStatus.Internal
 public final class FileStatusColorsTable extends JBTable {
 
-  public FileStatusColorsTable() {
+  public FileStatusColorsTable(@NotNull FileStatusColorsTableModel model) {
     setShowGrid(false);
     setIntercellSpacing(new Dimension(0,0));
     getColumnModel().setColumnSelectionAllowed(false);
@@ -27,9 +28,18 @@ public final class FileStatusColorsTable extends JBTable {
     setDefaultRenderer(Boolean.class, new MyDefaultStatusRenderer());
     setTableHeader(null);
     setRowHeight(JBUIScale.scale(22));
+
+    setModel(model);
+    adjustColumnWidths();
+    model.addTableModelListener(this);
   }
 
-  public void adjustColumnWidths() {
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    return new Dimension(JBUIScale.scale(250), getPreferredSize().height);
+  }
+
+  private void adjustColumnWidths() {
     for (int col = 0; col < getColumnCount(); col++) {
       DefaultTableColumnModel colModel = (DefaultTableColumnModel) getColumnModel();
       TableColumn column = colModel.getColumn(col);

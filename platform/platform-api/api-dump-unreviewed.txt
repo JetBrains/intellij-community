@@ -8680,6 +8680,12 @@ f:com.intellij.ui.layout.ComponentPredicateKt
 - sf:or(com.intellij.ui.layout.ComponentPredicate,com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueIs(javax.swing.JComboBox,java.lang.Object):com.intellij.ui.layout.ComponentPredicate
 - sf:selectedValueMatches(javax.swing.JComboBox,kotlin.jvm.functions.Function1):com.intellij.ui.layout.ComponentPredicate
+f:com.intellij.ui.layout.ValueComponentPredicate
+- com.intellij.ui.layout.ComponentPredicate
+- <init>(Z):V
+- addListener(kotlin.jvm.functions.Function1):V
+- invoke():java.lang.Boolean
+- f:set(Z):V
 f:com.intellij.ui.mac.touchbar.Touchbar
 - <init>():V
 - s:addActions(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup):V
