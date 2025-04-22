@@ -14,6 +14,7 @@ import com.intellij.util.text.splitToTextRanges
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceLanguageParsingSupport.Companion.parseToHighlightedHtml
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.textRange
 import org.intellij.plugins.markdown.settings.MarkdownSettings
@@ -23,10 +24,8 @@ import java.awt.Color
 import kotlin.math.max
 import kotlin.math.min
 
-var codeFenceId: Long = 0
-
 private fun parseContent(project: Project?, language: Language, text: String, languageName: String?,
-                         collector: (String, IntRange, Color?, Long?) -> Unit) {
+                         startOffset: Int?, collector: (String, IntRange, Color?, String?) -> Unit) {
   val file = LightVirtualFile("markdown_temp", text)
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
   val ecm = EditorColorsManager.getInstance()
@@ -43,24 +42,16 @@ private fun parseContent(project: Project?, language: Language, text: String, la
   }
 
   if (settings.useAlternativeHighlighting) {
-    // val lang = if (language == Language.ANY) (languageName ?: "") else language.id.lowercase()
-    val lines = text.split(Regex("\r\n|\r|\n")).map { it + '\n' }
-    var offset = 0
+    val lang = if (language == Language.ANY) (languageName ?: "") else language.id.lowercase()
+    val html = parseToHighlightedHtml(lang, text, startOffset ?: 0)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
 
-    if (lines.lastOrNull()?.trim()?.isEmpty() == true) {
-      lines.dropLast(1)
+    if (html.isNullOrEmpty() && language == Language.ANY) {
+      return
     }
-
-    ++codeFenceId
-
-    for (i in lines.indices) {
-      val line = lines[i]
-
-      collector(line, offset..offset + line.length, null, if (i == 0) codeFenceId else null)
-      offset += line.length
+    else if (html?.isNotEmpty() == true) {
+      collector(text, 0..text.length, null, html)
+      return
     }
-
-    return
   }
 
   val psiFile = PsiFileFactory.getInstance(project).createFileFromText(file.name, language, text)
@@ -80,10 +71,10 @@ private fun parseContent(project: Project?, language: Language, text: String, la
 }
 
 private inline fun collectHighlights(language: Language, text: String, project: Project? = null, languageName: String? = null,
-                                     crossinline consumer: (String, IntRange, Color?, Long?) -> Unit) {
-  parseContent(project, language, text, languageName) { content, range, color, id ->
-    if (color != null || id != null) {
-      consumer.invoke(content, range, color, id)
+                                     startOffset: Int? = 0, crossinline consumer: (String, IntRange, Color?, String?) -> Unit) {
+  parseContent(project, language, text, languageName, startOffset) { content, range, color, html ->
+    if (color != null || html != null) {
+      consumer.invoke(content, range, color, html)
     }
   }
 }
@@ -91,16 +82,17 @@ private inline fun collectHighlights(language: Language, text: String, project: 
 internal data class HighlightedRange(
   val range: TextRange,
   val color: Color? = null,
-  val id: Long? = null,
+  val html: String? = null
 ): Comparable<HighlightedRange> {
   override fun compareTo(other: HighlightedRange): Int {
     return TextRangeUtil.RANGE_COMPARATOR.compare(range, other.range)
   }
 }
 
-internal fun collectHighlightedChunks(language: Language, text: String, project: Project?, languageName: String): List<HighlightedRange> {
+internal fun collectHighlightedChunks(language: Language, text: String, project: Project?,
+                                      languageName: String, startOffset: Int): List<HighlightedRange> {
   return buildList {
-    collectHighlights(language, text, project, languageName) { _, range, color, id ->
+    collectHighlights(language, text, project, languageName, startOffset) { _, range, color, id ->
       add(HighlightedRange(TextRange(range.first, range.last), color, id))
     }
   }
@@ -158,7 +150,7 @@ private fun processLines(
 
     var left = lineRange.startOffset
 
-    for ((range, color, id) in ranges) {
+    for ((range, color) in ranges) {
       val start = max(left, range.startOffset)
       val end = min(lineRange.endOffset, range.endOffset)
 
@@ -171,7 +163,7 @@ private fun processLines(
       if (end - start > 0) {
         val range = TextRange(start, end)
         if (!range.isEmpty()) {
-          val span = createSpan(range.shiftRight(contentOffset), range.substring(text), color, id)
+          val span = createSpan(range.shiftRight(contentOffset), range.substring(text), color)
           builder.appendChunk(span)
         }
       }
@@ -202,20 +194,14 @@ private fun encodeEntities(text: String): String {
   return text.replace(Regex("""([&><"])""")) { match -> replacements[match.groupValues[1][0]].orEmpty() }
 }
 
-private fun createSpan(range: TextRange, text: String = "", color: Color? = null, id: Long? = null): HtmlChunk {
+private fun createSpan(range: TextRange, text: String = "", color: Color? = null): HtmlChunk {
   var span = HtmlChunk.span().sourceRange(range)
 
-  if (text.isEmpty() && color == null && id == null) {
+  if (text.isEmpty() && color == null) {
     return span
   }
 
-  span = span.addRaw(encodeEntities(text)).color(color)
-
-  if (id != null) {
-    span = span.attr("id", "cfid-$id").setClass("cfid")
-  }
-
-  return span
+  return span.addRaw(encodeEntities(text)).color(color)
 }
 
 private fun StringBuilder.appendChunk(chunk: HtmlChunk): StringBuilder {
