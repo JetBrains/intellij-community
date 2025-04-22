@@ -10,8 +10,10 @@ import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class LocalPluginManagerController(private val localPluginModel: MyPluginModel) : PluginManagerController {
   override fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {
     return MyPluginModel.isInstallingOrUpdate(model.pluginId)

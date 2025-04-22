@@ -9,10 +9,12 @@ import com.intellij.ide.plugins.newui.NewUiUtil
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfoRt
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A temporary class used to eliminate "runtime" PluginDescriptor usages in the UI. It will later be replaced with frontend and backend implementations.
  */
+@ApiStatus.Internal
 class PluginUiModelAdapter(
   val pluginDescriptor: IdeaPluginDescriptor,
 ) : PluginUiModel {

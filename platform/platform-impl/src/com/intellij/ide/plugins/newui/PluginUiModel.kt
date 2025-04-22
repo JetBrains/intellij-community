@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.Locale
 
@@ -12,6 +13,7 @@ import java.util.Locale
  * A lightweight model for representing plugin information in the UI.
  * This interface contains only the subset of plugin metadata needed for display purposes.
  */
+@ApiStatus.Internal
 interface PluginUiModel {
   val pluginId: PluginId
 
@@ -71,11 +73,13 @@ interface PluginUiModel {
   }
 }
 
+@ApiStatus.Internal
 fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
   if (this is PluginUiModelAdapter) return pluginDescriptor
   throw IllegalStateException("PluginUiModelAdapter expected")
 }
 
+@ApiStatus.Internal
 enum class PluginSource {
   LOCAL, REMOTE
 }
@@ -83,6 +87,7 @@ enum class PluginSource {
 /**
  * Represents a plugin dependency in the UI model
  */
+@ApiStatus.Internal
 data class PluginDependencyModel(
   val pluginId: PluginId,
   val isOptional: Boolean
@@ -92,6 +97,7 @@ private val K_FORMAT = DecimalFormat("###.#K")
 private val M_FORMAT = DecimalFormat("###.#M")
 
 @NlsSafe
+@ApiStatus.Internal
 fun PluginUiModel.presentableRating(): String? {
   val rating = this.rating ?: return null
   if (rating.isBlank()) return null
@@ -105,6 +111,7 @@ fun PluginUiModel.presentableRating(): String? {
 }
 
 @NlsSafe
+@ApiStatus.Internal
 fun PluginUiModel.presentableDownloads(): String? {
   val downloads = this.downloads ?: return null
   if (downloads.isBlank()) return null
@@ -122,6 +129,7 @@ fun PluginUiModel.presentableDownloads(): String? {
 }
 
 @NlsSafe
+@ApiStatus.Internal
 fun PluginUiModel.presentableSize(): String? {
   val size = this.size ?: return null
   if (size.isBlank()) return null

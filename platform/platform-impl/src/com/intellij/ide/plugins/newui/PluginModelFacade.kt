@@ -6,11 +6,13 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
+import org.jetbrains.annotations.ApiStatus
 
 /*
  * A service that executes operations on plugins, depending on the source of the plugin.
  * If it is local, the operation will be executed locally; otherwise, it will be executed on the server using an RPC call.
  */
+@ApiStatus.Internal
 class PluginModelFacade(private val pluginModel: MyPluginModel) {
   private val localController = LocalPluginManagerController(pluginModel)
 
@@ -120,6 +122,7 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 }
 
+@ApiStatus.Internal
 interface PluginManagerController {
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean
   fun getState(model: PluginUiModel): PluginEnabledState
