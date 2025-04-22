@@ -1367,12 +1367,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     private @Nullable CachedPresentationImpl cachedPresentation;
 
     private ExpandImpl() {
-      // Mimic what setModel() does when called from the super() constructor:
-      // if there's a model, it's not empty and the root is not a leaf, expand it.
-      var model = getModel();
       var rootPath = getRootPath();
-      if (model != null && rootPath != null && !model.isLeaf(rootPath.getLastPathComponent())) {
-        expandedState.put(rootPath, true);
+      if (rootPath != null) {
         // Additionally, expand everything that was already expanded by base class constructors.
         var expanded = Tree.super.getExpandedDescendants(rootPath);
         if (expanded != null) {

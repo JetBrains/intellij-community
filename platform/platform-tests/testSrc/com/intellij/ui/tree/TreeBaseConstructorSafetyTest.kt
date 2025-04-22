@@ -39,6 +39,25 @@ class TreeBaseConstructorSafetyTest {
   }
 
   @Test
+  fun `if the root is collapsed in setModel, it remains collapsed`() {
+    sut = object : Tree(createModel("""
+      root
+        node1
+          leaf11
+          leaf12
+        leaf2
+    """.trimIndent())) {
+      override fun setModel(newModel: TreeModel?) {
+        super.setModel(newModel)
+        setExpandedState(path("root"), false)
+      }
+    }
+    assertTreeStructure("""
+      +root
+    """.trimIndent())
+  }
+
+  @Test
   fun `calling setExpandedState from setModel is safe, and the updated state is kept`() {
     sut = object : Tree(createModel("""
       root
