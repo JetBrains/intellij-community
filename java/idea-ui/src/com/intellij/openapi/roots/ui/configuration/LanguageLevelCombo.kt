@@ -29,8 +29,8 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val items = mutableListOf<Any>()
     items.add(defaultItem ?: "")
 
-    val highestPreviewLevel = LanguageLevel.HIGHEST.getPreviewLevel()
-    val highestWithPreview = highestPreviewLevel ?: LanguageLevel.HIGHEST
+    val highestLanguageLevel = AcceptedLanguageLevelsSettings.getHighest()
+    val highestWithPreview = highestLanguageLevel.getPreviewLevel() ?: highestLanguageLevel
 
     fun MutableList<Any>.filterAndAdd(levels: Collection<LanguageLevel>) = levels.filter(levelFilter).also { addAll(it) }
 

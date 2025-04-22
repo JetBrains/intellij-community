@@ -324,6 +324,9 @@
     <registryKey key="java.test.enable.tree.live.time" defaultValue="true"
                  description="Enable live time for tests" restartRequired="true"/>
 
+    <registryKey key="java.highest.language.level" defaultValue="24"
+                 description="Highest released language level" restartRequired="false"/>
+
     <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true"
                  description="Index ids from class files instead of source files in JARs" restartRequired="false"/>
 
