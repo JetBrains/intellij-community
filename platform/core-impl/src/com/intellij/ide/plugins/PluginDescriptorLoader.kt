@@ -138,8 +138,9 @@ fun loadDescriptorFromJar(
   pluginDir: Path? = null,
   id: PluginId? = null,
 ): IdeaPluginDescriptorImpl? {
-  val resolver = pool.load(file)
+  var resolver: ZipEntryResolverPool.EntryResolver? = null
   try {
+    resolver = pool.load(file)
     val dataLoader = ImmutableZipFileDataLoader(resolver, zipPath = file)
     val input = dataLoader.load(descriptorRelativePath, pluginDescriptorSourceOnly = true) ?: return null
     val descriptor = loadDescriptorFromStream(
@@ -165,7 +166,7 @@ fun loadDescriptorFromJar(
     loadingContext.reportCannotLoad(file, e)
   }
   finally {
-    resolver.close()
+    resolver?.close()
   }
   return null
 }
