@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeMark
@@ -21,6 +22,7 @@ import kotlin.time.TimeMark
 internal class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
+  startupFusInfo: TerminalStartupFusInfo?,
   coroutineScope: CoroutineScope,
 ) {
   companion object {
@@ -45,6 +47,10 @@ internal class TerminalInput(
   init {
     val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
+
+      if (startupFusInfo != null) {
+        reportTypingAbilityLatency(startupFusInfo)
+      }
 
       try {
         for (submission in bufferChannel) {
@@ -126,6 +132,12 @@ internal class TerminalInput(
     else if (result.isFailure) {
       LOG.error("Failed to send input event: $event", result.exceptionOrNull())
     }
+  }
+
+  private fun reportTypingAbilityLatency(startupFusInfo: TerminalStartupFusInfo) {
+    val latency = startupFusInfo.triggerTime.elapsedNow()
+    ReworkedTerminalUsageCollector.logStartupTypingAbilityLatency(startupFusInfo.way, latency)
+    LOG.info("Reworked terminal startup typing ability latency: ${latency.inWholeMilliseconds} ms")
   }
 
   private data class InputEventSubmission(
