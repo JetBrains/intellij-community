@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class GradleReflectionUtil {
@@ -18,6 +19,57 @@ public final class GradleReflectionUtil {
     }
   }
 
+  private static @NotNull Method getMethod(
+    @NotNull Class<?> receiverParameterType,
+    @NotNull String methodName,
+    @NotNull Class<?> @NotNull ... parameterTypes
+  ) {
+    try {
+      return receiverParameterType.getMethod(methodName, parameterTypes);
+    }
+    catch (NoSuchMethodException | SecurityException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static Object invokeMethod(
+    @NotNull Method method,
+    Object receiverArgument,
+    Object... arguments
+  ) {
+    try {
+      return method.invoke(receiverArgument, arguments);
+    }
+    catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <T> T getValue(
+    @NotNull Object receiver,
+    @NotNull String getterName,
+    @NotNull Class<T> valueClass
+  ) {
+    Method method = getMethod(receiver.getClass(), getterName);
+    Object value = invokeMethod(method, receiver);
+    return valueClass.cast(value);
+  }
+
+  public static <T> void setValue(
+    @NotNull Object receiver,
+    @NotNull String setterName,
+    @NotNull Class<T> valueClass,
+    T value
+  ) {
+    Method method = getMethod(receiver.getClass(), setterName, valueClass);
+    invokeMethod(method, receiver, value);
+  }
+
+  /**
+   * @deprecated use {@link GradleReflectionUtil#getValue} instead.
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static <T> T reflectiveCall(@NotNull Object target, @NotNull String methodName, @NotNull Class<T> aClass) {
     try {
       Method method = target.getClass().getMethod(methodName);
