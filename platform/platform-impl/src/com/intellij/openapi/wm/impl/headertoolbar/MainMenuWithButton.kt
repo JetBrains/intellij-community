@@ -23,6 +23,8 @@ import com.intellij.ui.util.width
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.*
 import javax.swing.event.ChangeEvent
@@ -168,15 +170,21 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBa
     isOpaque = false
     isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
     border = null
-    JBUIScale.addUserScaleChangeListener {
-      val oldScale = it.oldValue as? Float ?: return@addUserScaleChangeListener
-      val newScale = it.newValue as? Float ?: return@addUserScaleChangeListener
-      if (oldScale == newScale || invisibleItems.isEmpty()) return@addUserScaleChangeListener
-      invisibleItems.forEach {
-        (name, itemToWidth) ->
-        val width = (itemToWidth.second / oldScale * newScale).roundToInt()
-        invisibleItems.put(name, Pair(itemToWidth.first, width))
-      } }
+    val userScaleListener = object : PropertyChangeListener {
+      override fun propertyChange(evt: PropertyChangeEvent) {
+        val oldScale = evt.oldValue as? Float ?: return
+        val newScale = evt.newValue as? Float ?: return
+        if (oldScale == newScale || invisibleItems.isEmpty()) return
+        invisibleItems.forEach { (name, itemToWidth) ->
+          val width = (itemToWidth.second / oldScale * newScale).roundToInt()
+          invisibleItems.put(name, Pair(itemToWidth.first, width))
+        }
+      }
+    }
+    JBUIScale.addUserScaleChangeListener(userScaleListener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      JBUIScale.removeUserScaleChangeListener(userScaleListener)
+    }
   }
 
   fun addInvisibleItem(item: ActionMenu) {
