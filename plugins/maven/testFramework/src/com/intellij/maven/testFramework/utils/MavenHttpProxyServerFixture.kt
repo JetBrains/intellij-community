@@ -22,7 +22,6 @@ import kotlin.jvm.optionals.getOrDefault
 
 class MavenHttpProxyServerFixture(
   val portMap: Map<String, Int>,
-  val port: Int,
   val executor: Executor,
 ) : IdeaTestFixture {
   private lateinit var myClient: HttpClient
@@ -31,10 +30,12 @@ class MavenHttpProxyServerFixture(
 
   private var proxyUsername: String? = null
   private var proxyPassword: String? = null
-  val requestedFiles = ArrayList<String>()
+  val requestedFiles: ArrayList<String> = ArrayList<String>()
+  val port: Int
+    get() = serverSocket.localPort
 
   override fun setUp() {
-    serverSocket = ServerSocket(port);
+    serverSocket = ServerSocket(0);
 
     myClient = HttpClient.newBuilder()
       .version(HttpClient.Version.HTTP_1_1)
@@ -57,7 +58,8 @@ class MavenHttpProxyServerFixture(
       val socket = serverSocket.accept()
       executor.execute { process(socket) }
     }
-    catch (ignore : SocketException){}
+    catch (ignore: SocketException) {
+    }
     catch (e: IOException) {
       MavenLog.LOG.warn(e)
     }
