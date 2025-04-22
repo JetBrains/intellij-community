@@ -856,13 +856,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public boolean hasBeenExpanded(TreePath path) {
     if (!initialized) { // Called from a super constructor.
-      // Note that this state is NOT kept after construction has finished.
-      // Keeping it would either require reflection or iterating over ALL paths,
-      // even if there are millions of them.
-      // This is because JTree doesn't have a convenient "getAllPathsThatHaveEverBeenExpanded" API.
-      // However, as this thing is barely used anywhere at all,
-      // it's OK to just consider the "has been expanded" state being reset when construction finishes.
-      // The important thing here is to ensure that this thing doesn't throw NPE if called from a super constructor.
       return super.hasBeenExpanded(path);
     }
     return expandImpl.hasBeenExpanded(path);
@@ -1370,11 +1363,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       var rootPath = getRootPath();
       if (rootPath != null) {
         // Additionally, expand everything that was already expanded by base class constructors.
-        var expanded = Tree.super.getExpandedDescendants(rootPath);
-        if (expanded != null) {
-          while (expanded.hasMoreElements()) {
-            var expandedPath = expanded.nextElement();
-            expandedState.put(expandedPath, true);
+        var toggled = Tree.super.getDescendantToggledPaths(rootPath);
+        if (toggled != null) {
+          while (toggled.hasMoreElements()) {
+            var toggledPath = toggled.nextElement();
+            // Put it regardless of whether it's true or false, because a non-null value is needed for hasBeenExpanded().
+            expandedState.put(toggledPath, Tree.super.isExpanded(toggledPath));
           }
         }
       }
