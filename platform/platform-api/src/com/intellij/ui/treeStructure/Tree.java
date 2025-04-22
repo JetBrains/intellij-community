@@ -119,7 +119,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     // An ugly hijacking: SmartExpander can't access advanced settings by itself, so we use the Tree constructor
     // as a convenient place to put this code somewhere where it'll be surely executed by the time it's needed.
     // We also update this setting in com.intellij.ui.tree.RecursiveExpandSettingListener.
-    SmartExpander.setRecursiveCollapseEnabled(AdvancedSettings.getBoolean("ide.tree.collapse.recursively"));
+    //noinspection SimplifiableConditionalExpression // no, dear inspection, using || here does NOT make the code more readable
+    SmartExpander.setRecursiveCollapseEnabled(
+      ApplicationManager.getApplication() != null // could be null, e.g. in tests
+      ? AdvancedSettings.getBoolean("ide.tree.collapse.recursively")
+      : true
+    );
     expandImpl = new ExpandImpl();
     myEmptyText = new StatusText(this) {
       @Override
