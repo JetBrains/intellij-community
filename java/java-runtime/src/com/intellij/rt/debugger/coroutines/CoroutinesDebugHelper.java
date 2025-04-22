@@ -6,6 +6,7 @@ import com.intellij.rt.debugger.JsonUtils;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class CoroutinesDebugHelper {
@@ -13,6 +14,7 @@ public final class CoroutinesDebugHelper {
   private static final String COROUTINE_OWNER_CLASS = "CoroutineOwner";
   private static final String DEBUG_METADATA_FQN = "kotlin.coroutines.jvm.internal.DebugMetadataKt";
   private static final String BASE_CONTINUATION_FQN = "kotlin.coroutines.jvm.internal.BaseContinuationImpl";
+  private static final String COROUTINE_STACK_FRAME_FQN = "kotlin.coroutines.jvm.internal.CoroutineStackFrame";
   private static final String DEBUG_COROUTINE_INFO_FQN = "kotlinx.coroutines.debug.internal.DebugCoroutineInfo";
   private static final String COROUTINE_CONTEXT_FQN = "kotlin.coroutines.CoroutineContext";
   private static final String COROUTINE_JOB_FQN = "kotlinx.coroutines.Job";
@@ -99,26 +101,34 @@ public final class CoroutinesDebugHelper {
     ClassLoader loader = continuation.getClass().getClassLoader();
     Class<?> debugMetadata = Class.forName(DEBUG_METADATA_FQN, false, loader);
     Class<?> baseContinuation = Class.forName(BASE_CONTINUATION_FQN, false, loader);
-    Method getStackTraceElement = debugMetadata.getDeclaredMethod("getStackTraceElement", baseContinuation);
-    getStackTraceElement.setAccessible(true);
+    Class<?> coroutineStackFrame = Class.forName(COROUTINE_STACK_FRAME_FQN, false, loader);
+    Method getStackTraceElement = coroutineStackFrame.getDeclaredMethod("getStackTraceElement");
+    Method callerFrame = coroutineStackFrame.getDeclaredMethod("getCallerFrame");
     Method getSpilledVariableFieldMapping = debugMetadata.getDeclaredMethod("getSpilledVariableFieldMapping", baseContinuation);
     getSpilledVariableFieldMapping.setAccessible(true);
 
     Object current = continuation;
-    do {
-      StackTraceElement stackTraceElement = (StackTraceElement)getStackTraceElement.invoke(null, current);
+    while(current != null && coroutineStackFrame.isInstance(current) && !isCoroutineOwner(current)) {
+
+      StackTraceElement stackTraceElement = (StackTraceElement)getStackTraceElement.invoke(current);
       continuationStackElements.add(stackTraceElement);
 
-      List<String> fields = new ArrayList<>();
-      List<String> names = new ArrayList<>();
-      extractSpilledVariables(current, names, fields, getSpilledVariableFieldMapping);
-      variableNames.add(names);
-      fieldNames.add(fields);
-      continuationStack.add(current);
+      if (baseContinuation.isInstance(current)) {
+        List<String> fields = new ArrayList<>();
+        List<String> names = new ArrayList<>();
 
-      current = invoke(current, "getCompletion");
+        extractSpilledVariables(current, names, fields, getSpilledVariableFieldMapping);
+
+        variableNames.add(names);
+        fieldNames.add(fields);
+      } else {
+        variableNames.add(Collections.<String>emptyList());
+        fieldNames.add(Collections.<String>emptyList());
+      }
+
+      continuationStack.add(current);
+      current = invoke(current, callerFrame);
     }
-    while (current != null && baseContinuation.isInstance(current));
 
     List<StackTraceElement> creationStack = null;
     if (current != null && isCoroutineOwner(current)) {
