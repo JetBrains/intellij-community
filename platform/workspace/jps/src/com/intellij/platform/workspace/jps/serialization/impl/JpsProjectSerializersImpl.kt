@@ -211,12 +211,17 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           }
         }
         else {
-          val obsolete = fileSerializersByUrl.getValues(fileUrl)
-          fileSerializersByUrl.removeKey(fileUrl)
-
-          obsoleteSerializers.addAll(obsolete)
-          obsolete.forEach {
-            serializerToDirectoryFactory.remove(it)
+          val maybeObsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
+          maybeObsoleteSerializers.forEach {
+            changedSources.add(it.internalEntitySource)
+            val directorySerializerFactory = serializerToDirectoryFactory.remove(it)
+            if (directorySerializerFactory != null) {
+              // Serializer should only be removed iff it is produced by a DirectorySerializerFactory
+              // If it is produced by a ListSerializerFactory, we keep the reference in fileSerializersByUrl,
+              // because the file (e.g. iml file) may be added later
+              fileSerializersByUrl.removeKey(fileUrl)
+              obsoleteSerializers.add(it)
+            }
           }
         }
       }
