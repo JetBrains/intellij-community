@@ -532,6 +532,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey GearPlain = new IntelliJIconKey("general/gearPlain.svg", "expui/general/settings.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey GreenCheckmark = new IntelliJIconKey("general/greenCheckmark.svg", "expui/general/greenCheckmark.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Groups = new IntelliJIconKey("expui/general/groups.svg", "expui/general/groups.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Hashtag = new IntelliJIconKey("expui/general/hashtag.svg", "expui/general/hashtag.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey HideToolWindow = new IntelliJIconKey("general/hideToolWindow.svg", "expui/general/hide.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey History = new IntelliJIconKey("expui/general/history.svg", "expui/general/history.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ImplementingMethod = new IntelliJIconKey("general/implementingMethod.svg", "expui/general/showToImplement.svg", AllIconsKeys.class);
