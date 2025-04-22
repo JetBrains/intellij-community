@@ -12,15 +12,20 @@ import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
 import org.intellij.plugins.markdown.extensions.common.highlighter.buildHighlightedFenceContent
+import org.intellij.plugins.markdown.extensions.jcef.MarkdownASTNode
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class DefaultCodeFenceGeneratingProvider(
   private val cacheProviders: Array<CodeFenceGeneratingProvider>,
   private val project: Project? = null,
   private val file: VirtualFile? = null
 ): GeneratingProvider {
-  private fun pluginGeneratedHtml(language: String?, codeFenceContent: String, codeFenceRawContent: String, node: ASTNode): String {
+  private fun pluginGeneratedHtml(language: String?, codeFenceContent: String, codeFenceRawContent: String, sourceNode: ASTNode): String {
+    val node = MarkdownASTNode(sourceNode, project, language)
+    val flexibleAboutLanguages = project?.let(MarkdownSettings::getInstance)?.useAlternativeHighlighting == true
+
     if (language == null) {
       return buildHighlightedFenceContent(
         codeFenceContent,
@@ -30,7 +35,9 @@ internal class DefaultCodeFenceGeneratingProvider(
         additionalLineProcessor = ::processCodeLine
       )
     }
-    val html = when (val provider = cacheProviders.firstOrNull { it.isApplicable(language) }) {
+    val html = when (val provider = cacheProviders.firstOrNull
+                { it.isApplicable(language) || (flexibleAboutLanguages && it is MarkdownCodeFencePreviewHighlighter) })
+    {
       null -> buildHighlightedFenceContent(
         codeFenceContent,
         highlightedRanges = emptyList(),
@@ -93,7 +100,7 @@ internal class DefaultCodeFenceGeneratingProvider(
         attributes.add("class=\"language-${language.split(" ").joinToString(separator = "-")}\"")
       }
       if (state == 0 && child.type == MarkdownTokenTypes.EOL) {
-        visitor.consumeTagOpen(node, "code", *attributes.toTypedArray())
+        visitor.consumeTagOpen(node, "code", *attributes.toTypedArray()) // TODO: Where <code...> tag is added
         state = 1
       }
     }

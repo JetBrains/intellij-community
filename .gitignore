@@ -21,3 +21,5 @@ edu/dependencies/build
 native/**/build/
 stale_outputs_checked
 /android
+/.idea/markdown.xml
+/.idea/dictionaries/project.xml

@@ -25,8 +25,10 @@ import com.intellij.util.application
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import org.cef.CefSettings.LogSeverity
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.handler.CefResourceRequestHandler
 import org.cef.handler.CefResourceRequestHandlerAdapter
@@ -35,6 +37,7 @@ import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
+import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter.Companion.updateCodeFenceCache
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable.Companion.fontSizeOptions
 import org.intellij.plugins.markdown.ui.preview.*
@@ -105,7 +108,7 @@ class MarkdownJCEFHtmlPanel(
     // language=HTML
     return """
       <!DOCTYPE html>
-      <html>
+      <html lang=en>
         <head>
           <title>IntelliJ Markdown Preview</title>
           <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
@@ -151,6 +154,18 @@ class MarkdownJCEFHtmlPanel(
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
+    jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
+      override fun onConsoleMessage(browser: CefBrowser, level: LogSeverity, message: String, source: String, line: Int
+      ): Boolean {
+        if (level == LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter")) {
+          val parts = message.split(":", limit = 4)
+
+          updateCodeFenceCache(parts[2], parts[3])
+        }
+        return false
+      }
+    }, cefBrowser)
+
     browserPipe.subscribe(SET_SCROLL_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
         data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
@@ -179,6 +194,8 @@ class MarkdownJCEFHtmlPanel(
 
       loadIndexContent()
       updateHandler.requests.collectLatest { request ->
+        executeJavaScript("fenceScanSkipCount = 0; lookForCodeFences();")
+
         when (request) {
           is PreviewRequest.Update -> {
             val (html, initialScrollOffset, document) = request
@@ -275,6 +292,7 @@ class MarkdownJCEFHtmlPanel(
     scrollListeners.remove(listener)
   }
 
+  @Deprecated("Deprecated in Java")
   override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
     executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
   }
@@ -448,7 +466,9 @@ class MarkdownJCEFHtmlPanel(
       "incremental-dom.min.js",
       "incremental-dom-additions.js",
       "BrowserPipe.js",
-      "ScrollSync.js"
+      "ScrollSync.js",
+      "highlighter.js",
+      "highlighter-bridge.js"
     )
 
     private val baseStyles = emptyList<String>()

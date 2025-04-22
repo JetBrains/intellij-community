@@ -2,7 +2,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,34 +37,24 @@ public final class PlatformNioHelper {
    *
    * @see NioFiles#readAttributes
    */
-  @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static void visitDirectory(
     @NotNull Path directory,
     @Nullable Set<String> filter,
     @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer
   ) throws IOException, SecurityException {
-    try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
+    try (var dirStream = Files.newDirectoryStream(directory)) { // Use standard API here
       for (var path : dirStream) {
         if (filter != null && !filter.contains(path.getFileName().toString())) {
           continue;
         }
 
-        BasicFileAttributes attrs = null;
-        if (path instanceof sun.nio.fs.BasicFileAttributesHolder) {
-          attrs = ((sun.nio.fs.BasicFileAttributesHolder)path).get();
-        }
-
         Result<BasicFileAttributes> result;
-        if (attrs != null) {
+        try {
+          // Use the standard `Files.readAttributes` to obtain attributes
+          BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
           result = new Result<>(attrs);
-        }
-        else {
-          try {
-            result = new Result<>(NioFiles.readAttributes(path));
-          }
-          catch (IOException | RuntimeException e) {
-            result = new Result<>(e);
-          }
+        } catch (IOException | RuntimeException e) { // Handle errors appropriately
+          result = new Result<>(e);
         }
 
         if (!consumer.test(path, result)) {
