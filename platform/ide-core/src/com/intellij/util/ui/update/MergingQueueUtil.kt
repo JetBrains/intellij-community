@@ -16,53 +16,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * hence the platform needs to know about all undelivered updates to proper track the configuration of a project.
  */
 fun MergingUpdateQueue.queueTracked(update: Update) {
-  ApplicationManager.getApplication().service<MergingUpdateQueueTracker>().registerEnter()
-  queue(TrackedUpdate(update))
+  require(this.isActive) { "Queue must be active for tracking" }
+  val tracker = ApplicationManager.getApplication().service<MergingUpdateQueueTracker>()
+  val trackedUpdate = tracker.trackUpdate(update)
+  queue(trackedUpdate)
 }
 
 @Internal
 interface MergingUpdateQueueTracker {
-  fun registerEnter()
-  fun registerExit()
-}
-
-private class TrackedUpdate(
-  private val original: Update,
-) : Update(original) {
-
-  // we have to delegate ALL overrideable methods because we don't know which ones are overridden in the original Update
-  // also Update is an abstract class, so we cannot use Kotlin Delegation
-
-  override val isDisposed: Boolean
-    get() = original.isDisposed
-  override val isExpired: Boolean
-    get() = original.isExpired
-  override fun wasProcessed(): Boolean = original.wasProcessed()
-  override fun setProcessed() = original.setProcessed()
-
-  override val executeInWriteAction: Boolean
-    get() = original.executeInWriteAction
-
-  override val isRejected: Boolean
-    get() = original.isRejected
-
-  override fun getEqualityObjects(): Array<Any> = original.equalityObjects
-
-  override fun canEat(update: Update): Boolean {
-    val unwrappedUpdate = (update as? TrackedUpdate)?.original ?: update
-    return original.canEat(unwrappedUpdate)
-  }
-
-  override fun setRejected() {
-    ApplicationManager.getApplication().service<MergingUpdateQueueTracker>().registerExit()
-    original.setRejected()
-  }
-
-  override fun run() {
-    try {
-      original.run()
-    } finally {
-      ApplicationManager.getApplication().service<MergingUpdateQueueTracker>().registerExit()
-    }
-  }
+  fun trackUpdate(update: Update): Update
 }

@@ -41,7 +41,7 @@ internal open class ClassifierImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
-        if (importContext.positionTypeAndReceiver.receiver != null) return emptyList()
+        if (importContext.isExplicitReceiver) return emptyList()
 
         val fileSymbol = getFileSymbol()
         val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importContext.position)
@@ -60,7 +60,7 @@ internal class AnnotationImportCandidatesProvider(
 ) : ClassifierImportCandidatesProvider(importContext) {
 
     init {
-        requireIsInstance<ImportPositionTypeAndReceiver.Annotation>(importContext.positionTypeAndReceiver)
+        requireIsInstance<ImportPositionType.Annotation>(importContext.positionType)
     }
 
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
@@ -86,7 +86,7 @@ internal class ConstructorReferenceImportCandidatesProvider(
 ) : ClassifierImportCandidatesProvider(importContext) {
 
     init {
-        requireIsInstance<ImportPositionTypeAndReceiver.CallableReference>(importContext.positionTypeAndReceiver)
+        requireIsInstance<ImportPositionType.CallableReference>(importContext.positionType)
     }
 
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {

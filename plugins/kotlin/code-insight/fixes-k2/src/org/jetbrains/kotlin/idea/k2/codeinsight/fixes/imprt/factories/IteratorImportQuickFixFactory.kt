@@ -5,21 +5,18 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportContext
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionTypeAndReceiver
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object IteratorImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
         when (diagnostic) {
             is KaFirDiagnostic.IteratorMissing,
             is KaFirDiagnostic.IteratorAmbiguity -> {
                 val iteratedExpression = diagnostic.psi as? KtExpression ?: return null
-                ImportContext(iteratedExpression, ImportPositionTypeAndReceiver.OperatorCall(iteratedExpression))
+                DefaultImportContext(iteratedExpression, ImportPositionTypeAndReceiver.OperatorCall(iteratedExpression))
             }
 
             else -> null

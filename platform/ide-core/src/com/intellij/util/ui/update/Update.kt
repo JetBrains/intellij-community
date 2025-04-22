@@ -15,7 +15,8 @@ import org.jetbrains.annotations.NonNls
 abstract class Update : ComparableObject.Impl, Runnable {
   private val _executeInWriteAction: Boolean
 
-  internal open val executeInWriteAction: Boolean
+  @get:ApiStatus.Internal
+  open val executeInWriteAction: Boolean
     get() = _executeInWriteAction
 
   val priority: Int

@@ -1049,6 +1049,21 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
             }
 
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionAllComponents.test")
+            public void testMultiDeclarationInLambdaParameterExtensionAllComponents() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionAllComponents.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionComponent1.test")
+            public void testMultiDeclarationInLambdaParameterExtensionComponent1() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent1.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionComponent2.test")
+            public void testMultiDeclarationInLambdaParameterExtensionComponent2() throws Exception {
+                runTest("testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent2.test");
+            }
+
             @TestMetadata("multiFunctionCandidate.test")
             public void testMultiFunctionCandidate() throws Exception {
                 runTest("testData/quickfix/autoImports/multiFunctionCandidate.test");

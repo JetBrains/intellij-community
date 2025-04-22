@@ -414,6 +414,7 @@ class AutoImportProjectTracker(
     private val asyncChangesProcessingProperty = AtomicBooleanProperty(
       !ApplicationManager.getApplication().isHeadlessEnvironment
       || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+      || java.lang.Boolean.getBoolean("external.system.auto.import.headless.async")
     )
 
     private val isEnabledAutoReload: Boolean

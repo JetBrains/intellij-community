@@ -8,10 +8,10 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 
-internal class GitModalCommitToggler : VcsStartupActivity {
+internal class ModalCommitToggler : VcsStartupActivity {
   override suspend fun execute(project: Project) {
     runOnceForApp("git.modal.commit.toggle") {
-      AdvancedSettings.setBoolean(GitModalCommitModeProvider.SETTING_ID,
+      AdvancedSettings.setBoolean(ModalCommitModeProvider.SETTING_ID,
                                   !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
     }
   }

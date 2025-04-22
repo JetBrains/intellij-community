@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
-import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -45,20 +44,38 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
+@Suppress("unused") // Used externally
+@Deprecated(
+  "Use TrustedProjects.isProjectTrusted instead",
+  ReplaceWith(
+    "TrustedProjects.isProjectTrusted(this)",
+    "com.intellij.ide.trustedProjects.TrustedProjects"
+  )
+)
 fun Project.isTrusted(): Boolean {
-  return TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
+  return TrustedProjects.isProjectTrusted(this)
 }
 
+@Suppress("unused") // Used externally
+@Deprecated(
+  "Use TrustedProjects.setProjectTrusted instead",
+  ReplaceWith(
+    "TrustedProjects.setProjectTrusted(this, isTrusted)",
+    "com.intellij.ide.trustedProjects.TrustedProjects"
+  )
+)
 fun Project.setTrusted(isTrusted: Boolean) {
-  TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
+  TrustedProjects.setProjectTrusted(this, isTrusted)
 }
 
 @Suppress("unused") // Used externally
+@Deprecated("Use TrustedProjects.isProjectTrusted instead")
 fun Project.getTrustedState(): ThreeState {
-  return TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
+  return TrustedProjects.getProjectTrustedState(this)
 }
 
 @Suppress("unused") // Used externally
+@Deprecated("Use TrustedProjects.isTrustedCheckDisabled instead")
 fun isTrustedCheckDisabled(): Boolean {
   return TrustedProjects.isTrustedCheckDisabled()
 }
