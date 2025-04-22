@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.frame.XFullValueEvaluator
@@ -12,8 +13,10 @@ import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -60,7 +63,9 @@ internal fun XValue.computePresentation(
         fullValueEvaluatorHandler(null)
       }
     }
-    xValue.computePresentation(valueNode, place)
+    withContext(Dispatchers.EDT) {
+      xValue.computePresentation(valueNode, place)
+    }
 
     launch {
       try {
