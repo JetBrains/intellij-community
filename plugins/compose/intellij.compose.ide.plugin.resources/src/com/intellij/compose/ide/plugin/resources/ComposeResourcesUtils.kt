@@ -2,6 +2,7 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -39,7 +40,10 @@ internal fun Module.getComposeResourcesDirFor(sourceSetName: String): VirtualFil
  */
 internal fun Module.getComposeResourcesDir(): VirtualFile? {
   val sourceSetName = getSourceSetNameFromComposeResourcesDir()
-  return getComposeResourcesDirFor(sourceSetName) ?: getComposeResourcesDirFor("commonMain")
+  return getComposeResourcesDirFor(sourceSetName) ?: getComposeResourcesDirFor("commonMain") ?: run {
+    log.warn("No Compose resources directory found for module $name and source set $sourceSetName.")
+    null
+  }
 }
 
 /**
@@ -58,3 +62,5 @@ internal val Module.composeResourcesDirsByName: Map<String, ComposeResourcesDir>
 internal data class ComposeResourcesDir(val moduleName: String, val sourceSetName: String, val directoryPath: Path, val isCustom: Boolean = false)
 
 internal data class ComposeResources(val moduleName: String, val directoriesBySourceSetName: Map<String, ComposeResourcesDir>)
+
+private val log by lazy { fileLogger() }

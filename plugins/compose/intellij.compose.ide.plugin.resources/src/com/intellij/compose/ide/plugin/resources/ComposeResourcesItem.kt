@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -60,14 +61,19 @@ internal data class ResourceItem(val type: ResourceType, val id: String, val key
     val project = sourceModule.project
     val composeResourcesDirsDependencies = sourceModule.getComposeResourcesDirsDependencies()
     return paths.mapNotNull { path ->
-      val targetResourceFile = composeResourcesDirsDependencies.firstNotNullOfOrNull { it.findFileByRelativePath(path) }
-                               ?: return@mapNotNull null
+      val targetResourceFile = composeResourcesDirsDependencies.firstNotNullOfOrNull { it.findFileByRelativePath(path) } ?: run {
+        log.warn("Target Compose resource file for '${this@ResourceItem}' not found: $path")
+        return@mapNotNull null
+      }
       val targetResourcePsiFile = targetResourceFile.findPsiFile(project) ?: return@mapNotNull null
       if (type.isStringType) {
         val targetStringPsiElement = composeResourcesDirsDependencies
                                        .mapNotNull { it.findFileByRelativePath(path)?.findPsiFile(project) }
                                        .firstNotNullOfOrNull { findAttributeByResourceKey(it, this) }
-                                     ?: return@mapNotNull null
+                                     ?: run {
+                                       log.warn("Target Compose resource string for '${this@ResourceItem}' not found: $path")
+                                       return@mapNotNull null
+                                     }
         val attributeValueToBeRenamed = targetStringPsiElement.children.lastOrNull() as? XmlAttributeValue ?: return@mapNotNull null
         attributeValueToBeRenamed
       }
@@ -161,3 +167,5 @@ internal fun String.getModuleName(): String? = when (count { it == ':' }) {
   2 -> substringBeforeLast(':').drop(1) // e.g. `projectName.composeApp.main` -> `:composeApp:main` -> composeApp
   else -> null
 }
+
+private val log by lazy { fileLogger() }

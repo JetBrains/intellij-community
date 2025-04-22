@@ -2,6 +2,7 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.util.module
@@ -16,9 +17,14 @@ internal class ComposeResourcesGotoDeclarationHandler : GotoDeclarationHandler {
 
     // find the resource object of the sourceElement
     val kotlinSourceElement = sourceElement.parent as? KtNameReferenceExpression ?: return null
-    val targetResourceItem = getResourceItem(kotlinSourceElement) ?: return null
+    val targetResourceItem = getResourceItem(kotlinSourceElement) ?: run {
+      log.warn("Cannot find Compose resource item for ${kotlinSourceElement.text}")
+      return null
+    }
 
     // return target psi elements
     return targetResourceItem.getPsiElements(sourceModule).toTypedArray()
   }
 }
+
+private val log by lazy { logger<ComposeResourcesGotoDeclarationHandler>() }
