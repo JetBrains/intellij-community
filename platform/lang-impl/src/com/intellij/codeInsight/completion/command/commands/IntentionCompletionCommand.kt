@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -41,6 +39,9 @@ internal class IntentionCompletionCommand(
           ShowIntentionActionsHandler.availableFor(psiFile, editor, myOffset, intentionAction.action)
         }
       }
+    if (!intentionAction.action.startInWriteAction() && availableFor) {
+      editor.putUserData(KEY_FORCE_CARET_OFFSET, ForceOffsetData(myOffset, offset))
+    }
     if (availableFor) {
       ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, name)
     }

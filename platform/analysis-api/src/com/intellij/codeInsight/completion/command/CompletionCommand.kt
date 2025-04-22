@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
@@ -117,3 +118,8 @@ data class HighlightInfoLookup(
 interface CompletionCommandWithPreview {
   fun getPreview(): IntentionPreviewInfo?
 }
+
+@JvmField
+val KEY_FORCE_CARET_OFFSET: Key<ForceOffsetData> = Key.create("completion.command.force.caret.offset")
+
+data class ForceOffsetData(val oldOffset: Int, val newOffset: Int)
