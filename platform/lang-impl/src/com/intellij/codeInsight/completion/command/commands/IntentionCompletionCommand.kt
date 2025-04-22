@@ -22,7 +22,7 @@ internal class IntentionCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val myOffset: Int,
   private val previewProvider: () -> IntentionPreviewInfo?,
-  ) : CompletionCommand(), CompletionCommandWithPreview {
+) : CompletionCommand(), CompletionCommandWithPreview {
 
   override val name: String
     get() = intentionAction.text
@@ -44,8 +44,8 @@ internal class IntentionCompletionCommand(
     if (availableFor) {
       ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, name)
     }
-    if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
-      //probably, intention moves the cursor
+    if (!intentionAction.action.startInWriteAction() || (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset)) {
+      //probably, intention moves the cursor or async gui
       return
     }
     if (marker.isValid) {

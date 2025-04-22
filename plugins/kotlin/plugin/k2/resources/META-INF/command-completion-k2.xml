@@ -1,6 +1,9 @@
 <idea-plugin>
 
   <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.completion.intention.offset.provider language="kotlin"
+                                                      implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory$KotlinIntentionCommandOffsetProvider"/>
+
     <codeInsight.completion.command.factory language="kotlin"
                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory"/>
 <!--    <codeInsight.completion.command.provider language="kotlin"-->
