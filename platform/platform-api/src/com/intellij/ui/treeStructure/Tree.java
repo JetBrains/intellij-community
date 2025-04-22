@@ -878,6 +878,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public boolean isExpanded(int row) {
+    if (!initialized) { // Called from the super() constructor.
+      return super.isExpanded(row);
+    }
     return expandImpl.isExpanded(row);
   }
 
