@@ -87,6 +87,36 @@ class TreeBaseConstructorSafetyTest {
     """.trimIndent())
   }
 
+  @Test
+  fun `calling collapsePaths from setModel is safe, and the updated state is kept`() {
+    sut = object : Tree(createModel("""
+      root
+        node1
+          leaf11
+          leaf12
+        node2
+          leaf21
+          leaf22
+        node3
+          leaf31
+          leaf32
+    """.trimIndent())) {
+      override fun setModel(newModel: TreeModel?) {
+        super.setModel(newModel)
+        expandPaths(listOf(path("root", "node1"), path("root", "node2"), path("root", "node3")))
+        collapsePaths(listOf(path("root", "node1"), path("root", "node2")))
+      }
+    }
+    assertTreeStructure("""
+      -root
+        +node1
+        +node2
+        -node3
+          leaf31
+          leaf32
+    """.trimIndent())
+  }
+
   private fun assertTreeStructure(structure: String) {
     val actualStructure = dumpTreeStructure()
     // these LFs make the output more readable
