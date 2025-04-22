@@ -124,7 +124,7 @@ fun bridge(fromLog: EditLog, toLog: EditLog): Operation {
   return toBefore.invert().compose(toAfter).normalizeHard()
 }
 
-private fun bridgeOrNull(fromLog: EditLog, toLog: EditLog): Operation? {
+fun bridgeOrNull(fromLog: EditLog, toLog: EditLog): Operation? {
   val (toBefore, toAfter) = v(fromLog, toLog).getOrNull() ?: return null
   return toBefore.invert().compose(toAfter).normalizeHard()
 }
