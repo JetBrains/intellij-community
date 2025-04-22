@@ -550,6 +550,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (!initialized) { // Base constructor call.
+      for (TreePath path : paths) {
+        super.collapsePath(path);
+      }
+      return;
+    }
     expandImpl.collapsePaths(paths);
   }
 
