@@ -20,8 +20,8 @@ import java.awt.*;
 @ApiStatus.Internal
 public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
-  protected void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint) {
-    DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, component, false, (XBreakpoint)breakpoint);
+  protected void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpoint<?> breakpoint) {
+    DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, component, false, breakpoint);
   }
 
   @Override

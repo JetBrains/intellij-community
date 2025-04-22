@@ -8,6 +8,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -21,7 +22,7 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
 
   public abstract void saveState();
 
-  public abstract Object getBreakpoint();
+  public abstract @Nullable XBreakpointProxy getBreakpoint();
 
   public abstract boolean isEnabled();
 

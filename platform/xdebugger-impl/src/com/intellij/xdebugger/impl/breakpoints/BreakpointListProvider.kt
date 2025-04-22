@@ -42,7 +42,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
   override fun getDescriptor(node: AbstractTreeNode<*>): OpenFileDescriptor? {
     val item = node.equalityObject as? BreakpointItem ?: return null
-    val breakpoint = item.breakpoint as? XBreakpoint<*> ?: return null
+    val breakpoint = (item.breakpoint as? XBreakpointProxy.Monolith)?.breakpoint ?: return null
     return breakpoint.sourcePosition?.let { OpenFileDescriptor(project, it.file, it.line, 0) }
   }
 
@@ -123,7 +123,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
           if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
             var any = item as Any
             for (rule in enabledRules) {
-              rule.getGroup(item.breakpoint)?.let {
+              val breakpoint = item.breakpoint ?: continue
+              rule.getGroup(breakpoint)?.let {
                 breakpoints[any] = it
                 any = it
               }

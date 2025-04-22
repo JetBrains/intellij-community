@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId

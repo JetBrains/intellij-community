@@ -296,7 +296,7 @@ public class BreakpointsDialog extends DialogWrapper {
           res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
-          res.add(new EditDescriptionAction((XBreakpointProxy)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
+          res.add(new EditDescriptionAction(((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
         return res.toArray(AnAction.EMPTY_ARRAY);
       }
@@ -501,9 +501,9 @@ public class BreakpointsDialog extends DialogWrapper {
         }
       }
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
-        Object breakpoint = item.getBreakpoint();
-        if (breakpoint instanceof XBreakpointBase) {
-          ((XBreakpointBase<?, ?, ?>)breakpoint).setGroup(groupName);
+        XBreakpointProxy breakpoint = item.getBreakpoint();
+        if (breakpoint instanceof XBreakpointProxy.Monolith) {
+          ((XBreakpointBase<?, ?, ?>)breakpoint.getBreakpoint()).setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);

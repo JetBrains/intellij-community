@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
@@ -23,7 +24,7 @@ import java.awt.*;
 @ApiStatus.Internal
 public abstract class EditBreakpointActionHandler extends DebuggerActionHandler {
 
-  protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint);
+  protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpoint<?> breakpoint);
 
   @Override
   public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
@@ -57,6 +58,9 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   }
 
   public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull BreakpointItem breakpoint) {
-    doShowPopup(project, parent, whereToShow, breakpoint.getBreakpoint());
+    XBreakpointProxy breakpointProxy = breakpoint.getBreakpoint();
+    if (breakpointProxy instanceof XBreakpointProxy.Monolith) {
+      doShowPopup(project, parent, whereToShow, ((XBreakpointProxy.Monolith)breakpointProxy).getBreakpoint());
+    }
   }
 }

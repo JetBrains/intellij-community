@@ -17,6 +17,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
@@ -36,7 +37,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   ) {
     List<BreakpointItem> items = breakpointManager.getAllBreakpointItems();
     for (BreakpointItem item : items) {
-      if (item.getBreakpoint() == breakpoint) {
+      if (Objects.equals(item.getBreakpoint(), breakpoint)) {
         items.remove(item);
         break;
       }
@@ -88,7 +89,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
 
   @Override
   void saveProperties() {
-    XBreakpointProxy masterBreakpoint = (XBreakpointProxy)myMasterBreakpointChooser.getSelectedBreakpoint();
+    XBreakpointProxy masterBreakpoint = myMasterBreakpointChooser.getSelectedBreakpoint();
     if (masterBreakpoint == null) {
       myDependentBreakpointManager.clearMasterBreakpoint(myBreakpoint);
     }
