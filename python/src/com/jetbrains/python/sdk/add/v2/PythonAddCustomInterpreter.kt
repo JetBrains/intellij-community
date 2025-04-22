@@ -10,10 +10,10 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.sdk.add.v2.conda.CondaExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.conda.CondaNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.hatch.HatchExistingEnvironmentSelector
@@ -48,7 +48,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
   )
 
   private val existingInterpreterSelectors = buildMap {
-    put(PYTHON, PythonExistingEnvironmentSelector(model))
+    put(PYTHON, PythonExistingEnvironmentSelector(model, moduleOrProject))
     put(CONDA, CondaExistingEnvironmentSelector(model, errorSink))
     if (moduleOrProject != null) {
       put(POETRY, PoetryExistingEnvironmentSelector(model, moduleOrProject))

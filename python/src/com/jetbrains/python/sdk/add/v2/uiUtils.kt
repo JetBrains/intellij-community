@@ -48,6 +48,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -280,10 +281,6 @@ internal class PythonInterpreterComboBox(
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 
-  private lateinit var itemsFlow: StateFlow<List<PythonSelectableInterpreter>>
-  val items: List<PythonSelectableInterpreter>
-    get() = itemsFlow.value
-
   private val interpreterToSelect = controller.propertyGraph.property<String?>(null)
 
   init {
@@ -299,8 +296,7 @@ internal class PythonInterpreterComboBox(
     editor = PythonSdkComboBoxWithBrowseButtonEditor(this, controller, newOnPathSelected)
   }
 
-  fun setItems(flow: StateFlow<List<PythonSelectableInterpreter>>) {
-    itemsFlow = flow
+  fun setItems(flow: Flow<List<PythonSelectableInterpreter>>) {
     controller.scope.launch(start = CoroutineStart.UNDISPATCHED) {
       flow.collectLatest { interpreters ->
         withContext(controller.uiContext) {
