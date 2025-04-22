@@ -2673,18 +2673,16 @@ c:com.intellij.ide.browsers.BrowserSelector
 - getSize():I
 - setSelected(com.intellij.ide.browsers.WebBrowser):V
 f:com.intellij.ide.browsers.BrowserSettings
+- com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.openapi.options.Configurable$NoScroll
+- com.intellij.openapi.options.Configurable$WithEpDependencies
 - com.intellij.openapi.options.SearchableConfigurable
 - <init>():V
-- apply():V
-- createComponent():javax.swing.JComponent
-- disposeUIResources():V
-- getDisplayName():java.lang.String
-- getHelpTopic():java.lang.String
+- createConfigurables():java.util.List
+- createPanel():com.intellij.openapi.ui.DialogPanel
+- getDependencies():java.util.Collection
 - getId():java.lang.String
-- isModified():Z
-- reset():V
-- selectBrowser(com.intellij.ide.browsers.WebBrowser):V
+- f:selectBrowser(com.intellij.ide.browsers.WebBrowser):V
 c:com.intellij.ide.browsers.BrowserStarter
 - <init>(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings,com.intellij.execution.process.ProcessHandler):V
 - <init>(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings,java.util.function.BooleanSupplier):V

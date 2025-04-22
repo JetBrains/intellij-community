@@ -7,11 +7,13 @@ import com.intellij.ide.browsers.BrowserLauncherAppless.Companion.canUseSystemDe
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Comparing
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.Function
@@ -25,13 +27,11 @@ import com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo
 import java.awt.event.ItemEvent
 import java.util.*
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.event.TableModelEvent
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
-internal class BrowserSettingsPanel {
-
+internal class BrowserSettingsPanel(configurablesRenderer: Panel.() -> Unit = {}) {
   private lateinit var browsersTable: JComponent
   private lateinit var browsersEditor: TableModelEditor<ConfigurableWebBrowser>
   private lateinit var alternativeBrowserPathField: TextFieldWithBrowseButton
@@ -42,7 +42,7 @@ internal class BrowserSettingsPanel {
   private lateinit var showBrowserHoverXml: JBCheckBox
   private var customPathValue: String? = null
 
-  private val root: JPanel = panel {
+  private val root: DialogPanel = panel {
     val itemEditor: DialogItemEditor<ConfigurableWebBrowser> = object : DialogItemEditor<ConfigurableWebBrowser> {
       override fun getItemClass(): Class<ConfigurableWebBrowser> {
         return ConfigurableWebBrowser::class.java
@@ -161,6 +161,8 @@ internal class BrowserSettingsPanel {
           .component
       }
     }
+
+    configurablesRenderer()
   }
 
   private fun updateCustomPathTextFieldValue(browser: DefaultBrowserPolicy) {
@@ -192,7 +194,7 @@ internal class BrowserSettingsPanel {
     alternativeBrowserPathField.text = ""
   }
 
-  val component: JPanel
+  val component: DialogPanel
     get() = root
 
   val isModified: Boolean
