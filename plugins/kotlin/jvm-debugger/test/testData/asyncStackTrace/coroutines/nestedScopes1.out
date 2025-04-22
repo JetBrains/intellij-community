@@ -1,0 +1,75 @@
+LineBreakpoint created at nestedScopes1.kt:12
+LineBreakpoint created at nestedScopes1.kt:15
+LineBreakpoint created at nestedScopes1.kt:19
+LineBreakpoint created at nestedScopes1.kt:22
+LineBreakpoint created at nestedScopes1.kt:26
+Run Java
+Connected to the target VM
+nestedScopes1.kt:12
+vvv stack trace vvv
+  invokeSuspend:12, NestedScopes1Kt$main$1$1
+  invokeSuspend:10, NestedScopes1Kt$main$1
+  invoke:-1, NestedScopes1Kt$main$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:7, NestedScopes1Kt
+  main:-1, NestedScopes1Kt
+^^^ stack trace ^^^
+nestedScopes1.kt:15
+vvv stack trace vvv
+  invokeSuspend:15, NestedScopes1Kt$main$1$1$1
+  invokeSuspend:13, NestedScopes1Kt$main$1$1
+  invokeSuspend:10, NestedScopes1Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:7, NestedScopes1Kt
+  main:-1, NestedScopes1Kt
+^^^ stack trace ^^^
+nestedScopes1.kt:19
+vvv stack trace vvv
+  invokeSuspend:19, NestedScopes1Kt$main$1$1$1$1
+  doo:38, NestedScopes1Kt
+  invokeSuspend:16, NestedScopes1Kt$main$1$1$1
+  invokeSuspend:13, NestedScopes1Kt$main$1$1
+  invokeSuspend:10, NestedScopes1Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:7, NestedScopes1Kt
+  main:-1, NestedScopes1Kt
+^^^ stack trace ^^^
+nestedScopes1.kt:22
+vvv stack trace vvv
+  invokeSuspend:22, NestedScopes1Kt$main$1$1$1$1$1
+  invokeSuspend:20, NestedScopes1Kt$main$1$1$1$1
+  doo:38, NestedScopes1Kt
+  invokeSuspend:16, NestedScopes1Kt$main$1$1$1
+  invokeSuspend:13, NestedScopes1Kt$main$1$1
+  invokeSuspend:10, NestedScopes1Kt$main$1
+  invoke:-1, NestedScopes1Kt$main$1$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:7, NestedScopes1Kt
+  main:-1, NestedScopes1Kt
+^^^ stack trace ^^^
+nestedScopes1.kt:26
+vvv stack trace vvv
+  invokeSuspend:26, NestedScopes1Kt$main$1$1$1$1$1$1
+  invokeSuspend:23, NestedScopes1Kt$main$1$1$1$1$1
+  invokeSuspend:20, NestedScopes1Kt$main$1$1$1$1
+  doo:38, NestedScopes1Kt
+  invokeSuspend:16, NestedScopes1Kt$main$1$1$1
+  invokeSuspend:13, NestedScopes1Kt$main$1$1
+  invokeSuspend:10, NestedScopes1Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:7, NestedScopes1Kt
+  main:-1, NestedScopes1Kt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

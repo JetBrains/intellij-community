@@ -481,7 +481,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     createBreakpointInHelloWorld();
   }
 
-  protected void printAsyncStackTrace() {
+  protected void printAsyncStackTrace(boolean showLineNumbers) {
     if (!myLogAllCommands) {
       printContext(getDebugProcess().getDebuggerContext());
     }
@@ -495,10 +495,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         systemPrintln("  <hidden frames>");
       }
       else {
-        systemPrintln("  " + StringUtil.substringBeforeLast(getFramePresentation(f), ":"));
+        systemPrintln("  " + frameRepresentation(f, showLineNumbers));
       }
     });
     systemPrintln("^^^ stack trace ^^^");
+  }
+
+  private String frameRepresentation(XStackFrame f, boolean showLineNumbers) {
+    return showLineNumbers ? StringUtil.substringBeforeLast(getFramePresentation(f), "(") :
+      StringUtil.substringBeforeLast(getFramePresentation(f), ":");
   }
 
   protected @NotNull List<XStackFrame> collectFrames(@Nullable XDebugSession session) {

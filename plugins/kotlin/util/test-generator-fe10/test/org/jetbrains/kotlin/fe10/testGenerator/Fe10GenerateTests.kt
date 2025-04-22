@@ -289,6 +289,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("asyncStackTrace/flows")
         }
 
+        listOf(AbstractCoroutineAsyncStackTraceTest::class, AbstractK2CoroutineAsyncStackTraceTest::class).forEach {
+            testClass(it) {
+                model("asyncStackTrace/coroutines")
+            }
+        }
+
         listOf(AbstractCoroutineDumpTest::class, AbstractK1IdeK2CodeCoroutineDumpTest::class).forEach {
             testClass(it) {
                 model("coroutines")
