@@ -299,16 +299,12 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  internal fun initialize(
-    getBuildNumber: () -> BuildNumber,
-    isPluginDisabled: (PluginId) -> Boolean,
-    isPluginBroken: (PluginId, version: String?) -> Boolean,
-  ): PluginLoadingError? {
+  fun initialize(context: PluginInitializationContext): PluginLoadingError? {
     assert(type == Type.PluginMainDescriptor)
-    if (isPluginDisabled(id)) {
+    if (context.isPluginDisabled(id)) {
       return onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
     }
-    checkCompatibility(getBuildNumber, isPluginBroken)?.let {
+    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
       return it
     }
 
@@ -321,12 +317,12 @@ class IdeaPluginDescriptorImpl private constructor(
     ))
 
     for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
-      if (isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
+      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
         return requiredDependencyIsDisabled(dependency.pluginId)
       }
     }
     for (pluginDependency in moduleDependencies.plugins) {
-      if (isPluginDisabled(pluginDependency.id)) {
+      if (context.isPluginDisabled(pluginDependency.id)) {
         return requiredDependencyIsDisabled(pluginDependency.id)
       }
     }
@@ -690,13 +686,6 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 }
-
-@ApiStatus.Internal
-fun IdeaPluginDescriptorImpl.initialize(context: PluginInitializationContext): PluginLoadingError? = initialize(
-  context::productBuildNumber,
-  context::isPluginDisabled,
-  context::isPluginBroken,
-)
 
 @ApiStatus.Internal
 @TestOnly

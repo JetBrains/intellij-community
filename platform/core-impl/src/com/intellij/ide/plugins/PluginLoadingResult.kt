@@ -73,11 +73,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     initContext: PluginInitializationContext,
   ) {
     for (descriptor in descriptors) {
-      val initError = descriptor.initialize(
-        getBuildNumber = initContext::productBuildNumber,
-        isPluginDisabled = initContext::isPluginDisabled,
-        isPluginBroken = initContext::isPluginBroken
-      )
+      val initError = descriptor.initialize(initContext)
       add(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, productBuildNumber = initContext.productBuildNumber, initError = initError)
     }
   }
