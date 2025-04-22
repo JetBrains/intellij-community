@@ -30,6 +30,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
   private val TEXT_LENGTH_FIELD = EventFields.Int("text_length")
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
+  private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -100,6 +101,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
+  )
+
+  private val startupCursorShowingLatency = GROUP.registerVarargEvent(
+    "startup.cursor.showing.latency",
+    TERMINAL_OPENING_WAY,
+    DURATION_FIELD,
   )
 
   @JvmStatic
@@ -185,5 +192,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   fun logHyperlinkFollowed(javaClass: Class<HyperlinkInfo>) {
     hyperlinkFollowedEvent.log(javaClass)
+  }
+
+  fun logStartupCursorShowingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+    startupCursorShowingLatency.log(
+      TERMINAL_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
   }
 }
