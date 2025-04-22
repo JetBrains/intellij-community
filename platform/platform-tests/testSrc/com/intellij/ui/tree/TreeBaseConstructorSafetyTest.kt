@@ -81,6 +81,28 @@ class TreeBaseConstructorSafetyTest {
   }
 
   @Test
+  fun `expanding and then collapsing the same path from setModel is safe, and the updated state is kept`() {
+    sut = object : Tree(createModel("""
+      root
+        node1
+          leaf11
+          leaf12
+        leaf2
+    """.trimIndent())) {
+      override fun setModel(newModel: TreeModel?) {
+        super.setModel(newModel)
+        setExpandedState(path("root", "node1"), true)
+        setExpandedState(path("root", "node1"), false)
+      }
+    }
+    assertTreeStructure("""
+      -root
+        +node1
+        leaf2
+    """.trimIndent())
+  }
+
+  @Test
   fun `calling expandPaths from setModel is safe, and the updated state is kept`() {
     sut = object : Tree(createModel("""
       root
@@ -201,6 +223,8 @@ class TreeBaseConstructorSafetyTest {
       -root
         +node1
     """.trimIndent())
+    val sut = checkNotNull(this.sut)
+    assertThat(sut.hasBeenExpanded(path("root", "node1"))).isTrue()
   }
 
   @Test
