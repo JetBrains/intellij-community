@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class DescriptorListLoadingContext(
+class PluginDescriptorLoadingContext(
   private val getBuildNumberForDefaultDescriptorVersion: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,

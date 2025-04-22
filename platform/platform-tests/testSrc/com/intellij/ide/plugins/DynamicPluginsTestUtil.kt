@@ -23,7 +23,7 @@ internal fun loadAndInitDescriptorInTest(
   PluginManagerCore.getAndClearPluginLoadingErrors()
 
   val buildNumber = BuildNumber.fromString("2042.42")!!
-  val loadingContext = DescriptorListLoadingContext(
+  val loadingContext = PluginDescriptorLoadingContext(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber }
   )
   val initContext = PluginInitializationContext.build(

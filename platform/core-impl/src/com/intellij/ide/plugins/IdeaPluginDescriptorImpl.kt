@@ -333,10 +333,10 @@ class IdeaPluginDescriptorImpl private constructor(
     return null
   }
 
-  internal fun loadPluginDependencyDescriptors(loadingContext: DescriptorListLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
+  internal fun loadPluginDependencyDescriptors(loadingContext: PluginDescriptorLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
     loadPluginDependencyDescriptors(loadingContext, pathResolver, dataLoader, ArrayList(3))
 
-  private fun loadPluginDependencyDescriptors(context: DescriptorListLoadingContext,
+  private fun loadPluginDependencyDescriptors(context: PluginDescriptorLoadingContext,
                                               pathResolver: PathResolver,
                                               dataLoader: DataLoader,
                                               visitedFiles: MutableList<String>) {

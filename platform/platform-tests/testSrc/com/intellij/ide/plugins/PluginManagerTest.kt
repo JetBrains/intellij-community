@@ -295,7 +295,7 @@ class PluginManagerTest {
     private fun loadAndInitializeDescriptors(testDataName: String, isBundled: Boolean): PluginManagerState {
       val file = Path.of(testDataPath, testDataName)
       val buildNumber = BuildNumber.fromString("2042.42")!!
-      val loadingContext = DescriptorListLoadingContext(
+      val loadingContext = PluginDescriptorLoadingContext(
         getBuildNumberForDefaultDescriptorVersion = { buildNumber }
       )
       val initContext = PluginInitializationContext.build(

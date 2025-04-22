@@ -625,7 +625,7 @@ object PluginManagerCore {
 
   @Internal
   fun initializePlugins(
-    loadingContext: DescriptorListLoadingContext,
+    loadingContext: PluginDescriptorLoadingContext,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
@@ -889,7 +889,7 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    context: DescriptorListLoadingContext,
+    context: PluginDescriptorLoadingContext,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
   ): PluginSet {

@@ -12,7 +12,7 @@ import java.nio.file.Path
 
 
 fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
-  val loadingContext = DescriptorListLoadingContext()
+  val loadingContext = PluginDescriptorLoadingContext()
   val initContext = PluginInitializationContext.build(
     disabledPlugins = emptySet(),
     expiredPlugins = emptySet(),
@@ -53,7 +53,7 @@ fun readAndInitDescriptorFromBytesForTest(
   path: Path,
   isBundled: Boolean,
   data: ByteArray,
-  loadingContext: DescriptorListLoadingContext,
+  loadingContext: PluginDescriptorLoadingContext,
   initContext: PluginInitializationContext,
   pathResolver: PathResolver,
   dataLoader: DataLoader,

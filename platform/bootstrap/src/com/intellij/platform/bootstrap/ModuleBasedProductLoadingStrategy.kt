@@ -69,7 +69,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
   override fun loadPluginDescriptors(
     scope: CoroutineScope,
-    loadingContext: DescriptorListLoadingContext,
+    loadingContext: PluginDescriptorLoadingContext,
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
@@ -93,7 +93,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
   private fun loadBundledPluginDescriptors(
     scope: CoroutineScope,
-    context: DescriptorListLoadingContext,
+    context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     val mainGroupModulesSet = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor.moduleId }
@@ -122,7 +122,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   private fun loadCustomPluginDescriptors(
     scope: CoroutineScope,
     customPluginDir: Path,
-    context: DescriptorListLoadingContext,
+    context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
   ): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
     if (!Files.isDirectory(customPluginDir)) {
@@ -154,7 +154,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
   private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
                                                               repositoryPaths: List<Path>,
-                                                              context: DescriptorListLoadingContext,
+                                                              context: PluginDescriptorLoadingContext,
                                                               zipFilePool: ZipEntryResolverPool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
     val repositoriesByPaths = scope.async {
       val repositoriesByPaths = repositoryPaths.associateWith {
@@ -207,7 +207,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
   private fun loadPluginDescriptorFromRuntimeModule(
     pluginModuleGroup: PluginModuleGroup,
-    context: DescriptorListLoadingContext,
+    context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
     serviceModuleMapping: ServiceModuleMapping?,
     mainGroupResourceRootSet: Set<Path>,

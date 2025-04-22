@@ -44,7 +44,7 @@ abstract class ProductLoadingStrategy {
 
   abstract fun loadPluginDescriptors(
     scope: CoroutineScope,
-    loadingContext: DescriptorListLoadingContext,
+    loadingContext: PluginDescriptorLoadingContext,
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,

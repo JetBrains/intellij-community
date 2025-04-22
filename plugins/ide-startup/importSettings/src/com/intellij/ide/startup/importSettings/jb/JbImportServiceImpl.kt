@@ -67,7 +67,7 @@ internal data class JbProductInfo(
 
   val nonDefaultName: Boolean = !JbImportServiceImpl.IDE_NAME_PATTERN.matcher(configDir.name).matches()
 
-  internal fun prefetchData(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
+  internal fun prefetchData(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext) {
     prefetchPluginDescriptors(coroutineScope, context)
     prefetchKeymap(coroutineScope)
   }
@@ -90,7 +90,7 @@ internal data class JbProductInfo(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
+  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext) {
     logger.debug("Prefetching plugin descriptors from $pluginDir")
     val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
     descriptors2ProcessCnt.set(descriptorDeferreds.size)
@@ -273,7 +273,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       PathManager.getConfigDir().parent,
       PathManager.getConfigDir().fileSystem.getPath(PathManager.getDefaultConfigPathFor("X")).parent
     )
-    val context = DescriptorListLoadingContext(getBuildNumberForDefaultDescriptorVersion = { PluginManagerCore.buildNumber })
+    val context = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
       if (!parentDir.exists() || !parentDir.isDirectory()) {
         logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")
