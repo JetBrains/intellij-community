@@ -114,7 +114,7 @@ public final class TestLoggerFactory implements Logger.Factory {
         addConsoleAppenderForDebugRecords();
       }
 
-      System.out.printf("Test log file: %s%n", logFile);
+      System.out.printf("Test log file: %s%n", logFile.toUri());
 
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");
