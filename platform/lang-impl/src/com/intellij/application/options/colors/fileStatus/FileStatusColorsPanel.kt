@@ -1,154 +1,146 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.application.options.colors.fileStatus;
+package com.intellij.application.options.colors.fileStatus
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.ui.ColorPanel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.ui.ColorPanel
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import javax.swing.JButton
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.ListSelectionListener
+import javax.swing.event.TableModelEvent
+import javax.swing.event.TableModelListener
 
 @ApiStatus.Internal
-public final class FileStatusColorsPanel {
+class FileStatusColorsPanel(fileStatuses: Array<FileStatus>) {
+  private val myTopPanel: JPanel? = null
+  private var myFileStatusColorsTable: JBTable? = null
+  private var myFileStatusColorBox: JBCheckBox? = null
+  private var myRestoreButton: JButton? = null
+  private var myColorPanel: ColorPanel? = null
+  private val myTablePane: JBScrollPane? = null
+  private var myColorSettingsPanel: JPanel? = null
+  private val myCustomizedLabel: JLabel? = null
+  val model: FileStatusColorsTableModel
 
-  private static final int TABLE_SIZE = 250; // Defined by UI spec
-
-  private JPanel myTopPanel;
-  private JBTable myFileStatusColorsTable;
-  private JBCheckBox myFileStatusColorBox;
-  private JButton myRestoreButton;
-  private ColorPanel myColorPanel;
-  private JBScrollPane myTablePane;
-  private JPanel myColorSettingsPanel;
-  private JLabel myCustomizedLabel;
-  private final FileStatusColorsTableModel myModel;
-
-  public FileStatusColorsPanel(FileStatus @NotNull [] fileStatuses) {
-    myModel = new FileStatusColorsTableModel(fileStatuses, getCurrentScheme());
-    myFileStatusColorsTable.setModel(
-      myModel);
-    ((FileStatusColorsTable)myFileStatusColorsTable).adjustColumnWidths();
-    myModel.addTableModelListener(myFileStatusColorsTable);
-    myFileStatusColorsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateColorPanel(myModel.getDescriptorAt(myFileStatusColorsTable.getSelectedRow()));
+  init {
+    this.model = FileStatusColorsTableModel(fileStatuses, currentScheme)
+    myFileStatusColorsTable!!.setModel(
+      this.model)
+    (myFileStatusColorsTable as FileStatusColorsTable).adjustColumnWidths()
+    model.addTableModelListener(myFileStatusColorsTable)
+    myFileStatusColorsTable!!.getSelectionModel().addListSelectionListener(object : ListSelectionListener {
+      override fun valueChanged(e: ListSelectionEvent?) {
+        updateColorPanel(model.getDescriptorAt(myFileStatusColorsTable!!.getSelectedRow()))
       }
-    });
-    myRestoreButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        restoreDefault(myFileStatusColorsTable.getSelectedRow());
+    })
+    myRestoreButton!!.addActionListener(object : ActionListener {
+      override fun actionPerformed(e: ActionEvent?) {
+        restoreDefault(myFileStatusColorsTable!!.getSelectedRow())
       }
-    });
-    myFileStatusColorBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        setUseColor(myFileStatusColorsTable.getSelectedRow(), myFileStatusColorBox.isSelected());
+    })
+    myFileStatusColorBox!!.addActionListener(object : ActionListener {
+      override fun actionPerformed(e: ActionEvent?) {
+        setUseColor(myFileStatusColorsTable!!.getSelectedRow(), myFileStatusColorBox!!.isSelected())
       }
-    });
-    myColorPanel.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        //noinspection ConstantConditions
-        setColor(myFileStatusColorsTable.getSelectedRow(), myColorPanel.getSelectedColor());
+    })
+    myColorPanel!!.addActionListener(object : ActionListener {
+      override fun actionPerformed(e: ActionEvent?) {
+        setColor(myFileStatusColorsTable!!.getSelectedRow(), myColorPanel!!.getSelectedColor()!!)
       }
-    });
-    adjustTableSize();
-    myColorSettingsPanel.setVisible(false);
-    updateCustomizedLabel();
-    myModel.addTableModelListener(new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        updateCustomizedLabel();
+    })
+    adjustTableSize()
+    myColorSettingsPanel!!.setVisible(false)
+    updateCustomizedLabel()
+    model.addTableModelListener(object : TableModelListener {
+      override fun tableChanged(e: TableModelEvent?) {
+        updateCustomizedLabel()
       }
-    });
+    })
   }
 
-  private void updateCustomizedLabel() {
-    boolean isVisible = myModel.containsCustomSettings();
-    myCustomizedLabel.setForeground(isVisible ? JBColor.GRAY : UIUtil.getLabelBackground());
+  private fun updateCustomizedLabel() {
+    val isVisible = model.containsCustomSettings()
+    myCustomizedLabel!!.setForeground(if (isVisible) JBColor.GRAY else UIUtil.getLabelBackground())
   }
 
-  private void adjustTableSize() {
-    Dimension d = myFileStatusColorsTable.getPreferredSize();
-    d.setSize(JBUIScale.scale(TABLE_SIZE), d.height);
-    myTablePane.setMinimumSize(new Dimension(JBUIScale.scale(TABLE_SIZE), 0));
-    myTablePane.setPreferredSize(d);
-    myTablePane.setMaximumSize(d);
+  private fun adjustTableSize() {
+    val d = myFileStatusColorsTable!!.getPreferredSize()
+    d.setSize(scale(TABLE_SIZE), d.height)
+    myTablePane!!.setMinimumSize(Dimension(scale(TABLE_SIZE), 0))
+    myTablePane.setPreferredSize(d)
+    myTablePane.setMaximumSize(d)
   }
 
-  public JPanel getComponent() {
-    SwingUtilities.updateComponentTreeUI(myTopPanel); // TODO: create Swing components in this method (see javadoc)
-    return myTopPanel;
+  val component: JPanel
+    get() {
+      SwingUtilities.updateComponentTreeUI(myTopPanel) // TODO: create Swing components in this method (see javadoc)
+      return myTopPanel!!
+    }
+
+  private fun createUIComponents() {
+    myFileStatusColorsTable = FileStatusColorsTable()
   }
 
-  private void createUIComponents() {
-    myFileStatusColorsTable = new FileStatusColorsTable();
-  }
-
-  public @NotNull FileStatusColorsTableModel getModel() {
-    return myModel;
-  }
-
-  private static @NotNull EditorColorsScheme getCurrentScheme() {
-    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-  }
-
-  private void updateColorPanel(@Nullable FileStatusColorDescriptor descriptor) {
+  private fun updateColorPanel(descriptor: FileStatusColorDescriptor?) {
     if (descriptor == null) {
-       myColorSettingsPanel.setVisible(false);
+      myColorSettingsPanel!!.setVisible(false)
     }
     else {
-      myColorSettingsPanel.setVisible(true);
-      myFileStatusColorBox.setSelected(descriptor.getColor() != null);
-      myRestoreButton.setEnabled(!descriptor.isDefault());
-      myColorPanel.setSelectedColor(descriptor.getColor());
+      myColorSettingsPanel!!.setVisible(true)
+      myFileStatusColorBox!!.setSelected(descriptor.getColor() != null)
+      myRestoreButton!!.setEnabled(!descriptor.isDefault())
+      myColorPanel!!.setSelectedColor(descriptor.getColor())
     }
   }
 
-  private void restoreDefault(int row) {
+  private fun restoreDefault(row: Int) {
     if (row >= 0) {
-      myModel.resetToDefault(row);
-      updateColorPanel(myModel.getDescriptorAt(row));
+      model.resetToDefault(row)
+      updateColorPanel(model.getDescriptorAt(row))
     }
   }
 
-  private void setUseColor(int row, boolean useColor) {
+  private fun setUseColor(row: Int, useColor: Boolean) {
     if (row >= 0) {
-      FileStatusColorDescriptor descriptor = myModel.getDescriptorAt(row);
+      val descriptor = model.getDescriptorAt(row)
       if (descriptor != null) {
-        Color defaultColor = descriptor.getDefaultColor();
-        Color c = useColor ? defaultColor != null ? defaultColor : UIUtil.getLabelForeground() : null;
-        getModel().setValueAt(c, row, 1);
-        updateColorPanel(descriptor);
+        val defaultColor = descriptor.getDefaultColor()
+        val c = if (useColor) if (defaultColor != null) defaultColor else UIUtil.getLabelForeground() else null
+        this.model.setValueAt(c, row, 1)
+        updateColorPanel(descriptor)
       }
     }
   }
 
-  private void setColor(int row, @NotNull Color color) {
-    if (row  >= 0) {
-      myModel.setValueAt(color, row, 1);
-      FileStatusColorDescriptor descriptor = myModel.getDescriptorAt(row);
+  private fun setColor(row: Int, color: Color) {
+    if (row >= 0) {
+      model.setValueAt(color, row, 1)
+      val descriptor = model.getDescriptorAt(row)
       if (descriptor != null) {
-        updateColorPanel(descriptor);
+        updateColorPanel(descriptor)
       }
     }
+  }
+
+  companion object {
+    private const val TABLE_SIZE = 250 // Defined by UI spec
+
+    private val currentScheme: EditorColorsScheme
+      get() = EditorColorsManager.getInstance().getSchemeForCurrentUITheme()
   }
 }
