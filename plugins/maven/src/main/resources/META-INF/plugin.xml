@@ -321,9 +321,14 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenLibraryScopesCollector"/>
 
     <statistics.validation.customValidationRule
       implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
+
+    <statistics.validation.customValidationRule
+      implementation="org.jetbrains.idea.maven.statistics.MavenLibraryCoordinatesWhitelistValidationRule"/>
+
 
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
