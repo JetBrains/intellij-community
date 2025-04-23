@@ -14,12 +14,13 @@ import com.intellij.util.text.splitToTextRanges
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceLanguageParsingSupport.Companion.parseToHighlightedHtml
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.textRange
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.children
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.altHighlighterAvailable
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.parseToHighlightedHtml
 import java.awt.Color
 import kotlin.math.max
 import kotlin.math.min
@@ -41,23 +42,25 @@ private fun parseContent(project: Project?, language: Language, text: String, la
     }
   }
 
-  if (settings.useAlternativeHighlighting) {
+  if (settings.useAlternativeHighlighting && altHighlighterAvailable()) {
     val lang = if (language == Language.ANY) (languageName ?: "") else language.id.lowercase()
     val html = parseToHighlightedHtml(lang, text, startOffset ?: 0)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
 
     if (html.isNullOrEmpty() && language == Language.ANY) {
+      // Alterative highlighting failed, and default highlighting doesn't work for the current language.
       return
     }
     else if (html?.isNotEmpty() == true) {
       collector(text, 0..text.length, null, html)
       return
     }
+    // Fall through to default highlighting if alternative failed but default understands the current language.
   }
 
   val psiFile = PsiFileFactory.getInstance(project).createFileFromText(file.name, language, text)
 
 	// Traverse the PSI tree and collect highlights
-	psiFile.accept(object : PsiRecursiveElementVisitor() {
+	psiFile?.accept(object : PsiRecursiveElementVisitor() {
 		override fun visitElement(element: PsiElement) {
 			super.visitElement(element)
 			val range = element.textRange
@@ -195,7 +198,7 @@ private fun encodeEntities(text: String): String {
 }
 
 private fun createSpan(range: TextRange, text: String = "", color: Color? = null): HtmlChunk {
-  var span = HtmlChunk.span().sourceRange(range)
+  val span = HtmlChunk.span().sourceRange(range)
 
   if (text.isEmpty() && color == null) {
     return span

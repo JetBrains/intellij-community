@@ -1,22 +1,50 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.extensions.common.highlighter
+package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.ui.jcef.JBCefBrowser
-import java.util.concurrent.CountDownLatch
-import org.cef.CefSettings.LogSeverity
+import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.handler.CefDisplayHandlerAdapter
 import org.intellij.lang.annotations.Language
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.executeJavaScript
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.waitForPageLoad
 import java.net.URL
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 internal class CodeFenceLanguageParsingSupport : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val highlightJS = URL("https://unpkg.com/@highlightjs/cdn-assets/highlight.min.js").readText()
+    var latestJS: String? = null
+    var fallbackJS: String? = null
+    val scriptLatch = CountDownLatch(2)
+
+    Thread {
+      try {
+        latestJS = URL("https://unpkg.com/@highlightjs/cdn-assets/highlight.min.js").readText()
+      }
+      catch (_: Exception) {}
+      scriptLatch.countDown()
+    }.start()
+
+    Thread {
+      try {
+        fallbackJS = this.javaClass.getResourceAsStream("highlighter.js")?.bufferedReader().use { it?.readText() }
+      }
+      catch (_: Exception) {}
+      scriptLatch.countDown()
+    }.start()
+
+    scriptLatch.await(5, TimeUnit.SECONDS)
+
+    val highlightJS = latestJS ?: fallbackJS
+
+    if (highlightJS == null) {
+      available = false
+      return
+    }
+
     @Suppress("JSUnresolvedReference")
     @Language("JavaScript")
     val jsExtra = """
@@ -54,6 +82,7 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
 
   companion object {
     @Volatile private var startupCompleted = false
+    @Volatile private var available = true
     @Volatile private var startupLatch: CountDownLatch? = CountDownLatch(1)
     @Volatile private var jsExecLatch: CountDownLatch? = null
     @Volatile private var jsResultLatch: CountDownLatch? = null
@@ -63,14 +92,14 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
     private val browser = object : JBCefBrowser() {
       init {
         jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
-          override fun onConsoleMessage(browser: CefBrowser, level: LogSeverity, message: String, source: String, line: Int): Boolean {
-            if (level == LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter:")) {
+          override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
+            if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter:")) {
               jsExecLatch?.await()
               jsResult = message.substring(12)
               jsResultLatch?.countDown()
               return true
             }
-            else if (level == LogSeverity.LOGSEVERITY_ERROR) {
+            else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
               System.err.println("Error while executing highlighter: $message")
               jsError = true
             }
@@ -139,12 +168,15 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
       return chunks.joinToString("")
     }
 
+    internal fun altHighlighterAvailable() = available
+
     internal fun parseToHighlightedHtml(language: String, content: String, startOffset: Int): String? {
       synchronized(browser) {
         startupLatch?.await(10, TimeUnit.SECONDS)
         startupLatch = null
 
         if (!startupCompleted) {
+          available = false
           return null
         }
 

@@ -367,7 +367,7 @@
 
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
 
-    <postStartupActivity implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceLanguageParsingSupport"/>
+    <postStartupActivity implementation="org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport"/>
   </extensions>
 
   <applicationListeners>

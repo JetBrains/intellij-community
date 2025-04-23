@@ -1,5 +1,3 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 /*!
   Highlight.js v11.11.1 (git: 08cb242e7d)
   (c) 2006-2024 Josh Goebel <hello@joshgoebel.com> and other contributors
