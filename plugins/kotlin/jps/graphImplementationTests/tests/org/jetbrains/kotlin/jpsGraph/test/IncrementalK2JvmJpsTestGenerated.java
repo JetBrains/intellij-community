@@ -1452,6 +1452,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
                 runTest("withJava/javaUsedInKotlin/addNullableAnnotation/");
             }
 
+            @TestMetadata("addPurelyImplementsAnnotation")
+            public void testAddPurelyImplementsAnnotation() throws Exception {
+                runTest("withJava/javaUsedInKotlin/addPurelyImplementsAnnotation/");
+            }
+
             public void testAllFilesPresentInJavaUsedInKotlin() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("withJava/javaUsedInKotlin"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, true);
             }

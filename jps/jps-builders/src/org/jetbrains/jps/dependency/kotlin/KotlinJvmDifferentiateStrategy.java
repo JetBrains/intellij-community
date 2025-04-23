@@ -71,6 +71,16 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
         new TypeRepr.ClassType("kotlin/Deprecated"),
         new TypeRepr.ClassType("kotlin/DeprecatedSinceKotlin")
       )
+    ),
+
+    AnnotationGroup.of(
+      "Kotlin JVM specific annotations",
+      EnumSet.of(AnnotationGroup.AnnTarget.type),
+      EnumSet.of(AnnotationGroup.AffectionKind.added, AnnotationGroup.AffectionKind.changed),
+      EnumSet.of(AnnotationGroup.AffectionScope.usages),
+      Set.of(
+        new TypeRepr.ClassType("kotlin/jvm/PurelyImplements")
+      )
     )
   );
 
