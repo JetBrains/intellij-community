@@ -3667,6 +3667,34 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-79967
+  public void testTypeOfTemplateStringInferredAsTemplateForPython314() {
+    runWithLanguageLevel(LanguageLevel.PYTHON314, () -> {
+      doTest("Template", """
+        expr = t"template string"
+        """);
+    });
+  }
+
+  // PY-79967
+  public void testTypeOfTemplateStringInferredAsStrForPython314() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      doTest("str", """
+        expr = t"template string"
+        """);
+    });
+  }
+
+  // PY-79967
+  public void testInterpolationExpressionTypeFromTemplateString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON314, () -> {
+      doTest("str", """
+        name = "John"
+        expr = t"Hello, {name}!".interpolations[0].expression
+        """);
+    });
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
