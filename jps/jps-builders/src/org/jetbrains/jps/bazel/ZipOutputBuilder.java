@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel;
 
-import java.io.DataOutput;
+import java.io.IOException;
 
 public interface ZipOutputBuilder {
 
@@ -15,5 +15,5 @@ public interface ZipOutputBuilder {
 
   void deleteEntry(String entryName);
 
-  void write(DataOutput out);
+  void close(boolean saveChanges) throws IOException;
 }

@@ -142,6 +142,10 @@ public class BazelIncBuilder {
 
       return ExitCode.OK;
     }
+    catch (Throwable e) {
+      diagnostic.report(Message.create(null, e));
+      return ExitCode.ERROR;
+    }
     finally {
       if (diagnostic instanceof PostponedDiagnosticSink) {
         // report postponed errors, if necessary
