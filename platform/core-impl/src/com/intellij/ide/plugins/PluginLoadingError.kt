@@ -13,7 +13,7 @@ sealed interface PluginNonLoadReason {
   val detailedMessage: @NlsContexts.DetailedDescription String
   val shortMessage: @NlsContexts.Label String
   val internalMessage: @NonNls String
-  val isNotifyUser: Boolean
+  val shouldNotifyUser: Boolean
 }
 
 @ApiStatus.Internal
@@ -21,7 +21,7 @@ class PluginLoadingError internal constructor(
   override val plugin: IdeaPluginDescriptor,
   private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>,
   private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
-  override val isNotifyUser: Boolean,
+  override val shouldNotifyUser: Boolean,
   @JvmField val disabledDependency: PluginId? = null,
 ) : PluginNonLoadReason {
   internal constructor(
@@ -32,7 +32,7 @@ class PluginLoadingError internal constructor(
     plugin = plugin,
     detailedMessageSupplier = detailedMessageSupplier,
     shortMessageSupplier = shortMessageSupplier,
-    isNotifyUser = true)
+    shouldNotifyUser = true)
 
   @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
   override val detailedMessage: @NlsContexts.DetailedDescription String

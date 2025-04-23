@@ -162,7 +162,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
             shortMessageSupplier = message("plugin.loading.error.short.package.prefix.conflict",
                                            module.name, alreadyRegistered.name,
                                            module.pluginId, alreadyRegistered.moduleName ?: alreadyRegistered.pluginId),
-            isNotifyUser = true,
+            shouldNotifyUser = true,
           ))
           continue@m
         }
@@ -183,7 +183,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
                   shortMessageSupplier = message("plugin.loading.error.short.package.prefix.conflict",
                                                  module.name, alreadyRegistered.name,
                                                  contentModule.name, alreadyRegistered.moduleName ?: alreadyRegistered.pluginId),
-                  isNotifyUser = true,
+                  shouldNotifyUser = true,
                 ))
               } else {
                 registerLoadingError(module, contentModule)
@@ -308,7 +308,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         plugin = descriptor,
         detailedMessageSupplier = message("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.name, presentableName),
         shortMessageSupplier = message("plugin.loading.error.short.ide.contains.conflicting.module", presentableName),
-        isNotifyUser = isNotifyUser,
+        shouldNotifyUser = isNotifyUser,
       )
     }
 
@@ -327,7 +327,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           plugin = descriptor,
           detailedMessageSupplier = message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, it),
           shortMessageSupplier = message("plugin.loading.error.short.depends.on.not.installed.plugin", it),
-          isNotifyUser = isNotifyUser,
+          shouldNotifyUser = isNotifyUser,
         )
       }
   }
@@ -362,7 +362,7 @@ private fun createCannotLoadError(
     plugin = descriptor,
     detailedMessageSupplier = detailedMessageSupplier,
     shortMessageSupplier = shortMessageSupplier,
-    isNotifyUser = isNotifyUser,
+    shouldNotifyUser = isNotifyUser,
   )
 }
 
@@ -376,7 +376,7 @@ private fun createTransitivelyDisabledError(
     plugin = descriptor,
     detailedMessageSupplier = message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.name, dependencyName),
     shortMessageSupplier = message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyName),
-    isNotifyUser = isNotifyUser,
+    shouldNotifyUser = isNotifyUser,
     disabledDependency = dependency.pluginId,
   )
 }

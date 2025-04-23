@@ -312,7 +312,7 @@ class IdeaPluginDescriptorImpl private constructor(
       plugin = this,
       detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", name, disabledDependency) },
       shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", disabledDependency) },
-      isNotifyUser = false,
+      shouldNotifyUser = false,
       disabledDependency
     ))
 
@@ -398,7 +398,7 @@ class IdeaPluginDescriptorImpl private constructor(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
-        isNotifyUser = false,
+        shouldNotifyUser = false,
       ))
     }
 
@@ -411,7 +411,7 @@ class IdeaPluginDescriptorImpl private constructor(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled") },
-        isNotifyUser = false
+        shouldNotifyUser = false
       ))
     }
 

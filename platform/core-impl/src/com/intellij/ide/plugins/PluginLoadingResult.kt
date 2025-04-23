@@ -87,7 +87,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
         plugin = descriptor,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
-        isNotifyUser = true
+        shouldNotifyUser = true
       ))
       return
     }

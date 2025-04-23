@@ -343,7 +343,7 @@ object PluginManagerCore {
         logger.info(logMessage)
       }
       @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-      return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter { it.isNotifyUser }.map { Supplier { it.detailedMessage } })
+      return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter { it.shouldNotifyUser }.map { Supplier { it.detailedMessage } })
         .map { Supplier { HtmlChunk.text(it.get()) } }
         .toList()
     }
