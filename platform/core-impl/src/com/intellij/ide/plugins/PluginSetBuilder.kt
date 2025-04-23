@@ -385,10 +385,10 @@ private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String
   return Supplier { CoreBundle.message(key, *params) }
 }
 
-private fun getAllPluginDependencies(ideaPluginDescriptorImpl: IdeaPluginDescriptorImpl): Sequence<PluginId> {
-  return ideaPluginDescriptorImpl.dependencies.asSequence()
+private fun getAllPluginDependencies(plugin: IdeaPluginDescriptorImpl): Sequence<PluginId> {
+  return plugin.dependencies.asSequence()
            .filterNot { it.isOptional }
            .map { it.pluginId } +
-         ideaPluginDescriptorImpl.moduleDependencies.plugins.asSequence()
+         plugin.moduleDependencies.plugins.asSequence()
            .map { it.id }
 }
