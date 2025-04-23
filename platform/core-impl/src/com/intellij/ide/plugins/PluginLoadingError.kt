@@ -12,7 +12,7 @@ sealed interface PluginNonLoadReason {
   val plugin: IdeaPluginDescriptor
   val detailedMessage: @NlsContexts.DetailedDescription String
   val shortMessage: @NlsContexts.Label String
-  val internalMessage: @NonNls String
+  val logMessage: @NonNls String
   val shouldNotifyUser: Boolean
 }
 
@@ -42,13 +42,13 @@ class PluginLoadingError internal constructor(
   override val shortMessage: @NlsContexts.Label String
     get() = shortMessageSupplier.get()
 
-  override val internalMessage: @NonNls String
+  override val logMessage: @NonNls String
     get() = formatErrorMessage(plugin, detailedMessageSupplier.get())
 
   internal val isDisabledError: Boolean
     get() = shortMessageSupplier === DISABLED
 
-  override fun toString(): @NonNls String = internalMessage
+  override fun toString(): @NonNls String = logMessage
 
   companion object {
     internal val DISABLED: Supplier<String> = Supplier { "" }
