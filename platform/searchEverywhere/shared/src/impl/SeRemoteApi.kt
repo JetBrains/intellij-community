@@ -61,6 +61,15 @@ interface SeRemoteApi : RemoteApi<Unit> {
                                    dataContextId: DataContextId,
                                    providerId: SeProviderId): Boolean
 
+  suspend fun openInFindToolWindow(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId?,
+    providerIds: List<SeProviderId>,
+    params: SeParams,
+    isAllTab: Boolean
+  ): Boolean
+
   suspend fun getAvailableProviderIds(): List<SeProviderId>
 
   suspend fun getSearchScopesInfoForProviders(

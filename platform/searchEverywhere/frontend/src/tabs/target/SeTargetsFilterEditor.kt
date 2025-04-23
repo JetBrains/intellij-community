@@ -6,8 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersAction
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeTypeVisibilityStateHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
@@ -24,7 +22,7 @@ class SeTargetsFilterEditor(private val scopesInfo: SeSearchScopesInfo?,
   }
 
   private val visibilityStateHolder: SeTypeVisibilityStateHolder? =
-    typeVisibilityStates?.takeIf { it.isNotEmpty() }?.let { it ->
+    typeVisibilityStates?.takeIf { it.isNotEmpty() }?.let {
       SeTypeVisibilityStateHolder(it, updateFilterValueWithVisibilityStates)
     }
 
@@ -34,11 +32,7 @@ class SeTargetsFilterEditor(private val scopesInfo: SeSearchScopesInfo?,
     }.getAction()
   }
 
-  override fun getPresentation(): SeFilterPresentation {
-    return object : SeFilterActionsPresentation {
-      override fun getActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
-    }
-  }
+  override fun getActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
 
   private fun getScopeFilterAction(): AnAction? {
     return scopeFilterAction

@@ -11,6 +11,8 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.frontend.*
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsFilter
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
@@ -42,6 +44,10 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
                                      delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return delegate.canBeShownInFindResults()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
@@ -53,29 +59,26 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
 }
 
 private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActionsFilter(false)) {
-  private val presentation = object : SeFilterActionsPresentation {
-    private val actions = listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")), AutoToggleAction {
-      private var isAutoToggleEnabled: Boolean = true
 
-      override fun isEverywhere(): Boolean {
-        return filterValue.includeDisabled
-      }
+  private val actions = listOf<AnAction>(object : CheckBoxSearchEverywhereToggleAction(IdeBundle.message("checkbox.disabled.included")), AutoToggleAction {
+    private var isAutoToggleEnabled: Boolean = true
 
-      override fun setEverywhere(state: Boolean) {
-        filterValue = SeActionsFilter(state)
-        isAutoToggleEnabled = false
-      }
+    override fun isEverywhere(): Boolean {
+      return filterValue.includeDisabled
+    }
 
-      override fun autoToggle(everywhere: Boolean): Boolean {
-        if (!canToggleEverywhere() || !isAutoToggleEnabled || (isEverywhere == everywhere)) return false
+    override fun setEverywhere(state: Boolean) {
+      filterValue = SeActionsFilter(state)
+      isAutoToggleEnabled = false
+    }
 
-        filterValue = SeActionsFilter(everywhere)
-        return true
-      }
-    })
+    override fun autoToggle(everywhere: Boolean): Boolean {
+      if (!canToggleEverywhere() || !isAutoToggleEnabled || (isEverywhere == everywhere)) return false
 
-    override fun getActions(): List<AnAction> = actions
-  }
+      filterValue = SeActionsFilter(everywhere)
+      return true
+    }
+  })
 
-  override fun getPresentation(): SeFilterPresentation = presentation
+  override fun getActions(): List<AnAction> = actions
 }
