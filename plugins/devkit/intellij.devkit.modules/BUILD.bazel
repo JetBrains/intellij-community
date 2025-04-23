@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.devkit.modules` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "modules_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "modules",
+  module_name = "intellij.devkit.modules",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+    "//platform/ide-core",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+    "//jps/model-serialization",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":modules_resources"]
+)
+### auto-generated section `build intellij.devkit.modules` end

@@ -26,6 +26,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/workspace/jps",
     "//java/java-impl:impl",
+    "//plugins/devkit/devkit-core:core",
   ],
   runtime_deps = [":scaffolding_resources"]
 )

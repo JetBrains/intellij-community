@@ -71,6 +71,7 @@ jvm_library(
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:gson",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [
     ":vcs-github_resources",
@@ -152,6 +153,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:vcs-github-apollographql-apollo-ast-jvm",
     "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [
     ":vcs-github_resources",

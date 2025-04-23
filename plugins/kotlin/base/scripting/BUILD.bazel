@@ -65,8 +65,8 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//java/idea-ui:ui",
     "@lib//:kotlinc-kotlin-scripting-dependencies",
-    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
     "//plugins/kotlin/scripting",
+    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
   ],
   exports = ["@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting"],
   runtime_deps = [":kotlin-base-scripting_resources"]
@@ -126,8 +126,8 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//java/idea-ui:ui",
     "@lib//:kotlinc-kotlin-scripting-dependencies",
-    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
     "//plugins/kotlin/scripting",
+    "@lib//:kotlin-base-scripting-amper-dependency-resolution-kotlin-base-scripting",
   ],
   runtime_deps = [":kotlin-base-scripting_resources"]
 )

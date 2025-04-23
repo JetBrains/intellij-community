@@ -10,11 +10,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
-    "//java/jsp-openapi-no-deps:jsp-noDeps",
   ],
-  exports = [
-    "//xml/openapi:xml",
-    "//java/jsp-openapi-no-deps:jsp-noDeps",
-  ]
+  exports = ["//xml/openapi:xml"]
 )
 ### auto-generated section `build intellij.jsp.base` end

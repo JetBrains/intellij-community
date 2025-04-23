@@ -29,7 +29,6 @@ jvm_library(
     "//platform/statistics",
     "//platform/threadDumpParser",
     "//platform/code-style-impl:codeStyle-impl",
-    "//java/jsp-openapi-no-deps:jsp-noDeps",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",
