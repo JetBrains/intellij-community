@@ -16,17 +16,25 @@ import com.intellij.psi.*
 import com.intellij.lang.Language as PlatformLanguage
 
 fun interface GeneratedCodeIntegrator {
-  suspend fun integrate(project: Project, method: String): String
+  suspend fun integrate(project: Project, method: String, imports: List<String>): String
 }
 
 class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
-  override suspend fun integrate(project: Project, method: String): String {
+  override suspend fun integrate(
+    project: Project,
+    method: String,
+    imports: List<String>,
+  ): String {
     return readAction {
       val editorManager = FileEditorManager.getInstance(project)
       val editor = editorManager.selectedTextEditor!!
       val text = editor.document.text
       val caret = editor.caretModel.currentCaret.offset
-      text.substring(0, caret) + method + "\n" + text.substring(caret)
+
+      val packageEnd = text.indexOf("package").let { if (it >= 0) text.indexOf('\n', it) + 1 else 0 }
+      val importSection = if (imports.isNotEmpty()) imports.joinToString("\n") { "import $it;" } + "\n\n" else ""
+
+      text.substring(0, packageEnd) + importSection + text.substring(packageEnd, caret) + method + "\n" + text.substring(caret)
     }
   }
 }
@@ -37,7 +45,8 @@ class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeInt
     val psiFileWithGeneratedCode = edtWriteAction { createPsiFile(code, project, "dummy1.java") }
     val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return emptyList()
 
-    val integratedCode = generatedCodeIntegrator.integrate(project, method)
+    val imports = extractImportsFromGeneratedSnippet(project, psiFileWithGeneratedCode)
+    val integratedCode = generatedCodeIntegrator.integrate(project, method, imports)
     val psiFileWithIntegratedCode = edtWriteAction { createPsiFile(integratedCode, project, "dummy2.java") }
 
     return smartReadActionBlocking(project) {
@@ -53,6 +62,13 @@ class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeInt
       PlatformLanguage.findLanguageByID("JAVA")!!,
       code,
     )
+  }
+
+  private suspend fun extractImportsFromGeneratedSnippet(project: Project, psiFileWithGeneratedCode: PsiFile): List<String> {
+    return smartReadActionBlocking(project) {
+      val importList = psiFileWithGeneratedCode.children.filterIsInstance<PsiImportList>().firstOrNull()
+      importList?.children?.filterIsInstance<PsiImportStatement>()?.mapNotNull { it.qualifiedName } ?: emptyList()
+    }
   }
 
   private suspend fun extractMethodFromGeneratedSnippet(
