@@ -225,10 +225,10 @@ object EelPathUtils {
 
     check(sourceDescriptor is LocalEelDescriptor)
 
-    val sourceHash = calculateFileHash(source)
+    val sourceHash = calculateFileHashUsingMetadata(source)
 
     val remoteHash = if (Files.exists(remotePath)) {
-      calculateFileHash(remotePath)
+      calculateFileHashUsingMetadata(remotePath)
     }
     else {
       ""
@@ -253,7 +253,7 @@ object EelPathUtils {
         if (deferred != null) {
           if (deferred.isCompleted) {
             val (oldSourceHash, _) = deferred.getCompleted()
-            if (oldSourceHash == calculateFileHash(source)) {
+            if (oldSourceHash == calculateFileHashUsingMetadata(source)) {
               return@compute deferred
             }
           }
@@ -265,7 +265,7 @@ object EelPathUtils {
         scope.async {
           val temp = eel.createTempFor(source, true)
           walkingTransfer(source, temp, false, fileAttributesStrategy)
-          calculateFileHash(source) to temp
+          calculateFileHashUsingMetadata(source) to temp
         }
       }!!.await().second
     }
@@ -280,23 +280,31 @@ object EelPathUtils {
     }
   }
 
-  private fun calculateFileHash(path: Path): String {
-    val digest = MessageDigest.getInstance("SHA-256")
+  /**
+   * Calculates a SHA-256 hash for a given file using only its metadata.
+   *
+   * This function computes a hash based solely on file attributes:
+   * - File size.
+   * - Last modified time.
+   * - Creation time.
+   * - File key (if available).
+   *
+   * @param path the file path for which the hash is calculated.
+   * @return a hexadecimal string representing the computed SHA-256 hash.
+   */
+  private fun calculateFileHashUsingMetadata(path: Path): String {
     val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
     val fileSize = attributes.size()
     val lastModified = attributes.lastModifiedTime().toMillis()
+    val creationTime = attributes.creationTime().toMillis()
+    val fileKey = attributes.fileKey()?.toString() ?: ""
+
+    val digest = MessageDigest.getInstance("SHA-256")
 
     digest.update(fileSize.toString().toByteArray())
     digest.update(lastModified.toString().toByteArray())
-
-    FileChannel.open(path, READ).use { channel ->
-      val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
-      while (channel.read(buffer) > 0) {
-        buffer.flip()
-        digest.update(buffer)
-        buffer.clear()
-      }
-    }
+    digest.update(creationTime.toString().toByteArray())
+    digest.update(fileKey.toByteArray())
 
     return digest.digest().joinToString("") { "%02x".format(it) }
   }
