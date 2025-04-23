@@ -135,6 +135,8 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     return JBUIScale.scale(contentLengthPreferredSize);
   }
 
+  private FontSize myFontSize;
+
   @Internal
   public void applyFontProps(@NotNull FontSize size) {
     Document document = getDocument();
@@ -145,8 +147,15 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
                       ? EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName()
                       : getFont().getFontName();
 
+    myFontSize = size;
+
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
     setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(size.getSize())));
+  }
+
+  @Override
+  public float getContentsScaleFactor() {
+    return myFontSize != null ? ((float)myFontSize.getSize()) / FontSize.SMALL.getSize() : 1f;
   }
 
   private Object myHighlightedTag;
