@@ -359,8 +359,8 @@ class BuildContextImpl internal constructor(
 
     val bcpJarNames = productProperties.xBootClassPathJarNames + if (useMultiRoutingFs) listOf(PLATFORM_CORE_NIO_FS) else emptyList()
     if (bcpJarNames.isNotEmpty()) {
-      val separator = if (os == OsFamily.WINDOWS) ";" else ":"
-      val bootCp = bcpJarNames.joinToString(separator) { "${macroName}/lib/${it}" }
+      val (pathSeparator, dirSeparator) = if (os == OsFamily.WINDOWS) ";" to "\\" else ":" to "/"
+      val bootCp = bcpJarNames.joinToString(pathSeparator) { arrayOf(macroName, "lib", it).joinToString(dirSeparator) }
       jvmArgs += "-Xbootclasspath/a:${bootCp}".let { if (isScript) '"' + it + '"' else it }
     }
 
