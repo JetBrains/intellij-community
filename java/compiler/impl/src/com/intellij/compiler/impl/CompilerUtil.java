@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
@@ -43,6 +44,9 @@ public final class CompilerUtil {
       try {
         outputPath = Path.of(outputRoot);
         attributes = Files.readAttributes(outputPath, BasicFileAttributes.class);
+      }
+      catch (NoSuchFileException e) {
+        LOG.debug(e);
       }
       catch (IOException | InvalidPathException e) {
         LOG.info(e.getClass().getName() + ": " + e.getMessage());
