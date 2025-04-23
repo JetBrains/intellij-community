@@ -3757,7 +3757,7 @@ a:com.intellij.openapi.ui.MasterDetailsComponent
 - p:clearChildren():V
 - p:createActions(Z):java.util.List
 - createComponent():javax.swing.JComponent
-- p:createToolbarActionGroup():com.intellij.openapi.actionSystem.DefaultActionGroup
+- p:createToolbarActions():java.util.List
 - disposeUIResources():V
 - ensureInitialized(com.intellij.openapi.ui.NamedConfigurable):V
 - ps:findNodeByCondition(javax.swing.tree.TreeNode,com.intellij.openapi.util.Condition):com.intellij.openapi.ui.MasterDetailsComponent$MyNode
