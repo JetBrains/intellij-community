@@ -108,6 +108,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
         public void testSubclassOfDslClass() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
         }
+
+        @TestMetadata("TopLevelFunctions.kt")
+        public void testTopLevelFunctions() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/TopLevelFunctions.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
