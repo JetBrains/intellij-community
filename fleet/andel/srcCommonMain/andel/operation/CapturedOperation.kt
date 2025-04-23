@@ -6,6 +6,7 @@ import andel.editor.Document
 import andel.editor.MutableDocument
 import andel.intervals.Intervals
 import andel.text.TextRange
+import kotlinx.serialization.Serializable
 
 data class CapturedOperation(val operation: Operation,
                              val base: EditLog
@@ -38,6 +39,7 @@ fun MutableDocument.applyDiff(capturedOperation: CapturedOperation): Boolean {
   else false
 }
 
+@Serializable
 data class CapturedOffset(val offset: Long,
                           val base: EditLog
 )
@@ -53,6 +55,7 @@ fun CapturedOffset.rebaseOrNull(document: Document, direction: Sticky = Sticky.L
   return offset.transformOnto(arrow, direction)
 }
 
+@Serializable
 data class CapturedTextRange(val range: TextRange,
                              val base: EditLog
 )
@@ -80,6 +83,7 @@ fun <K, V> CapturedIntervals<K, V>.rebase(document: Document): Intervals<K, V> {
   return intervals.edit(arrow)
 }
 
+@Serializable
 data class CapturedCaretPosition(val caretPosition: CaretPosition,
                                  val base: EditLog
 )
