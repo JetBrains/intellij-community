@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.rdTarget
+import com.intellij.driver.sdk.wait
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import kotlin.time.Duration.Companion.seconds
@@ -29,6 +30,14 @@ class StructureToolWindowUi(data: ComponentData) : UiComponent(data) {
   fun waitAndGetStructureTree(message: String? = null, waitForText: ((UiText) -> Boolean)? = null): JTreeUiComponent {
     val structureTree = structureTree.waitFound(10.seconds)
     structureTree.expandAll()
+    waitForText?.let { structureTree.waitAnyTexts(message = message, timeout = 10.seconds, predicate = it) }
+    return structureTree
+  }
+  fun waitExpandedAndGetStructureTree(message: String? =  null, expandPath: List<String>? = null, waitForText: ((UiText) -> Boolean)? = null): JTreeUiComponent {
+    val structureTree = structureTree.waitFound(10.seconds)
+    expandPath?.toTypedArray()?.let {
+      structureTree.expandPath(*it)
+    }
     waitForText?.let { structureTree.waitAnyTexts(message = message, timeout = 10.seconds, predicate = it) }
     return structureTree
   }
