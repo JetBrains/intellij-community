@@ -87,7 +87,7 @@ object PluginManagerCore {
 
   @Volatile
   private var nullablePluginSet: PluginSet? = null
-  private var pluginLoadingErrors: Map<PluginId, PluginLoadingError>? = null
+  private var pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>? = null
   private val pluginErrors = ArrayList<Supplier<HtmlChunk>>()
   private var pluginsToDisable: Set<PluginId>? = null
   private var pluginsToEnable: Set<PluginId>? = null
@@ -356,7 +356,7 @@ object PluginManagerCore {
     return emptyList()
   }
 
-  fun getLoadingError(pluginId: PluginId): PluginLoadingError? = pluginLoadingErrors!![pluginId]
+  fun getLoadingError(pluginId: PluginId): PluginNonLoadReason? = pluginLoadingErrors!![pluginId]
 
   @ApiStatus.Internal
   @Synchronized
@@ -459,7 +459,7 @@ object PluginManagerCore {
   private fun disableIncompatiblePlugins(
     descriptors: Collection<IdeaPluginDescriptorImpl>,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    errors: MutableMap<PluginId, PluginLoadingError>,
+    errors: MutableMap<PluginId, PluginNonLoadReason>,
     essentialPlugins: List<PluginId>
   ) {
     val selectedIds = System.getProperty("idea.load.plugins.id")
@@ -540,7 +540,7 @@ object PluginManagerCore {
       .firstOrNull { p -> p != null && !p.isHostOs() }
 
   @JvmStatic
-  fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginLoadingError? {
+  fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
     val incompatibleOs = getIncompatibleOs(descriptor)
     if (incompatibleOs != null) {
       return PluginLoadingError(
@@ -664,12 +664,14 @@ object PluginManagerCore {
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
     
-    fun registerLoadingError(loadingError: PluginLoadingError) {
+    fun registerLoadingError(loadingError: PluginNonLoadReason) {
       pluginErrorsById[loadingError.plugin.pluginId] = loadingError
       pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
-      val disabledDependencyId = loadingError.disabledDependency
-      if (disabledDependencyId != null && initContext.isPluginDisabled(disabledDependencyId)) {
-        pluginsToEnable[disabledDependencyId] = idMap[disabledDependencyId]!!.getName()
+      if (loadingError is PluginDependencyIsDisabled) {
+        val disabledDependencyId = loadingError.dependencyId
+        if (initContext.isPluginDisabled(disabledDependencyId)) {
+          pluginsToEnable[disabledDependencyId] = idMap[disabledDependencyId]!!.getName()
+        }
       }
     }
 

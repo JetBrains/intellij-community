@@ -24,7 +24,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   // the order of errors matters
-  private val pluginErrors = LinkedHashMap<PluginId, PluginLoadingError>()
+  private val pluginErrors = LinkedHashMap<PluginId, PluginNonLoadReason>()
 
   @VisibleForTesting
   @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
@@ -37,13 +37,13 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   val enabledPlugins: List<IdeaPluginDescriptorImpl>
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
-  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = LinkedHashMap(pluginErrors)
+  internal fun copyPluginErrors(): MutableMap<PluginId, PluginNonLoadReason> = LinkedHashMap(pluginErrors)
 
   fun getIncompleteIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = incompletePlugins
 
   fun getIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = idMap
 
-  private fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
+  private fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginNonLoadReason?) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.pluginId)) {
@@ -78,10 +78,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private fun initAndAdd(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
     descriptor.initialize(initContext)?.let { error ->
-      addIncompletePlugin(plugin = descriptor, error = when (error) {
-        is PluginIsMarkedDisabled -> null
-        is PluginLoadingError -> error
-      })
+      addIncompletePlugin(plugin = descriptor, error = error.takeIf { it !is PluginIsMarkedDisabled })
       return
     }
 

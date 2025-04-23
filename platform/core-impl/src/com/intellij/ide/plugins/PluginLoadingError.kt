@@ -75,3 +75,17 @@ class PluginIsMarkedDisabled(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is marked disabled"
   override val shouldNotifyUser: Boolean = false
 }
+
+@ApiStatus.Internal
+class PluginDependencyIsDisabled(
+  override val plugin: IdeaPluginDescriptor,
+  val dependencyId: PluginId, // TODO id is not enough, should show name instead; requires name resolution context
+  override val shouldNotifyUser: Boolean,
+) : PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", plugin.name, dependencyId)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) requires plugin with id=${dependencyId} to be enabled"
+}

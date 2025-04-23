@@ -307,23 +307,14 @@ class IdeaPluginDescriptorImpl private constructor(
     checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
       return it
     }
-
-    fun requiredDependencyIsDisabled(disabledDependency: PluginId) = onInitError(PluginLoadingError(
-      plugin = this,
-      detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", name, disabledDependency) },
-      shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", disabledDependency) },
-      shouldNotifyUser = false,
-      disabledDependency
-    ))
-
     for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
       if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
-        return requiredDependencyIsDisabled(dependency.pluginId)
+        return onInitError(PluginDependencyIsDisabled(this, dependency.pluginId, false))
       }
     }
     for (pluginDependency in moduleDependencies.plugins) {
       if (context.isPluginDisabled(pluginDependency.id)) {
-        return requiredDependencyIsDisabled(pluginDependency.id)
+        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
       }
     }
     return null

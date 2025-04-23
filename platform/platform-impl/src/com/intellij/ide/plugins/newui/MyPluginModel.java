@@ -1212,8 +1212,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return List.of();
     }
 
-    PluginLoadingError loadingError = PluginManagerCore.INSTANCE.getLoadingError(pluginId);
-    PluginId disabledDependency = loadingError != null ? loadingError.disabledDependency : null;
+    PluginNonLoadReason loadingError = PluginManagerCore.INSTANCE.getLoadingError(pluginId);
+    PluginId disabledDependency = loadingError instanceof PluginDependencyIsDisabled error ? error.getDependencyId() : null;
     if (disabledDependency == null) {
       return loadingError != null ?
              List.of(createTextChunk(loadingError.getShortMessage())) :

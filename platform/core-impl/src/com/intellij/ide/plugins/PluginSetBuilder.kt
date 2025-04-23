@@ -87,9 +87,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return sorted
   }
 
-  internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): List<PluginLoadingError> {
+  internal fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): List<PluginNonLoadReason> {
     val logMessages = ArrayList<String>()
-    val loadingErrors = ArrayList<PluginLoadingError>()
+    val loadingErrors = ArrayList<PluginNonLoadReason>()
     val enabledRequiredContentModules = HashMap<String, IdeaPluginDescriptorImpl>()
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
     val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode()
@@ -295,8 +295,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     fullIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     isPluginDisabled: (PluginId) -> Boolean,
-    errors: MutableMap<PluginId, PluginLoadingError>,
-  ): PluginLoadingError? {
+    errors: MutableMap<PluginId, PluginNonLoadReason>,
+  ): PluginNonLoadReason? {
     val isNotifyUser = !descriptor.isImplementationDetail && !pluginRequiresUltimatePluginButItsDisabled(descriptor.pluginId, fullIdMap)
     for (incompatibleId in descriptor.incompatiblePlugins) {
       if (!enabledPluginIds.containsKey(incompatibleId) || isPluginDisabled(incompatibleId)) {
@@ -316,7 +316,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       .firstOrNull { it !in enabledPluginIds }
       ?.let { dependencyPluginId ->
         return idMap.get(dependencyPluginId)?.let {
-          createTransitivelyDisabledError(descriptor, it, isNotifyUser)
+          // FIXME this is not precise reason type and may confuse user
+          PluginDependencyIsDisabled(descriptor, it.pluginId, isNotifyUser)
         } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
@@ -336,9 +337,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 private fun createCannotLoadError(
   descriptor: IdeaPluginDescriptorImpl,
   dependencyPluginId: PluginId,
-  errors: Map<PluginId, PluginLoadingError>,
+  errors: Map<PluginId, PluginNonLoadReason>,
   isNotifyUser: Boolean,
-): PluginLoadingError {
+): PluginNonLoadReason {
   val dependencyIdString = dependencyPluginId.idString
   val dependency = errors.get(dependencyPluginId)?.plugin
 
@@ -363,21 +364,6 @@ private fun createCannotLoadError(
     detailedMessageSupplier = detailedMessageSupplier,
     shortMessageSupplier = shortMessageSupplier,
     shouldNotifyUser = isNotifyUser,
-  )
-}
-
-private fun createTransitivelyDisabledError(
-  descriptor: IdeaPluginDescriptorImpl,
-  dependency: IdeaPluginDescriptorImpl,
-  isNotifyUser: Boolean,
-): PluginLoadingError {
-  val dependencyName = dependency.name
-  return PluginLoadingError(
-    plugin = descriptor,
-    detailedMessageSupplier = message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.name, dependencyName),
-    shortMessageSupplier = message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyName),
-    shouldNotifyUser = isNotifyUser,
-    disabledDependency = dependency.pluginId,
   )
 }
 
