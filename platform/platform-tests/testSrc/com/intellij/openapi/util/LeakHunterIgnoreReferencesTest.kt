@@ -6,18 +6,21 @@ import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PairProcessor
+import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ref.IgnoredTraverseReference
-import junit.framework.TestCase
-import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.util.IdentityHashMap
 import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import java.util.function.Supplier
+import java.util.stream.Stream
+import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
@@ -37,24 +40,27 @@ class LeakHunterIgnoreReferencesTest {
 
   @Test
   fun testLeakHunterDoesntReportFalsePositivesFromWeakHashMap() {
-    var disposable: Disposable.Default? = object : Disposable.Default {}
-    Disposer.dispose(disposable!!)
-    Disposer.getDisposalTrace(disposable).addSuppressed(MyLeakThrowable(MyLeakData()))
     val javaMap: WeakHashMap<Any?, MyLeakData?> = WeakHashMap<Any?, MyLeakData?>()
-    javaMap.put(disposable, MyLeakData())
-    //Ensure that the reference is GC'ed, even in interpreter mode
-    disposable = null
-    val supplier: Supplier<MutableMap<Any?, String?>?> = Supplier {
-      val result: MutableMap<Any?, String?> = IdentityHashMap<Any?, String?>()
-      result.put(javaMap, "Standard WeakHashMap")
-      result.put(Disposer.getTree(), "Disposer.getTree()")
-      result
-    }
-    LeakHunter.processLeaks(supplier, MyLeakData::class.java, Predicate { leak: MyLeakData? -> true }, null, PairProcessor { _, _ ->
+    val disposable = AtomicReference(Any())
+    javaMap.put(disposable.get(), MyLeakData())
+
+    disposable.set(null)
+
+    LeakHunter.processLeaks({ mapOf(javaMap to "Standard WeakHashMap")}, MyLeakData::class.java, Predicate { leak: MyLeakData? -> true }, null, PairProcessor { _, _ ->
       Assertions.fail("Found a leak!")
     })
   }
-
+  @Test
+  fun testLeakHunterDoesntReportDisposedDisposablesFromDisposer() {
+    val disposable: AtomicReference<Disposable.Default?> = AtomicReference(object : Disposable.Default {})
+    Disposer.dispose(disposable.get()!!)
+    Disposer.getDisposalTrace(disposable.get()!!).addSuppressed(MyLeakThrowable(MyLeakData()))
+    //Ensure that the reference is GC'ed, even in interpreter mode
+    disposable.set(null)
+    LeakHunter.processLeaks({ mapOf(Disposer.getTree() to "Disposer.getTree()")}, MyLeakData::class.java, Predicate { leak: MyLeakData? -> true }, null, PairProcessor { _, _ ->
+      Assertions.fail("Found a leak!")
+    })
+  }
 }
 
 private class MyLeakData

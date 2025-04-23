@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -112,11 +113,11 @@ public final class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
-                                      @NotNull Class<T> suspectClass,
-                                      @Nullable Predicate<? super T> isReallyLeak,
-                                      @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
-                                      @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
+  public static <T> boolean processLeaks(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                         @NotNull Class<T> suspectClass,
+                                         @Nullable Predicate<? super T> isReallyLeak,
+                                         @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
+                                         @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
     waitForIndicesToUpdate();
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
@@ -127,9 +128,9 @@ public final class LeakHunter {
     PersistentEnumeratorCache.clearCacheForTests();
     flushTelemetry();
     GCUtil.tryGcSoftlyReachableObjects();
-    Runnable runnable = () -> {
+    Computable<Boolean> runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {
+        return DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {
           if (leakBackLinkProcessor != null && leakBackLinkProcessor.test(backLink)) {
             return true;
           }
@@ -141,12 +142,7 @@ public final class LeakHunter {
       }
     };
     Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      runnable.run();
-    }
-    else {
-      application.runReadAction(runnable);
-    }
+    return application == null ? runnable.compute() : application.runReadAction(runnable);
   }
 
   // we want to avoid walking heap during indexing, because zillions of UpdateOp and other transient indexing requests stored in the temp queue could OOME
