@@ -303,10 +303,12 @@ internal class BazelBuildFileGenerator(
     val resourceDependencies = mutableListOf<String>()
     val sources = moduleDescriptor.sources
     if (moduleDescriptor.resources.isNotEmpty()) {
-      generateResources(module = moduleDescriptor, resourceDependencies = resourceDependencies, forTests = false)
+      val result = generateResources(module = moduleDescriptor, forTests = false)
+      resourceDependencies.addAll(result.resourceTargets)
     }
     if (moduleDescriptor.testResources.isNotEmpty()) {
-      generateResources(module = moduleDescriptor, resourceDependencies = resourceDependencies, forTests = true)
+      val result = generateResources(module = moduleDescriptor, forTests = true)
+      resourceDependencies.addAll(result.resourceTargets)
     }
 
     // if someone depends on such a test module from another production module
@@ -442,11 +444,14 @@ internal class BazelBuildFileGenerator(
     return glob(sources.flatMap { it.glob }, exclude = exclude.toList())
   }
 
+  private data class GenerateResourcesResult(
+    val resourceTargets: List<String>,
+  )
+
   private fun BuildFile.generateResources(
     module: ModuleDescriptor,
-    resourceDependencies: MutableList<String>,
     forTests: Boolean,
-  ) {
+  ): GenerateResourcesResult {
     if (module.sources.isEmpty() && !(module.module.dependenciesList.dependencies.none {
         when (it) {  // -- require
           is JpsModuleDependency, is JpsLibraryDependency -> {
@@ -465,25 +470,25 @@ internal class BazelBuildFileGenerator(
     }
 
     if (!module.isCommunity && module.targetName.startsWith("dotenv-") && resources[0].baseDirectory.contains("community")) {
-      if (forTests) {
+      val fixedTargetsList = if (forTests) {
         // skip for now
+        emptyList()
       }
       else {
-        resourceDependencies.add("@community//plugins/env-files-support:${module.targetName}_resources")
+        listOf("@community//plugins/env-files-support:${module.targetName}_resources")
       }
-      return
+      return GenerateResourcesResult(resourceTargets = fixedTargetsList)
     }
 
     load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
     val targetNameSuffix = if (forTests) TEST_RESOURCES_TARGET_SUFFIX else PRODUCTION_RESOURCES_TARGET_SUFFIX
 
-    for ((i, resource) in resources.withIndex()) {
-      target("jvm_resources") {
-        val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
-        option("name", name)
-        resourceDependencies.add(name)
+    val resourceTargets = resources.withIndex().map { (i, resource) ->
+      val name = "${module.targetName}$targetNameSuffix" + (if (i == 0) "" else "_$i")
 
+      target("jvm_resources") {
+        option("name", name)
         option("files", glob(resource.files, allowEmpty = false))
         if (resource.baseDirectory.isNotEmpty()) {
           option("strip_prefix", resource.baseDirectory)
@@ -492,7 +497,11 @@ internal class BazelBuildFileGenerator(
           visibility(arrayOf("//visibility:public"))
         }
       }
+
+      name
     }
+
+    return GenerateResourcesResult(resourceTargets = resourceTargets)
   }
 
   private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: Int): String? {
