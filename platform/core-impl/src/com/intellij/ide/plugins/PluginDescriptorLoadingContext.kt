@@ -11,6 +11,7 @@ import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -25,7 +26,7 @@ class PluginDescriptorLoadingContext(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
-  private val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
+  private val globalErrors: CopyOnWriteArrayList<Supplier<@Nls String>> = CopyOnWriteArrayList<Supplier<String>>()
 
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
@@ -55,7 +56,7 @@ class PluginDescriptorLoadingContext(
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
-  internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
+  internal fun copyGlobalErrors(): MutableList<Supplier<@Nls String>> = ArrayList(globalErrors)
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)

@@ -35,8 +35,8 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
       shortMessageSupplier = shortMessageSupplier,
       isNotifyUser = true)
 
-  @get:NlsContexts.DetailedDescription
-  val detailedMessage: String
+  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+  val detailedMessage: @NlsContexts.DetailedDescription String
     get() = detailedMessageSupplier!!.get()
 
   internal val isDisabledError: Boolean
@@ -47,7 +47,7 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
   val internalMessage: @NonNls String
     get() = formatErrorMessage(plugin, (detailedMessageSupplier ?: shortMessageSupplier).get())
 
-  @get:NlsContexts.Label
-  val shortMessage: String
+  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+  val shortMessage: @NlsContexts.Label String
     get() = shortMessageSupplier.get()
 }

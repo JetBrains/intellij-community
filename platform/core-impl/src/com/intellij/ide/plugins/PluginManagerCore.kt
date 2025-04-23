@@ -324,25 +324,32 @@ object PluginManagerCore {
   }
 
   @Suppress("LoggingSimilarMessage")
-  private fun preparePluginErrors(globalErrorsSuppliers: List<Supplier<String>>): List<Supplier<HtmlChunk>> {
+  private fun preparePluginErrors(globalErrorsSuppliers: List<Supplier<@Nls String>>): List<Supplier<HtmlChunk>> {
     val pluginLoadingErrors = pluginLoadingErrors ?: emptyMap()
     if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
       return emptyList()
     }
     // the log includes all messages, not only those which need to be reported to the user
-    val loadingErrors = pluginLoadingErrors.entries.map { it.value }
+    val loadingErrors = pluginLoadingErrors.values
     val logMessage =
       "Problems found loading plugins:\n  " +
-      (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.internalMessage }).joinToString(separator = "\n  ")
+      (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.internalMessage })
+        .joinToString(separator = "\n  ")
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
         logger.warn(logMessage)
-      }else{
+      }
+      else {
         logger.info(logMessage)
       }
-      @Suppress("HardCodedStringLiteral")
       return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter(PluginLoadingError::isNotifyUser).map(PluginLoadingError::detailedMessageSupplier))
-        .map { Supplier { HtmlChunk.text(it!!.get()) } }
+        .filterNotNull()
+        .map {
+          Supplier {
+            @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+            HtmlChunk.text(it.get())
+          }
+        }
         .toList()
     }
     else if (PlatformUtils.isFleetBackend()) {
