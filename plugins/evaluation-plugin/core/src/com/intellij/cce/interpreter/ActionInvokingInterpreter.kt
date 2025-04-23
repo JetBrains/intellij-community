@@ -53,6 +53,11 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         is Delay -> actionsInvoker.delay(action.seconds)
         is OpenFileInBackground -> fileOpener.openInBackground(action.file)
         is OptimiseImports -> actionsInvoker.optimiseImports(action.file)
+        is Rollback -> {
+          val currentTextLength = actionsInvoker.getText().length
+          actionsInvoker.deleteRange(0, currentTextLength)
+          actionsInvoker.printText(text)
+        }
       }
       if (isCanceled) break
     }

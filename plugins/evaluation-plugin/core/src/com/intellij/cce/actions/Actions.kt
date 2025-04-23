@@ -11,7 +11,8 @@ sealed interface Action {
   val sessionId: SessionId
 
   enum class ActionType {
-    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME, DELAY, OPEN_FILE_IN_BACKGROUND, OPTIMISE_IMPORTS
+    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME, DELAY, OPEN_FILE_IN_BACKGROUND, OPTIMISE_IMPORTS,
+    ROLLBACK
   }
 
   object JsonAdapter : JsonDeserializer<Action>, JsonSerializer<Action> {
@@ -26,6 +27,7 @@ sealed interface Action {
         ActionType.DELAY -> context.deserialize(json, Delay::class.java)
         ActionType.OPEN_FILE_IN_BACKGROUND -> context.deserialize(json, OpenFileInBackground::class.java)
         ActionType.OPTIMISE_IMPORTS -> context.deserialize(json, OptimiseImports::class.java)
+        ActionType.ROLLBACK -> context.deserialize(json, Rollback::class.java)
       }
     }
 
@@ -87,8 +89,10 @@ data class OpenFileInBackground internal constructor(override val sessionId: Ses
 
 data class OptimiseImports internal constructor(override val sessionId: SessionId, val file: String) : Action {
   override val type: Action.ActionType = Action.ActionType.OPTIMISE_IMPORTS
+}
 
-  internal constructor(sessionId: UUID, file: String) : this(UUIDBasedSessionId(sessionId), file)
+data class Rollback internal constructor(override val sessionId: SessionId, val file: String) : Action {
+  override val type: Action.ActionType = Action.ActionType.ROLLBACK
 }
 
 data class TextRange(val start: Int, val end: Int)
@@ -119,5 +123,6 @@ class ActionsBuilder {
     fun delay(seconds: Int) = actions.add(Delay(sessionId, seconds))
     fun openFileInBackground(filePath: String) = actions.add(OpenFileInBackground(sessionId, filePath))
     fun optimiseImports(filePath: String) = actions.add(OptimiseImports(sessionId, filePath))
+    fun rollback(filePath: String) = actions.add(Rollback(sessionId, filePath))
   }
 }
