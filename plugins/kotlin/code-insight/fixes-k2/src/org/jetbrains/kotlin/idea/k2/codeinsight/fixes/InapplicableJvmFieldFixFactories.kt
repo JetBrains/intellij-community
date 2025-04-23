@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 
 internal object InapplicableJvmFieldFixFactories {
 
-    val removeAnnotationFixFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InapplicableJvmField ->
+    val removeAnnotationFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.InapplicableJvmField ->
         listOf(
             RemoveAnnotationFix(KotlinBundle.message("remove.jvmfield.annotation"), diagnostic.psi)
         )
