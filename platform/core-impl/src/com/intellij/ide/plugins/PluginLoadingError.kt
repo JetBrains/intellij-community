@@ -201,3 +201,16 @@ class PluginMalformedSinceUntilConstraints(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) has malformed constraints for IDE version"
   override val shouldNotifyUser: Boolean = true
 }
+
+@ApiStatus.Internal
+class PluginLoadingIsDisabledCompletely(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.plugin.loading.disabled", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.plugin.loading.disabled")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not loaded because plugin loading is disabled completely"
+  override val shouldNotifyUser: Boolean = true
+}

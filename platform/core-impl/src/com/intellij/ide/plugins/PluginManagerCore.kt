@@ -497,11 +497,7 @@ object PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         descriptor.isMarkedForLoading = false
-        errors[descriptor.getPluginId()] = PluginLoadingError(
-          descriptor,
-          message("plugin.loading.error.long.plugin.loading.disabled", descriptor.getName()),
-          message("plugin.loading.error.short.plugin.loading.disabled")
-        )
+        errors[descriptor.getPluginId()] = PluginLoadingIsDisabledCompletely(descriptor)
       }
     }
 
