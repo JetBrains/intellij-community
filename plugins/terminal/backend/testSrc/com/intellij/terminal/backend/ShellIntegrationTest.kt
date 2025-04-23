@@ -30,6 +30,7 @@ import org.junit.runners.Parameterized
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
@@ -200,6 +201,22 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
     val suffixFound = contentUpdatedEvents.any { it.text.contains("MY_PATH=path1:path2:path3") }
     Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+  }
+
+  @Test
+  fun `ZDOTDIR can be changed in zshenv`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    val msg = "Loading .zshrc in the updated ZDOTDIR"
+    val zshrcDir = Files.createTempDirectory(".zshrc-dir").also {
+      it.resolve(".zshrc").writeText("echo '$msg'")
+    }
+    val zshenvDir = Files.createTempDirectory(".zshenv-dir").also {
+      it.resolve(".zshenv").writeText("ZDOTDIR='$zshrcDir'")
+    }
+    val events = startSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to zshenvDir.toString())) {}
+    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
+    val found = contentUpdatedEvents.any { it.text.contains(msg) }
+    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, found)
   }
 
   private suspend fun startSessionAndCollectOutputEvents(

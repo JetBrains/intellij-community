@@ -27,6 +27,13 @@ if [[ -f "$JETBRAINS_INTELLIJ_ORIGINAL_FILE" ]]; then
 
     builtin source "$JETBRAINS_INTELLIJ_ORIGINAL_FILE"
 
+    # ZDOTDIR might be changed by the user config
+    if [[ -n "$ZDOTDIR" ]]; then
+      JETBRAINS_INTELLIJ_ORIGINAL_ZDOTDIR="$ZDOTDIR"
+    else
+      builtin unset JETBRAINS_INTELLIJ_ORIGINAL_ZDOTDIR
+    fi
+
     # Set back to the IntelliJ location to continue injecting IntelliJ shell integration.
     ZDOTDIR="$JETBRAINS_INTELLIJ_ZDOTDIR_COPY"
   fi
