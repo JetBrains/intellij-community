@@ -1,20 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.editor
 
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
-import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.FrontendEditorLinesBreakpointTypesManager
+import com.intellij.platform.debugger.impl.frontend.getAvailableBreakpointTypesFromServer
 import com.intellij.xdebugger.impl.XSourcePositionImpl
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 internal class XDebuggerLineChangeHandler(
@@ -33,7 +32,8 @@ internal class XDebuggerLineChangeHandler(
         val (editor, position) = event
         val project = editor.project ?: return@collectLatest
         try {
-          val icon = project.service<XDebuggerLineChangeIconProvider>().getIcon(position, editor)
+          val type = getBreakpointTypeForLine(project, editor, position.line)
+          val icon = type?.enabledIcon
           withContext(Dispatchers.Main) {
             handler(editor.gutter as EditorGutterComponentEx, position, icon)
           }
@@ -56,17 +56,15 @@ internal class XDebuggerLineChangeHandler(
     lineChangedEvents.tryEmit(null)
   }
 
-  private data class LineChangedEvent(val editor: Editor, val position: XSourcePositionImpl)
-}
-
-@ApiStatus.Internal
-open class XDebuggerLineChangeIconProvider(val project: Project) {
-  open suspend fun getIcon(position: XSourcePositionImpl, editor: Editor): Icon? {
-    return readAction {
-      blockingContextToIndicator {
-        val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, false, editor)
-        types.firstOrNull()?.enabledIcon
-      }
+  private suspend fun getBreakpointTypeForLine(project: Project, editor: Editor, line: Int): XBreakpointTypeProxy? {
+    val types: List<XBreakpointTypeProxy> = if (useFeProxy()) {
+      FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLine(editor, line)
     }
+    else {
+      getAvailableBreakpointTypesFromServer(project, editor, line)
+    }
+    return types.firstOrNull()
   }
+
+  private data class LineChangedEvent(val editor: Editor, val position: XSourcePositionImpl)
 }
