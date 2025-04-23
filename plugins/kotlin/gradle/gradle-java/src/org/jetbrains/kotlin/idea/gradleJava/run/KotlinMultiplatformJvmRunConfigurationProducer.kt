@@ -10,12 +10,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -70,21 +68,17 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
 
-        configuration.name = "${function.containingKtFile.virtualFile.nameWithoutExtension} [${runTask.targetName}]"
+        configuration.name = function.getKMPDesktopGradleConfigurationName(runTask)
         configuration.isDebugAllEnabled = false
         configuration.isDebugServerProcess = false
 
         configuration.settings.apply {
             externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
             taskNames = listOf(runTask.taskName)
-            scriptParameters = "${mainClassScriptParameter(function)} --quiet"
+            scriptParameters = kmpJvmGradleTaskParameters(function)
         }
 
         return true
-    }
-
-    private fun mainClassScriptParameter(function: KtFunction): String {
-        return "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
     }
 
     private fun Module?.asJvmModule(): Module? =

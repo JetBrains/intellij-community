@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.run
 
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -10,6 +12,8 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -122,3 +126,16 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
     (methodName == "task") && (fqClassName == FqName(GRADLE_API_PROJECT)
             || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE)
             || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
+
+fun KtNamedFunction.getKMPDesktopGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
+    "${getConfigurationName()} [${runTask.targetName}]"
+
+fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSourceDirectoryName() ?: name
+
+fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
+
+fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
+
+fun Module.getSourceDirectoryName(): String? = name.split(".").getOrNull(1)
+
+private const val quietParameter: String = "--quiet"
