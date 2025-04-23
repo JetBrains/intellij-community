@@ -188,3 +188,16 @@ class PluginUntilBuildConstraintViolation(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.untilBuild} or older, but the current build is $productBuildNumber"
   override val shouldNotifyUser: Boolean = true
 }
+
+@ApiStatus.Internal
+class PluginMalformedSinceUntilConstraints(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) has malformed constraints for IDE version"
+  override val shouldNotifyUser: Boolean = true
+}

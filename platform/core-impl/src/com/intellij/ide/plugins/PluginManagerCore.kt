@@ -577,11 +577,7 @@ object PluginManagerCore {
     }
     catch (e: Exception) {
       logger.error(e)
-      return PluginLoadingError(
-        descriptor,
-        message("plugin.loading.error.long.failed.to.load.requirements.for.ide.version", descriptor.getName()),
-        message("plugin.loading.error.short.failed.to.load.requirements.for.ide.version")
-      )
+      return PluginMalformedSinceUntilConstraints(descriptor)
     }
     return null
   }
