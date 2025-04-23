@@ -79,8 +79,8 @@ object MarketplaceUrls {
   fun getPluginReviewNoteUrl() = "${getPluginManagerUrl()}/docs/marketplace/reviews-policy.html" // plugin manager url?
 
   @JvmStatic
-  fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = buildString {
-    append("${getPluginManagerUrl()}/intellij/${pluginId.urlEncode()}/review/new")
+  fun getPluginWriteReviewUrl(pluginManagerUrl: String, pluginId: PluginId, version: String?): String = buildString {
+    append("${pluginManagerUrl}/intellij/${pluginId.urlEncode()}/review/new")
     append("?build=$IDE_BUILD_FOR_REQUEST")
     version?.let {
       append("&version=$it")

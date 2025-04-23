@@ -63,6 +63,8 @@ interface PluginUiModel {
 
   val isLicenseOptional: Boolean
 
+  val suggestedCommercialIde: String?
+
   /**
    * Java compatibility method. Going to be removed after refactoring is done.
    */

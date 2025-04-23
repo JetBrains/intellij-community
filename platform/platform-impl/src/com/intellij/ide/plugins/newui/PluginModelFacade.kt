@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -97,9 +98,18 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return getController(descriptor).uninstallAndUpdateUi(descriptor)
   }
 
+  fun findInstalledPlugin(model: PluginUiModel): PluginUiModel? {
+    return getController(model).findInstalledPlugin(model)
+  }
+
+  fun getPluginManagerUrl(model: PluginUiModel): String {
+    return getController(model).getPluginManagerUrl(model)
+  }
+
   private fun getController(model: PluginUiModel): PluginManagerController {
     return getController(model.source)
   }
+
   private fun getController(source: PluginSource): PluginManagerController{
     return when (source) {
       PluginSource.LOCAL -> localController
@@ -139,4 +149,6 @@ interface PluginManagerController {
   fun getDependents(models: List<PluginUiModel>): Map<PluginUiModel, List<PluginUiModel>>
   fun isBundledUpdate(model: PluginUiModel): Boolean
   fun uninstallAndUpdateUi(model: PluginUiModel)
+  fun findInstalledPlugin(model: PluginUiModel): PluginUiModel?
+  fun getPluginManagerUrl(model: PluginUiModel) : String
 }

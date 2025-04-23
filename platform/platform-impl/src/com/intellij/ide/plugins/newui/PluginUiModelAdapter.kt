@@ -77,5 +77,10 @@ class PluginUiModelAdapter(
   override val isLicenseOptional: Boolean
     get() = pluginDescriptor.isLicenseOptional
 
+  override val suggestedCommercialIde: String?
+    get() {
+      return if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedCommercialIde else null
+    }
+
   override val source: PluginSource = PluginSource.LOCAL
 }

@@ -552,9 +552,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val newReviewLink = LinkPanel(topPanel, true, false, null, BorderLayout.WEST)
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false) {
-      val pluginId = plugin!!.pluginId
-      val installedPlugin = getPlugin(pluginId)
-      getPluginWriteReviewUrl(pluginId, installedPlugin?.version)
+      val pluginUiModel = plugin!!
+      val installedPlugin = pluginModel.findInstalledPlugin(pluginUiModel)
+      val pluginManagerUrl = pluginModel.getPluginManagerUrl(pluginUiModel)
+      getPluginWriteReviewUrl(pluginManagerUrl, pluginUiModel.pluginId, installedPlugin?.version)
     }
 
     val notePanel: JPanel = Wrapper(
@@ -774,13 +775,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     select(0, true)
 
-    var suggestedCommercialIde: String? = null
+    val suggestedCommercialIde: String? = plugin!!.suggestedCommercialIde
 
-    if (plugin?.getDescriptor() is PluginNode) {
-      suggestedCommercialIde = (plugin?.getDescriptor() as PluginNode).suggestedCommercialIde
-      if (suggestedCommercialIde != null) {
-        installButton!!.isVisible = false
-      }
+    if (suggestedCommercialIde != null) {
+      installButton!!.isVisible = false
     }
 
     if (plugin != null) {

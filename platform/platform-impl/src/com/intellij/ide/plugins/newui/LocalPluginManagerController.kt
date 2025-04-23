@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getPluginDistDirByClass
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
@@ -76,5 +77,13 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
 
   override fun uninstallAndUpdateUi(model: PluginUiModel) {
     return localPluginModel.uninstallAndUpdateUi(model.getDescriptor())
+  }
+
+  override fun findInstalledPlugin(model: PluginUiModel): PluginUiModel? {
+    return PluginManagerCore.getPlugin(model.pluginId)?.let { PluginUiModelAdapter(it) }
+  }
+
+  override fun getPluginManagerUrl(model: PluginUiModel): String {
+    return MarketplaceUrls.getPluginManagerUrl()
   }
 }
