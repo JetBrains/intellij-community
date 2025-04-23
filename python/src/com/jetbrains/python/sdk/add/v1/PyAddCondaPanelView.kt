@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
 import com.intellij.execution.target.TargetBrowserHints
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,6 +22,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Compan
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
 import com.jetbrains.python.sdk.add.PyAddSdkView
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -132,6 +134,15 @@ internal class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : Py
           showError(
             PyBundle.message("python.sdk.conda.cant.create.title"),
             PyBundle.message("python.sdk.conda.cant.create.body", it.localizedMessage))
+        }.onSuccess { sdk ->
+          with(sdk.sdkModificator) {
+            writeAction {
+              (sdkAdditionalData as? PyTargetAwareAdditionalData)?.let { targetAwareAdditionalData ->
+                targetPanelExtension?.applyToAdditionalData(targetAwareAdditionalData)
+              }
+              commitChanges()
+            }
+          }
         }.getOrNull()
       }
     }
