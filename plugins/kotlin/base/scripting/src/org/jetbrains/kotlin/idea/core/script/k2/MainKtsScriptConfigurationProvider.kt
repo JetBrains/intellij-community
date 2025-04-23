@@ -48,9 +48,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? {
         val ktFile = readAction { virtualFile.toPsiFile(project) as? KtFile } ?: return null
         val hasNoDependencies = readAction { ktFile.hasNoDependencies() }
-        if (hasNoDependencies) {
-            createNoDependenciesConfiguration(virtualFile)
-        } else if (ktFile.dependenciesExistLocally()) {
+        if (hasNoDependencies || ktFile.dependenciesExistLocally()) {
             refineConfiguration(virtualFile)
         }
 

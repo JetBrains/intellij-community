@@ -34,4 +34,9 @@ public class K2MainKtsHighlightingTestGenerated extends AbstractK2MainKtsHighlig
     public void testDefinitionDependencies() throws Exception {
         runTest("../../idea/tests/testData/mainKts/definitionDependencies.main.kts");
     }
+
+    @TestMetadata("fileName.main.kts")
+    public void testFileName() throws Exception {
+        runTest("../../idea/tests/testData/mainKts/fileName.main.kts");
+    }
 }

@@ -1,10 +1,6 @@
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
 
-import kotlin.reflect.KClass
+listOf(DependsOn::class, Repository::class, Import::class, CompilerOptions::class, ScriptFileLocation::class)
 
-fun mainKtsDefaultImports(): List<KClass<out Annotation>> {
-    return listOf(DependsOn::class, Repository::class, Import::class, CompilerOptions::class, ScriptFileLocation::class)
-}
-
-println(mainKtsDefaultImports())
+println("Hello from ${__FILE__.path}")

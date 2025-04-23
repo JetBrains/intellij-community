@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.codeInsight.daemon.impl.EditorTracker
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.GlobalState
@@ -20,18 +19,12 @@ import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTest() {
-    override fun doMultiFileTest(
-        files: List<PsiFile>, globalDirectives: Directives
-    ) {
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         runBlocking {
             DefaultScriptResolutionStrategy.getInstance(project).execute(*(files.mapNotNull { it as? KtFile }.toTypedArray())).join()
         }
 
         super.doMultiFileTest(files, globalDirectives)
-    }
-
-    override fun getProject(): Project {
-        return super.getProject()
     }
 
     override fun runInDispatchThread(): Boolean = false
