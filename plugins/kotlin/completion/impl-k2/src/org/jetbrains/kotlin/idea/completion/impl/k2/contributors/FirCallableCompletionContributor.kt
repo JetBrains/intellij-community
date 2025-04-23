@@ -122,7 +122,7 @@ internal open class FirCallableCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
     ) {
-        val scopeContext = weighingContext.scopeContext!!
+        val scopeContext = weighingContext.scopeContext
 
         val extensionChecker = (positionContext as? KotlinSimpleNameReferencePositionContext)?.let {
             KtCompletionExtensionCandidateChecker.create(
@@ -369,7 +369,7 @@ internal open class FirCallableCompletionContributor(
 
                     collectDotCompletion(
                         positionContext = positionContext,
-                        scopeContext = weighingContext.scopeContext!!,
+                        scopeContext = weighingContext.scopeContext,
                         explicitReceiver = receiverExpression,
                         extensionChecker = null,
                         showReceiver = true,

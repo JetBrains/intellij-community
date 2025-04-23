@@ -52,7 +52,7 @@ internal class WeighingContext private constructor(
     override val token: KaLifetimeToken,
     val languageVersionSettings: LanguageVersionSettings,
     private val positionInFakeCompletionFile: PsiElement,
-    private val myScopeContext: KaScopeContext?,
+    private val myScopeContext: KaScopeContext,
     private val myExpectedType: KaType?,
     private val myActualReceiverTypes: List<List<KaType>>,
     private val myPreferredSubtype: KaClassType?,
@@ -85,7 +85,7 @@ internal class WeighingContext private constructor(
         operator fun contains(name: Name): Boolean = withValidityAssertion { name in symbolsContainingPosition }
     }
 
-    val scopeContext: KaScopeContext?
+    val scopeContext: KaScopeContext
         get() = withValidityAssertion { myScopeContext }
 
     val expectedType: KaType?
@@ -131,7 +131,7 @@ internal class WeighingContext private constructor(
                 token = token,
                 languageVersionSettings = parameters.languageVersionSettings,
                 positionInFakeCompletionFile = elementInCompletionFile,
-                myScopeContext = scopeContext,
+                myScopeContext = scopeContext ?: completionFile.importingScopeContext,
                 myExpectedType = expectedType,
                 myActualReceiverTypes = actualReceiverTypes,
                 contextualSymbolsCache = ContextualSymbolsCache(

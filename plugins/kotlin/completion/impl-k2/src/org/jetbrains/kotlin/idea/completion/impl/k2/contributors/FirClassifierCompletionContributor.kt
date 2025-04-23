@@ -138,7 +138,9 @@ internal open class FirClassifierCompletionContributor(
         context: WeighingContext,
     ): Sequence<LookupElementBuilder> {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        val scopesToCheck = context.scopeContext!!.scopes.toMutableList()
+        val scopesToCheck = context.scopeContext
+            .scopes
+            .toMutableList()
 
         context.preferredSubtype?.symbol?.let { preferredSubtypeSymbol ->
             preferredSubtypeSymbol.staticScope?.let {
