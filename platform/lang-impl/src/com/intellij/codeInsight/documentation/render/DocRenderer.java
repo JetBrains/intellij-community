@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -315,10 +316,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.getCaret().setSelectionVisible(!reusable);
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
-    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(DocumentationFontSize.getDocumentationFontSize().getSize()));
+    int fontSize = DocumentationFontSize.getDocumentationFontSize().getSize();
+    fontAttributes.put(TextAttribute.SIZE, JBUIScale.scale(fontSize));
     // disable kerning for now - laying out all fragments in a file with it takes too much time
     fontAttributes.put(TextAttribute.KERNING, 0);
     pane.setFont(pane.getFont().deriveFont(fontAttributes));
+    pane.setScaleFactor(((float)fontSize) / FontSize.SMALL.getSize());
     EditorColorsScheme scheme = editor.getColorsScheme();
     Color textColor = getTextColor(scheme);
     pane.setForeground(textColor);
@@ -412,6 +415,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     };
     private boolean myRepaintRequested;
+    private float myScaleFactor = 1f;
 
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
@@ -443,6 +447,15 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (foldRegion != null) {
         foldRegion.repaint();
       }
+    }
+
+    void setScaleFactor(float scaleFactor) {
+      myScaleFactor = scaleFactor;
+    }
+
+    @Override
+    public float getContentsScaleFactor() {
+      return myScaleFactor;
     }
 
     @Override

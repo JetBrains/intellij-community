@@ -4,6 +4,7 @@
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
@@ -15,6 +16,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
 import com.intellij.util.ui.html.*
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -180,6 +182,11 @@ class ExtendableHTMLViewFactory internal constructor(
     @JvmField
     val BLOCK_HR_SUPPORT: Extension = BlockHrSupportExtension()
   }
+
+  @ApiStatus.Internal
+  interface ScaledHtmlJEditorPane {
+    val contentsScaleFactor: Float
+  }
 }
 
 private class IconExtension(private val existingIconProvider: (key: String) -> Icon?) : Extension {
@@ -204,7 +211,8 @@ private class IconExtension(private val existingIconProvider: (key: String) -> I
     val classLoader = if (isReflectivePath(src)) {
       val className = getClassNameByIconPath(src)
       IconManager.getInstance().getClassLoaderByClassName(className)
-    } else null
+    }
+    else null
 
     return findIconUsingNewImplementation(
       path = src,
@@ -218,16 +226,19 @@ private class IconExtension(private val existingIconProvider: (key: String) -> I
  */
 private class JBIconView(elem: Element, private val icon: Icon) : View(elem) {
   override fun getPreferredSpan(axis: Int): Float {
+    val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
     return when (axis) {
-      X_AXIS -> icon.iconWidth.toFloat()
-      Y_AXIS -> icon.iconHeight.toFloat()
+      X_AXIS -> icon.iconWidth.toFloat() * scaleFactor
+      Y_AXIS -> icon.iconHeight.toFloat() * scaleFactor
       else -> throw IllegalArgumentException("Invalid axis: $axis")
     }
   }
 
   override fun getAlignment(axis: Int): Float {
     // 12 is a "standard" font height that has a user scale of 1
-    return if (axis == Y_AXIS) JBUIScale.scale(12) / icon.iconHeight.toFloat() else super.getAlignment(axis)
+    val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
+    val fontSize = container.font.size
+    return if (axis == Y_AXIS) JBUIScale.scale(fontSize) / (icon.iconHeight.toFloat() * scaleFactor) else super.getAlignment(axis)
   }
 
   override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? {
@@ -238,7 +249,13 @@ private class JBIconView(elem: Element, private val icon: Icon) : View(elem) {
     val g2d = g as Graphics2D
     val savedComposite = g2d.composite
     g2d.composite = AlphaComposite.SrcOver // support transparency
-    icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
+
+    val scaleFactor = container.asSafely<ExtendableHTMLViewFactory.ScaledHtmlJEditorPane>()?.contentsScaleFactor ?: 1f
+    val scaledIcon = if (icon is ScalableIcon && scaleFactor != 1f)
+      icon.scale(scaleFactor)
+    else
+      icon
+    scaledIcon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
     g2d.composite = savedComposite
   }
 
@@ -462,7 +479,7 @@ private class ParagraphViewExExtension : Extension {
     val attrs = view.attributes
     if (
       (attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null
-      || element.attributes.getAttribute(HTML.Attribute.TITLE) != null)
+       || element.attributes.getAttribute(HTML.Attribute.TITLE) != null)
     ) {
       return ParagraphViewEx(element)
     }
