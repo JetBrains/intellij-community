@@ -302,7 +302,7 @@ class IdeaPluginDescriptorImpl private constructor(
   fun initialize(context: PluginInitializationContext): PluginLoadingError? {
     assert(type == Type.PluginMainDescriptor)
     if (context.isPluginDisabled(id)) {
-      return onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = null, shortMessageSupplier = PluginLoadingError.DISABLED))
+      return onInitError(PluginLoadingError(plugin = this, detailedMessageSupplier = PluginLoadingError.DISABLED, shortMessageSupplier = PluginLoadingError.DISABLED))
     }
     checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
       return it
@@ -310,7 +310,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
     fun requiredDependencyIsDisabled(disabledDependency: PluginId) = onInitError(PluginLoadingError(
       plugin = this,
-      detailedMessageSupplier = null,
+      detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.depends.on.disabled.plugin", name, disabledDependency) },
       shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", disabledDependency) },
       isNotifyUser = false,
       disabledDependency

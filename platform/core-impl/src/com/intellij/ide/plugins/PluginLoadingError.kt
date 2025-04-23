@@ -19,14 +19,14 @@ sealed interface PluginNonLoadReason {
 @ApiStatus.Internal
 class PluginLoadingError internal constructor(
   override val plugin: IdeaPluginDescriptor,
-  private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+  private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>,
   private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
   override val isNotifyUser: Boolean,
   @JvmField val disabledDependency: PluginId? = null,
 ) : PluginNonLoadReason {
   internal constructor(
     plugin: IdeaPluginDescriptor,
-    detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+    detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>,
     shortMessageSupplier: Supplier<@NlsContexts.Label String>,
   ) : this(
     plugin = plugin,
@@ -36,14 +36,14 @@ class PluginLoadingError internal constructor(
 
   @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
   override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = detailedMessageSupplier!!.get()
+    get() = detailedMessageSupplier.get()
 
   @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
   override val shortMessage: @NlsContexts.Label String
     get() = shortMessageSupplier.get()
 
   override val internalMessage: @NonNls String
-    get() = formatErrorMessage(plugin, (detailedMessageSupplier ?: shortMessageSupplier).get())
+    get() = formatErrorMessage(plugin, detailedMessageSupplier.get())
 
   internal val isDisabledError: Boolean
     get() = shortMessageSupplier === DISABLED
