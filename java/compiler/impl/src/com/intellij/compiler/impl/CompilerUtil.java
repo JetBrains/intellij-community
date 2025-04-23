@@ -3,15 +3,14 @@ package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -24,7 +23,10 @@ import java.util.HashSet;
 public final class CompilerUtil {
   private static final Logger LOG = Logger.getInstance(CompilerUtil.class);
 
-  public static void refreshIOFiles(final @NotNull Collection<? extends File> files) {
+  /** @deprecated trivial; prefer {@link LocalFileSystem#refreshNioFiles} */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
+  public static void refreshIOFiles(@NotNull Collection<? extends java.io.File> files) {
     if (!files.isEmpty()) {
       LocalFileSystem.getInstance().refreshIoFiles(files);
     }
@@ -73,8 +75,12 @@ public final class CompilerUtil {
     }
   }
 
-  public static <T extends Throwable> void runInContext(CompileContext context, @NlsContexts.ProgressText String title, ThrowableRunnable<T> action) throws T {
-    ProgressIndicator indicator = context.getProgressIndicator();
+  public static <T extends Throwable> void runInContext(
+    @NotNull CompileContext context,
+    @Nullable @NlsContexts.ProgressText String title,
+    @NotNull ThrowableRunnable<T> action
+  ) throws T {
+    var indicator = context.getProgressIndicator();
     if (title != null) {
       indicator.pushState();
       indicator.setText(title);
@@ -89,7 +95,7 @@ public final class CompilerUtil {
     }
   }
 
-  public static void logDuration(final String activityName, long duration) {
+  public static void logDuration(String activityName, long duration) {
     LOG.info(activityName + " took " + duration + " ms: " + duration / 60000 + " min " + (duration % 60000) / 1000 + "sec");
   }
 }

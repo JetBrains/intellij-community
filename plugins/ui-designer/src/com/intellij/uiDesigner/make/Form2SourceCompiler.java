@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -211,7 +211,10 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       }, ModalityState.nonModal());
     }
 
-    CompilerUtil.refreshIOFiles(filesToRefresh);
+    if (!filesToRefresh.isEmpty()) {
+      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+    }
+
     return compiledItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
