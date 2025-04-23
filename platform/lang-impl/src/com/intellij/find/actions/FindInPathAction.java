@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
