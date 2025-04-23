@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.application.options.CodeStyle
@@ -90,7 +90,7 @@ class TestApplicationManager private constructor() {
       val isLightProject = ProjectManagerImpl.isLight(project)
       val app = ApplicationManager.getApplication()
 
-      com.intellij.testFramework.common.runAll(
+      runAll(
         {
           if (isLightProject) {
             project.serviceIfCreated<AutoPopupController>()?.cancelAllRequests()
@@ -135,13 +135,13 @@ class TestApplicationManager private constructor() {
         { waitForProjectLeakingThreads(project) },
         { dropModuleRootCaches(project) },
         {
-          // reset data provider before disposing the project to ensure that the disposed project is not accessed
+          // reset the data provider before disposing the project to ensure that the disposed project is not accessed
           getInstanceIfCreated()?.setDataProvider(null)
         },
         { WriteIntentReadAction.run { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } },
         {
           if (testCounter++ % 100 == 0) {
-            // Some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean data,
+            // Some tests are written in Groovy, and running all of them may result in some 40 MiB of memory wasted on bean data,
             // so let's clear the cache occasionally to ensure it doesn't grow too big.
             GCUtil.clearBeanInfoCache()
           }
@@ -170,6 +170,7 @@ class TestApplicationManager private constructor() {
      */
     @JvmStatic
     fun testProjectLeak() {
+      @Suppress("SpellCheckingInspection")
       if (java.lang.Boolean.getBoolean("idea.test.guimode")) {
         val application = ApplicationManager.getApplication()
         application.invokeAndWait {
@@ -189,6 +190,7 @@ class TestApplicationManager private constructor() {
     fun disposeApplicationAndCheckForLeaks() {
       disposeApplicationAndCheckForLeaks(emptyList())
     }
+
     @JvmStatic
     fun disposeApplicationAndCheckForLeaks(ignoredTraverseEntries : List<IgnoredTraverseEntry>) {
       val edtThrowable = runInEdtAndGet {
@@ -209,13 +211,8 @@ class TestApplicationManager private constructor() {
               assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries)
             }
           },
-          {
-            @Suppress("SSBasedInspection")
-            getInstanceIfCreated()?.dispose()
-          },
-          {
-            EDT.dispatchAllInvocationEvents()
-          },
+          { getInstanceIfCreated()?.dispose() },
+          { EDT.dispatchAllInvocationEvents() },
         )
       }
 
@@ -248,14 +245,20 @@ class TestApplicationManager private constructor() {
     }
   }
 
+  @ApiStatus.Obsolete
+  @Suppress("UsagesOfObsoleteApi")
   fun setDataProvider(provider: DataProvider?) {
     dataManager.setTestDataProvider(provider)
   }
 
+  @ApiStatus.Obsolete
+  @Suppress("UsagesOfObsoleteApi")
   fun setDataProvider(provider: DataProvider?, parentDisposable: Disposable?) {
     dataManager.setTestDataProvider(provider, parentDisposable!!)
   }
 
+  @Deprecated("See [com.intellij.openapi.actionSystem.DataContext.getData]")
+  @Suppress("removal", "DEPRECATION")
   fun getData(dataId: String): Any? = dataManager.dataContext.getData(dataId)
 
   fun dispose() {
