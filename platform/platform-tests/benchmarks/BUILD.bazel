@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.platform.benchmarks` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "benchmarks_test",
+jvm_library(
+  name = "benchmarks_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
@@ -20,5 +21,10 @@ jvm_test(
     "//platform/lang-impl",
     "//platform/util:util-tests_test_lib",
   ]
+)
+
+jvm_test(
+  name = "benchmarks_test",
+  runtime_deps = [":benchmarks_test_lib"]
 )
 ### auto-generated section `build intellij.platform.benchmarks` end

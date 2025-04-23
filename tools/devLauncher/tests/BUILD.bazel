@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.tools.devLauncher.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "tools-devLauncher-tests_test",
+jvm_library(
+  name = "tools-devLauncher-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//tools/devLauncher",
@@ -14,5 +15,10 @@ jvm_test(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ]
+)
+
+jvm_test(
+  name = "tools-devLauncher-tests_test",
+  runtime_deps = [":tools-devLauncher-tests_test_lib"]
 )
 ### auto-generated section `build intellij.tools.devLauncher.tests` end

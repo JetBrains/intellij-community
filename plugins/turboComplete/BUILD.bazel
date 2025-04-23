@@ -31,10 +31,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.turboComplete.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "turboComplete-tests_test",
+jvm_library(
+  name = "turboComplete-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit5",
@@ -44,5 +45,10 @@ jvm_test(
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
   ]
+)
+
+jvm_test(
+  name = "turboComplete-tests_test",
+  runtime_deps = [":turboComplete-tests_test_lib"]
 )
 ### auto-generated section `build intellij.turboComplete.tests` end

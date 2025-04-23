@@ -1,9 +1,10 @@
 ### auto-generated section `build kotlin.util.test-generator-all` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "kotlin-util-test-generator-all_test",
+jvm_library(
+  name = "kotlin-util-test-generator-all_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
@@ -16,5 +17,10 @@ jvm_test(
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
   ]
+)
+
+jvm_test(
+  name = "kotlin-util-test-generator-all_test",
+  runtime_deps = [":kotlin-util-test-generator-all_test_lib"]
 )
 ### auto-generated section `build kotlin.util.test-generator-all` end

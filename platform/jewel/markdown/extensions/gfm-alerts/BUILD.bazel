@@ -38,8 +38,9 @@ jvm_library(
   plugins = ["@lib//:compose-plugin"]
 )
 
-jvm_test(
-  name = "jewel-markdown-extensions-gfmAlerts_test",
+jvm_library(
+  name = "jewel-markdown-extensions-gfmAlerts_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":jewel-markdown-extensions-gfmAlerts"],
@@ -58,5 +59,10 @@ jvm_test(
   ],
   runtime_deps = [":jewel-markdown-extensions-gfmAlerts_resources"],
   plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "jewel-markdown-extensions-gfmAlerts_test",
+  runtime_deps = [":jewel-markdown-extensions-gfmAlerts_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.gfmAlerts` end

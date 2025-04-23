@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.junit.v5.rt.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "junit-v5-rt-tests_test",
+jvm_library(
+  name = "junit-v5-rt-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/junit5_rt:junit-v5-rt",
@@ -28,5 +29,10 @@ jvm_test(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ]
+)
+
+jvm_test(
+  name = "junit-v5-rt-tests_test",
+  runtime_deps = [":junit-v5-rt-tests_test_lib"]
 )
 ### auto-generated section `build intellij.junit.v5.rt.tests` end

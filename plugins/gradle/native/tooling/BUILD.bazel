@@ -33,10 +33,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "gradle-native-tooling-tests_test",
+jvm_library(
+  name = "gradle-native-tooling-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
@@ -47,5 +48,10 @@ jvm_test(
     "//platform/object-serializer:objectSerializer_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
   ]
+)
+
+jvm_test(
+  name = "gradle-native-tooling-tests_test",
+  runtime_deps = [":gradle-native-tooling-tests_test_lib"]
 )
 ### auto-generated section `build intellij.gradle.native.tooling.tests` end

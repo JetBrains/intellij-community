@@ -1,7 +1,7 @@
 ### auto-generated section `build intellij.platform.jewel.uiTests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
@@ -20,8 +20,9 @@ jvm_resources(
   strip_prefix = "src/test/resources"
 )
 
-jvm_test(
-  name = "uiTests_test",
+jvm_library(
+  name = "uiTests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
@@ -39,5 +40,10 @@ jvm_test(
   ],
   runtime_deps = [":uiTests_test_resources"],
   plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "uiTests_test",
+  runtime_deps = [":uiTests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.jewel.uiTests` end

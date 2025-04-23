@@ -38,15 +38,16 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 create_kotlinc_options(
   name = "custom_ide-plugin-k2-tests",
   context_receivers = True
 )
 
-jvm_test(
-  name = "ide-plugin-k2-tests_test",
+jvm_library(
+  name = "ide-plugin-k2-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom_ide-plugin-k2-tests",
   associates = ["//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2"],
@@ -67,5 +68,10 @@ jvm_test(
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlin-test-assertions-core-jvm",
   ]
+)
+
+jvm_test(
+  name = "ide-plugin-k2-tests_test",
+  runtime_deps = [":ide-plugin-k2-tests_test_lib"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end

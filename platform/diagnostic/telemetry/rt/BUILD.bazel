@@ -14,8 +14,9 @@ jvm_library(
   ]
 )
 
-jvm_test(
-  name = "diagnostic-telemetry-rt_test",
+jvm_library(
+  name = "diagnostic-telemetry-rt_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":diagnostic-telemetry-rt"],
@@ -27,5 +28,10 @@ jvm_test(
     "@lib//:jetbrains-annotations",
     "@lib//:junit5",
   ]
+)
+
+jvm_test(
+  name = "diagnostic-telemetry-rt_test",
+  runtime_deps = [":diagnostic-telemetry-rt_test_lib"]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` end

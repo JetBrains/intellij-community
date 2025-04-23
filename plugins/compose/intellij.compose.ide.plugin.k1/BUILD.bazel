@@ -44,10 +44,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "ide-plugin-k1-tests_test",
+jvm_library(
+  name = "ide-plugin-k1-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"],
   deps = [
@@ -68,5 +69,10 @@ jvm_test(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-compose-compiler-plugin",
   ]
+)
+
+jvm_test(
+  name = "ide-plugin-k1-tests_test",
+  runtime_deps = [":ide-plugin-k1-tests_test_lib"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` end

@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.java.guiForms.jps.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "java-guiForms-jps-tests_test",
+jvm_library(
+  name = "java-guiForms-jps-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//jps/jps-builders:build-tests_test_lib",
@@ -16,5 +17,10 @@ jvm_test(
     "//platform/testFramework:testFramework_test_lib",
     "//jps/model-serialization:model-serialization-tests_test_lib",
   ]
+)
+
+jvm_test(
+  name = "java-guiForms-jps-tests_test",
+  runtime_deps = [":java-guiForms-jps-tests_test_lib"]
 )
 ### auto-generated section `build intellij.java.guiForms.jps.tests` end

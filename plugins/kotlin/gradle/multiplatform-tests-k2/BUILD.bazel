@@ -1,9 +1,10 @@
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform-tests.k2` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "kotlin-gradle-multiplatform-tests-k2_test",
+jvm_library(
+  name = "kotlin-gradle-multiplatform-tests-k2_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:junit4",
@@ -40,5 +41,10 @@ jvm_test(
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
     "@lib//:kotlinc-analysis-api",
   ]
+)
+
+jvm_test(
+  name = "kotlin-gradle-multiplatform-tests-k2_test",
+  runtime_deps = [":kotlin-gradle-multiplatform-tests-k2_test_lib"]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform-tests.k2` end

@@ -466,7 +466,7 @@ java_library(
 
 ### auto-generated section `build intellij.python.helpers.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "python-helpers-tests_test_resources",
@@ -474,8 +474,9 @@ jvm_resources(
   strip_prefix = "helpers/testResources"
 )
 
-jvm_test(
-  name = "python-helpers-tests_test",
+jvm_library(
+  name = "python-helpers-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["helpers/tests/**/*.kt", "helpers/tests/**/*.java"], allow_empty = True, exclude = [
     "helpers/tests/.gradle/**/*",
     "helpers/tests/.tox/**/*",
@@ -486,6 +487,11 @@ jvm_test(
     "@lib//ant/lib:ant-antlr",
   ],
   runtime_deps = [":python-helpers-tests_test_resources"]
+)
+
+jvm_test(
+  name = "python-helpers-tests_test",
+  runtime_deps = [":python-helpers-tests_test_lib"]
 )
 ### auto-generated section `build intellij.python.helpers.tests` end
 

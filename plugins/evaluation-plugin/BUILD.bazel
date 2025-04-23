@@ -41,10 +41,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "evaluationPlugin-tests_test",
+jvm_library(
+  name = "evaluationPlugin-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
@@ -60,5 +61,10 @@ jvm_test(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/evaluation-plugin/languages/python:evaluationPlugin-languages-python",
   ]
+)
+
+jvm_test(
+  name = "evaluationPlugin-tests_test",
+  runtime_deps = [":evaluationPlugin-tests_test_lib"]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end
