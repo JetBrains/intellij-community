@@ -1170,12 +1170,12 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             return false;
           }
 
-          int resCount;
-          if (usageCount != null) {
+          int resCount = resultsCount.get();
+          if (usageCount == null) {
+            resCount = resultsCount.incrementAndGet();
+          } else if (resultsCount.get() < usageCount){
             resultsCount.set(usageCount);
             resCount = usageCount;
-          } else {
-            resCount = resultsCount.incrementAndGet();
           }
 
           if (resCount >= ShowUsagesAction.getUsagesPageSize()) {
@@ -1191,7 +1191,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
               lastUsageFileRef.set(usageFile);
             }
           }
-          else {
+          else if (fileCount > resultsFilesCount.get()) {
             resultsFilesCount.set(fileCount);
           }
 

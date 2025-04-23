@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.platform.find.FindInProjectModel
 import com.intellij.platform.find.FindInProjectResult
 import com.intellij.platform.find.FindRemoteApi
-import com.intellij.platform.find.RdFindInProjectNavigation
 import com.intellij.platform.find.RdSimpleTextAttributes
 import com.intellij.platform.find.RdTextChunk
 import com.intellij.platform.project.findProject
@@ -50,10 +49,9 @@ class FindRemoteApiImpl: FindRemoteApi {
       var previousResult: FindInProjectResult? = null
       val maxUsages = ShowUsagesAction.getUsagesPageSize()
       val usagesCount = AtomicInteger()
-      val filesCount = AtomicInteger()
       coroutineScope {
         var previousItem: UsageInfo2UsageAdapter? = null
-
+        val files = mutableSetOf<String>()
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, emptySet()) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
@@ -64,9 +62,7 @@ class FindRemoteApiImpl: FindRemoteApi {
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
           val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem!!)
 
-          if (!merged && previousItem !=null && previousItem!!.path != adapter.path) {
-            filesCount.incrementAndGet()
-          }
+          files.add(adapter.path)
           if (!merged && previousResult != null) {
             launch {
               send(previousResult!!)
@@ -87,8 +83,7 @@ class FindRemoteApiImpl: FindRemoteApi {
             virtualFile.rpcId(),
             virtualFile.path,
             usagesCountRes,
-            filesCount.get()
-
+            files.size
           )
           usagesCountRes < maxUsages
         }
