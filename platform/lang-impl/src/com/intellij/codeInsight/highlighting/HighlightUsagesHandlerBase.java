@@ -26,8 +26,8 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
   protected final @NotNull Editor myEditor;
   protected final @NotNull PsiFile myFile;
 
-  protected final List<TextRange> myReadUsages = new ArrayList<>();
-  protected final List<TextRange> myWriteUsages = new ArrayList<>();
+  protected final @NotNull List<@NotNull TextRange> myReadUsages = new ArrayList<>();
+  protected final @NotNull List<@NotNull TextRange> myWriteUsages = new ArrayList<>();
   protected @NlsContexts.StatusBarText String myStatusText;
   protected @NlsContexts.HintText String myHintText;
 
@@ -92,11 +92,11 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
     }
   }
 
-  public @NotNull List<TextRange> getReadUsages() {
+  public @NotNull List<@NotNull TextRange> getReadUsages() {
     return myReadUsages;
   }
 
-  public @NotNull List<TextRange> getWriteUsages() {
+  public @NotNull List<@NotNull TextRange> getWriteUsages() {
     return myWriteUsages;
   }
 
