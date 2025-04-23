@@ -8,6 +8,10 @@
       Adds support for the <a href="https://toml.io/en/">TOML</a> configuration file syntax.
     ]]></description>
 
+    <dependencies>
+        <plugin id="com.intellij.modules.lang"/>
+    </dependencies>
+
     <content>
         <module name="intellij.toml.core" loading="embedded"/>
         <module name="intellij.toml.backend"/>
