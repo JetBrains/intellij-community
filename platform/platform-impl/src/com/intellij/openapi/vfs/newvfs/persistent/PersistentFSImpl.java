@@ -130,7 +130,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           VirtualFileSystemEntry root = entry.getValue();
           if (VirtualFileManager.getInstance().getFileSystem(root.getFileSystem().getProtocol()) == null) {
             // the file system must have been unregistered
-            iterator.remove();//TODO RC: but entry in a .idToDirCache.myIdToRootCache -- still remains?
+            iterator.remove();
+            myIdToDirCache.remove(root.getId());
+            //TODO RC: how to push it out of VfsData?
           }
         }
       }
@@ -1700,7 +1702,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int rootNameId = vfsPeer.getNameId(rootName);
     boolean markModified;
-    VirtualFileSystemEntry newRoot;
+    FsRoot newRoot;
     synchronized (myRoots) {
       root = myRoots.get(rootUrl);
       if (root != null) return root;
