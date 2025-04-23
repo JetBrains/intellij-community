@@ -1,0 +1,17 @@
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java b/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java	(revision 4c05f0d21177c9549ced3c89b08fe670b15a8c6d)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory.java	(date 1745411337801)
+@@ -449,7 +449,7 @@
+     }
+
+     StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
+-    return selectedPromoter.getPromotion(isEmptyState);
++    return null;
+   }
+
+   public static @NlsSafe String getAppName() {
