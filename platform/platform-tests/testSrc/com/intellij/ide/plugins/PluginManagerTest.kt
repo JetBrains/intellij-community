@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil
@@ -20,7 +21,6 @@ import com.intellij.util.TriConsumer
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.Assertions
-import org.easymock.EasyMock
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -265,29 +265,33 @@ class PluginManagerTest {
     }
 
     private fun checkCompatibility(ideVersion: String?, sinceBuild: String?, untilBuild: String?): PluginLoadingError? {
-      val mock = EasyMock.niceMock<IdeaPluginDescriptor>(IdeaPluginDescriptor::class.java)
-      EasyMock.expect<String?>(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes()
-      EasyMock.expect<String?>(mock.getUntilBuild()).andReturn(untilBuild).anyTimes()
-      EasyMock.expect<MutableList<IdeaPluginDependency?>?>(mock.getDependencies()).andReturn(
-        mutableListOf()).anyTimes()
-      EasyMock.replay(mock)
-
-      return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString(ideVersion)!!)
+      val desc = object : TestIdeaPluginDescriptorEx() {
+        override fun getPluginId(): PluginId = PluginId.getId("test")
+        override fun getName(): @NlsSafe String? = pluginId.idString
+        override fun getSinceBuild(): @NlsSafe String? = sinceBuild
+        override fun getUntilBuild(): @NlsSafe String? = untilBuild
+        override fun getVersion(): @NlsSafe String? = null
+        override fun getDependencies(): List<IdeaPluginDependency> = listOf()
+      }
+      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString(ideVersion)!!)
     }
 
     private fun checkCompatibility(platformId: String): Boolean {
-      val platformDependencyMock = EasyMock.niceMock<IdeaPluginDependency>(IdeaPluginDependency::class.java)
-      EasyMock.expect(platformDependencyMock.pluginId).andReturn(PluginId.getId(platformId))
-      EasyMock.replay(platformDependencyMock)
-
-      val mock = EasyMock.niceMock<IdeaPluginDescriptor>(IdeaPluginDescriptor::class.java)
-      EasyMock.expect<String?>(mock.getSinceBuild()).andReturn(null).anyTimes()
-      EasyMock.expect<String?>(mock.getUntilBuild()).andReturn(null).anyTimes()
-      EasyMock.expect<MutableList<IdeaPluginDependency?>?>(mock.getDependencies()).andReturn(
-        mutableListOf(platformDependencyMock)).anyTimes()
-      EasyMock.replay(mock)
-
-      return PluginManagerCore.checkBuildNumberCompatibility(mock, BuildNumber.fromString("145")!!) == null
+      val desc = object : TestIdeaPluginDescriptorEx() {
+        override fun getPluginId(): PluginId = PluginId.getId("test")
+        override fun getName(): @NlsSafe String? = pluginId.idString
+        override fun getSinceBuild(): @NlsSafe String? = null
+        override fun getUntilBuild(): @NlsSafe String? = null
+        override fun getVersion(): @NlsSafe String? = null
+        override fun getDependencies(): List<IdeaPluginDependency> = listOf(
+          object : IdeaPluginDependency {
+            override val pluginId: PluginId = PluginId.getId(platformId)
+            override val isOptional: Boolean
+              get() = throw AssertionError("unexpected call")
+          }
+        )
+      }
+      return PluginManagerCore.checkBuildNumberCompatibility(desc, BuildNumber.fromString("145")!!) == null
     }
 
     private fun assertCompatible(ideVersion: String?, sinceBuild: String?, untilBuild: String?) {
