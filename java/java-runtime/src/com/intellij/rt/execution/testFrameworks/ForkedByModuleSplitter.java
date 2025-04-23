@@ -75,7 +75,8 @@ public abstract class ForkedByModuleSplitter {
           File argFile = File.createTempFile("arg_file", null);
           argFile.deleteOnExit();
           try (FileOutputStream writer = new FileOutputStream(argFile)) {
-            writer.write(classpath.getBytes(Charset.defaultCharset()));
+            String quotedArg = quoteArg(classpath);
+            writer.write(quotedArg.getBytes(Charset.defaultCharset()));
           }
           builder.add("@" + argFile.getAbsolutePath());
         }
@@ -106,6 +107,38 @@ public abstract class ForkedByModuleSplitter {
     new Thread(createInputReader(exec.getErrorStream(), System.err), "Read forked error output").start();
     new Thread(createInputReader(exec.getInputStream(), System.out), "Read forked output").start();
     return exec.waitFor();
+  }
+
+  /**
+   * WARNING: Due to compatibility reasons, this method has duplicate: {@link com.intellij.execution.CommandLineWrapperUtil#quoteArg(String)}
+   * If you modify this method, consider also changing its copy.
+   */
+  private static String quoteArg(String arg) {
+    String specialCharacters = " #'\"\n\r\t\f";
+    boolean containsSpecialCharacter = false;
+
+    for (int i = 0; i < arg.length(); i++ ) {
+      char ch = arg.charAt(i);
+      if (specialCharacters.indexOf(ch) >= 0) {
+        containsSpecialCharacter = true;
+        break;
+      }
+    }
+
+    if (!containsSpecialCharacter) return arg;
+
+    StringBuilder sb = new StringBuilder(arg.length() * 2);
+    for (int i = 0; i < arg.length(); i++) {
+      char c = arg.charAt(i);
+      if (c == ' ' || c == '#' || c == '\'') sb.append('"').append(c).append('"');
+      else if (c == '"') sb.append("\"\\\"\"");
+      else if (c == '\n') sb.append("\"\\n\"");
+      else if (c == '\r') sb.append("\"\\r\"");
+      else if (c == '\t') sb.append("\"\\t\"");
+      else if (c == '\f') sb.append("\"\\f\"");
+      else sb.append(c);
+    }
+    return sb.toString();
   }
 
   private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
