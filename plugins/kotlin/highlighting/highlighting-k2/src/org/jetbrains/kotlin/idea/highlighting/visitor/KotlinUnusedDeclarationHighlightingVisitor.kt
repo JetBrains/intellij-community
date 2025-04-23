@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.visitor
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHighlighting
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingProcessor
@@ -34,11 +33,9 @@ internal class KotlinUnusedDeclarationHighlightingVisitor : HighlightVisitor {
     override fun visit(element: PsiElement) {}
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
-        val ktFile = file as? KtFile ?: return true
+        if (file !is KtFile) return true
 
-        analyze(ktFile) {
-            KotlinUnusedHighlightingProcessor(file).collectHighlights(holder)
-        }
+        KotlinUnusedHighlightingProcessor(file).collectHighlights(holder)
 
         return true
     }
