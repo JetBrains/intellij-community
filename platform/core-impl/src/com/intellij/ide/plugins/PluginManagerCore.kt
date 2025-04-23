@@ -534,16 +534,16 @@ object PluginManagerCore {
   fun isIncompatible(descriptor: IdeaPluginDescriptor, buildNumber: BuildNumber?): Boolean =
     checkBuildNumberCompatibility(descriptor, buildNumber ?: PluginManagerCore.buildNumber) != null
 
-  fun getIncompatibleOs(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? =
+  fun getUnfulfilledOsRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? =
     descriptor.getDependencies().asSequence()
       .map { IdeaPluginOsRequirement.fromModuleId(it.pluginId) }
       .firstOrNull { p -> p != null && !p.isHostOs() }
 
   @JvmStatic
   fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
-    val incompatibleOs = getIncompatibleOs(descriptor)
-    if (incompatibleOs != null) {
-      return PluginIsIncompatibleWithHostPlatform(descriptor, incompatibleOs, SystemInfo.getOsName())
+    val requiredOs = getUnfulfilledOsRequirement(descriptor)
+    if (requiredOs != null) {
+      return PluginIsIncompatibleWithHostPlatform(descriptor, requiredOs, SystemInfo.getOsName())
     }
 
     if (isIgnoreCompatibility) {

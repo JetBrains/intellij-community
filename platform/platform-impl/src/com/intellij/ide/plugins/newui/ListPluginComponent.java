@@ -115,7 +115,7 @@ public final class ListPluginComponent extends JPanel {
     PluginId pluginId = plugin.getPluginId();
     boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
                          ? !"com.jetbrains.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
-                         : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
+                         : PluginManagerCore.INSTANCE.getUnfulfilledOsRequirement(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();

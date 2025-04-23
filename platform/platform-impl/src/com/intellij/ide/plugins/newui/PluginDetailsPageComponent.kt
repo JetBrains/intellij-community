@@ -12,8 +12,8 @@ import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
 import com.intellij.ide.plugins.PluginManagerCore.findPlugin
-import com.intellij.ide.plugins.PluginManagerCore.getIncompatibleOs
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
+import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
@@ -958,7 +958,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     plugin = pluginDescriptor
     val policy = PluginManagementPolicy.getInstance()
     this.updateDescriptor = if (updateDescriptor != null && policy.canEnablePlugin(updateDescriptor)) updateDescriptor else null
-    isPluginCompatible = getIncompatibleOs(pluginDescriptor) == null
+    isPluginCompatible = getUnfulfilledOsRequirement(pluginDescriptor) == null
     isPluginAvailable = isPluginCompatible && policy.canEnablePlugin(updateDescriptor)
     if (isMarketplace && isMultiTabs) {
       installedDescriptorForMarketplace = findPlugin(plugin!!.pluginId)
