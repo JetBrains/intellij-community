@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -141,5 +142,20 @@ class PluginIsCompatibleOnlyWithIntelliJIDEA(
     get() = CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is compatible with IntelliJ IDEA only because it doesn''t define any explicit module dependencies"
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithHostPlatform(
+  override val plugin: IdeaPluginDescriptor,
+  val requiredOs: IdeaPluginOsRequirement,
+  val hostOs: @NlsSafe String,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.incompatible.with.platform", plugin.name, plugin.version, requiredOs, hostOs)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredOs)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires platform ${requiredOs} but the current platform is ${hostOs}"
   override val shouldNotifyUser: Boolean = true
 }

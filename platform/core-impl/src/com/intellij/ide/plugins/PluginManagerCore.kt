@@ -543,11 +543,7 @@ object PluginManagerCore {
   fun checkBuildNumberCompatibility(descriptor: IdeaPluginDescriptor, ideBuildNumber: BuildNumber): PluginNonLoadReason? {
     val incompatibleOs = getIncompatibleOs(descriptor)
     if (incompatibleOs != null) {
-      return PluginLoadingError(
-        descriptor,
-        message("plugin.loading.error.long.incompatible.with.platform", descriptor.getName(), descriptor.getVersion(), incompatibleOs, SystemInfo.getOsName()),
-        message("plugin.loading.error.short.incompatible.with.platform", incompatibleOs)
-      )
+      return PluginIsIncompatibleWithHostPlatform(descriptor, incompatibleOs, SystemInfo.getOsName())
     }
 
     if (isIgnoreCompatibility) {
