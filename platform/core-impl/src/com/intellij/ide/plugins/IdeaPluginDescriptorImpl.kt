@@ -385,12 +385,7 @@ class IdeaPluginDescriptorImpl private constructor(
     if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
       // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
       val mode = if (isKotlinPluginK1Mode()) CoreBundle.message("plugin.loading.error.k1.mode") else CoreBundle.message("plugin.loading.error.k2.mode")
-      return onInitError(PluginLoadingError(
-        plugin = this,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
-        shouldNotifyUser = false,
-      ))
+      return onInitError(PluginIsIncompatibleWithKotlinMode(this, mode))
     }
 
     if (isBundled) {

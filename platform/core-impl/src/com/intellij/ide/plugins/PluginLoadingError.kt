@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
@@ -87,4 +88,18 @@ class PluginDependencyIsDisabled(
     get() = CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) requires plugin with id=${dependencyId} to be enabled"
+}
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithKotlinMode(
+  override val plugin: IdeaPluginDescriptor,
+  val mode: @Nls String
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", plugin.name, mode)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is incompatible with Kotlin in $mode mode"
+  override val shouldNotifyUser: Boolean = false
 }
