@@ -30,10 +30,6 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setPerformGroup(true);

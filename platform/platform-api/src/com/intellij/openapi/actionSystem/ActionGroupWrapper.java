@@ -41,11 +41,6 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    myDelegate.beforeActionPerformedUpdate(e);
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ActionWrapperUtil.actionPerformed(e, this, myDelegate);
   }

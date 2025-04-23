@@ -8098,7 +8098,6 @@ c:com.intellij.ide.actions.CopyReferencePopup
 - com.intellij.ide.actions.NonTrivialActionGroup
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- beforeActionPerformedUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.CopyReferenceUtil
 - <init>():V

@@ -38,21 +38,9 @@ public abstract class LfeBaseProxyAction extends AnAction {
   }
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    LargeFileEditor largeFileEditor = Utils.tryGetLargeFileEditorManager(e);
-    if (largeFileEditor != null) {
-      updateForLfe(e, largeFileEditor);
-    }
-    else {
-      originalAction.beforeActionPerformedUpdate(e);
-    }
-  }
-
-  @Override
   public boolean displayTextInToolbar() {
     return originalAction.displayTextInToolbar();
   }
-
 
   @Override
   public void setDefaultIcon(boolean isDefaultIconSet) {

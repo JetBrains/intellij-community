@@ -1419,7 +1419,6 @@ c:com.intellij.openapi.actionSystem.ActionGroupWrapper
 - com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
 - <init>(com.intellij.openapi.actionSystem.ActionGroup):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- beforeActionPerformedUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - f:getDelegate():com.intellij.openapi.actionSystem.ActionGroup
@@ -1474,7 +1473,6 @@ c:com.intellij.openapi.actionSystem.AnActionWrapper
 - com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted
 - <init>(com.intellij.openapi.actionSystem.AnAction):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- beforeActionPerformedUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getDelegate():com.intellij.openapi.actionSystem.AnAction
 - isDumbAware():Z
@@ -2031,7 +2029,6 @@ a:com.intellij.openapi.editor.actionSystem.EditorAction
 - p:<init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - f:actionPerformed(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):V
-- beforeActionPerformedUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 - clearDynamicHandlersCache():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getEditor(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.editor.Editor
