@@ -924,8 +924,6 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
-    <listener class="git4idea.remoteApi.rhizome.GitRepositoryEntitiesStorage$VcsMappingListener"
-              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
     <listener class="git4idea.config.GitBackendVcsSettingsListener"
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
   </projectListeners>

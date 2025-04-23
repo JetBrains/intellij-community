@@ -16,11 +16,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.platform.project.asEntityOrNull
 import com.intellij.ui.RowIcon
 import com.intellij.vcs.git.frontend.GitFrontendBundle
+import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
-import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryEntity
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import icons.DvcsImplIcons
 
@@ -29,9 +28,7 @@ internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val project = event.project ?: return null
-    val projectEntity = project.asEntityOrNull() ?: return null
-
-    val refs = GitRepositoryEntity.inProject(projectEntity).flatMap {
+    val refs = GitRepositoriesFrontendHolder.getInstance(project).getAll().flatMap {
       buildList {
         add(it.repositoryId.rootPath.toString())
         addAll(it.state.refs.localBranches.map { it.fullName })

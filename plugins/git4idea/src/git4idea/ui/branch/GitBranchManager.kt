@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.log.GitRefManager
-import git4idea.remoteApi.rhizome.GitRepositoryEntitiesStorage
+import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +24,7 @@ class GitBranchManager(
                                       GitRepositoryManager.getInstance(project)) {
   override fun notifyFavoriteSettingsChanged(repository: GitRepository?) {
     cs.launch {
-      GitRepositoryEntitiesStorage.getInstance(myProject).updateFavoriteRefs(repository)
+      myProject.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).favoriteRefsUpdated(repository)
       myProject.messageBus.syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchFavoriteSettingsChanged()
     }
   }

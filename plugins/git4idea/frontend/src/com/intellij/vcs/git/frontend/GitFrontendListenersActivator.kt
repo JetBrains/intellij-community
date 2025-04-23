@@ -4,14 +4,14 @@ package com.intellij.vcs.git.frontend
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.vcs.git.frontend.widget.GitRepositoriesStateListener
+import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.frontend.widget.GitWidgetStateHolder
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 
 internal class GitFrontendListenersActivator : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (Registry.isRdBranchWidgetEnabled()) {
-      GitRepositoriesStateListener.getInstance(project)
+      GitRepositoriesFrontendHolder.getInstance(project).init()
       GitWidgetStateHolder.getInstance(project).initStateUpdate(selectedFile = null)
     }
   }

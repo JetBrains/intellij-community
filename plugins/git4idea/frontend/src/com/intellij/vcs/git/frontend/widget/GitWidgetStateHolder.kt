@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class GitWidgetStateHolder(private val project: Project, private val cs: CoroutineScope) {
+  // TODO - keep do not show state until repo info is loaded
   var currentState: GitWidgetState = GitWidgetState.DoNotShow
     private set
 

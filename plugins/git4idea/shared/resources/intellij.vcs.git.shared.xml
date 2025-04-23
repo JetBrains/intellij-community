@@ -18,8 +18,6 @@
                  restartRequired="true"
                  description="WIP: Enables RD-friendly version of the Git branches widget"/>
 
-    <platform.entityTypes implementation="com.intellij.vcs.git.shared.rhizome.GitEntityTypeProvider"/>
-
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectSettings service="git4idea.config.GitVcsSettings"/>
 

@@ -25,7 +25,7 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.merge.GitResolvedMergeConflictsFilesHolder
-import git4idea.remoteApi.rhizome.GitRepositoryEntitiesStorage
+import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.status.GitStagingAreaHolder
 import git4idea.telemetry.GitTelemetrySpan
 import kotlinx.coroutines.CoroutineScope
@@ -174,7 +174,7 @@ class GitRepositoryImpl private constructor(
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val previousInfo = repoInfo
     repoInfo = readRepoInfo()
-    GitRepositoryEntitiesStorage.getInstance(project).runRepoSync(this, false).get()
+    project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).repositoryUpdated(this)
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
 
@@ -279,7 +279,7 @@ class GitRepositoryImpl private constructor(
         val initialRepoInfo = repoInfo
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
         updater.installListeners()
-        GitRepositoryEntitiesStorage.getInstance(project).runRepoSync(this, true).get()
+        project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).repositoryCreated(this)
         notifyIfRepoChanged(this, null, initialRepoInfo)
         this.untrackedFilesHolder.invalidate()
         this.resolvedConflictsFilesHolder.invalidate()

@@ -2,7 +2,8 @@
 package git4idea.remoteApi
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.messages.SimpleMessageBusConnection
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -10,9 +11,10 @@ import kotlinx.coroutines.flow.callbackFlow
 
 internal fun <T> flowWithMessageBus(
   project: Project,
-  operation: suspend ProducerScope<T>.(connection: MessageBusConnection) -> Unit,
+  scope: CoroutineScope,
+  operation: suspend ProducerScope<T>.(connection: SimpleMessageBusConnection) -> Unit,
 ): Flow<T> = callbackFlow<T> {
-  val connection = project.messageBus.connect()
+  val connection = project.messageBus.connect(scope)
   operation(connection)
   awaitClose { connection.disconnect() }
 }
