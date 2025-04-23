@@ -3,14 +3,44 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
-class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
-                                              val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
-                                              private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
-                                              val isNotifyUser: Boolean,
-                                              @JvmField val disabledDependency: PluginId? = null) {
+@ApiStatus.Internal
+class PluginLoadingError internal constructor(
+  val plugin: IdeaPluginDescriptor,
+  val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+  private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
+  val isNotifyUser: Boolean,
+  @JvmField val disabledDependency: PluginId? = null,
+) {
+  internal constructor(
+    plugin: IdeaPluginDescriptor,
+    detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+    shortMessageSupplier: Supplier<@NlsContexts.Label String>,
+  ) : this(
+    plugin = plugin,
+    detailedMessageSupplier = detailedMessageSupplier,
+    shortMessageSupplier = shortMessageSupplier,
+    isNotifyUser = true)
+
+  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+  val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = detailedMessageSupplier!!.get()
+
+  internal val isDisabledError: Boolean
+    get() = shortMessageSupplier === DISABLED
+
+  val internalMessage: @NonNls String
+    get() = formatErrorMessage(plugin, (detailedMessageSupplier ?: shortMessageSupplier).get())
+
+  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+  val shortMessage: @NlsContexts.Label String
+    get() = shortMessageSupplier.get()
+
+  override fun toString(): @NonNls String = internalMessage
+
   companion object {
     internal val DISABLED: Supplier<String> = Supplier { "" }
 
@@ -26,28 +56,4 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
       return builder.toString()
     }
   }
-
-  internal constructor(plugin: IdeaPluginDescriptor,
-                       detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
-                       shortMessageSupplier: Supplier<@NlsContexts.Label String>) :
-    this(plugin = plugin,
-      detailedMessageSupplier = detailedMessageSupplier,
-      shortMessageSupplier = shortMessageSupplier,
-      isNotifyUser = true)
-
-  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-  val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = detailedMessageSupplier!!.get()
-
-  internal val isDisabledError: Boolean
-    get() = shortMessageSupplier === DISABLED
-
-  override fun toString(): @NonNls String = internalMessage
-
-  val internalMessage: @NonNls String
-    get() = formatErrorMessage(plugin, (detailedMessageSupplier ?: shortMessageSupplier).get())
-
-  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-  val shortMessage: @NlsContexts.Label String
-    get() = shortMessageSupplier.get()
 }
