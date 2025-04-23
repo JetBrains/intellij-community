@@ -144,8 +144,12 @@ public class JavaDebugProcess extends XDebugProcess {
                 ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();
                 newSuspendContext.initExecutionStacks(threadProxy);
 
-                if (event == DebuggerSession.Event.REFRESH) {
-                  ((XDebugSessionImpl)getSession()).updateSuspendContext(newSuspendContext);
+                if (event == DebuggerSession.Event.REFRESH || event == DebuggerSession.Event.REFRESH_WITH_STACK) {
+                  XDebugSessionImpl xDebugSession = (XDebugSessionImpl)getSession();
+                  xDebugSession.updateSuspendContext(newSuspendContext);
+                  if (event == DebuggerSession.Event.REFRESH_WITH_STACK) {
+                    xDebugSession.rebuildViews();
+                  }
                   return;
                 }
 
