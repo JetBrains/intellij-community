@@ -578,6 +578,11 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-79910
+  public void testTryExceptNoFinally() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");
