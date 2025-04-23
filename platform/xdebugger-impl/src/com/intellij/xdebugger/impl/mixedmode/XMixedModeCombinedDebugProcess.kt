@@ -53,12 +53,12 @@ import javax.swing.event.HyperlinkListener
  */
 @ApiStatus.Internal
 class XMixedModeCombinedDebugProcess(
-  val low: XDebugProcess,
+  var low: XDebugProcess,
   val high: XDebugProcess,
   val session: XDebugSessionImpl,
   val config: XMixedModeProcessesConfiguration,
 ) : XDebugProcess(session), XDebugSessionTabCustomizer {
-  private val processes = listOf(low, high)
+  private val processes get() = listOf(low, high)
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private val coroutineScope get() = session.coroutineScope
@@ -73,11 +73,11 @@ class XMixedModeCombinedDebugProcess(
       while (true) {
         when(val newState = stateMachine.stateChannel.receive()) {
           is BothStopped -> {
-            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
+            //val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
             withContext(Dispatchers.EDT) {
               positionReachedInProgress = true
               try {
-                session.positionReached(ctx, myAttract)
+                session.positionReached(newState.high, myAttract)
               }
               finally {
                 positionReachedInProgress = false
@@ -307,6 +307,11 @@ class XMixedModeCombinedDebugProcess(
     val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
     val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
     this.stateMachine.set(state)
+  }
+
+  fun addGoodLowDebugProcess(low: XDebugProcess) {
+    this.low = low
+    stateMachine.low = low
   }
 
   fun setNextStatement(position: XSourcePosition) {
