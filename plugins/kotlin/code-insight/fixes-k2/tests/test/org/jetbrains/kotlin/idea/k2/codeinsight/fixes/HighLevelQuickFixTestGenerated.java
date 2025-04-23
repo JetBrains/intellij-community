@@ -5822,6 +5822,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/unresolvableTypeParams.kt");
         }
 
+        @TestMetadata("unresolvedTypes.kt")
+        public void testUnresolvedTypes() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/unresolvedTypes.kt");
+        }
+
         @TestMetadata("variableInitializedWithNull.kt")
         public void testVariableInitializedWithNull() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/variableInitializedWithNull.kt");

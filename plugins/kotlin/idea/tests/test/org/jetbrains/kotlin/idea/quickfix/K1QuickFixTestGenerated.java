@@ -19913,6 +19913,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/unresolvableTypeParams.kt");
             }
 
+            @TestMetadata("unresolvedTypes.kt")
+            public void testUnresolvedTypes() throws Exception {
+                runTest("testData/quickfix/typeMismatch/unresolvedTypes.kt");
+            }
+
             @TestMetadata("variableInitializedWithNull.kt")
             public void testVariableInitializedWithNull() throws Exception {
                 runTest("testData/quickfix/typeMismatch/variableInitializedWithNull.kt");

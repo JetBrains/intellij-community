@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -172,6 +173,7 @@ internal object ChangeTypeQuickFixFactories {
     ): List<ModCommandAction> {
         val resolvedCall = expression.resolveToCall() ?: return emptyList()
 
+        if (!isResolvableInScope(expectedType, expression, mutableSetOf())) return emptyList()
         return buildList {
             addIfNotNull(createUpdateTypeFixForCalledFunction(resolvedCall, expectedType))
             addAll(createUpdateTypeFixesForCalledVariable(resolvedCall, actualType, expectedType))
@@ -283,6 +285,7 @@ internal object ChangeTypeQuickFixFactories {
         actualType: KaType,
         expectedTypeFromDiagnostics: KaType
     ): List<ModCommandAction> {
+        if (!isResolvableInScope(expectedTypeFromDiagnostics, declaration, mutableSetOf())) return emptyList()
         val expectedTypeFromDeclaration = declaration.returnType
         val expression = declaration.initializer ?: return emptyList()
         return buildList {
