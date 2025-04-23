@@ -18,7 +18,9 @@ import org.jetbrains.annotations.ApiStatus
 interface XBreakpointTypeApi : RemoteApi<Unit> {
   suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList
 
-  suspend fun getAvailableBreakpointTypesForLine(projectId: ProjectId, editorId: EditorId, positionDto: XSourcePositionDto): List<XBreakpointTypeId>
+  suspend fun getAvailableBreakpointTypesForLine(projectId: ProjectId, editorId: EditorId, line: Int): List<XBreakpointTypeId>
+
+  suspend fun getAvailableBreakpointTypesForEditor(projectId: ProjectId, editorId: EditorId): List<List<XBreakpointTypeId>>?
 
   companion object {
     @JvmStatic
