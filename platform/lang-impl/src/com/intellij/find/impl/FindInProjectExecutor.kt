@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
@@ -31,15 +32,19 @@ open class FindInProjectExecutor {
         presentation: FindUsagesProcessPresentation,
         findModel: FindModel,
         filesToScanInitially: Set<VirtualFile>,
-        onResult: (UsageInfoAdapter) -> Boolean,
+        onResult: (UsageInfoAdapter, Int?, Int?) -> Boolean,
         onFinish:() -> Unit?
     ) {
         FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
             val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
             usage.presentation.icon // cache icon
 
-            onResult(usage)
+            onResult.invokeWithDefault(usage)
         }
       onFinish()
     }
+
+  protected fun ((UsageInfoAdapter, Int?, Int?) -> Boolean).invokeWithDefault(usage: UsageInfoAdapter): Boolean {
+    return this(usage, null, null)
+  }
 }

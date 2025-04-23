@@ -33,7 +33,7 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
     presentation: FindUsagesProcessPresentation,
     findModel: FindModel,
     filesToScanInitially: Set<VirtualFile>,
-    onResult: (UsageInfoAdapter) -> Boolean,
+    onResult: (UsageInfoAdapter, Int?, Int?) -> Boolean,
     onFinish: () -> Unit?
   ) {
     if (findModel.stringToFind.isBlank()) {
@@ -45,7 +45,7 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
       coroutineScope.launch {
         FindRemoteApi.getInstance().findByModel(getModel(project, findModel)).collect { findResult ->
           val usage = UsageInfoModel(project, findResult, coroutineScope)
-          onResult(usage)
+          onResult(usage, findResult.usagesCount, findResult.fileCount)
         }
         onFinish()
       }
@@ -55,7 +55,7 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
         val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
         usage.presentation.icon // cache icon
 
-        onResult(usage)
+        onResult.invokeWithDefault(usage)
       }
       onFinish()
     }
@@ -63,17 +63,22 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
 }
 
 private fun getModel(project: Project, findModel: FindModel): FindInProjectModel {
-  return FindInProjectModel(project.projectId(),
-                            findModel.stringToFind,
-                            findModel.isWholeWordsOnly,
-                            findModel.isRegularExpressions,
-                            findModel.isCaseSensitive,
-                            findModel.isProjectScope,
-                            findModel.fileFilter,
-                            findModel.moduleName,
-                            findModel.searchContext.name,
-                            findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }, //TODO rework
-                            findModel.isReplaceState)
+  return FindInProjectModel(projectId = project.projectId(),
+                            stringToFind = findModel.stringToFind,
+                            isWholeWordsOnly = findModel.isWholeWordsOnly,
+                            isRegularExpressions = findModel.isRegularExpressions,
+                            isCaseSensitive = findModel.isCaseSensitive,
+                            isMultiline = findModel.isMultiline,
+                            isPreserveCase = findModel.isPreserveCase,
+                            isProjectScope = findModel.isProjectScope,
+                            isMultipleFiles = findModel.isMultipleFiles,
+                            isReplaceState = findModel.isReplaceState,
+                            isPromptOnReplace = findModel.isPromptOnReplace,
+                            fileFilter = findModel.fileFilter,
+                            moduleName = findModel.moduleName,
+                            searchContext = findModel.searchContext.name,
+                            scopeId = findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }, //TODO rework
+                            )
 }
 
 fun RdSimpleTextAttributes.toInstance(): SimpleTextAttributes {

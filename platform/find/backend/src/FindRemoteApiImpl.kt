@@ -2,6 +2,7 @@
 package com.intellij.platform.find.backend
 
 import com.intellij.find.FindModel
+import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NotNull
 import java.awt.Font
+import java.util.concurrent.atomic.AtomicInteger
 
 class FindRemoteApiImpl: FindRemoteApi {
   override suspend fun findByModel(model: FindInProjectModel): Flow<FindInProjectResult> {
@@ -46,6 +48,9 @@ class FindRemoteApiImpl: FindRemoteApi {
       val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
       val isReplaceState = findModel.isReplaceState
       var previousResult: FindInProjectResult? = null
+      val maxUsages = ShowUsagesAction.getUsagesPageSize()
+      val usagesCount = AtomicInteger()
+      val filesCount = AtomicInteger()
       coroutineScope {
         var previousItem: UsageInfo2UsageAdapter? = null
 
@@ -54,9 +59,14 @@ class FindRemoteApiImpl: FindRemoteApi {
           if (virtualFile == null)
             return@findUsages true
 
+          val usagesCountRes = usagesCount.incrementAndGet()
+
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
           val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem!!)
 
+          if (!merged && previousItem !=null && previousItem!!.path != adapter.path) {
+            filesCount.incrementAndGet()
+          }
           if (!merged && previousResult != null) {
             launch {
               send(previousResult!!)
@@ -75,18 +85,18 @@ class FindRemoteApiImpl: FindRemoteApi {
             adapter.navigationOffset,
             adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
             virtualFile.rpcId(),
-            virtualFile.path
+            virtualFile.path,
+            usagesCountRes,
+            filesCount.get()
+
           )
-          true
+          usagesCountRes < maxUsages
         }
       }
       previousResult?.let { send(it) }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
-  override suspend fun navigate(request: RdFindInProjectNavigation) {
-    TODO("Not yet implemented")
-  }
 }
 
   private fun createSimpleTextAttributes(textChunk: @NotNull TextChunk): RdSimpleTextAttributes {

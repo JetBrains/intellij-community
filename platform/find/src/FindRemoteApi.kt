@@ -18,9 +18,6 @@ interface FindRemoteApi : RemoteApi<Unit> {
 
   suspend fun findByModel(model: FindInProjectModel): Flow<FindInProjectResult>
 
-
-  suspend fun navigate(request: RdFindInProjectNavigation)
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): FindRemoteApi {
@@ -36,12 +33,16 @@ data class FindInProjectModel (
   val isWholeWordsOnly: Boolean,
   val isRegularExpressions: Boolean,
   val isCaseSensitive: Boolean,
+  val isMultiline: Boolean,
+  val isPreserveCase: Boolean,
   val isProjectScope: Boolean,
+  val isMultipleFiles: Boolean,
+  val isReplaceState: Boolean,
+  val isPromptOnReplace: Boolean,
   val fileFilter: String?,
   val moduleName: String?,
   val searchContext: String,
   val scopeId: Int?,
-  val isReplaceState: Boolean
 )
 
 @Serializable
@@ -51,7 +52,9 @@ data class FindInProjectResult (
   val offset: Int,
   val length: Int,
   val fileId: VirtualFileId,
-  val path: String
+  val path: String,
+  val usagesCount: Int,
+  val fileCount: Int,
 )
 
 @Serializable
@@ -66,11 +69,4 @@ data class RdSimpleTextAttributes (
   val bgColor: Int? = null,
   val waveColor: Int? = null,
   val style: Int = 0
-)
-
-@Serializable
-data class RdFindInProjectNavigation (
-  val fileId: VirtualFileId,
-  val offset: Int,
-  val requestFocus: Boolean
 )

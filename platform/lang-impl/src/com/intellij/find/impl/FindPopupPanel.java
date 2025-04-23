@@ -1127,21 +1127,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     int hash = System.identityHashCode(myResultsPreviewSearchProgress);
 
     // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
-    Set<VirtualFile> filesToScanInitially = new LinkedHashSet<>();
-
-    if (myHelper.myPreviousModel != null && myHelper.myPreviousModel.getStringToFind().length() < myHelper.getModel().getStringToFind().length()) {
-      DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
-      for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
-        Object value = previousModel.getValueAt(i, 0);
-        if (value instanceof FindPopupItem) {
-          UsageInfoAdapter usage = ((FindPopupItem)value).getUsage();
-          if (usage instanceof UsageInfo2UsageAdapter) {
-            VirtualFile file = ((UsageInfo2UsageAdapter)usage).getFile();
-            if (file != null) filesToScanInitially.add(file);
-          }
-        }
-      }
-    }
+    Set<VirtualFile> filesToScanInitially = getFilesToScanInitially();
 
     myHelper.myPreviousModel = myHelper.getModel().clone();
 
@@ -1178,22 +1164,35 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
 
-        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, filesToScanInitially, usage -> {
+        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, filesToScanInitially, (usage, usageCount, fileCount)-> {
           if (isCancelled()) {
             onStop(hash);
             return false;
           }
 
-          if (resultsCount.getAndIncrement() >= ShowUsagesAction.getUsagesPageSize()) {
+          int resCount;
+          if (usageCount != null) {
+            resultsCount.set(usageCount);
+            resCount = usageCount;
+          } else {
+            resCount = resultsCount.incrementAndGet();
+          }
+
+          if (resCount >= ShowUsagesAction.getUsagesPageSize()) {
             onStop(hash);
             return false;
           }
 
-          String file = lastUsageFileRef.get();
-          String usageFile = PathUtil.toSystemIndependentName(usage.getPath());
-          if (!usageFile.equals(file)) {
-            resultsFilesCount.incrementAndGet();
-            lastUsageFileRef.set(usageFile);
+          if (!FindKey.INSTANCE.isEnabled() || fileCount == null) {
+            String file = lastUsageFileRef.get();
+            String usageFile = PathUtil.toSystemIndependentName(usage.getPath());
+            if (!usageFile.equals(file)) {
+              resultsFilesCount.incrementAndGet();
+              lastUsageFileRef.set(usageFile);
+            }
+          }
+          else {
+            resultsFilesCount.set(fileCount);
           }
 
           FindPopupItem recentItem = SoftReference.dereference(recentItemRef.get());
@@ -1302,6 +1301,25 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         }, state);
       }
     }, myResultsPreviewSearchProgress);
+  }
+
+  private @NotNull Set<VirtualFile> getFilesToScanInitially() {
+    Set<VirtualFile> filesToScanInitially = new LinkedHashSet<>();
+
+    if (myHelper.myPreviousModel != null && myHelper.myPreviousModel.getStringToFind().length() < myHelper.getModel().getStringToFind().length()) {
+      DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
+      for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
+        Object value = previousModel.getValueAt(i, 0);
+        if (value instanceof FindPopupItem) {
+          UsageInfoAdapter usage = ((FindPopupItem)value).getUsage();
+          if (usage instanceof UsageInfo2UsageAdapter) {
+            VirtualFile file = ((UsageInfo2UsageAdapter)usage).getFile();
+            if (file != null) filesToScanInitially.add(file);
+          }
+        }
+      }
+    }
+    return filesToScanInitially;
   }
 
   private void reset() {
