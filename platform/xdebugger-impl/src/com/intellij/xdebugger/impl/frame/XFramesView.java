@@ -64,6 +64,8 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
+
 @ApiStatus.Internal
 public final class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
@@ -155,7 +157,10 @@ public final class XFramesView extends XDebugView {
         int i = myFramesList.locationToIndex(new Point(x, y));
         if (i != -1) myFramesList.selectFrame(i);
         ActionManager actionManager = ActionManager.getInstance();
-        ActionGroup group = (ActionGroup)actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP);
+        String actionGroup = areFrontendDebuggerActionsEnabled()
+                   ? XDebuggerActions.FRAMES_TREE_POPUP_GROUP_FRONTEND
+                   : XDebuggerActions.FRAMES_TREE_POPUP_GROUP;
+        ActionGroup group = (ActionGroup)actionManager.getAction(actionGroup);
         actionManager.createActionPopupMenu("XDebuggerFramesList", group).getComponent().show(comp, x, y);
       }
     });
