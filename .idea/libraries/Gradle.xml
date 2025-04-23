@@ -7,9 +7,6 @@
         </artifact>
       </verification>
     </properties>
-    <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/plugins/gradle/anno" />
-    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.14-rc-1/gradle-api-8.14-rc-1.jar!/" />
     </CLASSES>
