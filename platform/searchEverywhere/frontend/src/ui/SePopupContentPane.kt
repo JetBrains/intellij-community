@@ -50,6 +50,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.event.*
@@ -62,13 +68,18 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
-class SePopupContentPane(private val project: Project?, private val vm: SePopupVm) : JPanel(), Disposable, UiDataProvider {
+class SePopupContentPane(private val project: Project?, private val vm: SePopupVm, onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(
-    project, vm.tabVms.map { SePopupHeaderPane.Tab(it) }, vm.currentTabIndex, vm.coroutineScope
+    project,
+    vm.tabVms.map { SePopupHeaderPane.Tab(it) },
+    vm.currentTabIndex,
+    vm.coroutineScope,
+    vm.ShowInFindToolWindowAction(onShowFindToolWindow)
   )
+
   private val textField: SeTextField = SeTextField()
 
   private val resultListModel = SeResultListModel { resultList.selectionModel }
@@ -87,17 +98,19 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     val defaultRenderer = SeDefaultListItemRenderer().get()
 
     resultList.setCellRenderer(ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
-      if (value is SeResultListItemRow && value.item.presentation is SeActionItemPresentation) {
-        actionListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      }
-      else if (value is SeResultListItemRow && value.item.presentation is SeTargetItemPresentation) {
-        targetListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      }
-      else if (value is SeResultListItemRow && value.item.presentation is SeTextSearchItemPresentation) {
-        textSearchItemListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      }
-      else {
-        defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      when (value) {
+        is SeResultListItemRow if value.item.presentation is SeActionItemPresentation -> {
+          actionListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        is SeResultListItemRow if value.item.presentation is SeTargetItemPresentation -> {
+          targetListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        is SeResultListItemRow if value.item.presentation is SeTextSearchItemPresentation -> {
+          textSearchItemListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        else -> {
+          defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
       }
     })
 
@@ -187,8 +200,10 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.coroutineScope.launch {
       vm.currentTabFlow.collectLatest {
         val filterEditor = it.filterEditor.getValue()
-        withContext(Dispatchers.EDT) {
-          headerPane.setFilterPresentation(filterEditor?.getPresentation())
+        filterEditor?.let { filterEditor ->
+          withContext(Dispatchers.EDT) {
+            headerPane.setFilterActions(filterEditor.getActions())
+          }
         }
       }
     }
@@ -334,7 +349,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     ScrollingUtil.installMoveUpAction(resultList, textField)
     ScrollingUtil.installMoveDownAction(resultList, textField)
 
-    resultList.addListSelectionListener { e: ListSelectionEvent ->
+    resultList.addListSelectionListener { _: ListSelectionEvent ->
       val index = resultList.selectedIndex
       if (index != -1) {
         extendedInfoComponent?.updateElement(resultList.selectedValue, this@SePopupContentPane)

@@ -15,7 +15,7 @@ import javax.swing.text.Document
 @ApiStatus.Internal
 class SePopupInstance(private val popupVm: SePopupVm,
                       private val popupContentPane: SePopupContentPane): SearchEverywherePopupInstance {
-  override fun getSearchText(): String? = popupVm.searchPattern.value
+  override fun getSearchText(): String = popupVm.searchPattern.value
 
   override fun setSearchText(searchText: String?) {
     popupVm.searchPattern.value = searchText ?: ""
@@ -63,7 +63,7 @@ class SePopupInstance(private val popupVm: SePopupVm,
   }
 
   private val currentTabSearchEverywhereToggleAction: SearchEverywhereToggleAction?
-    get() = (popupVm.currentTab.filterEditor.getValueOrNull()?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+    get() = popupVm.currentTab.filterEditor.getValueOrNull()?.getActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
 }

@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
@@ -35,6 +36,19 @@ class SeRemoteApiImpl: SeRemoteApi {
   ): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
     return SeBackendService.getInstance(project).canBeShownInFindResults(sessionRef, dataContextId, providerIds, isAllTab)
+  }
+
+  override suspend fun openInFindToolWindow(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId?,
+    providerIds: List<SeProviderId>,
+    params: SeParams,
+    isAllTab: Boolean
+  ): Boolean {
+    val project = projectId.findProjectOrNull() ?: return false
+    return SeBackendService.getInstance(project)
+      .openInFindToolWindow(projectId, sessionRef, dataContextId, providerIds, params, isAllTab)
   }
 
   override suspend fun isShownInSeparateTab(projectId: ProjectId, sessionRef: DurableRef<SeSessionEntity>, dataContextId: DataContextId, providerId: SeProviderId): Boolean {

@@ -28,6 +28,7 @@ jvm_library(
     "//platform/usageView",
     "//platform/util/text-matching",
     "//platform/execution-impl",
+    "//platform/usageView-impl",
     "//platform/refactoring",
     "//platform/indexing-api:indexing",
   ],

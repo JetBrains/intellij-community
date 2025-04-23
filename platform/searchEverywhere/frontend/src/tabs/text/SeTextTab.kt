@@ -2,15 +2,18 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.text
 
 import com.intellij.find.FindBundle
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
+import fleet.kernel.DurableRef
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import kotlinx.coroutines.flow.Flow
@@ -35,6 +38,14 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
 
   override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo {
     return SeTextTabEmptyResultInfoProvider(filterEditor.getValue(), delegate.project).getEmptyResultInfo()
+  }
+
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return delegate.canBeShownInFindResults()
+  }
+
+  override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
+    return delegate.openInFindToolWindow(sessionRef, params, initEvent, false)
   }
 
   override fun dispose() {

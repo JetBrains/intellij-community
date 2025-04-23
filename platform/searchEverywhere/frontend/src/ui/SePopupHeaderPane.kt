@@ -7,13 +7,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterComponentPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
 import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -40,7 +36,7 @@ class SePopupHeaderPane(
   tabs: @Nls List<Tab>,
   selectedTabState: MutableStateFlow<Int>,
   coroutineScope: CoroutineScope,
-  toolbar: JComponent? = null,
+  private val showInFindToolWindowAction: AnAction,
 ): NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
   private val tabInfos = mutableListOf<Tab>().apply { addAll(tabs) }
@@ -71,14 +67,8 @@ class SePopupHeaderPane(
           }
           .component
 
+        setFilterActions(emptyList())
         cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
-
-        if (toolbar != null) {
-          toolbar.putClientProperty(ActionToolbarImpl.USE_BASELINE_KEY, true)
-          cell(toolbar)
-            .align(AlignX.RIGHT)
-            .customize(UnscaledGaps(left = 18))
-        }
       }
 
     }
@@ -107,12 +97,17 @@ class SePopupHeaderPane(
     }
   }
 
-  fun setFilterPresentation(filterPresentation: SeFilterPresentation?) {
-    when (filterPresentation) {
-      is SeFilterActionsPresentation -> setFilterActions(filterPresentation.getActions())
-      is SeFilterComponentPresentation -> setFilterComponent(filterPresentation.getComponent())
-      null -> setFilterComponent(null)
-    }
+  fun setFilterActions(actions: List<AnAction>) {
+    val actionGroup = DefaultActionGroup(actions)
+    actionGroup.add(showInFindToolWindowAction)
+    val toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
+    toolbar.targetComponent = this
+    val toolbarComponent = toolbar.getComponent()
+    toolbarComponent.setOpaque(false)
+    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
+
+    setFilterComponent(toolbarComponent)
   }
 
   fun addTab(tab: Tab) {
@@ -133,18 +128,6 @@ class SePopupHeaderPane(
       tabFilterContainer.revalidate()
       tabFilterContainer.repaint()
     }
-  }
-
-  private fun setFilterActions(actions: List<AnAction>) {
-    val actionGroup = DefaultActionGroup(actions)
-    toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
-    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
-    toolbar.targetComponent = this
-    val toolbarComponent = toolbar.getComponent()
-    toolbarComponent.setOpaque(false)
-    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9))
-
-    setFilterComponent(toolbarComponent)
   }
 
   fun updateToolbarActions() {

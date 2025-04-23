@@ -14,9 +14,10 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeTabMock(override val name: String,
-                private val delegate: SeTabDelegate
-): SeTab {
+class SeTabMock(
+  override val name: String,
+  private val delegate: SeTabDelegate,
+) : SeTab {
   override val shortName: String = name
   override val id: String = name
 
@@ -30,6 +31,10 @@ class SeTabMock(override val name: String,
     return true
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return false
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
@@ -41,7 +46,7 @@ class SeTabMock(override val name: String,
       name: String,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
-      scope: CoroutineScope
+      scope: CoroutineScope,
     ): SeTabMock {
       val delegate = SeTabDelegate(project, sessionRef, name, providerIds, initEvent, scope)
       return SeTabMock(name, delegate)

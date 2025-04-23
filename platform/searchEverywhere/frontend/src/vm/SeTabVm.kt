@@ -6,15 +6,24 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
+import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +36,7 @@ class SeTabVm(
   private val project: Project?,
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
-  searchPattern: StateFlow<String>,
+  private val searchPattern: StateFlow<String>,
 ) {
   val searchResults: StateFlow<Flow<SeThrottledItems<SeResultEvent>>> get() = _searchResults.asStateFlow()
   val name: String get() = tab.name
@@ -145,8 +154,17 @@ class SeTabVm(
     return tab.getEmptyResultInfo(context)
   }
 
+  suspend fun canBeShownInFindResults(): Boolean {
+    return tab.canBeShownInFindResults()
+  }
+
+  suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
+    val params = SeParams(searchPattern.value, (filterEditor.getValue()?.resultFlow?.value ?: SeFilterState.Empty))
+    return tab.openInFindToolWindow(sessionRef, params, initEvent)
+  }
+
   suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? {
-    return (tab.getFilterEditor()?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+    return tab.getFilterEditor()?.getActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
   }
