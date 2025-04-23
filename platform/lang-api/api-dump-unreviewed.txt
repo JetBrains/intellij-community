@@ -4947,6 +4947,7 @@ a:com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 - com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- s:cleanSettingsPagesProvidersCache():V
 - createConfigurable(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleConfigurable
 - createFileFromText(com.intellij.openapi.project.Project,java.lang.String):com.intellij.psi.PsiFile
 - p:customizeDefaults(com.intellij.psi.codeStyle.CommonCodeStyleSettings,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):V

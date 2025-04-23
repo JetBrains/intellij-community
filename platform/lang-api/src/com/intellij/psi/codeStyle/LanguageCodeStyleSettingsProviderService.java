@@ -23,6 +23,7 @@ final class LanguageCodeStyleSettingsProviderService implements Disposable {
   public LanguageCodeStyleSettingsProviderService() {
     LanguageCodeStyleSettingsProvider.EP_NAME.addChangeListener(() -> {
       allProviders = null;
+      LanguageCodeStyleSettingsProvider.cleanSettingsPagesProvidersCache();
     }, this);
 
     LanguageCodeStyleSettingsContributor.EP_NAME.addChangeListener(() -> {
