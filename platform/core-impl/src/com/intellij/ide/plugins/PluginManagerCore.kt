@@ -562,11 +562,7 @@ object PluginManagerCore {
           null
         }
         if (sinceBuildNumber != null && sinceBuildNumber > ideBuildNumber) {
-          return PluginLoadingError(
-            descriptor,
-            message("plugin.loading.error.long.incompatible.since.build", pluginName, descriptor.getVersion(), sinceBuild, ideBuildNumber),
-            message("plugin.loading.error.short.incompatible.since.build", sinceBuild)
-          )
+          return PluginSinceBuildConstraintViolation(descriptor, ideBuildNumber)
         }
       }
 

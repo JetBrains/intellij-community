@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -157,5 +158,19 @@ class PluginIsIncompatibleWithHostPlatform(
     get() = CoreBundle.message("plugin.loading.error.short.incompatible.with.platform", requiredOs)
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires platform ${requiredOs} but the current platform is ${hostOs}"
+  override val shouldNotifyUser: Boolean = true
+}
+
+@ApiStatus.Internal
+class PluginSinceBuildConstraintViolation(
+  override val plugin: IdeaPluginDescriptor,
+  val productBuildNumber: BuildNumber,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.incompatible.since.build", plugin.name, plugin.version, plugin.sinceBuild, productBuildNumber)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.since.build", plugin.sinceBuild)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.sinceBuild} or newer, but the current build is $productBuildNumber"
   override val shouldNotifyUser: Boolean = true
 }
