@@ -121,3 +121,14 @@ T = TypeVar("T", bound=TD2)
 
 def func6(**kwargs: Unpack[T]) -> None:  # E: unpacked value must be a TypedDict, not a TypeVar bound to TypedDict.
     ...
+
+# > The situation where the destination callable contains **kwargs: Unpack[TypedDict] and
+# > the source callable doesn’t contain **kwargs should be disallowed. This is because,
+# > we cannot be sure that additional keyword arguments are not being passed in when an instance of a subclass
+# > had been assigned to a variable with a base class type and then unpacked in the destination callable invocation
+
+def func7(*, v1: int, v3: str, v2: str = "") -> None:
+    ...
+
+
+v7: TDProtocol6 = func7  # E: source does not have kwargs

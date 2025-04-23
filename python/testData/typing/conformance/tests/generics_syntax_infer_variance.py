@@ -51,8 +51,15 @@ class ShouldBeCovariant4(Generic[T]):
     x: T
 
 
-vo4_1: ShouldBeCovariant4[float] = ShouldBeCovariant4[int](1)  # OK
-vo4_4: ShouldBeCovariant4[int] = ShouldBeCovariant4[float](1.0)  # E
+# This test is problematic as of Python 3.13 because of the
+# newly synthesized "__replace__" method, which causes the type
+# variable to be inferred as invariant rather than covariant.
+# See https://github.com/python/mypy/issues/17623#issuecomment-2266312738
+# for details. Until we sort this out, we'll leave this test commented
+# out.
+
+# vo4_1: ShouldBeCovariant4[float] = ShouldBeCovariant4[int](1)  # OK
+# vo4_4: ShouldBeCovariant4[int] = ShouldBeCovariant4[float](1.0)  # E
 
 
 class ShouldBeCovariant5(Generic[T]):
@@ -84,7 +91,7 @@ class ShouldBeInvariant1(Generic[T]):
         self._value = value
 
     @property
-    def value(self):
+    def value(self) -> T:
         return self._value
 
     @value.setter

@@ -25,6 +25,9 @@ def model_field(
 class ModelMeta(type):
     not_a_field: str
 
+    def __init__(self, not_a_field: str) -> None:
+        self.not_a_field = not_a_field
+
 
 class ModelBase(metaclass=ModelMeta):
     def __init_subclass__(

@@ -122,14 +122,14 @@ class CoContra_Child1(CoContra[T_co, T_contra]):  # OK
     ...
 
 
-class CoContra_Child2(
-    CoContra[T_co, T_co]  # E: Second type arg must be contravariant
+class CoContra_Child2(  # E[CoContra_Child2]: Second type arg must be contravariant
+    CoContra[T_co, T_co]  # E[CoContra_Child2]: Second type arg must be contravariant
 ):
     ...
 
 
-class CoContra_Child3(
-    CoContra[T_contra, T_contra]  # E: First type arg must be covariant
+class CoContra_Child3(  # E[CoContra_Child3]: First type arg must be covariant
+    CoContra[T_contra, T_contra]  # E[CoContra_Child3]: First type arg must be covariant
 ):
     ...
 
@@ -138,8 +138,8 @@ class CoContra_Child4(CoContra[T, T]):  # OK
     ...
 
 
-class CoContra_Child5(
-    CoContra[Co[T_co], Co[T_co]]  # E: Second type arg must be contravariant
+class CoContra_Child5(  # E[CoContra_Child5]: Second type arg must be contravariant
+    CoContra[Co[T_co], Co[T_co]]  # E[CoContra_Child5]: Second type arg must be contravariant
 ):
     ...
 
@@ -192,7 +192,7 @@ class CoToContraToContra_WithTA(Contra_TA[Co_TA[Contra_TA[T_contra]]]):  # E
     ...
 
 
-class ContraToContraToContra_WithTA(
-    Contra_TA[Contra_TA[Contra_TA[T_co]]]  # E
+class ContraToContraToContra_WithTA(  # E[ContraToContraToContra_WithTA]
+    Contra_TA[Contra_TA[Contra_TA[T_co]]]  # E[ContraToContraToContra_WithTA]
 ):
     ...

@@ -77,11 +77,17 @@ class Outer(Generic[T]):
     class AlsoBad:
         x: list[T]  # E
 
+        def __init__(self, x: list[T]) -> None:
+            self.x = x
+
     class Inner(Iterable[S]):  # OK
         ...
     attr: Inner[T]  # OK
 
     alias: TypeAlias = list[T]  # E
+
+    def __init__(self, attr: Inner[T]) -> None:
+        self.attr = attr
 
 
 # Test unbound type variables at global scope

@@ -41,7 +41,7 @@ vco1_1: ShouldBeCovariant1[float] = ShouldBeCovariant1[int]()  # OK
 vco1_2: ShouldBeCovariant1[int] = ShouldBeCovariant1[float]()  # E
 
 
-class ShouldBeCovariant2[T](Sequence[T]):
+class ShouldBeCovariant2[T](ShouldBeCovariant1[T]):
     pass
 
 
@@ -85,7 +85,7 @@ class ShouldBeInvariant1[T]:
         self._value = value
 
     @property
-    def value(self):
+    def value(self) -> T:
         return self._value
 
     @value.setter
