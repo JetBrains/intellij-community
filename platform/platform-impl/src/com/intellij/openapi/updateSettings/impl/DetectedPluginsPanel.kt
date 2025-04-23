@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginHeaderPanel
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.OnePixelDivider
@@ -73,7 +74,7 @@ class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(Plu
         val plugin = getValueAt(selectedRow)!!.descriptor
         myHeader.setPlugin(plugin)
         myDetailsComponent.setOnlyUpdateMode()
-        myDetailsComponent.showPluginImpl(plugin, null)
+        myDetailsComponent.showPluginImpl(PluginUiModelAdapter(plugin), null)
       }
     }
     removeAll()

@@ -1147,6 +1147,7 @@ public final class ListPluginComponent extends JPanel {
     parent.repaint();
   }
 
+  @Deprecated
   public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin.getDescriptor();
   }

@@ -151,7 +151,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var reviewNextPageButton: JButton? = null
   private var indicator: OneLineProgressIndicator? = null
 
-  private var plugin: IdeaPluginDescriptor? = null
+  private var plugin: PluginUiModel? = null
   private var isPluginAvailable = false
   private var isPluginCompatible = false
   private var updateDescriptor: IdeaPluginDescriptor? = null
@@ -243,11 +243,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   val descriptorForActions: IdeaPluginDescriptor?
-    get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin else installedDescriptorForMarketplace
+    get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin?.getDescriptor() else installedDescriptorForMarketplace
 
   fun setPlugin(plugin: IdeaPluginDescriptor?) {
     if (plugin != null) {
-      this.plugin = plugin
+      this.plugin = PluginUiModelAdapter(plugin)
     }
   }
 
@@ -433,7 +433,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(InstallButton(true).also { installButton = it })
     installButton!!.addActionListener(ActionListener { _ ->
-      pluginModel.installOrUpdatePlugin(this, plugin!!, null, ModalityState.stateForComponent(installButton!!))
+      pluginModel.installOrUpdatePlugin(this, plugin?.getDescriptor()!!, null, ModalityState.stateForComponent(installButton!!))
     })
 
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
@@ -665,7 +665,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (component == null) {
       installedDescriptorForMarketplace = null
       updateDescriptor = installedDescriptorForMarketplace
-      plugin = updateDescriptor
+      plugin = null
       select(1, true)
       setEmptyState(if (multiSelection) EmptyState.MULTI_SELECT else EmptyState.NONE_SELECTED)
     }
@@ -739,7 +739,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
 
       if (syncLoading) {
-        showPluginImpl(component.pluginDescriptor, component.getUpdatePluginDescriptor())
+        showPluginImpl(component.pluginModel, component.getUpdatePluginDescriptor())
         pluginCardOpened(component.pluginDescriptor, component.group)
       }
     }
@@ -753,18 +753,18 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
         if (showComponent == component) {
           stopLoading()
-          showPluginImpl(component.pluginDescriptor, component.getUpdatePluginDescriptor())
+          showPluginImpl(component.pluginModel, component.updatePluginDescriptor)
           pluginCardOpened(component.pluginDescriptor, component.group)
         }
       }
     }
   }
 
-  fun showPluginImpl(pluginDescriptor: IdeaPluginDescriptor, updateDescriptor: IdeaPluginDescriptor?) {
-    plugin = pluginDescriptor
+  fun showPluginImpl(pluginModel: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?) {
+    plugin = pluginModel
     val policy = PluginManagementPolicy.getInstance()
     this.updateDescriptor = if (updateDescriptor != null && policy.canEnablePlugin(updateDescriptor)) updateDescriptor else null
-    isPluginCompatible = getUnfulfilledOsRequirement(pluginDescriptor) == null
+    isPluginCompatible = getUnfulfilledOsRequirement(pluginModel.getDescriptor()) == null
     isPluginAvailable = isPluginCompatible && policy.canEnablePlugin(updateDescriptor)
     if (isMarketplace) {
       installedDescriptorForMarketplace = findPlugin(plugin!!.pluginId)
@@ -776,15 +776,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     var suggestedCommercialIde: String? = null
 
-    if (plugin is PluginNode) {
-      suggestedCommercialIde = (plugin as PluginNode).suggestedCommercialIde
+    if (plugin?.getDescriptor() is PluginNode) {
+      suggestedCommercialIde = (plugin?.getDescriptor() as PluginNode).suggestedCommercialIde
       if (suggestedCommercialIde != null) {
         installButton!!.isVisible = false
       }
     }
 
     if (plugin != null) {
-      customizer.processShowPlugin(plugin!!)
+      customizer.processShowPlugin(plugin!!.getDescriptor())
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
@@ -855,11 +855,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myVersion2!!.isVisible = isVersion
     }
 
-    tagPanel!!.setTags(getTags(plugin))
+    tagPanel!!.setTags(plugin.calculateTags())
 
+    val descriptor = plugin.getDescriptor()
     if (isMarketplace) {
-      showMarketplaceData(plugin)
-      updateMarketplaceTabsVisible(show = plugin is PluginNode && !plugin.isConverted)
+      showMarketplaceData(descriptor)
+      updateMarketplaceTabsVisible(show = descriptor is PluginNode && !descriptor.isConverted)
     }
     else {
       val node = installedPluginMarketplaceNode
@@ -895,7 +896,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val homepage = getPluginHomepage(plugin.pluginId)
 
-    if (plugin.isBundled && !plugin.allowBundledUpdate() || !isPluginFromMarketplace || homepage == null) {
+    if (plugin.isBundled && !descriptor.allowBundledUpdate() || !isPluginFromMarketplace || homepage == null) {
       homePage!!.hide()
     }
     else {
@@ -913,8 +914,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (suggestedFeatures != null) {
       var feature: String? = null
-      if (isMarketplace && plugin is PluginNode) {
-        feature = plugin.suggestedFeatures.firstOrNull()
+      if (isMarketplace && descriptor is PluginNode) {
+        feature = descriptor.suggestedFeatures.firstOrNull()
       }
       suggestedFeatures!!.setSuggestedText(feature)
     }
@@ -944,7 +945,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (myImagesComponent != null) {
       val node = installedPluginMarketplaceNode
-      myImagesComponent!!.show((node ?: plugin))
+      myImagesComponent!!.show((node ?: plugin.getDescriptor()))
     }
 
     ApplicationManager.getApplication().invokeLater({
@@ -954,7 +955,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                       }
                                                     }, ModalityState.any())
 
-    if (MyPluginModel.isInstallingOrUpdate(plugin)) {
+    if (MyPluginModel.isInstallingOrUpdate(plugin.getDescriptor())) {
       showProgress()
     }
     else {
@@ -1219,7 +1220,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     else {
       installButton!!.isVisible = false
 
-      val state = getDeletedState(plugin!!)
+      val state = getDeletedState(plugin!!.getDescriptor())
       val uninstalled = state[0]
       val uninstalledWithoutRestart = state[1]
 
@@ -1264,9 +1265,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val hasErrors = !isMarketplace && !errors.isEmpty()
 
-    iconLabel!!.isEnabled = isMarketplace || pluginModel.isEnabled(plugin!!)
-    iconLabel!!.icon = pluginModel.getIcon(plugin!!, true, hasErrors, false)
-    iconLabel!!.disabledIcon = pluginModel.getIcon(plugin!!, true, hasErrors, true)
+    val descriptor = plugin?.getDescriptor()
+    iconLabel!!.isEnabled = isMarketplace || pluginModel.isEnabled(descriptor!!)
+    iconLabel!!.icon = pluginModel.getIcon(descriptor!!, true, hasErrors, false)
+    iconLabel!!.disabledIcon = pluginModel.getIcon(descriptor, true, hasErrors, true)
   }
 
   private fun updateErrors() {
@@ -1389,7 +1391,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun updateEnabledForProject() {
     val enabledForProject = isEnabledForProject ?: return
-    val state = pluginModel.getState(plugin!!)
+    val state = pluginModel.getState(plugin!!.getDescriptor())
     enabledForProject.text = state.presentableText
     enabledForProject.icon = AllIcons.General.ProjectConfigurable
   }
@@ -1424,11 +1426,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun getDescription(): @Nls String? {
     return installedPluginMarketplaceNode?.description?.takeIf { it.isNotBlank() }
-           ?: plugin?.description?.takeIf { it.isNotBlank() }
+           ?: plugin?.getDescriptor()?.description?.takeIf { it.isNotBlank() }
   }
 
   private fun getChangeNotes(): @NlsSafe String? {
-    return plugin?.changeNotes?.takeIf { it.isNotBlank() }
+    return plugin?.getDescriptor()?.changeNotes?.takeIf { it.isNotBlank() }
            ?: installedPluginMarketplaceNode?.changeNotes?.takeIf { it.isNotBlank() }
   }
 
