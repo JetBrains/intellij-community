@@ -37,6 +37,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.platform.starter",
             "intellij.idea.community.customization",
             "intellij.java.ide.resources",
+            "intellij.platform.whatsNew",
             "intellij.xml.dom",
         )
 
