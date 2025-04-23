@@ -9,7 +9,7 @@ import java.util.function.Supplier
 @NonNls
 private const val BUNDLE = "messages.JavaFrontbackBundle"
 
-internal object JavaFrontbackBundle {
+object JavaFrontbackBundle {
   private val instance = DynamicBundle(JavaFrontbackBundle::class.java, BUNDLE)
 
   @JvmStatic
