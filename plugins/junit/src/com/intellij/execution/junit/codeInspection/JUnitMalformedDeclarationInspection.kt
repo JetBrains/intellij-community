@@ -523,7 +523,7 @@ private class JUnitMalformedSignatureVisitor(
         JUnitBundle.message("jvm.inspections.junit.malformed.param.no.sources.are.provided.descriptor")
       }
       else if (hasMultipleParameters(method.javaPsi)) {
-        JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", firstSingleParameterProvider?.shortName)
+        JUnitBundle.message("jvm.inspections.junit.malformed.param.multiple.parameters.descriptor", firstSingleParameterProvider.shortName)
       }
       else return
       holder.registerUProblem(method, message)
@@ -663,7 +663,7 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun implementationsTestInstanceAnnotated(containingClass: PsiClass): Boolean =
-    ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true).asIterable().any { TestUtils.testInstancePerClass(it) }
+    ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true).any { TestUtils.testInstancePerClass(it) }
 
   private fun getComponentType(returnType: PsiType?, method: PsiMethod): PsiType? {
     val collectionItemType = JavaGenericsUtil.getCollectionItemType(returnType, method.resolveScope)
