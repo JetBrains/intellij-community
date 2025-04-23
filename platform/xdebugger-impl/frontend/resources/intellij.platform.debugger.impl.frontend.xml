@@ -21,5 +21,6 @@
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
+    <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.editor.XDebuggerLineChangeIconProvider"/>
   </extensions>
 </idea-plugin>

@@ -4,8 +4,11 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.editor.BreakpointPromoterEditorListener
 import com.intellij.platform.project.projectId
+import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
@@ -91,6 +94,14 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
     }
+
+    installEditorListeners()
+  }
+
+  private fun installEditorListeners() {
+    val eventMulticaster = EditorFactory.getInstance().getEventMulticaster()
+    val bpPromoter = BreakpointPromoterEditorListener(project, cs)
+    eventMulticaster.addEditorMouseMotionListener(bpPromoter, cs.asDisposable())
   }
 
   internal fun getSessionIdByContentDescriptor(descriptor: RunContentDescriptor): XDebugSessionId? {

@@ -149,11 +149,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     });
 
     GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
-    EditorMouseMotionListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
-    eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
     if (ExperimentalUI.isNewUI()) {
       myNewRunToCursorListener = new InlayRunToCursorEditorListener(myProject, coroutineScope);
       eventMulticaster.addEditorMouseMotionListener(myNewRunToCursorListener, this);
@@ -401,80 +399,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   public static @NotNull NotificationGroup getNotificationGroup() {
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
-  }
-
-  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener {
-    private XSourcePositionImpl myLastPosition = null;
-    private Icon myLastIcon = null;
-
-    private final XDebuggerLineChangeHandler lineChangeHandler;
-
-    BreakpointPromoterEditorListener(CoroutineScope coroutineScope) {
-      lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, icon) -> {
-        myLastIcon = icon;
-        if (myLastIcon != null) {
-          updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine());
-        }
-        return Unit.INSTANCE;
-      });
-    }
-
-    @Override
-    public void mouseMoved(@NotNull EditorMouseEvent e) {
-      if (!ExperimentalUI.isNewUI() || !ShowBreakpointsOverLineNumbersAction.isSelected()) return;
-      Editor editor = e.getEditor();
-      if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
-      EditorGutter editorGutter = editor.getGutter();
-      if (editorGutter instanceof EditorGutterComponentEx gutter) {
-        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA && EditorUtil.isBreakPointsOnLineNumbers()) {
-          int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
-          Document document = editor.getDocument();
-          if (DocumentUtil.isValidLine(line, document)) {
-            XSourcePositionImpl position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(document), line);
-            if (position != null) {
-              if (myLastPosition == null || !myLastPosition.getFile().equals(position.getFile()) || myLastPosition.getLine() != line) {
-                // drop an icon first and schedule the available types calculation
-                clear(gutter);
-                myLastPosition = position;
-                lineChangeHandler.lineChanged(editor, position);
-              }
-              return;
-            }
-          }
-        }
-        if (myLastIcon != null) {
-          clear(gutter);
-          myLastPosition = null;
-          lineChangeHandler.exitedGutter();
-        }
-      }
-    }
-
-    private void clear(EditorGutterComponentEx gutter) {
-      updateActiveLineNumberIcon(gutter, null, null);
-      myLastIcon = null;
-    }
-
-    private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
-      if (gutter.getClientProperty("editor.gutter.context.menu") != null) return;
-      boolean requireRepaint = false;
-      if (gutter.getClientProperty("line.number.hover.icon") != icon) {
-        gutter.putClientProperty("line.number.hover.icon", icon);
-        gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
-                                                                                     : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
-        if (icon != null) {
-          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Editor updates cursor on MouseMoved, set it explicitly
-        }
-        requireRepaint = true;
-      }
-      if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {
-        gutter.putClientProperty("active.line.number", line);
-        requireRepaint = true;
-      }
-      if (requireRepaint) {
-        gutter.repaint();
-      }
-    }
   }
 
   private final class GutterUiRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
