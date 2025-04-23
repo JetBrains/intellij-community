@@ -134,8 +134,8 @@ fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module,
 
 fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
 
-fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
+internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
 
-fun Module.getSourceDirectoryName(): String? = name.split(".").getOrNull(1)
+private fun Module.getSourceDirectoryName(): String? = name.split(".").getOrNull(1)
 
 private const val quietParameter: String = "--quiet"
