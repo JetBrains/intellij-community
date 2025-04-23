@@ -402,7 +402,7 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  public void testMetaclassHavingDunderCall() {
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
     doTestByText("""
                    from typing import Self
       
@@ -419,6 +419,9 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    
                    expr = MyClass()
                    """);
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
     doTestByText("""
                    from typing import Self
                    
@@ -433,6 +436,9 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    
                    c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
                    """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
     doTestByText("""
                    from typing import Self
                    
@@ -447,6 +453,9 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    
                    c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
                    """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
     doTestByText("""
                    from typing import Self
                    
