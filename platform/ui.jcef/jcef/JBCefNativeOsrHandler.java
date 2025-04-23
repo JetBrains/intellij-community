@@ -106,7 +106,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     synchronized (frame) {
       try {
         frame.lock();
-        if (!FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported()) {
+        if (useNativeRasterLoader()) {
           JBR.getNativeRasterLoader().loadNativeRaster(vi, frame.getPtr(), frame.getWidth(), frame.getHeight(),
                                                        frame.getPtr() + frame.getRectsOffset(),
                                                        frame.getDirtyRectsCount());
@@ -196,5 +196,32 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       src.position(offsetSrc).get(dst, offsetDst, dw - x0);
     else
       src.position(offsetSrc).get(dst, offsetDst, x1 - x0);
+  }
+
+  private static Boolean useNativeRasterLoader() {
+    return !FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported();
+  }
+
+  @Override
+  Color getColorAt(int x, int y) {
+    if (!useNativeRasterLoader()) {
+      return super.getColorAt(x, y);
+    }
+
+    if (myCurrentFrame == null) {
+      return null;
+    }
+    try {
+      myCurrentFrame.lock();
+
+      ByteBuffer byteBuffer = myCurrentFrame.wrapRaster();
+      if (x < 0 || x >= myCurrentFrame.getWidth() || y < 0 || y >= myCurrentFrame.getHeight()) {
+        return null;
+      }
+      Color color = new Color(byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(y * myCurrentFrame.getWidth() + x), true);
+      return color;
+    } finally {
+      myCurrentFrame.unlock();
+    }
   }
 }

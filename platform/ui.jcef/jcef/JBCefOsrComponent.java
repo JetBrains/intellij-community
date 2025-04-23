@@ -269,6 +269,14 @@ class JBCefOsrComponent extends JPanel {
     }
   }
 
+  Color getColorAt(int x, int y) {
+    return myRenderHandler.getColorAt(x, y);
+  }
+
+  double getPixelDensity() {
+    return myRenderHandler.getPixelDensity();
+  }
+
   /**
    * This class is an adapter between Java and CEF mouse wheel API.
    * CEF scrolling performance in some applications(e.g. PDF viewer) might be not enough to handle every java screen in time.
