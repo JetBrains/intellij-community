@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -75,19 +74,5 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(beta, true));  // EAP 1st launch
     assertTrue(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 2nd launch
-  }
-
-  @Test
-  public void whatsNewSettingsMigration() {
-    BuildNumber previous = fromString("211.7628.21"), release = fromString("212.4746.92");
-    String historicProperty = "ide.updates.whats.new.shown.for";
-    PropertiesComponent properties = PropertiesComponent.getInstance();
-    try {
-      properties.setValue(historicProperty, previous.getBaselineVersion(), 0);
-      assertTrue(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
-    }
-    finally {
-      properties.unsetValue(historicProperty);
-    }
   }
 }

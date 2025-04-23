@@ -190,16 +190,6 @@ public class UpdateCheckerService {
 
     var lastShownFor = settings.getWhatsNewShownFor();
     if (lastShownFor == 0) {
-      // migration from `PropertiesComponent`; safe to drop around 2024.2
-      var fallbackProperty = "ide.updates.whats.new.shown.for";
-      var properties = PropertiesComponent.getInstance();
-      lastShownFor = properties.getInt(fallbackProperty, 0);
-      if (lastShownFor != 0) {
-        properties.unsetValue(fallbackProperty);
-        settings.setWhatsNewShownFor(lastShownFor);
-      }
-    }
-    if (lastShownFor == 0) {
       // this ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
       // (to detect updates, the method relies on imported settings; users starting from scratch are out of luck)
       settings.setWhatsNewShownFor(current.getBaselineVersion());
