@@ -99,6 +99,8 @@ public final @NonNls class PyNames {
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
 
+  public static final String TEMPLATELIB_TEMPLATE = "string.templatelib.Template";
+
   public static final String CLASSMETHOD = "classmethod";
   public static final String STATICMETHOD = "staticmethod";
   public static final String OVERLOAD = "overload";
