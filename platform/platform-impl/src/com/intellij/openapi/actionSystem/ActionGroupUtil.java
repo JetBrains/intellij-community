@@ -23,7 +23,7 @@ public final class ActionGroupUtil {
 
   /**
    * Requires proper {@link UpdateSession}.
-   * Must be called on background thread (except {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}).
+   * Must be called on a background thread.
    * Not intended for {@link AnAction#actionPerformed(AnActionEvent)}.
    */
   public static @NotNull JBIterable<? extends AnAction> getActiveActions(@NotNull ActionGroup actionGroup,
@@ -35,7 +35,7 @@ public final class ActionGroupUtil {
 
   /**
    * Requires proper {@link UpdateSession}.
-   * Must be called on background thread (except {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)}).
+   * Must be called on a background thread.
    * Not intended for {@link AnAction#actionPerformed(AnActionEvent)}.
    */
   public static @NotNull JBIterable<? extends AnAction> getVisibleActions(@NotNull ActionGroup actionGroup,

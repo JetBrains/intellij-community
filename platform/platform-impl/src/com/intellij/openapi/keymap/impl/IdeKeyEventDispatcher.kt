@@ -557,7 +557,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       if (!this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)) {
         if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, chosen.event, false)) {
           LOG.warn("Action '${chosen.event.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
-                   " in `beforeActionPerformedUpdate` right after successful `update`")
+                   " in `lastUpdateAndCheckDumb` right after successful `update`")
           logTimeMillis(chosen.startedAt, chosen.action)
         }
         else {

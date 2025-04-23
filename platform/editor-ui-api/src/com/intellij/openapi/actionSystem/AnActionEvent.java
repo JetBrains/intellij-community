@@ -220,7 +220,7 @@ public class AnActionEvent implements PlaceProvider {
    * @deprecated See the {@link AnAction#beforeActionPerformedUpdate(AnActionEvent)} javadoc.
    * @see #getData(DataKey)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final @NotNull <T> T getRequiredData(@NotNull DataKey<T> key) {
     T data = getData(key);
     if (data == null) throw new AssertionError(key.getName() + " is missing");

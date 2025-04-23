@@ -1797,6 +1797,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:lastUpdateAndCheckDumb(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,Z):Z
 - sf:mergeFrom(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.openapi.actionSystem.AnAction
 - sf:performActionDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
+- sf:performDumbAwareUpdate(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - sf:performDumbAwareUpdate(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,Z):Z
 - sf:performDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.Runnable):V
 - sf:performInputEventHandlerWithCallbacks(com.intellij.openapi.actionSystem.ActionUiKind,java.lang.String,java.awt.event.InputEvent,java.lang.Runnable):V

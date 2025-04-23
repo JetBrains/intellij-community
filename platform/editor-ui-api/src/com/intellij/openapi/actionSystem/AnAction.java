@@ -367,12 +367,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * implementations MUST NOT rely on it.
    * Instead, they MUST always check whether the data context is suitable in {@link #actionPerformed(AnActionEvent)} and do nothing if it is not.
    *
-   * @deprecated Move any code to {@link #actionPerformed(AnActionEvent)}
+   * @deprecated NEVER CALLED. Move any code to {@link #actionPerformed(AnActionEvent)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.OverrideOnly
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    update(e);
   }
 
   /**
@@ -416,8 +415,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
    * <p>
-   * The implementors should not assume that {@link #update(AnActionEvent)}
-   * or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
+   * The implementors should not assume that {@link #update(AnActionEvent)} has been called before,
    * and MUST to re-check that context is suitable, and do nothing if it is not.
    * <p>
    * The method must not be called directly.

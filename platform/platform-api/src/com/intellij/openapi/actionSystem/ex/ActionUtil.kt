@@ -7,16 +7,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
-import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.platform.ide.core.permissions.Permission
-import com.intellij.platform.ide.core.permissions.PermissionDeniedException
-import com.intellij.platform.ide.core.permissions.RequiresPermissions
-import com.intellij.platform.ide.core.permissions.checkPermissionsGranted
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -30,6 +25,10 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.core.permissions.Permission
+import com.intellij.platform.ide.core.permissions.PermissionDeniedException
+import com.intellij.platform.ide.core.permissions.RequiresPermissions
+import com.intellij.platform.ide.core.permissions.checkPermissionsGranted
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperationCanceledException
@@ -198,29 +197,33 @@ object ActionUtil {
   }
 
   /**
-   * Calls [AnAction.update] or [AnAction.beforeActionPerformedUpdate]
-   * depending on `beforeActionPerformed` value with all the required extra logic around it.
+   * Calls [AnAction.update] with proper context, checks and notifications.
+   * Does nothing if [beforeActionPerformed] is true.]
+   *
+   * @return true if update tried to access indices in dumb mode
+   */
+  @Deprecated("Use performDumbAwareUpdate(action, event) instead")
+  @JvmStatic
+  fun performDumbAwareUpdate(action: AnAction, e: AnActionEvent, beforeActionPerformed: Boolean): Boolean {
+    if (beforeActionPerformed) {
+      return false
+    }
+    return performDumbAwareUpdate(action, e)
+  }
+
+  /**
+   * Calls [AnAction.update] with proper context, checks and notifications.
    *
    * @return true if update tried to access indices in dumb mode
    */
   @JvmStatic
-  fun performDumbAwareUpdate(action: AnAction, e: AnActionEvent, beforeActionPerformed: Boolean): Boolean {
+  fun performDumbAwareUpdate(action: AnAction, e: AnActionEvent): Boolean {
     val presentation = e.presentation
     if (LightEdit.owns(e.project) && !isActionLightEditCompatible(action)) {
       presentation.isEnabledAndVisible = false
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
       return false
-    }
-    var beforePerformedMode: String? = null // on|fast_only|old_only|off
-    if (beforeActionPerformed) {
-      beforePerformedMode = Registry.get("actionSystem.update.beforeActionPerformedUpdate").selectedOption
-      val updateThread = action.getActionUpdateThread()
-      if (beforePerformedMode == "off" || beforePerformedMode == "old_only" &&
-          (updateThread == ActionUpdateThread.BGT ||
-           updateThread == ActionUpdateThread.EDT)) {
-        return false
-      }
     }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
     val dumbMode = isDumbMode(e.project)
@@ -233,32 +236,15 @@ object ActionUtil {
     val allowed = !dumbMode || action.isDumbAware
     action.applyTextOverride(e)
     try {
-      if (beforeActionPerformed && e.updateSession === UpdateSession.EMPTY) {
-        IdeUiService.getInstance().initUpdateSession(e)
-      }
       val runnable = {
         e.setInjectedContext(action.isInInjectedContext)
-        if (beforeActionPerformed) {
-          action.beforeActionPerformedUpdate(e)
-        }
-        else {
-          action.update(e)
-        }
+        action.update(e)
         if (!e.presentation.isEnabled && e.isInInjectedContext) {
           e.setInjectedContext(false)
-          if (beforeActionPerformed) {
-            action.beforeActionPerformedUpdate(e)
-          }
-          else {
-            action.update(e)
-          }
+          action.update(e)
         }
       }
-      val sectionName =
-        if (beforeActionPerformed && beforePerformedMode == "fast_only") SlowOperations.FORCE_THROW
-        else if (beforeActionPerformed) SlowOperations.ACTION_PERFORM
-        else SlowOperations.ACTION_UPDATE
-      SlowOperations.startSection(sectionName).use {
+      SlowOperations.startSection(SlowOperations.ACTION_UPDATE).use {
         val startTime = System.nanoTime()
         runnable()
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)
