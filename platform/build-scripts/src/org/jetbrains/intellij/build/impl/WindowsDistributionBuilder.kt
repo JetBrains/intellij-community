@@ -11,17 +11,42 @@ import com.intellij.platform.util.coroutines.mapConcurrent
 import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.FileSet
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.NativeBinaryDownloader
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
-import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
+import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
+import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.AddDirEntriesMode
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.runJava
+import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
+import org.jetbrains.intellij.build.io.transformFile
+import org.jetbrains.intellij.build.io.zip
+import org.jetbrains.intellij.build.io.zipWithCompression
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.io.InputStream
@@ -29,8 +54,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.LocalDate
-import java.util.*
-import kotlin.io.path.*
+import java.util.Arrays
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.fileSize
+import kotlin.io.path.inputStream
+import kotlin.io.path.name
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -56,7 +87,7 @@ internal class WindowsDistributionBuilder(
       copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
       generateBuildTxt(context, targetPath)
-      copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
+      copyDistFiles(context, targetPath, OsFamily.WINDOWS, arch)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))
 
@@ -98,7 +129,7 @@ internal class WindowsDistributionBuilder(
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
-    val runtimeDir = context.bundledRuntime.extract(os = OsFamily.WINDOWS, arch = arch)
+    val runtimeDir = context.bundledRuntime.extract(OsFamily.WINDOWS, arch)
 
     @Suppress("SpellCheckingInspection")
     val vcRtDll = runtimeDir.resolve("jbr/bin/msvcp140.dll")
@@ -173,12 +204,11 @@ internal class WindowsDistributionBuilder(
     val winScripts = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
     val actualScriptNames = Files.newDirectoryStream(winScripts).use { dirStream -> dirStream.map { it.fileName.toString() }.sorted() }
 
-    @Suppress("SpellCheckingInspection")
-    val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", "ltedit.bat")
+    val expectedScriptNames = listOf("executable-template.bat", "format.bat", "inspect.bat", @Suppress("SpellCheckingInspection") "ltedit.bat")
     check(actualScriptNames == expectedScriptNames) {
       "Expected script names '${expectedScriptNames.joinToString(separator = " ")}', " +
       "but got '${actualScriptNames.joinToString(separator = " ")}' " +
-      "in $winScripts. Please review ${WindowsDistributionBuilder::class.java.name} and update accordingly"
+      "in ${winScripts}. Please review ${WindowsDistributionBuilder::class.java.name} and update accordingly"
     }
 
     substituteTemplatePlaceholders(
@@ -199,14 +229,10 @@ internal class WindowsDistributionBuilder(
     )
 
     val inspectScript = context.productProperties.inspectCommandName
-    @Suppress("SpellCheckingInspection")
-    for (fileName in listOf("format.bat", "inspect.bat", "ltedit.bat")) {
-      val sourceFile = winScripts.resolve(fileName)
-      val targetFile = distBinDir.resolve(fileName)
-
+    for (fileName in listOf("format.bat", "inspect.bat", @Suppress("SpellCheckingInspection") "ltedit.bat")) {
       substituteTemplatePlaceholders(
-        inputFile = sourceFile,
-        outputFile = targetFile,
+        inputFile = winScripts.resolve(fileName),
+        outputFile = distBinDir.resolve(fileName),
         placeholder = "@@",
         values = listOf(
           Pair("product_full", fullName),
@@ -263,12 +289,12 @@ internal class WindowsDistributionBuilder(
 
         val dirMap = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix }
         if (context.options.compressZipFiles) {
-          zipWithCompression(targetFile = targetFile, dirs = dirMap)
+          zipWithCompression(targetFile, dirMap)
         }
         else {
-          zip(targetFile = targetFile, dirs = dirMap, addDirEntriesMode = AddDirEntriesMode.NONE)
+          zip(targetFile, dirMap, AddDirEntriesMode.NONE)
         }
-        validateProductJson(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
+        validateProductJson(targetFile, zipPrefix, context)
         context.notifyArtifactBuilt(targetFile)
         targetFile
       }
@@ -442,7 +468,7 @@ internal class WindowsDistributionBuilder(
   }
 
   private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): Path {
-    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch = arch, os = OsFamily.WINDOWS, ideContext = context) {
+    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.WINDOWS, context) {
       "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)

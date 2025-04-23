@@ -38,7 +38,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.computeAppInfoXml
-import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
@@ -177,29 +176,20 @@ class BuildContextImpl internal constructor(
         LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
       } ?: NonCachingJarCacheManager
       return BuildContextImpl(
-        compilationContext = compilationContext.asArchivedIfNeeded,
-        productProperties = productProperties,
-        windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString),
-        linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),
-        macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString),
-        proprietaryBuildTools = proprietaryBuildTools,
-        applicationInfo = ApplicationInfoPropertiesImpl(
-          project = compilationContext.project,
-          productProperties = productProperties,
-          buildOptions = compilationContext.options,
-        ),
-        jarCacheManager = jarCacheManager,
+        compilationContext.asArchivedIfNeeded, productProperties,
+        productProperties.createWindowsCustomizer(projectHomeAsString),
+        productProperties.createLinuxCustomizer(projectHomeAsString),
+        productProperties.createMacCustomizer(projectHomeAsString),
+        proprietaryBuildTools,
+        ApplicationInfoPropertiesImpl(compilationContext.project, productProperties, compilationContext.options),
+        jarCacheManager
       )
     }
   }
 
   override var builtinModule: BuiltinModulesFileData?
-    get() {
-      if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-        return null
-      }
-      return builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
-    }
+    get() = if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) null
+            else builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
     set(value) {
       check(builtinModulesData == null) { "builtinModulesData was already set" }
       builtinModulesData = value
@@ -215,12 +205,11 @@ class BuildContextImpl internal constructor(
     distFiles.add(file)
   }
 
-  override suspend fun getBundledPluginModules(): List<String> {
-    return bundledPluginModulesForModularLoader.await() ?: productProperties.productLayout.bundledPluginModules
-  }
+  override suspend fun getBundledPluginModules(): List<String> =
+    bundledPluginModulesForModularLoader.await() ?: productProperties.productLayout.bundledPluginModules
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val bundledPluginModulesForModularLoader = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("bundled plugin modules for modular loader"), start = CoroutineStart.LAZY) {
+  private val bundledPluginModulesForModularLoader = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("bundled plugin modules for modular loader"), CoroutineStart.LAZY) {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
       getOriginalModuleRepository().loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
         it.stringId
@@ -245,7 +234,7 @@ class BuildContextImpl internal constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val _frontendModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), start = CoroutineStart.LAZY) {
+  private val _frontendModuleFilter = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("JetBrains client module filter"), CoroutineStart.LAZY) {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val moduleRepository = getOriginalModuleRepository()
@@ -269,8 +258,8 @@ class BuildContextImpl internal constructor(
       }
       return CompletableDeferred(IncludeAllContentModuleFilter)
     }
-    
-    return GlobalScope.async(Dispatchers.Unconfined + CoroutineName("Content Modules Filter"), start = CoroutineStart.LAZY) {
+
+    return GlobalScope.async(Dispatchers.Unconfined + CoroutineName("Content Modules Filter"), CoroutineStart.LAZY) {
       val bundledPluginModules = getBundledPluginModules()
       ContentModuleByProductModeFilter(getOriginalModuleRepository().repository, bundledPluginModules, productProperties.productMode)
     }
@@ -283,9 +272,8 @@ class BuildContextImpl internal constructor(
 
   override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
-  override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {
-    return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
-  }
+  override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean =
+    shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
 
   override suspend fun createCopyForProduct(
     productProperties: ProductProperties,
@@ -307,33 +295,20 @@ class BuildContextImpl internal constructor(
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
 
-    val newAppInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = options)
+    val newAppInfo = ApplicationInfoPropertiesImpl(project, productProperties, options)
 
+    val buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)(project)
+    @Suppress("DEPRECATION")
+    val artifactDir = if (prepareForBuild) paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode) else null
     val compilationContextCopy = compilationContext.createCopy(
-      messages = messages,
-      options = options,
-      paths = computeBuildPaths(
-        options = options,
-        buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)(project),
-        projectHome = paths.projectHome,
-        artifactDir = if (prepareForBuild) {
-          @Suppress("DEPRECATION")
-          paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode)
-        }
-        else {
-          null
-        }
-      )
+      messages, options, computeBuildPaths(options, buildOut, paths.projectHome, artifactDir)
     )
     val copy = BuildContextImpl(
-      compilationContext = compilationContextCopy,
-      productProperties = productProperties,
-      windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
-      linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
-      macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
-      proprietaryBuildTools = proprietaryBuildTools,
-      applicationInfo = newAppInfo,
-      jarCacheManager = jarCacheManager,
+      compilationContextCopy, productProperties,
+      productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
+      productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
+      productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
+      proprietaryBuildTools, newAppInfo, jarCacheManager
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()
@@ -431,11 +406,11 @@ class BuildContextImpl internal constructor(
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
 
   override val appInfoXml: String by lazy {
-    computeAppInfoXml(context = this, appInfo = applicationInfo)
+    computeAppInfoXml(context = this, applicationInfo)
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("dev mode product runner"), start = CoroutineStart.LAZY) {
+  private val devModeProductRunner = GlobalScope.async(Dispatchers.Unconfined + CoroutineName("dev mode product runner"), CoroutineStart.LAZY) {
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
@@ -455,13 +430,8 @@ class BuildContextImpl internal constructor(
     attachStdOutToException: Boolean,
   ) {
     runProcess(
-      args = args,
-      workingDir = workingDir,
-      timeout = timeout,
-      additionalEnvVariables = additionalEnvVariables,
-      stdOutConsumer = messages::info,
-      stdErrConsumer = messages::warning,
-      attachStdOutToException = attachStdOutToException,
+      args, workingDir, timeout, additionalEnvVariables, attachStdOutToException = attachStdOutToException,
+      stdOutConsumer = messages::info, stdErrConsumer = messages::warning,
     )
   }
 
@@ -470,9 +440,7 @@ class BuildContextImpl internal constructor(
   }
 }
 
-private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {
-  return { project ->
-    val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
-    projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
-  }
+private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path = { project ->
+  val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
+  projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
 }

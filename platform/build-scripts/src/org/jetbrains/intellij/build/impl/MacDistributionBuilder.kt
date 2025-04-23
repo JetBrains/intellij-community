@@ -154,7 +154,7 @@ class MacDistributionBuilder(
       val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
       updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
 
-      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.MACOS, arch = arch)
+      val runtimeDir = context.bundledRuntime.extract(OsFamily.MACOS, arch)
       updateExecutablePermissions(runtimeDir, executableFileMatchers)
 
       if (context.isMacCodeSignEnabled) {
@@ -172,33 +172,19 @@ class MacDistributionBuilder(
       val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + NO_RUNTIME_SUFFIX + ".zip")
       val zipRoot = getMacZipRoot(customizer, context)
       val compressionLevel = if (publishSitArchive || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
-      val extraFiles = context.getDistFiles(os = OsFamily.MACOS, arch)
+      val extraFiles = context.getDistFiles(OsFamily.MACOS, arch)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
       val builder = this@MacDistributionBuilder
       val productJson = generateProductJson(context, arch, withRuntime = true)
       buildMacZip(
-        macDistributionBuilder = builder,
-        targetFile = macZip,
-        zipRoot = zipRoot,
-        arch = arch,
-        productJson = productJson,
-        directories = directories,
-        extraFiles = extraFiles,
-        includeRuntime = true,
-        compressionLevel = compressionLevel,
+        builder, macZip, zipRoot, arch, productJson, directories, extraFiles, includeRuntime = true, compressionLevel
       )
 
       if (customizer.buildArtifactWithoutRuntime) {
+        val productJson = generateProductJson(context, arch, withRuntime = false)
+        val directoriesSansRuntime = directories.filterNot { it == runtimeDir }
         buildMacZip(
-          macDistributionBuilder = builder,
-          targetFile = macZipWithoutRuntime,
-          zipRoot = zipRoot,
-          arch = arch,
-          productJson = generateProductJson(context, arch, withRuntime = false),
-          directories = directories.filterNot { it == runtimeDir },
-          extraFiles = extraFiles,
-          includeRuntime = false,
-          compressionLevel = compressionLevel,
+          builder, macZipWithoutRuntime, zipRoot, arch, productJson, directoriesSansRuntime, extraFiles, includeRuntime = false, compressionLevel
         )
       }
 
@@ -224,12 +210,12 @@ class MacDistributionBuilder(
 
   private suspend fun signMacBinaries(osAndArchSpecificDistPath: Path, runtimeDist: Path, arch: JvmArchitecture) {
     val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
-    val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch = arch).keys
+    val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch).keys
     withContext(Dispatchers.IO) {
       signMacBinaries(files = binariesToSign, context)
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         launch(CoroutineName("recursively signing macOS binaries in $dir")) {
-          recursivelySignMacBinaries(root = dir, context, executableFileMatchers = matchers)
+          recursivelySignMacBinaries(root = dir, context, matchers)
         }
       }
     }
@@ -477,7 +463,7 @@ class MacDistributionBuilder(
           }
         }
 
-        validateProductJson(archiveFile = targetFile, pathInArchive = "${zipRoot}/Resources", context = macDistributionBuilder.context)
+        validateProductJson(targetFile, pathInArchive = "${zipRoot}/Resources", macDistributionBuilder.context)
       }
   }
 
@@ -630,13 +616,10 @@ class MacDistributionBuilder(
     val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
     Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath), dmgImageCopy)
     val scriptsDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
-    Files.copy(scriptsDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"),
-               StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptsDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
     NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
-    Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"),
-               StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-    Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"),
-               StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
     val entrypoint = tempDir.resolve("build.sh")
     Files.writeString(
       entrypoint,

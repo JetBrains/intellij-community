@@ -11,14 +11,28 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.NativeBinaryDownloader
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
-import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
+import org.jetbrains.intellij.build.impl.productInfo.generateEmbeddedFrontendLaunchData
+import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
+import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.copyFileToDir
+import org.jetbrains.intellij.build.io.moveFileToDir
+import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -107,7 +121,7 @@ class LinuxDistributionBuilder(
         }
       }
 
-      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.LINUX, arch = arch)
+      val runtimeDir = context.bundledRuntime.extract(OsFamily.LINUX, arch)
       updateExecutablePermissions(runtimeDir, executableFileMatchers)
       val tarGzPath: Path? = context.executeStep(
         spanBuilder("Build Linux .tar.gz with bundled Runtime")

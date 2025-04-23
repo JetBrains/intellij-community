@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -6,11 +6,19 @@ import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
+import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
@@ -20,7 +28,7 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission.*
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.GZIPInputStream
 
@@ -67,7 +75,7 @@ class BundledRuntimeImpl(
       if (result != null) return result
       val os = OsFamily.currentOs
       val arch = JvmArchitecture.currentJvmArch
-      val path = extract(os = os, arch = arch)
+      val path = extract(os, arch)
       val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
       val releaseFile = home.resolve("release")
       check(Files.exists(releaseFile)) {
@@ -78,12 +86,12 @@ class BundledRuntimeImpl(
     }
   }
 
-  override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+  override suspend fun extract(os: OsFamily, arch: JvmArchitecture, prefix: String): Path {
     val isMusl = os == OsFamily.LINUX && LinuxLibcImpl.isLinuxMusl
     val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-${if (isMusl) "musl-" else ""}$arch")
     val jbrDir = targetDir.resolve("jbr")
 
-    val archive = findArchive(prefix, os, arch)
+    val archive = findArchive(os, arch, prefix)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
       paths.communityHomeDirRoot,
@@ -100,26 +108,22 @@ class BundledRuntimeImpl(
     return targetDir
   }
 
-  override suspend fun extractTo(os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
-    doExtract(findArchive(prefix, os, arch), destinationDir, os)
+  override suspend fun extractTo(os: OsFamily, arch: JvmArchitecture, destinationDir: Path) {
+    doExtract(findArchive(os, arch, prefix), destinationDir, os)
   }
 
-  override fun downloadUrlFor(prefix: String, os: OsFamily, arch: JvmArchitecture): String {
-    val archiveName = archiveName(prefix = prefix, arch = arch, os = os)
-    return "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
-  }
+  override fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, prefix: String): String =
+    "https://cache-redirector.jetbrains.com/intellij-jbr/${archiveName(os, arch, prefix)}"
 
-  override suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    return downloadFileToCacheLocation(url = downloadUrlFor(prefix, os, arch), communityRoot = paths.communityHomeDirRoot)
-  }
+  override suspend fun findArchive(os: OsFamily, arch: JvmArchitecture, prefix: String): Path =
+    downloadFileToCacheLocation(downloadUrlFor(os, arch, prefix), paths.communityHomeDirRoot)
 
   /**
    * Update this method together with:
-   *  [com.intellij.remoteDev.downloader.CodeWithMeClientDownloader.downloadClientAndJdk]
-   *  [UploadingAndSigning.getMissingJbrs]
-   *  [org.jetbrains.intellij.build.dependencies.JdkDownloader.getUrl]
+   * - [UploadingAndSigning.getMissingJbrs]
+   * - [org.jetbrains.intellij.build.dependencies.JdkDownloader.getUrl]
    */
-  override fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean): String {
+  override fun archiveName(os: OsFamily, arch: JvmArchitecture, prefix: String, forceVersionWithUnderscores: Boolean): String {
     val split = build.split('b')
     if (split.size != 2) {
       throw IllegalArgumentException("$build doesn't match '<update>b<build_number>' format (e.g.: 17.0.2b387.1)")

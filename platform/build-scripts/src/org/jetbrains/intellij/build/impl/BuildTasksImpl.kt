@@ -119,7 +119,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       val propertiesFile = createIdeaPropertyFile(context)
       val builder = getOsDistributionBuilder(currentOs, context, propertiesFile)!!
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      context.bundledRuntime.extractTo(currentOs, targetDirectory.resolve("jbr"), arch)
+      context.bundledRuntime.extractTo(currentOs, arch, targetDirectory.resolve("jbr"))
       updateExecutablePermissions(targetDirectory, builder.generateExecutableFilesMatchers(includeRuntime = true, arch).keys)
       builder.checkExecutablePermissions(targetDirectory, root = "", includeRuntime = true, arch)
       builder.writeProductInfoFile(targetDirectory, arch)

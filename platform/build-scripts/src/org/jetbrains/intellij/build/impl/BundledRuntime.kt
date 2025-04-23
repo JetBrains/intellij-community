@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
@@ -8,7 +8,6 @@ import java.nio.file.Path
 
 interface BundledRuntime {
   val prefix: String
-
   val build: String
 
   suspend fun getHomeForCurrentOsAndArch(): Path
@@ -16,15 +15,15 @@ interface BundledRuntime {
   /**
    * @return a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
    */
-  suspend fun extract(prefix: String = this.prefix, os: OsFamily, arch: JvmArchitecture): Path
+  suspend fun extract(os: OsFamily, arch: JvmArchitecture, prefix: String = this.prefix): Path
 
-  suspend fun extractTo(os: OsFamily, destinationDir: Path, arch: JvmArchitecture)
+  suspend fun extractTo(os: OsFamily, arch: JvmArchitecture, destinationDir: Path)
 
-  suspend fun findArchive(prefix: String = this.prefix, os: OsFamily, arch: JvmArchitecture): Path
+  suspend fun findArchive(os: OsFamily, arch: JvmArchitecture, prefix: String = this.prefix): Path
 
-  fun downloadUrlFor(prefix: String = this.prefix, os: OsFamily, arch: JvmArchitecture): String
+  fun downloadUrlFor(os: OsFamily, arch: JvmArchitecture, prefix: String = this.prefix): String
 
-  fun archiveName(prefix: String = this.prefix, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
+  fun archiveName(os: OsFamily, arch: JvmArchitecture, prefix: String = this.prefix, forceVersionWithUnderscores: Boolean = false): String
 
   fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): Sequence<String>
 }
