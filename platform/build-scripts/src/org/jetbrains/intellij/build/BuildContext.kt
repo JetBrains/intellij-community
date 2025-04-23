@@ -8,6 +8,8 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
@@ -174,6 +176,9 @@ interface BuildContext : CompilationContext {
   val pluginAutoPublishList: PluginAutoPublishList
 
   val isNightlyBuild: Boolean
+
+  @get:ApiStatus.Internal
+  val distributionState: DistributionBuilderState
 }
 
 suspend inline fun <T> BuildContext.executeStep(

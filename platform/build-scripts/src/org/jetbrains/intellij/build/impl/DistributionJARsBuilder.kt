@@ -103,10 +103,10 @@ import kotlin.io.path.listDirectoryEntries
  * non-bundled plugins (in [artifacts][BuildPaths.artifactDir]/plugins directory).
  */
 internal suspend fun buildDistribution(
-  state: DistributionBuilderState,
   context: BuildContext,
   isUpdateFromSources: Boolean = false,
 ): ContentReport = coroutineScope {
+  val state = context.distributionState
   validateModuleStructure(state.platform, context)
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
