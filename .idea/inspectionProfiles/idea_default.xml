@@ -1243,6 +1243,18 @@
       <replaceConfiguration name="Disposable instance by lambda" description="It's not safe to instantiate Disposable via lambda because lambdas does not guarantee their identity." text="Disposable { }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Disposer.newDisposable()">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Do not call actionGroup.getChildren(null)" description="Use a getter without AnActionEvent parameter. &#10;Otherwise a proper group expansion in an action update session with a proper event is required.&#10;&#10;See IJPL-148333" text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.intellij\.openapi\.actionSystem\.ActionGroup" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="getChildren" target="true" within="" contains="" />
+        <constraint name="Parameter" regexp="null" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call actionGroup.getChildren(null)" text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.intellij\.openapi\.actionSystem\.ActionGroup" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="getChildren" target="true" within="" contains="" />
+        <constraint name="Parameter" regexp="null" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" problemDescriptor="Do not call jdi invokeMethod directly - use DebugProcess.invokeMethod instead" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ObjectReference" exprTypeWithinHierarchy="true" within="" contains="" />
