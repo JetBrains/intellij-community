@@ -19,7 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -204,12 +204,12 @@ public final class JdkUtil {
   }
 
   private static boolean isCompatibleWithOs(@NotNull EelDescriptor descriptor) {
-    EelPath.OS os = descriptor.getOperatingSystem();
+    EelPlatform os = descriptor.getPlatform();
     if (SystemInfo.isWindows) {
-      return os == EelPath.OS.WINDOWS;
+      return os instanceof EelPlatform.Windows;
     }
     else {
-      return os == EelPath.OS.UNIX;
+      return os instanceof EelPlatform.Posix;
     }
   }
 

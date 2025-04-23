@@ -58,10 +58,14 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     context
   }
 
-  override suspend fun getTargetPlatform(): EelPlatform.Posix {
-    return myContext.await().execCommand {
+  private val myTargetPlatform = scope.async(start = CoroutineStart.LAZY) {
+    myContext.await().execCommand {
       getTargetPlatform()
     }
+  }
+
+  override suspend fun getTargetPlatform(): EelPlatform.Posix {
+    return myTargetPlatform.await()
   }
 
   final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
@@ -301,8 +305,8 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.X86_64)
-    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.ARM_64)
+    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.Arch.X86_64)
+    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.Arch.ARM_64)
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform

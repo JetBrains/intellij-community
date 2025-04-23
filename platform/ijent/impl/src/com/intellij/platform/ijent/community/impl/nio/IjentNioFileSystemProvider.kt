@@ -3,12 +3,12 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
+import com.intellij.platform.eel.directorySeparators
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileInfo.Type.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.*
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.impl.fs.EelFsResultImpl
-import com.intellij.platform.eel.path.directorySeparators
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.eel.provider.utils.throwFileSystemException
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
@@ -577,7 +577,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun readSymbolicLink(link: Path): Path {
     val fs = ensureAbsoluteIjentNioPath(link).nioFs
     val absolutePath = link.eelPath
-    val os = fs.ijentFs.pathOs
+    val os = fs.ijentFs.descriptor.platform
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemException().type) {

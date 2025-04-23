@@ -3,11 +3,10 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 
-internal class EelTestDescriptor(val id: String, os: EelPath.OS, val apiProvider: () -> EelApi) : EelDescriptor {
-  override val operatingSystem: EelPath.OS = os
-
+internal class EelTestDescriptor(val id: String, override val platform: EelPlatform, val apiProvider: () -> EelApi) : EelDescriptor {
   override suspend fun upgrade(): EelApi {
     return apiProvider()
   }

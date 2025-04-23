@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.path.EelPath
@@ -145,7 +146,7 @@ object EelPathUtils {
     }
     val root = eelPath.root.toString().replace('\\', '/')
     // see sun.nio.fs.WindowsUriSupport#toUri(java.lang.String, boolean, boolean)
-    val trailing = if (eelPath.descriptor.operatingSystem == EelPath.OS.WINDOWS) "/" else ""
+    val trailing = if (eelPath.descriptor.platform is EelPlatform.Windows) "/" else ""
     return URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
   }
 

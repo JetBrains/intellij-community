@@ -14,7 +14,8 @@ interface LocalEelApi : EelApi
 interface EelApi {
   val descriptor: EelDescriptor
 
-  val platform: EelPlatform
+  // TODO: should it be extension property?
+  val platform: EelPlatform get() = descriptor.platform
 
   /** Docs: [EelFileSystemApi] */
   val fs: EelFileSystemApi
@@ -42,14 +43,12 @@ interface EelApi {
 }
 
 interface EelPosixApi : EelApi {
-  override val platform: EelPlatform.Posix
   override val tunnels: EelTunnelsPosixApi
   override val userInfo: EelUserPosixInfo
   override val fs: EelFileSystemPosixApi
 }
 
 interface EelWindowsApi : EelApi {
-  override val platform: EelPlatform.Windows
   override val tunnels: EelTunnelsWindowsApi
   override val userInfo: EelUserWindowsInfo
   override val fs: EelFileSystemWindowsApi

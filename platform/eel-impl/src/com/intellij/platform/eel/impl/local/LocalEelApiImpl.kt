@@ -35,7 +35,6 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
 
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
-  override val platform: EelPlatform.Windows get() = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
   override val exec: EelExecApi = EelLocalExecApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
@@ -62,19 +61,6 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
 
   override val tunnels: EelTunnelsPosixApi get() = EelLocalTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
-  override val platform: EelPlatform.Posix
-    get() {
-      val arch = CpuArch.CURRENT.toEelArch()
-      return when {
-        SystemInfo.isMac -> EelPlatform.Darwin(arch)
-        SystemInfo.isLinux -> EelPlatform.Linux(arch)
-        SystemInfo.isFreeBSD -> EelPlatform.FreeBSD(arch)
-        else -> {
-          LOG.info("Eel is not supported on current platform")
-          EelPlatform.Linux(arch)
-        }
-      }
-    }
 
   override val exec: EelExecApi = EelLocalExecApi()
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
@@ -85,7 +71,6 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   }
 
   override val fs: LocalEelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
-    override val pathOs: EelPath.OS = EelPath.OS.UNIX
     override val descriptor: EelDescriptor get() = LocalEelDescriptor
 
     override suspend fun createTemporaryDirectory(

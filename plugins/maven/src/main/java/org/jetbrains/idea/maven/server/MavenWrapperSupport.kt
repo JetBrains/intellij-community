@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -113,7 +114,7 @@ internal class MavenWrapperSupport {
       throw IllegalStateException(SyncBundle.message("zip.is.not.correct", zipFile.toAbsolutePath()))
     }
     val mavenHome = dirs[0]
-    if (mavenHome.getEelDescriptor().operatingSystem == EelPath.OS.UNIX) {
+    if (mavenHome.getEelDescriptor().platform is EelPlatform.Posix) {
       makeMavenBinRunnable(mavenHome)
     }
     return mavenHome

@@ -19,11 +19,11 @@ fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {
 }
 
 fun CpuArch.toEelArch(): EelPlatform.Arch = when (this) {
-  CpuArch.X86 -> EelPlatform.X86
-  CpuArch.X86_64 -> EelPlatform.X86_64
-  CpuArch.ARM32 -> EelPlatform.ARM_32
-  CpuArch.ARM64 -> EelPlatform.ARM_64
-  CpuArch.OTHER, CpuArch.UNKNOWN -> EelPlatform.Unknown
+  CpuArch.X86 -> EelPlatform.Arch.X86
+  CpuArch.X86_64 -> EelPlatform.Arch.X86_64
+  CpuArch.ARM32 -> EelPlatform.Arch.ARM_32
+  CpuArch.ARM64 -> EelPlatform.Arch.ARM_64
+  CpuArch.OTHER, CpuArch.UNKNOWN -> EelPlatform.Arch.Unknown
 }
 
 @Throws(FileSystemException::class)

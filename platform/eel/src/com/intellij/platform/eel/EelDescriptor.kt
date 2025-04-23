@@ -2,6 +2,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPath.OS
 
 /**
  * A descriptor of an environment where [EelApi] may exist.
@@ -33,11 +34,17 @@ import com.intellij.platform.eel.path.EelPath
  * If you need to access the remote environment, you can use the method [upgrade], which can suspend for some time before returning a working instance of [EelApi]
  */
 interface EelDescriptor {
+  @Deprecated("Use platform instead", ReplaceWith("platform"))
+  val operatingSystem: OS
+    get() = when (platform) {
+      is EelPlatform.Windows -> OS.WINDOWS
+      is EelPlatform.Posix -> OS.UNIX
+    }
 
   /**
    * The platform of an environment corresponding to this [EelDescriptor].
    */
-  val operatingSystem: EelPath.OS
+  val platform: EelPlatform
 
   /**
    * Retrieves an instance of [EelApi] corresponding to this [EelDescriptor].

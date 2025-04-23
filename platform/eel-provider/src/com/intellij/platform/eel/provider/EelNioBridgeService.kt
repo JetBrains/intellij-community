@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.NonNls
 import java.nio.file.FileSystem
@@ -155,7 +156,7 @@ fun Path.asEelPath(): EelPath {
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
   val root = service.tryGetNioRoots(descriptor)?.firstOrNull { this.startsWith(it) } ?: error("unreachable") // since the descriptor is not null, the root should be as well
   val relative = root.relativize(this)
-  if (descriptor.operatingSystem == EelPath.OS.UNIX) {
+  if (descriptor.platform is EelPlatform.Posix) {
     return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })
   }
   else {

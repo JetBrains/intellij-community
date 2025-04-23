@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.internal.impl
 
-import com.intellij.platform.eel.fs.pathOs
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.concurrentLimit
@@ -72,9 +71,9 @@ class PythonWithLanguageLevelImpl internal constructor(
   override suspend fun getReadableName(): @Nls String {
     val eelApi = pythonBinary.getEelDescriptor().upgrade()
     val home = eelApi.userInfo.home.asNioPath()
-    val separator = when (eelApi.fs.pathOs) {
-      EelPath.OS.WINDOWS -> "\\"
-      EelPath.OS.UNIX -> "/"
+    val separator = when (eelApi.platform) {
+      is EelPlatform.Windows -> "\\"
+      is EelPlatform.Posix -> "/"
     }
     val pythonString = (if (pythonBinary.startsWith(home)) "~$separator" + pythonBinary.relativeTo(home).pathString
     else pythonBinary.pathString)

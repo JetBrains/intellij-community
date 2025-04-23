@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework
 
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -33,9 +34,9 @@ suspend fun waitNoError(delay: Duration = 100.milliseconds, repeat: Int = 50, ch
 }
 
 @RequiresBackgroundThread
-fun PythonHomePath.resolvePythonTool(name: String): Path = when (getEelDescriptor().operatingSystem) {
-  EelPath.OS.WINDOWS -> resolve("Scripts/$name.exe")
-  EelPath.OS.UNIX -> resolve("bin/$name")
+fun PythonHomePath.resolvePythonTool(name: String): Path = when (getEelDescriptor().platform) {
+  is EelPlatform.Windows -> resolve("Scripts/$name.exe")
+  is EelPlatform.Posix-> resolve("bin/$name")
 }
 
 
@@ -53,12 +54,12 @@ private class PathMatcher(private val parent: Path) : TypeSafeMatcher<Path>(Path
 
   private fun Path.expandWinPath(): Path =
     try {
-      when (getEelDescriptor().operatingSystem) {
+      when (getEelDescriptor().platform) {
         // On Windows we change 8.3 problem (c:\users\William.~1 -> c:\users\William.Gates)
         // But you are encountered to disable 8.3 with `fsutil 8dot3name set 1`
-        EelPath.OS.WINDOWS -> toRealPath()
+        is EelPlatform.Windows -> toRealPath()
         // On Unix, this function resolves symlinks (i.e `~/.venv/python` -> `/usr/bin/python`) which isn't what we want.
-        EelPath.OS.UNIX -> this
+        is EelPlatform.Posix -> this
       }
       toRealPath()
     }

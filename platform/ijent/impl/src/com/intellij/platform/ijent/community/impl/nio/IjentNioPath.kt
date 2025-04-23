@@ -2,8 +2,10 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.path.platform
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -155,9 +157,9 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
   }
 
   override fun toUri(): URI {
-    val prefix = when (eelPath.os) {
-      EelPath.OS.WINDOWS -> "/" + eelPath.root.toString().replace('\\', '/')
-      EelPath.OS.UNIX -> null
+    val prefix = when (eelPath.platform) {
+      is EelPlatform.Windows -> "/" + eelPath.root.toString().replace('\\', '/')
+      is EelPlatform.Posix -> null
     }
     val allParts = listOfNotNull(prefix) + eelPath.parts
     return allParts.fold(nioFs.uri, URI::resolve)

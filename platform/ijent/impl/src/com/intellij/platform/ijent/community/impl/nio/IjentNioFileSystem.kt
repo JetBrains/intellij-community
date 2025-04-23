@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.platform.eel.directorySeparators
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
-import com.intellij.platform.eel.path.directorySeparators
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -67,15 +67,11 @@ class IjentNioFileSystem internal constructor(
     }
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
-    val os = when (ijentFs) {
-      is IjentFileSystemPosixApi -> EelPath.OS.UNIX
-      is IjentFileSystemWindowsApi -> EelPath.OS.WINDOWS
-    }
     return try {
       more.fold(EelPath.parse(first, ijentFs.descriptor)) { path, newPart -> path.resolve(newPart) }.toNioPath()
     }
     catch (_: EelPathException) {
-      RelativeIjentNioPath(first.split(*os.directorySeparators) + more, this)
+      RelativeIjentNioPath(first.split(*ijentFs.descriptor.platform.directorySeparators) + more, this)
     }
   }
 

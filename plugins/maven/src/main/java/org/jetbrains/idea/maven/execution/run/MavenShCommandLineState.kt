@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.execute
 import com.intellij.platform.eel.path.EelPath
@@ -321,7 +322,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
   private fun isWindows() =
-    myConfiguration.project.getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS
+    myConfiguration.project.getEelDescriptor().platform is EelPlatform.Windows
 
   private fun isWrapperedOutput(): Boolean {
     val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)

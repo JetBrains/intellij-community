@@ -5,29 +5,39 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.EelNioBridgeService
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.spi.FileSystemProvider
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
+
+private suspend fun WSLDistribution.getIjent(): IjentPosixApi {
+  return WslIjentManager.instanceAsync().getIjentApi(this, null, false)
+}
 
 @ApiStatus.Internal
 @VisibleForTesting
 class IjentWslNioFsToggleStrategy(
   private val coroutineScope: CoroutineScope,
 ) {
-  internal val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
+  internal val enabledInDistros: MutableMap<WSLDistribution, WslEelDescriptor> = ConcurrentHashMap()
 
   private val providersCache = ContainerUtil.createConcurrentWeakMap<String, IjentWslNioFileSystemProvider>()
 
@@ -60,23 +70,27 @@ class IjentWslNioFsToggleStrategy(
   }
 
   private fun handleWslDistributionAddition(distro: WSLDistribution) {
-    enabledInDistros += distro
     switchToIjentFs(distro)
   }
 
   private fun handleWslDistributionDeletion(distro: WSLDistribution) {
-    enabledInDistros -= distro
-    recomputeEel(distro) { _, actualFs ->
-      actualFs
+    val descriptor = enabledInDistros.remove(distro)
+
+    if (descriptor != null) {
+      recomputeEel(descriptor) { _, actualFs ->
+        actualFs
+      }
     }
   }
 
   fun switchToIjentFs(distro: WSLDistribution) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
+    val descriptor = runBlockingMaybeCancellable { distro.getIjent() }.descriptor as WslEelDescriptor
+
+    enabledInDistros[distro] = descriptor
+
     try {
-      val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) {
-        WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
-      }
+      val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) { distro.getIjent() }
       ijentFsProvider.newFileSystem(
         URI("ijent", "wsl", "/${distro.id}", null, null),
         IjentNioFileSystemProvider.newFileSystemMap(ijentFs),
@@ -86,7 +100,7 @@ class IjentWslNioFsToggleStrategy(
       // Nothing.
     }
 
-    recomputeEel(distro) { underlyingProvider, _ ->
+    recomputeEel(descriptor) { underlyingProvider, _ ->
       val fileSystemProvider = providersCache.computeIfAbsent(distro.id) {
         IjentWslNioFileSystemProvider(
           wslDistribution = distro,
@@ -100,9 +114,9 @@ class IjentWslNioFsToggleStrategy(
     }
   }
 
-  fun switchToTracingWsl9pFs(distro: WSLDistribution) {
-    recomputeEel(distro) { underlyingProvider, previousFs ->
-      LOG.info("Switching $distro to the original file system but with tracing")
+  fun switchToTracingWsl9pFs(descriptor: WslEelDescriptor) {
+    recomputeEel(descriptor) { underlyingProvider, previousFs ->
+      LOG.info("Switching $descriptor to the original file system but with tracing")
 
       try {
         previousFs?.close()
@@ -118,14 +132,11 @@ class IjentWslNioFsToggleStrategy(
   fun unregisterAll() {
     val service = EelNioBridgeService.getInstanceSync()
 
-    val distros = mutableListOf<WSLDistribution>()
-    enabledInDistros.removeIf {
-      distros += it
-      true
+    enabledInDistros.entries.forEachGuaranteed { (_, descriptor) ->
+      service.unregister(descriptor)
     }
-    for (distro in distros) {
-      service.unregister(WslEelDescriptor(distro))
-    }
+
+    enabledInDistros.clear()
   }
 }
 
@@ -144,13 +155,12 @@ private val WSLDistribution.roots: Set<String>
   }
 
 private fun recomputeEel(
-  distro: WSLDistribution,
+  descriptor: WslEelDescriptor,
   action: (underlyingProvider: FileSystemProvider, previousFs: FileSystem?) -> FileSystem?,
 ) {
   val service = EelNioBridgeService.getInstanceSync()
-  val descriptor = WslEelDescriptor(distro)
 
-  distro.roots.forEachGuaranteed { localRoot ->
-    service.register(localRoot, descriptor, distro.id, false, false, action)
+  descriptor.distribution.roots.forEachGuaranteed { localRoot ->
+    service.register(localRoot, descriptor, descriptor.distribution.id, false, false, action)
   }
 }

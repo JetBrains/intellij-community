@@ -7,9 +7,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
@@ -28,26 +28,31 @@ import kotlin.io.path.name
 
 internal const val FAKE_WINDOWS_ROOT = "\\\\dummy-ij-root\\test-eel\\"
 
-internal val currentOs: EelPath.OS
+private val EelPlatform.name: String get() = when (this) {
+  is EelPlatform.Posix -> "posix"
+  is EelPlatform.Windows -> "windows"
+}
+
+internal val currentOs: EelPlatform
   get() = if (SystemInfo.isWindows) {
-    EelPath.OS.WINDOWS
+    EelPlatform.Windows(EelPlatform.Arch.Unknown)
   }
   else {
-    EelPath.OS.UNIX
+    EelPlatform.Linux(EelPlatform.Arch.Unknown)
   }
 
-internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDescriptor, os: EelPath.OS): EelApi {
+internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDescriptor, os: EelPlatform): EelApi {
   return when (os) {
-    EelPath.OS.UNIX -> EelTestPosixApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
-    EelPath.OS.WINDOWS -> EelTestWindowsApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
+    is EelPlatform.Posix -> EelTestPosixApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
+    is EelPlatform.Windows -> EelTestWindowsApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
   }
 }
 
 internal data class IsolatedFileSystemImpl(override val storageRoot: Path, override val eelDescriptor: EelDescriptor, override val eelApi: EelApi) : IsolatedFileSystem
 
-internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFileSystem> = TestFixtureInitializer { initialized ->
+internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFileSystem> = TestFixtureInitializer { initialized ->
   checkMultiRoutingFileSystem()
-  val meaningfulDirName = "eel-fixture-${os.name.lowercase()}"
+  val meaningfulDirName = "eel-fixture-${os.name}"
   val directory = Files.createTempDirectory(meaningfulDirName)
 
   val fakeRoot = if (SystemInfo.isUnix) {
@@ -63,7 +68,7 @@ internal fun eelInitializer(os: EelPath.OS): TestFixtureInitializer<IsolatedFile
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
   val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os, apiRef::get)
-  service.register(fakeRoot, descriptor, descriptor.id, true, (os == EelPath.OS.WINDOWS)) { _, _ ->
+  service.register(fakeRoot, descriptor, descriptor.id, true, (os is EelPlatform.Windows)) { _, _ ->
     fakeLocalFileSystem
   }
   val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)

@@ -13,8 +13,6 @@ import com.intellij.util.system.CpuArch
 internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
   override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo(descriptor)
 
-  override val platform: EelPlatform.Windows = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
-
   override val fs: WindowsNioBasedEelFileSystemApi = EelTestFileSystemWindowsApi(descriptor, fileSystem)
 
   override val archive: EelArchiveApi

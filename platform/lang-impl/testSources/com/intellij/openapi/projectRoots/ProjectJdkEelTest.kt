@@ -6,6 +6,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.testSdkFixture
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
@@ -25,7 +26,7 @@ import java.nio.file.Files
 
 @TestApplication
 class ProjectJdkEelTest {
-  val eel = eelFixture(EelPath.OS.UNIX)
+  val eel = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
 
   val localProject = projectFixture(openAfterCreation = true)
 

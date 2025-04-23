@@ -4,7 +4,7 @@
  import com.intellij.ide.IdeCoreBundle;
  import com.intellij.openapi.actionSystem.DataContext;
  import com.intellij.openapi.util.SystemInfo;
- import com.intellij.platform.eel.path.EelPath;
+ import com.intellij.platform.eel.EelPlatform;
  import com.intellij.platform.eel.provider.utils.JEelUtils;
  import com.intellij.util.SystemProperties;
  import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@
      if (contextPath != null) {
        var eelPath = JEelUtils.toEelPath(contextPath);
        if (eelPath != null) {
-         return eelPath.getOs() == EelPath.OS.WINDOWS;
+         return eelPath.getDescriptor().getPlatform() instanceof EelPlatform.Windows;
        }
      }
      return SystemInfo.isWindows;

@@ -521,15 +521,12 @@ enum class WslTestStrategy { Legacy, Ijent }
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
-      override val operatingSystem: EelPath.OS
-        get() = EelPath.OS.UNIX
+      override val platform: EelPlatform = EelPlatform.Linux(EelPlatform.Arch.Unknown)
 
       override suspend fun upgrade(): EelApi {
         throw UnsupportedOperationException()
       }
     }
-
-  override val platform: EelPlatform.Posix get() = throw UnsupportedOperationException()
 
   override val archive: EelArchiveApi get() = throw UnsupportedOperationException()
 

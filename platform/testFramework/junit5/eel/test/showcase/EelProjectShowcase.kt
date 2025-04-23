@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.showcase
 
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
@@ -14,7 +15,7 @@ import java.nio.file.Path
 
 @TestApplication
 class EelProjectShowcase {
-  val eel = eelFixture(EelPath.OS.UNIX)
+  val eel = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
   val tempDir = eel.tempDirFixture()
   val project = projectFixture(tempDir, openAfterCreation = true)
 

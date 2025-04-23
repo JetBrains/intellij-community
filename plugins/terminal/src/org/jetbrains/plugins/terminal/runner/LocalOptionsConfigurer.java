@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
@@ -115,7 +115,7 @@ public final class LocalOptionsConfigurer {
                                                                      @NotNull String workingDir,
                                                                      @NotNull Project project,
                                                                      @Nullable EelDescriptor eelDescriptor) {
-    final var isWindows = eelDescriptor != null ? eelDescriptor.getOperatingSystem() == EelPath.OS.WINDOWS : SystemInfo.isWindows;
+    final var isWindows = eelDescriptor != null ? eelDescriptor.getPlatform() instanceof EelPlatform.Windows : SystemInfo.isWindows;
 
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();

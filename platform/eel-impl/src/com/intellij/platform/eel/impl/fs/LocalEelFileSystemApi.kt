@@ -27,8 +27,6 @@ import kotlin.io.path.fileStore
 import kotlin.streams.asSequence
 
 abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) : EelFileSystemApi {
-  abstract val pathOs: EelPath.OS
-
   protected fun EelPath.toNioPath(): Path =
     fs.getPath(toString())
 
@@ -337,7 +335,6 @@ abstract class PosixNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserPosixInfo,
 ) : NioBasedEelFileSystemApi(fs), LocalEelFileSystemPosixApi {
-  override val pathOs: EelPath.OS = EelPath.OS.UNIX
 
   override suspend fun createDirectory(
     path: EelPath,
@@ -407,7 +404,6 @@ abstract class WindowsNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserWindowsInfo,
 ) : NioBasedEelFileSystemApi(fs), LocalEelFileSystemWindowsApi {
-  override val pathOs: EelPath.OS = EelPath.OS.WINDOWS
 
   override suspend fun getRootDirectories(): Collection<EelPath> =
     FileSystems.getDefault().rootDirectories.map { path ->

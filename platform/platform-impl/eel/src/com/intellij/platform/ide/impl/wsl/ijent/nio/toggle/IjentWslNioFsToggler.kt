@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler.WslEelProvider
@@ -47,15 +48,14 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   fun switchToIjentFs(distro: WSLDistribution) {
     logErrorIfNotWindows()
     strategy ?: error("Not available")
-    strategy.enabledInDistros.add(distro)
     strategy.switchToIjentFs(distro)
   }
 
   @TestOnly
-  fun switchToTracingWsl9pFs(distro: WSLDistribution) {
+  fun switchToTracingWsl9pFs(descriptor: WslEelDescriptor) {
     logErrorIfNotWindows()
     strategy ?: error("Not available")
-    strategy.switchToTracingWsl9pFs(distro)
+    strategy.switchToTracingWsl9pFs(descriptor)
   }
 
   @TestOnly
@@ -154,9 +154,7 @@ private suspend fun tryInitializeEelOnWsl(path: String) {
 }
 
 
-data class WslEelDescriptor(val distribution: WSLDistribution) : EelDescriptor {
-  override val operatingSystem: EelPath.OS = EelPath.OS.UNIX
-
+data class WslEelDescriptor(val distribution: WSLDistribution, override val platform: EelPlatform) : EelDescriptor {
 
   override suspend fun upgrade(): EelApi {
     return WslEelProvider().getApiByDistribution(distribution)

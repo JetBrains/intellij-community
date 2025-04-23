@@ -1,6 +1,7 @@
 package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -63,12 +64,12 @@ private suspend fun PythonBinary.executeWithResult(vararg args: String): Result<
 }
 
 @RequiresBackgroundThread
-fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().operatingSystem) {
-  EelPath.OS.WINDOWS -> parent.takeIf { it.name.lowercase() != "scripts" } ?: parent.parent
-  EelPath.OS.UNIX -> parent.takeIf { it.name != "bin" } ?: parent.parent
+fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().platform) {
+  is EelPlatform.Windows -> parent.takeIf { it.name.lowercase() != "scripts" } ?: parent.parent
+  is EelPlatform.Posix -> parent.takeIf { it.name != "bin" } ?: parent.parent
 }
 
 @RequiresBackgroundThread
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
-  return VirtualEnvReader(isWindows = getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS).findPythonInPythonRoot(this)
+  return VirtualEnvReader(isWindows = getEelDescriptor().platform is EelPlatform.Windows).findPythonInPythonRoot(this)
 }

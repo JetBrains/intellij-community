@@ -3,12 +3,14 @@ package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import kotlin.collections.component1
 
 class EelAbsolutePathTest {
   @TestFactory
@@ -20,7 +22,7 @@ class EelAbsolutePathTest {
       "/foo/bar/.",
       "/foo/bar/./baz",
       "/foo/bar/./baz/..",
-    ).map { it to EelPath.OS.UNIX }
+    ).map { it to EelPlatform.Linux(EelPlatform.Arch.Unknown) }
 
     val windowsPaths = listOf(
       """C:\""",  // Keep in mind that "C:" is not an absolute path, it actually points to a current directory.
@@ -33,7 +35,7 @@ class EelAbsolutePathTest {
       """\\wsl${'$'}\Ubuntu-22.04""",
       """\\wsl${'$'}\Ubuntu-22.04\home""",
       """\\wsl${'$'}\Ubuntu-22.04\home\user""",
-    ).map { it to EelPath.OS.WINDOWS }
+    ).map { it to EelPlatform.Windows(EelPlatform.Arch.Unknown) }
 
     for ((rawPath, os) in (unixPaths + windowsPaths)) {
       add(dynamicTest(rawPath) {
@@ -45,8 +47,8 @@ class EelAbsolutePathTest {
 
   @TestFactory
   fun `os-dependent separators`(): List<DynamicTest> = buildList {
-    val unixPath = EelPath.parse("/", DummyEelDescriptor(EelPath.OS.UNIX))
-    val windowsPath = EelPath.parse("C:\\", DummyEelDescriptor(EelPath.OS.WINDOWS))
+    val unixPath = EelPath.parse("/", DummyEelDescriptor(EelPlatform.Linux(EelPlatform.Arch.Unknown)))
+    val windowsPath = EelPath.parse("C:\\", DummyEelDescriptor(EelPlatform.Windows(EelPlatform.Arch.Unknown)))
     val parts = listOf(Triple("a/b/c/d", listOf("a", "b", "c", "d"), listOf("a", "b", "c", "d")),
                        Triple("a\\b\\c\\d", listOf("a\\b\\c\\d"), listOf("a", "b", "c", "d")),
                        Triple("a\\b/c\\d", listOf("a\\b", "c\\d"), listOf("a", "b", "c", "d")))
@@ -62,13 +64,13 @@ class EelAbsolutePathTest {
 
   @Test
   fun endsWith() {
-    val path = EelPath.parse("C:\\foo\\bar\\baz", DummyEelDescriptor(EelPath.OS.WINDOWS))
+    val path = EelPath.parse("C:\\foo\\bar\\baz", DummyEelDescriptor(EelPlatform.Windows(EelPlatform.Arch.Unknown)))
     path.endsWith(listOf("bar", "baz")) shouldBe true
     path.endsWith(listOf("bar", "baz", "qux")) shouldBe false
     path.endsWith(listOf("C:", "foo", "bar", "bax")) shouldBe false
   }
 
-  class DummyEelDescriptor(override val operatingSystem: EelPath.OS) : EelDescriptor {
+  class DummyEelDescriptor(override val platform: EelPlatform) : EelDescriptor {
     override suspend fun upgrade(): EelApi {
       return Assertions.fail<Nothing>()
     }

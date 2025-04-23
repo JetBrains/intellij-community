@@ -6,6 +6,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 class GlobalWorkspaceModelEelTest {
-  val eel = eelFixture(EelPath.OS.UNIX)
+  val eel = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
 
   val eelTempDir = eel.tempDirFixture()
   val eelProject = projectFixture(eelTempDir)

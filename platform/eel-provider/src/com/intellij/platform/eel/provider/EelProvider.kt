@@ -12,7 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.util.coroutines.forEachConcurrent
+import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
@@ -83,13 +85,22 @@ fun EelDescriptor.upgradeBlocking(): EelApi {
 }
 
 data object LocalEelDescriptor : EelDescriptor {
-  override val operatingSystem: EelPath.OS
-    get() = if (SystemInfo.isWindows) {
-      EelPath.OS.WINDOWS
+  private val LOG = logger<LocalEelDescriptor>()
+
+  override val platform: EelPlatform by lazy {
+    val arch = CpuArch.CURRENT.toEelArch()
+
+    when {
+      SystemInfo.isWindows -> EelPlatform.Windows(arch)
+      SystemInfo.isMac -> EelPlatform.Darwin(arch)
+      SystemInfo.isLinux -> EelPlatform.Linux(arch)
+      SystemInfo.isFreeBSD -> EelPlatform.FreeBSD(arch)
+      else -> {
+        LOG.info("Eel is not supported on current platform")
+        EelPlatform.Linux(arch)
+      }
     }
-    else {
-      EelPath.OS.UNIX
-    }
+  }
 
   override suspend fun upgrade(): EelApi {
     return localEel
