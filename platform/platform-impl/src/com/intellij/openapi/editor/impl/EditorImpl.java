@@ -1348,12 +1348,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null));
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null));
+  }
+
+  @ApiStatus.Internal
+  public void setFontSize(float fontSize, @Nullable Point zoomCenter) {
+    ReadAction.run(() -> setFontSizeImpl(fontSize, zoomCenter));
   }
 
   /**
@@ -1362,7 +1367,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @param fontSize   new font size
    * @param zoomCenter zoom point, relative to viewport
    */
-  private void setFontSize(float fontSize, @Nullable Point zoomCenter) {
+  private void setFontSizeImpl(float fontSize, @Nullable Point zoomCenter) {
     int oldFontSize = myScheme.getEditorFontSize();
     float oldFontSize2D = myScheme.getEditorFontSize2D();
 
@@ -5787,12 +5792,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           size -= shift;
           if (size >= MIN_FONT_SIZE) {
             if (isWheelFontChangePersistent) {
-              setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
-                          convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(UISettingsUtils.getInstance().scaleFontSize(size),
+                              convertPoint(this, e.getPoint(), getViewport()));
               adjustGlobalFontSize(size);
             }
             else {
-              setFontSize(size, convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(size, convertPoint(this, e.getPoint(), getViewport()));
             }
           }
           return;
