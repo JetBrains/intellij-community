@@ -1263,10 +1263,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val hasErrors = !isMarketplace && !errors.isEmpty()
 
-    val descriptor = plugin?.getDescriptor()
-    iconLabel!!.isEnabled = isMarketplace || pluginModel.getModel().isEnabled(descriptor!!)
-    iconLabel!!.icon = pluginModel.getModel().getIcon(descriptor!!, true, hasErrors, false)
-    iconLabel!!.disabledIcon = pluginModel.getModel().getIcon(descriptor, true, hasErrors, true)
+    iconLabel!!.isEnabled = isMarketplace || pluginModel.isEnabled(plugin!!)
+    iconLabel!!.icon = pluginModel.getIcon(plugin!!, true, hasErrors, false)
+    iconLabel!!.disabledIcon = pluginModel.getIcon(plugin!!, true, hasErrors, true)
   }
 
   private fun updateErrors() {
