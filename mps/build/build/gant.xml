@@ -9,6 +9,7 @@
     <property name="tc.android.root" location="${tc.root}/ij-android"/>
     <property name="jps.project.root" location="${basedir}/.."/>
     <property name="community.folder" location="${basedir}/../community"/>
+    <property name="android.folder" location="${community.folder}/android"/>
     <property name="community.out" value="${basedir}/../out/jetbrains mps"/>
     <property name="mps.folder" value="${basedir}/../.."/>
     <property name="version.properties.file" value="${mps.folder}/build/version.properties"/>
@@ -167,6 +168,32 @@
 
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
+
+        <property name="jet-sign_library_hotfix-android"
+                  value="${basedir}/patches/jet-sign_library_hotfix_for251-android.patch"/>
+        <echo message="Applying ${jet-sign_library_hotfix-android}"/>
+        <exec executable="git" dir="${android.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${jet-sign_library_hotfix-android}"/>
+        </exec>
+        <exec executable="git" dir="${android.folder}">
+            <arg value="apply"/>
+            <arg value="${jet-sign_library_hotfix-android}"/>
+        </exec>
+
+        <property name="jet-sign_library_hotfix"
+                  value="${basedir}/patches/jet-sign_library_hotfix_for251.patch"/>
+        <echo message="Applying ${jet-sign_library_hotfix}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${jet-sign_library_hotfix}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${jet-sign_library_hotfix}"/>
+        </exec>
 
         <property name="MPS-38050"
                   value="${basedir}/patches/MPS-38050.patch"/>
