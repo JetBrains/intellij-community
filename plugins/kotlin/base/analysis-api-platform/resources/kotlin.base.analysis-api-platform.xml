@@ -60,7 +60,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinContentScopeRefiner implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinResolveScopeEnlargerBridge"/>
     <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinCombinableSourceAndClassRootsScopeMergeStrategy"/>
-    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.KotlinUnionScopeMergeStrategy" order="first"/>
+    <kotlinGlobalSearchScopeMergeStrategy implementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.projectStructure.scopes.IdeKotlinUnionScopeMergeStrategy" order="first"/>
   </extensions>
 
   <projectListeners>

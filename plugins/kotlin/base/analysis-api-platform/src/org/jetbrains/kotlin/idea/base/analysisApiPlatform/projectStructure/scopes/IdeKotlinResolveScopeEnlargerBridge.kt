@@ -10,8 +10,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarge
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 
-/** Bridges FE1.0 [org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger] to AA [org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner]. */
-class IdeKotlinResolveScopeEnlargerBridge : KotlinContentScopeRefiner {
+/**
+ * Bridges FE1.0 [KotlinResolveScopeEnlarger][org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger] to the Analysis
+ * API's [KotlinContentScopeRefiner][org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner].
+ */
+internal class IdeKotlinResolveScopeEnlargerBridge : KotlinContentScopeRefiner {
     override fun getEnlargementScopes(module: KaModule): List<GlobalSearchScope> {
         if (module !is KaSourceModule) return emptyList()
 

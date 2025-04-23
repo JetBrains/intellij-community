@@ -7,10 +7,10 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalS
 import kotlin.reflect.KClass
 
 /**
- * A [org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMergeStrategy] introduced to flatten nested union scopes.
- * As [com.intellij.psi.search.UnionScope] is package-private, the strategy has to target [com.intellij.psi.search.GlobalSearchScope].
+ * A [KotlinGlobalSearchScopeMergeStrategy] introduced to flatten nested union scopes. As [com.intellij.psi.search.UnionScope] is
+ * package-private, the strategy has to target [GlobalSearchScope].
  */
-class KotlinUnionScopeMergeStrategy: KotlinGlobalSearchScopeMergeStrategy<GlobalSearchScope> {
+internal class IdeKotlinUnionScopeMergeStrategy : KotlinGlobalSearchScopeMergeStrategy<GlobalSearchScope> {
     override val targetType: KClass<GlobalSearchScope> = GlobalSearchScope::class
 
     override fun uniteScopes(scopes: List<GlobalSearchScope>): List<GlobalSearchScope> {
