@@ -6,12 +6,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
@@ -36,13 +38,24 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
         val dslAnnotation = with(session) {
             val functionCall = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
             // function declaration argument has a dsl marker
-            functionCall.argumentMapping.values.forEach { signature ->
+            val argumentMapping = functionCall.argumentMapping
+            // to check function declaration arguments type, rather call site
+            // to avoid cases with generics like `apply` those have no dsl markers
+            argumentMapping.values.forEach { signature ->
                 val receiverType = (signature.returnType as? KaFunctionType)?.receiverType
                 receiverType?.let(::getDslAnnotation)?.let { return@with it }
             }
 
             // function has a dsl marker
-            firstDslAnnotationOrNull(functionCall.symbol)
+            val symbol = functionCall.symbol
+
+            // in context of implicit receiver
+            val dispatchReceiver = functionCall.partiallyAppliedSymbol.dispatchReceiver
+            val dispatchReceiverType = dispatchReceiver?.takeIf { it is KaImplicitReceiverValue }?.type as? KaClassType
+            dispatchReceiverType?.symbol?.let(::firstDslAnnotationOrNull)?.let { return@with it }
+
+            // in case of ext function
+            firstDslAnnotationOrNull(symbol)
         } ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
