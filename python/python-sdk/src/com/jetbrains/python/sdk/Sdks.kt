@@ -190,7 +190,7 @@ suspend fun Sdk.setAssociationToModuleAsync(module: Module) {
 suspend fun Sdk.setAssociationToPath(path: String?) {
   val data = getOrCreateAdditionalData().also {
     when {
-      path != null -> it.associateWithModulePath(path)
+      path != null -> it.associatedModulePath = path
       else -> it.associatedModulePath = null
     }
   }
