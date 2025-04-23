@@ -15,6 +15,9 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.manifest" scope="RUNTIME" />

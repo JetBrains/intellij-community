@@ -497,6 +497,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.java.dev/intellij.java.dev.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.java.dev/intellij.java.dev.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" filepath="$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/execution/backend/intellij.java.execution.impl.backend.iml" filepath="$PROJECT_DIR$/java/execution/backend/intellij.java.execution.impl.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/execution/frontend/intellij.java.execution.impl.frontend.iml" filepath="$PROJECT_DIR$/java/execution/frontend/intellij.java.execution.impl.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/execution/shared/intellij.java.execution.impl.shared.iml" filepath="$PROJECT_DIR$/java/execution/shared/intellij.java.execution.impl.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-features-trainer/intellij.java.featuresTrainer.iml" filepath="$PROJECT_DIR$/java/java-features-trainer/intellij.java.featuresTrainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-frontback-impl/intellij.java.frontback.impl.iml" filepath="$PROJECT_DIR$/java/java-frontback-impl/intellij.java.frontback.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-frontback-psi-api/intellij.java.frontback.psi.iml" filepath="$PROJECT_DIR$/java/java-frontback-psi-api/intellij.java.frontback.psi.iml" />

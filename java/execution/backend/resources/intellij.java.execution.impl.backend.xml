@@ -1,0 +1,13 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.java.execution.impl.shared"/>
+    <plugin id="com.intellij.platform.experimental.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.execution.backend.JavaAutoRunTrackerActivity"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.execution.backend.JavaTestDiscoveryRemoteApiProvider"/>
+  </extensions>
+</idea-plugin>

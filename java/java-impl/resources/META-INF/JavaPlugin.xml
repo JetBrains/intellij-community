@@ -885,8 +885,6 @@
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
     <runConfigurationExtension implementation="com.intellij.execution.impl.JavaDebuggerAutoAttach"/>
 
-    <editorFloatingToolbarProvider implementation="com.intellij.execution.testDiscovery.JavaAutoRunFloatingToolbarProvider"/>
-
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor"/>
     <weigher order="after mostUsed" key="completion" id="methodChains"
