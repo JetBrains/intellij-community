@@ -138,6 +138,8 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
         return when {
           callable is KtFunction && callable.isLocal -> false
           (callable.containingClassOrObject as? KtClass)?.isInterface() == true -> false
+          callable is KtConstructor<*> && (callable.containingClassOrObject as? KtClass)?.isEnum() == true -> false
+          callable is KtClass && callable.isEnum() -> false
           else -> true
         }
     }
