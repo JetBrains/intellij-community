@@ -1,35 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.GutterMarkPreprocessor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -40,8 +30,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.rpc.XBreakpointId;
@@ -56,18 +44,18 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
-import static com.intellij.xdebugger.XDebuggerUtil.INLINE_BREAKPOINTS_KEY;
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableSharedFlow;
 import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
 @ApiStatus.Internal
-public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
+public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState>
+  extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
+
   private static final @NonNls String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
@@ -84,7 +72,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private volatile boolean myDisposed;
   private final MutableSharedFlow<Unit> myBreakpointChangedFlow = createMutableSharedFlow(0, 1);
 
-  public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
+  public XBreakpointBase(final XBreakpointType<Self, P> type,
+                         XBreakpointManagerImpl breakpointManager,
+                         final @Nullable P properties,
+                         final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
@@ -304,7 +295,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   @Override
-  public @NotNull XBreakpointType<Self,P> getType() {
+  public @NotNull XBreakpointType<Self, P> getType() {
     return myType;
   }
 
@@ -599,7 +590,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public @NotNull GutterIconRenderer createGutterIconRenderer() {
-    return new BreakpointGutterIconRenderer();
+    return new BreakpointGutterIconRenderer(this);
   }
 
   public void clearIcon() {
@@ -609,240 +600,5 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   @Override
   public int compareTo(@NotNull Self self) {
     return myType.getBreakpointComparator().compare((Self)this, self);
-  }
-
-  protected abstract static class CommonBreakpointGutterIconRenderer extends GutterIconRenderer {
-    @Override
-    public @NotNull Alignment getAlignment() {
-      return ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers() ? Alignment.LINE_NUMBERS : Alignment.RIGHT;
-    }
-  }
-
-  protected class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
-    @Override
-    public @NotNull Icon getIcon() {
-      return XBreakpointBase.this.getIcon();
-    }
-
-    @Override
-    public @NotNull String getAccessibleName() {
-      // [tav] todo: add "hit" state
-      return XDebuggerBundle.message("accessible.name.icon.0.1.2", getType().getTitle(),
-                                     getCondition() != null ? " " + XDebuggerBundle.message("accessible.name.icon.conditional") : "",
-                                     !isEnabled() ? " " + XDebuggerBundle.message("accessible.name.icon.disabled") : "");
-    }
-
-    @Override
-    public @Nullable AnAction getClickAction() {
-      if (Registry.is("debugger.click.disable.breakpoints")) {
-        return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
-      } else {
-        return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
-      }
-    }
-
-    @Override
-    public @Nullable AnAction getMiddleButtonClickAction() {
-      if (!Registry.is("debugger.click.disable.breakpoints")) {
-        return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
-      } else {
-        return new RemoveBreakpointGutterIconAction(XBreakpointBase.this);
-      }
-    }
-
-    @Override
-    public @Nullable AnAction getRightButtonClickAction() {
-      return new EditBreakpointAction.ContextAction(this, XBreakpointBase.this);
-    }
-
-    @Override
-    public @Nullable ActionGroup getPopupMenuActions() {
-      return new DefaultActionGroup(getAdditionalPopupMenuActions(getBreakpointManager().getDebuggerManager().getCurrentSession()));
-    }
-
-    @Override
-    public @Nullable String getTooltipText() {
-      return getDescription();
-    }
-
-    @Override
-    public GutterDraggableObject getDraggableObject() {
-      return createBreakpointDraggableObject();
-    }
-
-    private XBreakpointBase<?,?,?> getBreakpoint() {
-      return XBreakpointBase.this;
-    }
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof XLineBreakpointImpl.BreakpointGutterIconRenderer
-             && getBreakpoint() == ((XLineBreakpointImpl.BreakpointGutterIconRenderer)obj).getBreakpoint()
-             && Comparing.equal(getIcon(), ((XLineBreakpointImpl.BreakpointGutterIconRenderer)obj).getIcon());
-    }
-
-    @Override
-    public int hashCode() {
-      return getBreakpoint().hashCode();
-    }
-  }
-
-  protected static class MultipleBreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
-
-    private final List<XBreakpointBase<?, ?, ?>> breakpoints;
-
-    public MultipleBreakpointGutterIconRenderer(List<XBreakpointBase<?, ?, ?>> breakpoints) {
-      this.breakpoints = breakpoints;
-      assert breakpoints.size() >= 2;
-    }
-
-    private boolean areAllDisabled() {
-      return ContainerUtil.and(breakpoints, b -> !b.isEnabled());
-    }
-
-    @Override
-    public @NotNull Icon getIcon() {
-      var session = breakpoints.get(0).getBreakpointManager().getDebuggerManager().getCurrentSession();
-      if (session != null && session.areBreakpointsMuted()) {
-        return AllIcons.Debugger.MultipleBreakpointsMuted;
-      } else if (areAllDisabled()) {
-        return AllIcons.Debugger.MultipleBreakpointsDisabled;
-      } else {
-        return AllIcons.Debugger.MultipleBreakpoints;
-      }
-    }
-
-    @Override
-    public @NotNull String getAccessibleName() {
-      return super.getAccessibleName();
-    }
-
-    private AnAction createToggleAction() {
-      // This gutter's actions are not collected to any menu, so we use SimpleAction.
-      return DumbAwareAction.create(e -> {
-        // Semantics:
-        // - disable all if any is enabled,
-        // - enable all if all are disabled.
-        var newEnabledValue = areAllDisabled();
-        for (var b : breakpoints) {
-          b.setEnabled(newEnabledValue);
-        }
-      });
-    }
-
-    private AnAction createRemoveAction() {
-      // This gutter's actions are not collected to any menu, so we use SimpleAction.
-      return DumbAwareAction.create(e -> {
-        removeBreakpoints();
-      });
-    }
-
-    private void removeBreakpoints() {
-      XDebuggerUtilImpl.removeBreakpointsWithConfirmation(breakpoints);
-    }
-
-    @Override
-    public @Nullable AnAction getClickAction() {
-      if (Registry.is("debugger.click.disable.breakpoints")) {
-        return createToggleAction();
-      } else {
-        return createRemoveAction();
-      }
-    }
-
-    @Override
-    public @Nullable AnAction getMiddleButtonClickAction() {
-      if (!Registry.is("debugger.click.disable.breakpoints")) {
-        return createToggleAction();
-      } else {
-        return createRemoveAction();
-      }
-    }
-
-    @Override
-    public @Nullable AnAction getRightButtonClickAction() {
-      // This gutter's actions are not collected to any menu, so we use SimpleAction.
-      return DumbAwareAction.create(e -> {
-        var project = e.getProject();
-        if (project == null) return;
-        // Initially we select the newest breakpoint, it's shown above other breakpoints in the dialog.
-        @SuppressWarnings("OptionalGetWithoutIsPresent") // there are always at least two breakpoints
-        var initialOne = breakpoints.stream().sorted().findFirst().get();
-        BreakpointsDialogFactory.getInstance(project).showDialog(initialOne);
-      });
-    }
-
-    @Override
-    public @Nullable ActionGroup getPopupMenuActions() {
-      // TODO[inline-bp]: show some menu with the list of all breakpoints with some actions for them (remove, edit, ...)
-      // TODO[inline-bp]: alt+enter actions are completely broken for multiple breakpoints:
-      //                   all actions are mixed and it's hard to separate them
-      //                   and it's non trivial to add batch actions "toggle all", "remove all", ...
-      //                   see GutterIntentionMenuContributor.collectActions.
-      //                   Moreover it might be a good idea to show breakpoint actions on alt+enter only if cursor is in breakpoint's range
-      return super.getPopupMenuActions();
-    }
-
-    @Override
-    public @Nullable String getTooltipText() {
-      return XDebuggerBundle.message("xbreakpoint.tooltip.multiple");
-    }
-
-    @Override
-    public GutterDraggableObject getDraggableObject() {
-      return new GutterDraggableObject() {
-        @Override
-        public boolean copy(int line, VirtualFile file, int actionId) {
-          return false; // It's too hard, no copying, please.
-        }
-
-        @Override
-        public void remove() {
-          removeBreakpoints();
-        }
-      };
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MultipleBreakpointGutterIconRenderer that
-        && this.breakpoints.equals(that.breakpoints);
-    }
-
-    @Override
-    public int hashCode() {
-      return breakpoints.hashCode();
-    }
-
-  }
-
-  static final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
-    @Override
-    public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
-      // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.
-      // But we disable it in the old mode just for ease of regressions debugging.
-      if (!Registry.is(INLINE_BREAKPOINTS_KEY)) return marks;
-
-      var breakpointCount = ContainerUtil.count(marks, m -> m instanceof CommonBreakpointGutterIconRenderer);
-      if (breakpointCount <= 1) {
-        return marks;
-      }
-
-      var newMarks = new ArrayList<GutterMark>(marks.size() - breakpointCount + 1);
-      var breakpoints = new ArrayList<XBreakpointBase<?, ?, ?>>(breakpointCount);
-      var breakpointMarkPosition = -1;
-      for (GutterMark mark : marks) {
-        assert !(mark instanceof MultipleBreakpointGutterIconRenderer) : "they are not expected to be created before processing";
-        if (mark instanceof XBreakpointBase<?,?,?>.BreakpointGutterIconRenderer singleBreakpointMark) {
-          breakpoints.add(singleBreakpointMark.getBreakpoint());
-          breakpointMarkPosition = newMarks.size();
-          continue;
-        }
-
-        newMarks.add(mark);
-      }
-      newMarks.add(breakpointMarkPosition, new MultipleBreakpointGutterIconRenderer(breakpoints));
-
-      return newMarks;
-    }
   }
 }
