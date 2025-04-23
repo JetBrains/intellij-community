@@ -393,12 +393,7 @@ class IdeaPluginDescriptorImpl private constructor(
     }
 
     if (AppMode.isDisableNonBundledPlugins()) {
-      return onInitError(PluginLoadingError(
-        plugin = this,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled") },
-        shouldNotifyUser = false
-      ))
+      return onInitError(NonBundledPluginsAreExplicitlyDisabled(this))
     }
 
     PluginManagerCore.checkBuildNumberCompatibility(this, getBuildNumber())?.let {

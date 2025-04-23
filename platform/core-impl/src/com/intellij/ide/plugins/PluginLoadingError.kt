@@ -103,3 +103,16 @@ class PluginIsIncompatibleWithKotlinMode(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is incompatible with Kotlin in $mode mode"
   override val shouldNotifyUser: Boolean = false
 }
+
+@ApiStatus.Internal
+class NonBundledPluginsAreExplicitlyDisabled(
+  override val plugin: IdeaPluginDescriptor
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.custom.plugin.loading.disabled")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not loaded because non-bundled plugins are explicitly disabled"
+  override val shouldNotifyUser: Boolean = false
+}
