@@ -92,14 +92,14 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun switcher(isOn: Boolean, init: (LcrSwitcherInitParams.() -> Unit)?) {
-    val initParams = LcrSwitcherInitParams()
+  override fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)?) {
+    val initParams = LcrSwitchInitParams()
     initParams.accessibleName = if (isOn) IdeBundle.message("onoff.button.on") else IdeBundle.message("onoff.button.off")
     if (init != null) {
       initParams.init()
     }
 
-    add(LcrSwitcherImpl(initParams, true, gap, isOn))
+    add(LcrSwitchImpl(initParams, true, gap, isOn))
   }
 
   override fun separator(init: LcrSeparator.() -> Unit) {
@@ -171,7 +171,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
           val font = cell.initParams.font
           if (font == null) 0 else component.getFontMetrics(font).height
         }
-        is LcrSwitcherImpl -> component.minimumHeight
+        is LcrSwitchImpl -> component.minimumHeight
       }
       minHeight = max(minHeight, cellMinHeight)
     }
@@ -373,7 +373,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
     val topOffset = when (cell) {
       is LcrIconImpl -> 0
-      is LcrSwitcherImpl -> 0
+      is LcrSwitchImpl -> 0
 
       // Add 1 pixel above, which gives better vertical alignment in case odd row height
       is LcrSimpleColoredTextImpl -> 1

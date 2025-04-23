@@ -49,8 +49,8 @@ internal class LcrListPanel : UISandboxPanel {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item $value")
           })
-          jbList("Switcher", (1..99).toList(), listCellRenderer {
-            switcher(index % 2 == 0)
+          jbList("Switch", (1..99).toList(), listCellRenderer {
+            switch(index % 2 == 0)
             text("Item $value")
           })
 
@@ -119,7 +119,7 @@ internal class LcrListPanel : UISandboxPanel {
           }
             .component.viewport.view as JBList<Int>
 
-          jbList("Mixed, tooltips", listOf("Text", "With Icon", "Italic", "Commented", "With Switcher", "With Icon And Switcher"), listCellRenderer {
+          jbList("Mixed, tooltips", listOf("Text", "With Icon", "Italic", "Commented", "With Switch", "With Icon And Switch"), listCellRenderer {
             toolTipText = value
 
             when (index) {
@@ -140,13 +140,13 @@ internal class LcrListPanel : UISandboxPanel {
                 }
               }
               4 -> {
-                switcher(false)
+                switch(false)
                 text(value)
               }
               5 -> {
                 icon(AllIcons.General.Information)
                 text(value)
-                switcher(true)
+                switch(true)
               }
             }
           })
@@ -159,7 +159,7 @@ internal class LcrListPanel : UISandboxPanel {
             text("Item ($value)") {
               font = JBFont.h1()
             }
-            switcher(index % 2 == 0)
+            switch(index % 2 == 0)
             text("small comment") {
               font = JBFont.small()
               foreground = greyForeground

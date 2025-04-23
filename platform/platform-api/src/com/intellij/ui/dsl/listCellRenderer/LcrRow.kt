@@ -85,7 +85,7 @@ interface LcrRow<T> {
    * Adds a cell with a switcher (toggle button).
    */
   @ApiStatus.Internal
-  fun switcher(isOn: Boolean, init: (LcrSwitcherInitParams.() -> Unit)? = null)
+  fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)? = null)
 
   /**
    * Adds separator above the row

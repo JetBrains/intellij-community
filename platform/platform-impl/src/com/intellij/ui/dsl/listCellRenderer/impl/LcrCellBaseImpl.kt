@@ -20,7 +20,7 @@ internal sealed class LcrCellBaseImpl<T : LcrInitParams>(val initParams: T, val 
   enum class Type(private val instanceFactory: () -> JComponent) {
     ICON(::JLabel),
     SIMPLE_COLORED_TEXT(::PatchedSimpleColoredComponent),
-    SWITCHER(::OnOffButton);
+    SWITCH(::OnOffButton);
 
     private val instance = lazy { instanceFactory() }
 

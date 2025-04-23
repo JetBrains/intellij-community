@@ -136,7 +136,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
 
     if (switcherState != null) {
-      switcher(isOn = switcherState) {
+      switch(isOn = switcherState) {
         align = LcrInitParams.Align.RIGHT
       }
     }
