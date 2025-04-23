@@ -39,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
@@ -219,10 +217,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     for (PyExpression target : node.getTargets()) {
       if (target instanceof PyReferenceExpression expr) {
-        myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
         PyExpression qualifier = expr.getQualifier();
         if (qualifier != null) {
           qualifier.accept(this);
+        }
+        else {
+          myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
         }
       }
       else {

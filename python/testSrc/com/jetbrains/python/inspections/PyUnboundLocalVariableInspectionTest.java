@@ -319,6 +319,15 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
         """
     );
   }
+  
+  // PY-46592
+  public void testUseParameterAfterDeletingAttribute() {
+    doTestByText("""
+        def func(foo, bar):
+            del foo.bar
+            print(bar)  # false positive
+        """);
+  }
 
   // PY-4537
   public void testReferencedAfterDeletion() {
