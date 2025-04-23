@@ -38,7 +38,7 @@ class VendorInfoPanel : JPanel(ListLayout.horizontal(JBUI.scale(5))) {
     add(nonTraderIcon)
   }
 
-  fun show(node: PluginNode) {
+  fun show(node: PluginUiModel) {
     val vendorDetails = node.vendorDetails
 
     if (vendorDetails == null) {

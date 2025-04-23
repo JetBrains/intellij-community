@@ -764,7 +764,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     plugin = pluginModel
     val policy = PluginManagementPolicy.getInstance()
     this.updateDescriptor = if (updateDescriptor != null && policy.canEnablePlugin(updateDescriptor)) updateDescriptor else null
-    isPluginCompatible = getUnfulfilledOsRequirement(pluginModel.getDescriptor()) == null
+    isPluginCompatible = pluginModel.isIncompatibleWithCurrentOs
     isPluginAvailable = isPluginCompatible && policy.canEnablePlugin(updateDescriptor)
     if (isMarketplace) {
       installedDescriptorForMarketplace = findPlugin(plugin!!.pluginId)
@@ -856,14 +856,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val descriptor = plugin.getDescriptor()
     if (isMarketplace) {
-      showMarketplaceData(descriptor)
+      showMarketplaceData(plugin)
       updateMarketplaceTabsVisible(show = descriptor is PluginNode && !descriptor.isConverted)
     }
     else {
       val node = installedPluginMarketplaceNode
       updateMarketplaceTabsVisible(node != null)
       if (node != null) {
-        showMarketplaceData(node)
+        showMarketplaceData(PluginUiModelAdapter(node))
       }
       updateEnabledForProject()
     }
@@ -960,34 +960,34 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun showMarketplaceData(descriptor: IdeaPluginDescriptor?) {
+  private fun showMarketplaceData(model: PluginUiModel?) {
     var rating: String? = null
     var downloads: String? = null
     var size: String? = null
     var requiredPluginNames: Collection<String> = emptyList()
 
-    if (descriptor is PluginNode) {
-      rating = descriptor.presentableRating
-      downloads = descriptor.presentableDownloads
-      size = descriptor.presentableSize
+    if (model?.getDescriptor() is PluginNode) {
+      rating = model.presentableRating()
+      downloads = model.presentableDownloads()
+      size = model.presentableSize()
 
       if (reviewPanel != null) {
-        updateReviews(descriptor)
+        updateReviews(model)
       }
 
-      updateUrlComponent(forumUrl, "plugins.configurable.forum.url", descriptor.forumUrl)
-      updateUrlComponent(licenseUrl, "plugins.configurable.license.url", descriptor.licenseUrl)
-      updateUrlComponent(bugtrackerUrl, "plugins.configurable.bugtracker.url", descriptor.bugtrackerUrl)
-      updateUrlComponent(documentationUrl, "plugins.configurable.documentation.url", descriptor.documentationUrl)
-      updateUrlComponent(sourceCodeUrl, "plugins.configurable.source.code", descriptor.sourceCodeUrl)
-      updateUrlComponent(pluginReportUrl, "plugins.configurable.report.marketplace.plugin", descriptor.reportPluginUrl)
+      updateUrlComponent(forumUrl, "plugins.configurable.forum.url", model.forumUrl)
+      updateUrlComponent(licenseUrl, "plugins.configurable.license.url", model.licenseUrl)
+      updateUrlComponent(bugtrackerUrl, "plugins.configurable.bugtracker.url", model.bugtrackerUrl)
+      updateUrlComponent(documentationUrl, "plugins.configurable.documentation.url", model.documentationUrl)
+      updateUrlComponent(sourceCodeUrl, "plugins.configurable.source.code", model.sourceCodeUrl)
+      updateUrlComponent(pluginReportUrl, "plugins.configurable.report.marketplace.plugin", model.reportPluginUrl)
 
-      vendorInfoPanel!!.show(descriptor)
+      vendorInfoPanel!!.show(model)
 
-      requiredPluginNames = descriptor.dependencyNames ?: emptyList()
+      requiredPluginNames = model.dependencyNames ?: emptyList()
 
       if (customRepoForDebug != null) {
-        val customRepo = descriptor.repositoryName
+        val customRepo = model.repositoryName
         customRepoForDebug!!.text = "Custom Repository: $customRepo" //NON-NLS
         customRepoForDebug!!.isVisible = customRepo != null
       }
@@ -1021,8 +1021,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val installedPluginMarketplaceNode: PluginNode?
     get() = if (showComponent == null) null else showComponent!!.installedPluginMarketplaceNode
 
-  private fun updateReviews(pluginNode: PluginNode) {
-    val comments = pluginNode.reviewComments
+  private fun updateReviews(model: PluginUiModel) {
+    val comments = model.reviewComments
 
     reviewPanel!!.clear()
     if (comments != null) {

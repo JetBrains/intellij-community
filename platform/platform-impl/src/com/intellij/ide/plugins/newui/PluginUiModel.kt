@@ -2,7 +2,9 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.getTags
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -64,6 +66,39 @@ interface PluginUiModel {
   val isLicenseOptional: Boolean
 
   val suggestedCommercialIde: String?
+
+  // URL-related properties
+  @get:NlsSafe
+  val forumUrl: String?
+  
+  @get:NlsSafe
+  val licenseUrl: String?
+  
+  @get:NlsSafe
+  val bugtrackerUrl: String?
+  
+  @get:NlsSafe
+  val documentationUrl: String?
+  
+  @get:NlsSafe
+  val sourceCodeUrl: String?
+  
+  @get:NlsSafe
+  val reportPluginUrl: String?
+  
+  val dependencyNames: Collection<String>?
+  
+  @get:NlsSafe
+  val repositoryName: String?
+  
+  val reviewComments: PageContainer<PluginReviewComment>?
+  
+  @get:NlsSafe
+  val verifiedName: String?
+  
+  val isVerified: Boolean
+  
+  val isTrader: Boolean
 
   /**
    * Java compatibility method. Going to be removed after refactoring is done.

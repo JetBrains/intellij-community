@@ -2,17 +2,16 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.newui.NewUiUtil
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.ui.LicensingFacade
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
-import kotlin.text.startsWith
 
 /**
  * A temporary class used to eliminate "runtime" PluginDescriptor usages in the UI. It will later be replaced with frontend and backend implementations.
@@ -59,10 +58,10 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.organization
 
   override val downloads: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.getPresentableDownloads() else null
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloads else null
 
   override val rating: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.getPresentableRating() else null
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.rating else null
   override val productCode: String?
     get() = pluginDescriptor.productCode
 
@@ -83,4 +82,43 @@ class PluginUiModelAdapter(
     }
 
   override val source: PluginSource = PluginSource.LOCAL
+
+  // URL-related properties
+  override val forumUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
+
+  override val licenseUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.licenseUrl else null
+
+  override val bugtrackerUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.bugtrackerUrl else null
+
+  override val documentationUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.documentationUrl else null
+
+  override val sourceCodeUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.sourceCodeUrl else null
+
+  override val reportPluginUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reportPluginUrl else null
+
+  override val dependencyNames: Collection<String>?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
+
+  override val repositoryName: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.repositoryName else null
+
+  override val reviewComments: PageContainer<PluginReviewComment>?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
+
+  override val verifiedName: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.verifiedName else null
+
+  override val isVerified: Boolean
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isVerified else false
+
+  override val isTrader: Boolean
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isTrader else false
+
+  override fun getDescriptor(): IdeaPluginDescriptor = pluginDescriptor
 }
