@@ -19,7 +19,6 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.render.IconCompOptionalCompPanel
@@ -137,7 +136,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
 
     if (switcherState != null) {
-      onOffButton(isButtonSelected = switcherState) {
+      switcher(isOn = switcherState) {
         align = LcrInitParams.Align.RIGHT
       }
     }

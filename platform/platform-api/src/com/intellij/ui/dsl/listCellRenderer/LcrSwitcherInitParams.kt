@@ -5,4 +5,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class LcrOnOffButtonInitParams : LcrInitParams()
+class LcrSwitcherInitParams : LcrInitParams()

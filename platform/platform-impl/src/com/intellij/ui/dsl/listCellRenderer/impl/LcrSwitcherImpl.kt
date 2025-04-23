@@ -3,25 +3,24 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.checkTrue
-import com.intellij.ui.dsl.listCellRenderer.LcrOnOffButtonInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrSwitcherInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JList
 
 @ApiStatus.Internal
-internal class LcrOnOffButtonImpl(initParams: LcrOnOffButtonInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val isButtonSelected: Boolean) :
-  LcrCellBaseImpl<LcrOnOffButtonInitParams>(initParams, baselineAlign, beforeGap) {
+internal class LcrSwitcherImpl(initParams: LcrSwitcherInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val isOn: Boolean) :
+  LcrCellBaseImpl<LcrSwitcherInitParams>(initParams, baselineAlign, beforeGap) {
 
-  override val type = Type.ON_OFF_BUTTON
+  override val type = Type.SWITCHER
 
   override fun apply(component: JComponent, enabled: Boolean, list: JList<*>, isSelected: Boolean) {
     checkTrue(type.isInstance(component))
 
     component as OnOffButton
-    component.isSelected = isButtonSelected
-    initParams.accessibleName?.let {
-      component.accessibleContext.accessibleName = it
-    }
+    component.isSelected = isOn
+    component.isEnabled = enabled
+    component.accessibleContext.accessibleName = initParams.accessibleName
   }
 }

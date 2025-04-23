@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -91,13 +92,14 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun onOffButton(isButtonSelected: Boolean, init: (LcrOnOffButtonInitParams.() -> Unit)?) {
-    val initParams = LcrOnOffButtonInitParams()
+  override fun switcher(isOn: Boolean, init: (LcrSwitcherInitParams.() -> Unit)?) {
+    val initParams = LcrSwitcherInitParams()
+    initParams.accessibleName = if (isOn) IdeBundle.message("onoff.button.on") else IdeBundle.message("onoff.button.off")
     if (init != null) {
       initParams.init()
     }
 
-    add(LcrOnOffButtonImpl(initParams, true, gap, isButtonSelected))
+    add(LcrSwitcherImpl(initParams, true, gap, isOn))
   }
 
   override fun separator(init: LcrSeparator.() -> Unit) {
@@ -169,7 +171,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
           val font = cell.initParams.font
           if (font == null) 0 else component.getFontMetrics(font).height
         }
-        is LcrOnOffButtonImpl -> component.minimumHeight
+        is LcrSwitcherImpl -> component.minimumHeight
       }
       minHeight = max(minHeight, cellMinHeight)
     }
@@ -371,7 +373,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
     val topOffset = when (cell) {
       is LcrIconImpl -> 0
-      is LcrOnOffButtonImpl -> 0
+      is LcrSwitcherImpl -> 0
 
       // Add 1 pixel above, which gives better vertical alignment in case odd row height
       is LcrSimpleColoredTextImpl -> 1

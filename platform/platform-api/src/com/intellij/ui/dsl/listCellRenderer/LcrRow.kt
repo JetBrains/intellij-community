@@ -82,10 +82,10 @@ interface LcrRow<T> {
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
   /**
-   * Adds a cell with an on-off button
+   * Adds a cell with a switcher (toggle button).
    */
   @ApiStatus.Internal
-  fun onOffButton(isButtonSelected: Boolean, init: (LcrOnOffButtonInitParams.() -> Unit)? = null)
+  fun switcher(isOn: Boolean, init: (LcrSwitcherInitParams.() -> Unit)? = null)
 
   /**
    * Adds separator above the row
