@@ -16,7 +16,6 @@ com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/client/ClientProjectSession
 com/intellij/openapi/components/impl/stores/IComponentStore
-com/intellij/openapi/editor/PopupBridge
 com/intellij/openapi/editor/markup/AnalyzerStatus
 com/intellij/openapi/editor/markup/UIController
 com/intellij/openapi/roots/impl/storage/ClasspathStorageProvider
