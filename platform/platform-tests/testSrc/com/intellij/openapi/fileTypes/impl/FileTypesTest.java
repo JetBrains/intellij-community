@@ -1161,7 +1161,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       bean.implementationClass = MyFileTypeWithStaticField.class.getName();
       bean.fieldName = "INSTANCE518";
       try {
-        assertThrows(NoSuchFieldException.class, () -> registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
+        assertThrows(PluginException.class, () -> registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
       }
       finally {
         FileTypeManagerImpl.EP_NAME.getPoint().unregisterExtension(bean);
