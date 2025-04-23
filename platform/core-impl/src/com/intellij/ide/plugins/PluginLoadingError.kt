@@ -130,3 +130,16 @@ class PluginIsMarkedBroken(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) is marked incompatible with the current version of the IDE"
   override val shouldNotifyUser: Boolean = true
 }
+
+@ApiStatus.Internal
+class PluginIsCompatibleOnlyWithIntelliJIDEA(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is compatible with IntelliJ IDEA only because it doesn''t define any explicit module dependencies"
+  override val shouldNotifyUser: Boolean = true
+}

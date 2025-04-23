@@ -2,7 +2,6 @@
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
-import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.PlatformUtils
 import com.intellij.util.text.VersionComparatorUtil
@@ -83,12 +82,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     }
 
     if (checkModuleDependencies && isCheckingForImplicitDependencyNeeded(descriptor)) {
-      addIncompletePlugin(descriptor, PluginLoadingError(
-        plugin = descriptor,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only") },
-        shouldNotifyUser = true
-      ))
+      addIncompletePlugin(descriptor, PluginIsCompatibleOnlyWithIntelliJIDEA(descriptor))
       return
     }
 
