@@ -1039,7 +1039,6 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - <init>(java.util.function.Supplier,Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - f:isPopup():Z
 - f:isPrimary(com.intellij.openapi.actionSystem.AnAction):Z
 - f:isSearchable():Z

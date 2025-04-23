@@ -1575,7 +1575,6 @@ c:com.intellij.openapi.actionSystem.DefaultActionGroup
 - f:getChildActionsOrStubs():com.intellij.openapi.actionSystem.AnAction[]
 - f:getChildren(com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- f:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - f:getChildrenCount():I
 - getConstraints(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.Constraints
 - getModificationStamp():I
