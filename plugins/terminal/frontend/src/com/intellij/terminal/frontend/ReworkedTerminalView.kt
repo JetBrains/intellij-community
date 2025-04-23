@@ -393,7 +393,7 @@ internal class ReworkedTerminalView(
 
     TerminalFontSizeProviderImpl.getInstance().addListener(parentDisposable, object : TerminalFontSizeProvider.Listener {
       override fun fontChanged() {
-        result.setFontSize(TerminalFontSizeProviderImpl.getInstance().getFontSize(), result.bottomLeftCornerOrNull())
+        result.setFontSize(TerminalFontSizeProviderImpl.getInstance().getFontSize(), result.bottomLeftCornerOrNull(), true)
         result.resizeIfShowing()
       }
     })
