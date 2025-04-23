@@ -23,7 +23,6 @@ class PluginLoadingError internal constructor(
   private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>,
   private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
   override val shouldNotifyUser: Boolean,
-  @JvmField val disabledDependency: PluginId? = null,
 ) : PluginNonLoadReason {
   internal constructor(
     plugin: IdeaPluginDescriptor,
