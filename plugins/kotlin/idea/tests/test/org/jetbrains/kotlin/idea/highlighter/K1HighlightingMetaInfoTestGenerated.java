@@ -96,6 +96,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         public void testSubclassOfDslClass() throws Exception {
             runTest("testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
         }
+
+        @TestMetadata("TopLevelFunctions.kt")
+        public void testTopLevelFunctions() throws Exception {
+            runTest("testData/highlighterMetaInfo/dsl/TopLevelFunctions.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
