@@ -4,7 +4,10 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -34,6 +37,14 @@ internal data class GHPRDiffVirtualFile(override val fileManagerId: String,
 
   private fun findProjectVm(): GHPRConnectedProjectViewModel? =
     project.service<GHPRProjectViewModel>().connectedProjectVm.value?.takeIf { it.repository == repository }
+
+  internal class TitleProvider : EditorTabTitleProvider {
+    override fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? =
+      when (file) {
+        is GHPRDiffVirtualFile -> file.presentableName
+        else -> null
+      }
+  }
 }
 
 private fun getPresentablePath(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier) =

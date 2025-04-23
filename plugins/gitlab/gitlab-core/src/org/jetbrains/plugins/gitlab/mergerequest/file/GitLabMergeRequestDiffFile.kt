@@ -17,11 +17,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diff.impl.GenericDataProvider
+import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,9 +44,7 @@ internal data class GitLabMergeRequestDiffFile(
   private val project: Project,
   private val glProject: GitLabProjectCoordinates,
   private val mergeRequestIid: String,
-) : CodeReviewDiffVirtualFile(getFileName(mergeRequestIid)),
-    VirtualFilePathWrapper,
-    GitLabVirtualFile {
+) : CodeReviewDiffVirtualFile(getFileName(mergeRequestIid)), GitLabVirtualFile {
 
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GitLabVirtualFileSystem.getInstance()
 
@@ -56,6 +56,14 @@ internal data class GitLabMergeRequestDiffFile(
 
   override fun createViewer(project: Project): DiffEditorViewer {
     return project.service<GitLabMergeRequestDiffService>().createGitLabDiffRequestProcessor(connectionId, mergeRequestIid)
+  }
+
+  internal class TitleProvider : EditorTabTitleProvider {
+    override fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? =
+      when (file) {
+        is GitLabMergeRequestDiffFile -> file.presentableName
+        else -> null
+      }
   }
 }
 

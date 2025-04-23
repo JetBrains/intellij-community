@@ -46,6 +46,7 @@
     <diff.DiffExtension implementation="org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffExtension"/>
     <fileIconProvider implementation="org.jetbrains.plugins.gitlab.ui.GitlabCiIconProvider"/>
     <fileTypeUsageSchemaDescriptor schema="gitlab" implementationClass="org.jetbrains.plugins.gitlab.ui.GitlabFileTypeSchemaProvider"/>
+    <editorTabTitleProvider implementation="org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestDiffFile$TitleProvider"/>
 
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.gitlab.ui.action.GitLabAnnotationGutterActionProvider"/>
 

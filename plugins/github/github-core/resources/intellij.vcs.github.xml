@@ -62,6 +62,7 @@
     <virtualFileSystem key="ghpr" implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileSystem"/>
     <fileIconProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPRVirtualFileIconProvider" order="first"/>
     <fileEditorProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPREditorProvider"/>
+    <editorTabTitleProvider implementation="org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile$TitleProvider"/>
 
     <toolWindow id="Pull Requests" icon="org.jetbrains.plugins.github.GithubIcons.PullRequestsToolWindow"
                 anchor="left" doNotActivateOnStart="true" canCloseContents="true"

@@ -129,5 +129,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
   </component>
 </module>
