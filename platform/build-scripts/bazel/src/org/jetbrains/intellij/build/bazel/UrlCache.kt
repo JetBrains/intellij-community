@@ -87,7 +87,7 @@ private fun getAuthFromMavenSettingsXml(): Pair<String, String>? {
 }
 
 private fun getAuthFromNetrc(): Pair<String, String>? {
-  val netrcPath = Paths.get(System.getProperty("user.home"), ".netrc")
+  val netrcPath = System.getenv("NETRC")?.let(Path::of) ?: Paths.get(System.getProperty("user.home"), ".netrc")
   if (!netrcPath.isRegularFile()) {
     println("DEBUG: .netrc not found at $netrcPath - skipping auth from .netrc")
     return null
