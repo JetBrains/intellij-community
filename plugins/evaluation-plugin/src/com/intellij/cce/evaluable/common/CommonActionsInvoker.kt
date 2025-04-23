@@ -127,6 +127,7 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
   }
 
   override fun optimiseImports(file: String) {
+    LOG.info("Optimise imports in file: $file")
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(fullPath(file)))!!
     return runBlockingCancellable { ImportOptimiser.optimiseImports(project, virtualFile) }
   }
