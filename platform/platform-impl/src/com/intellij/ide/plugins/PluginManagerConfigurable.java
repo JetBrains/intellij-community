@@ -435,7 +435,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
-        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade.getModel(), searchListener, true);
+        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, true);
         myPluginModelFacade.getModel().addDetailPanel(detailPanel);
         return detailPanel;
       }
@@ -983,7 +983,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
-        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade.getModel(), searchListener, false);
+        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, false);
         myPluginModelFacade.getModel().addDetailPanel(detailPanel);
         return detailPanel;
       }

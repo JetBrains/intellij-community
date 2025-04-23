@@ -78,7 +78,7 @@ import kotlin.coroutines.coroutineContext
 
 @Internal
 class PluginDetailsPageComponent @JvmOverloads constructor(
-  private val pluginModel: MyPluginModel,
+  private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
   private val isMarketplace: Boolean,
 ) : MultiPanel() {
@@ -165,7 +165,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   init {
     nameAndButtons = BaselinePanel(12, false)
-    customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel)
+    customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
 
     createPluginPanel()
     select(1, true)
@@ -398,10 +398,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (plugin != null && !sentFeedbackPlugins.contains(plugin.pluginId)) {
       val pluginIdMap = buildPluginIdMap()
       val pluginDescriptor = pluginIdMap.getOrDefault(plugin.pluginId, null)
-      if (pluginDescriptor != null && pluginModel.isUninstalled(pluginDescriptor)) {
+      if (pluginDescriptor != null && pluginModel.getModel().isUninstalled(pluginDescriptor)) {
         rootPanel.add(uninstallFeedbackNotification!!, BorderLayout.NORTH)
       }
-      else if (pluginModel.isDisabledInDiff(plugin.pluginId)) {
+      else if (pluginModel.getModel().isDisabledInDiff(plugin.pluginId)) {
         rootPanel.add(disableFeedbackNotification!!, BorderLayout.NORTH)
       }
     }
@@ -409,7 +409,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createEnableDisableAction(action: PluginEnableDisableAction): SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.EnableDisableAction(
-      PluginModelFacade(pluginModel),
+      PluginModelFacade(pluginModel.getModel()),
       action,
       false,
       java.util.List.of(this),
@@ -420,11 +420,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createButtons() {
     val nameAndButtons = nameAndButtons!!
-    nameAndButtons.addButtonComponent(RestartButton(pluginModel).also { restartButton = it })
+    nameAndButtons.addButtonComponent(RestartButton(pluginModel.getModel()).also { restartButton = it })
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {
-      pluginModel.installOrUpdatePlugin(
+      pluginModel.getModel().installOrUpdatePlugin(
         this,
         descriptorForActions!!, updateDescriptor,
         ModalityState.stateForComponent(updateButton!!),
@@ -433,7 +433,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(InstallButton(true).also { installButton = it })
     installButton!!.addActionListener(ActionListener { _ ->
-      pluginModel.installOrUpdatePlugin(this, plugin?.getDescriptor()!!, null, ModalityState.stateForComponent(installButton!!))
+      pluginModel.getModel().installOrUpdatePlugin(this, plugin?.getDescriptor()!!, null, ModalityState.stateForComponent(installButton!!))
     })
 
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
@@ -1039,7 +1039,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createUninstallAction(): SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.UninstallAction(
-      PluginModelFacade(pluginModel), false, this, java.util.List.of(this),
+      PluginModelFacade(pluginModel.getModel()), false, this, java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions?.let { PluginUiModelAdapter(it) } },
       {
         updateNotifications()
@@ -1258,7 +1258,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun updateIcon(errors: List<HtmlChunk?> = pluginModel.getErrors(descriptorForActions!!)) {
+  private fun updateIcon(errors: List<HtmlChunk?> = pluginModel.getModel().getErrors(descriptorForActions!!)) {
     if (iconLabel == null) {
       return
     }
@@ -1266,21 +1266,21 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val hasErrors = !isMarketplace && !errors.isEmpty()
 
     val descriptor = plugin?.getDescriptor()
-    iconLabel!!.isEnabled = isMarketplace || pluginModel.isEnabled(descriptor!!)
-    iconLabel!!.icon = pluginModel.getIcon(descriptor!!, true, hasErrors, false)
-    iconLabel!!.disabledIcon = pluginModel.getIcon(descriptor, true, hasErrors, true)
+    iconLabel!!.isEnabled = isMarketplace || pluginModel.getModel().isEnabled(descriptor!!)
+    iconLabel!!.icon = pluginModel.getModel().getIcon(descriptor!!, true, hasErrors, false)
+    iconLabel!!.disabledIcon = pluginModel.getModel().getIcon(descriptor, true, hasErrors, true)
   }
 
   private fun updateErrors() {
     if (showComponent?.isNotFreeInFreeMode != true) {
-      val errors = pluginModel.getErrors(descriptorForActions!!)
+      val errors = pluginModel.getModel().getErrors(descriptorForActions!!)
       updateIcon(errors)
       errorComponent!!.setErrors(errors) { this.handleErrors() }
     }
   }
 
   private fun handleErrors() {
-    pluginModel.enableRequiredPlugins(descriptorForActions!!)
+    pluginModel.getModel().enableRequiredPlugins(descriptorForActions!!)
 
     updateIcon()
     updateEnabledState()
@@ -1289,7 +1289,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   fun showProgress() {
     indicator = OneLineProgressIndicator(false)
-    indicator!!.setCancelRunnable { pluginModel.finishInstall(descriptorForActions!!, null, false, false, true) }
+    indicator!!.setCancelRunnable { pluginModel.getModel().finishInstall(descriptorForActions!!, null, false, false, true) }
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
 
     MyPluginModel.addProgress(descriptorForActions!!, indicator!!)
@@ -1338,7 +1338,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updateEnableForNameAndIcon() {
-    val enabled = pluginModel.isEnabled(descriptorForActions!!)
+    val enabled = pluginModel.getModel().isEnabled(descriptorForActions!!)
     nameComponent.foreground = if (enabled) null else ListPluginComponent.DisabledColor
     if (iconLabel != null) {
       iconLabel!!.isEnabled = enabled
@@ -1350,7 +1350,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
 
-    if (!pluginModel.isUninstalled(descriptorForActions!!)) {
+    if (!pluginModel.getModel().isUninstalled(descriptorForActions!!)) {
       if (enableDisableController != null) {
         enableDisableController!!.update()
       }
@@ -1391,7 +1391,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun updateEnabledForProject() {
     val enabledForProject = isEnabledForProject ?: return
-    val state = pluginModel.getState(plugin!!.getDescriptor())
+    val state = pluginModel.getState(plugin!!)
     enabledForProject.text = state.presentableText
     enabledForProject.icon = AllIcons.General.ProjectConfigurable
   }

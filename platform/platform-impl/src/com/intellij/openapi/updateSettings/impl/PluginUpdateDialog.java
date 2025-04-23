@@ -107,7 +107,7 @@ final class PluginUpdateDialog extends DialogWrapper {
     });
 
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, true);
+    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel), LinkListener.NULL, true);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();

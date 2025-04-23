@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginHeaderPanel
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
+import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -29,7 +30,7 @@ class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(Plu
 
   init {
     val pluginModel = MyPluginModel(project)
-    myDetailsComponent = PluginDetailsPageComponent(pluginModel, LinkListener { _, _ -> }, true)
+    myDetailsComponent = PluginDetailsPageComponent(PluginModelFacade(pluginModel), LinkListener { _, _ -> }, true)
     val entryTable = getEntryTable()
     entryTable.setTableHeader(null)
     entryTable.setDefaultRenderer(PluginDownloader::class.java, object : ColoredTableCellRenderer() {
