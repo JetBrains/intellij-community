@@ -571,10 +571,7 @@ object PluginManagerCore {
         val pluginName = descriptor.getName()
         val untilBuildNumber = BuildNumber.fromString(untilBuild, pluginName, null)
         if (untilBuildNumber != null && untilBuildNumber < ideBuildNumber) {
-          return PluginLoadingError(
-            descriptor,
-            message("plugin.loading.error.long.incompatible.until.build", pluginName, descriptor.getVersion(), untilBuild, ideBuildNumber),
-            message("plugin.loading.error.short.incompatible.until.build", untilBuild))
+          return PluginUntilBuildConstraintViolation(descriptor, ideBuildNumber)
         }
       }
     }

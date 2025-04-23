@@ -174,3 +174,17 @@ class PluginSinceBuildConstraintViolation(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.sinceBuild} or newer, but the current build is $productBuildNumber"
   override val shouldNotifyUser: Boolean = true
 }
+
+@ApiStatus.Internal
+class PluginUntilBuildConstraintViolation(
+  override val plugin: IdeaPluginDescriptor,
+  val productBuildNumber: BuildNumber,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.incompatible.until.build", plugin.name, plugin.version, plugin.untilBuild, productBuildNumber)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.incompatible.until.build", plugin.untilBuild)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) requires IDE build ${plugin.untilBuild} or older, but the current build is $productBuildNumber"
+  override val shouldNotifyUser: Boolean = true
+}
