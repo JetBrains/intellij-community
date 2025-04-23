@@ -3,20 +3,21 @@ package com.intellij.diagnostic;
 
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.common.ThreadLeakTracker;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class JVMResponsivenessMonitorTest {
   @Test
-  @Timeout(value = 5, unit = TimeUnit.SECONDS)
-  public void monitorThreadIsTerminatedAfterClose() throws InterruptedException {
-    Assumptions.assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY);
+  @Timeout(value = 5, unit = SECONDS)
+  public void monitorThread_IsTerminatedAfterClose() throws InterruptedException {
+    assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY,
+                "Test fails on TeamCity because JVMResponsivenessMonitor's thread is left running from some other test");
 
     Map<String, Thread> threadByNameBefore = ThreadLeakTracker.getThreads();
     Thread monitorThreadBeforeStarted = threadByNameBefore.get(JVMResponsivenessMonitor.MONITOR_THREAD_NAME);
@@ -37,10 +38,8 @@ public class JVMResponsivenessMonitorTest {
   }
 
   @Test
-  @Timeout(value = 5, unit = TimeUnit.SECONDS)
-  public void threadLeakTrackerIgnoresResponsivenessMonitorThread() throws InterruptedException {
-    Assumptions.assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY);
-
+  @Timeout(value = 5, unit = SECONDS)
+  public void threadLeakTracker_IgnoresResponsivenessMonitorThread() throws InterruptedException {
     Map<String, Thread> threadsBefore = ThreadLeakTracker.getThreads();
     try (@SuppressWarnings("unused") JVMResponsivenessMonitor monitor = new JVMResponsivenessMonitor()) {
       ThreadLeakTracker.checkLeak(threadsBefore);
