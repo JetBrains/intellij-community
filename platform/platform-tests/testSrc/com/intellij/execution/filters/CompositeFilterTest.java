@@ -29,7 +29,7 @@ public class CompositeFilterTest extends LightPlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myCompositeFilter = new CompositeFilter(new MockDumbService(null));
+    myCompositeFilter = new CompositeFilter(new MockDumbService(getProject()));
     myCompositeFilter.setForceUseAllFilters(false);
   }
 
