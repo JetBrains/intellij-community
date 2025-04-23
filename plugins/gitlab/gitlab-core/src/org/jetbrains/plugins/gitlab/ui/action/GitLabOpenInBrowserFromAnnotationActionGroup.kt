@@ -9,13 +9,13 @@ import com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.util.asSafely
+import com.intellij.vcs.gitlab.icons.GitlabIcons
 import git4idea.GitRevisionNumber
 import git4idea.annotate.GitFileAnnotation
 import git4idea.remote.hosting.action.HostedGitRepositoryReference
 import git4idea.remote.hosting.action.HostedGitRepositoryReferenceActionGroup
 import git4idea.remote.hosting.action.HostedGitRepositoryReferenceUtil
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotation)

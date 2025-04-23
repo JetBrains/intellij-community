@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.gitlab" allow-bundled-update="true">
+<idea-plugin>
   <resource-bundle>messages.GitLabBundle</resource-bundle>
 
   <dependencies>
@@ -36,7 +36,7 @@
                          displayName="GitLab"/>
 
     <!--TODO: correct icon-->
-    <toolWindow id="Merge Requests" icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabToolWindow"
+    <toolWindow id="Merge Requests" icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabToolWindow"
                 anchor="left" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabToolWindowFactory"
                 canCloseContents="true"/>
@@ -94,7 +94,7 @@
   <actions>
     <action id="GitLab.Merge.Request.Show.List"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestsAction"
-            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
 
     <action id="GitLab.Merge.Request.List.Refresh"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestListRefreshAction"
@@ -108,10 +108,10 @@
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabShowMergeRequestAction"/>
     <action id="GitLab.Merge.Request.Open.Link"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
-            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
     <action id="GitLab.Merge.Request.Copy.Link"
             class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
-            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo"/>
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
     <action id="GitLab.Merge.Request.Create"
             class="org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabAction"
             icon="AllIcons.General.Add">
@@ -120,7 +120,7 @@
 
     <action id="GitLab.Create.Snippet"
             class="org.jetbrains.plugins.gitlab.snippets.GitLabCreateSnippetAction"
-            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
@@ -193,7 +193,7 @@
             class="org.jetbrains.plugins.gitlab.mergerequest.diff.action.GitLabMergeRequestDiffSubmitReviewAction"/>
 
     <group id="GitLab.Open.In.Browser" class="org.jetbrains.plugins.gitlab.ui.action.GitLabOpenInBrowserActionGroup"
-           icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+           icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
       <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
@@ -202,7 +202,7 @@
     </group>
 
     <group id="GitLab.Copy.Link" class="org.jetbrains.plugins.gitlab.ui.action.GitLabCopyLinkActionGroup"
-           icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+           icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <override-text place="CopyReferencePopup"/>
       <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
     </group>
@@ -211,12 +211,12 @@
       <separator/>
       <action id="GitLab.Merge.Request.Show.In.Toolwindow"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
-              icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+              icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       </action>
       <reference ref="GitLab.MergeRequest.Review.Submit"/>
       <action id="GitLab.Merge.Request.Branch.Update"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$UpdateAction"
-              icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabWarning">
+              icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabWarning">
       </action>
       <action id="GitLab.MergeRequest.Review.Mode.Toggle"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ToggleReviewAction">

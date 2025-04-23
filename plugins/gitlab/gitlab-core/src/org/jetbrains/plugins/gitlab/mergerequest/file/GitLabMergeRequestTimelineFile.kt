@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.gitlab.icons.GitlabIcons
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
