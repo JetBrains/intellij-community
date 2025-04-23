@@ -171,6 +171,7 @@ c:com.intellij.codeInsight.CodeInsightSettings
 - isSelectAutopopupSuggestionsByChars():Z
 - loadState(org.jdom.Element):V
 - noStateLoaded():V
+- s:runWithTemporarySettings(com.intellij.util.ThrowableConvertor):java.lang.Object
 - setBackspaceMode(com.intellij.codeInsight.editorActions.SmartBackspaceMode):V
 - setCompletionCaseSensitive(I):V
 - setSelectAutopopupSuggestionsByChars(Z):V

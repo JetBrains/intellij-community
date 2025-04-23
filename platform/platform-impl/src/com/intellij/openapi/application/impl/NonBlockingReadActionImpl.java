@@ -7,6 +7,7 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.ServiceNotReadyException;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.constraints.BaseConstrainedExecution;
@@ -139,7 +140,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private static void invokeLater(@NotNull Runnable runnable) {
     Application app = ApplicationManager.getApplication();
     AppImplKt.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
-      app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
+      SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
+        app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
+        return Unit.INSTANCE;
+      });
       return Unit.INSTANCE;
     });
   }

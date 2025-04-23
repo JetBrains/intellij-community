@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk;
 
 import com.google.gson.Gson;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
@@ -18,6 +17,7 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
 import com.jetbrains.python.sdk.flavors.PyFlavorData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +93,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   /**
    * Temporary hack to deal with leagcy conda. Use constructor instead
    */
+  @ApiStatus.Internal
   public final void changeFlavorAndData(@NotNull PyFlavorAndData<?, ?> flavorAndData) {
     this.myFlavorAndData = flavorAndData;
   }
@@ -100,6 +101,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   /**
    * Persistent UUID of SDK.  Could be used to point to "this particular" SDK.
    */
+  @ApiStatus.Internal
   public final @NotNull UUID getUUID() {
     return myUUID;
   }
@@ -108,48 +110,40 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return new PythonSdkAdditionalData(this);
   }
 
-  public void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+  public final void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
     myAddedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myAddedPaths.add(file);
     }
   }
 
-  public void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+  @ApiStatus.Internal
+  public final void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
     myExcludedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myExcludedPaths.add(file);
     }
   }
 
-  public void setPathsToTransferFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
+  @ApiStatus.Internal
+  public final void setPathsToTransferFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
     myPathsToTransfer.clear();
     for (VirtualFile file : addedPaths) {
       myPathsToTransfer.add(file);
     }
   }
 
-  public String getAssociatedModulePath() {
+  public final String getAssociatedModulePath() {
     return myAssociatedModulePath;
   }
 
-  public void resetAssociatedModulePath() {
-    setAssociatedModulePath(null);
-  }
 
-  public void setAssociatedModulePath(@Nullable String associatedModulePath) {
-    myAssociatedModulePath = associatedModulePath;
-  }
-
-  public void associateWithModule(@NotNull Module module) {
-    final String path = BasePySdkExtKt.getBasePath(module);
-    if (path != null) {
-      associateWithModulePath(path);
-    }
-  }
-
-  public void associateWithModulePath(@NotNull String modulePath) {
-    myAssociatedModulePath = FileUtil.toSystemIndependentName(modulePath);
+  /**
+   * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
+   */
+  @ApiStatus.Internal
+  public final void setAssociatedModulePath(@Nullable String modulePath) {
+    myAssociatedModulePath = modulePath == null ? null : FileUtil.toSystemIndependentName(modulePath);
   }
 
   public void save(final @NotNull Element rootElement) {
@@ -173,11 +167,11 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
-  public @NotNull PythonSdkFlavor<?> getFlavor() {
+  public final @NotNull PythonSdkFlavor<?> getFlavor() {
     return myFlavorAndData.getFlavor();
   }
 
-  public @NotNull PyFlavorAndData<?, ?> getFlavorAndData() {
+  public final @NotNull PyFlavorAndData<?, ?> getFlavorAndData() {
     return myFlavorAndData;
   }
 
@@ -192,12 +186,11 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_REMOVED_BY_USER_ROOT, PATH_REMOVED_BY_USER), myExcludedPaths);
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
     if (element != null) {
-      setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
+      myAssociatedModulePath = element.getAttributeValue(ASSOCIATED_PROJECT_PATH);
       var uuidStr = element.getAttributeValue(SDK_UUID_FIELD_NAME);
       if (uuidStr != null) {
         myUUID = UUID.fromString(uuidStr);
       }
-      setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
       var flavorId = JDOMExternalizer.readString(element, FLAVOR_ID);
       if (flavorId != null) {
         var flavorOpt = PythonSdkFlavor.getApplicableFlavors(true).stream().filter(f -> f.getUniqueId().equals(flavorId)).findFirst();
@@ -227,18 +220,18 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
 
-  public Set<VirtualFile> getAddedPathFiles() {
+  public final Set<VirtualFile> getAddedPathFiles() {
     return getPathsAsVirtualFiles(myAddedPaths);
   }
 
-  public Set<VirtualFile> getExcludedPathFiles() {
+  public final Set<VirtualFile> getExcludedPathFiles() {
     return getPathsAsVirtualFiles(myExcludedPaths);
   }
 
   /**
    * @see com.jetbrains.python.sdk.PyTransferredSdkRootsKt#getPathsToTransfer(Sdk)
    */
-  public @NotNull Set<VirtualFile> getPathsToTransfer() {
+  public final @NotNull Set<VirtualFile> getPathsToTransfer() {
     return getPathsAsVirtualFiles(myPathsToTransfer);
   }
 

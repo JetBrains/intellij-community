@@ -1713,14 +1713,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
           VirtualFileSystemEntry existingRoot = entry.getValue();
           if (existingRoot.getId() == rootId) {
-            String message =
-              "Duplicate FS roots: " + rootUrl + " / " + entry.getKey() + " id=" + rootId + " valid=" + existingRoot.isValid();
-            throw new RuntimeException(message, e);
+            throw new RuntimeException(
+              "Tried to create FS root => conflicted with already existing root: " +
+              "(path='" + path + "', fs=" + fs + ", rootUrl='" + rootUrl + "'), conflicted with existing " +
+              "(rootUrl='" + entry.getKey() + "', rootId=" + rootId + ", valid=" + existingRoot.isValid() + ")", e);
           }
         }
+        VirtualFileSystemEntry cachedDir = myIdToDirCache.getCachedDir(rootId);
+        VirtualFileSystemEntry cachedRoot = myIdToDirCache.getCachedRoot(rootId);
         throw new RuntimeException(
-          "No root duplication, rootName='" + rootName + "'; rootNameId=" + rootNameId + "; rootId=" + rootId + ";" +
-          " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
+          "Tried to create FS root => conflicted with already existing file: " +
+          "(path='" + path + "', fs=" + fs + ", rootUrl='" + rootUrl + "') -> " +
+          "(rootName='" + rootName + "', rootNameId=" + rootNameId + ", rootId=" + rootId + "), " +
+          "cachedDir: " + cachedDir + ", cachedRoot: " + cachedRoot, e);
       }
       incStructuralModificationCount();
       markModified = writeRootFields(rootId, rootName, fs.isCaseSensitive(), attributes) != -1;

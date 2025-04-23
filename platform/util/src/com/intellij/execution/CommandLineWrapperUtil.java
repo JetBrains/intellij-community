@@ -86,6 +86,10 @@ public final class CommandLineWrapperUtil {
     }
   }
 
+  /**
+   * WARNING: Due to compatibility reasons, this method has duplicate: {@link com.intellij.rt.execution.testFrameworks.ForkedByModuleSplitter#quoteArg(String)}
+   * If you modify this method, consider also changing its copy.
+   */
   private static String quoteArg(String arg) {
     String specials = " #'\"\n\r\t\f";
     if (!StringUtil.containsAnyChar(arg, specials)) {

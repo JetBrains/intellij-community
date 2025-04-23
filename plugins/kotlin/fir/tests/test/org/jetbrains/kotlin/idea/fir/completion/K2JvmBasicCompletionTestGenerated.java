@@ -2524,6 +2524,40 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/basic/common/sealedHierarchy")
+        public static class SealedHierarchy extends AbstractK2JvmBasicCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("PreferSealedHierarchyInAs.kt")
+            public void testPreferSealedHierarchyInAs() throws Exception {
+                runTest("../../completion/testData/basic/common/sealedHierarchy/PreferSealedHierarchyInAs.kt");
+            }
+
+            @TestMetadata("PreferSealedHierarchyInIs.kt")
+            public void testPreferSealedHierarchyInIs() throws Exception {
+                runTest("../../completion/testData/basic/common/sealedHierarchy/PreferSealedHierarchyInIs.kt");
+            }
+
+            @TestMetadata("PreferSealedHierarchyInSafeAs.kt")
+            public void testPreferSealedHierarchyInSafeAs() throws Exception {
+                runTest("../../completion/testData/basic/common/sealedHierarchy/PreferSealedHierarchyInSafeAs.kt");
+            }
+
+            @TestMetadata("PreferSealedHierarchyNested.kt")
+            public void testPreferSealedHierarchyNested() throws Exception {
+                runTest("../../completion/testData/basic/common/sealedHierarchy/PreferSealedHierarchyNested.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/basic/common/shadowing")
         public static class Shadowing extends AbstractK2JvmBasicCompletionTest {
             @java.lang.Override

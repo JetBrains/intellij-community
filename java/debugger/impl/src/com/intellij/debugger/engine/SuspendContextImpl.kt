@@ -52,7 +52,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   @Suppress("UsagesOfObsoleteApi")
   val managerThread: DebuggerManagerThreadImpl = myDebugProcess.managerThread
 
-  /** The thead that comes from the JVM event or was reset by switching to suspend-all procedure  */
+  /** The thread that comes from the JVM event or was reset by switching to suspend-all procedure  */
   @get:ApiStatus.Internal
   var eventThread: ThreadReferenceProxyImpl? = null
     private set

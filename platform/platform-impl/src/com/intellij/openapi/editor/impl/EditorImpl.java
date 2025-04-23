@@ -1325,21 +1325,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    ReadAction.run(() -> setFontSize(fontSize, null));
+    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+  }
+
+  @ApiStatus.Internal
+  public void setFontSize(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
+    ReadAction.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
   }
 
   /**
    * Changes editor font size, attempting to keep a given point unmoved. If point is not given, the top left screen corner is assumed.
    *
-   * @param fontSize   new font size
-   * @param zoomCenter zoom point, relative to viewport
+   * @param fontSize            new font size
+   * @param zoomCenter          zoom point, relative to viewport
+   * @param validateImmediately immediately update the editor's size (slower, but more accurate when the point is close to the bottom edge)
    */
-  private void setFontSize(float fontSize, @Nullable Point zoomCenter) {
+  private void setFontSizeImpl(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
     int oldFontSize = myScheme.getEditorFontSize();
     float oldFontSize2D = myScheme.getEditorFontSize2D();
 
@@ -1355,9 +1361,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     float newFontSize2D = myScheme.getEditorFontSize2D(); // the resulting font size might be different due to applied min/max limits
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE, oldFontSize, newFontSize);
     myPropertyChangeSupport.firePropertyChange(PROP_FONT_SIZE_2D, oldFontSize2D, newFontSize2D);
-    // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size, and it was not possible
-    // to scroll to the bottom of the document).
-    myScrollPane.getViewport().invalidate();
+    if (validateImmediately) {
+      // This is a slow operation and may cause performance issues when zooming large files using the mouse wheel.
+      // On the other hand, the terminal needs this option because it uses the bottom-left corner as the zoom point,
+      // and it doesn't work properly when the font size is increased, because we need to recompute the size immediately
+      // to be able to scroll down that much.
+      validateSize();
+    }
+    else {
+      // Update vertical scroll bar bounds if necessary (we had a problem that use increased editor font size, and it was not possible
+      // to scroll to the bottom of the document).
+      myScrollPane.getViewport().invalidate();
+    }
 
     Point shiftedZoomCenterAbsolute = logicalPositionToXY(zoomCenterLogical);
     myScrollingModel.disableAnimation();
@@ -5800,12 +5815,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           size -= shift;
           if (size >= MIN_FONT_SIZE) {
             if (isWheelFontChangePersistent) {
-              setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
-                          convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(UISettingsUtils.getInstance().scaleFontSize(size),
+                              convertPoint(this, e.getPoint(), getViewport()), false);
               adjustGlobalFontSize(size);
             }
             else {
-              setFontSize(size, convertPoint(this, e.getPoint(), getViewport()));
+              setFontSizeImpl(size, convertPoint(this, e.getPoint(), getViewport()), false);
             }
           }
           return;

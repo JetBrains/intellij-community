@@ -603,7 +603,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private static @Nullable Field getField(@NotNull FileTypeBean bean, Class<Object> aClass) throws NoSuchFieldException {
     if (bean.fieldName != null) {
-      return aClass.getDeclaredField(bean.fieldName);
+      try {
+        return aClass.getDeclaredField(bean.fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        PluginException ex =
+          PluginException.createByClass("File type " + aClass.getName() + " has no field " + bean.fieldName, e, aClass);
+        LOG.error(ex);
+        throw e;
+      }
     }
 
     Field field = null;

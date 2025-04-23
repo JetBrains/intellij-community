@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -65,12 +65,15 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 && profile.isToolEnabled(deadCodeKey, ktFile)
     }
 
-    context(KaSession)
     internal fun collectHighlights(holder: HighlightInfoHolder) {
         if (!enabled) return
+
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
-            registerLocalReferences(dividedElements.inside())
-            registerLocalReferences(dividedElements.outside())
+            analyze(ktFile) {
+                registerLocalReferences(dividedElements.inside())
+                registerLocalReferences(dividedElements.outside())
+            }
+
             // highlight visible symbols first
             collectAndHighlightNamedElements(dividedElements.inside(), holder)
             collectAndHighlightNamedElements(dividedElements.outside(), holder)

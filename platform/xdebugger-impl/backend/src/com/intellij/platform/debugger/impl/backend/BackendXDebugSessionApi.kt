@@ -269,6 +269,13 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       session.showExecutionPoint()
     }
   }
+
+  override suspend fun muteBreakpoints(sessionId: XDebugSessionId, muted: Boolean) {
+    val session = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      session.setBreakpointMuted(muted)
+    }
+  }
 }
 
 internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {

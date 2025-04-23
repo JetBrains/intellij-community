@@ -183,6 +183,7 @@ public class XVariablesView extends XVariablesViewBase {
       }
     }
 
+    @ApiStatus.Internal
     public static void set(@Nullable XDebugSessionProxy session, InlineVariablesInfo info) {
       if (session != null) {
         DEBUG_VARIABLES.set(session.getSessionData(), info);

@@ -308,7 +308,7 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
   } ?: PythonSdkAdditionalData()
 
   if (doAssociate && associatedModulePath != null) {
-    data.associateWithModulePath(associatedModulePath)
+    data.associatedModulePath = associatedModulePath
   }
 
   val sdk = SdkConfigurationUtil.setupSdk(

@@ -27,6 +27,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -139,6 +140,7 @@ public final class UsageViewUtil {
     return ContainerUtil.map2Array(usageInfos, PsiElement.class, UsageInfo::getElement);
   }
 
+  @ApiStatus.Obsolete
   public static void navigateTo(@NotNull UsageInfo info, boolean requestFocus) {
     int offset = info.getNavigationOffset();
     VirtualFile file = info.getVirtualFile();

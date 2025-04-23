@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.rw
 
 import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -11,7 +12,9 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.progress.blockingContext
+import fleet.util.enumSetOf
 import kotlinx.coroutines.*
+import java.util.EnumSet
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
@@ -138,7 +141,9 @@ private suspend fun yieldToPendingWriteActions() {
   yieldUntilRun { runnable ->
     val application = ApplicationManager.getApplication()
     getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
-      application.invokeLater(runnable, ModalityState.any())
+      SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER)) {
+        application.invokeLater(runnable, ModalityState.any())
+      }
     }
   }
 }

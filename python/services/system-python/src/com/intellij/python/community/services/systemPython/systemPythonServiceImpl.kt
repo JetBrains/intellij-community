@@ -5,7 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.Service.Level.APP
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -18,11 +18,9 @@ import com.intellij.python.community.services.systemPython.impl.CoreSystemPython
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.installer.installBinary
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.InvalidPathException
@@ -35,8 +33,9 @@ import kotlin.time.Duration.Companion.minutes
 private val logger = fileLogger()
 
 // null means "disabled"
-internal val cacheTimeout: Duration?
-  get() = Registry.get("python.system.refresh.minutes").asInteger().let { i ->
+internal suspend fun getCacheTimeout(): Duration? =
+  // This function is suspending because registry might not be available before the application is fully loaded.
+  RegistryManager.getInstanceAsync().get("python.system.refresh.minutes").asInteger().let { i ->
     if (i > 0) i.minutes else null
   }
 
@@ -47,18 +46,24 @@ internal val cacheTimeout: Duration?
 @Internal
 internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
   private val findPythonsMutex = Mutex()
-  private val cache: Cache<EelDescriptor, SystemPython>? = cacheTimeout?.let { interval ->
-    Cache(scope, interval) { eelDescriptor ->
-      searchPythonsPhysicallyNoCache(eelDescriptor.upgrade())
+  private val _cacheImpl: CompletableDeferred<Cache<EelDescriptor, SystemPython>?> = CompletableDeferred()
+  private suspend fun cache() = _cacheImpl.await()
+
+  init {
+    scope.launch {
+      _cacheImpl.complete(getCacheTimeout()?.let { interval ->
+        Cache<EelDescriptor, SystemPython>(scope, interval) { eelDescriptor ->
+          searchPythonsPhysicallyNoCache(eelDescriptor.upgrade())
+        }
+      })
     }
   }
-
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String> {
     val pythonWithLangLevel = PythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)
-    cache?.get(pythonPath.getEelDescriptor())?.add(systemPython)
+    cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
     return Result.success(systemPython)
   }
 
@@ -66,7 +71,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     if (eelApi == localEel) LocalPythonInstaller else null
 
   override suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean): List<SystemPython> =
-    if (cache != null) {
+    cache()?.let { cache ->
       // Cache enabled
       cache.startUpdate()
       if (forceRefresh) {
@@ -76,11 +81,8 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       else {
         cache.get(eelApi.descriptor)
       }.sorted()
-    }
-    else {
-      // Cache disabled
-      searchPythonsPhysicallyNoCache(eelApi)
-    }
+    } ?: searchPythonsPhysicallyNoCache(eelApi)
+
 
   class MyServiceState : BaseState() {
     // Only strings are supported by serializer

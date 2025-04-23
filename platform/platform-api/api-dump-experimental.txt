@@ -304,13 +304,17 @@ f:com.intellij.openapi.wm.PermissionsKt
 - createMainPanelToolbar(com.intellij.openapi.Disposable):javax.swing.JComponent
 - createQuickAccessActions(com.intellij.openapi.Disposable):java.util.List
 - createQuickAccessComponent(com.intellij.openapi.Disposable):java.awt.Component
+*:com.intellij.platform.ide.navigation.NavigationHandler
+- a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext):Z
 *:com.intellij.platform.ide.navigation.NavigationOptions
 - *sf:Companion:com.intellij.platform.ide.navigation.NavigationOptions$Companion
 - s:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
 - a:preserveCaret(Z):com.intellij.platform.ide.navigation.NavigationOptions
+- s:requestFocus():com.intellij.platform.ide.navigation.NavigationOptions
 - a:requestFocus(Z):com.intellij.platform.ide.navigation.NavigationOptions
 *f:com.intellij.platform.ide.navigation.NavigationOptions$Companion
 - f:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
+- f:requestFocus():com.intellij.platform.ide.navigation.NavigationOptions
 *:com.intellij.platform.ide.navigation.NavigationService
 - *sf:Companion:com.intellij.platform.ide.navigation.NavigationService$Companion
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService

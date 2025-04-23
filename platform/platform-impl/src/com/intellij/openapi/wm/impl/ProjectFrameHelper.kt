@@ -20,6 +20,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
@@ -27,7 +28,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -171,6 +171,8 @@ abstract class ProjectFrameHelper internal constructor(
       frame.background = JBColor.PanelBackground
       balloonLayout.queueRelayout()
     })
+
+    if (frame.isVisible) notifyProjectActivation() // the frame was reused from an older project and is already activated
   }
 
   internal open fun CoroutineScope.createFrameHeaderHelper(frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: IdeRootPane): ProjectFrameCustomHeaderHelper =

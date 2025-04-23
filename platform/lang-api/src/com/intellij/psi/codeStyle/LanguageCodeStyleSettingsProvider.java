@@ -371,6 +371,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return ourSettingsPagesProviders.updateAndGet(providers -> providers != null ? providers : calcSettingPagesProviders());
   }
 
+  public static void cleanSettingsPagesProvidersCache() {
+    ourSettingsPagesProviders.set(null);
+  }
+
   private static @NotNull Set<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
     Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders = new HashSet<>();
     for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {

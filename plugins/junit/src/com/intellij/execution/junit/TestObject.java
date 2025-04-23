@@ -728,16 +728,29 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         return JUnitStarter.JUNIT5_PARAMETER;
       }
       if (testFramework instanceof JUnit4Framework) {
-        return JUnitStarter.JUNIT4_PARAMETER;
+        return hasVintageTestEngine(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : JUnitStarter.JUNIT4_PARAMETER;
       }
       if (testFramework instanceof JUnit3Framework) {
-        return isClassConfiguration ? JUnitStarter.JUNIT4_PARAMETER : JUnitStarter.JUNIT3_PARAMETER;
+        return getRunnerForJUnit3(globalSearchScope, isClassConfiguration);
       }
       if (testFramework instanceof JUnitTestFramework && !((JUnitTestFramework)testFramework).shouldRunSingleClassAsJUnit5(project, globalSearchScope)) {
         return JUnitStarter.JUNIT4_PARAMETER;
       }
     }
     return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
+  }
+
+  private @NotNull String getRunnerForJUnit3(@NotNull GlobalSearchScope globalSearchScope, boolean isClassConfiguration) {
+    if (hasVintageTestEngine(globalSearchScope)) {
+      return JUnitStarter.JUNIT5_PARAMETER;
+    }
+    return isClassConfiguration ? JUnitStarter.JUNIT4_PARAMETER : JUnitStarter.JUNIT3_PARAMETER;
+  }
+
+  private boolean hasVintageTestEngine(@NotNull GlobalSearchScope globalSearchScope) {
+    Project project = myConfiguration.getProject();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    return JUnitUtil.hasPackageWithDirectories(psiFacade, VINTAGE_ENGINE_NAME, globalSearchScope);
   }
 
   private boolean isCustomJUnit5(GlobalSearchScope globalSearchScope) {

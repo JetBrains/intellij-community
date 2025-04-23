@@ -3576,7 +3576,7 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  public void testMetaclassHavingDunderCall() {
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
     doTest("object", """
       from typing import Self
       
@@ -3593,6 +3593,9 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = MyClass(1)
       """);
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
     doTest("MyClass", """
       from typing import Self
       
@@ -3607,6 +3610,9 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = MyClass(1)
       """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
     doTest("MyClass", """
       from typing import Self
       
@@ -3621,6 +3627,9 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = MyClass(1)
       """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
     doTest("int", """
       from typing import Self
       
@@ -3635,6 +3644,9 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = MyClass(1)
       """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
     doTest("Base", """
       from typing import Any, Self
 

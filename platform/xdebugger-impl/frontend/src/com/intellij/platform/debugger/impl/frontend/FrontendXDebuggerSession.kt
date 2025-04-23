@@ -42,6 +42,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -125,7 +126,8 @@ class FrontendXDebuggerSession private constructor(
   // TODO all of the methods below
   // TODO pass in DTO?
   override val sessionName: String = sessionDto.sessionName
-  override val sessionData: XDebugSessionData = createFeSessionData(sessionDto)
+  override val sessionData: XDebugSessionData = FrontendXDebugSessionData(project, sessionDto.sessionDataDto,
+                                                                          cs, id, sessionState)
 
   override val restartActions: List<AnAction>
     get() = emptyList() // TODO
@@ -172,18 +174,6 @@ class FrontendXDebuggerSession private constructor(
         if (tabDto == null) return@collectLatest
         initTabInfo(tabDto)
         this.cancel() // Only one tab expected
-      }
-    }
-
-    cs.launch(Dispatchers.EDT) {
-      sessionDto.sessionDataDto.breakpointsMutedFlow.toFlow().collectLatest {
-        sessionData.isBreakpointsMuted = it
-      }
-    }
-
-    cs.launch {
-      sessionState.collectLatest { state ->
-        sessionData.isPauseSupported = state.isPauseActionSupported
       }
     }
   }
@@ -380,12 +370,6 @@ class FrontendXDebuggerSession private constructor(
   }
 }
 
-private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData {
-  val sessionData = XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)
-  sessionData.isBreakpointsMuted = sessionDto.sessionDataDto.initialBreakpointsMuted
-  return sessionData
-}
-
 private fun CoroutineScope.createPositionFlow(dtoFlow: suspend () -> Flow<XSourcePositionDto?>): StateFlow<XSourcePosition?> = channelFlow {
   dtoFlow().collectLatest { sourcePositionDto ->
     if (sourcePositionDto == null) {
@@ -398,4 +382,45 @@ private fun CoroutineScope.createPositionFlow(dtoFlow: suspend () -> Flow<XSourc
     }
   }
 }.stateIn(this, SharingStarted.Eagerly, null)
+
+/**
+ * Note that data added to [com.intellij.openapi.util.UserDataHolder] is not synced with backend.
+ */
+private class FrontendXDebugSessionData(
+  project: Project, sessionDataDto: XDebugSessionDataDto,
+  cs: CoroutineScope,
+  sessionId: XDebugSessionId,
+  sessionStateFlow: StateFlow<XDebugSessionState>,
+) : XDebugSessionData(project, sessionDataDto.configurationName) {
+  private val muteBreakpointsBackendSyncFlow = MutableSharedFlow<Boolean>(extraBufferCapacity = 1,
+                                                                          onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    // Do not change to Kotlin setters, it calls this instead of super for some reason KT-76972
+    super.setBreakpointsMuted(sessionDataDto.initialBreakpointsMuted)
+    cs.syncWithLocalFlow(sessionDataDto.breakpointsMutedFlow.toFlow()) { super.setBreakpointsMuted(it) }
+
+    super.setPauseSupported(sessionStateFlow.value.isPauseActionSupported)
+    cs.syncWithLocalFlow(sessionStateFlow.map { it.isPauseActionSupported }) { super.setPauseSupported(it) }
+
+    cs.launch {
+      muteBreakpointsBackendSyncFlow.collectLatest { muted ->
+        XDebugSessionApi.getInstance().muteBreakpoints(sessionId, muted)
+      }
+    }
+  }
+
+  override fun setBreakpointsMuted(muted: Boolean) {
+    super.setBreakpointsMuted(muted)
+    muteBreakpointsBackendSyncFlow.tryEmit(muted)
+  }
+}
+
+private fun <T> CoroutineScope.syncWithLocalFlow(sourceFlow: Flow<T>, localFlowSetter: (T) -> Unit) {
+  launch {
+    sourceFlow.collectLatest { e ->
+      localFlowSetter(e)
+    }
+  }
+}
 

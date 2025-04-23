@@ -22,7 +22,7 @@ class OnStartCheckServiceTest {
       error("Mock object, do not call")
     }
     override fun getVersion() = ContentVersion("2025", "1.1", null, "123")
-    override suspend fun isAvailable() = error("Mock object, do not call")
+    override suspend fun isAvailable() = true
   }
 
   @Test

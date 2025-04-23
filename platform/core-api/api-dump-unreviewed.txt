@@ -4521,6 +4521,13 @@ a:com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 - s:getReferencesFromProviders(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
 - s:getReferencesFromProviders(com.intellij.psi.PsiElement,com.intellij.psi.PsiReferenceService$Hints):com.intellij.psi.PsiReference[]
 - a:getRegistrar(com.intellij.lang.Language):com.intellij.psi.PsiReferenceRegistrar
+com.intellij.psi.jsp.IJspClassLevelDeclarationStatement
+com.intellij.psi.jsp.JspClassLevelDeclarationStatementType
+com.intellij.psi.jsp.JspCodeBlockType
+com.intellij.psi.jsp.JspCommentType
+com.intellij.psi.jsp.JspJavaCodeType
+com.intellij.psi.jsp.JspScriptletType
+com.intellij.psi.jsp.JspTemplateExpressionType
 com.intellij.psi.meta.MetaDataContributor
 - a:contributeMetaData(com.intellij.psi.meta.MetaDataRegistrar):V
 a:com.intellij.psi.meta.MetaDataRegistrar

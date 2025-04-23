@@ -400,8 +400,6 @@
     <applicationService
       serviceInterface="com.intellij.codeInsight.generation.OverrideImplementExploreUtil$MemberImplementorExplorersProvider"
       serviceImplementation="com.intellij.codeInsight.generation.MemberImplementorExplorersProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"
-                        serviceImplementation="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
     <applicationService serviceInterface="com.intellij.psi.CommonReferenceProviderTypes"
                         serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
@@ -1290,7 +1288,6 @@
     <constructorBodyGenerator language="JAVA"
                               implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
     <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
-    <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
     <codeCompletionConfigurable instance="com.intellij.application.options.JavaCompletionConfigurable" order="first"/>
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>

@@ -402,7 +402,7 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  public void testMetaclassHavingDunderCall() {
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
     doTestByText("""
                    from typing import Self
       
@@ -419,6 +419,13 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    
                    expr = MyClass()
                    """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructedMultiFile() {
+    doMultiFileTest();
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
     doTestByText("""
                    from typing import Self
                    
@@ -431,8 +438,12 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                        def __new__(cls, p) -> Self: ...
                    
                    
-                   c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   c1 = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
+                   c2 = MyClass(1) # TODO PY-80602 Missing error 'Unexpected argument'
                    """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
     doTestByText("""
                    from typing import Self
                    
@@ -447,6 +458,9 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    
                    c = MyClass(<warning descr="Parameter 'p' unfilled">)</warning>
                    """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
     doTestByText("""
                    from typing import Self
                    

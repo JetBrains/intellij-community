@@ -378,7 +378,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     return result;
   }
 
-  public static void collectHighlightRanges(@NotNull PsiReference ref, @NotNull Collection<? super TextRange> result) {
+  public static void collectHighlightRanges(@NotNull PsiReference ref, @NotNull Collection<? super @NotNull TextRange> result) {
     for (TextRange relativeRange : ReferenceRange.getRanges(ref)) {
       collectHighlightRanges(ref.getElement(), relativeRange, result);
     }

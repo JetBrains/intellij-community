@@ -26,10 +26,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.InlineBanner;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JBSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.ui.components.panels.Wrapper;
@@ -82,11 +79,11 @@ public final class InspectorWindow extends JDialog implements Disposable {
                          @NotNull Component component,
                          @NotNull UiInspectorAction.UiInspector inspector,
                          @Nullable MouseEvent event) throws HeadlessException {
-    super(findWindow(component));
+    super(findOwnerDialog(component));
     myProject = project;
     myInspector = inspector;
-    Window window = findWindow(component);
-    setModal(window instanceof JDialog && ((JDialog)window).isModal());
+    Window ownerWindow = findOwnerDialog(component);
+    setModal(ownerWindow instanceof JDialog && ((JDialog)ownerWindow).isModal());
     myComponents.add(component);
     myInitialComponent = component;
     getRootPane().setBorder(JBUI.Borders.empty(5));
@@ -188,7 +185,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
     });
 
-    if (isDoubleBufferingDisabled(window)) {
+    if (isDoubleBufferingDisabled(component)) {
       String message = "Double buffering is disabled for this window. See 'com.intellij.util.ui.GraphicsUtil.safelyGetGraphics' JavaDoc.";
       if (SystemProperties.getBooleanProperty("idea.debug.mode", false)) {
         message += "<br>To find the cause, you may pass a '-Dswing.logDoubleBufferingDisable=true' option " +
@@ -237,12 +234,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
     return "UiInspectorWindow";
   }
 
-  private static Window findWindow(Component component) {
+  private static Window findOwnerDialog(Component component) {
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(component);
     if (dialogWrapper != null) {
       return dialogWrapper.getPeer().getWindow();
     }
-    return UIUtil.getWindow(component);
+    return null;
   }
 
   private InspectorTable getCurrentTable() {
@@ -457,7 +454,11 @@ public final class InspectorWindow extends JDialog implements Disposable {
   }
 
 
-  private static boolean isDoubleBufferingDisabled(Window window) {
+  private static boolean isDoubleBufferingDisabled(Component component) {
+    // we do not want to get the Popup.HeavyWeightWindow
+    Component window = ComponentUtil.findParentByCondition(component, it -> {
+      return it instanceof JFrame || it instanceof JDialog;
+    });
     if (window instanceof RootPaneContainer) {
       JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
       try {

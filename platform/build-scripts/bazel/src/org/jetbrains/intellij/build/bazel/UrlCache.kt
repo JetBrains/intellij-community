@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.containers.orNull
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -12,6 +13,7 @@ import kotlinx.serialization.json.Json
 import org.jdom.Namespace
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -85,7 +87,7 @@ private fun getAuthFromMavenSettingsXml(): Pair<String, String>? {
 }
 
 private fun getAuthFromNetrc(): Pair<String, String>? {
-  val netrcPath = Paths.get(System.getProperty("user.home"), ".netrc")
+  val netrcPath = System.getenv("NETRC")?.let(Path::of) ?: Paths.get(System.getProperty("user.home"), ".netrc")
   if (!netrcPath.isRegularFile()) {
     println("DEBUG: .netrc not found at $netrcPath - skipping auth from .netrc")
     return null
@@ -109,7 +111,7 @@ private val authHeaderValue by lazy {
 }
 
 internal class UrlCache(val cacheFile: Path) {
-  private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+  private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
   private val cache: MutableMap<String, CacheEntry> by lazy {
     if (Files.exists(cacheFile)) {
@@ -148,6 +150,7 @@ internal class UrlCache(val cacheFile: Path) {
     addAuthIfNeeded(repo, requestBuilder)
 
     val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.discarding())
+      ?.followRedirectsIfNeeded()
     val statusCode = response?.statusCode()
     if (statusCode == 401) {
       throw IllegalStateException("Not authorized: $url")
@@ -165,6 +168,7 @@ internal class UrlCache(val cacheFile: Path) {
     addAuthIfNeeded(repo, requestBuilder)
 
     val response = httpClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
+      .followRedirectsIfNeeded()
     if (response.statusCode() != 200) {
       val body = response.body().use { it.readAllBytes() }.decodeToString()
       error("Cannot download $url: ${response.statusCode()}\n$body")
@@ -179,11 +183,45 @@ internal class UrlCache(val cacheFile: Path) {
     }
     return digest.digest().joinToString("") { "%02x".format(it) }
   }
+
+  private inline fun <reified T> HttpResponse<T>.followRedirectsIfNeeded(maxRedirects: Int = 5): HttpResponse<T> {
+    var response = this
+    for (i in 0..maxRedirects) {
+      if (!isHttpResponseRedirect(response.statusCode())) {
+        return response
+      }
+
+      val location = response.headers().firstValue("Location").orNull() ?: error("Missing Location header")
+      val requestBuilder = HttpRequest.newBuilder().uri(URI.create(location)).method(this.request().method(), HttpRequest.BodyPublishers.noBody())
+      @Suppress("UNCHECKED_CAST")
+      response = httpClient.send(requestBuilder.build(), when (T::class) {
+        InputStream::class -> HttpResponse.BodyHandlers.ofInputStream()
+        Void::class -> HttpResponse.BodyHandlers.discarding()
+        else -> throw IllegalArgumentException("Unsupported type: ${T::class}")
+      } as HttpResponse.BodyHandler<T>)
+    }
+
+    if (isHttpResponseRedirect(response.statusCode())) {
+      error("Too many redirects: ${this.request().uri()}")
+    }
+    return response
+  }
 }
 
 private fun addAuthIfNeeded(url: JarRepository, requestBuilder: HttpRequest.Builder) {
   if (url.isPrivate) {
     requestBuilder.header("Authorization", authHeaderValue)
+  }
+}
+
+private fun isHttpResponseRedirect(statusCode: Int?): Boolean {
+  return when (statusCode) {
+    301,          // Moved Permanently
+    302,          // Found
+    303,          // See Other
+    307,          // Temporary Redirect
+    308  -> true  // Permanent Redirect
+    else -> false
   }
 }
 

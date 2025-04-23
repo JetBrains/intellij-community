@@ -3,6 +3,8 @@ package com.intellij.settingsSync.core.communicator
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.loadDescriptor
 import com.intellij.ide.plugins.loadAndInitDescriptorFromArtifact
@@ -16,8 +18,11 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.settingsSync.core.RestartForPluginInstall
+import com.intellij.settingsSync.core.RestartReason
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
@@ -142,38 +147,46 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
         }
       }
       var installSuccessful: Boolean = withContext(Dispatchers.EDT) {
-        if (downloaders.size != 2) {
-          logger.error("Unexpected number of downloaders: ${downloaders.size}")
-          return@withContext false
-        }
-        val marketplacePluginFile = downloaders[marketplacePluginId]?.filePath ?: let {
-          logger.error("Cannot download marketplace plugin")
-          return@withContext false
-        }
-        val targetFile = PluginInstaller.unpackPlugin(marketplacePluginFile, Path.of(PathManager.getPluginsPath()))
+        if (!PluginManagerCore.isPluginInstalled(marketplacePluginId)) {
+          val marketplacePluginDownloader = downloaders[marketplacePluginId] ?: let{
+            logger.error("Cannot download plugin '${marketplacePluginId.idString}' from marketplace!")
+            return@withContext false
+          }
+          val marketplacePluginFile = marketplacePluginDownloader.filePath
+          val targetFile = PluginInstaller.unpackPlugin(marketplacePluginFile, Path.of(PathManager.getPluginsPath()))
 
-        val targetDescriptor = loadDescriptor(targetFile, false, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER) ?: let {
-          logger.error("No descriptor found in marketplace plugin")
-          return@withContext false
+          val targetDescriptor = loadDescriptor(targetFile, false, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER) ?: let {
+            logger.error("No descriptor found in marketplace plugin")
+            return@withContext false
+          }
+
+          targetDescriptor.jarFiles = getJars(targetFile.parent)
+          if (!loadPlugin(targetDescriptor)) {
+            logger.error("Cannot load marketplace plugin")
+            return@withContext false
+          }
+          SettingsSyncEvents.getInstance().fireRestartRequired(RestartForPluginInstall(setOf(marketplacePluginDownloader.pluginName)))
         }
 
-        targetDescriptor.jarFiles = getJars(targetFile.parent)
-        if (!loadPlugin(targetDescriptor)) {
-          logger.error("Cannot load marketplace plugin")
-          return@withContext false
+        if (!PluginManagerCore.isPluginInstalled(settingsSyncPluginId)) {
+          val syncPluginDownloader = downloaders[settingsSyncPluginId] ?: let{
+            logger.error("Cannot download plugin '${settingsSyncPluginId.idString}' from marketplace!")
+            return@withContext false
+          }
+
+          val syncPluginFile = syncPluginDownloader.filePath
+          val syncPluginDescriptor = loadAndInitDescriptorFromArtifact(syncPluginFile, null) ?: let {
+            logger.error("Cannot load plugin descriptor for ${settingsSyncPluginId.idString}")
+            return@withContext false
+          }
+          if (!PluginInstaller.installAndLoadDynamicPlugin(syncPluginFile, null, syncPluginDescriptor)) {
+            logger.error("Cannot load plugin ${settingsSyncPluginId.idString}")
+            return@withContext false
+          }
         }
-        val syncPluginFile = downloaders[settingsSyncPluginId]?.filePath ?: let {
-          logger.error("cannot download backup & sync plugin")
-          return@withContext false
-        }
-        val syncPluginDescriptor = loadAndInitDescriptorFromArtifact(syncPluginFile, null) ?: let {
-          logger.error("Cannot load b&s plugin descriptor")
-          return@withContext false
-        }
-        return@withContext PluginInstaller.installAndLoadDynamicPlugin(syncPluginFile, null, syncPluginDescriptor)
+        return@withContext true
       }
       if (!installSuccessful) {
-
         if (parentComponent != null) {
           Messages.showInfoMessage(parentComponent, SettingsSyncBundle.message("settings.jba.plugin.required.text"),
                                    SettingsSyncBundle.message("settings.jba.plugin.required.title"))

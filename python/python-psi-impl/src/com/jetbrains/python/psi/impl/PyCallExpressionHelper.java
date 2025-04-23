@@ -925,14 +925,7 @@ public final class PyCallExpressionHelper {
   private static @NotNull List<? extends RatedResolveResult> resolveConstructors(@NotNull PyClassType type,
                                                                                  @Nullable PyCallSiteExpression callSite,
                                                                                  @NotNull PyResolveContext resolveContext) {
-    // When evaluating a constructor call, a type checker should first check if the class has a custom metaclass (a
-    // subclass of type) that defines a __call__ method. If so, it should evaluate the call of this method using the
-    // supplied arguments. If the metaclass is type, this step can be skipped.
-    //
-    // If the evaluated return type of the __call__ method indicates something other than an instance of the class
-    // being constructed, a type checker should assume that the metaclass __call__ method is overriding
-    // type.__call__ in some special manner, and it should not attempt to evaluate the __new__ or __init__
-    // methods on the class.
+    // https://typing.python.org/en/latest/spec/constructors.html#metaclass-call-method
     final var metaclassDunderCall = resolveMetaclassDunderCall(type, callSite, resolveContext);
     final var context = resolveContext.getTypeEvalContext();
     boolean skipNewAndInitEvaluation = StreamEx.of(metaclassDunderCall)

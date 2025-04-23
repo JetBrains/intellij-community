@@ -7,14 +7,14 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
 
-class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
+class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : PythonExistingEnvironmentConfigurator(model) {
 
   private lateinit var comboBox: PythonInterpreterComboBox
 
@@ -35,7 +35,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : Pyth
     comboBox.setItems(model.allInterpreters)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
     // todo error handling, nullability issues
     return Result.success(setupSdkIfDetected(model.state.selectedInterpreter.get()!!, model.existingSdks)!!)
   }

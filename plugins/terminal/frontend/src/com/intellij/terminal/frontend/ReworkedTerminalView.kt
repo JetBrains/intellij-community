@@ -52,6 +52,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.Point
 import java.awt.event.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -392,13 +393,21 @@ internal class ReworkedTerminalView(
 
     TerminalFontSizeProviderImpl.getInstance().addListener(parentDisposable, object : TerminalFontSizeProvider.Listener {
       override fun fontChanged() {
-        result.setFontSize(TerminalFontSizeProviderImpl.getInstance().getFontSize())
+        result.setFontSize(TerminalFontSizeProviderImpl.getInstance().getFontSize(), result.bottomLeftCornerOrNull(), true)
         result.resizeIfShowing()
       }
     })
 
     return result
   }
+
+  private fun EditorImpl.bottomLeftCornerOrNull(): Point? =
+    if (component.isShowing) {
+      Point(0, scrollingModel.visibleArea.height)
+    }
+    else {
+      null
+    }
 
   private fun EditorImpl.resizeIfShowing() {
     if (component.isShowing) { // to avoid sending the resize event twice, for the regular and alternate buffer editors

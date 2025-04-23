@@ -64,7 +64,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
   override fun startInWriteAction(): Boolean = false
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    if (navigateToLookupItem(project)) {
+    if (navigateToLookupItem(project, editor)) {
       return
     }
     if (EditorUtil.isCaretInVirtualSpace(editor)) {

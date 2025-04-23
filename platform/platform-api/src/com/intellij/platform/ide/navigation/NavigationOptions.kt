@@ -51,6 +51,11 @@ interface NavigationOptions {
     @JvmStatic
     fun defaultOptions(): NavigationOptions = defaultOptions
 
+    @JvmStatic
+    fun requestFocus(): NavigationOptions {
+      return defaultOptions().requestFocus(true)
+    }
+
     private val defaultOptions = Impl(
       requestFocus = true,
       preserveCaret = false,

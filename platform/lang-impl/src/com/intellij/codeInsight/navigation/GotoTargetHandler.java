@@ -31,7 +31,10 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -48,6 +51,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.platform.ide.navigation.NavigationServiceKt.navigateBlocking;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
@@ -156,7 +161,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
             ((AdditionalAction)element.getItem()).execute();
           }
           else {
-            navigate(project, element, navigatable -> navigateToElement(navigatable));
+            navigate(project, element, navigatable -> navigateToElement(project, navigatable));
           }
         }
       }).
@@ -275,12 +280,21 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339117, EA-842843")) {
       if (!descriptor.canNavigate()) return false;
     }
-    navigateToElement(descriptor);
+    navigateToElement(target.getProject(), descriptor);
     return true;
   }
 
+  @ApiStatus.Obsolete
   protected void navigateToElement(@NotNull Navigatable descriptor) {
-    descriptor.navigate(true);
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    Project project = frame != null ? frame.getProject() : null;
+    navigateToElement(project, descriptor);
+  }
+
+  @ApiStatus.Internal
+  protected void navigateToElement(@Nullable Project project, @NotNull Navigatable descriptor) {
+    if (project == null) return;
+    navigateBlocking(project, descriptor, NavigationOptions.requestFocus(), null);
   }
 
   protected boolean shouldSortTargets() {

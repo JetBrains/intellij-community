@@ -455,10 +455,10 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
     Collection<SourceSet> result = new ArrayList<>();
     if (testingExtensionClass.isInstance(testingExtension)) {
-      Collection<?> suites = GradleReflectionUtil.reflectiveCall(testingExtension, "getSuites", Collection.class);
+      Collection<?> suites = GradleReflectionUtil.getValue(testingExtension, "getSuites", Collection.class);
       for (Object suite : suites) {
         if (jvmTestSuiteClass.isInstance(suite)) {
-          SourceSet sourceSet = GradleReflectionUtil.reflectiveCall(suite, "getSources", SourceSet.class);
+          SourceSet sourceSet = GradleReflectionUtil.getValue(suite, "getSources", SourceSet.class);
           if (sourceSet != null) {
             result.add(sourceSet);
           }

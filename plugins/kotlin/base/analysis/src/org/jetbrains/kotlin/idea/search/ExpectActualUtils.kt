@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex
@@ -64,4 +65,8 @@ object ExpectActualUtils {
         ).flatMap { it.getAllElements<KtNamedDeclaration>(project, searchScope) }
             .toList()
     }
+
+    @get:TestOnly
+    @set:TestOnly
+    var testLog: StringBuilder? = null
 }

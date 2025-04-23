@@ -62,6 +62,11 @@
 
     <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
 
+    <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"
+                        serviceImplementation="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
+
     <registryKey key="java.formatter.chained.calls.pre212.compatibility"
                  defaultValue="false"
                  description="Format chained calls as in versions prior to 2021.2"/>

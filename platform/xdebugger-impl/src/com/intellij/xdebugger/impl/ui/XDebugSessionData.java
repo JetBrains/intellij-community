@@ -26,6 +26,7 @@ public class XDebugSessionData extends UserDataHolderBase {
   private final @NotNull String myConfigurationName;
   private final MutableStateFlow<Boolean> myBreakpointsMutedFlow = createMutableStateFlow(false);
   private final MutableStateFlow<Boolean> myPauseSupported = createMutableStateFlow(false);
+
   /**
    * @deprecated Use {@link XDebugSessionData#XDebugSessionData(Project, String)} instead
    */

@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getTypeDescription
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
@@ -190,7 +191,7 @@ private fun showUnknownTypeInDeclarationDialog(
         )
     )
 
-    TypeAccessibilityChecker.testLog?.append("$message\n")
+    ExpectActualUtils.testLog?.append("$message\n")
     return isUnitTestMode() || showOkNoDialog(
         KotlinBundle.message("unknown.types.title"),
         message,

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -24,6 +25,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -241,5 +243,29 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     return ReflectionUtil.comparePublicNonFinalFields(this, o);
+  }
+
+  /**
+   * Run the {@code consumer} with the current {@link CodeInsightSettings} and then restore them to the state before this method call.
+   * Useful for running the tests with custom code insight settings, like this:
+   * <pre>
+   *  runWithTemporarySettings(settings -> {
+   *    settings.MY_SETTING_TO_TEST = newValue;
+   *    settings.OTHER_SETTING_TO_TEST = newValue2;
+   *    doTest();
+   *  });
+   * </pre>
+   * This will run {@code doTest()} with some settings changed, and then restore them automatically when the test finished.
+   */
+  @TestOnly
+  public static <T, E extends Throwable> T runWithTemporarySettings(@NotNull ThrowableConvertor<? super CodeInsightSettings, ? extends T, E> consumer) throws E {
+    CodeInsightSettings settings = getInstance();
+    Element temp = settings.getState();
+    try {
+      return consumer.convert(settings);
+    }
+    finally {
+      settings.loadState(temp);
+    }
   }
 }

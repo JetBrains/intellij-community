@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaAnnotationCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbo
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferredSubtypeWeigher
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
@@ -52,6 +55,7 @@ internal class WeighingContext private constructor(
     private val myScopeContext: KaScopeContext?,
     private val myExpectedType: KaType?,
     private val myActualReceiverTypes: List<List<KaType>>,
+    private val myPreferredSubtype: KaClassType?,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
     private val mySymbolsToSkip: Set<KaSymbol>,
@@ -62,6 +66,7 @@ internal class WeighingContext private constructor(
      */
     class ContextualSymbolsCache(private val symbolsContainingPosition: Map<Name, List<KaCallableSymbol>>) {
         private val contextualOverriddenSymbols: MutableMap<Name, Set<KaCallableSymbol>> = mutableMapOf()
+
         context(KaSession)
         fun symbolIsPresentInContext(symbol: KaCallableSymbol): Boolean = withValidityAssertion {
             if (symbol !is KaNamedSymbol) return false
@@ -88,6 +93,12 @@ internal class WeighingContext private constructor(
             myExpectedType
         }
 
+    val preferredSubtype: KaClassType?
+        get() = withValidityAssertion {
+            myPreferredSubtype
+        }
+
+
     val actualReceiverTypes: List<List<KaType>>
         get() = withValidityAssertion { myActualReceiverTypes }
 
@@ -110,8 +121,9 @@ internal class WeighingContext private constructor(
             elementInCompletionFile: PsiElement,
             scopeContext: KaScopeContext? = null,
             expectedType: KaType? = null,
+            preferredSubtype: KaClassType? = null,
             actualReceiverTypes: List<List<KaType>> = emptyList(),
-            symbolsToSkip: Set<KaSymbol> = emptySet(),
+            symbolsToSkip: Set<KaSymbol> = emptySet()
         ): WeighingContext {
             val completionFile = parameters.completionFile
             val defaultImportPaths = completionFile.getDefaultImportPaths(useSiteModule = parameters.useSiteModule).toSet()
@@ -128,9 +140,18 @@ internal class WeighingContext private constructor(
                         originalFile = parameters.originalFile,
                     )
                 ),
+                myPreferredSubtype = preferredSubtype,
                 importableFqNameClassifier = ImportableFqNameClassifier(completionFile) { defaultImportPaths.hasImport(it) },
                 mySymbolsToSkip = symbolsToSkip,
             )
+        }
+
+        // For `is` and `as` operations we want to prefer sealed inheritors
+        context(KaSession)
+        fun KtExpression.getPreferredSealedType(): KaClassType? {
+            val comparisonType = expressionType as? KaClassType ?: return null
+            if (comparisonType.symbol.modality != KaSymbolModality.SEALED) return null
+            return comparisonType
         }
 
         context(KaSession)
@@ -149,6 +170,25 @@ internal class WeighingContext private constructor(
                 nameExpression.expectedType != null -> nameExpression.expectedType
                 nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
                 nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
+                else -> null
+            }
+
+            fun KtBinaryExpressionWithTypeRHS.isAsOrSafeAs(): Boolean {
+                val operationElementType = operationReference.getReferencedNameElementType()
+                return operationElementType == KtTokens.AS_KEYWORD || operationElementType == KtTokens.AS_SAFE
+            }
+
+            val preferredSubtype = when (positionContext) {
+                is KotlinTypeNameReferencePositionContext -> {
+                    val typeReferenceOwner = positionContext.typeReference?.parent
+                    val leftHandExpression = when {
+                        typeReferenceOwner is KtIsExpression -> typeReferenceOwner.leftHandSide
+                        typeReferenceOwner is KtBinaryExpressionWithTypeRHS && typeReferenceOwner.isAsOrSafeAs() -> typeReferenceOwner.left
+                        else -> null
+                    }
+                    leftHandExpression?.getPreferredSealedType()
+                }
+
                 else -> null
             }
 
@@ -174,11 +214,12 @@ internal class WeighingContext private constructor(
                 elementInCompletionFile = positionContext.position,
                 scopeContext = scopeContext,
                 expectedType = expectedType,
+                preferredSubtype = preferredSubtype,
                 actualReceiverTypes = CallableMetadataProvider.calculateActualReceiverTypes(
                     explicitReceiver = positionContext.explicitReceiver,
                     implicitReceivers = ::implicitReceivers,
                 ),
-                symbolsToSkip = setOfNotNull(symbolToSkip),
+                symbolsToSkip = setOfNotNull(symbolToSkip)
             )
         }
 
@@ -275,13 +316,14 @@ internal object Weighers {
         NotImportedWeigher.addWeight(context, lookupElement, symbol, availableWithoutImport)
         ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.origin)
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
+        PreferredSubtypeWeigher.addWeight(context, lookupElement, symbol)
 
         if (symbol !is KaCallableSymbol) return@also
 
         K2SoftDeprecationWeigher.addWeight(lookupElement, symbol, context.languageVersionSettings)
 
         PreferContextualCallablesWeigher.addWeight(lookupElement, symbol, context.contextualSymbolsCache)
-        PreferFewerParametersWeigher. addWeight(lookupElement, symbol)
+        PreferFewerParametersWeigher.addWeight(lookupElement, symbol)
     }
 
     fun CompletionSorter.applyWeighers(positionContext: KotlinRawPositionContext): CompletionSorter =
@@ -292,6 +334,7 @@ internal object Weighers {
             ExpectedTypeWeigher.Weigher,
             DeprecatedWeigher.Weigher,
             PriorityWeigher.Weigher,
+            PreferredSubtypeWeigher.Weigher,
             PreferGetSetMethodsToPropertyWeigher.Weigher,
             NotImportedWeigher.Weigher,
             KindWeigher.Weigher,
