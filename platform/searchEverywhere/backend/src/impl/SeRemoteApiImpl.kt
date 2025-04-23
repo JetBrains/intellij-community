@@ -23,6 +23,15 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(projectId.findProject()).itemSelected(sessionRef, itemData, modifiers, searchText)
   }
 
+  override suspend fun canBeShownInFindResults(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): Boolean {
+    return SeBackendService.getInstance(projectId.findProject()).canBeShownInFindResults(sessionRef, dataContextId, providerId)
+  }
+
   override suspend fun getItems(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,

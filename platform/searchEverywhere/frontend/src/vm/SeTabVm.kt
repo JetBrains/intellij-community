@@ -101,4 +101,11 @@ class SeTabVm(
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return tab.itemSelected(item, modifiers, searchText)
   }
+
+  /**
+   * Defines if results can be shown in <i>Find</i> toolwindow.
+   */
+  suspend fun canBeShownInFindResults(): Boolean {
+    return tab.canBeShownInFindResults()
+  }
 }

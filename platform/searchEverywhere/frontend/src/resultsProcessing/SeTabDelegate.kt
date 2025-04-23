@@ -67,6 +67,13 @@ class SeTabDelegate(val project: Project?,
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
+  /**
+   * Defines if results can be shown in <i>Find</i> toolwindow.
+   */
+  suspend fun canBeShownInFindResults(): Boolean {
+    return providers.values.any { it.canBeShownInFindResults() }
+  }
+
   override fun dispose() {}
 
   companion object {

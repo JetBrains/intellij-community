@@ -51,6 +51,10 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
   override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
     (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates()
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return provider.canBeShownInFindResults()
+  }
+
   override fun dispose() {
     SeLog.log(LIFE_CYCLE, "Local provider ${id.value} disposed")
     Disposer.dispose(provider)

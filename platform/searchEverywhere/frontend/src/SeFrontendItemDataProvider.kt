@@ -55,6 +55,10 @@ class SeFrontendItemDataProvider(private val projectId: ProjectId,
   override suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation>? =
     SeRemoteApi.getInstance().getTypeVisibilityStatesForProvider(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return SeRemoteApi.getInstance().canBeShownInFindResults(projectId, providerId = id, sessionRef = sessionRef, dataContextId = dataContextId)
+  }
+
   override fun dispose() {}
 
   companion object {

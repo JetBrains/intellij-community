@@ -37,6 +37,11 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
+  // TODO: or just return false?
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return delegate.canBeShownInFindResults()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }

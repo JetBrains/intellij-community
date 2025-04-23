@@ -45,6 +45,14 @@ interface SeRemoteApi : RemoteApi<Unit> {
     searchText: String,
   ): Boolean
 
+  /**
+   * Defines if results can be shown in <i>Find</i> toolwindow.
+   */
+  suspend fun canBeShownInFindResults(projectId: ProjectId,
+                                      sessionRef: DurableRef<SeSessionEntity>,
+                                      dataContextId: DataContextId,
+                                      providerId: SeProviderId): Boolean
+
   suspend fun getAvailableProviderIds(): List<SeProviderId>
 
   suspend fun getSearchScopesInfoForProvider(

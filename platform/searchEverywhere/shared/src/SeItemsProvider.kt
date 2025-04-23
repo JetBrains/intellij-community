@@ -17,4 +17,9 @@ interface SeItemsProvider: Disposable {
 
   suspend fun collectItems(params: SeParams, collector: Collector)
   suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean
+
+  /**
+   * Defines if results can be shown in <i>Find</i> toolwindow.
+   */
+  suspend fun canBeShownInFindResults(): Boolean
 }

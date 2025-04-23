@@ -28,4 +28,9 @@ interface SeTab: Disposable {
   suspend fun getFilterEditor(): SeFilterEditor?
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
+
+  /**
+   * Defines if results can be shown in <i>Find</i> toolwindow.
+   */
+  suspend fun canBeShownInFindResults(): Boolean
 }

@@ -43,6 +43,10 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
     TODO()
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return false
+  }
+
   private suspend fun processItems(text: String, includeDisabled: Boolean, processor: suspend (MatchedValue) -> Boolean) {
     model.buildGroupMappings()
     runSuspendingUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->

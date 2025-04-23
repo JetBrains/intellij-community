@@ -68,6 +68,13 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
     return contributorWrapper.contributor.getExtendedDescription(legacyItem)
   }
 
+  /**
+   * Defines if results found by this contributor can be shown in <i>Find</i> toolwindow.
+   */
+  fun canBeShownInFindResults(): Boolean {
+    return contributorWrapper.contributor.showInFindResults()
+  }
+
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
     val namePattern = contributorWrapper.contributor.filterControlSymbols(rawPattern)
     val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)

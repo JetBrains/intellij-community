@@ -28,6 +28,10 @@ class SeRecentFilesProvider(private val contributorWrapper: SeAsyncWeightedContr
     return targetsProviderDelegate.itemSelected(item, modifiers, searchText)
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return targetsProviderDelegate.canBeShownInFindResults()
+  }
+
   override fun dispose() {
     Disposer.dispose(contributorWrapper)
   }

@@ -33,12 +33,11 @@ import org.jetbrains.annotations.Nls
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
 
-  suspend fun getItems(
-    sessionRef: DurableRef<SeSessionEntity>,
-    providerId: SeProviderId,
-    params: SeParams,
-    dataContextId: DataContextId?,
-    requestedCountChannel: ReceiveChannel<Int>,
+  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
+                       providerId: SeProviderId,
+                       params: SeParams,
+                       dataContextId: DataContextId?,
+                       requestedCountChannel: ReceiveChannel<Int>
   ): Flow<SeItemData> {
     val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return emptyFlow()
 
@@ -63,21 +62,18 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     }
   }
 
-  suspend fun getItems(
-    sessionRef: DurableRef<SeSessionEntity>,
-    providerId: SeProviderId,
-    params: SeParams,
-    dataContextId: DataContextId?,
+  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
+                       providerId: SeProviderId,
+                       params: SeParams,
+                       dataContextId: DataContextId?
   ): Flow<SeItemData> {
     val provider = getProviders(sessionRef, dataContextId)[providerId]
 
     return provider?.getItems(params) ?: emptyFlow()
   }
 
-  private suspend fun getProviders(
-    sessionRef: DurableRef<SeSessionEntity>,
-    dataContextId: DataContextId?,
-  ): Map<SeProviderId, SeItemDataProvider> {
+  private suspend fun getProviders(sessionRef: DurableRef<SeSessionEntity>,
+                                   dataContextId: DataContextId?): Map<SeProviderId, SeItemDataProvider> {
 
     val session = sessionRef.derefOrNull() ?: return emptyMap()
     var existingHolderEntities = entities(Session, session)
@@ -163,6 +159,15 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   ): Map<SeProviderId, @Nls String> {
     val allProviders = getProviders(sessionRef, dataContextId)
     return allProviders.filter { providerIds.contains(it.key) }.mapValues { it.value.displayName }
+  }
+
+  suspend fun canBeShownInFindResults(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): Boolean {
+    val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return false
+    return provider.canBeShownInFindResults()
   }
 
   companion object {

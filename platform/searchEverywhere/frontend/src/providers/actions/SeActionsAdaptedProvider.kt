@@ -46,6 +46,10 @@ class SeActionsAdaptedProvider(private val legacyContributor: ActionSearchEveryw
     return legacyContributor.getExtendedDescription(item)
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return legacyContributor.showInFindResults()
+  }
+
   override fun dispose() {
     Disposer.dispose(legacyContributor)
   }

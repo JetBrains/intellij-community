@@ -53,6 +53,10 @@ class SeItemsProviderMock(
     return true
   }
 
+  override suspend fun canBeShownInFindResults(): Boolean {
+    return false
+  }
+
   override fun dispose() {
     SeLog.log(LIFE_CYCLE, "Provider mock ${id} disposed")
   }
