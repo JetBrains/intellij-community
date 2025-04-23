@@ -62,7 +62,8 @@ abstract class CodeExecutionManager {
                                 "\n" +
                                 "# Create a new virtual environment\n" +
                                 "echo \"Creating a new virtual environment...\"\n" +
-                                "\"\$PYTHON\" -m venv \"\$VENV_PATH\"\n" +
+                                "PYTHON_ENV=\${PYTHON:-\"python3\"}\n" +
+                                "\"\$PYTHON_ENV\" -m venv \"\$VENV_PATH\"\n" +
                                 "\n" +
                                 "# Activate the virtual environment\n" +
                                 "echo \"Activating virtual environment...\"\n" +
@@ -90,12 +91,12 @@ abstract class CodeExecutionManager {
                             "\n" +
                             "# Run tests (with optional specific file/module)\n" +
                             "echo \"Running tests...\"\n" +
-                            "PYTHONPATH=. pytest -v --rootdir=. \"\$TEST_TARGET.py\" --junit-xml=\$TEST_TARGET-junit --cov=\"\$2\" --cov-branch --cov-report json:\$TEST_TARGET-coverage\n")
+                            "PYTHONPATH=. pytest -v \"\$TEST_TARGET.py\" --rootdir=. --junit-xml=\$TEST_TARGET-junit --cov=\"\$2\" --cov-branch --cov-report json:\$TEST_TARGET-coverage\n")
     runFile.writeText(content.toString())
   }
 
 
-  fun compileAndExecute(project: Project, code: String, target: String, unitUnderTest: PsiNamedElement?, setupCommands: List<String>): ProcessExecutionLog {
+  fun compileAndExecute(project: Project, code: String, target: String, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     // Clear collectedInfo
     clear()
     val basePath = project.basePath

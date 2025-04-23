@@ -37,12 +37,6 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
   }
 
   override fun setupEnvironment(project: Project, sdk: Sdk?, setupCommands: List<String>) {
-    if (!shouldSetup) {
-      return
-    }
-
-    shouldSetup = false
-
     val basePath = project.basePath
 
     basePath ?: return
@@ -94,7 +88,10 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     val coverageFilePath = "$basePath/$testName-coverage"
     val junitFilePath = "$basePath/$testName-junit"
     try {
+      // Drop '.py' extension and replace path separator with module separator
       val targetModule = target.dropLast(3).replace('/', '.')
+
+      // Execute coverage for the test and target module
       val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.toString(), testName, targetModule), sdk)
 
       // Collect success ratio
