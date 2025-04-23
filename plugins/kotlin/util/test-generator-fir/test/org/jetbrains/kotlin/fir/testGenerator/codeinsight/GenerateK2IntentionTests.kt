@@ -49,6 +49,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/trailingComma", pattern = pattern)
             model("${idea}intentions/insertExplicitTypeArguments", pattern = pattern)
             model("${idea}intentions/removeSingleArgumentName", pattern = pattern)
+            model("${idea}intentions/expandBooleanExpression", pattern = pattern)
             model("${idea}intentions/removeAllArgumentNames", pattern = pattern)
             model("${idea}intentions/convertPropertyGetterToInitializer", pattern = pattern)
             model("${idea}intentions/convertToRawStringTemplate", pattern = pattern)
