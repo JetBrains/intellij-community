@@ -3,9 +3,7 @@
 // ERROR: Argument type mismatch: actual type is 'ArrayList<String?>?', but 'ArrayList<String>?' was expected.
 // ERROR: Argument type mismatch: actual type is 'ArrayList<String?>', but 'ArrayList<String>' was expected.
 // ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
-// ERROR: Type mismatch: inferred type is 'ArrayList<String>?', but 'ArrayList<String?>?' was expected.
 // ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
-// ERROR: Type mismatch: inferred type is 'ArrayList<String>', but 'ArrayList<String?>' was expected.
 class Foo {
     fun testAssignment(k: K) {
         val l1 = k.return1()

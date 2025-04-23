@@ -3,9 +3,7 @@
 // ERROR: Argument type mismatch: actual type is 'ArrayList<String?>?', but '@Nullable() ArrayList<@NotNull() String>?' was expected.
 // ERROR: Argument type mismatch: actual type is 'ArrayList<String?>', but '@NotNull() ArrayList<@NotNull() String>' was expected.
 // ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual '@Nullable() ArrayList<@NotNull() String>?'.
-// ERROR: Type mismatch: inferred type is '@Nullable() ArrayList<@NotNull() String>?', but 'ArrayList<String?>?' was expected.
 // ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual '@NotNull() ArrayList<@NotNull() String>'.
-// ERROR: Type mismatch: inferred type is '@NotNull() ArrayList<@NotNull() String>', but 'ArrayList<String?>' was expected.
 // ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual '@Nullable() ArrayList<@NotNull() String>?'.
 // ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual '@NotNull() ArrayList<@NotNull() String>'.
 class Foo {
