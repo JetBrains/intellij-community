@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
@@ -86,8 +86,13 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
 
   @Override
   public void close() throws InterruptedException {
-    samplingThread.interrupt();
-    samplingThread.join();
+    //RC: there is a race between samplingThread.start() in ctor and .interrupt() here -- if thread is not yet
+    //    started, .interrupt() could be just wasted, and join() will wait forever.
+    //    The loop below fixes the race:
+    while(samplingThread.getState() != Thread.State.TERMINATED) {
+      samplingThread.interrupt();
+      samplingThread.join(1000);
+    }
   }
 
   /** task durations, in nanoseconds */
