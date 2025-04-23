@@ -10,7 +10,7 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 class PluginLoadingError internal constructor(
   val plugin: IdeaPluginDescriptor,
-  val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
+  private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>?,
   private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
   val isNotifyUser: Boolean,
   @JvmField val disabledDependency: PluginId? = null,

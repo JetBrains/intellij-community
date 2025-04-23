@@ -342,14 +342,9 @@ object PluginManagerCore {
       else {
         logger.info(logMessage)
       }
-      return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter(PluginLoadingError::isNotifyUser).map(PluginLoadingError::detailedMessageSupplier))
-        .filterNotNull()
-        .map {
-          Supplier {
-            @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-            HtmlChunk.text(it.get())
-          }
-        }
+      @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+      return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter { it.isNotifyUser }.map { Supplier { it.detailedMessage } })
+        .map { Supplier { HtmlChunk.text(it.get()) } }
         .toList()
     }
     else if (PlatformUtils.isFleetBackend()) {
