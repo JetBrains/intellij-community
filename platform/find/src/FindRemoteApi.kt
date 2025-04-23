@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.Nls
-import java.awt.Color
 
 @ApiStatus.Internal
 @Rpc
@@ -41,13 +40,14 @@ data class FindInProjectModel (
   val fileFilter: String?,
   val moduleName: String?,
   val searchContext: String,
-  val scopeId: Int?
+  val scopeId: Int?,
+  val isReplaceState: Boolean
 )
 
 @Serializable
 data class FindInProjectResult (
   val presentation: List<RdTextChunk>,
-  val line: Int?,
+  val line: Int,
   val offset: Int,
   val length: Int,
   val fileId: VirtualFileId,

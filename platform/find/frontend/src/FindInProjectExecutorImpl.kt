@@ -3,18 +3,16 @@ package com.intellij.platform.find.frontend
 
 import com.intellij.find.FindModel
 import com.intellij.find.impl.FindInProjectExecutor
+import com.intellij.find.impl.FindInProjectUtil
+import com.intellij.find.impl.FindKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.platform.find.FindInProjectModel
-import com.intellij.find.impl.FindKey
-import com.intellij.platform.find.FindRemoteApi
-import com.intellij.platform.find.RdSimpleTextAttributes
-import com.intellij.platform.find.SearchScopeProvider
-import com.intellij.platform.find.UsageInfoModel
+import com.intellij.platform.find.*
 import com.intellij.platform.project.projectId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usages.FindUsagesProcessPresentation
+import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -26,7 +24,7 @@ import javax.swing.table.TableCellRenderer
 open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindInProjectExecutor() {
 
   override fun createTableCellRenderer(): TableCellRenderer? {
-    return ThinClientFindInProjectTableCellRenderer()
+    return if (FindKey.isEnabled) ThinClientFindInProjectTableCellRenderer() else null
   }
 
   override fun findUsages(
@@ -44,20 +42,22 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
 
 
     if (FindKey.isEnabled) {
-      println("findUsages started")
       coroutineScope.launch {
-        FindRemoteApi.getInstance().findByModel(getModel(project, findModel)).collect { info ->
-          val usage = UsageInfoModel(project, info, coroutineScope)
-
-          println("found result ${usage.model.presentation.joinToString{ it.text }}")
+        FindRemoteApi.getInstance().findByModel(getModel(project, findModel)).collect { findResult ->
+          val usage = UsageInfoModel(project, findResult, coroutineScope)
           onResult(usage)
         }
         onFinish()
       }
-      //TODO after launching coroutine scope should be some logic to check is it finished or not to show "Searching" or "Nothing found" states and progress indicator
     }
     else {
-      super.findUsages(project, progressIndicator, presentation, findModel, filesToScanInitially, onResult, onFinish)
+      FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
+        val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
+        usage.presentation.icon // cache icon
+
+        onResult(usage)
+      }
+      onFinish()
     }
   }
 }
@@ -72,7 +72,8 @@ private fun getModel(project: Project, findModel: FindModel): FindInProjectModel
                             findModel.fileFilter,
                             findModel.moduleName,
                             findModel.searchContext.name,
-                            findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }) //TODO rework
+                            findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }, //TODO rework
+                            findModel.isReplaceState)
 }
 
 fun RdSimpleTextAttributes.toInstance(): SimpleTextAttributes {

@@ -3,7 +3,9 @@ package com.intellij.platform.find
 
 
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorLocation
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
@@ -11,15 +13,15 @@ import com.intellij.usages.UsageInfoAdapter
 import com.intellij.usages.UsagePresentation
 import com.intellij.usages.rules.MergeableUsage
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
+private val LOG = logger<UsageInfoModel>()
 class UsageInfoModel(val project: Project, val model: FindInProjectResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter {
 
-  override fun isValid() = true
+  override fun isValid(): Boolean = true
 
+  //don't use it, use getMergedUsageInfos() instead
   override fun getMergedInfos(): Array<UsageInfo> {
-    // this code has to be replaced with a panel anyway. currently it only affects some actions from the toolbar we don't use
     return emptyArray()
   }
 
@@ -41,13 +43,21 @@ class UsageInfoModel(val project: Project, val model: FindInProjectResult, val c
   override fun canNavigateToSource(): Boolean = true
 
   override fun navigate(requestFocus: Boolean) {
-    val request = RdFindInProjectNavigation(model.fileId, model.offset, requestFocus)
-    coroutineScope.launch { FindRemoteApi.getInstance().navigate(request) }
-  }
+    val virtualFile = model.fileId.virtualFile()
+    if (virtualFile == null) {
+      LOG.error("Cannot find virtual file for ${model.fileId}")
+      return
+    }
+    val openFileDescriptor = if (model.offset != -1)
+      OpenFileDescriptor(project, virtualFile, model.offset)
+    else
+      OpenFileDescriptor(project, virtualFile, model.line, 0)
+    openFileDescriptor.navigate(requestFocus)
+   }
 
   override fun getPath(): String = model.path
 
-  override fun getLine(): Int = model.line ?: 0
+  override fun getLine(): Int = model.line
 
   override fun getNavigationOffset(): Int = model.offset
 

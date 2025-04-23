@@ -38,13 +38,16 @@ class FindRemoteApiImpl: FindRemoteApi {
         fileFilter = model.fileFilter
         moduleName = model.moduleName
         searchContext = FindModel.SearchContext.valueOf(model.searchContext)
+        isReplaceState = model.isReplaceState
       }
       val project = model.projectId.findProject()
       //TODO rewrite find function without using progress indicator and presentation
       val progressIndicator = EmptyProgressIndicator()
       val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
-
+      val isReplaceState = findModel.isReplaceState
+      var previousResult: FindInProjectResult? = null
       coroutineScope {
+        var previousItem: UsageInfo2UsageAdapter? = null
 
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, emptySet()) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
@@ -52,35 +55,32 @@ class FindRemoteApiImpl: FindRemoteApi {
             return@findUsages true
 
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
-          val textChunks = adapter.text.drop(1).map {
+          val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem!!)
+
+          if (!merged && previousResult != null) {
+            launch {
+              send(previousResult!!)
+            }
+          }
+
+          previousItem = adapter
+          previousItem.updateCachedPresentation()
+          val textChunks = previousItem.text.map {
             val attributes = createSimpleTextAttributes(it)
             RdTextChunk(it.text, attributes)
           }
-
-          val findResultItem = FindInProjectResult(
+          previousResult = FindInProjectResult(
             textChunks,
             adapter.line + 1,
-            usageInfo.navigationOffset,
-            usageInfo.rangeInElement?.length ?: 0,
+            adapter.navigationOffset,
+            adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
             virtualFile.rpcId(),
             virtualFile.path
           )
-          launch {
-            send(findResultItem)
-          }
           true
-          //val result = trySend(findResultItem)
-          //when {
-          //  result.isSuccess -> true  // Continue processing
-          //  result.isClosed || result.isFailure -> {
-          //    progressIndicator.cancel() // Cancel the search process
-          //    result.exceptionOrNull()?.let { throw it }
-          //    false  // Stop processing on failure
-          //  }
-          //  else -> true  // Continue in other cases
-          //}
         }
       }
+      previousResult?.let { send(it) }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
 
