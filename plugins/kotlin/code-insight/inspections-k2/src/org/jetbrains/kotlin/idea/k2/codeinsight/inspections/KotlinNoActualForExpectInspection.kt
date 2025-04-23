@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.tooling.core.withClosure
 import java.awt.Component
@@ -230,7 +232,9 @@ private class CreateActualForExpectLocalQuickFix(
                 .setItemsChosenCallback { declarations ->
                     val actualDeclarations = WriteCommandAction.writeCommandAction(project).withName(familyName)
                         .compute(ThrowableComputable<List<KtDeclaration>, Throwable> {
-                            declarations.mapNotNull { declaration -> doCreateActualFix(project, descriptor, declaration) }
+                            val selectedPlatforms = declarations.map { it.module.platform }.toMutableSet()
+                            selectedPlatforms.removeIf { currentPlatform -> selectedPlatforms.any { it != currentPlatform && it.componentPlatforms.containsAll(currentPlatform.componentPlatforms ) } }
+                            declarations.mapNotNull { declaration -> if (declaration.module.platform in selectedPlatforms) doCreateActualFix(project, descriptor, declaration) else null }
                         })
                     val last = actualDeclarations.lastOrNull()
                     for (declaration in actualDeclarations) {
