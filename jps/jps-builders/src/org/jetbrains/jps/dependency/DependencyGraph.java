@@ -4,7 +4,6 @@ package org.jetbrains.jps.dependency;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -12,7 +11,7 @@ import java.util.List;
  */
 public interface DependencyGraph extends Graph, Closeable {
 
-  Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException;
+  Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly);
 
   default DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
     return differentiate(delta, params, List.of());

@@ -30,7 +30,7 @@ public final class LoggingDependencyGraph extends LoggingGraph implements Depend
   }
 
   @Override
-  public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
+  public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
     return getDelegate().createDelta(sourcesToProcess, deletedSources, isSourceOnly);
   }
 

@@ -737,7 +737,7 @@ public final class BuildDataManager {
       private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
       @Override
-      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
         lock.readLock().lock();
         try {
           return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly);
