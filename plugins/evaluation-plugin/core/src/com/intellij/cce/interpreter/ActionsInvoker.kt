@@ -10,6 +10,7 @@ interface ActionsInvoker {
   fun delay(seconds: Int)
   fun openFile(file: String): String
   fun closeFile(file: String)
+  fun optimiseImports(file: String)
   fun isOpen(file: String): Boolean
   fun save()
   fun getText(): String

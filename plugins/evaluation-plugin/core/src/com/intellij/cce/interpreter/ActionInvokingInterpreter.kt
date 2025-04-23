@@ -52,6 +52,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         is SelectRange -> actionsInvoker.selectRange(action.begin, action.end)
         is Delay -> actionsInvoker.delay(action.seconds)
         is OpenFileInBackground -> fileOpener.openInBackground(action.file)
+        is OptimiseImports -> actionsInvoker.optimiseImports(action.file)
       }
       if (isCanceled) break
     }
