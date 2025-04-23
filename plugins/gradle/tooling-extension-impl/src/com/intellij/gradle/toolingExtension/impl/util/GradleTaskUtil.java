@@ -9,6 +9,7 @@ import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
+import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.metaobject.AbstractDynamicObject;
 import org.gradle.internal.metaobject.DynamicObject;
 import org.jetbrains.annotations.NotNull;
@@ -63,5 +64,13 @@ public final class GradleTaskUtil {
       return task.getArchiveFileName().get();
     }
     return GradleReflectionUtil.reflectiveCall(task, "getArchiveName", String.class);
+  }
+
+  public static void setTaskTestForkEvery(@NotNull Test task, long forkEvery) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("8.1")) {
+      task.setForkEvery(forkEvery);
+      return;
+    }
+    GradleReflectionUtil.setValue(task, "setForkEvery", Long.class, forkEvery);
   }
 }
