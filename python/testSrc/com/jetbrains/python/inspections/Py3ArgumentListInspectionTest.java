@@ -421,6 +421,10 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructedMultiFile() {
+    doMultiFileTest();
+  }
+
   public void testMetaclassNotAnnotatedDunderCall() {
     doTestByText("""
                    from typing import Self
