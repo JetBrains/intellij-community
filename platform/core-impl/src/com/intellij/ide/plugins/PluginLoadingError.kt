@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
@@ -65,4 +66,17 @@ class PluginLoadingError internal constructor(
       return builder.toString()
     }
   }
+}
+
+@ApiStatus.Internal
+class PluginIsMarkedDisabled(
+  override val plugin: IdeaPluginDescriptor,
+) : PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.marked.disabled", plugin.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.marked.disabled")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is marked disabled"
+  override val shouldNotifyUser: Boolean = false
 }
