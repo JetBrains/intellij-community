@@ -202,12 +202,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
    */
   @ApiStatus.Internal
   public static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
-                                                     int offset,
-                                                     int startLine,
-                                                     int startCol,
-                                                     int endLine,
-                                                     int endCol,
-                                                     boolean persistent) {
+                                                                     int offset,
+                                                                     int startLine,
+                                                                     int startCol,
+                                                                     int endLine,
+                                                                     int endCol,
+                                                                     boolean persistent) {
     int estimatedLength = RangeMarkerImpl.estimateDocumentLength(file);
     offset = Math.min(offset, estimatedLength);
     RangeMarkerImpl marker = persistent

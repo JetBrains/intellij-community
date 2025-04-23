@@ -35,16 +35,18 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @ApiStatus.Internal
   public RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
     this(forceDocumentStrongReference ? document : ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document),
+         document,
          document.getTextLength(), start, end, register, false, false);
   }
 
   // The constructor which creates a marker without a document and saves it in the virtual file directly. Can be cheaper than loading the entire document.
   RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, int estimatedDocumentLength, boolean register) {
     // unfortunately, we don't know the exact document size until we load it
-    this(virtualFile, estimatedDocumentLength, start, end, register, false, false);
+    this(virtualFile, null,estimatedDocumentLength, start, end, register, false, false);
   }
 
   private RangeMarkerImpl(@NotNull Object documentOrFile,
+                          @Nullable DocumentEx document,
                           int documentTextLength,
                           int start,
                           int end,
@@ -58,7 +60,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myDocumentOrFile = documentOrFile;
     myId = counter.next();
     if (register) {
-      registerInTree(start, end, greedyToLeft, greedyToRight, 0);
+      DocumentEx d = document == null ? getDocument() : document;
+      registerInTree(d, start, end, greedyToLeft, greedyToRight, 0);
     }
   }
 
@@ -67,8 +70,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return document == null ? Math.max(0, (int)virtualFile.getLength()) : document.getTextLength();
   }
 
-  protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    getDocument().registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
+  @ApiStatus.Internal
+  protected void registerInTree(@NotNull DocumentEx document, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    document.registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   protected void unregisterInTree() {

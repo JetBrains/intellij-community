@@ -1437,7 +1437,6 @@ c:com.intellij.openapi.editor.impl.RangeMarkerImpl
 - isValid():Z
 - p:onReTarget(com.intellij.openapi.editor.event.DocumentEvent):V
 - p:persistentHighlighterUpdate(com.intellij.openapi.editor.event.DocumentEvent,Z):V
-- p:registerInTree(I,I,Z,Z,I):V
 - s:runAssertingInternalInvariants(com.intellij.util.ThrowableRunnable):V
 - setGreedyToLeft(Z):V
 - setGreedyToRight(Z):V
