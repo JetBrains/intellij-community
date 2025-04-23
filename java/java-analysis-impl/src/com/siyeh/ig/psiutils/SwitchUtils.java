@@ -325,33 +325,7 @@ public final class SwitchUtils {
    */
   @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
-    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, block)) {
-      return false;
-    }
-
-    final PsiCodeBlock switchBody = block.getBody();
-    if (switchBody != null) {
-      for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiSwitchLabelStatementBase && !isBeingCompleted((PsiSwitchLabelStatementBase)child)) {
-          return child instanceof PsiSwitchLabeledRuleStatement;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Checks if the label is being completed and there are no other case label elements in the list of the case label's elements
-   * @param label the label to analyze
-   * @return true if the label is currently being completed
-   */
-  @Contract(pure = true)
-  private static boolean isBeingCompleted(@NotNull PsiSwitchLabelStatementBase label) {
-    if (!(label.getLastChild() instanceof PsiErrorElement)) return false;
-
-    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
-    return list != null && list.getElements().length == 1;
+    return PsiUtil.isRuleFormatSwitch(block);
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {

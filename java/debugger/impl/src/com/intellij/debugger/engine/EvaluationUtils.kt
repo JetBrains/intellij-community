@@ -109,8 +109,8 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate (
       // then it should be paused again
       context.managerThread!!
         .invokeNow(process.createPauseCommand(null))
-      throw e
     }
+    throw e
   }
   finally {
     process.requestsManager.deleteRequest(requestor)

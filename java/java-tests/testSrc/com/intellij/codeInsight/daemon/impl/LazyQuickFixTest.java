@@ -174,6 +174,7 @@ public class LazyQuickFixTest extends LightQuickFixTestCase {
     assertTrue(String.valueOf(infos), ContainerUtil.exists(infos, h-> "Cannot resolve method 'fooooo' in 'AClass'".equals(h.getDescription())));
     CodeInsightTestFixtureImpl.waitForLazyQuickFixesUnderCaret(getFile(), getEditor());
     assertSize(1, regFixCalled); // now must compute, since it's close to the caret
+    Disposer.dispose(resolveInBackground);
   }
 
   private static class MyLazyFixHighlightVisitor implements HighlightVisitor {

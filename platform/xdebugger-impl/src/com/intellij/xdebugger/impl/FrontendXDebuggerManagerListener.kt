@@ -2,8 +2,7 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.util.messages.Topic
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -11,11 +10,12 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface FrontendXDebuggerManagerListener {
-  fun processStarted(sessionId: XDebugSessionId, sessionDto: XDebugSessionDto) {}
-  fun processStopped(sessionId: XDebugSessionId) {}
-  fun activeSessionChanged(previousSessionId: XDebugSessionId?, currentSessionId: XDebugSessionId?) {}
+  fun sessionStarted(session: XDebugSessionProxy) {}
+  fun sessionStopped(session: XDebugSessionProxy) {}
+  fun activeSessionChanged(previousSession: XDebugSessionProxy?, currentSession: XDebugSessionProxy?) {}
 
   companion object {
+    @JvmField
     @Topic.ProjectLevel
     val TOPIC: Topic<FrontendXDebuggerManagerListener> =
       Topic("FrontendXDebuggerManager events", FrontendXDebuggerManagerListener::class.java)

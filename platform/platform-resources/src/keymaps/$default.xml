@@ -1307,7 +1307,4 @@
   <action id="ResetIdeScaleAction">
     <keyboard-shortcut first-keystroke="shift alt 0"/>
   </action>
-  <action id="AIAssistant.Chat.AIPopupChat">
-    <keyboard-shortcut first-keystroke="control shift alt BACK_SLASH"/>
-  </action>
 </keymap>

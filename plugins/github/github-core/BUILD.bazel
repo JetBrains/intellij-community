@@ -70,6 +70,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:gson",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [
     ":vcs-github_resources",
@@ -150,6 +151,7 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:kotlin-reflect",
     "@lib//:vcs-github-apollographql-apollo-ast-jvm",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [
     ":vcs-github_resources",

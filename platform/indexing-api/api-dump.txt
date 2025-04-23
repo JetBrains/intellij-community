@@ -12,6 +12,7 @@ c:com.intellij.find.FindModel
 - getDirectoryName():java.lang.String
 - getFileFilter():java.lang.String
 - getModuleName():java.lang.String
+- getRegExpFlags():I
 - getSearchContext():com.intellij.find.FindModel$SearchContext
 - getStringToFind():java.lang.String
 - getStringToReplace():java.lang.String
@@ -69,6 +70,7 @@ c:com.intellij.find.FindModel
 - setPreserveCase(Z):V
 - setProjectScope(Z):V
 - setPromptOnReplace(Z):V
+- setRegExpFlags(I):V
 - setRegularExpressions(Z):V
 - setReplaceAll(Z):V
 - setReplaceState(Z):V

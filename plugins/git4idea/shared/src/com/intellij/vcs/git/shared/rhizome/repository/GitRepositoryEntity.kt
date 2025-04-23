@@ -6,6 +6,8 @@ import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.rpc.GitReferencesSet
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
+import git4idea.GitStandardLocalBranch
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
@@ -14,12 +16,14 @@ import org.jetbrains.annotations.ApiStatus
 data class GitRepositoryEntity(override val eid: EID) : Entity {
   val repositoryId: RepositoryId by RepositoryIdValue
   val project: ProjectEntity by Project
+  val shortName: String by ShortName
   val state: GitRepositoryStateEntity by State
   val favoriteRefs: GitRepositoryFavoriteRefsEntity by FavoriteRefs
 
   companion object : DurableEntityType<GitRepositoryEntity>(GitRepositoryEntity::class.java.name, "com.intellij", ::GitRepositoryEntity) {
     val RepositoryIdValue: Required<RepositoryId> = requiredValue("repositoryId", RepositoryId.serializer(), Indexing.UNIQUE)
     val Project: Required<ProjectEntity> = requiredRef("project")
+    val ShortName: Required<String> = requiredValue("shortName", String.serializer())
     val State: Required<GitRepositoryStateEntity> = requiredRef("state", RefFlags.UNIQUE, RefFlags.CASCADE_DELETE)
     val FavoriteRefs: Required<GitRepositoryFavoriteRefsEntity> = requiredRef("favoriteRefs", RefFlags.UNIQUE, RefFlags.CASCADE_DELETE)
 
@@ -31,12 +35,14 @@ data class GitRepositoryEntity(override val eid: EID) : Entity {
 data class GitRepositoryStateEntity(override val eid: EID) : Entity {
   val repositoryId: RepositoryId by RepositoryIdValue
   val currentRef: String? by CurrentRef
-  val refs: GitReferencesSet by RefrencesSet
+  val refs: GitReferencesSet by ReferencesSet
+  val recentBranches: List<GitStandardLocalBranch> by RecentBranches
 
   companion object : DurableEntityType<GitRepositoryStateEntity>(GitRepositoryStateEntity::class.java.name, "com.intellij", ::GitRepositoryStateEntity) {
     val RepositoryIdValue: Required<RepositoryId> = requiredValue("repositoryId", RepositoryId.serializer(), Indexing.INDEXED)
     val CurrentRef: Optional<String> = optionalValue("currentRef", String.serializer())
-    val RefrencesSet: Required<GitReferencesSet> = requiredValue("referencesSet", GitReferencesSet.serializer())
+    val ReferencesSet: Required<GitReferencesSet> = requiredValue("referencesSet", GitReferencesSet.serializer())
+    val RecentBranches: Required<List<GitStandardLocalBranch>> = requiredValue("recentBranches", ListSerializer(GitStandardLocalBranch.serializer()))
   }
 }
 

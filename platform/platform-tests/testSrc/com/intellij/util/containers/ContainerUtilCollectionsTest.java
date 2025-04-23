@@ -151,6 +151,11 @@ public class ContainerUtilCollectionsTest extends Assert {
     ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakMap();
     checkKeyTossedEventually(map);
   }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentWeakMapWithStrategyTossed() {
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentWeakMap(HashingStrategy.identity());
+    checkKeyTossedEventually(map);
+  }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
@@ -191,6 +196,14 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testConcurrentSoftMapTossed() {
     ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentSoftMap();
     checkKeyTossedEventually(map);
+  }
+  @Test(timeout = TIMEOUT)
+  public void testConcurrentSoftMapWithStrategyAndListenerTossed() {
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) -> {
+      assertSame(map.get(), thisMap);
+    }));
+    checkKeyTossedEventually(map.get());
   }
 
   @Test(timeout = TIMEOUT)
@@ -886,6 +899,21 @@ public class ContainerUtilCollectionsTest extends Assert {
     AtomicReference<Object> evicted = new AtomicReference<>();
     AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
     map.set(CollectionFactory.createConcurrentSoftMap((thisMap,value) -> {
+      assertTrue(evicted.compareAndSet(null, value));
+      assertSame(map.get(), thisMap);
+    }));
+    Object value = new Object();
+    map.get().put(new Object(), value);
+
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.get().remove("") != null/*to call processQueue()*/ || map.get().isEmpty());
+    map.get().remove(""); // to call processQueue()
+    assertSame(value, evicted.get());
+  }
+  @Test
+  public void testKeyEvictionListenerWorksInConcurrentSoftMapWithHashingStrategy() {
+    AtomicReference<Object> evicted = new AtomicReference<>();
+    AtomicReference<Map<Object, Object>> map = new AtomicReference<>();
+    map.set(CollectionFactory.createConcurrentSoftMap(HashingStrategy.identity(), (thisMap,value) -> {
       assertTrue(evicted.compareAndSet(null, value));
       assertSame(map.get(), thisMap);
     }));

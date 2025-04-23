@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -207,7 +208,7 @@ final class SettingsHelper {
   static void showNotificationDisableGPU() {
     Notification notification = NOTIFICATION_GROUP.getValue().createNotification(
       IdeBundle.message("notification.content.jcef.gpucrash.title"),
-      IdeBundle.message("notification.content.jcef.gpucrash.message"),
+      IdeBundle.message("notification.content.jcef.gpucrash.message", ApplicationInfo.getInstance().getFullApplicationName()),
       NotificationType.ERROR);
 
     notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.restart")) {

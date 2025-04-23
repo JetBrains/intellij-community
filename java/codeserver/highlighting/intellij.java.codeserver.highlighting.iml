@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
+    <orderEntry type="module" module-name="intellij.java.frontback.impl" />
   </component>
 </module>

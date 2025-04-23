@@ -15,6 +15,8 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
+import com.intellij.codeInsight.completion.command.CompletionCommandKt;
+import com.intellij.codeInsight.completion.command.ForceOffsetData;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -68,6 +70,7 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
   public static final Key<Processor<? super PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
   private static final FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
+    forceToMoveCaret(editor);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -78,6 +81,16 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
       }
     });
   };
+
+  static void forceToMoveCaret(Editor editor) {
+    ForceOffsetData data = editor.getUserData(CompletionCommandKt.KEY_FORCE_CARET_OFFSET);
+    if (data != null && data.getOldOffset() == editor.getCaretModel().getOffset()) {
+      editor.getCaretModel().moveToOffset(data.getNewOffset());
+    }
+    if (data != null) {
+      editor.putUserData(CompletionCommandKt.KEY_FORCE_CARET_OFFSET, null);
+    }
+  }
 
   public static @NotNull List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();

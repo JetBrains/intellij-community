@@ -201,7 +201,8 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
     XBreakpointCustomPropertiesPanel customRightConditionPanel = breakpointType.createCustomRightPropertiesPanel(project);
     boolean isVisibleOnPopup = false;
-    if (myBreakpoint instanceof XBreakpointProxy.Monolith) {
+    if (customRightConditionPanel != null && myBreakpoint instanceof XBreakpointProxy.Monolith) {
+      //noinspection unchecked
       isVisibleOnPopup = customRightConditionPanel.isVisibleOnPopup(((XBreakpointProxy.Monolith)breakpoint).getBreakpoint());
     }
     if (customRightConditionPanel != null && (myShowAllOptions || isVisibleOnPopup)) {

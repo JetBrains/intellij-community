@@ -1,3 +1,8 @@
+*:com.intellij.execution.process.CommandLineEnvCustomizer
+- *sf:Companion:com.intellij.execution.process.CommandLineEnvCustomizer$Companion
+- a:customizeEnv(com.intellij.execution.configurations.GeneralCommandLine,java.util.Map):V
+*f:com.intellij.execution.process.CommandLineEnvCustomizer$Companion
+- *f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.execution.process.ElevationService
 - a:authorizeService():V
 - createProcess(com.intellij.execution.configurations.GeneralCommandLine):java.lang.Process

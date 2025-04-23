@@ -204,8 +204,8 @@ public class XBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public Object getBreakpoint() {
-    return myBreakpointProxy.getBreakpoint();
+  public XBreakpointProxy getBreakpoint() {
+    return myBreakpointProxy;
   }
 
   @Override
@@ -230,15 +230,11 @@ public class XBreakpointItem extends BreakpointItem {
 
   @Override
   public int compareTo(BreakpointItem breakpointItem) {
-    Object thisBreakpoint = getBreakpoint();
-    Object otherBreakpoint = breakpointItem.getBreakpoint();
-    if (otherBreakpoint instanceof XBreakpointProxy) {
-      return myBreakpointProxy.compareTo((XBreakpointProxy)otherBreakpoint);
+    XBreakpointProxy otherBreakpoint = breakpointItem.getBreakpoint();
+    if (otherBreakpoint == null) {
+      return 1;
     }
-    if (thisBreakpoint instanceof XBreakpointBase && otherBreakpoint instanceof XBreakpoint) {
-      return ((XBreakpointBase)thisBreakpoint).compareTo((XBreakpoint<?>)otherBreakpoint);
-    }
-    return 0;
+    return myBreakpointProxy.compareTo(otherBreakpoint);
   }
 
   @Override

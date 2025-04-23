@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -21,7 +22,7 @@ public class BreakpointNoneItem extends BreakpointItem {
   }
 
   @Override
-  public Object getBreakpoint() {
+  public XBreakpointProxy getBreakpoint() {
     return null;
   }
 

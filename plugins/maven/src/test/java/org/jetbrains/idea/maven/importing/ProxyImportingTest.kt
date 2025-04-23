@@ -7,7 +7,6 @@ import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.junit.Test
@@ -26,8 +25,7 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
     myRepositoryFixture = MavenHttpRepositoryServerFixture()
     myRepositoryFixture.setUp()
     val port = URI(myRepositoryFixture.url()).port
-    val proxyPort = NetUtils.findAvailableSocketPort()
-    myProxyFixture = MavenHttpProxyServerFixture(mapOf("mavendummycentral.jetbrains.com" to port), proxyPort, AppExecutorUtil.getAppExecutorService())
+    myProxyFixture = MavenHttpProxyServerFixture(mapOf("mavendummycentral.jetbrains.com" to port), AppExecutorUtil.getAppExecutorService())
     myProxyFixture.setUp()
   }
 

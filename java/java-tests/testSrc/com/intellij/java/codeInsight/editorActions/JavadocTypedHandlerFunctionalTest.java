@@ -15,4 +15,6 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
-public class JavadocTypedHandlerFunctionalTest extends com.intellij.codeInsight.JavadocTypedHandlerFunctionalTest {}
+import com.intellij.codeInsight.AbstractJavadocTypedHandlerFunctionalTest;
+
+public class JavadocTypedHandlerFunctionalTest extends AbstractJavadocTypedHandlerFunctionalTest {}

@@ -23,6 +23,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//java/java-indexing-api:indexing",
     "//java/codeserver/core:java-codeserver-core",
+    "//java/java-frontback-impl:frontback-impl",
   ],
   runtime_deps = [":java-codeserver-highlighting_resources"]
 )

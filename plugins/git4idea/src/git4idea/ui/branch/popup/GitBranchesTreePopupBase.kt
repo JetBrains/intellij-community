@@ -8,12 +8,7 @@ import com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
@@ -24,20 +19,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.ActiveComponent
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.SeparatorWithText
-import com.intellij.ui.SmartExpander
-import com.intellij.ui.TreeActions
-import com.intellij.ui.WindowMoveListener
+import com.intellij.ui.*
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -64,22 +49,16 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
-import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitTagHolder
-import git4idea.repo.GitTagLoaderListener
-import git4idea.ui.branch.tree.GitBranchesTreeModel
+import git4idea.repo.*
+import git4idea.ui.branch.tree.*
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
-import git4idea.ui.branch.tree.GitBranchesTreeRenderer
-import git4idea.ui.branch.tree.GitBranchesTreeSingleRepoModel
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectFirst
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectLast
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectNext
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.selectPrev
-import git4idea.ui.branch.tree.recentCheckoutBranches
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -92,20 +71,10 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Point
-import java.awt.event.ActionEvent
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
+import java.awt.event.*
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.swing.AbstractAction
-import javax.swing.ActionMap
-import javax.swing.InputMap
-import javax.swing.JComponent
-import javax.swing.JTree
-import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
+import javax.swing.*
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreeModel
@@ -115,6 +84,7 @@ import kotlin.math.min
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
+@OptIn(FlowPreview::class)
 internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   project: Project,
   step: T,
@@ -168,7 +138,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
     GitDisposable.getInstance(project).coroutineScope
       .childScope("Git Branches Tree Popup")
       .cancelledWith(this).launch {
-        searchPatternStateFlow.drop(1).debounce(100).collectLatest { pattern ->
+        searchPatternStateFlow.drop(1).debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collectLatest { pattern ->
           withContext(Dispatchers.EDT) {
             applySearchPattern(pattern)
           }

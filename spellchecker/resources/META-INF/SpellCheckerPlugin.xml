@@ -47,5 +47,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.spellchecker.statistics.SpellcheckerActionStatistics"/>
 
     <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="notification.group.spellchecker"/>
+
+    <spellchecker.dictionary.checker implementation="com.intellij.spellchecker.dictionary.ProjectNameDictionaryChecker"/>
   </extensions>
 </idea-plugin>

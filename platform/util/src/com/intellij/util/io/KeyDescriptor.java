@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
@@ -25,10 +25,14 @@ import java.io.IOException;
  */
 public interface KeyDescriptor<T> extends EqualityPolicy<T>, DataExternalizer<T> {
   /**
-   * @implNote The implementation may use the returned hashcode values
-   * together with {@link #save(DataOutput, Object)} to persist keys
-   * on disk. Make sure the hashcode function is stable and returns
-   * the stable values, e.g. that are independent from restarts or environment changes
+   * @implNote The implementation may use the returned hashcode values together with {@link #save(DataOutput, Object)}
+   * to persist keys on disk.
+   * Make sure the hashcode function is stable and returns the stable values, i.e. values that are not changing with
+   * restarts or environment changes.
+   * <p/>
+   * E.g. {@link Enum} hash code is not stable (it is = {@link Object#hashCode()}), hence if you have Enums as key/part
+   * of compound key -- you must write dedicated hash code implementation in this method, the one that relies on
+   * {@link Enum#ordinal()} or {@link Enum#name()}.
    * @see #save(DataOutput, Object)
    */
   @Override

@@ -78,7 +78,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
                                                  @Nullable RunContentDescriptor contentToReuse) {
-    XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session);
+    XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
     return create(proxy, icon, environment == null ? null : new BackendExecutionEnvironmentProxy(environment), contentToReuse, forceNewDebuggerUi, withFramesCustomization);
@@ -507,7 +507,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
    */
   @Deprecated
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
-    showWatchesView(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    showWatchesView(XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   public static void showWatchesView(@NotNull XDebugSessionProxy session) {

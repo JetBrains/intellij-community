@@ -14,7 +14,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/git4idea:vcs-git",
     "//platform/vcs-api:vcs",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-api:core",
@@ -22,6 +21,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/ide-core",
     "//platform/projectModel-api:projectModel",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
   ],
   runtime_deps = [":vcs-git-commit-modal_resources"]
 )

@@ -56,7 +56,6 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.sessionData.configurationName,
       currentSession.areBreakpointsMuted(),
       currentSession.getBreakpointsMutedFlow().toRpc(),
-      currentSession.suspendData(),
     )
 
     val consoleView = if (useFeProxy()) {
@@ -69,6 +68,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.id,
       XDebuggerEditorsProviderDto(fileTypeId, editorsProvider),
       initialSessionState,
+      currentSession.suspendData(),
       currentSession.sessionName,
       createSessionEvents(currentSession).toRpc(),
       sessionDataDto,

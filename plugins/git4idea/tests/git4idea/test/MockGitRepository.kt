@@ -2,8 +2,11 @@
 package git4idea.test
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.project.projectId
+import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import git4idea.GitLocalBranch
 import git4idea.GitVcs
 import git4idea.branch.GitBranchesCollection
@@ -120,6 +123,10 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
 
   override fun getTagHolder(): GitTagHolder {
     return tagHolder ?: GitTagHolder(this)
+  }
+
+  override fun getRpcId(): RepositoryId {
+    return RepositoryId(projectId = project.projectId(), rootPath = root.rpcId())
   }
 
   override fun dispose() {

@@ -13,8 +13,10 @@ import com.intellij.psi.JavaDocTokenType
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.impl.source.tree.JavaDocElementType
 import com.intellij.psi.impl.source.tree.JavaElementType
+import org.jetbrains.annotations.VisibleForTesting
 
-internal class JavaElementTypeConverterExtension : ElementTypeConverterFactory {
+@VisibleForTesting
+class JavaElementTypeConverterExtension : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = javaConverter
 
   private val javaConverter: ElementTypeConverter = elementTypeConverterOf(

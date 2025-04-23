@@ -30,7 +30,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     Document doc = JavaXmlDocumentKt.createDocumentBuilder().parse(new InputSource(new StringReader(docText)));
     Element root = new DOMBuilder().build(doc.getDocumentElement());
 
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
     EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
 
     targetScheme.readExternal(root);
@@ -39,7 +39,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   }
 
   protected @NotNull Pair<EditorColorsScheme, TextAttributes> doTestWriteRead(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
 
     EditorColorsScheme sourceScheme = (EditorColorsScheme)defaultScheme.clone();
     sourceScheme.setName("test");

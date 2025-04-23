@@ -63,7 +63,7 @@ public final class EditorColorsUtil {
 
   public static @NotNull EditorColorsScheme getColorSchemeForPrinting() {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    return colorsManager.isDarkEditor() ? colorsManager.getScheme(EditorColorsManager.getDefaultSchemeName())
+    return colorsManager.isDarkEditor() ? colorsManager.getDefaultScheme()
                                         : colorsManager.getGlobalScheme();
   }
 

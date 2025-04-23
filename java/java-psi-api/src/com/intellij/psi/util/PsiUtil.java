@@ -1143,7 +1143,7 @@ public final class PsiUtil extends PsiUtilCore {
 
     PsiFile file = element.getContainingFile();
     // Could be non-physical 'light file' created by some JVM languages
-    PsiFile navigationFile = file == null ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
+    PsiFile navigationFile = file == null || file.isPhysical() ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
     if (navigationFile != null) {
       file = navigationFile;
     }
@@ -1594,6 +1594,43 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isInMarkdownDocComment(PsiElement element) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
     return docComment != null && docComment.isMarkdownComment();
+  }
+
+  /**
+   * Returns true if a given switch block has a rule-based format (like 'case 0 ->')
+   * @param block a switch block to test
+   * @return true if a given switch block has a rule-based format; false if it has a conventional label-based format (like 'case 0:')
+   * If the switch body has no labels yet and language level permits, the rule-based format is assumed.
+   */
+  @Contract(pure = true)
+  public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
+    if (!isAvailable(JavaFeature.ENHANCED_SWITCH, block)) {
+      return false;
+    }
+
+    final PsiCodeBlock switchBody = block.getBody();
+    if (switchBody != null) {
+      for (PsiElement child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiSwitchLabelStatementBase && !isBeingCompleted((PsiSwitchLabelStatementBase)child)) {
+          return child instanceof PsiSwitchLabeledRuleStatement;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Checks if the label is being completed and there are no other case label elements in the list of the case label's elements
+   * @param label the label to analyze
+   * @return true if the label is currently being completed
+   */
+  @Contract(pure = true)
+  private static boolean isBeingCompleted(@NotNull PsiSwitchLabelStatementBase label) {
+    if (!(label.getLastChild() instanceof PsiErrorElement)) return false;
+
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
+    return list != null && list.getElements().length == 1;
   }
 
   //<editor-fold desc="Deprecated stuff">

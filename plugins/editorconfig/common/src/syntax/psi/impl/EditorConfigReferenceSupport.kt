@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 interface EditorConfigReferenceSupport {
 
-  fun getReference(element: EditorConfigHeader): PsiReference
+  fun getReference(element: EditorConfigHeader): PsiReference?
 
   fun getReference(element: EditorConfigDescribableElement): PsiReference?
 }

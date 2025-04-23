@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class SeAllTab(private val delegate: SeTabDelegate): SeTab {
   override val name: String
-    get() = IdeBundle.message("searcheverywhere.allelements.tab.name")
+    get() = IdeBundle.message("searcheverywhere.all.elements.tab.name")
 
   override val shortName: String
     get() = name

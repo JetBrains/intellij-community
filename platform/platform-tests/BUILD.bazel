@@ -140,6 +140,7 @@ jvm_library(
     "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure",
     "//platform/testFramework/junit5/projectStructure:testFramework-junit5-projectStructure_test_lib",
     "//platform/plugins/parser/impl:plugins-parser-impl",
+    "//platform/platform-impl/eel:ide-impl-wsl",
   ],
   runtime_deps = [
     ":tests_test_resources",

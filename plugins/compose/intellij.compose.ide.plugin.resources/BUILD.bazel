@@ -29,6 +29,7 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//xml/xml-parser:parser",
+    "//platform/usageView",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )
@@ -63,6 +64,7 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//xml/xml-parser:parser",
+    "//platform/usageView",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )

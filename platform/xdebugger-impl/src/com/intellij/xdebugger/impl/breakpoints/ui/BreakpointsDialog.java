@@ -52,7 +52,7 @@ import java.util.List;
 public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
-  private final @Nullable BreakpointsDialogInitialBreakpoint myInitialBreakpoint;
+  private final @Nullable XBreakpointId myInitialBreakpointId;
   private final XBreakpointManagerProxy myBreakpointManager;
 
   private BreakpointItemsTreeController myTreeController;
@@ -93,11 +93,11 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   protected BreakpointsDialog(@NotNull Project project,
-                              @Nullable BreakpointsDialogInitialBreakpoint initialBreakpoint,
+                              @Nullable XBreakpointId initialBreakpointId,
                               XBreakpointManagerProxy breakpointManager) {
     super(project);
     myProject = project;
-    myInitialBreakpoint = initialBreakpoint;
+    myInitialBreakpointId = initialBreakpointId;
     myBreakpointManager = breakpointManager;
 
     collectGroupingRules();
@@ -181,12 +181,8 @@ public class BreakpointsDialog extends DialogWrapper {
         });
       myTreeController.selectFirstBreakpointItem();
     }
-    if (myInitialBreakpoint instanceof BreakpointsDialogInitialBreakpoint.BreakpointId) {
-      selectBreakpointById(((BreakpointsDialogInitialBreakpoint.BreakpointId)myInitialBreakpoint).getId(), false);
-    }
-    else if (myInitialBreakpoint instanceof BreakpointsDialogInitialBreakpoint.GenericBreakpoint) {
-      selectBreakpoint(((BreakpointsDialogInitialBreakpoint.GenericBreakpoint)myInitialBreakpoint).getBreakpoint(), false);
-    }
+
+    selectBreakpoint(myInitialBreakpointId, false);
   }
 
   @Override
@@ -300,7 +296,7 @@ public class BreakpointsDialog extends DialogWrapper {
           res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
-          res.add(new EditDescriptionAction((XBreakpointProxy)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
+          res.add(new EditDescriptionAction(((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
         return res.toArray(AnAction.EMPTY_ARRAY);
       }
@@ -448,8 +444,8 @@ public class BreakpointsDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       saveCurrentItem();
       XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
-      if (breakpoint != null) {
-        selectBreakpoint(breakpoint, true);
+      if (breakpoint instanceof XBreakpointBase<?, ?, ?>) {
+        selectBreakpoint(((XBreakpointBase<?, ?, ?>)breakpoint).getBreakpointId(), true);
       }
     }
   }
@@ -463,28 +459,13 @@ public class BreakpointsDialog extends DialogWrapper {
     super.toFront();
   }
 
-  private boolean selectBreakpointById(@Nullable XBreakpointId breakpointId, boolean update) {
+  public boolean selectBreakpoint(@Nullable XBreakpointId breakpointId, boolean update) {
     if (update) {
       updateBreakpoints();
     }
     if (breakpointId != null) {
       for (BreakpointItem item : myBreakpointItems) {
         if (Objects.equals(item.getId(), breakpointId)) {
-          myTreeController.selectBreakpointItem(item, null);
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  public boolean selectBreakpoint(Object breakpoint, boolean update) {
-    if (update) {
-      updateBreakpoints();
-    }
-    if (breakpoint != null) {
-      for (BreakpointItem item : myBreakpointItems) {
-        if (item.getBreakpoint() == breakpoint) {
           myTreeController.selectBreakpointItem(item, null);
           return true;
         }
@@ -520,9 +501,9 @@ public class BreakpointsDialog extends DialogWrapper {
         }
       }
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
-        Object breakpoint = item.getBreakpoint();
-        if (breakpoint instanceof XBreakpointBase) {
-          ((XBreakpointBase<?, ?, ?>)breakpoint).setGroup(groupName);
+        XBreakpointProxy breakpoint = item.getBreakpoint();
+        if (breakpoint instanceof XBreakpointProxy.Monolith) {
+          (((XBreakpointProxy.Monolith)breakpoint).getBreakpoint()).setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);

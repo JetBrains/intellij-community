@@ -24,6 +24,11 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "//java/java-frontback-impl:frontback-impl",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":java-debugger-impl-shared_resources"]
 )

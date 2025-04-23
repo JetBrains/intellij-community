@@ -11,7 +11,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
+import com.intellij.xdebugger.impl.frame.asProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.map
 private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
     val session = XDebuggerManager.getInstance(project)?.currentSession ?: return null
-    return XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(session)
+    return session.asProxy()
   }
 
   override fun isEnabled(): Boolean {
@@ -45,10 +45,12 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
     val managerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
-    return managerImpl.currentSessionFlow.map {
-      if (it == null) return@map null
-      XDebugSessionProxyKeeper.getInstance(project).getOrCreateProxy(it)
-    }
+    return managerImpl.currentSessionFlow.map { it?.asProxy() }
+  }
+
+  override fun getSessions(project: Project): List<XDebugSessionProxy> {
+    val managerImpl = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
+    return managerImpl.debugSessions.map { it.asProxy() }
   }
 
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {

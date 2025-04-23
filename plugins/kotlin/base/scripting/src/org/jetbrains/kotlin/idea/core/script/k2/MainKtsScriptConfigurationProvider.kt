@@ -57,7 +57,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         return data[virtualFile]
     }
 
-    suspend fun refineConfiguration(virtualFile: VirtualFile): ScriptConfigurationWithSdk {
+    suspend fun refineConfiguration(virtualFile: VirtualFile) {
         val sdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
 
         val scriptSource = VirtualFileScriptSource(virtualFile)
@@ -78,8 +78,6 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         val newData = ScriptConfigurationWithSdk(result, sdk)
 
         data[virtualFile] = newData
-
-        return newData
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {

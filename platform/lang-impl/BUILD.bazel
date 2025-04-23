@@ -106,7 +106,6 @@ jvm_library(
     "//platform/platform-impl/internal:ide-internal",
     "//platform/util/concurrency",
     "//platform/platform-impl/ui:ide-ui",
-    "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/foldings",
     "//platform/syntax/syntax-api:syntax",

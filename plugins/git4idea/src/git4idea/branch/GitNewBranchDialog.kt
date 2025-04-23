@@ -31,6 +31,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
+import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -38,7 +39,6 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.validators.*
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
@@ -88,7 +88,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private val allRepositories = GitRepositoryManager.getInstance(project).repositories
   private val initialRepositories = repositories.toList()
 
-  private val iconProvider = GitBranchesTreeIconProvider(project)
   private val warningVisibilityProperty = AtomicBooleanProperty(false)
   private var repositoryManuallySelected = false
 
@@ -187,7 +186,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           icon(AllIcons.Empty)
         }
         else if (repo != null) {
-          icon(iconProvider.forRepository(repo))
+          icon(GitBranchesTreeIconProvider.forRepository(project, repo.rpcId))
           text(DvcsUtil.getShortRepositoryName(repo))
         }
       }

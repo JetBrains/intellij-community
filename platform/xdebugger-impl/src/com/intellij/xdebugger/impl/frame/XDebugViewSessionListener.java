@@ -15,8 +15,12 @@ public final class XDebugViewSessionListener implements XDebugSessionListener {
     mySession = session;
   }
 
+  /**
+   * Use {@link #attach(XDebugView, XDebugSessionProxy)} instead.
+   */
+  @ApiStatus.Obsolete
   public static void attach(@NotNull XDebugView debugView, @NotNull XDebugSession session) {
-    XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session);
+    XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
     attach(debugView, proxy);
   }
 

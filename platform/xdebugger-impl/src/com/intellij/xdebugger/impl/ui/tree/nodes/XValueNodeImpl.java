@@ -11,14 +11,14 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.CoroutineUtilsKt;
 import com.intellij.xdebugger.impl.XSourceKind;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
@@ -122,18 +122,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void updateInlineDebuggerData() {
     try {
-      XDebugSession session = XDebugView.getSession(getTree());
+      XDebugSessionProxy session = XDebugView.getSessionProxy(getTree());
       final XSourcePosition mainPosition;
       final XSourcePosition altPosition;
-      if (session instanceof XDebugSessionImpl) {
-        XStackFrame currentFrame = session.getCurrentStackFrame();
-        mainPosition = ((XDebugSessionImpl)session).getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
-        altPosition = ((XDebugSessionImpl)session).getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
-      }
-      else {
-        mainPosition = session == null ? null : session.getCurrentPosition();
-        altPosition = null;
-      }
+      if (session == null) return;
+      XStackFrame currentFrame = session.getCurrentStackFrame();
+      if (currentFrame == null) return;
+      mainPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
+      altPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
       if (mainPosition == null && altPosition == null) {
         return;
       }
@@ -159,9 +155,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         }
       };
 
-      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(callback::computed);
-      }
+      CoroutineUtilsKt.updateInlineDebuggerData(session, getValueContainer(), callback);
     }
     catch (Exception ignore) {
     }

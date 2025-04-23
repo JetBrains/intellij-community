@@ -171,27 +171,6 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
     findCollisionsAgainstNewName(methodToRename, newName, result);
     findHidingMethodWithOtherSignature(methodToRename, newName, result);
-    final PsiClass containingClass = methodToRename.getContainingClass();
-    final PsiMethod patternMethod = getPrototypeWithNewName(methodToRename, newName);
-    if (containingClass != null && patternMethod != null) {
-      try {
-        final PsiMethod methodInBaseClass = containingClass.findMethodBySignature(patternMethod, true);
-        if (methodInBaseClass != null && methodInBaseClass.getContainingClass() != containingClass) {
-          if (methodInBaseClass.hasModifierProperty(PsiModifier.FINAL)) {
-            result.add(new UnresolvableCollisionUsageInfo(methodInBaseClass, methodToRename) {
-              @Override
-              public String getDescription() {
-                return JavaRefactoringBundle
-                  .message("renaming.method.will.override.final.0", RefactoringUIUtil.getDescription(methodInBaseClass, true));
-              }
-            });
-          }
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   private void findHidingMethodWithOtherSignature(PsiMethod methodToRename, String newName, List<UsageInfo> result) {

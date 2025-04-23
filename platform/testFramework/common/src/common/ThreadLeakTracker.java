@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.JVMResponsivenessMonitor;
@@ -242,7 +242,13 @@ public final class ThreadLeakTracker {
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
            || isIjentMediatorThread(stackTrace)
+           || windowsCompletionPortLeakForDocker(stackTrace)
            || isSwingAccessibilityThread(stackTrace);
+  }
+
+  private static boolean windowsCompletionPortLeakForDocker(StackTraceElement[] trace) {
+    // IOCP on Windows leaked by a docker client
+    return trace[0].getClassName().equals("sun.nio.ch.Iocp");
   }
 
   private static boolean isSwingAccessibilityThread(StackTraceElement[] trace) {

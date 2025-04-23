@@ -59,7 +59,18 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a>.
+ * Holds state such as editor, file, document, caret(s) position, and so on.
+ * Also provides a rich API for setting this state up and performing assertions on it.
+ * <p>
+ * It is not tied to any specific test framework.
+ * <p>
+ * Usually used to test <i>code insight features</i> such as inspections,
+ * intentions, code completion, highlighting, navigation, and refactorings in
+ * a headless-like IDE instance.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Overview</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/tests-and-fixtures.html">Tests and Fixtures</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-highlighting.html">Testing Highlighting</a>
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
@@ -88,7 +99,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   PsiFile getFile();
 
   /**
-   * @return the action context for current in-memory editor
+   * @return the action context for the current in-memory editor
    */
   @RequiresReadLock
   default ActionContext getActionContext() {
@@ -228,7 +239,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * Compares a file in the test project with a file in the testdata directory.
    *
-   * @param filePath                  path to file to be checked, relative to the source root of the test project.
+   * @param filePath                  path to the file to be checked, relative to the source root of the test project.
    * @param expectedFile              path to file to check against, relative to the testdata path.
    * @param ignoreTrailingWhitespaces whether the comparison should ignore trailing whitespaces.
    */
@@ -244,7 +255,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void enableInspections(InspectionProfileEntry @NotNull ... inspections);
 
-  @SuppressWarnings("unchecked")
   void enableInspections(Class<? extends LocalInspectionTool> @NotNull ... inspections);
 
   void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
@@ -288,21 +298,38 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                                 boolean checkWeakWarnings,
                                 @TestDataFile VirtualFile @NotNull ... files);
 
+
   /**
-   * Check highlighting of file already loaded by {@code configure*} methods.
-   *
-   * @return duration
+   * @see #checkHighlighting(boolean, boolean, boolean, boolean)
    */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings);
 
+  /**
+   * Checks highlighting of the file loaded into the in-memory editor.
+   * <p>
+   * To load the file in to the in-memory editor, use the {@code configure*} family of methods,
+   * for example {@link #configureByText(String, String)} or {@link #configureByFile(String)}}.
+   * <p>
+   * Throws an exception if the file isn't loaded into the in-memory editor.
+   *
+   * @return highlighting duration in milliseconds
+   * @see ExpectedHighlightingData
+   */
   long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean ignoreExtraHighlighting);
 
+  /**
+   * @see #checkHighlighting(boolean, boolean, boolean, boolean)
+   */
   long checkHighlighting();
 
   /**
-   * Runs highlighting test for the given files.
+   * Loads files into the in-memory editor and tests highlighting for the first of them.
    * <p>
-   * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with {@code checkInfos=false}.
+   * This is essentially a shortcut for
+   * {@link #configureByFiles(String...)}
+   * followed by
+   * {@link #testHighlighting(boolean, boolean checkInfos, boolean, String...)}
+   * with {@code checkInfos=false}.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return highlighting duration in milliseconds
@@ -321,7 +348,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull VirtualFile sourceDir);
 
   /**
-   * @return all highlight infos for current file
+   * @return all highlight infos for the current file
    */
   @NotNull
   @Unmodifiable
@@ -371,7 +398,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<IntentionAction> getAvailableIntentions();
 
   /**
-   * Returns all intentions or quick fixes which are available in position marked by {@link #CARET_MARKER},
+   * Returns all intentions or quick fixes that are available in position marked by {@link #CARET_MARKER},
    * and whose text starts with the specified hint text.
    *
    * @param hint the text that the intention text should begin with.
@@ -398,7 +425,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Copies multiple files from the testdata directory to the same relative paths in the test project directory, opens the first of them
-   * in the in-memory editor and returns an intention action or quickfix with the name exactly matching the specified text.
+   * in the in-memory editor, and returns an intention action or quickfix with the name exactly matching the specified text.
    *
    * @param intentionName the text that the intention text should be equal to.
    * @param filePaths     the list of file paths to copy to the test project directory.
@@ -425,9 +452,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Nullable String getIntentionPreviewText(@NotNull String hint);
 
   /**
-   * Checks whether intention preview is HTML with expected text.
+   * Checks whether the intention preview is HTML with expected text.
    *
-   * @param action action to get the preview from
+   * @param action   action to get the preview from
    * @param expected expected HTML preview text
    */
   void checkIntentionPreviewHtml(@NotNull IntentionAction action, @NotNull @Language("HTML") String expected);
@@ -485,7 +512,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * <p>
    * Checks that lookup is shown, and it contains items with given lookup strings
    *
-   * @param items most probably will contain > 1 items
+   * @param items most probably will contain more than 1 item
    */
   void testCompletionVariants(@NotNull @TestDataFile String fileBefore, String @NotNull ... items);
 
@@ -543,7 +570,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Opens the specified file in the editor, places the caret and selection according to the markup,
-   * launches the Find Usages action and returns the items displayed in the usage view.
+   * launches the Find Usages action, and returns the items displayed in the usage view.
    */
   @NotNull
   Collection<Usage> testFindUsagesUsingAction(@TestDataFile String @NotNull ... fileNames);
@@ -614,6 +641,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void checkResult(@NotNull String filePath, @NotNull String expectedText, boolean stripTrailingSpaces);
 
+  /**
+   * @return document for the specified PSI file.
+   */
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
@@ -691,7 +721,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void renameElementAtCaret(@NotNull String newName);
 
   /**
-   * Renames element in position marked by {@link #CARET_MARKER} using injected {@link RenameHandler}.
+   * Renames the element in position marked by {@link #CARET_MARKER} using injected {@link RenameHandler}.
    * <p>
    * Very close to {@link #renameElementAtCaret(String)} but uses handlers.
    *
@@ -735,6 +765,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Misnamed, actually it checks only parameter hints.
+   *
    * @see #testInlays(Function, Predicate)
    */
   void testInlays();
@@ -776,20 +807,20 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * carets (places marked with {@link #CARET_MARKER} in file).
    * Example:
    * <pre>
-   *   PyC&lt;caret&gt; is IDE for Py&lt;caret&gt;
+   *   PyC&lt;caret&gt; is an IDE for Py&lt;caret&gt;
    * </pre>
    * should be completed to
    * <pre>
-   *   PyCharm is IDE for Python
+   *   PyCharm is an IDE for Python
    * </pre>
    * Actually, it works just like {@link #completeBasic()} but supports
-   * several {@link #CARET_MARKER}.
+   * several {@link #CARET_MARKER}s.
    *
    * @param charToTypeIfOnlyOneOrNoCompletion this char will be typed when the completion performed automatically.
    *                                          It is a legacy, consider providing it as {@code null} to avoid typing.
-   * @param charToTypeIfMultipleCompletions this char will be typed in case of multiple completion variants.
-   *                                        It could be used to complete the suggestion with {@code '\t'} for example.
-   *                                        Provide {@code null} to avoid typing.
+   * @param charToTypeIfMultipleCompletions   this char will be typed in case of multiple completion variants.
+   *                                          It could be used to complete the suggestion with {@code '\t'} for example.
+   *                                          Provide {@code null} to avoid typing.
    * @return list of all completion elements just like in {@link #completeBasic()}
    * @see #completeBasic()
    */
@@ -852,7 +883,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * @return Disposable for the corresponding project fixture.
    * It's disposed earlier than {@link UsefulTestCase#getTestRootDisposable()} and can be useful
-   * e.g. for avoiding library virtual pointers leaks: {@code PsiTestUtil.addLibrary(myFixture.getProjectDisposable(), ...)}
+   * e.g., for avoiding library virtual pointers leaks: {@code PsiTestUtil.addLibrary(myFixture.getProjectDisposable(), ...)}
    */
   default @NotNull Disposable getProjectDisposable() {
     return ((ProjectEx)getProject()).getEarlyDisposable();

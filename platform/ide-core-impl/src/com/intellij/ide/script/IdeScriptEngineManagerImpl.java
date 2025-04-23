@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.diagnostic.PluginException;
@@ -282,7 +282,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       boolean hasBase = p0 > 0;
       int p1 = hasBase ? name.indexOf("$", p0 + 1) : -1;
       String base = hasBase ? name.substring(0, Math.max(p0, p1)) : name;
-      long hash = StringHash.calc(base);
+      long hash = StringHash.buz(base);
 
       Class<?> c = null;
       ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader or "this" if not found

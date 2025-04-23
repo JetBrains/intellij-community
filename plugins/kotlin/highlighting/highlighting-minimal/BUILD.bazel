@@ -15,13 +15,13 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//java/java-frontback-impl:frontback-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-impl",
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/util:util-ui",
     "//platform/lang-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
   ],
   runtime_deps = [
     ":kotlin-highlighting-minimal_resources",

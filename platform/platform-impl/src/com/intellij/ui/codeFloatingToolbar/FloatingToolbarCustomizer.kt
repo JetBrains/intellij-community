@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
@@ -62,7 +62,7 @@ internal fun hasMinimalFloatingToolbar(language: Language): Boolean {
 }
 
 internal fun isSelectionRequiredForFloatingToolbar(language: Language): Boolean {
-  if (!AdvancedSettings.getBoolean("floating.codeToolbar.show.without.selection")) return true
+  if (!Registry.`is`("floating.codeToolbar.show.without.selection")) return true
 
   for (lang in LanguageUtil.getBaseLanguages(language)) {
     forLanguage(lang)?.let { return it.selectionRequired }

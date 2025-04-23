@@ -42,8 +42,6 @@ object UserFactorDescriptions {
       Descriptor.register("prefixMatchingType", ::PrefixMatchingTypeUpdater, ::PrefixMatchingTypeReader)
     val TEMPLATES_USAGE: UserFactorDescription<TemplatesUsageUpdater, TemplatesUsageReader> =
       Descriptor.register("templatesUsage", ::TemplatesUsageUpdater, ::TemplatesUsageReader)
-    val FULL_LINE_FACTORS: UserFactorDescription<FullLineFactorsUpdater, FullLineFactorsReader> =
-      Descriptor.register("fullLineFactors", ::FullLineFactorsUpdater, ::FullLineFactorsReader)
 
     fun isKnownFactor(id: String): Boolean = id in IDS
 

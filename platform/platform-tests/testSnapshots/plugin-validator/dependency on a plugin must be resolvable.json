@@ -2,6 +2,6 @@
 [1]: ------------------------------
 Plugin not found: incorrectId (
   entry=PluginDependency(pluginId=incorrectId),
-  referencingDescriptorFile=/dependent/META-INF/plugin.xml
+  referencingDescriptorFile=dependent/META-INF/plugin.xml
 )
 -----------------------------------

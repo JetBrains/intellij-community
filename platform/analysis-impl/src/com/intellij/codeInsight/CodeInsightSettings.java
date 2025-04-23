@@ -72,11 +72,12 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   @Deprecated
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;
 
+  @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
   public int getCompletionCaseSensitive() {
     return COMPLETION_CASE_SENSITIVE;
   }
 
-  public void setCompletionCaseSensitive(int value) {
+  public void setCompletionCaseSensitive(@MagicConstant(intValues = {ALL, NONE, FIRST_LETTER}) int value) {
     COMPLETION_CASE_SENSITIVE = value;
   }
 
@@ -219,6 +220,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   }
 
   @Override
+  @NotNull
   public Element getState() {
     Element element = new Element("state");
     writeExternal(element);

@@ -523,7 +523,10 @@
     <group id="ToolsBasicGroup">
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
-    <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction"/>
+    <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
+      <override-text place="EditorPopup"/>
+    </action>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
     <action id="Scratch.ChangeLanguage" class="com.intellij.ide.scratch.ScratchFileActions$ChangeLanguageAction">
       <add-to-group group-id="EditorPopupMenu2"/>

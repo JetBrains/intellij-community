@@ -38,6 +38,7 @@ jvm_library(
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
     "//platform/platform-impl/bootstrap/kernel:ide-bootstrap-kernel",
+    "//platform/platform-impl/eel:ide-impl-wsl",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end

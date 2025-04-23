@@ -52,6 +52,7 @@ import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.rd.LocalEditorSupportUtil;
 import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -1403,7 +1404,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     // - The frontend cannot synchronously check file validity;
     // - typing on the backend is not performed.
-    if (EditorFlags.isMonolith()) {
+    if (LocalEditorSupportUtil.isMonolith()) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
       VirtualFile file = manager.getFile(myDocument);
       if (file != null && !file.isValid()) {

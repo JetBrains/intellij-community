@@ -7,10 +7,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal class ProgressPlaceChecker private constructor() {
+@ApiStatus.Internal
+class ProgressPlaceChecker private constructor() {
   companion object {
-    val placeChecker = ProgressPlaceChecker()
+    val placeChecker: ProgressPlaceChecker = ProgressPlaceChecker()
     fun getInstance(): ProgressPlaceChecker {
       return placeChecker
     }

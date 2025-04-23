@@ -6,6 +6,7 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
@@ -1182,6 +1183,35 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.main")))
     assertUnorderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project.java17-compile")),
                                     "--blablabla")
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-371005"])
+  fun repetitiveCompilerArguments() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin> 
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.12.1</version>
+             <configuration>
+               <compilerArgs>
+                   <arg>--add-exports</arg>
+                   <arg>java.base/sun.reflect.annotation=ALL-UNNAMED</arg>
+                   <arg>--add-exports</arg>
+                   <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+               </compilerArgs>
+             </configuration>
+          </plugin>
+        </plugins>
+      </build> """.trimIndent())
+    assertModules("project")
+    assertOrderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project")),
+                                  "--add-exports", "java.base/sun.reflect.annotation=ALL-UNNAMED", "--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED")
   }
 
 }

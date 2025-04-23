@@ -11,6 +11,12 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.RegisterExtension
 
+/**
+ * A wrapper around [LightJavaCodeInsightFixtureTestCase] that is JUnit 5-compatible.
+ * 
+ * @see LightJavaCodeInsightFixtureTestCase
+ * @see LightJavaCodeInsightFixtureTestCase4
+ */
 @TestDataPath("\$CONTENT_ROOT/testData")
 abstract class LightJavaCodeInsightFixtureTestCase5 (projectDescriptor: LightProjectDescriptor? = null) {
 

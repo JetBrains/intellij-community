@@ -108,6 +108,7 @@ public class JavaEditingTest extends AbstractBasicJavaEditingTest {
   public void testSmartIndentOnEnterWithinNonLastStatement() {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     boolean oldValue = settings.SMART_INDENT_ON_ENTER;
+    settings.SMART_INDENT_ON_ENTER = true;
     try {
       doTest(JavaFileType.INSTANCE, '\n');
     }

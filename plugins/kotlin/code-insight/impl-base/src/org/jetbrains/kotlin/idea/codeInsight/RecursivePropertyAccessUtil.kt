@@ -5,13 +5,17 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,16 +23,19 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object RecursivePropertyAccessUtil {
     @ApiStatus.ScheduledForRemoval
@@ -64,7 +71,7 @@ object RecursivePropertyAccessUtil {
         return element.parent !is KtCallableReferenceExpression
     }
 
-    private fun KaSession.hasThisAsReceiver(expression: KtQualifiedExpression) =
+    private fun hasThisAsReceiver(expression: KtQualifiedExpression) =
         expression.receiverExpression.textMatches(KtTokens.THIS_KEYWORD.value)
 
     private fun KaSession.hasObjectReceiver(expression: KtQualifiedExpression): Boolean {
@@ -74,7 +81,7 @@ object RecursivePropertyAccessUtil {
     }
 
     private fun KtBinaryExpression?.isAssignmentTo(expression: KtSimpleNameExpression): Boolean =
-      this != null && KtPsiUtil.isAssignment(this) && PsiTreeUtil.isAncestor(left, expression, false)
+        this != null && KtPsiUtil.isAssignment(this) && PsiTreeUtil.isAncestor(left, expression, false)
 
     private fun isSameAccessor(expression: KtSimpleNameExpression, isGetter: Boolean): Boolean {
         val binaryExpr = expression.getStrictParentOfType<KtBinaryExpression>()
@@ -96,42 +103,63 @@ object RecursivePropertyAccessUtil {
     }
 
     fun KtSimpleNameExpression.isRecursivePropertyAccess(anyRecursionTypes: Boolean): Boolean {
-        val propertyAccessor = getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor ?: return false
-      analyze(this) {
-        val propertySymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return false
-        if (propertySymbol != propertyAccessor.property.symbol) return false
+        val propertyAccessor = getContainingPropertyAccessor() ?: return false
+        analyze(this) {
+            val variableAccessCall = resolveToCall()?.successfulVariableAccessCall() ?: return false
+            val propertySymbol = variableAccessCall.symbol as? KaPropertySymbol ?: return false
+            if (propertySymbol != propertyAccessor.property.symbol) return false
 
-        (parent as? KtQualifiedExpression)?.let {
-          val propertyReceiverType = propertySymbol.receiverType
-          val receiverType = it.receiverExpression.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
-          if (anyRecursionTypes) {
-            if (receiverType != null && propertyReceiverType != null && !receiverType.isSubtypeOf(propertyReceiverType)) {
-              return false
+            if (!anyRecursionTypes) {
+                val propertyContainer = propertySymbol.containingSymbol as? KaClassLikeSymbol
+                val propertyReceiverParameter = propertySymbol.receiverParameter
+                val callDispatchReceiver = getSymbolFor(variableAccessCall.partiallyAppliedSymbol.dispatchReceiver)
+                val callExtensionReceiver = getSymbolFor(variableAccessCall.partiallyAppliedSymbol.extensionReceiver)
+
+                if (propertyContainer != callDispatchReceiver || propertyReceiverParameter != callExtensionReceiver)
+                    return false
             }
-          }
-          else {
-            if (!hasThisAsReceiver(it) && !hasObjectReceiver(it) && (propertyReceiverType == null || receiverType?.isSubtypeOf(
-                propertyReceiverType
-              ) == false)
-            ) {
-              return false
-            }
-          }
         }
-      }
         return isSameAccessor(this, propertyAccessor.isGetter)
+    }
+
+    fun KaSession.isInsidePropertyAccessorWithBackingField(simpleNameExpression: KtSimpleNameExpression): Boolean =
+        simpleNameExpression.getContainingPropertyAccessor()?.property?.symbol?.safeAs<KaPropertySymbol>()?.hasBackingField == true
+
+    private fun KaSession.getSymbolFor(receiverValue: KaReceiverValue?): KaSymbol? = when (receiverValue) {
+        is KaExplicitReceiverValue -> {
+            val expression = receiverValue.expression
+            val expressionSymbol = expression.resolveExpression()
+            adjustMisresolvedThis(expression, expressionSymbol)
+        }
+        is KaImplicitReceiverValue -> receiverValue.symbol
+        is KaSmartCastedReceiverValue -> getSymbolFor(receiverValue.original)
+        else -> null
+    }
+
+    /**
+     * Hack: workaround for a FE10 bug manifesting through AA.
+     * FE10 can return a symbol for the whole property instead of its receiver symbol when it resolves a `this` expression.
+     * Since `this` can never reference a property, returning the receiver in this case should be safe.
+     */
+    private fun adjustMisresolvedThis(expression: KtExpression, symbol: KaSymbol?): KaSymbol? =
+        if (expression is KtThisExpression && symbol is KaPropertySymbol && symbol.receiverParameter != null)
+            symbol.receiverParameter
+        else symbol
+
+    fun KtSimpleNameExpression.getContainingPropertyAccessor(): KtPropertyAccessor? {
+        return getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor
     }
 
     private fun KtSimpleNameExpression.isRecursiveSyntheticPropertyAccess(): Boolean {
         val namedFunction = getParentOfType<KtDeclarationWithBody>(true) as? KtNamedFunction ?: return false
 
-      analyze(this) {
-        val syntheticSymbol = mainReference.resolveToSymbol() as? KaSyntheticJavaPropertySymbol ?: return false
-        val namedFunctionSymbol = namedFunction.symbol
-        if (namedFunctionSymbol != syntheticSymbol.javaGetterSymbol && namedFunctionSymbol != syntheticSymbol.javaSetterSymbol) {
-          return false
+        analyze(this) {
+            val syntheticSymbol = mainReference.resolveToSymbol() as? KaSyntheticJavaPropertySymbol ?: return false
+            val namedFunctionSymbol = namedFunction.symbol
+            if (namedFunctionSymbol != syntheticSymbol.javaGetterSymbol && namedFunctionSymbol != syntheticSymbol.javaSetterSymbol) {
+                return false
+            }
         }
-      }
 
         val name = namedFunction.name ?: return false
         val referencedName = text.capitalizeAsciiOnly()

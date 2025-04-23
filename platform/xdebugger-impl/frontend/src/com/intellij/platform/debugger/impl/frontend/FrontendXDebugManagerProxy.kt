@@ -31,6 +31,10 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).currentSession
   }
 
+  override fun getSessions(project: Project): List<XDebugSessionProxy> {
+    return FrontendXDebuggerManager.getInstance(project).sessions
+  }
+
   override fun getBreakpointManagerProxy(project: Project): XBreakpointManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).breakpointsManager
   }

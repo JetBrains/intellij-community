@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInspection.reference.PsiMemberReference
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.ClassUtil
@@ -69,41 +69,8 @@ abstract class BaseJunitAnnotationReference(
   }
 
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
-    val literal = element.toUElement(UExpression::class.java) ?: return ResolveResult.EMPTY_ARRAY
-    val uClass = literal.getParentOfType(UClass::class.java) ?: return ResolveResult.EMPTY_ARRAY
-    val directLink = directLink(literal, uClass)
-    if (directLink != null) return arrayOf(PsiElementResolveResult(directLink))
-
-    val method = literal.getParentOfType(UMethod::class.java)
-    if (method != null) { // direct annotation
-      val resolved = fastResolveFor(method)
-      return if (resolved is PsiMethod)  arrayOf(PsiElementResolveResult(resolved)) else ResolveResult.EMPTY_ARRAY
-    } else if (uClass.isAnnotationType) { // inherited annotation from another annotation
-      val scope = GlobalSearchScope.projectScope(element.project)
-      val process = ArrayDeque<PsiClass>()
-      val processed = mutableSetOf<PsiClass>()
-      val result = mutableSetOf<PsiMethod>()
-
-      process.add(uClass)
-      while (process.isNotEmpty()) {
-        val current = process.removeFirst()
-        if (!processed.add(current)) continue
-
-        // find all the methods annotated with this annotation
-        result.addAll(AnnotatedElementsSearch.searchPsiMethods(current, scope).findAll())
-
-        // find all the classes and annotations annotated with this annotation in depth
-        process.addAll(AnnotatedElementsSearch.searchPsiClasses(current, scope).findAll())
-      }
-      return result
-        .mapNotNull { method -> method.toUElement(UMethod::class.java) }
-        .mapNotNull { method -> method.getParentOfType(UClass::class.java) }
-        .distinct() // process only classes
-        .mapNotNull { clazz -> fastResolveFor(literal, clazz) }
-        .map { method -> PsiElementResolveResult(method) }.toTypedArray()
-    } else {
-      return ResolveResult.EMPTY_ARRAY
-    }
+    val file: PsiFile = element.containingFile ?: return ResolveResult.EMPTY_ARRAY
+    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, OurGenericsResolver, false, incompleteCode, file)
   }
 
   /**
@@ -127,10 +94,10 @@ abstract class BaseJunitAnnotationReference(
   private fun fastResolveFor(literal: UExpression, scope: UClass): PsiElement? {
     val methodName = literal.evaluate() as String? ?: return null
     val psiClazz = scope.javaPsi
-    var clazzMethods = psiClazz.findMethodsByName(methodName, true)
+    val clazzMethods = psiClazz.findMethodsByName(methodName, true)
     if (clazzMethods.isEmpty() && (scope.isInterface || PsiUtil.isAbstractClass(psiClazz))) {
       val methods = ClassInheritorsSearch.search(psiClazz, psiClazz.resolveScope, false)
-        .asIterable()
+        .findAll()
         .flatMap { aClazz -> aClazz.findMethodsByName(methodName, false).toList() }
           return filteredMethod(methods.toTypedArray(), scope, literal.getParentOfType(UMethod::class.java))
     }
@@ -153,8 +120,49 @@ abstract class BaseJunitAnnotationReference(
   /**
    * @param method method referenced from within JUnit annotation
    * @param literalClazz the class where the annotation is located
-   * @param literalMethod the JUnit annotated method, is null in case the annotation is class-level
-   * @return true in case static check is successful
+   * @param literalMethod the JUnit annotated method is null in case the annotation is class-level
+   * @return true in case a static check is successful
    */
   protected abstract fun hasNoStaticProblem(method: PsiMethod, literalClazz: UClass, literalMethod: UMethod?): Boolean
+
+  private object OurGenericsResolver: ResolveCache.PolyVariantResolver<BaseJunitAnnotationReference> {
+
+    override fun resolve(ref: BaseJunitAnnotationReference, incompleteCode: Boolean): Array<ResolveResult> {
+      val literal = ref.element.toUElement(UExpression::class.java) ?: return ResolveResult.EMPTY_ARRAY
+      val uClass = literal.getParentOfType(UClass::class.java) ?: return ResolveResult.EMPTY_ARRAY
+      val directLink = ref.directLink(literal, uClass)
+      if (directLink != null) return arrayOf(PsiElementResolveResult(directLink))
+
+      val method = literal.getParentOfType(UMethod::class.java)
+      if (method != null) { // direct annotation
+        val resolved = ref.fastResolveFor(method)
+        return if (resolved is PsiMethod)  arrayOf(PsiElementResolveResult(resolved)) else ResolveResult.EMPTY_ARRAY
+      } else if (uClass.isAnnotationType) { // inherited annotation from another annotation
+        val scope = uClass.sourcePsi?.resolveScope ?: ref.element.resolveScope
+        val process = ArrayDeque<PsiClass>()
+        val processed = mutableSetOf<PsiClass>()
+        val result = mutableSetOf<PsiMethod>()
+
+        process.add(uClass)
+        while (process.isNotEmpty()) {
+          val current = process.removeFirst()
+          if (!processed.add(current)) continue
+
+          // find all the methods annotated with this annotation
+          result.addAll(AnnotatedElementsSearch.searchPsiMethods(current, scope).findAll())
+
+          // find all the classes and annotations annotated with this annotation in depth
+          process.addAll(AnnotatedElementsSearch.searchPsiClasses(current, scope).findAll())
+        }
+        return result
+          .mapNotNull { method -> method.toUElement(UMethod::class.java) }
+          .mapNotNull { method -> method.getParentOfType(UClass::class.java) }
+          .distinct() // process only classes
+          .mapNotNull { clazz -> ref.fastResolveFor(literal, clazz) }
+          .map { method -> PsiElementResolveResult(method) }.toTypedArray()
+      } else {
+        return ResolveResult.EMPTY_ARRAY
+      }
+    }
+  }
 }

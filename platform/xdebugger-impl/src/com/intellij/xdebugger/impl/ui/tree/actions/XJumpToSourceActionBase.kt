@@ -14,14 +14,8 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceActionBase.Companion.NAVIGATION_TIMEOUT
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.seconds
 
@@ -46,32 +40,26 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
    */
   protected abstract suspend fun navigateToSource(project: Project, value: XValue, session: XDebugSessionProxy?): Boolean
 
-  companion object {
-    private val NAVIGATION_TIMEOUT = 10.seconds
+}
 
-    /**
-     * Starts computing [XSourcePosition] by [navigationRequest], when it is calculated, navigates to it.
-     * [XSourcePosition] has to be returned to the [XNavigatable] callback, otherwise the suspend function will be stuck.
-     *
-     * @see NAVIGATION_TIMEOUT
-     */
-    @ApiStatus.Internal
-    suspend fun navigateByNavigatable(project: Project, navigationRequest: (XNavigatable) -> Unit): Boolean {
-      val xSourceDeferred = CompletableDeferred<XSourcePosition?>()
-      val navigatable = XNavigatable { sourcePosition ->
-        xSourceDeferred.complete(sourcePosition)
-      }
-      navigationRequest(navigatable)
+private val NAVIGATION_TIMEOUT = 10.seconds
 
-      val sourcePosition = withTimeoutOrNull(NAVIGATION_TIMEOUT) {
-        xSourceDeferred.await()
-      } ?: return false
+/**
+ * Computes [XSourcePosition] by [navigationRequest].
+ * [XSourcePosition] has to be returned to the [XNavigatable] callback, otherwise the suspend function will be stuck.
+ *
+ * @see NAVIGATION_TIMEOUT
+ */
+@ApiStatus.Internal
+suspend fun computeSourcePositionWithTimeout(navigationRequest: (XNavigatable) -> Unit): XSourcePosition? {
+  val xSourceDeferred = CompletableDeferred<XSourcePosition?>()
+  val navigatable = XNavigatable { sourcePosition ->
+    xSourceDeferred.complete(sourcePosition)
+  }
+  navigationRequest(navigatable)
 
-      withContext(Dispatchers.EDT) {
-        sourcePosition.createNavigatable(project).navigate(true)
-      }
-      return true
-    }
+  return withTimeoutOrNull(NAVIGATION_TIMEOUT) {
+    xSourceDeferred.await()
   }
 }
 

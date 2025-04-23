@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.components.service
@@ -27,11 +27,6 @@ internal class GitBranchesTreeMultiRepoModel(
   override fun getRemoteBranches() = GitBranchUtil.getCommonRemoteBranches(repositories)
 
   override fun getTags() = GitBranchUtil.getCommonTags(repositories)
-
-  override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
-                                             || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
-                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
-                                             || (node === GitTagType && tagsTree.isEmpty())
 
   override fun getChildren(parent: Any?): List<Any> {
     if (parent == null) return emptyList()

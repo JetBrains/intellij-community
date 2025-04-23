@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.PyPackageVersionComparator
@@ -24,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class CompositePythonRepositoryManager(
   override val project: Project,
   private val managers: List<PythonRepositoryManager>,
-  @Deprecated("Don't use sdk from here") override val sdk: Sdk
 ) : PythonRepositoryManager {
 
   override val repositories: List<PyPackageRepository> =

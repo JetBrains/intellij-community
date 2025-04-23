@@ -5,7 +5,10 @@ import com.intellij.java.syntax.element.JavaSyntaxTokenType;
 import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.java.syntax.parser.ReferenceParser;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.lang.java.parser.PsiSyntaxBuilderWithLanguageLevel;
@@ -15,6 +18,7 @@ import com.intellij.platform.syntax.lexer.Lexer;
 import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
 import com.intellij.platform.syntax.psi.ParsingDiagnostics;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 import com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -27,7 +31,6 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 
 import java.util.Collections;
 import java.util.Set;
@@ -35,6 +38,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 
+//todo remove and merge with standard
 /**
  * @see com.intellij.java.syntax.element.JavaSyntaxElementType
  */

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.codeInspection.util.IntentionName
@@ -45,7 +45,6 @@ import com.jetbrains.python.sdk.showSdkExecutionException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.awt.BorderLayout
-import java.awt.Insets
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -200,7 +199,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
     override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
-        val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
+        val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0))
         val message = PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.permission")
 
         add(

@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.branch.GitRefType
@@ -24,7 +25,6 @@ import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesClippedNamesCache
-import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
@@ -41,8 +41,6 @@ internal abstract class GitBranchesTreeRenderer(
   protected val treePopupStep: GitBranchesTreePopupStepBase,
   private val favoriteToggleOnClickSupported: Boolean = true,
 ) : TreeCellRenderer {
-  private val iconProvider = GitBranchesTreeIconProvider(treePopupStep.project)
-
   private val updateScaleHelper = UpdateScaleHelper()
 
   private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
@@ -57,7 +55,7 @@ internal abstract class GitBranchesTreeRenderer(
   }
 
   fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? = when (treeNode) {
-    is GitBranchesTreeModel.BranchesPrefixGroup -> iconProvider.forGroup()
+    is GitBranchesTreeModel.BranchesPrefixGroup -> GitBranchesTreeIconProvider.forGroup()
     is RefUnderRepository -> getBranchIcon(treeNode.ref, listOf(treeNode.repository), isSelected)
     is GitReference -> getBranchIcon(treeNode, selected = isSelected)
     else -> null
@@ -70,14 +68,14 @@ internal abstract class GitBranchesTreeRenderer(
     val branchManager = treePopupStep.project.service<GitBranchManager>()
     val isFavorite = repositories.all { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
 
-    return iconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = selected)
+    return GitBranchesTreeIconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = selected)
   }
 
   private fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
     val value = treeNode ?: return null
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-      is GitBranchesTreeModel.RepositoryNode -> iconProvider.forRepository(value.repository)
+      is GitBranchesTreeModel.RepositoryNode -> GitBranchesTreeIconProvider.forRepository(value.repository.project, value.repository.rpcId)
       else -> null
     }
   }

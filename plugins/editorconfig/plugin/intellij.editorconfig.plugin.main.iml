@@ -6,6 +6,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.editorconfig.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.editorconfig.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.editorconfig.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend" scope="RUNTIME" />
   </component>
 </module>

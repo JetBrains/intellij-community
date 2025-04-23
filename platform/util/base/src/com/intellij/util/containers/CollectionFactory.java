@@ -21,7 +21,7 @@ public final class CollectionFactory {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap() {
-    return new ConcurrentWeakHashMap<>(0.75f);
+    return new ConcurrentWeakHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, null);
   }
 
   /**
@@ -29,7 +29,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "_, -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap(@NotNull HashingStrategy<? super K> strategy) {
-    return new ConcurrentWeakHashMap<>(strategy);
+    return new ConcurrentWeakHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, strategy, null);
   }
 
   /**
@@ -37,7 +37,7 @@ public final class CollectionFactory {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentMap<@NotNull String, @NotNull V> createConcurrentWeakCaseInsensitiveMap() {
-    return new ConcurrentWeakHashMap<>(HashingStrategy.caseInsensitive());
+    return createConcurrentWeakMap(HashingStrategy.caseInsensitive());
   }
 
   /**
@@ -79,7 +79,7 @@ public final class CollectionFactory {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakIdentityMap() {
-    return new ConcurrentWeakHashMap<>(HashingStrategy.identity());
+    return createConcurrentWeakMap(HashingStrategy.identity());
   }
 
   /**
@@ -145,10 +145,10 @@ public final class CollectionFactory {
 
   @Contract(value = "_,_,_,_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap(int initialCapacity,
-                                                                            float loadFactor,
-                                                                            int concurrencyLevel,
-                                                                            @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+                                                                                              float loadFactor,
+                                                                                              int concurrencyLevel,
+                                                                                              @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, null);
   }
 
   @Contract(value = " -> new", pure = true)
@@ -410,7 +410,7 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap() {
-    return new ConcurrentSoftHashMap<>(null);
+    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, null);
   }
 
   /**
@@ -419,15 +419,25 @@ public final class CollectionFactory {
    */
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
-    return new ConcurrentSoftHashMap<>(evictionListener);
+    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, evictionListener);
+  }
+  /**
+   * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
+   * Keys are hashed and compared using {@code hashingStrategy}.
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value.
+   */
+  @Contract(value = "_,_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull HashingStrategy<? super K> hashingStrategy,
+                                                                                              @NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
+    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, hashingStrategy, evictionListener);
   }
 
   @Contract(value = "_,_,_,_-> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(int initialCapacity,
-                                                                                     float loadFactor,
-                                                                                     int concurrencyLevel,
-                                                                                     @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return new ConcurrentSoftHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+                                                                                              float loadFactor,
+                                                                                              int concurrencyLevel,
+                                                                                              @NotNull HashingStrategy<? super K> hashingStrategy) {
+    return new ConcurrentSoftHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, null);
   }
 
   public static void trimMap(@NotNull Map<?, ?> map) {

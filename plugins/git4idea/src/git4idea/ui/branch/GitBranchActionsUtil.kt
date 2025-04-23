@@ -6,25 +6,25 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import git4idea.GitDisposable
 import git4idea.GitLocalBranch
 import git4idea.GitNotificationIdsHolder.Companion.BRANCHES_UPDATE_SUCCESSFUL
 import git4idea.GitReference
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.branch.GitBranchPair
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitNewBranchDialog
 import git4idea.config.GitVcsSettings
+import git4idea.fetch.GitFetchSpec
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -48,12 +48,12 @@ internal fun updateBranches(project: Project, repositories: Collection<GitReposi
     repositories.associateWith { it.branchTrackInfos.filter { info -> localBranchNames.contains(info.localBranch.name) } }
   if (repoToTrackingInfos.isEmpty()) return
 
-  GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("branches.updating.process"), true) {
-    private val successfullyUpdated = arrayListOf<String>()
-
-    override fun run(indicator: ProgressIndicator) {
-      val fetchSupport = GitFetchSupport.fetchSupport(project)
-      val currentBranchesMap: MutableMap<GitRepository, GitBranchPair> = HashMap()
+  GitDisposable.getInstance(project).coroutineScope.launch {
+    withBackgroundProgress(project, GitBundle.message("branches.updating.process")) {
+      // If a branch is checked out, do update via GitUpdateExecutionProcess
+      val updateProcessTargets = HashMap<GitRepository, GitBranchPair>()
+      // Otherwise, perform fetch using remote:local refspec
+      val fetchTargets = mutableListOf<GitFetchSpec>()
 
       for ((repo, trackingInfos) in repoToTrackingInfos) {
         val currentBranch = repo.currentBranch
@@ -61,42 +61,36 @@ internal fun updateBranches(project: Project, repositories: Collection<GitReposi
           val localBranch = trackingInfo.localBranch
           val remoteBranch = trackingInfo.remoteBranch
           if (localBranch == currentBranch) {
-            currentBranchesMap[repo] = GitBranchPair(currentBranch, remoteBranch)
+            updateProcessTargets[repo] = GitBranchPair(currentBranch, remoteBranch)
           }
           else {
             // Fast-forward all non-current branches in the selection
             val localBranchName = localBranch.name
             val remoteBranchName = remoteBranch.nameForRemoteOperations
-            val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
-            try {
-              fetchResult.throwExceptionIfFailed()
-              successfullyUpdated.add(localBranchName)
-            }
-            catch (ignored: VcsException) {
-              fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
-            }
+            fetchTargets.add(GitFetchSpec(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName"))
           }
         }
       }
-      // Update all current branches in the selection
-      if (currentBranchesMap.isNotEmpty()) {
+
+      if (fetchTargets.isNotEmpty()) {
+        val fetchSuccessful =
+          GitFetchSupport.fetchSupport(project).fetch(fetchTargets).showNotificationIfFailed(GitBundle.message("branches.update.failed"))
+        if (fetchSuccessful) {
+          VcsNotifier.getInstance(project).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "", GitBundle.message("branches.fetch.finished", fetchTargets.size))
+        }
+      }
+
+      if (updateProcessTargets.isNotEmpty()) {
+        // This method is executed asynchronously, which can bring confusion with notifications and the overall update status.
+        // Should be reconsidered one day.
         GitUpdateExecutionProcess(project,
                                   repositories,
-                                  currentBranchesMap,
+                                  updateProcessTargets,
                                   GitVcsSettings.getInstance(project).updateMethod,
                                   false).execute()
       }
     }
-
-    override fun onSuccess() {
-      if (successfullyUpdated.isNotEmpty()) {
-        VcsNotifier.getInstance(project).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "",
-                                                       GitBundle.message("branches.selected.branches.updated.title",
-                                                                         successfullyUpdated.size,
-                                                                         successfullyUpdated.joinToString("\n")))
-      }
-    }
-  })
+  }
 }
 
 internal fun isTrackingInfosExist(branchNames: List<String>, repositories: Collection<GitRepository>) =

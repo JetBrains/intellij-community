@@ -62,7 +62,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   static boolean shouldCheckConsistency() {
     return IS_UNDER_UNIT_TEST && !ApplicationManagerEx.isInStressTest()
-           && !Boolean.TRUE.equals(TestModeFlags.get(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST));
+           && !TestModeFlags.is(DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST);
   }
 
   @TestOnly

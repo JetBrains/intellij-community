@@ -3,6 +3,7 @@ package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId;
 import com.intellij.util.messages.Topic;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
@@ -127,4 +128,7 @@ public interface GitRepository extends Repository {
 
   @NotNull
   GitTagHolder getTagHolder();
+
+  @NotNull
+  RepositoryId getRpcId();
 }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.IExceptionWithRetryPolicy
 import org.jetbrains.intellij.build.StripedMutex
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.cleanUpIfRequired
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.cleanDirectory
@@ -186,8 +187,9 @@ object BuildDependenciesDownloader {
   @TestOnly
   fun getExtractCount(): Int = extractCount.get()
 
-  class HttpStatusException(message: String, @JvmField val statusCode: Int, val url: String) : IllegalStateException(message) {
+  class HttpStatusException(message: String, @JvmField val statusCode: Int, val url: String) : IllegalStateException(message), IExceptionWithRetryPolicy {
     override fun toString(): String = "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
+    override val isRetryAllowed: Boolean get() = statusCode != 404
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.execution.ExecutionException
@@ -24,7 +24,7 @@ import java.nio.file.Path
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     PipManagementInstaller(sdk, this).installManagementIfNeeded()

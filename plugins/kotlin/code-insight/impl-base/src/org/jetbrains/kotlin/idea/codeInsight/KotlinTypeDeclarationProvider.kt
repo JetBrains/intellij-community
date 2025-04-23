@@ -96,9 +96,9 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         analyze(this) {
             val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-            val targetSymbol = type.upperBoundIfFlexible().abbreviationOrSelf.symbol?.psi
+            val targetPsiElement = type.upperBoundIfFlexible().abbreviationOrSelf.symbol?.psi
                 ?: (callSiteReferenceProvider?.invoke()?.element as? KtElement)?.resolvePsiOfTypeAtCallSite()
-            targetSymbol?.let { return arrayOf(it) }
+            targetPsiElement?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY
     }
@@ -107,6 +107,6 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         analyze(this) {
             val memberCall = resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze null
             val type = memberCall.partiallyAppliedSymbol.signature.returnType
-            type.upperBoundIfFlexible().symbol?.psi
+            type.abbreviationOrSelf.symbol?.psi
         }
 }

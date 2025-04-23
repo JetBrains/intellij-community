@@ -27,6 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
@@ -185,12 +186,35 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
   }
 
+  @Test
+  fun `zsh integration should be executed in the global scope`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    val dir = Files.createTempDirectory("zsh-custom-zdotdir")
+    Files.writeString(dir.resolve(".zshrc"), """
+      export -T MY_PATH my_path
+      MY_PATH='path1:path2:path1:path3:path2'
+      typeset -U my_path MY_PATH
+      echo "MY_PATH=${'$'}MY_PATH"
+    """.trimIndent())
+    val events = startSessionAndCollectOutputEvents(extraEnvVariables = mapOf("ZDOTDIR" to dir.toString())) {}
+    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
+    val suffixFound = contentUpdatedEvents.any { it.text.contains("MY_PATH=path1:path2:path3") }
+    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+  }
+
   private suspend fun startSessionAndCollectOutputEvents(
     size: TermSize = TermSize(80, 24),
+    extraEnvVariables: Map<String, String> = emptyMap(),
     block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
+      val session = TerminalSessionTestUtil.startTestTerminalSession(
+        shellPath.toString(),
+        projectRule.project,
+        childScope("TerminalSession"),
+        size,
+        extraEnvVariables
+      )
       val inputChannel = session.getInputChannel()
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()

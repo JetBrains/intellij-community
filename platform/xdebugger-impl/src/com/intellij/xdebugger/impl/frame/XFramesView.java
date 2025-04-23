@@ -86,7 +86,7 @@ public final class XFramesView extends XDebugView {
   private boolean myRefresh;
 
   public XFramesView(@NotNull XDebugSession session) {
-    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    this(XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   public XFramesView(@NotNull XDebugSessionProxy sessionProxy) {

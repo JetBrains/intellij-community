@@ -1,9 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -17,22 +14,20 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.failure
-import kotlinx.coroutines.Dispatchers
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -135,7 +130,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       }
       row("") {
         checkBox(message("available.to.all.projects"))
-          .bindSelected(model.state.makeAvailable)
+          .bindSelected(model.state.makeAvailableForAllProjects)
       }
     }
 
@@ -164,7 +159,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     // todo remove project path, or move to controller
     try {
       val venvPath = Path.of(model.state.venvPath.get())
-      model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first())
+      model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first(), moduleOrProject)
     }
     catch (e: InvalidPathException) {
       failure(e.localizedMessage)
@@ -176,7 +171,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     return InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
                                      statisticsTarget,
                                      model.state.inheritSitePackages.get(),
-                                     model.state.makeAvailable.get(),
+                                     model.state.makeAvailableForAllProjects.get(),
                                      false,
       //presenter.projectLocationContext is WslContext,
                                      false, // todo fix for wsl

@@ -466,6 +466,25 @@ internal object ChangeTypeQuickFixFactories {
             val containerName = parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }
             return ChangeTypeFixUtils.functionOrConstructorParameterPresentation(this, containerName?.asString())
         }
+
+    val implicitNothingPropertyTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ImplicitNothingPropertyType ->
+        createImplicitNothingTypeFix(diagnostic.psi as? KtProperty)
+    }
+
+    val implicitNothingReturnTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ImplicitNothingReturnType ->
+        createImplicitNothingTypeFix(diagnostic.psi as? KtFunction)
+    }
+
+    private fun createImplicitNothingTypeFix(callable: KtCallableDeclaration?): List<ModCommandAction> {
+        if (callable == null) return emptyList()
+        return listOf(
+            UpdateTypeQuickFix(
+                callable,
+                TargetType.ENCLOSING_DECLARATION,
+                CallableReturnTypeUpdaterUtils.TypeInfo(CallableReturnTypeUpdaterUtils.TypeInfo.NOTHING)
+            )
+        )
+    }
 }
 
 @OptIn(KaExperimentalApi::class)

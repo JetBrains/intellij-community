@@ -5,7 +5,6 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelTunnelsApi.CreateFilePath
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
@@ -17,9 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.CoreMatchers.not
-import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -66,20 +62,6 @@ class EelLocalTunnelApiTest {
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
       connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()).getOrThrow() //      Helper closes the stream, so does the channel
       Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)).getOrThrow())
-    }
-  }
-
-  @ParameterizedTest
-  @ValueSource(booleans = [true, false])
-  fun testClientLingerZero(setLingerZero: Boolean) = timeoutRunBlocking(1.minutes) {
-    withServer { connection, helper ->
-      if (setLingerZero) {
-        connection.configureSocket { setLinger(0.seconds) }
-      }
-      connection.close()
-      val result = helper.awaitProcessResult()
-      val hasReset = containsString("reset")
-      assertThat("With linger 0 there must be reset. Without linger no.", result.stderr.decodeToString(), if (setLingerZero) hasReset else not(hasReset))
     }
   }
 

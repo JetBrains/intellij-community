@@ -5816,6 +5816,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/outerScopeMutableListOfCall.kt");
         }
 
+        @TestMetadata("setHiddenByElvisOperator.kt")
+        public void testSetHiddenByElvisOperator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/setHiddenByElvisOperator.kt");
+        }
+
+        @TestMetadata("setHiddenByElvisOperatorNested.kt")
+        public void testSetHiddenByElvisOperatorNested() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/setHiddenByElvisOperatorNested.kt");
+        }
+
         @TestMetadata("shadowedFunctionName.kt")
         public void testShadowedFunctionName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");
@@ -7894,6 +7904,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt")
             public void testDontReplaceIfPropertyHasLambdaAndSetterInsideIsLast() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
+            }
+
+            @TestMetadata("dontReplaceMapGetValuesCaptured.kt")
+            public void testDontReplaceMapGetValuesCaptured() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceMapGetValuesCaptured.kt");
             }
 
             @TestMetadata("dontReplaceOverridenNotProperty.kt")
@@ -13357,6 +13372,85 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals")
+    public static class ReplaceWithIgnoreCaseEquals extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/extension.kt");
+        }
+
+        @TestMetadata("extension2.kt")
+        public void testExtension2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/extension2.kt");
+        }
+
+        @TestMetadata("lowercase.kt")
+        public void testLowercase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/lowercase.kt");
+        }
+
+        @TestMetadata("notApplicable.kt")
+        public void testNotApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/notApplicable.kt");
+        }
+
+        @TestMetadata("notApplicable2.kt")
+        public void testNotApplicable2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/notApplicable2.kt");
+        }
+
+        @TestMetadata("notApplicable3.kt")
+        public void testNotApplicable3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/notApplicable3.kt");
+        }
+
+        @TestMetadata("notApplicable4.kt")
+        public void testNotApplicable4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/notApplicable4.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/nullable.kt");
+        }
+
+        @TestMetadata("nullable2.kt")
+        public void testNullable2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/nullable2.kt");
+        }
+
+        @TestMetadata("nullable3.kt")
+        public void testNullable3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/nullable3.kt");
+        }
+
+        @TestMetadata("toLowerCase.kt")
+        public void testToLowerCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/toLowerCase.kt");
+        }
+
+        @TestMetadata("toUpperCase.kt")
+        public void testToUpperCase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/toUpperCase.kt");
+        }
+
+        @TestMetadata("uppercase.kt")
+        public void testUppercase() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceWithIgnoreCaseEquals/uppercase.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/addOperatorModifier")
     public static class AddOperatorModifier extends AbstractK2LocalInspectionTest {
         @java.lang.Override
@@ -15460,11 +15554,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("usedAsExpression.kt")
             public void testUsedAsExpression() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/usedAsExpression.kt");
-            }
-
-            @TestMetadata("version12.kt")
-            public void testVersion12() throws Exception {
-                runTest("../../../idea/tests/testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/version12.kt");
             }
         }
     }

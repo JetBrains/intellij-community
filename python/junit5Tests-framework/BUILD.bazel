@@ -41,6 +41,8 @@ jvm_library(
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
     "//platform/eel-provider",
+    "@lib//:python-community-junit5_tests-framework-uk-webcompere-system-stubs-jupiter",
+    "@lib//:io-mockk-jvm",
   ],
   runtime_deps = ["//python/pluginCore:community-plugin"]
 )

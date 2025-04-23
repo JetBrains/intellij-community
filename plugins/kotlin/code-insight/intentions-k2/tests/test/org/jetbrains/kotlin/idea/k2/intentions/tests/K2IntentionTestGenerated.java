@@ -8786,6 +8786,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/arrayInt.kt");
         }
 
+        @TestMetadata("arrayNullableInt.kt")
+        public void testArrayNullableInt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/arrayNullableInt.kt");
+        }
+
         @TestMetadata("arrayString.kt")
         public void testArrayString() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertArrayParameterToVararg/arrayString.kt");

@@ -100,7 +100,7 @@ abstract class KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionPlaceh
         internal class X {
             val LOG = LoggerFactory.getLogger()
             fun m() {
-              LOG.info( <warning descr="Fewer arguments provided (0) than placeholders specified (4)">S + "{}" + (1 + 2) + '{' + '}' + S</warning> )
+              LOG.info( <warning descr="Fewer arguments provided (0) than placeholders specified (at least 2)">S + "{}" + (1 + 2) + '{' + '}' + S</warning> )
               LOG.info( <warning descr="Fewer arguments provided (0) than placeholders specified (1)">message</warning> )
             }
 

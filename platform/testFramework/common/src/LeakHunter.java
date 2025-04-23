@@ -152,9 +152,10 @@ public final class LeakHunter {
   // we want to avoid walking heap during indexing, because zillions of UpdateOp and other transient indexing requests stored in the temp queue could OOME
   @TestOnly
   private static void waitForIndicesToUpdate() {
+    ProjectManager projectManager = ApplicationManager.getApplication() == null ? null : ProjectManager.getInstance();
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
         while (DumbServiceImpl.getInstance(project).isDumb()) {
           DumbServiceImpl.getInstance(project).waitForSmartMode(100L);
           UIUtil.dispatchAllInvocationEvents();
@@ -163,7 +164,7 @@ public final class LeakHunter {
       }
     }
     else {
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
         DumbService.getInstance(project).waitForSmartMode();
         FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
       }

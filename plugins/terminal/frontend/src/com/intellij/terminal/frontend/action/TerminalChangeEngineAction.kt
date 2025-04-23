@@ -13,6 +13,8 @@ import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 internal sealed class TerminalChangeEngineAction(private val engine: TerminalEngine) : DumbAwareToggleAction() {
   init {
@@ -29,7 +31,8 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(application)
 
-      TerminalToolWindowManager.getInstance(e.project!!).createNewSession()
+      val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE)
+      TerminalToolWindowManager.getInstance(e.project!!).createNewSession(startupFusInfo)
     }
   }
 

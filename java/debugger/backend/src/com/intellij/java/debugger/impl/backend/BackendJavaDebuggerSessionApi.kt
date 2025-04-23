@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 
 internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int): JavaThreadDumpResponseDto? {
+  override suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int, onlyPlatformThreads: Boolean): JavaThreadDumpResponseDto? {
     val xSession = sessionId.findValue() ?: return null
 
     val javaDebugProcess = xSession.debugProcess as JavaDebugProcess
@@ -36,7 +36,7 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
     executeOnDMT(context.managerThread!!) {
       // Pass parts of the dump to the ThreadDumpPanel via a channel as soon as they are computed
       val dumpItemsChannel = produce(capacity = Channel.BUFFERED) {
-        ThreadDumpAction.buildThreadDump(context, channel)
+        ThreadDumpAction.buildThreadDump(context, onlyPlatformThreads, channel)
       }
       val dtosChannel = Channel<JavaThreadDumpDto>(capacity = Channel.BUFFERED)
       launch(Dispatchers.Default) {

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.PsiFileEx
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTest
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import java.io.File
 
 abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
@@ -18,7 +20,8 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val expectedHighlighting = dataFile().getExpectedHighlightingFile()
         val psiFile = files.first()
-        if (psiFile is KtFile && psiFile.isScript()) {
+
+        if (!isFirPlugin && psiFile is KtFile && psiFile.isScript()) {
             ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
         }
 
@@ -27,12 +30,13 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         }
 
         files.forEach {
-            if (InTextDirectivesUtils.isDirectiveDefined(it.text, "BATCH_MODE")) {
+            val fileText = runReadAction { it.text }
+            if (InTextDirectivesUtils.isDirectiveDefined(fileText, "BATCH_MODE")) {
                 it.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
             }
         }
 
-        checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)
+        runInEdtAndWait { checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project) }
     }
 
     protected fun File.getExpectedHighlightingFile(suffix: String = highlightingFileNameSuffix(this)): File {

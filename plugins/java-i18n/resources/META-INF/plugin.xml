@@ -37,8 +37,6 @@
 
     <lang.foldingBuilder language="UAST" implementationClass="com.intellij.codeInspection.i18n.folding.PropertyFoldingBuilder"
                          order="FIRST"/>
-    <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.ResourceBundleContextFoldingBuilder"/>
-
     <gotoDeclarationHandler implementation="com.intellij.codeInspection.i18n.folding.I18nMessageGotoDeclarationHandler" order="FIRST"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlinePropertyHandler"/>
 
@@ -97,9 +95,6 @@
     </intentionAction>
 
     <completion.confidence language="UAST" implementationClass="com.intellij.lang.properties.PropertyKeyLiteralConfidence" id="propertyKeys" order="before javaSkipAutopopupInStrings"/>
-
-    <applicationService serviceImplementation="com.intellij.lang.properties.PropertiesFoldingSettings"/>
-    <codeFoldingOptionsProvider instance="com.intellij.lang.properties.PropertiesFoldingOptionsProvider"/>
 
     <fileIconProvider implementation="com.intellij.java.i18n.MessagesFileIconProvider"/>
   </extensions>

@@ -1,0 +1,39 @@
+com.intellij.dvcs.branch.BranchType
+- a:getName():java.lang.String
+c:com.intellij.dvcs.branch.DvcsBranchInfo
+- f:repoPath:java.lang.String
+- f:sourceName:java.lang.String
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- hashCode():I
+f:com.intellij.dvcs.branch.DvcsBranchSettings
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getGroupingKeyIds():java.util.Set
+com.intellij.dvcs.branch.DvcsCompareSettings
+- a:setSwapSidesInCompareBranches(Z):V
+- a:shouldSwapSidesInCompareBranches():Z
+com.intellij.dvcs.branch.DvcsSyncSettings
+- a:getSyncSetting():com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- a:setSyncSetting(com.intellij.dvcs.branch.DvcsSyncSettings$Value):V
+e:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- java.lang.Enum
+- sf:DONT_SYNC:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- sf:NOT_DECIDED:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- sf:SYNC:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- s:valueOf(java.lang.String):com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- s:values():com.intellij.dvcs.branch.DvcsSyncSettings$Value[]
+e:com.intellij.dvcs.branch.GroupingKey
+- java.lang.Enum
+- sf:GROUPING_BY_DIRECTORY:com.intellij.dvcs.branch.GroupingKey
+- sf:GROUPING_BY_REPOSITORY:com.intellij.dvcs.branch.GroupingKey
+- f:getDescription():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getId():java.lang.String
+- f:getText():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.dvcs.branch.GroupingKey
+- s:values():com.intellij.dvcs.branch.GroupingKey[]
+f:com.intellij.dvcs.ui.DvcsBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier

@@ -3449,6 +3449,14 @@ a:com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 - f:createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.util.ProperTextRange):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 - a:createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.PsiElement):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 - createHighlightUsagesHandler(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.psi.PsiElement,com.intellij.openapi.util.ProperTextRange):com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
+a:com.intellij.codeInsight.highlighting.PairedBraceAndAnglesMatcher
+- com.intellij.codeInsight.highlighting.PairedBraceMatcherAdapter
+- <init>(com.intellij.lang.PairedBraceMatcher,com.intellij.lang.Language,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.psi.tree.ParentAwareTokenSet):V
+- <init>(com.intellij.lang.PairedBraceMatcher,com.intellij.lang.Language,com.intellij.openapi.fileTypes.LanguageFileType,com.intellij.psi.tree.TokenSet):V
+- a:gt():com.intellij.psi.tree.IElementType
+- isLBraceToken(com.intellij.openapi.editor.highlighter.HighlighterIterator,java.lang.CharSequence,com.intellij.openapi.fileTypes.FileType):Z
+- isRBraceToken(com.intellij.openapi.editor.highlighter.HighlighterIterator,java.lang.CharSequence,com.intellij.openapi.fileTypes.FileType):Z
+- a:lt():com.intellij.psi.tree.IElementType
 c:com.intellij.codeInsight.highlighting.PairedBraceMatcherAdapter
 - com.intellij.codeInsight.highlighting.BraceMatcher
 - com.intellij.lang.PairedBraceMatcher

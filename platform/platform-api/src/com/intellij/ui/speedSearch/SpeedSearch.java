@@ -130,28 +130,34 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
     return myString;
   }
 
-  public void updatePattern(final String string) {
-    if (myString.equals(string)) return;
+  public void updatePattern(final String searchText) {
+    if (myString.equals(searchText)) return;
 
     myJustActivated = false;
 
     String prevString = myString;
-    myString = string;
+    myString = searchText;
     try {
-      String pattern = "*" + string;
-      NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
-      String separators = SpeedSearchUtil.getDefaultHardSeparators();
-      NameUtil.MatcherBuilder builder = new NameUtil.MatcherBuilder(pattern).withCaseSensitivity(caseSensitivity)
-        .withSeparators(separators);
-      if (myMatchAllOccurrences) {
-        builder = builder.allOccurrences();
-      }
-      myMatcher = builder.build();
+      myMatcher = createNewMatcher(searchText);
     }
     catch (Exception e) {
       myMatcher = null;
     }
     fireStateChanged(prevString);
+  }
+
+  protected @NotNull Matcher createNewMatcher(String searchText) {
+    String pattern = "*" + searchText;
+    NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
+    String separators = SpeedSearchUtil.getDefaultHardSeparators();
+    NameUtil.MatcherBuilder builder =
+      new NameUtil.MatcherBuilder(pattern)
+        .withCaseSensitivity(caseSensitivity)
+        .withSeparators(separators);
+    if (myMatchAllOccurrences) {
+      builder = builder.allOccurrences();
+    }
+    return builder.build();
   }
 
   public @Nullable Matcher getMatcher() {

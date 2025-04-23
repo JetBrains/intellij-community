@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.Repository;
@@ -15,19 +15,6 @@ import java.util.Collection;
 import java.util.List;
 
 public final class DvcsBranchUtil {
-  public static @Nullable <T extends DvcsBranchInfo> T find(final @Nullable Collection<T> branches,
-                                                            @Nullable Repository repository,
-                                                            @NotNull String sourceBranch) {
-    if (branches == null) return null;
-    return ContainerUtil.find(branches, targetInfo -> repoAndSourceAreEqual(repository, sourceBranch, targetInfo));
-  }
-
-  private static boolean repoAndSourceAreEqual(@Nullable Repository repository,
-                                               @NotNull String sourceBranch,
-                                               @NotNull DvcsBranchInfo targetInfo) {
-    return StringUtil.equals(targetInfo.sourceName, sourceBranch) && getPathFor(repository).equals(targetInfo.repoPath);
-  }
-
   public static @NotNull String getPathFor(@Nullable Repository repository) {
     return repository == null ? "" : repository.getRoot().getPath();
   }

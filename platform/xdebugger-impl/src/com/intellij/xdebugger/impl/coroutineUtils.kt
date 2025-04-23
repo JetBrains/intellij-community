@@ -10,8 +10,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.util.ThreeState
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.xdebugger.impl.rpc.XValueApi
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -79,3 +85,21 @@ private class FrontendDebuggerActionCoroutineScope(val cs: CoroutineScope)
 
 @Service(Service.Level.PROJECT)
 private class FrontendDebuggerActionProjectCoroutineScope(val project: Project, val cs: CoroutineScope)
+
+internal fun updateInlineDebuggerData(session: XDebugSessionProxy, xValue: XValue, callback: XInlineDebuggerDataCallback) {
+  session.currentSuspendContextCoroutineScope?.launch {
+    XDebugManagerProxy.getInstance().withId(xValue, session) { xValueId ->
+      val (canCompute, positionFlow) = XValueApi.getInstance().computeInlineData(xValueId) ?: return@withId
+      if (canCompute != ThreeState.UNSURE) {
+        positionFlow.toFlow().collect {
+          withContext(Dispatchers.EDT) {
+            callback.computed(it.sourcePosition())
+          }
+        }
+      }
+      else {
+        xValue.computeSourcePosition(callback::computed)
+      }
+    }
+  }
+}

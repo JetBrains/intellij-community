@@ -7,10 +7,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//java/openapi:java",
+    "//java/java-psi-api:psi",
     "//platform/util",
     "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi-no-deps:jsp-noDeps",
   ],
-  exports = ["//java/jsp-base-openapi:jsp-base"]
+  exports = [
+    "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi-no-deps:jsp-noDeps",
+  ]
 )
 ### auto-generated section `build intellij.jsp` end

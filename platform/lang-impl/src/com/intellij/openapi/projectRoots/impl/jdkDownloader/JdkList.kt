@@ -197,6 +197,7 @@ data class JdkItem(
   companion object {
     fun detectVariant(vendorText: @NlsSafe String): JdkVersionDetector.Variant {
       if (vendorText.contains("Oracle OpenJDK")) return JdkVersionDetector.Variant.Oracle
+      if (vendorText.contains("Microsoft")) return JdkVersionDetector.Variant.Microsoft
       if (vendorText.contains("Corretto")) return JdkVersionDetector.Variant.Corretto
       if (vendorText.contains("BellSoft")) return JdkVersionDetector.Variant.Liberica
       if (vendorText.contains("Azul")) return JdkVersionDetector.Variant.Zulu

@@ -130,8 +130,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                        RefactoringUIUtil.getDescription(targetClass, true),
                                                        VisibilityUtil.getVisibilityStringToDisplay(targetClass),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-        message = StringUtil.capitalize(message);
-        conflicts.putValue(targetClass, message);
+        conflicts.putValue(targetClass, StringUtil.capitalize(message));
       }
       // check for member accessibility
       else if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, ref, null, null)) {
@@ -140,30 +139,29 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                        VisibilityUtil.toPresentableText(
                                                          VisibilityUtil.getVisibilityModifier(modifierListCopy)),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-        message = StringUtil.capitalize(message);
-        conflicts.putValue(member, message);
+        conflicts.putValue(ref, StringUtil.capitalize(message));
       }
     }
   }
 
   public static void analyzeUsedElementsAfterMove(PsiMember member,
-                                           PsiElement scope,
-                                           @NotNull Set<? extends PsiMember> membersToMove,
-                                           @Nullable Set<? extends PsiMethod> abstractMethods,
-                                           @Nullable PsiClass targetClass,
-                                           @NotNull PsiElement context,
-                                           MultiMap<PsiElement, @DialogMessage String> conflicts) {
+                                                  PsiElement scope,
+                                                  @NotNull Set<? extends PsiMember> membersToMove,
+                                                  @Nullable Set<? extends PsiMethod> abstractMethods,
+                                                  @Nullable PsiClass targetClass,
+                                                  @NotNull PsiElement context,
+                                                  MultiMap<PsiElement, @DialogMessage String> conflicts) {
     checkUsedElements(member, scope, membersToMove, abstractMethods, targetClass, null, context, conflicts);
   }
 
   private static void checkUsedElements(PsiMember member,
-                                 PsiElement scope,
-                                 @NotNull Set<? extends PsiMember> membersToMove,
-                                 @Nullable Set<? extends PsiMethod> abstractMethods,
-                                 @Nullable PsiClass targetClass,
-                                 PsiClass accessClass,
-                                 @NotNull PsiElement context,
-                                 MultiMap<PsiElement, @DialogMessage String> conflicts) {
+                                        PsiElement scope,
+                                        @NotNull Set<? extends PsiMember> membersToMove,
+                                        @Nullable Set<? extends PsiMethod> abstractMethods,
+                                        @Nullable PsiClass targetClass,
+                                        PsiClass accessClass,
+                                        @NotNull PsiElement context,
+                                        MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final Set<PsiMember> moving = new HashSet<>(membersToMove);
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
@@ -213,32 +211,31 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   }
 
   public static void analyzeAccessibilityAfterMove(PsiMember refMember,
-                                            @NotNull PsiElement newContext,
-                                            @Nullable PsiClass accessClass,
-                                            PsiMember member,
-                                            MultiMap<PsiElement, @DialogMessage String> conflicts) {
+                                                   @NotNull PsiElement newContext,
+                                                   @Nullable PsiClass accessClass,
+                                                   PsiMember member,
+                                                   MultiMap<PsiElement, @DialogMessage String> conflicts) {
     PsiResolveHelper helper = JavaPsiFacade.getInstance(newContext.getProject()).getResolveHelper();
     if (!helper.isAccessible(refMember, refMember.getModifierList(), newContext, accessClass, newContext)) {
       String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                      RefactoringUIUtil.getDescription(refMember, true),
                                                      VisibilityUtil.getVisibilityStringToDisplay(refMember),
                                                      RefactoringUIUtil.getDescription(member, false));
-      message = StringUtil.capitalize(message);
-      conflicts.putValue(refMember, message);
+      conflicts.putValue(refMember, StringUtil.capitalize(message));
     }
-    else if (newContext instanceof PsiClass &&
+    else if (newContext instanceof PsiClass aClass &&
              refMember instanceof PsiField &&
              refMember.getContainingClass() == member.getContainingClass()) {
-      PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
+      PsiField fieldInSubClass = aClass.findFieldByName(refMember.getName(), false);
       if (fieldInSubClass != null &&
           !refMember.hasModifierProperty(PsiModifier.STATIC) &&
           fieldInSubClass != refMember &&
           !member.hasModifierProperty(PsiModifier.STATIC)) {
-        conflicts.putValue(refMember, StringUtil.capitalize(
-          JavaRefactoringBundle.message("dialog.message.0.would.hide.which.1.used.by.moved.2",
-                                        RefactoringUIUtil.getDescription(fieldInSubClass, true),
-                                        RefactoringUIUtil.getDescription(refMember, true),
-                                        RefactoringUIUtil.getDescription(member, false))));
+        String message = JavaRefactoringBundle.message("dialog.message.0.would.hide.which.1.used.by.moved.2",
+                                                       RefactoringUIUtil.getDescription(fieldInSubClass, true),
+                                                       RefactoringUIUtil.getDescription(refMember, true),
+                                                       RefactoringUIUtil.getDescription(member, false));
+        conflicts.putValue(refMember, StringUtil.capitalize(message));
       }
     }
   }
@@ -268,8 +265,8 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
             !(resolved instanceof LightElement) &&
             resolved.isPhysical() &&
             !haveElementInScope(resolved)) {
-          if (resolved instanceof PsiMethod) {
-            for (PsiMethod superMethod : ((PsiMethod)resolved).findDeepestSuperMethods()) {
+          if (resolved instanceof PsiMethod method) {
+            for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
               if (haveElementInScope(superMethod)) return;
             }
           }
@@ -288,28 +285,28 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
           return true;
         }
         if (!resolved.getManager().isInProject(resolved)) {
-          if (resolved instanceof PsiMember) {
-            final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
+          if (resolved instanceof PsiMember member) {
+            final PsiClass containingClass = member.getContainingClass();
             if (containingClass != null) {
               final String fqn = containingClass.getQualifiedName();
               if (fqn != null) {
                 final PsiClass classFromTarget = JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope);
                 if (classFromTarget != null) {
-                  if (resolved instanceof PsiMethod) {
-                    return classFromTarget.findMethodsBySignature((PsiMethod)resolved, true).length > 0;
+                  if (resolved instanceof PsiMethod method) {
+                    return classFromTarget.findMethodsBySignature(method, true).length > 0;
                   }
-                  if (resolved instanceof PsiField) {
-                    return classFromTarget.findFieldByName(((PsiField)resolved).getName(), false) != null;
+                  if (resolved instanceof PsiField field) {
+                    return classFromTarget.findFieldByName(field.getName(), false) != null;
                   }
-                  if (resolved instanceof PsiClass) {
-                    return classFromTarget.findInnerClassByName(((PsiClass)resolved).getName(), false) != null;
+                  if (resolved instanceof PsiClass aClass) {
+                    return classFromTarget.findInnerClassByName(aClass.getName(), false) != null;
                   }
                 }
               }
             }
           }
-          if (resolved instanceof PsiClass) {
-            final String fqn = ((PsiClass)resolved).getQualifiedName();
+          if (resolved instanceof PsiClass aClass) {
+            final String fqn = aClass.getQualifiedName();
             return fqn != null && JavaPsiFacade.getInstance(project).findClass(fqn, resolveScope) != null;
           }
         }
@@ -345,13 +342,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
     NextUsage:
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
-      final PsiElement referencedElement;
-      if (usage instanceof MoveRenameUsageInfo) {
-        referencedElement = ((MoveRenameUsageInfo)usage).getReferencedElement();
-      }
-      else {
-        referencedElement = usage.getElement();
-      }
+      final PsiElement referencedElement = (usage instanceof MoveRenameUsageInfo info) ? info.getReferencedElement() : usage.getElement();
       assert referencedElement != null : usage;
       final PsiFile movedFile = referencedElement.getContainingFile();
       if (!(movedFile instanceof PsiJavaFile)) continue NextUsage; // don't create conflicts for elements we are not responsible for
@@ -363,13 +354,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
         final GlobalSearchScope resolveScope1 = element.getResolveScope();
         if (!resolveScope1.isSearchInModuleContent(targetModule, isInTestSources)) {
           final PsiFile usageFile = element.getContainingFile();
-          PsiElement container;
-          if (usageFile instanceof PsiJavaFile) {
-            container = ConflictsUtil.getContainer(element);
-          }
-          else {
-            container = usageFile;
-          }
+          PsiElement container = (usageFile instanceof PsiJavaFile) ? ConflictsUtil.getContainer(element) : usageFile;
           final String scopeDescription = RefactoringUIUtil.getDescription(container, true);
           final VirtualFile usageVFile = usageFile.getVirtualFile();
           if (usageVFile != null) {

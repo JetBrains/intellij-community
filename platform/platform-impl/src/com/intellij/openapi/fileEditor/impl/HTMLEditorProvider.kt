@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
+import org.cef.handler.CefRequestHandler
 import org.jetbrains.annotations.ApiStatus
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
@@ -78,6 +79,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
       private set
     internal var queryHandler: JsQueryHandler? = null
       private set
+    internal var requestHandler: CefRequestHandler? = null; private set
 
     companion object {
       @JvmStatic
@@ -94,6 +96,12 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     fun withQueryHandler(queryHandler: JsQueryHandler?): Request {
       this.queryHandler = queryHandler
+      return this
+    }
+
+    @ApiStatus.Internal
+    fun withRequestHandler(requestHandler: CefRequestHandler?): Request {
+      this.requestHandler = requestHandler
       return this
     }
   }

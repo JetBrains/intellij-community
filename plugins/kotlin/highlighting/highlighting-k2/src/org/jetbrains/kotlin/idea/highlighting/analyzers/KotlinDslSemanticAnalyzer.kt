@@ -6,8 +6,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
@@ -29,11 +33,17 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
      */
     private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
         val calleeExpression = element.calleeExpression ?: return null
-        val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
         val dslAnnotation = with(session) {
-            val receiverType = (lambdaExpression.expressionType as? KaFunctionType)?.receiverType ?: return null
-            getDslAnnotation(receiverType) ?: return null
-        }
+            val functionCall = calleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+            // function declaration argument has a dsl marker
+            functionCall.argumentMapping.values.forEach { signature ->
+                val receiverType = (signature.returnType as? KaFunctionType)?.receiverType
+                receiverType?.let(::getDslAnnotation)?.let { return@with it }
+            }
+
+            // function has a dsl marker
+            firstDslAnnotationOrNull(functionCall.symbol)
+        } ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
         return HighlightingFactory.highlightName(
@@ -50,24 +60,40 @@ fun KtClass.getDslStyleId(): Int? {
     if (!isAnnotation() || annotationEntries.isEmpty()) {
         return null
     }
-    analyze(this) {
-        val classSymbol = namedClassSymbol?.takeIf {
-            it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
-        } ?: return null
-        val className = classSymbol.classId?.asSingleFqName() ?: return null
-        return DslStyleUtils.styleIdByFQName(className)
+    val dslAnnotation = analyze(this) {
+        getDslAnnotation(namedClassSymbol)
+    } ?: return null
+    return DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
+}
+
+private fun getDslAnnotation(namedClassSymbol: KaNamedClassSymbol?): ClassId? {
+    val classSymbol = namedClassSymbol?.takeIf {
+        it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
     }
+    return classSymbol?.classId
 }
 
 /**
- * Returns a dsl annotation for a given type (or for one of the supertypes), if there is one.
+ * Returns a dsl annotation for a given symbol (or for one of its supertypes), if there is one.
  * A Dsl annotation is an annotation that is itself marked by [DslMarker] annotation.
  */
+private fun KaSession.firstDslAnnotationOrNull(symbol: KaDeclarationSymbol): ClassId? {
+    val allAnnotationsWithSuperTypes = sequence {
+        yieldAll(symbol.annotations.classIds)
+        if (symbol is KaClassSymbol) {
+            for (superType in symbol.superTypes) {
+                superType.expandedSymbol?.let { yieldAll(it.annotations.classIds) }
+            }
+        }
+    }
+    return allAnnotationsWithSuperTypes.find {
+        findClass(it)?.isDslHighlightingMarker() == true
+    }
+}
+
 private fun KaSession.getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotations.classIds)
-        val symbol = type.expandedSymbol ?: return@sequence
-        yieldAll(symbol.annotations.classIds)
         for (superType in type.allSupertypes) {
             superType.expandedSymbol?.let { yieldAll(it.annotations.classIds) }
         }

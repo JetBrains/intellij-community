@@ -178,16 +178,14 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       withEnvironment("MAVEN_USER_HOME" to mavenHomeDir.absolutePathString()) {
         val uri = URI.create(url)
         val domain = "domain.available.only.via.proxy.intellij.com"
-        val proxyPort = NetUtils.findAvailableSocketPort()
         val proxy = MavenHttpProxyServerFixture(mapOf(domain to uri.port),
-                                                proxyPort,
                                                 AppExecutorUtil.getAppExecutorService())
         proxy.setUp()
         val wrapperUrl = URI("http://$domain${uri.path}")
         val proxySettings = ProxySettings.getInstance()
         val defaultConfig = proxySettings.getProxyConfiguration()
         try {
-          proxySettings.setProxyConfiguration(ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, "localhost", proxyPort))
+          proxySettings.setProxyConfiguration(ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, "localhost", proxy.port))
           createProjectPom("<groupId>test</groupId>" +
                            "<artifactId>project</artifactId>" +
                            "<version>1</version>")

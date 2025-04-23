@@ -37,8 +37,6 @@ class FrontendXBreakpointProxy(
 
   private val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
 
-  override val breakpoint: Any = this
-
   override val type: XBreakpointTypeProxy = FrontendXBreakpointType(project, dto.type)
 
   private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)

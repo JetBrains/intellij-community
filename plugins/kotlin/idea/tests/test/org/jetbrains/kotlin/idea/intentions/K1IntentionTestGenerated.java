@@ -1073,85 +1073,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/addJvmStatic")
-    public static class AddJvmStatic extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("abstractVal.kt")
-        public void testAbstractVal() throws Exception {
-            runTest("testData/intentions/addJvmStatic/abstractVal.kt");
-        }
-
-        @TestMetadata("constVal.kt")
-        public void testConstVal() throws Exception {
-            runTest("testData/intentions/addJvmStatic/constVal.kt");
-        }
-
-        @TestMetadata("funInAnonymousObject.kt")
-        public void testFunInAnonymousObject() throws Exception {
-            runTest("testData/intentions/addJvmStatic/funInAnonymousObject.kt");
-        }
-
-        @TestMetadata("funInClass.kt")
-        public void testFunInClass() throws Exception {
-            runTest("testData/intentions/addJvmStatic/funInClass.kt");
-        }
-
-        @TestMetadata("funWithJvmStatic.kt")
-        public void testFunWithJvmStatic() throws Exception {
-            runTest("testData/intentions/addJvmStatic/funWithJvmStatic.kt");
-        }
-
-        @TestMetadata("openVal.kt")
-        public void testOpenVal() throws Exception {
-            runTest("testData/intentions/addJvmStatic/openVal.kt");
-        }
-
-        @TestMetadata("overrideVal.kt")
-        public void testOverrideVal() throws Exception {
-            runTest("testData/intentions/addJvmStatic/overrideVal.kt");
-        }
-
-        @TestMetadata("topLevelFun.kt")
-        public void testTopLevelFun() throws Exception {
-            runTest("testData/intentions/addJvmStatic/topLevelFun.kt");
-        }
-
-        @TestMetadata("topLevelVal.kt")
-        public void testTopLevelVal() throws Exception {
-            runTest("testData/intentions/addJvmStatic/topLevelVal.kt");
-        }
-
-        @TestMetadata("valInAnonymousObject.kt")
-        public void testValInAnonymousObject() throws Exception {
-            runTest("testData/intentions/addJvmStatic/valInAnonymousObject.kt");
-        }
-
-        @TestMetadata("valInClass.kt")
-        public void testValInClass() throws Exception {
-            runTest("testData/intentions/addJvmStatic/valInClass.kt");
-        }
-
-        @TestMetadata("valWithJvmField.kt")
-        public void testValWithJvmField() throws Exception {
-            runTest("testData/intentions/addJvmStatic/valWithJvmField.kt");
-        }
-
-        @TestMetadata("valWithJvmStatic.kt")
-        public void testValWithJvmStatic() throws Exception {
-            runTest("testData/intentions/addJvmStatic/valWithJvmStatic.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/addLabeledReturnInLambda")
     public static class AddLabeledReturnInLambda extends AbstractK1IntentionTest {
         @java.lang.Override
@@ -3429,69 +3350,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/intentions/branched/unfolding")
-        public abstract static class Unfolding extends AbstractK1IntentionTest {
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/propertyToIf")
-            public static class PropertyToIf extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("nestedIfs.kt")
-                public void testNestedIfs() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nestedIfs.kt");
-                }
-
-                @TestMetadata("nestedIfs2.kt")
-                public void testNestedIfs2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nestedIfs2.kt");
-                }
-
-                @TestMetadata("nonLocalProperty.kt")
-                public void testNonLocalProperty() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nonLocalProperty.kt");
-                }
-
-                @TestMetadata("nonLocalProperty2.kt")
-                public void testNonLocalProperty2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/nonLocalProperty2.kt");
-                }
-
-                @TestMetadata("simpleIf.kt")
-                public void testSimpleIf() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIf.kt");
-                }
-
-                @TestMetadata("simpleIf2.kt")
-                public void testSimpleIf2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIf2.kt");
-                }
-
-                @TestMetadata("simpleIfWithBlocks.kt")
-                public void testSimpleIfWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithBlocks.kt");
-                }
-
-                @TestMetadata("simpleIfWithBlocks2.kt")
-                public void testSimpleIfWithBlocks2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithBlocks2.kt");
-                }
-
-                @TestMetadata("simpleIfWithType.kt")
-                public void testSimpleIfWithType() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithType.kt");
-                }
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/branched/when")
         public abstract static class When extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
@@ -4704,6 +4562,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertArgumentToSet/outerScopeMutableListOfCall.kt");
         }
 
+        @TestMetadata("setHiddenByElvisOperator.kt")
+        public void testSetHiddenByElvisOperator() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/setHiddenByElvisOperator.kt");
+        }
+
+        @TestMetadata("setHiddenByElvisOperatorNested.kt")
+        public void testSetHiddenByElvisOperatorNested() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/setHiddenByElvisOperatorNested.kt");
+        }
+
         @TestMetadata("shadowedFunctionName.kt")
         public void testShadowedFunctionName() throws Exception {
             runTest("testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");
@@ -4731,6 +4599,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("arrayInt.kt")
         public void testArrayInt() throws Exception {
             runTest("testData/intentions/convertArrayParameterToVararg/arrayInt.kt");
+        }
+
+        @TestMetadata("arrayNullableInt.kt")
+        public void testArrayNullableInt() throws Exception {
+            runTest("testData/intentions/convertArrayParameterToVararg/arrayNullableInt.kt");
         }
 
         @TestMetadata("arrayString.kt")

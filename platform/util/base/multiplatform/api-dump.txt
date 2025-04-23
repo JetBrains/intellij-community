@@ -1,3 +1,5 @@
+@:com.intellij.openapi.util.NlsSafe
+- java.lang.annotation.Annotation
 c:com.intellij.util.text.CharArrayCharSequence
 - java.lang.CharSequence
 - pf:myChars:C[]

@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.intellij.plugins.intelliLang.inject.InjectLanguageAction.forceToMoveCaret;
+
 public final class UnInjectLanguageAction implements IntentionAction, LowPriorityAction {
   @Override
   public @NotNull String getText() {
@@ -89,6 +91,7 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
       }
     }
     finally {
+      forceToMoveCaret(editor);
       FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
     }
   }

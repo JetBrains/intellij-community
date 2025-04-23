@@ -22,6 +22,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -35,7 +36,8 @@ private val visibleCount: Int
   get() = Registry.intValue("ide.notification.visible.count", 2)
 
 @OptIn(FlowPreview::class)
-internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : BalloonLayout {
+@ApiStatus.Internal
+open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : BalloonLayout {
   private val resizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent) {
       queueRelayout()

@@ -23,18 +23,17 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -56,22 +55,22 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
   public static final String INDENT = "  ";
   boolean myPopupIsShown = false;
   private final boolean myCustomNode;
-  private final XDebugSession mySession;
+  private final XDebugSessionProxy mySession;
   private final XValueNodeImpl myValueNode;
   private final XDebuggerTreeCreator myTreeCreator;
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
-  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull VirtualFile file, int line, @NotNull XDebugSession session) {
+  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull VirtualFile file, int line, @NotNull XDebugSessionProxy session) {
     // We cannot pass any XSourcePosition object here, check EA-841896
     myPosition = XSourcePositionImpl.create(file, line);
     mySession = session;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     updatePresentation();
-    XValueMarkers<?, ?> markers = session instanceof XDebugSessionImpl ?  ((XDebugSessionImpl)session).getValueMarkers() : null;
+    XValueMarkers<?, ?> markers = session.getValueMarkers();
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
-                                             session.getDebugProcess().getEditorsProvider(),
+                                             session.getEditorsProvider(),
                                              session.getCurrentPosition(),
                                              markers);
   }
@@ -95,7 +94,7 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
     int x = event.getMouseEvent().getX();
     boolean isRemoveIconClick = myCustomNode && x >= myRemoveXCoordinate;
     if (isRemoveIconClick) {
-      XDebugSessionTab tab = ((XDebugSessionImpl)mySession).getSessionTab();
+      XDebugSessionTab tab = mySession.getSessionTab();
       if (tab != null) {
         tab.getWatchesView().removeWatches(Collections.singletonList(myValueNode));
       }
@@ -127,8 +126,10 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
     InlineValuePopupProvider popupProvider = InlineValuePopupProvider.EP_NAME.findFirstSafe(a -> a.accepts(myValueNode));
     if (popupProvider != null) {
       popupProvider.showPopup(myValueNode, mySession, myPosition, myTreeCreator, editor, point, hidePopupRunnable);
-    } else {
-      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, editor, point, myPosition, mySession, hidePopupRunnable);
+    }
+    else {
+      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, editor, point, myPosition, mySession,
+                                            hidePopupRunnable);
     }
   }
 
@@ -237,12 +238,12 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
       return oldValues;
     }
 
-    static @NotNull TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
+    static @NotNull TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSessionProxy session) {
       return isFullLineHighlighter(session, file, lineNumber, true)
              ? getTopFrameSelectedAttributes() : getNormalAttributes();
     }
 
-    static boolean isFullLineHighlighter(@NotNull XDebugSession session, @NotNull VirtualFile file, int lineNumber,
+    static boolean isFullLineHighlighter(@NotNull XDebugSessionProxy session, @NotNull VirtualFile file, int lineNumber,
                                          boolean isToCheckTopFrameOnly) {
       Project project = session.getProject();
       XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(project);
@@ -355,7 +356,8 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
           for (int i = 0; i < actualParts.size(); i++) {
             if (i < oldParts.size() && StringUtil.equals(actualParts.get(i), oldParts.get(i))) {
               result.add(new LineExtensionInfo(actualParts.get(i), getNormalAttributes()));
-            } else {
+            }
+            else {
               result.add(new LineExtensionInfo(actualParts.get(i), getChangedAttributes()));
             }
             if (i != actualParts.size() - 1) {

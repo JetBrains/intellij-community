@@ -2,9 +2,17 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory
+import com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.testFramework.LightVirtualFile
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
+import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -28,9 +36,11 @@ class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
         return true
     }
 
+    @OptIn(KaImplementationDetail::class, KaExperimentalApi::class)
     override fun createFile(originalFile: PsiFile, text: String): PsiFile? {
-        val newFile = KtPsiFactory.contextual(originalFile, eventSystemEnabled = true).createFile(originalFile.name, text)
-        newFile.originalFile = originalFile
+        val newFile =
+            KtPsiFactory(originalFile.project, eventSystemEnabled = true, markGenerated = false).createFile(originalFile.name, text)
+        newFile.contextModule = originalFile.getKaModule(originalFile.project, useSiteModule = null)
         if (originalFile.name.endsWith(".kts")) {
             createCopyOfScript(originalFile, newFile)?.let { return it }
         }
@@ -38,9 +48,9 @@ class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
         val virtualFile = newFile.virtualFile
         val originalVirtualFile = originalFile.virtualFile
         if (virtualFile is LightVirtualFile && originalVirtualFile != null) {
+            virtualFile.analysisContextModule = originalFile.getKaModule(originalFile.project, useSiteModule = null)
             virtualFile.originalFile = originalVirtualFile
             virtualFile.fileType = originalVirtualFile.fileType
-
         }
         return newFile
     }
@@ -53,5 +63,25 @@ class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
         val copiedNewBlockExpression = newFile.script?.blockExpression ?: return null
         copyOfOriginalBlockExpression.replace(copiedNewBlockExpression.copy())
         return newFileCopy
+    }
+
+    class KotlinIntentionCommandOffsetProvider : IntentionCommandOffsetProvider {
+        override fun findOffsets(psiFile: PsiFile, offset: Int): List<Int> {
+            val offsets = mutableListOf<Int>()
+            offsets.add(offset)
+            if (offset == 0) {
+                return offsets
+            }
+            val previousElement = psiFile.findElementAt(offset - 1)
+            if (previousElement?.parent is PsiLanguageInjectionHost) {
+                val delta = if (previousElement.parent.text.endsWith("\"\"\"")) {
+                    3
+                } else {
+                    1
+                }
+                offsets.add(previousElement.parent.range.endOffset - delta)
+            }
+            return offsets
+        }
     }
 }

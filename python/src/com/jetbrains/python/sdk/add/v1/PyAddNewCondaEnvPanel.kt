@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
 import com.intellij.execution.ExecutionException
@@ -25,11 +25,12 @@ import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
-import com.jetbrains.python.sdk.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
+import com.jetbrains.python.sdk.conda.condaSupportedLanguages
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.ui.pyMayBeModalBlocking
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -121,7 +122,7 @@ open class PyAddNewCondaEnvPanel(
     val sdk = createSdkByGenerateTask(task, existingSdks, null, associatedPath, null)
     if (!shared) {
       when {
-        newProjectPath != null -> sdk.setAssociationToPath(newProjectPath)
+        newProjectPath != null -> pyMayBeModalBlocking { sdk.setAssociationToPath(newProjectPath) }
         module != null -> sdk.setAssociationToModule(module)
       }
     }

@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 internal class FrontendXSuspendContext(
   private val suspendContextDto: XSuspendContextDto,
   private val project: Project,
-  private val lifetimeScope: CoroutineScope,
+  internal val lifetimeScope: CoroutineScope,
 ) : XSuspendContext() {
   private val id = suspendContextDto.id
 

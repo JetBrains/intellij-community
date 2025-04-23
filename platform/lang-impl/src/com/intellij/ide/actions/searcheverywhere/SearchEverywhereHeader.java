@@ -350,7 +350,7 @@ public final class SearchEverywhereHeader {
       }
     }, new PreviewAction(), new SearchEverywhereFiltersAction<>(filter, onChanged, new ContributorFilterCollector()));
     return new SETab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID,
-                     IdeBundle.message("searcheverywhere.allelements.tab.name"),
+                     IdeBundle.message("searcheverywhere.all.elements.tab.name"),
                      contributors, actions, filter);
   }
 

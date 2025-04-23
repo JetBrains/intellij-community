@@ -49,6 +49,8 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//java/java-psi-impl:psi-impl",
   ],
   runtime_deps = [":kotlin-code-insight-intentions-shared_resources"]
 )

@@ -84,6 +84,7 @@ internal suspend fun createIjModule(vRoot: VirtualFile, moduleName: String) {
   backgroundWriteAction {
     val module = ModuleManager.getInstance(project).newModule(files.moduleRoot.resolve("$moduleName.iml"), JAVA_MODULE_ENTITY_TYPE_ID_NAME)
     val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+    rootModel.inheritSdk()
     rootModel.addContentEntry(vFiles.vModuleRoot).also { contentEntry ->
       contentEntry.addSourceFolder(vFiles.vSrc, JavaSourceRootType.SOURCE).also {
         it.packagePrefix = "com.$moduleName"

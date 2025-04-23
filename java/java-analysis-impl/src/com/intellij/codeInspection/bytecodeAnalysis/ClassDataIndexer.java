@@ -63,8 +63,8 @@ public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Ma
   private static final int VERSION = 19; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER + StringHash.murmur(
-    BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion()))
-      .collect(Collectors.joining("-")));
+    BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion())).collect(Collectors.joining("-")),
+    31);
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new BytecodeAnalysisIndex.EquationsExternalizer(), new ClassDataIndexer());
 

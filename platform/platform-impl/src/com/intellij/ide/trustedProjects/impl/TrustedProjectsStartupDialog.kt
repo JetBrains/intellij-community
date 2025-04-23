@@ -156,10 +156,13 @@ class TrustedProjectStartupDialog private constructor(
             @Suppress("DialogTitleCapitalization")
             text(myTitle).apply {
               component.font = JBFont.h4()
+              component.isFocusable = true // Workaround for IJPL-184339
             }
           }
           row {
-            text(message)
+            text(message).apply {
+              component.isFocusable = true // Workaround for IJPL-184339
+            }
           }
           if (getParentFolder() != null) {
             row {

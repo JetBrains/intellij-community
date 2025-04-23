@@ -3,7 +3,11 @@ package com.intellij.diagnostic.logs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.RollingFileHandler
@@ -102,7 +106,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     }
 
     val allObservedCategories = updatedCategoriesToLevel.keys union this.state.categories.map { it.category.toTrimmed() }
-    val categoriesWithSeparateFiles = state.categoriesWithSeparateFiles intersect allObservedCategories
+    val categoriesWithSeparateFiles = state.categoriesWithSeparateFiles.map { it.toTrimmed() } intersect allObservedCategories
 
     for (category in allObservedCategories) {
       val enable = category in categoriesWithSeparateFiles

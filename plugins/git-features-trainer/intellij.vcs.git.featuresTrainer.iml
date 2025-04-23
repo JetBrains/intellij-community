@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.vcs.git.shared" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" />
   </component>
 </module>

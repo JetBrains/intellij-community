@@ -63,6 +63,10 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
       if (metadata != null) {
         parameters.put("metadata", metadata);
       }
+      var userBucket = facade.userBucket;
+      if (userBucket != null) {
+        parameters.put("userBucket", userBucket);
+      }
     }
 
     return url.addParameters(parameters);

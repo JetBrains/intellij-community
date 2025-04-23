@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.jsp.IJspJavaComment;
 
-public interface JspJavaComment extends PsiComment {
+public interface JspJavaComment extends PsiComment, IJspJavaComment {
 }

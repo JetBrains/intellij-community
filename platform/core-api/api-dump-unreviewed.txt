@@ -1391,6 +1391,71 @@ f:com.intellij.openapi.components.ServicesKt
 - sf:serviceNotFoundError(com.intellij.openapi.components.ComponentManager,java.lang.Class):java.lang.IllegalStateException
 f:com.intellij.openapi.editor.CharacterSequences
 - sf:codePointAt(java.lang.CharSequence,I):I
+f:com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+- sf:AI_INLAY_BUTTON_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:AI_INLAY_BUTTON_FOCUSED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:AI_INLAY_BUTTON_HOVERED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:BLOCK_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:BRACES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:BRACKETS:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:CLASS_NAME:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:CLASS_REFERENCE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:COMMA:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:CONSTANT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_CODE_BLOCK:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_CODE_INLINE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_COMMENT_GUIDE:com.intellij.openapi.editor.colors.ColorKey
+- sf:DOC_COMMENT_LINK:com.intellij.openapi.editor.colors.ColorKey
+- sf:DOC_COMMENT_MARKUP:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_COMMENT_TAG:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_COMMENT_TAG_VALUE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOC_TIPS_SHORTCUT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DOT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:FUNCTION_CALL:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:FUNCTION_DECLARATION:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:GLOBAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:HIGHLIGHTED_REFERENCE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:IDENTIFIER:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_FOCUSED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_HINT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_BUTTON_HOVERED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLAY_TEXT_WITHOUT_BACKGROUND:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINE_PARAMETER_HINT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINE_PARAMETER_HINT_CURRENT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINE_PARAMETER_HINT_HIGHLIGHTED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINE_REFACTORING_SETTINGS_DEFAULT:com.intellij.openapi.editor.colors.ColorKey
+- sf:INLINE_REFACTORING_SETTINGS_FOCUSED:com.intellij.openapi.editor.colors.ColorKey
+- sf:INLINE_REFACTORING_SETTINGS_HOVERED:com.intellij.openapi.editor.colors.ColorKey
+- sf:INLINE_SUGGESTION:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INSTANCE_FIELD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INSTANCE_METHOD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INTERFACE_NAME:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INVALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:KEYWORD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:LABEL:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:LINE_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:LOCAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:MARKUP_ATTRIBUTE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:MARKUP_ENTITY:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:MARKUP_TAG:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:METADATA:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:NUMBER:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:OPERATION_SIGN:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:PARAMETER:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:PARENTHESES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:PREDEFINED_SYMBOL:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REASSIGNED_LOCAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:REASSIGNED_PARAMETER:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:SEMICOLON:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:STATIC_FIELD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:STATIC_METHOD:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:STRING:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:TEMPLATE_LANGUAGE_COLOR:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:VALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
+- <init>():V
 com.intellij.openapi.editor.Document
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.Document[]
@@ -1441,6 +1506,10 @@ f:com.intellij.openapi.editor.FoldingGroup
 - equals(java.lang.Object):Z
 - hashCode():I
 - s:newGroup(java.lang.String):com.intellij.openapi.editor.FoldingGroup
+com.intellij.openapi.editor.HighlighterColors
+- sf:BAD_CHARACTER:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:NO_HIGHLIGHTING:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:TEXT:com.intellij.openapi.editor.colors.TextAttributesKey
 com.intellij.openapi.editor.RangeMarker
 - com.intellij.openapi.util.Segment
 - com.intellij.openapi.util.UserDataHolder
@@ -5352,6 +5421,8 @@ f:com.intellij.testFramework.TestModeFlags
 - s:get(com.intellij.openapi.util.Key):java.lang.Object
 - s:is(com.intellij.openapi.util.Key):Z
 - s:reset(com.intellij.openapi.util.Key):V
+- s:runWithFlag(com.intellij.openapi.util.Key,java.lang.Object,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:runWithFlag(com.intellij.openapi.util.Key,java.lang.Object,java.lang.Runnable):V
 - s:set(com.intellij.openapi.util.Key,java.lang.Object):java.lang.Object
 - s:set(com.intellij.openapi.util.Key,java.lang.Object,com.intellij.openapi.Disposable):V
 com.intellij.testIntegration.TestFramework

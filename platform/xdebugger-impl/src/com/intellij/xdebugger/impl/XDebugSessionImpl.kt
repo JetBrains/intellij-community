@@ -57,6 +57,7 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarn
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.frame.asProxy
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer
 import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess
@@ -458,7 +459,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
     else {
       if (myTabInitDataFlow.value != null) return
-      val proxy = XDebugSessionProxyKeeper.getInstance(myProject).getOrCreateProxy(this)
+      val proxy = this.asProxy()
       val tab = XDebugSessionTab.create(proxy, myIcon, executionEnvironment?.let { BackendExecutionEnvironmentProxy(it) }, contentToReuse,
                                         forceNewDebuggerUi, withFramesCustomization)
       if (myTabInitDataFlow.compareAndSet(null, XDebuggerSessionTabInfoNoInit(tab))) {

@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -26,8 +26,8 @@ public final class ConflictsUtil {
       if (parent instanceof PsiMember && !(parent instanceof PsiTypeParameter)) {
         return parent;
       }
-      if (parent instanceof PsiFile) {
-        PsiElement host = FileContextUtil.getFileContext((PsiFile)parent);
+      if (parent instanceof PsiFile file) {
+        PsiElement host = FileContextUtil.getFileContext(file);
         if (host == null) {
           return parent;
         }
@@ -42,7 +42,7 @@ public final class ConflictsUtil {
                                           PsiMethod prototype,
                                           MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (prototype == null) return;
-    String protoMethodInfo = getMethodPrototypeString(prototype);
+    String protoMethodInfo = RefactoringUIUtil.getDescription(prototype, false);
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
     if (method == null && aClass != null) {
@@ -50,7 +50,7 @@ public final class ConflictsUtil {
       for (PsiMethod classMethod : aClass.getMethods()) {
         if (MethodSignatureUtil.areSignaturesErasureEqual(signature, classMethod.getSignature(PsiSubstitutor.EMPTY))) {
           method = classMethod;
-          protoMethodInfo = "with same erasure";
+          protoMethodInfo = JavaRefactoringBundle.message("method.with.the.same.erasure");
           break;
         }
       }
@@ -59,25 +59,27 @@ public final class ConflictsUtil {
     if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)
         && (!(method instanceof LightRecordCanonicalConstructor) || !(refactoredMethod instanceof LightRecordCanonicalConstructor))) {
       if (aClass.equals(method.getContainingClass())) {
-        final String classDescr = aClass instanceof PsiAnonymousClass ?
-                                  JavaRefactoringBundle.message("current.class") :
-                                  RefactoringUIUtil.getDescription(aClass, false);
-        conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1", protoMethodInfo, classDescr));
+        conflicts.putValue(method, RefactoringBundle.message("0.is.already.defined.in.1",
+                                                             StringUtil.capitalize(protoMethodInfo),
+                                                             RefactoringUIUtil.getDescription(aClass, false)));
       }
       else { // method somewhere in base class
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
-          String className = CommonRefactoringUtil.htmlEmphasize(DescriptiveNameUtil.getDescriptiveName(method.getContainingClass()));
-          if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {
+          String classDescription = RefactoringUIUtil.getDescription(method.getContainingClass(), false);
+          if (method.hasModifierProperty(PsiModifier.FINAL)) {
+            conflicts.putValue(method, JavaRefactoringBundle.message("renaming.method.will.override.final.0",
+                                                                     protoMethodInfo, classDescription));
+          }
+          else if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
             boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);
             final String conflict = isMethodAbstract != isMyMethodAbstract ?
-                                    JavaRefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, className) :
-                                    JavaRefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, className);
+                                    JavaRefactoringBundle.message("method.0.will.implement.method.of.the.base.class", protoMethodInfo, classDescription) :
+                                    JavaRefactoringBundle.message("method.0.will.override.a.method.of.the.base.class", protoMethodInfo, classDescription);
             conflicts.putValue(method, conflict);
           }
           else { // prototype is private, will be compile-error
-            conflicts.putValue(method, JavaRefactoringBundle.message("method.0.will.hide.method.of.the.base.class",
-                                                    protoMethodInfo, className));
+            conflicts.putValue(method, JavaRefactoringBundle.message("method.0.will.hide.method.of.the.base.class", protoMethodInfo, classDescription));
           }
         }
       }
@@ -98,14 +100,6 @@ public final class ConflictsUtil {
   private static boolean isStaticInterfaceMethods(PsiClass aClass, PsiMethod refactoredMethod, PsiMethod method) {
     return aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC) &&
            refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  private static String getMethodPrototypeString(final PsiMethod prototype) {
-    return PsiFormatUtil.formatMethod(
-      prototype,
-      PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-      PsiFormatUtilBase.SHOW_TYPE
-    );
   }
 
   public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, MultiMap<PsiElement, @DialogMessage String> conflicts) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
@@ -32,6 +32,7 @@ internal abstract class GitBranchesTreeModel(
   protected var localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
   protected var remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch> = LazyRefsSubtreeHolder.emptyHolder()
   protected var tagsTree: LazyRefsSubtreeHolder<GitTag> = LazyRefsSubtreeHolder.emptyHolder()
+  protected var recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
 
   protected val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
@@ -85,6 +86,10 @@ internal abstract class GitBranchesTreeModel(
 
   final override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
 
+  override fun isLeaf(node: Any?): Boolean = node is GitReference
+                                               || node is RefUnderRepository
+                                               || (node is GitRefType && getCorrespondingTree(node).isEmpty())
+
   protected abstract fun getChildren(parent: Any?): List<Any>
 
   fun updateTags() {
@@ -105,6 +110,15 @@ internal abstract class GitBranchesTreeModel(
   protected open fun getRecentBranches(): Collection<GitLocalBranch>? = null
 
   protected abstract fun getTags(): Collection<GitTag>
+
+  protected fun areRefTreesEmpty() = (GitBranchType.entries + GitTagType).all { getCorrespondingTree(it).isEmpty() }
+
+  protected fun getCorrespondingTree(refType: GitRefType): Map<String, Any> = when (refType) {
+    GitBranchType.REMOTE -> remoteBranchesTree.tree
+    GitBranchType.RECENT -> recentCheckoutBranchesTree.tree
+    GitBranchType.LOCAL -> localBranchesTree.tree
+    GitTagType -> tagsTree.tree
+  }
 
   private fun rebuildTags(matcher: MinusculeMatcher?) {
     val favoriteTags = branchManager.getFavoriteBranches(GitTagType)

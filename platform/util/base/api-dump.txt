@@ -395,6 +395,7 @@ f:com.intellij.util.containers.CollectionFactory
 - s:createConcurrentSoftKeySoftValueMap(I,F,I):java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftMap(I,F,I,com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
+- s:createConcurrentSoftMap(com.intellij.util.containers.HashingStrategy,java.util.function.BiConsumer):java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftMap(java.util.function.BiConsumer):java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftValueMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftValueMap(java.util.function.BiConsumer):java.util.concurrent.ConcurrentMap

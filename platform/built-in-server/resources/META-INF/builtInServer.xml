@@ -20,7 +20,7 @@
     <applicationActivity implementation="org.jetbrains.ide.BuiltInServerManagerLauncher"/>
 
     <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
-    <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
+    <browsersConfigurableProvider instance="org.jetbrains.builtInWebServer.BuiltInServerConfigurable"/>
     <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
 
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>

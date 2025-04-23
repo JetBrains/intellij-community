@@ -75,7 +75,7 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
   }
 
   @Override
-  public void testModeFlagChanged(@NotNull Key<?> key, @Nullable Object value) {
+  public <T> void testModeFlagChanged(@NotNull Key<T> key, @Nullable T value) {
   }
 
   private static IdeaTestExecutionPolicy ourCurrent;

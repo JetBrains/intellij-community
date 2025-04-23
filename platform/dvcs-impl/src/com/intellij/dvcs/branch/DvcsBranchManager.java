@@ -6,6 +6,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.VcsUtil;
@@ -49,8 +50,9 @@ public abstract class DvcsBranchManager<T extends Repository> {
   public boolean isFavorite(@Nullable BranchType branchType, @Nullable Repository repository, @NotNull String branchName) {
     if (branchType == null) return false;
     String branchTypeName = branchType.getName();
-    if (myBranchSettings.getFavorites().contains(branchTypeName, repository, branchName)) return true;
-    if (myBranchSettings.getExcludedFavorites().contains(branchTypeName, repository, branchName)) return false;
+    VirtualFile root = repository == null ? null : repository.getRoot();
+    if (myBranchSettings.getFavorites().contains(branchTypeName, root, branchName)) return true;
+    if (myBranchSettings.getExcludedFavorites().contains(branchTypeName, root, branchName)) return false;
     return isPredefinedAsFavorite(branchType, branchName);
   }
 
@@ -143,16 +145,17 @@ public abstract class DvcsBranchManager<T extends Repository> {
                           boolean shouldBeFavorite) {
     if (branchType == null) return;
     String branchTypeName = branchType.getName();
+    VirtualFile root = repository == null ? null : repository.getRoot();
     if (shouldBeFavorite) {
-      myBranchSettings.getExcludedFavorites().remove(branchTypeName, repository, branchName);
+      myBranchSettings.getExcludedFavorites().remove(branchTypeName, root, branchName);
       if (!isPredefinedAsFavorite(branchType, branchName)) {
-        myBranchSettings.getFavorites().add(branchTypeName, repository, branchName);
+        myBranchSettings.getFavorites().add(branchTypeName, root, branchName);
       }
     }
     else {
-      myBranchSettings.getFavorites().remove(branchTypeName, repository, branchName);
+      myBranchSettings.getFavorites().remove(branchTypeName, root, branchName);
       if (isPredefinedAsFavorite(branchType, branchName)) {
-        myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
+        myBranchSettings.getExcludedFavorites().add(branchTypeName, root, branchName);
       }
     }
     notifyFavoriteSettingsChanged(repository);

@@ -66,7 +66,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return super.createCustomComponent(presentation, place).apply {
-      maximumWidth = 500
+      maximumWidth = JBUI.scale(500)
       val widget = this as ToolbarComboButton
       launchOnShow("ProjectWidget") {
         val positionListeners = WidgetPositionListeners(widget, presentation)

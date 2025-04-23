@@ -12,7 +12,6 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.resolvePythonBinary
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
