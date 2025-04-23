@@ -214,3 +214,21 @@ class PluginLoadingIsDisabledCompletely(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not loaded because plugin loading is disabled completely"
   override val shouldNotifyUser: Boolean = true
 }
+
+@ApiStatus.Internal
+class PluginPackagePrefixConflict(
+  override val plugin: IdeaPluginDescriptorImpl,
+  val module: IdeaPluginDescriptorImpl,
+  val conflictingModule: IdeaPluginDescriptorImpl,
+): PluginNonLoadReason {
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.package.prefix.conflict", plugin.name, conflictingModule.name, module.moduleId, conflictingModule.moduleId)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.package.prefix.conflict", plugin.name, conflictingModule.name)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${module.name}' conflicts with '${conflictingModule.name}' and may work incorrectly. " +
+            "Their respective modules '${module.moduleId}' and '${conflictingModule.moduleId}' declare the same package prefix"
+  override val shouldNotifyUser: Boolean = true
+
+  private val IdeaPluginDescriptorImpl.moduleId: String get() = moduleName ?: pluginId.idString
+}

@@ -154,16 +154,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           isDisabledDueToPackagePrefixConflict.put(module.moduleName ?: module.pluginId.idString, alreadyRegistered)
           logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
                           "${alreadyRegistered.moduleName ?: alreadyRegistered.pluginId}")
-          loadingErrors.add(PluginLoadingError(
-            module,
-            detailedMessageSupplier = message("plugin.loading.error.long.package.prefix.conflict",
-                                              module.name, alreadyRegistered.name,
-                                              module.pluginId, alreadyRegistered.moduleName ?: alreadyRegistered.pluginId),
-            shortMessageSupplier = message("plugin.loading.error.short.package.prefix.conflict",
-                                           module.name, alreadyRegistered.name,
-                                           module.pluginId, alreadyRegistered.moduleName ?: alreadyRegistered.pluginId),
-            shouldNotifyUser = true,
-          ))
+          loadingErrors.add(PluginPackagePrefixConflict(module, module, alreadyRegistered))
           continue@m
         }
       }
@@ -175,16 +166,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
               module.isMarkedForLoading = false
               if (isDisabledDueToPackagePrefixConflict.containsKey(contentModule.name)) {
                 val alreadyRegistered = isDisabledDueToPackagePrefixConflict[contentModule.name]!!
-                loadingErrors.add(PluginLoadingError(
-                  module,
-                  detailedMessageSupplier = message("plugin.loading.error.long.package.prefix.conflict",
-                                                    module.name, alreadyRegistered.name,
-                                                    contentModule.name, alreadyRegistered.moduleName ?: alreadyRegistered.pluginId),
-                  shortMessageSupplier = message("plugin.loading.error.short.package.prefix.conflict",
-                                                 module.name, alreadyRegistered.name,
-                                                 contentModule.name, alreadyRegistered.moduleName ?: alreadyRegistered.pluginId),
-                  shouldNotifyUser = true,
-                ))
+                loadingErrors.add(PluginPackagePrefixConflict(module, contentModule.requireDescriptor(), alreadyRegistered))
               } else {
                 registerLoadingError(module, contentModule)
               }
