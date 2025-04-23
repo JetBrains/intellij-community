@@ -1,12 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
-import com.intellij.codeInsight.completion.command.getCommandContext
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
@@ -18,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiVariable
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -29,7 +25,7 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
 
     val javaRef = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement::class.java) ?: return emptyList()
     val psiElement = javaRef.resolve() ?: return emptyList()
-
+    if (psiElement !is PsiVariable) return emptyList()
     // Check if any inline handler can handle this element
     val editor = context.editor
     val extensionList = InlineActionHandler.EP_NAME.extensionList

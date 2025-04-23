@@ -709,6 +709,25 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertTrue(elements.any { element -> element.lookupString.equals("Copy class", ignoreCase = true) })
   }
 
+  fun testInlineReferenceOnlyVariables() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        public class B {
+            void foo(){
+            }
+        }
+        
+        class C extends B {
+            @Override..<caret>
+            void foo() {
+                super.foo();
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.none { element -> element.lookupString.contains("Inline", ignoreCase = true) })
+  }
+
   fun testDoNotCloseAfterPreview() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
