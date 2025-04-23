@@ -2,12 +2,13 @@
   library: amper.dependency.resolution.kotlin.base.scripting
   module: kotlin.base.scripting
   files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0/dependency-resolution-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0/concurrency-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0/dependency-resolution-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0/concurrency-0.jar
   - name: $MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2/slf4j-api-2.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0/nio-filechannels-0.jar
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0/telemetry-0.jar
   - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0/serialization-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0/core-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1/kotlinx-coroutines-core-1.jar
 - name: lib/completion-ranking-kotlin.jar
   library: completion-ranking-kotlin
   module: kotlin.ml-completion

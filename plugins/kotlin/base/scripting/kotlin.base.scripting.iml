@@ -68,18 +68,25 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-dependencies" level="project" />
+    <orderEntry type="module" module-name="kotlin.scripting" />
     <orderEntry type="module-library" exported="">
       <library name="amper.dependency.resolution.kotlin.base.scripting" type="repository">
-        <properties maven-id="org.jetbrains.amper:dependency-resolution-jvm:0.6.0-dev-2523">
+        <properties maven-id="org.jetbrains.amper:dependency-resolution:0.7.0-dev-2678">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2523/dependency-resolution-jvm-0.6.0-dev-2523.jar">
-              <sha256sum>db6b86ef2173c7ce0615199f8497d6fd2f64cb0fd8ca073d75efd6689aeb5962</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678.jar">
+              <sha256sum>16047f49ff3960e4b29ca613eb09685484c20d8f105c4ed59b5a2ed1cb5e7f06</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2523/concurrency-jvm-0.6.0-dev-2523.jar">
-              <sha256sum>bfd0d26fc45476913caa2f0f17cae748fce4f4d014b5dc382440b16e0f9085bd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678.jar">
+              <sha256sum>852c4fe4d73514ac88358f1e9cb9709f5e3dbd75b2374a278d1002132ba0423b</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar">
               <sha256sum>a12578dde1ba00bd9b816d388a0b879928d00bab3c83c240f7013bf4196c579a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678.jar">
+              <sha256sum>a01977ce7cae056f2ced5787780ed66f3a32a8f86789e2c0c3807ae7cf6d46c9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678.jar">
+              <sha256sum>21c7012670116bf3cf30823bf69f9af3ec5bfd84d47aa8b1c6491824b52ac3c5</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar">
               <sha256sum>06b644a2b65fbf798f49fb7666d718f1123ee98ef7199edcbe23e8aaa4300c51</sha256sum>
@@ -90,45 +97,43 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9.jar">
               <sha256sum>30f015d1c1a393e19c18cd4f43532089c36d4ca328608ce3dda78b74d3d31515</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.8.0/kotlinx-coroutines-core-1.8.0.jar">
-              <sha256sum>20aa434b6a930ea66d2e61b00deefae09fea3d32f9640d2e0c271312880e0add</sha256sum>
-            </artifact>
           </verification>
           <exclude>
-            <dependency maven-id="io.ktor:ktor-client-cio-jvm" />
-            <dependency maven-id="io.ktor:ktor-client-jvm" />
-            <dependency maven-id="org.apache.commons:commons-lang3" />
-            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-extension-kotlin" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-sdk" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+            <dependency maven-id="io.ktor:ktor-client-jvm" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2523/dependency-resolution-jvm-0.6.0-dev-2523.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2523/concurrency-jvm-0.6.0-dev-2523.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.8.0/kotlinx-coroutines-core-1.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2523/dependency-resolution-jvm-0.6.0-dev-2523-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2523/concurrency-jvm-0.6.0-dev-2523-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-core/1.8.0/kotlinx-coroutines-core-1.8.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="kotlin.scripting" />
   </component>
 </module>
