@@ -36,7 +36,7 @@ public class GeneratedEvaluationClass {
         }
     }
 
-    public static void callApply1(Object object, Runnable runnable) {
+    public static void callApply1(Object object, Runnable p0) {
         try {
             Class<?> klass = Class.forName("WithReflectionAccess");
             java.lang.reflect.Method member = null;
@@ -61,7 +61,7 @@ public class GeneratedEvaluationClass {
                 }
             }
             member.setAccessible(true);
-            member.invoke(object, runnable);
+            member.invoke(object, p0);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
