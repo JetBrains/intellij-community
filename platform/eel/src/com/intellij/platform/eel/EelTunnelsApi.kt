@@ -401,7 +401,7 @@ fun EelTunnelsApiHelpers.GetAcceptorForRemotePort.hostAddress(
 /**
  * Represents a common class for all network-related errors appearing during the interaction with IJent or local process
  */
-sealed interface EelNetworkError
+sealed interface EelNetworkError : EelError
 
 /**
  * An error that can happen during the creation of a connection to a remote server

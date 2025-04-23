@@ -1,7 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-sealed interface EelResult<out P, out E> {
+import org.jetbrains.annotations.ApiStatus
+
+/**
+ * [EelResult] is not completely deprecated yet, because the API that should replace it being developed.
+ * Nevertheless, prepare for the upcoming deprecation.
+ * Refrain from making new extension functions for [EelResult] and for using it in state of objects, putting EelResults into collections, etc.
+ */
+@ApiStatus.Obsolete
+sealed interface EelResult<out P, out E /*: EelError*//* TODO Uncomment and fix usages. */> {
   interface Ok<out P> : EelResult<P, Nothing> {
     val value: P
   }
@@ -9,6 +17,11 @@ sealed interface EelResult<out P, out E> {
   interface Error<out E> : EelResult<Nothing, E> {
     val error: E
   }
+}
+
+@ApiStatus.NonExtendable
+interface EelError {
+  object Unknown : EelError
 }
 
 /***

@@ -91,7 +91,7 @@ interface EelExecApi {
    */
   suspend fun findExeFilesInPath(binaryName: String): List<EelPath>
 
-  interface ExecuteProcessError {
+  interface ExecuteProcessError : EelError {
     val errno: Int
     val message: String
   }
