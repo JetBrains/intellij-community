@@ -1,28 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Internal
 @file:JvmName("JavaVersionConstructor")
-
 package com.intellij.util.lang
 
 import com.intellij.util.currentJavaVersionPlatformSpecific
-import org.jetbrains.annotations.ApiStatus
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmField
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
 
 /**
- *
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
- *
  *
  * Based on [JEP 322 "Time-Based Release Versioning"](http://openjdk.org/jeps/322) (Java 10+), but also supports JEP 223
  * "New Version-String Scheme" (Java 9), as well as earlier version's formats.
  *
- *
  * See [.parse] for examples of supported version strings.
  *
- * @implNote the class is used in bootstrap - please use only JDK API
+ * @implNote the class is used in bootstrap - please only use runtime API
  */
 class JavaVersion internal constructor(
   /**
@@ -59,7 +49,7 @@ class JavaVersion internal constructor(
    * `true` if the platform is an early access release, `false` otherwise (or when not known).
    */
   @JvmField
-  val ea: Boolean,
+  val ea: Boolean
 ) : Comparable<JavaVersion> {
   init {
     require(feature >= 0)
@@ -163,16 +153,14 @@ class JavaVersion internal constructor(
      * The method attempts to parse `"java.runtime.version"` system property first (usually, it is more complete),
      * and falls back to `"java.version"` if the former is invalid or differs in [.feature] or [.minor] numbers.
      */
-    @Deprecated("Use CurrentJavaVersion.current() instead", ReplaceWith("com.intellij.util.lang.CurrentJavaVersion.current()"))
+    @Deprecated("Use CurrentJavaVersion.currentJavaVersion() instead", ReplaceWith("com.intellij.util.lang.CurrentJavaVersion.currentJavaVersion()"))
     @JvmStatic
     fun current(): JavaVersion = currentJavaVersionPlatformSpecific()
 
     private const val MAX_ACCEPTED_VERSION = 50 // sanity check
 
     /**
-     *
      * Parses a Java version string.
-     *
      *
      * Supports various sources, including (but not limited to):<br></br>
      * - `"java.*version"` system properties (a version number without any decoration)<br></br>
@@ -181,7 +169,6 @@ class JavaVersion internal constructor(
      * - a second line of the above command (something like to "Java(TM) SE Runtime Environment (build $VERSION)")<br></br>
      * - output of "`java --full-version`" ("java $VERSION")<br></br>
      * - a line of "release" file ("JAVA_VERSION=\"$VERSION\"")
-     *
      *
      * See com.intellij.util.lang.JavaVersionTest for examples.
      *
@@ -302,4 +289,3 @@ class JavaVersion internal constructor(
     }
   }
 }
-
