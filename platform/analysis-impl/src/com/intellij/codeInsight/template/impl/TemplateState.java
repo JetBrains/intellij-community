@@ -986,7 +986,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   private static boolean isPreviewEditor(@Nullable Editor editor) {
-    if (!(editor instanceof ImaginaryEditor)) return false;
     return IntentionPreviewUtils.getPreviewEditor() == editor;
   }
 
