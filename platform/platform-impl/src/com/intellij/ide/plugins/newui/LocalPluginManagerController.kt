@@ -83,7 +83,15 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
     return PluginManagerCore.getPlugin(model.pluginId)?.let { PluginUiModelAdapter(it) }
   }
 
+  override fun findPlugin(model: PluginUiModel): PluginUiModel? {
+    return PluginManagerCore.buildPluginIdMap()[model.pluginId]?.let { PluginUiModelAdapter(it)}
+  }
+
   override fun getPluginManagerUrl(model: PluginUiModel): String {
     return MarketplaceUrls.getPluginManagerUrl()
+  }
+
+  override fun isDisabledInDiff(model: PluginUiModel): Boolean {
+    return localPluginModel.isDisabledInDiff(model.pluginId)
   }
 }

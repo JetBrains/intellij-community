@@ -102,8 +102,16 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return getController(model).findInstalledPlugin(model)
   }
 
+  fun findPlugin(model: PluginUiModel): PluginUiModel? {
+    return getController(model).findPlugin(model)
+  }
+
   fun getPluginManagerUrl(model: PluginUiModel): String {
     return getController(model).getPluginManagerUrl(model)
+  }
+
+  fun isDisabledInDiff(model: PluginUiModel): Boolean {
+    return getController(model).isDisabledInDiff(model)
   }
 
   private fun getController(model: PluginUiModel): PluginManagerController {
@@ -151,4 +159,6 @@ interface PluginManagerController {
   fun uninstallAndUpdateUi(model: PluginUiModel)
   fun findInstalledPlugin(model: PluginUiModel): PluginUiModel?
   fun getPluginManagerUrl(model: PluginUiModel) : String
+  fun isDisabledInDiff(model: PluginUiModel): Boolean
+  fun findPlugin(model: PluginUiModel): PluginUiModel?
 }

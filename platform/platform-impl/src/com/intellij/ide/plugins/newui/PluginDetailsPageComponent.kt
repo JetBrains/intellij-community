@@ -396,12 +396,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val plugin = plugin
     if (plugin != null && !sentFeedbackPlugins.contains(plugin.pluginId)) {
-      val pluginIdMap = buildPluginIdMap()
-      val pluginDescriptor = pluginIdMap.getOrDefault(plugin.pluginId, null)
-      if (pluginDescriptor != null && pluginModel.getModel().isUninstalled(pluginDescriptor)) {
+      val foundPlugin = pluginModel.findPlugin(plugin)
+      if (foundPlugin != null && pluginModel.isUninstalled(foundPlugin)) {
         rootPanel.add(uninstallFeedbackNotification!!, BorderLayout.NORTH)
       }
-      else if (pluginModel.getModel().isDisabledInDiff(plugin.pluginId)) {
+      else if (pluginModel.isDisabledInDiff(plugin)) {
         rootPanel.add(disableFeedbackNotification!!, BorderLayout.NORTH)
       }
     }
@@ -409,7 +408,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createEnableDisableAction(action: PluginEnableDisableAction): SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.EnableDisableAction(
-      PluginModelFacade(pluginModel.getModel()),
+      pluginModel,
       action,
       false,
       java.util.List.of(this),
@@ -433,7 +432,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(InstallButton(true).also { installButton = it })
     installButton!!.addActionListener(ActionListener { _ ->
-      pluginModel.getModel().installOrUpdatePlugin(this, plugin?.getDescriptor()!!, null, ModalityState.stateForComponent(installButton!!))
+      pluginModel.installOrUpdatePlugin(this, plugin!!, null, ModalityState.stateForComponent(installButton!!))
     })
 
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
@@ -1037,7 +1036,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createUninstallAction(): SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.UninstallAction(
-      PluginModelFacade(pluginModel.getModel()), false, this, java.util.List.of(this),
+      pluginModel, false, this, java.util.List.of(this),
       { obj: PluginDetailsPageComponent -> obj.descriptorForActions?.let { PluginUiModelAdapter(it) } },
       {
         updateNotifications()
