@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
@@ -112,25 +113,35 @@ public class ReflectionAccessMethodBuilder {
   }
 
   public ReflectionAccessMethodBuilder addParameter(@NotNull String jvmType, @NotNull String name) {
-    myParameters.add(new ParameterInfo(jvmType.replace('$', '.'), name, jvmType));
+    myParameters.add(new ParameterInfo(jvmType.replace('$', '.'), name, new TypeInfo(jvmType, 0)));
     return this;
   }
 
   public ReflectionAccessMethodBuilder addParameters(@NotNull PsiParameterList parameterList) {
     PsiParameter[] parameters = parameterList.getParameters();
-    for (PsiParameter parameter : parameters) {
-      PsiType parameterType = parameter.getType();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType parameterType = parameters[i].getType();
       PsiType erasedType = TypeConversionUtil.erasure(parameterType);
       String typeName = typeName(parameterType, erasedType);
-      String jvmType = erasedType != null ? extractJvmType(erasedType) : typeName;
+      TypeInfo jvmType = erasedType != null ? extractJvmType(erasedType) : new TypeInfo(typeName, 0);
 
-      String name = parameter.getName();
+      String name = "p" + i; // To avoid confusion with local variables, the real parameter names are not used.
 
-      PsiType accessedType = PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
-      myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
+      if (requiresObjectType(parameterType) || jvmType.arrayDimension > 0) {
+        myParameters.add(new ParameterInfo(CommonClassNames.JAVA_LANG_OBJECT, name, jvmType));
+      }
+      else {
+        PsiType accessedType = PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
+        myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
+      }
     }
 
     return this;
+  }
+
+  private static boolean requiresObjectType(PsiType type) {
+    PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
+    return psiClass != null && (psiClass.isRecord() || psiClass.isEnum());
   }
 
   private static @NotNull String typeName(@NotNull PsiType type, @Nullable PsiType erasedType) {
@@ -148,18 +159,46 @@ public class ReflectionAccessMethodBuilder {
     return erasedType.getCanonicalText();
   }
 
-  private static @NotNull String extractJvmType(@NotNull PsiType type) {
+  private static class TypeInfo {
+    final int arrayDimension;
+    final String typeName;
+
+    private TypeInfo(String name, int dimension) {
+      arrayDimension = dimension;
+      typeName = name;
+    }
+
+    String lookupClass() {
+      if (TypeConversionUtil.isPrimitive(typeName)) {
+        return typeName + StringUtil.repeat("[]", arrayDimension) + ".class";
+      }
+      else {
+        String className = typeName;
+        if (arrayDimension > 0) {
+          className = StringUtil.repeat("[", arrayDimension) + "L" + typeName + ";";
+        }
+        return "java.lang.Class.forName(\"" + className + "\")";
+      }
+    }
+  }
+
+  private static @NotNull TypeInfo extractJvmType(@NotNull PsiType type) {
+    int arrayDimension = 0;
+    while (type instanceof PsiArrayType arrayType) {
+      arrayDimension++;
+      type = arrayType.getComponentType();
+    }
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     String canonicalText = type.getCanonicalText();
     String jvmName = psiClass == null ? canonicalText : ClassUtil.getJVMClassName(psiClass);
-    return jvmName == null ? canonicalText : jvmName;
+    return new TypeInfo(jvmName == null ? canonicalText : jvmName, arrayDimension);
   }
 
   private static String createCatchBlocks(@NotNull List<String> exceptions) {
     return StreamEx.of(exceptions).map(x -> "catch(" + x + " e) { throw new java.lang.RuntimeException(e); }").joining("\n");
   }
 
-  private record ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull String jvmTypeName) {
+  private record ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull TypeInfo jvmType) {
   }
 
   private interface MyMemberAccessor {
@@ -227,7 +266,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getMemberLookupExpression() {
-      String args = StreamEx.of(myParameters).skip(1).map(x -> PsiReflectionAccessUtil.classForName(x.jvmTypeName))
+      String args = StreamEx.of(myParameters).skip(1).map(x -> x.jvmType.lookupClass())
                             .prepend(StringUtil.wrapWithDoubleQuote(myMethodName))
                             .joining(", ", "(", ")");
       return "getDeclaredMethod" + args;
@@ -251,10 +290,9 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getAccessExpression() {
-      return StreamEx.of(myParameters).map(x -> x.name).joining(", ", "invoke(", ")");
+      return "invoke" + parametersStringForInvoke();
     }
   }
-
 
   private class MyConstructorAccessor implements MyMemberAccessor {
     private final String myClassName;
@@ -265,7 +303,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getMemberLookupExpression() {
-      String args = StreamEx.of(myParameters).map(x -> x.jvmTypeName).map(PsiReflectionAccessUtil::classForName).joining(", ", "(", ")");
+      String args = StreamEx.of(myParameters).map(x -> x.jvmType.lookupClass()).joining(", ", "(", ")");
       return "getDeclaredConstructor" + args;
     }
 
@@ -276,8 +314,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getAccessExpression() {
-      String args = StreamEx.of(myParameters).map(x -> x.name).joining(", ", "(", ")");
-      return "newInstance" + args;
+      return "newInstance" + parametersStringForInvoke();
     }
 
     @Override
@@ -289,5 +326,16 @@ public class ReflectionAccessMethodBuilder {
     public List<String> getPossibleExceptions() {
       return Collections.singletonList("java.lang.ReflectiveOperationException");
     }
+  }
+
+  private String parametersStringForInvoke() {
+    return StreamEx.of(myParameters).map(x -> {
+      if (x.jvmType.arrayDimension > 0) {
+        return "(java.lang.Object)" + x.name; // cast arrays to Object to avoid confusion with varargs method invocation
+      }
+      else {
+        return x.name;
+      }
+    }).joining(", ", "(", ")");
   }
 }
