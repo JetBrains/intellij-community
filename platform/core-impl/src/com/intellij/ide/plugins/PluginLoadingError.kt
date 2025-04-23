@@ -46,14 +46,9 @@ class PluginLoadingError internal constructor(
   override val logMessage: @NonNls String
     get() = formatErrorMessage(plugin, detailedMessageSupplier.get())
 
-  internal val isDisabledError: Boolean
-    get() = shortMessageSupplier === DISABLED
-
   override fun toString(): @NonNls String = logMessage
 
   companion object {
-    internal val DISABLED: Supplier<String> = Supplier { "" }
-
     private fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
       val builder = StringBuilder()
       builder.append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")

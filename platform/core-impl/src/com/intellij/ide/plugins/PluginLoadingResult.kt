@@ -78,7 +78,10 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private fun initAndAdd(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, initContext: PluginInitializationContext) {
     descriptor.initialize(initContext)?.let { error ->
-      addIncompletePlugin(plugin = descriptor, error = error.takeIf { !it.isDisabledError })
+      addIncompletePlugin(plugin = descriptor, error = when (error) {
+        is PluginIsMarkedDisabled -> null
+        is PluginLoadingError -> error
+      })
       return
     }
 
