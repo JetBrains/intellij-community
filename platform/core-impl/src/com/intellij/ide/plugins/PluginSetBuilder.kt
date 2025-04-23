@@ -296,16 +296,9 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
-    return descriptor.moduleDependencies.modules.asSequence().map { it.name }
-      .firstOrNull { it !in enabledModuleV2Ids }
-      ?.let {
-        PluginLoadingError(
-          plugin = descriptor,
-          detailedMessageSupplier = message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, it),
-          shortMessageSupplier = message("plugin.loading.error.short.depends.on.not.installed.plugin", it),
-          shouldNotifyUser = isNotifyUser,
-        )
-      }
+    return descriptor.moduleDependencies.modules
+      .firstOrNull { it.name !in enabledModuleV2Ids }
+      ?.let { PluginModuleDependencyCannotBeLoadedOrMissing(plugin = descriptor, moduleDependency = it, shouldNotifyUser = isNotifyUser) }
   }
 }
 

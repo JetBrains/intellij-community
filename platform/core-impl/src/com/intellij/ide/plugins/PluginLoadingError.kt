@@ -247,3 +247,18 @@ class PluginIsIncompatibleWithAnotherPlugin(
   override val logMessage: @NonNls String
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is incompatible with another plugin '${incompatiblePlugin.name}' (${incompatiblePlugin.pluginId})"
 }
+
+@ApiStatus.Internal
+class PluginModuleDependencyCannotBeLoadedOrMissing(
+  override val plugin: IdeaPluginDescriptor,
+  val moduleDependency: ModuleDependencies.ModuleReference,
+  override val shouldNotifyUser: Boolean,
+): PluginNonLoadReason {
+  // FIXME VERY confusing message
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.depends.on.not.installed.plugin", plugin.name, moduleDependency.name)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.depends.on.not.installed.plugin", moduleDependency.name)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has module dependency '${moduleDependency.name}' which cannot be loaded or missing"
+}
