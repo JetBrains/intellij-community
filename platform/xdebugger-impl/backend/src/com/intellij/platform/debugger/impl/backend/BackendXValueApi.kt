@@ -7,18 +7,25 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
+import com.intellij.xdebugger.frame.XNavigatable
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.ui.tree.actions.computeSourcePositionWithTimeout
+import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.await
@@ -80,6 +87,40 @@ internal class BackendXValueApi : XValueApi {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
     val xExpression = xValueModel.xValue.calculateEvaluationExpression().asCompletableFuture().await() ?: return null
     return xExpression.toRpc()
+  }
+
+  override suspend fun computeSourcePosition(xValueId: XValueId): XSourcePositionDto? {
+    return computePosition(xValueId) { xValue, navigatable ->
+      xValue.computeSourcePosition(navigatable)
+    }
+  }
+
+  override suspend fun computeTypeSourcePosition(xValueId: XValueId): XSourcePositionDto? {
+    return computePosition(xValueId) { xValue, navigatable ->
+      xValue.computeTypeSourcePosition(navigatable)
+    }
+  }
+
+  private suspend fun computePosition(xValueId: XValueId, compute: (XValue, XNavigatable)-> Unit): XSourcePositionDto? {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
+    val sourcePosition = computeSourcePositionWithTimeout { navigatable ->
+      compute(xValueModel.xValue, navigatable)
+    }
+    return sourcePosition?.toRpc()
+  }
+
+  override suspend fun computeInlineData(xValueId: XValueId): XInlineDebuggerDataDto? {
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return null
+    val flow = MutableSharedFlow<XSourcePositionDto>()
+    val state = xValueModel.xValue.computeInlineDebuggerData(object : XInlineDebuggerDataCallback() {
+      override fun computed(position: XSourcePosition?) {
+        if (position == null) return
+        xValueModel.cs.launch {
+          flow.emit(position.toRpc())
+        }
+      }
+    })
+    return XInlineDebuggerDataDto(state, flow.toRpc())
   }
 }
 

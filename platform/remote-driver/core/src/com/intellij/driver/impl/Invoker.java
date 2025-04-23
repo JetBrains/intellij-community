@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Computable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -242,7 +243,12 @@ public class Invoker implements InvokerMBean {
         return call(call, supplier);
       }
       case READ_ACTION -> {
-        return ReadAction.compute(() -> call(call, supplier));
+        if (call.getDispatcher() == OnDispatcher.EDT) {
+          return WriteIntentReadAction.compute((Computable<Object>)() -> call(call, supplier));
+        }
+        else {
+          return ReadAction.compute(() -> call(call, supplier));
+        }
       }
       case WRITE_ACTION -> {
         return WriteAction.compute(() -> call(call, supplier));

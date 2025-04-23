@@ -313,6 +313,11 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeExporter"/>
     </extensionPoint>
 
+    <extensionPoint name="browsersConfigurableProvider"
+                    beanClass="com.intellij.ide.browsers.BrowserSettingsConfigurableEP" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
+
     <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter" dynamic="true"/>
     <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>

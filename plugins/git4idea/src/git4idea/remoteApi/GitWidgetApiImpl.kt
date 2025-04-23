@@ -60,7 +60,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
     val presentation = GitCurrentBranchPresenter.getPresentation(this)
 
     return GitWidgetState.OnRepository(
-      repository = rpcId(),
+      repository = this.rpcId,
       presentationData = GitWidgetState.RepositoryPresentation(
         icon = presentation.icon?.rpcId(),
         text = presentation.text,

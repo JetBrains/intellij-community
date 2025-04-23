@@ -462,11 +462,35 @@ private suspend fun writeBuilderFiles(
       sourcePackage = clsFqn.substringBeforeLast('.')
 
       val argsInterfacesByFqn: Map<String, ArgInterfaceInfo> = clsBuilderRequests.associate { builderRequest ->
+        val javaPsiFacade = JavaPsiFacade.getInstance(tempProject)
+        val projectScope = GlobalSearchScope.projectScope(tempProject)
         val argsInterface = getKtClassFromKtLightClass(
-          JavaPsiFacade.getInstance(tempProject).findClass(builderRequest.argsInterfaceFqn, GlobalSearchScope.projectScope(tempProject)))
+          javaPsiFacade.findClass(builderRequest.argsInterfaceFqn, projectScope))
         check(argsInterface != null) { "PsiClass for ${builderRequest.argsInterfaceFqn} not found" }
 
-        val requiredArguments: List<RequiredArgument> = argsInterface.getProperties()
+        val argsAllInterfaces: Collection<KtClass> = run {
+          val tree = hashSetOf<KtClass>()
+          val queue = ArrayDeque(listOf(argsInterface))
+          while (true) {
+            val iface = queue.removeFirstOrNull() ?: break
+            if (tree.add(iface)) {
+              iface.getSuperTypeList()
+                ?.entries
+                ?.mapNotNull { superTypeListEntry -> superTypeListEntry.typeReference }
+                ?.mapNotNull(KtTypeReference::getFqn)
+                ?.map { fqn ->
+                  val cls = getKtClassFromKtLightClass(javaPsiFacade.findClass(fqn, projectScope))
+                  check(cls != null) { "PsiClass for $fqn not found" }
+                  cls
+                }
+                ?.let(queue::addAll)
+            }
+          }
+          tree
+        }
+
+        val requiredArguments: List<RequiredArgument> = argsAllInterfaces
+          .flatMap { iface -> iface.getProperties() }
           .filter { property -> !property.hasBody() }
           .map { property ->
             RequiredArgument(
@@ -476,8 +500,10 @@ private suspend fun writeBuilderFiles(
             )
           }
           .sortedBy { it.name }
+          .distinct()
 
-        val optionalArguments: List<OptionalArgument> = argsInterface.getProperties()
+        val optionalArguments: List<OptionalArgument> = argsAllInterfaces
+          .flatMap { iface -> iface.getProperties() }
           .filter { property -> property.hasBody() }
           .map { property ->
             OptionalArgument(
@@ -488,8 +514,11 @@ private suspend fun writeBuilderFiles(
             )
           }
           .sortedBy { it.name }
+          .distinct()
 
-        val propertyNames = argsInterface.getProperties().map { property -> property.name!! }.sortedBy { it }
+        val propertyNames = argsAllInterfaces
+          .flatMap { iface -> iface.getProperties() }
+          .map { property -> property.name!! }.sortedBy { it }
 
         for (fullTypeFqn in requiredArguments.map { it.typeFqn } + optionalArguments.map { it.typeFqn }) {
           for (singleTypeFqn in fullTypeFqn.split(Regex("[<>,?]"))) {

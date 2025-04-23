@@ -18,19 +18,15 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
  *
  * It is capable of injecting code in:
  *
- * * Top-level code fences with support of formatting and
- *   correct alignment on enter
+ * * Top-level code fences with support of formatting and correct alignment on Enter.
  *
- * * Blockquoted/in-list code fences with formatting model.
+ * * Blockquote/in-list code fences with a formatting model.
  *   But in that case indentation is disabled via [MarkdownEnterHandler]
- *   and formatting is disable via [MarkdownFormattingBlock].
- *   The reason for it is numerous problems with injection-based
- *   formatting.
+ *   and formatting is disabled via [MarkdownFormattingBlock].
+ *   The reason for it is many problems with injection-based formatting.
  */
 internal open class CodeFenceInjector : MultiHostInjector {
-  companion object {
-    private val toInject = listOf(MarkdownCodeFence::class.java)
-  }
+  private val toInject = listOf(MarkdownCodeFence::class.java)
 
   override fun elementsToInjectIn(): List<Class<out PsiElement>?> = toInject
 
@@ -62,10 +58,9 @@ internal open class CodeFenceInjector : MultiHostInjector {
   }
 
   /**
-   * Such code fence will make use of IntelliJ Formatter.
+   * Such a code fence will make use of IntelliJ Formatter.
    *
-   * But, the problem is that not all formatters are ready to work in
-   * injected context, so we should do it with great care.
+   * But the problem is that not all formatters are ready to work in the injected context, so we should do it with great care.
    */
   private fun injectAsOnePlace(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language) {
     val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = true) ?: return

@@ -324,6 +324,9 @@
     <registryKey key="java.test.enable.tree.live.time" defaultValue="true"
                  description="Enable live time for tests" restartRequired="true"/>
 
+    <registryKey key="java.highest.language.level" defaultValue="24"
+                 description="Highest released language level" restartRequired="false"/>
+
     <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true"
                  description="Index ids from class files instead of source files in JARs" restartRequired="false"/>
 
@@ -1288,13 +1291,10 @@
                               implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
     <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
-    <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
     <codeCompletionConfigurable instance="com.intellij.application.options.JavaCompletionConfigurable" order="first"/>
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
-    <lang.smartEnterProcessor language="JAVA"
-                              implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor"/>
     <enterHandlerDelegate
       id="JavaEnterInInjectedTextBlockHandler"
       order="before EnterBetweenBracesHandler, before JavaEnterInTextBlockHandler, first"
@@ -1309,8 +1309,6 @@
                           implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
     <listSplitJoinContext language="JAVA"
                           implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinRecordComponentsContext"/>
-    <moveLeftRightHandler language="JAVA"
-                          implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.JavaMoveLeftRightHandler"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration"
                           order="before xml"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
@@ -1413,9 +1411,6 @@
     <lang.documentationFixer language="JAVA" implementationClass="com.intellij.codeInsight.documentation.JavaDocCommentFixer"/>
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
-    <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
-    <lang.whiteSpaceFormattingStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.JavaWhiteSpaceFormattingStrategy"/>
-    <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA"
                                                             implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
@@ -2663,7 +2658,6 @@
     </intentionAction>
     <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
     <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
-    <highlightErrorFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter"/>
 
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.JavaClassAndFileEqualityProvider"/>
 
@@ -2743,9 +2737,6 @@
 
     <usageFeaturesProvider implementation="com.intellij.find.findUsages.similarity.JavaUsageSimilarityFeaturesProvider"/>
 
-    <registryKey key="java.formatter.chained.calls.pre212.compatibility"
-                 defaultValue="false"
-                 description="Format chained calls as in versions prior to 2021.2"/>
     <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java"
                  key="ide.java.refactoring.suggested.call.site"/>
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
@@ -2854,7 +2845,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <java.definitions id="java-backend" implementation="com.intellij.codeInsight.JavaDefinitionService"/>
     <projectService serviceImplementation="com.intellij.jarRepository.RepositoryLibrarySettings$Service"
                     configurationSchemaKey="repositoryLibrary"/>
   </extensions>

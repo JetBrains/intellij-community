@@ -122,5 +122,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="TEST" />
   </component>
 </module>

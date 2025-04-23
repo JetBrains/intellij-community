@@ -104,6 +104,78 @@ public class Py3TypeTest extends PyTestCase {
            """);
   }
 
+  // PY-76659
+  public void testRecursiveResolve() {
+    doTest("int",
+           """
+             x = 42
+             while x:
+                 x = x + 1
+             expr = x""");
+  }
+
+  // PY-76659
+  public void testRecursiveResolve2() {
+    doTest("int",
+           """
+             x = 42
+             b: bool = ...
+             while x:
+                 if b:
+                     x = x + 1
+                     expr = x
+                 else:
+                     x = x - 1
+             """);
+  }
+
+  // PY-76659
+  public void testDeclareAfterUse() {
+    doTest("int | Any",
+           """
+             from typing import Any, TypeGuard
+             
+             def is_positive_integer(value: Any) -> TypeGuard[int]:
+                 return isinstance(value, int) and value > 0
+
+             def bar() -> object:
+                 return 321
+             
+             def foo():
+                 for i in range(1, 100):
+                     if i > 1:
+                         expr = x
+                     x = bar()
+                     if not is_positive_integer(x):
+                         break
+             """);
+  }
+
+  // PY-76659
+  public void testClassChain() {
+    doTest("B | C | D | A",
+           """
+             class A:
+                 def bar() -> "B":
+                     return B()
+             class B:
+                 def bar() -> "C":
+                     return C()
+             class C:
+                 def bar() -> "D":
+                     return D()
+             class D:
+                 def bar() -> A:
+                     return A()
+             
+             def foo(b):
+                 x = A()
+                 while b:
+                     x = x.bar()
+             
+                 expr = x""");
+  }
+
   // PY-6702
   public void testYieldFromType() {
     doTest("str | int | float",
@@ -788,7 +860,7 @@ public class Py3TypeTest extends PyTestCase {
              async for expr in a:
                  print(expr)""");
   }
-  
+
   // PY-60714
   public void testAsyncIteratorUnwrapsCoroutineFromAnext() {
     doTest("bytes", """
@@ -3510,7 +3582,7 @@ public class Py3TypeTest extends PyTestCase {
       
       
       class Meta(type):
-          def call(cls, *args, **kwargs) -> object: ...
+          def call(cls, p) -> object: ...
       
           __call__ = call
       
@@ -3519,14 +3591,14 @@ public class Py3TypeTest extends PyTestCase {
           def __new__(cls, p) -> Self: ...
       
       
-      expr = MyClass()
+      expr = MyClass(1)
       """);
     doTest("MyClass", """
       from typing import Self
       
       
       class Meta(type):
-          def __call__(cls): ...
+          def __call__(cls, p: int): ...
       
       
       class MyClass(metaclass=Meta):
@@ -3558,10 +3630,28 @@ public class Py3TypeTest extends PyTestCase {
       
       
       class MyClass(metaclass=Meta):
-          def __new__(cls, p1, p2) -> Self: ...
+          def __new__(cls, x) -> Self: ...
       
       
       expr = MyClass(1)
+      """);
+    doTest("Base", """
+      from typing import Any, Self
+
+
+      class Meta(type):
+          def __call__(self, *args: Any, **kwds: Any) -> 'Derived': ...
+
+
+      class Base(metaclass=Meta):
+          def __new__(cls, *args: Any, **kwds: Any) -> Self: ...
+
+
+      class Derived(Base):
+          ...
+
+
+      expr = Base()
       """);
   }
 

@@ -77,11 +77,15 @@ import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTest
 import static org.junit.Assume.assumeTrue;
 
 /**
- * This class is compatible with both JUnit 3 and JUnit 4,
- * but not JUnit 5 (see the module intellij.platform.testFramework.junit5 instead).
+ * This class is compatible with both JUnit 3 and JUnit 4, but not JUnit 5.
  * <p>
- * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other (like {@code Parametrized.class}),
- * and you are all set.
+ * To use JUnit 3, make the name of your test methods start with {@code test}, as per the JUnit 3 convention.
+ * <p>
+ * To use JUnit 4, annotate your test subclass with {@code @RunWith(JUnit4.class)} or any other runner (like {@code Parametrized.class}).
+ * <p>
+ * For JUnit 5 support,
+ * see the {@code intellij.platform.testFramework.junit5} module in {@code community/platform/testFramework/junit5}.
+ * <h3>Caveats</h3>
  * If you're looking for JUnit 4 for Assume support and still have JUnit 3 tests,
  * consider using {@code @RunWith(JUnit38AssumeSupportRunner.class)}.
  * <p>
@@ -90,9 +94,9 @@ import static org.junit.Assume.assumeTrue;
  * <p>
  * Don't define {@code @Rule}s calling {@linkplain #runBare()}, just subclassing this class (directly or indirectly) is enough.
  * <p>
- * The execution order is the following:
+ * <h3>Execution order</h3>
  * <ul>
- *   <li><em>(JUnit 4 only)</em> {@linkplain #checkShouldRunTest} that can be used to ignore tests with meaningful message
+ *   <li><em>(JUnit 4 only)</em> {@linkplain #checkShouldRunTest} that can be used to ignore tests with a meaningful message
  *   <li>{@linkplain #shouldRunTest()} is also called (both JUnit 3 and JUnit 4)
  *   <li>{@linkplain #setUp()}, usually overridden so that it initializes classes in order from base to specific
  *     <ul>
@@ -237,7 +241,7 @@ public abstract class UsefulTestCase extends TestCase {
     Disposer.setDebugMode(!isStressTest);
 
     if (isIconRequired()) {
-      // ensure that IconLoader will not use fake empty icon
+      // ensure that IconLoader will not use a fake empty icon
       try {
         IconManager.Companion.activate(new CoreIconManager());
       }
@@ -431,8 +435,8 @@ Most likely there was an uncaught exception in asynchronous execution that resul
    * This reflects the way the default {@link TestCase#runBare} works, with few notable exceptions:
    * <ul>
    *   <li/> {@link #tearDown} is called even if {@link #setUp} has failed;
-   *   <li/> exceptions from tearDown() don't shadow those from the main test method, but are rather linked as suppressed;
-   *   <li/> it allows to customise the way the methods are invoked through {@link #runTestRunnable},
+   *   <li/> exceptions from tearDown() don't shadow those from the main test method but are rather linked as suppressed;
+   *   <li/> it allows customizing the way the methods are invoked through {@link #runTestRunnable},
    *         {@link #invokeSetUp} and {@link #invokeTearDown}, for example, to make them execute on a different thread.
    * </ul>
    */
@@ -461,7 +465,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   /**
    * Logs the setup cost grouped by test fixture class (superclass of the current test class).
    *
-   * @param cost a cost of setup in milliseconds
+   * @param cost setup cost in milliseconds
    */
   private void logPerClassCost(int cost, @NotNull ObjectIntMap<String> costMap, @NotNull ObjectIntMap<String> countMap) {
     String name = getClass().getSuperclass().getName();
@@ -1070,7 +1074,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
    * Such tests should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
-   * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
+   * If you want your test to be treated as "Performance", include the "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
   public final boolean isPerformanceTest() {

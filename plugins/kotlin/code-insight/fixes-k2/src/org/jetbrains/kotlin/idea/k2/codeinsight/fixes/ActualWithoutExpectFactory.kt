@@ -214,7 +214,7 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
     }
 }
 
-class CreateExpectedClassFix(
+internal class CreateExpectedClassFix(
     declaration: KtClassOrObject,
     targetExpectedClass: KtClassOrObject?,
     targetFile: KtFile?,
@@ -242,7 +242,7 @@ class CreateExpectedClassFix(
     }
 }
 
-class CreateExpectedCallableMemberFix(
+internal class CreateExpectedCallableMemberFix(
     declaration: KtCallableDeclaration,
     targetExpectedClass: KtClassOrObject?,
     targetFile: KtFile?,

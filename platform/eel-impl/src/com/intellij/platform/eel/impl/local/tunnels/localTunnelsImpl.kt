@@ -96,12 +96,11 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
   }
 
 
-  override suspend fun getConnectionToRemotePort(address: HostAddress, configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit): EelResult<Connection, EelConnectionError> =
-    getConnectionToRemotePortImpl(address, configureSocketBeforeConnection)
+  override suspend fun getConnectionToRemotePort(args: GetConnectionToRemotePortArgs): EelResult<Connection, EelConnectionError> =
+    getConnectionToRemotePortImpl(args)
 
-  override suspend fun getAcceptorForRemotePort(address: HostAddress, configureServerSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError> =
-    getAcceptorForRemotePortImpl(address, configureServerSocket)
-
+  override suspend fun getAcceptorForRemotePort(args: GetAcceptorForRemotePort): EelResult<ConnectionAcceptor, EelConnectionError> =
+    getAcceptorForRemotePortImpl(args)
 }
 
 private suspend fun deleteFileSilently(file: Path) {
@@ -114,17 +113,17 @@ private suspend fun deleteFileSilently(file: Path) {
   }
 }
 
-private suspend fun getConnectionToRemotePortImpl(address: HostAddress, configureSocket: ConfigurableClientSocket.() -> Unit): EelResult<Connection, EelConnectionError> = withContext(Dispatchers.IO) {
-  val socketChannel = address.protocolPreference.protocolFamily?.let {
+private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePortArgs): EelResult<Connection, EelConnectionError> = withContext(Dispatchers.IO) {
+  val socketChannel = args.protocolPreference.protocolFamily?.let {
     SocketChannel.open(it)
   } ?: SocketChannel.open()
-  configureSocket(ConfigurableClientSocketImpl(socketChannel.socket()))
+  args.configureSocketBeforeConnection(ConfigurableClientSocketImpl(socketChannel.socket()))
   val connKiller = async {
-    delay(address.timeout)
+    delay(args.timeout)
     socketChannel.close()
   }
   return@withContext try {
-    socketChannel.connect(address.asInetSocketAddress)
+    socketChannel.connect(args.asInetSocketAddress)
     NetworkOk(SocketAdapter(socketChannel))
   }
   catch (e: IOException) {
@@ -135,17 +134,17 @@ private suspend fun getConnectionToRemotePortImpl(address: HostAddress, configur
   }
 }
 
-private fun getAcceptorForRemotePortImpl(address: HostAddress, configureSocket: ConfigurableSocket.() -> Unit): EelResult<ConnectionAcceptor, EelConnectionError> {
+private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): EelResult<ConnectionAcceptor, EelConnectionError> {
   val channel = try {
     ServerSocketChannel.open().apply {
-      bind(address.asInetSocketAddress)
+      bind(args.asInetSocketAddress)
       logger.info("Listening for $localAddress")
     }
   }
   catch (e: IOException) {
     return ResultErrImpl(UnknownFailure(e.localizedMessage))
   }
-  configureSocket(ConfigurableServerSocketImpl(channel.socket()))
+  args.configureServerSocket(ConfigurableServerSocketImpl(channel.socket()))
   return ResultOkImpl(ConnectionAcceptorImpl(channel))
 }
 

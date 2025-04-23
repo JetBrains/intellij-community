@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a bug or request a feature
+    url: https://youtrack.jetbrains.com/newIssue?project=JEWEL
+    about: Please report new issues on YouTrack

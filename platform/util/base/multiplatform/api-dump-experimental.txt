@@ -1,5 +1,3 @@
-*@:com.intellij.openapi.util.NlsSafe
-- java.lang.annotation.Annotation
 *f:com.intellij.openapi.util.text.StringsKmp
 - sf:stringHashCode(java.lang.CharSequence):I
 - sf:stringHashCode(java.lang.CharSequence,I,I):I

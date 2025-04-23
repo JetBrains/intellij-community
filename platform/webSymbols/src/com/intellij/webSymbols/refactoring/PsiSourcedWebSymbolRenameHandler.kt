@@ -48,6 +48,5 @@ private class PsiSourcedWebSymbolRenameHandler : RenameHandler, TitledHandler {
 
 internal fun acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol: Symbol): Boolean =
   symbol is PsiSourcedWebSymbol
-  && symbol !is WebSymbolDeclaredInPsi
   && symbol.source is PsiNamedElement
   && symbol.source !is SyntheticElement

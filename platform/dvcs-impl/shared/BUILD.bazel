@@ -15,6 +15,9 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
   ],
   runtime_deps = [":vcs-dvcs-impl-shared_resources"]
 )

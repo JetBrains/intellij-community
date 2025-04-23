@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.jsp.noDeps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "jsp-noDeps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsp-noDeps",
+  module_name = "intellij.jsp.noDeps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = ["@lib//:jetbrains-annotations"],
+  runtime_deps = [":jsp-noDeps_resources"]
+)
+### auto-generated section `build intellij.jsp.noDeps` end

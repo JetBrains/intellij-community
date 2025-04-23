@@ -38,6 +38,8 @@ jvm_library(
     "@lib//:ec4j-core",
     "//platform/settings",
     "@lib//:kotlinx-serialization-core",
+    "//plugins/editorconfig/common",
+    "//platform/backend",
   ],
   runtime_deps = [
     ":backend_resources",
@@ -77,6 +79,8 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/settings",
     "@lib//:kotlinx-serialization-core",
+    "//plugins/editorconfig/common",
+    "//platform/backend",
   ],
   runtime_deps = [
     ":backend_resources",

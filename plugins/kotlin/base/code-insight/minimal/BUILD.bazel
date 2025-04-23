@@ -15,7 +15,6 @@ jvm_library(
   deps = [
     "//platform/lang-impl",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//java/java-frontback-impl:frontback-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",

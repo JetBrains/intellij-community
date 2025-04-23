@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
+import com.intellij.dvcs.commit.DvcsCommitModeProvider;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,7 +34,6 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
-import git4idea.commit.GitCommitModeProvider;
 import git4idea.commit.GitStagingAreaCommitMode;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
@@ -359,13 +359,7 @@ public final class GitVcs extends AbstractVcs {
     if (GitVcsApplicationSettings.getInstance().isStagingAreaEnabled()) {
       return GitStagingAreaCommitMode.INSTANCE;
     }
-    CommitMode commitModeFromExtension = GitCommitModeProvider.EP_NAME.computeSafeIfAny(GitCommitModeProvider::getCommitMode);
-    if (commitModeFromExtension != null) {
-      return commitModeFromExtension;
-    }
-    else {
-      return null;
-    }
+    return DvcsCommitModeProvider.compute();
   }
 
   @Override

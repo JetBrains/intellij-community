@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.openapi.util.Key;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private boolean isForward = true;
   private boolean isGlobal = true;
   private boolean isRegularExpressions;
+  private @MagicConstant(flagsFromClass = Pattern.class) int regExpFlags;
   private boolean isCaseSensitive;
   private boolean isMultipleFiles;
   private boolean isPromptOnReplace = true;
@@ -137,6 +139,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       isForward = model.isForward;
       isGlobal = model.isGlobal;
       isRegularExpressions = model.isRegularExpressions;
+      regExpFlags = model.regExpFlags;
       isCaseSensitive = model.isCaseSensitive;
       isMultipleFiles = model.isMultipleFiles;
       isPromptOnReplace = model.isPromptOnReplace;
@@ -182,6 +185,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (isProjectScope != findModel.isProjectScope) return false;
     if (isPromptOnReplace != findModel.isPromptOnReplace) return false;
     if (isRegularExpressions != findModel.isRegularExpressions) return false;
+    if (regExpFlags != findModel.regExpFlags) return false;
     if (isReplaceAll != findModel.isReplaceAll) return false;
     if (isReplaceState != findModel.isReplaceState) return false;
     if (isSearchHighlighters != findModel.isSearchHighlighters) return false;
@@ -215,6 +219,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isForward ? 1 : 0);
     result = 31 * result + (isGlobal ? 1 : 0);
     result = 31 * result + (isRegularExpressions ? 1 : 0);
+    result = 31 * result + regExpFlags;
     result = 31 * result + (isCaseSensitive ? 1 : 0);
     result = 31 * result + (isMultipleFiles ? 1 : 0);
     result = 31 * result + (isPromptOnReplace ? 1 : 0);
@@ -232,7 +237,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isMultiline ? 1 : 0);
     result = 31 * result + (isPreserveCase ? 1 : 0);
     result = 31 * result + (mySearchInProjectFiles ? 1 : 0);
-    result = 31 * result + (myPattern != null ? myPattern.hashCode() : 0);
     return result;
   }
 
@@ -369,6 +373,19 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = val != isRegularExpressions;
     if (changed) {
       isRegularExpressions = val;
+      notifyObservers();
+    }
+  }
+
+  public int getRegExpFlags() {
+    return regExpFlags;
+  }
+
+  public void setRegExpFlags(@MagicConstant(flagsFromClass = Pattern.class) int flags) {
+    boolean changed = flags != regExpFlags;
+    if (changed) {
+      regExpFlags = flags;
+      myPattern = PatternUtil.NOTHING;
       notifyObservers();
     }
   }
@@ -614,7 +631,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     return (FindModel)super.clone();
   }
 
-
   @Override
   public String toString() {
     return "--- FIND MODEL ---\n" +
@@ -627,6 +643,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
            "isForward = " + isForward + "\n" +
            "isGlobal = " + isGlobal + "\n" +
            "isRegularExpressions = " + isRegularExpressions + "\n" +
+           "regExpFlags = " + regExpFlags + "\n" +
            "isCaseSensitive = " + isCaseSensitive + "\n" +
            "isMultipleFiles = " + isMultipleFiles + "\n" +
            "isPromptOnReplace = " + isPromptOnReplace + "\n" +
@@ -914,7 +931,13 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     Pattern pattern = myPattern;
     if (pattern == PatternUtil.NOTHING) {
       String toFind = getStringToFind();
-      int flags = isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+      @MagicConstant(flagsFromClass = Pattern.class) int flags;
+      if (regExpFlags != 0) {
+        flags = getRegExpFlags(); // should separate case-sensitive setting be used here?
+      }
+      else {
+        flags = isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+      }
 
       // SOE during matching regular expressions is considered to be feature
       // http://bugs.java.com/view_bug.do?bug_id=6882582

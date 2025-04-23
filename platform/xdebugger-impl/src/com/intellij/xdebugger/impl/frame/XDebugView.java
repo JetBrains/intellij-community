@@ -58,7 +58,7 @@ public abstract class XDebugView implements Disposable {
    */
   @ApiStatus.Obsolete
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
-    processSessionEvent(event, XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    processSessionEvent(event, XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {
@@ -66,8 +66,17 @@ public abstract class XDebugView implements Disposable {
     return component == null ? null : getSession(component);
   }
 
+  /**
+   * Use {@link #getSessionProxy} instead.
+   */
+  @ApiStatus.Obsolete
   public static @Nullable XDebugSession getSession(@NotNull Component component) {
     return getData(XDebugSession.DATA_KEY, component);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy getSessionProxy(@NotNull Component component) {
+    return getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY, component);
   }
 
   public static @Nullable <T> T getData(DataKey<T> key, @NotNull Component component) {

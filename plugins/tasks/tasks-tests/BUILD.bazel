@@ -49,6 +49,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/jdom",
     "//platform/bookmarks",
+    "//plugins/git4idea/shared:vcs-git-shared",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = ["//spellchecker"]
 )

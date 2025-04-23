@@ -20,6 +20,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/analysis-api:analysis",
     "//platform/util/jdom",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.platform.macro` end

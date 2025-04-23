@@ -39,10 +39,6 @@ public final class PyAbstractClassInspection extends PyInspection {
 
   private static final class Visitor extends PyInspectionVisitor {
 
-    private static @Nls @NotNull String canNotInstantiateAbstractClassMessage(@NotNull PyClass pyClass) {
-      return PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName());
-    }
-
     private Visitor(@NotNull ProblemsHolder holder,
                     @NotNull TypeEvalContext context) {
       super(holder, context);
@@ -57,10 +53,11 @@ public final class PyAbstractClassInspection extends PyInspection {
             boolean hasAbstractMethod =
               ContainerUtil.exists(pyClass.getMethods(), method -> PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext));
             if (hasAbstractMethod || !getAllSuperAbstractMethods(pyClass).isEmpty()) {
-              registerProblem(node, canNotInstantiateAbstractClassMessage(pyClass), ProblemHighlightType.WARNING);
+              registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()),
+                              ProblemHighlightType.WARNING);
             }
             else if (isAbstract(pyClass)) {
-              registerProblem(node, canNotInstantiateAbstractClassMessage(pyClass));
+              registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()));
             }
           }
         }

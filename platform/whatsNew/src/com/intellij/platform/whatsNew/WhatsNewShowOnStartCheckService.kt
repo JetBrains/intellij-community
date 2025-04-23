@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import kotlinx.coroutines.withContext

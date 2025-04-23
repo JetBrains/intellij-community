@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import git4idea.GitReference
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRefType
@@ -37,11 +36,7 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
 
   override fun getTags() = GitBranchUtil.getCommonTags(repositories)
 
-  override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
-                                             || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
-                                             || (node === GitBranchType.REMOTE && remoteBranchesTree.isEmpty())
-                                             || (node is RefTypeUnderRepository && node.isEmpty())
-                                             || (node is GitTagType && tagsTree.isEmpty())
+  override fun isLeaf(node: Any?): Boolean = super.isLeaf(node) || (node is RefTypeUnderRepository && node.isEmpty())
 
   private fun RefTypeUnderRepository.isEmpty() =
     type === GitBranchType.LOCAL && repositoriesWithBranchesTree.isLocalBranchesEmpty(repository)
@@ -128,10 +123,11 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
   }
 
   private fun haveFilteredBranches(): Boolean =
-    !actionsTree.isEmpty() || !repositoriesTree.isEmpty()
-    || !localBranchesTree.isEmpty() || !remoteBranchesTree.isEmpty()
-    || !repositoriesWithBranchesTree.isLocalBranchesEmpty() || !repositoriesWithBranchesTree.isRemoteBranchesEmpty()
-    || !tagsTree.isEmpty()
+    !actionsTree.isEmpty()
+    || !repositoriesTree.isEmpty()
+    || !areRefTreesEmpty()
+    || !repositoriesWithBranchesTree.isLocalBranchesEmpty()
+    || !repositoriesWithBranchesTree.isRemoteBranchesEmpty()
 
   private inner class LazyRepositoryBranchesHolder {
     private val repositoryNodes = repositories.map { RepositoryNode(it, isLeaf = false) }

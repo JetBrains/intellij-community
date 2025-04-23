@@ -51,8 +51,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -84,16 +84,23 @@ public final class ScratchFileActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-
       Project project = e.getProject();
       String place = e.getPlace();
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
+        ActionPlaces.EDITOR_POPUP.equals(place) && hasSelection(editor) ||
         e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
 
       e.getPresentation().setEnabledAndVisible(enabled);
       updatePresentationTextAndIcon(e, e.getPresentation());
+    }
+
+    private static boolean hasSelection(@Nullable Editor editor) {
+      if (editor == null) return false;
+      return StringUtil.isNotEmpty(editor.getSelectionModel().getSelectedText(true));
     }
 
     @Override
@@ -111,12 +118,15 @@ public final class ScratchFileActions {
         StringUtil.isNotEmpty(context.text) ? new LanguageItem(
           null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
 
-      // extract text from the focused component, e.g. a tree or a list
+      // extract text from the focused component, e.g., a tree or a list
       ScratchImplUtil.TextExtractor textExtractor = selectionItem == null ? ScratchImplUtil.getTextExtractor(component) : null;
       LanguageItem extractItem =
         textExtractor != null && StringUtil.isEmpty(context.text) &&
         !EditorUtil.isRealFileEditor(e.getData(CommonDataKeys.EDITOR)) ?
         new LanguageItem(null, PlainTextFileType.INSTANCE, PlainTextFileType.INSTANCE.getDefaultExtension()) : null;
+
+      boolean isFromConsole = e.getPlace().equals(ActionPlaces.EDITOR_POPUP)
+                              && hasSelection(e.getData(CommonDataKeys.EDITOR));
 
       Consumer<LanguageItem> consumer = o -> {
         context.language = o.language();
@@ -125,7 +135,7 @@ public final class ScratchFileActions {
           context.text = StringUtil.notNullize(textExtractor.extractText());
           context.caretOffset = 0;
         }
-        else if (o != selectionItem) {
+        else if (o != selectionItem && !isFromConsole) {
           context.text = "";
           context.caretOffset = 0;
         }
@@ -160,7 +170,7 @@ public final class ScratchFileActions {
       if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
         presentation.setText(ActionsBundle.actionText(ACTION_ID));
       }
-      else {
+      else if (!e.getPlace().equals(ActionPlaces.EDITOR_POPUP)) {
         presentation.setText(myActionText.getValue());
       }
 

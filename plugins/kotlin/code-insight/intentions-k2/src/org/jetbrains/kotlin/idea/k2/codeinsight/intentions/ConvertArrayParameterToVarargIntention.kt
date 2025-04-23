@@ -11,14 +11,15 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeProjection
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertArrayParameterToVarargIntention :
@@ -31,7 +32,7 @@ internal class ConvertArrayParameterToVarargIntention :
         !element.isLambdaParameter && !element.isVarArg && !element.isFunctionTypeParameter
 
     override fun getPresentation(context: ActionContext, element: KtParameter): Presentation? = analyze(element) {
-        val typeReference = element.getChildOfType<KtTypeReference>() ?: return null
+        val typeReference = element.typeReference ?: return null
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null
         val type = symbol.returnType as? KaClassType? ?: return null
         val actionName = when {
@@ -41,11 +42,10 @@ internal class ConvertArrayParameterToVarargIntention :
                 val typeProjection = typeArgument?.parent as? KtTypeProjection
                 if (typeProjection?.hasModifier(KtTokens.IN_KEYWORD) != false) return null
                 if (!typeProjection.hasModifier(KtTokens.OUT_KEYWORD) &&
-                    type.arrayElementType?.isPrimitive == false
+                    type.arrayElementType?.let { !it.isMarkedNullable && it.isPrimitive } == false
                 ) {
                     KotlinBundle.message("0.may.break.code", familyName)
-                }
-                else {
+                } else {
                     familyName
                 }
             }
@@ -59,7 +59,7 @@ internal class ConvertArrayParameterToVarargIntention :
     override fun KaSession.prepareContext(element: KtParameter): KtTypeReference? {
         val symbol = element.symbol as? KaValueParameterSymbol ?: return null
         val elementType = symbol.returnType.arrayElementType ?: return null
-        val newType = elementType.withNullability(KaTypeNullability.NON_NULLABLE).render(position = Variance.IN_VARIANCE)
+        val newType = elementType.render(position = Variance.IN_VARIANCE)
         return KtPsiFactory(element.project).createType(newType)
     }
 
@@ -69,7 +69,7 @@ internal class ConvertArrayParameterToVarargIntention :
         elementContext: KtTypeReference,
         updater: ModPsiUpdater,
     ) {
-        val typeReference = element.getChildOfType<KtTypeReference>() ?: return
+        val typeReference = element.typeReference ?: return
         shortenReferences(typeReference.replace(elementContext) as KtTypeReference)
         element.addModifier(KtTokens.VARARG_KEYWORD)
     }

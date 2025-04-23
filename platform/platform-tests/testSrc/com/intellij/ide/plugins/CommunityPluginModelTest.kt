@@ -11,14 +11,14 @@ import java.nio.file.Path
 class CommunityPluginModelTest {
   @TestFactory
   fun check(): List<DynamicTest> {
-    val communityPath = PlatformTestUtil.getCommunityPath()
+    val communityPath = Path.of(PlatformTestUtil.getCommunityPath())
     val options = PluginValidationOptions(
       skipUnresolvedOptionalContentModules = true,
       referencedPluginIdsOfExternalPlugins = setOf(
         "com.intellij.modules.python-in-mini-ide-capable", //defined in the ultimate part
         "com.intellij.modules.rider", //defined in the ultimate part
       ),
-      modulesToSkip = setOf(
+      modulesWithIncorrectlyPlacedModuleDescriptor = setOf(
         "intellij.android.device-explorer",
       ),
       pathsIncludedFromLibrariesViaXiInclude = setOf(
@@ -27,11 +27,11 @@ class CommunityPluginModelTest {
         "META-INF/wizard-template-impl.xml",
       )
     )
-    val result = validatePluginModel(Path.of(communityPath), options)
+    val result = validatePluginModel(communityPath, options)
     
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-      val out = Path.of(communityPath, System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
-      result.writeGraph(out)
+      val out = communityPath.resolve(System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
+      result.writeGraph(out, communityPath)
       println()
       println("Graph is written to $out")
       println("Drop file to https://plugingraph.ij.pages.jetbrains.team/ to visualize.")

@@ -99,15 +99,6 @@ a:com.intellij.dvcs.actions.DvcsQuickListContentProvider
 - getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - pa:getVcsName():java.lang.String
 - replaceVcsActionsFor(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):Z
-com.intellij.dvcs.branch.BranchType
-- a:getName():java.lang.String
-c:com.intellij.dvcs.branch.DvcsBranchInfo
-- f:repoPath:java.lang.String
-- f:sourceName:java.lang.String
-- <init>():V
-- <init>(java.lang.String,java.lang.String):V
-- equals(java.lang.Object):Z
-- hashCode():I
 a:com.intellij.dvcs.branch.DvcsBranchManager
 - sf:DVCS_BRANCH_SETTINGS_CHANGED:com.intellij.util.messages.Topic
 - pf:myProject:com.intellij.openapi.project.Project
@@ -144,16 +135,11 @@ f:com.intellij.dvcs.branch.DvcsBranchPopup$MyMoreIndex
 - sf:DEFAULT_NUM:I
 - sf:MAX_NUM:I
 - <init>():V
-f:com.intellij.dvcs.branch.DvcsBranchSettings
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getGroupingKeyIds():java.util.Set
 f:com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.dvcs.branch.DvcsSyncSettings,com.intellij.dvcs.repo.AbstractRepositoryManager):V
 - f:initBranchSyncPolicyIfNotInitialized():V
 f:com.intellij.dvcs.branch.DvcsBranchUtil
 - <init>():V
-- s:find(java.util.Collection,com.intellij.dvcs.repo.Repository,java.lang.String):com.intellij.dvcs.branch.DvcsBranchInfo
 - s:getPathFor(com.intellij.dvcs.repo.Repository):java.lang.String
 - s:shortenBranchName(java.lang.String):java.lang.String
 - s:swapRevisions(java.util.List):java.util.List
@@ -162,25 +148,12 @@ f:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 f:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion
 - f:create(java.lang.String,java.lang.String):com.intellij.openapi.ui.DialogPanel
 - bs:create$default(com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
-com.intellij.dvcs.branch.DvcsCompareSettings
-- a:setSwapSidesInCompareBranches(Z):V
-- a:shouldSwapSidesInCompareBranches():Z
 a:com.intellij.dvcs.branch.DvcsMultiRootBranchConfig
 - pf:myRepositories:java.util.Collection
 - <init>(java.util.Collection):V
 - diverged():Z
 - getCurrentBranch():java.lang.String
 - a:getLocalBranchNames():java.util.Collection
-com.intellij.dvcs.branch.DvcsSyncSettings
-- a:getSyncSetting():com.intellij.dvcs.branch.DvcsSyncSettings$Value
-- a:setSyncSetting(com.intellij.dvcs.branch.DvcsSyncSettings$Value):V
-e:com.intellij.dvcs.branch.DvcsSyncSettings$Value
-- java.lang.Enum
-- sf:DONT_SYNC:com.intellij.dvcs.branch.DvcsSyncSettings$Value
-- sf:NOT_DECIDED:com.intellij.dvcs.branch.DvcsSyncSettings$Value
-- sf:SYNC:com.intellij.dvcs.branch.DvcsSyncSettings$Value
-- s:valueOf(java.lang.String):com.intellij.dvcs.branch.DvcsSyncSettings$Value
-- s:values():com.intellij.dvcs.branch.DvcsSyncSettings$Value[]
 a:com.intellij.dvcs.branch.DvcsTaskHandler
 - com.intellij.openapi.vcs.VcsTaskHandler
 - p:<init>(com.intellij.dvcs.repo.AbstractRepositoryManager,com.intellij.openapi.project.Project,java.lang.String):V
@@ -197,16 +170,6 @@ a:com.intellij.dvcs.branch.DvcsTaskHandler
 - pa:mergeAndClose(java.lang.String,java.util.List):V
 - startNewTask(java.lang.String):com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo
 - switchToTask(com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo,java.lang.Runnable):Z
-e:com.intellij.dvcs.branch.GroupingKey
-- java.lang.Enum
-- sf:GROUPING_BY_DIRECTORY:com.intellij.dvcs.branch.GroupingKey
-- sf:GROUPING_BY_REPOSITORY:com.intellij.dvcs.branch.GroupingKey
-- f:getDescription():java.lang.String
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getId():java.lang.String
-- f:getText():java.lang.String
-- s:valueOf(java.lang.String):com.intellij.dvcs.branch.GroupingKey
-- s:values():com.intellij.dvcs.branch.GroupingKey[]
 a:com.intellij.dvcs.branch.TrackReposSynchronouslyAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware

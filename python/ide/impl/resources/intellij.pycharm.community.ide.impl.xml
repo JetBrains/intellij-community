@@ -21,6 +21,9 @@
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
 
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollectorValidationRule"/>
+
     <refactoring.elementListenerProvider
       implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
     <statistics.counterUsagesCollector

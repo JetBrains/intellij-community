@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.components.service
@@ -9,7 +9,6 @@ import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
-import git4idea.branch.GitTagType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
@@ -21,8 +20,6 @@ internal open class GitBranchesTreeSingleRepoModel(
   topLevelActions: List<Any>,
 ) : GitBranchesTreeModel(project, topLevelActions, listOf(repository)) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
-
-  protected lateinit var recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitReference>
 
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)
@@ -39,10 +36,6 @@ internal open class GitBranchesTreeSingleRepoModel(
   override fun getRecentBranches(): Collection<GitLocalBranch> = repository.recentCheckoutBranches
 
   override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.branches.remoteBranches
-
-  override fun isLeaf(node: Any?): Boolean = node is GitReference
-                                             || node is RefUnderRepository
-                                             || (node is GitRefType && getCorrespondingTree(node).isEmpty())
 
   override fun getTags() = repository.tags.keys
 
@@ -77,13 +70,6 @@ internal open class GitBranchesTreeSingleRepoModel(
     return buildBranchTreeNodes(branchType, branchesMap, path)
   }
 
-  private fun getCorrespondingTree(branchType: GitRefType): Map<String, Any> = when (branchType) {
-    GitBranchType.REMOTE -> remoteBranchesTree.tree
-    GitBranchType.RECENT -> recentCheckoutBranchesTree.tree
-    GitBranchType.LOCAL -> localBranchesTree.tree
-    GitTagType -> tagsTree.tree
-  }
-
   override fun getPreferredSelection(): TreePath? =
     (actionsTree.topMatch ?: getPreferredBranch())?.let { createTreePathFor(this, it) }
 
@@ -93,6 +79,6 @@ internal open class GitBranchesTreeSingleRepoModel(
   protected open fun notHaveFilteredNodes(): Boolean {
     return nameMatcher != null
            && actionsTree.isEmpty()
-           && recentCheckoutBranchesTree.isEmpty() && localBranchesTree.isEmpty() && remoteBranchesTree.isEmpty() && tagsTree.isEmpty()
+           && areRefTreesEmpty()
   }
 }

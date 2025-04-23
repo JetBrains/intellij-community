@@ -4,7 +4,6 @@ import fleet.buildtool.jpms.withJavaSourceSet
 // IMPORT__MARKER_END
 plugins {
   alias(libs.plugins.kotlin.multiplatform)
-  id("fleet.multiplatform-module-conventions")
   id("fleet.project-module-conventions")
   id("fleet.toolchain-conventions")
   id("fleet.module-publishing-conventions")
@@ -31,6 +30,14 @@ kotlin {
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-Xlambdas=class",
   )
+  targets {
+    jvm {
+      withJava()
+    }
+    wasmJs {
+      browser {}
+    }
+  }
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {
     tasks.named("syncCommonMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { destinationDirectory.set(layout.buildDirectory.dir("copiedSources/commonMain")) }
     tasks.named("syncCommonMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { sources.add(layout.projectDirectory.dir("../srcCommonMain")) }

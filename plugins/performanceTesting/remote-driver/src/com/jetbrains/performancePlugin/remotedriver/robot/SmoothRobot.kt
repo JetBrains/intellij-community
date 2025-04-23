@@ -196,6 +196,7 @@ internal class SmoothRobot @JvmOverloads constructor(
     moveMouse(component, to)
 
     Thread.sleep(delayMs.toLong())
+    moveMouse(component, to)
     releaseMouse(RemoteMouseButton.LEFT)
   }
 

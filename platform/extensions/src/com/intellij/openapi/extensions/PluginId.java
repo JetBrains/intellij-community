@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ public final class PluginId implements Comparable<PluginId> {
     this.idString = idString;
   }
 
-  public @NotNull String getIdString() {
+  public @NotNull @NlsSafe String getIdString() {
     return idString;
   }
 

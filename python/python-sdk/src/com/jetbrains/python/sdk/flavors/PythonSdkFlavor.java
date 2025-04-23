@@ -206,7 +206,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     builder.append(" ");
     if (configuration instanceof TargetConfigurationWithId) {
       var typeAndTargetId = ((TargetConfigurationWithId)configuration).getTargetAndTypeId();
-      builder.append(typeAndTargetId.component1().toString());
+      builder.append(typeAndTargetId.component1());
       builder.append(typeAndTargetId.getSecond());
     }
     else if (configuration != null) {
@@ -404,17 +404,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return getLanguageLevelFromVersionStringStatic(getVersionString(sdkHome));
   }
 
-
-  /**
-   * Returns wrong language level when argument is null which isn't probably what you except.
-   * Be sure to check argument for null
-   *
-   * @deprecated use {@link #getLanguageLevelFromVersionStringStatic(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
-    return getLanguageLevelFromVersionStringStatic(version);
-  }
 
   /**
    * Returns wrong language level when argument is null which isn't probably what you except.

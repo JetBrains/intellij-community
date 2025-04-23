@@ -21,8 +21,8 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
@@ -64,10 +64,12 @@ interface XDebugSessionProxy {
   val currentStateHyperlinkListener: HyperlinkListener?
   val currentEvaluator: XDebuggerEvaluator?
   val smartStepIntoHandlerEntry: XSmartStepIntoHandlerEntry?
+  val currentSuspendContextCoroutineScope: CoroutineScope?
 
   fun getCurrentPosition(): XSourcePosition?
   fun getTopFramePosition(): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
+  fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition?
   fun getCurrentExecutionStack(): XExecutionStack?
   fun getCurrentStackFrame(): XStackFrame?
   fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean = executionStack.topFrame == frame)
@@ -155,6 +157,9 @@ interface XDebugSessionProxy {
       }
     }
 
+    override val currentSuspendContextCoroutineScope: CoroutineScope?
+      get() = (session as XDebugSessionImpl).currentSuspendCoroutineScope
+
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition
     }
@@ -165,6 +170,10 @@ interface XDebugSessionProxy {
 
     override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
       return (session as? XDebugSessionImpl)?.getFrameSourcePosition(frame)
+    }
+
+    override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
+      return (session as? XDebugSessionImpl)?.getFrameSourcePosition(frame, sourceKind)
     }
 
     override fun getCurrentExecutionStack(): XExecutionStack? {

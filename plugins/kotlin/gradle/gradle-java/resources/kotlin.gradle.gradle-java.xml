@@ -98,6 +98,8 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinAllInPackageGradleConfigurationProducer"
+                              order="before allInPackageGradleConfigurationProducer"/>
 
     <registryKey
             key="kotlin.gradle.testing.enabled"

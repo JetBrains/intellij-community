@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
@@ -167,7 +167,7 @@ class GitCommitOptionsUi(
     commitContext.isSignOffCommit = signOffCommit.isSelected
     commitContext.isCommitRenamesSeparately = commitRenamesSeparately.run { isEnabled && isSelected }
 
-    author?.let { settings.saveCommitAuthor(it) }
+    author?.let { settings.saveCommitAuthor(it.toString()) }
     settings.setSignOffCommit(signOffCommit.isSelected)
     settings.isCommitRenamesSeparately = commitRenamesSeparately.isSelected
   }

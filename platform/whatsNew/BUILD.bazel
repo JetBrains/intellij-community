@@ -35,6 +35,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//platform/ui.jcef:ui-jcef",
     "//platform/analysis-api:analysis",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":whatsNew_resources"]
 )
@@ -68,6 +69,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":whatsNew_resources"]
 )

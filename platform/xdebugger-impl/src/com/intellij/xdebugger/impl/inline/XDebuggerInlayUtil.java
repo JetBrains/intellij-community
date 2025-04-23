@@ -19,7 +19,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
@@ -44,15 +47,14 @@ public final class XDebuggerInlayUtil {
 
   XDebuggerInlayUtil(Project project) {
     myProject = project;
-    project.getMessageBus().connect().subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
+    project.getMessageBus().connect().subscribe(FrontendXDebuggerManagerListener.TOPIC, new FrontendXDebuggerManagerListener() {
       @Override
-      public void processStopped(@NotNull XDebugProcess debugProcess) {
-        XVariablesView.InlineVariablesInfo.set(debugProcess.getSession(), null);
+      public void sessionStopped(@NotNull XDebugSessionProxy session) {
+        XVariablesView.InlineVariablesInfo.set(session, null);
       }
 
       @Override
-      public void currentSessionChanged(@Nullable XDebugSession previousSession,
-                                        @Nullable XDebugSession currentSession) {
+      public void activeSessionChanged(@Nullable XDebugSessionProxy previousSession, @Nullable XDebugSessionProxy currentSession) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (previousSession != null && !previousSession.isStopped()) {
             XVariablesView.InlineVariablesInfo info = XVariablesView.InlineVariablesInfo.get(previousSession);
@@ -78,20 +80,18 @@ public final class XDebuggerInlayUtil {
     }, project);
   }
 
-  public boolean createLineEndInlay(@NotNull XValueNodeImpl valueNode,
-                                    @NotNull XDebugSession session,
-                                    @NotNull VirtualFile file,
-                                    int line) {
+  public void createLineEndInlay(@NotNull XValueNodeImpl valueNode,
+                                 @NotNull XDebugSessionProxy session,
+                                 @NotNull VirtualFile file,
+                                 int line) {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         createInlayInt(session, new InlineDebugRenderer(valueNode, file, line, session));
       }, ModalityState.nonModal(), session.getProject().getDisposed());
-      return true;
     }
-    return false;
   }
 
-  private static void createInlayInt(@NotNull XDebugSession session, InlineDebugRenderer renderer) {
+  private static void createInlayInt(@NotNull XDebugSessionProxy session, InlineDebugRenderer renderer) {
     EDT.assertIsEdt();
     XSourcePosition position = renderer.getPosition();
     FileEditor editor = XDebuggerUtil.getInstance().getSelectedEditor(session.getProject(), position.getFile());

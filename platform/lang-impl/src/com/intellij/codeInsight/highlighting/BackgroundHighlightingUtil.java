@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -27,6 +27,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
+
+import static com.intellij.idea.AppModeAssertions.checkFrontend;
+import static com.intellij.openapi.editor.rd.LocalEditorSupportUtil.isLocalEditorSupport;
 
 @ApiStatus.Internal
 public final class BackgroundHighlightingUtil {
@@ -94,6 +97,9 @@ public final class BackgroundHighlightingUtil {
   }
 
   static boolean needMatching(@NotNull Editor newEditor, @NotNull CodeInsightSettings codeInsightSettings) {
+    if (isLocalEditorSupport(newEditor)) {
+      return checkFrontend();
+    }
     if (!codeInsightSettings.HIGHLIGHT_BRACES) return false;
 
     if (newEditor.getSelectionModel().hasSelection()) return false;

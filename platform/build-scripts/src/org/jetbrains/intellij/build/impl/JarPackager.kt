@@ -297,16 +297,15 @@ class JarPackager private constructor(
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     extraExcludes.isEmpty()
 
-    val nativeFiles = context.getModuleOutputFileContent(module = module, forTests = useTestModuleOutput, relativePath = "META-INF/native-files-list")?.let { String(it) }?.lines()
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
       assets.computeIfAbsent(moduleOutDir) { file ->
-        AssetDescriptor(isDir = true, file = file, relativePath = "", nativeFiles = nativeFiles)
+        AssetDescriptor(isDir = true, file = file, relativePath = "")
       }
     }
     else {
       assets.computeIfAbsent(outFile) { file ->
-        createAssetDescriptor(relativeOutputFile = item.relativeOutputFile, targetFile = file, nativeFiles = nativeFiles)
+        createAssetDescriptor(relativeOutputFile = item.relativeOutputFile, targetFile = file)
       }
     }
 
@@ -318,7 +317,7 @@ class JarPackager private constructor(
 
     val jarAsset = lazy(LazyThreadSafetyMode.NONE) {
       if (packToDir) {
-        getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile, nativeFiles = nativeFiles)
+        getJarAsset(targetFile = outFile, relativeOutputFile = item.relativeOutputFile)
       }
       else {
         asset
@@ -356,8 +355,7 @@ class JarPackager private constructor(
         module = module,
         copiedFiles = copiedFiles,
         asset = jarAsset,
-        withTests = useTestModuleOutput,
-        nativeFiles = nativeFiles,
+        withTests = useTestModuleOutput
       )
     }
   }
@@ -378,7 +376,6 @@ class JarPackager private constructor(
           isDir = false,
           file = targetFile,
           relativePath = relativePath,
-          nativeFiles = null,
           useCacheAsTargetFile = false,
         )
         customAsset.getSources(context)?.let { assetDescriptor.sources.addAll(it) }
@@ -424,8 +421,7 @@ class JarPackager private constructor(
     module: JpsModule,
     copiedFiles: MutableMap<CopiedForKey, CopiedFor>,
     asset: Lazy<AssetDescriptor>,
-    withTests: Boolean,
-    nativeFiles: List<String>?,
+    withTests: Boolean
   ) {
     val moduleName = module.name
     val includeProjectLib = if (layout is PluginLayout) layout.auto else item.reason == ModuleIncludeReasons.PRODUCT_MODULES
@@ -475,7 +471,7 @@ class JarPackager private constructor(
       else {
         fun addLibrary(relativeOutputFile: String, files: List<Path>) {
           filesToSourceWithMapping(
-            asset = getJarAsset(targetFile = outDir.resolve(relativeOutputFile), relativeOutputFile = relativeOutputFile, nativeFiles = nativeFiles),
+            asset = getJarAsset(targetFile = outDir.resolve(relativeOutputFile), relativeOutputFile = relativeOutputFile),
             files = files,
             library = library,
             relativeOutputFile = relativeOutputFile,
@@ -544,7 +540,7 @@ class JarPackager private constructor(
               ProjectLibraryEntry(path = targetFile, data = projectLibraryData, libraryFile = file, hash = hash, size = size, relativeOutputFile = item.relativeOutputFile)
             }
           },
-          isPreSignedAndExtractedCandidate = asset.nativeFiles != null || isLibPreSigned(library),
+          isPreSignedAndExtractedCandidate = isLibPreSigned(library),
           filter = ::defaultLibrarySourcesNamesFilter,
         )
       )
@@ -577,7 +573,7 @@ class JarPackager private constructor(
       }
 
       filesToSourceWithMapping(
-        asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativePath, nativeFiles = null),
+        asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativePath),
         files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile),
         library = library,
         relativeOutputFile = relativePath,
@@ -613,7 +609,7 @@ class JarPackager private constructor(
   }
 
   private fun projectLibsToSourceWithMappings(uberJarFile: Path, libraryToMerge: Map<JpsLibrary, List<Path>>) {
-    val descriptor = getJarAsset(targetFile = uberJarFile, relativeOutputFile = "", nativeFiles = null)
+    val descriptor = getJarAsset(targetFile = uberJarFile, relativeOutputFile = "")
     for ((library, files) in libraryToMerge) {
       filesToSourceWithMapping(
         asset = descriptor,
@@ -663,7 +659,7 @@ class JarPackager private constructor(
         if (outPath.endsWith(".jar")) {
           val targetFile = outDir.resolve(outPath)
           filesToSourceWithMapping(
-            asset = getJarAsset(targetFile = targetFile, relativeOutputFile = outPath, nativeFiles = null),
+            asset = getJarAsset(targetFile = targetFile, relativeOutputFile = outPath),
             files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile),
             library = library,
             relativeOutputFile = outPath,
@@ -677,7 +673,7 @@ class JarPackager private constructor(
 
       fun addLibrary(targetFile: Path, relativeOutputFile: String, files: List<Path>) {
         filesToSourceWithMapping(
-          asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativeOutputFile, nativeFiles = null),
+          asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativeOutputFile),
           files = files,
           library = library,
           relativeOutputFile = relativeOutputFile,
@@ -720,7 +716,7 @@ class JarPackager private constructor(
     }
 
     val sources = asset.sources
-    val isPreSignedCandidate = asset.nativeFiles != null || (isRootDir && isLibPreSigned(library))
+    val isPreSignedCandidate = isRootDir && isLibPreSigned(library)
     for (file in files) {
       sources.add(
         ZipSource(
@@ -756,9 +752,9 @@ class JarPackager private constructor(
     }
   }
 
-  private fun getJarAsset(targetFile: Path, relativeOutputFile: String, nativeFiles: List<String>?): AssetDescriptor {
+  private fun getJarAsset(targetFile: Path, relativeOutputFile: String): AssetDescriptor {
     return assets.computeIfAbsent(targetFile) {
-      createAssetDescriptor(targetFile = targetFile, relativeOutputFile = relativeOutputFile, nativeFiles = nativeFiles)
+      createAssetDescriptor(targetFile = targetFile, relativeOutputFile = relativeOutputFile)
     }
   }
 }
@@ -780,7 +776,6 @@ private data class AssetDescriptor(
   @JvmField val file: Path,
   @JvmField val relativePath: String,
   @JvmField var effectiveFile: Path = file,
-  @JvmField val nativeFiles: List<String>?,
   @JvmField val useCacheAsTargetFile: Boolean = true,
 ) {
   // must be sorted - we use it as is for Jar Cache
@@ -956,7 +951,7 @@ private suspend fun buildAsset(
     return emptyBuildJarsResult()
   }
 
-  val nativeFileHandler = if (isCodesignEnabled) NativeFileHandlerImpl(context, asset) else null
+  val nativeFileHandler = if (isCodesignEnabled) NativeFileHandlerImpl(context) else null
   val sourceToMetadata = HashMap<Source, SizeAndHash>(sources.size)
 
   val file = asset.file
@@ -1018,12 +1013,10 @@ private fun checkAssetUniqueness(assets: Collection<AssetDescriptor>) {
   }
 }
 
-private class NativeFileHandlerImpl(private val context: BuildContext, private val descriptor: AssetDescriptor) : NativeFileHandler {
+private class NativeFileHandlerImpl(private val context: BuildContext) : NativeFileHandler {
   override val sourceToNativeFiles = HashMap<ZipSource, List<String>>()
 
   override fun isNative(name: String): Boolean {
-    descriptor.nativeFiles?.let { return descriptor.nativeFiles.contains(name) }
-
     @Suppress("SpellCheckingInspection", "RedundantSuppression")
     return isMacLibrary(name) ||
            name.endsWith(".exe") ||
@@ -1101,8 +1094,8 @@ private fun createModuleSource(module: JpsModule, outputDir: Path, excludes: Lis
   }
 }
 
-private fun createAssetDescriptor(relativeOutputFile: String, targetFile: Path, nativeFiles: List<String>?): AssetDescriptor {
-  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile, nativeFiles = nativeFiles)
+private fun createAssetDescriptor(relativeOutputFile: String, targetFile: Path): AssetDescriptor {
+  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
 }
 
 private fun computeDistributionFileEntries(

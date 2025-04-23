@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
+import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -19,7 +20,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 3)
+  private val GROUP = EventLogGroup(GROUP_ID, 5)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -28,6 +29,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val EVENT_ID_FIELD = EventFields.Int("event_id")
   private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
   private val TEXT_LENGTH_FIELD = EventFields.Int("text_length")
+  private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
+  private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -45,7 +48,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
 
-  private val hyperlinkFollowedEvent = GROUP.registerEvent("terminal.hyperlink.followed",)
+  private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
 
   private val osVersion: String by lazy {
     Version.parseVersion(OS.CURRENT.version)?.toCompactString() ?: "unknown"
@@ -98,6 +101,19 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     TEXT_LENGTH_FIELD,
     DURATION_FIELD,
     OS_VERSION_FIELD,
+  )
+
+  private val startupCursorShowingLatency = GROUP.registerVarargEvent(
+    "startup.cursor.showing.latency",
+    TERMINAL_OPENING_WAY,
+    DURATION_FIELD,
+  )
+
+  /** The time until the shell process is started, and we can send user's input to it */
+  private val startupTypingAbilityLatency = GROUP.registerVarargEvent(
+    "startup.typing.ability.latency",
+    TERMINAL_OPENING_WAY,
+    DURATION_FIELD,
   )
 
   @JvmStatic
@@ -181,7 +197,21 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  fun logHyperlinkFollowed() {
-    hyperlinkFollowedEvent.log()
+  fun logHyperlinkFollowed(javaClass: Class<HyperlinkInfo>) {
+    hyperlinkFollowedEvent.log(javaClass)
+  }
+
+  fun logStartupCursorShowingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+    startupCursorShowingLatency.log(
+      TERMINAL_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
+  }
+
+  fun logStartupTypingAbilityLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+    startupTypingAbilityLatency.log(
+      TERMINAL_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
   }
 }

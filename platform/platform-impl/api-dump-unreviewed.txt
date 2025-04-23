@@ -2673,18 +2673,16 @@ c:com.intellij.ide.browsers.BrowserSelector
 - getSize():I
 - setSelected(com.intellij.ide.browsers.WebBrowser):V
 f:com.intellij.ide.browsers.BrowserSettings
+- com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.openapi.options.Configurable$NoScroll
+- com.intellij.openapi.options.Configurable$WithEpDependencies
 - com.intellij.openapi.options.SearchableConfigurable
 - <init>():V
-- apply():V
-- createComponent():javax.swing.JComponent
-- disposeUIResources():V
-- getDisplayName():java.lang.String
-- getHelpTopic():java.lang.String
+- createConfigurables():java.util.List
+- createPanel():com.intellij.openapi.ui.DialogPanel
+- getDependencies():java.util.Collection
 - getId():java.lang.String
-- isModified():Z
-- reset():V
-- selectBrowser(com.intellij.ide.browsers.WebBrowser):V
+- f:selectBrowser(com.intellij.ide.browsers.WebBrowser):V
 c:com.intellij.ide.browsers.BrowserStarter
 - <init>(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings,com.intellij.execution.process.ProcessHandler):V
 - <init>(com.intellij.execution.configurations.RunConfiguration,com.intellij.ide.browsers.StartBrowserSettings,java.util.function.BooleanSupplier):V
@@ -11575,7 +11573,7 @@ f:com.intellij.openapi.wm.impl.WindowManagerImpl
 - setWindowShadow(java.awt.Window,com.intellij.openapi.wm.ex.WindowManagerEx$WindowShadowMode):V
 - suggestParentWindow(com.intellij.openapi.project.Project):java.awt.Window
 - updateDefaultFrameInfoOnProjectClose(com.intellij.openapi.project.Project):V
-- f:withFrameReuseEnabled():java.lang.AutoCloseable
+- withFrameReuseEnabled():java.lang.AutoCloseable
 c:com.intellij.openapi.wm.impl.content.BaseLabel
 - javax.swing.JLabel
 - p:myUi:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -13358,8 +13356,8 @@ c:com.intellij.ui.FilteringSpeedSearch
 - iterate(javax.swing.tree.DefaultMutableTreeNode,Z,Z):java.util.Iterator
 - noHits():V
 - p:onMatchingChecked(java.lang.Object,java.lang.Iterable,com.intellij.ui.FilteringTree$Matching):V
-- p:onSearchFieldUpdated(java.lang.String):V
-- p:onUpdatePattern(java.lang.String):V
+- p:onSearchPatternUpdated(java.lang.String):V
+- refilter(java.lang.String):V
 - select(javax.swing.tree.DefaultMutableTreeNode):V
 - update():V
 - updateSelection():V
@@ -13751,7 +13749,6 @@ c:com.intellij.ui.LanguageTextField$SimpleDocumentCreator
 - createDocument(java.lang.String,com.intellij.lang.Language,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Document
 - customizePsiFile(com.intellij.psi.PsiFile):V
 f:com.intellij.ui.LicensingFacade
-- s:INSTANCE:com.intellij.ui.LicensingFacade
 - ai_enabled:Z
 - confirmationStamps:java.util.Map
 - expirationDate:java.util.Date
@@ -13766,6 +13763,7 @@ f:com.intellij.ui.LicensingFacade
 - productLicenses:java.util.Map
 - restrictions:java.util.List
 - subType:java.lang.String
+- userBucket:java.lang.String
 - <init>():V
 - s:fromJson(java.lang.String):com.intellij.ui.LicensingFacade
 - getConfirmationStamp(java.lang.String):java.lang.String
@@ -15497,11 +15495,7 @@ a:com.intellij.ui.layout.Cell
 - bf:link(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - bs:link$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bf:textField(com.intellij.ui.layout.PropertyBinding,java.lang.Integer):com.intellij.ui.layout.CellBuilder
-- bf:textField(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.Integer):com.intellij.ui.layout.CellBuilder
-- bf:textField(kotlin.reflect.KMutableProperty0,java.lang.Integer):com.intellij.ui.layout.CellBuilder
 - bs:textField$default(com.intellij.ui.layout.Cell,com.intellij.ui.layout.PropertyBinding,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- bs:textField$default(com.intellij.ui.layout.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- bs:textField$default(com.intellij.ui.layout.Cell,kotlin.reflect.KMutableProperty0,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 com.intellij.ui.layout.CellBuilder
 - a:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
@@ -15518,7 +15512,6 @@ f:com.intellij.ui.layout.CellBuilder$DefaultImpls
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellKt
 - sf:createPropertyBinding(kotlin.reflect.KMutableProperty0,java.lang.Class):com.intellij.ui.layout.PropertyBinding
-- bsf:withTextBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 @:com.intellij.ui.layout.CellMarker
 - java.lang.annotation.Annotation
 e:com.intellij.ui.layout.GrowPolicy

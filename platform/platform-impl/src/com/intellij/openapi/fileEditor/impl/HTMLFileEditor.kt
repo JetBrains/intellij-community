@@ -49,7 +49,7 @@ private const val URL_LOADING_TIMEOUT_MS = 10000
 internal class HTMLFileEditor(
   private val project: Project,
   private val file: LightVirtualFile,
-  request: HTMLEditorProvider.Request,
+  private val request: HTMLEditorProvider.Request,
 ) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(true, null, null)
@@ -140,6 +140,10 @@ internal class HTMLFileEditor(
       contentPanel.jbCefClient.cefClient.addMessageRouter(jsRouter)
     }
 
+    request.requestHandler?.let { handler ->
+      contentPanel.jbCefClient.addRequestHandler(handler, contentPanel.cefBrowser)
+    }
+
     contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
       override fun onStatusMessage(browser: CefBrowser, text: @NlsSafe String) = StatusBar.Info.set(text, project)
     }, contentPanel.cefBrowser)
@@ -194,6 +198,10 @@ internal class HTMLFileEditor(
     jsRouter?.let { router ->
       contentPanel.jbCefClient.cefClient.removeMessageRouter(router)
       router.dispose()
+    }
+
+    request.requestHandler?.let { handler ->
+      contentPanel.jbCefClient.removeRequestHandler(handler, contentPanel.cefBrowser)
     }
   }
 

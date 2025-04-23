@@ -30,6 +30,8 @@ var JBPopup.height: Int
  *
  * Using these setters will permanently fix the second dimension as well.
  * That is: the `minimumHeight = 20` call will prevent `minimumWidth` from being updated on content changes.
+ *
+ * Remember to use [com.intellij.util.ui.JBUI.scale(int)] when setting a hardcoded constant.
  */
 var JComponent.minimumWidth: Int
   get() = minimumSize.width

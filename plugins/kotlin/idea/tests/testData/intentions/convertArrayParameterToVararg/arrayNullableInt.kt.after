@@ -1,0 +1,4 @@
+// INTENTION_TEXT: Convert to vararg parameter (may break code)
+fun test(vararg a: Int?) {
+    a[0]?.unaryPlus()
+}

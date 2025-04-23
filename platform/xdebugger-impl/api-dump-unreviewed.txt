@@ -243,22 +243,6 @@ c:com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher
 f:com.intellij.xdebugger.impl.actions.DisableAllButThisBreakpointAction
 - com.intellij.xdebugger.impl.actions.AllButThisBreakpointAction
 - <init>():V
-c:com.intellij.xdebugger.impl.actions.EditBreakpointAction
-- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-c:com.intellij.xdebugger.impl.actions.EditBreakpointAction$ContextAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>(com.intellij.openapi.editor.markup.GutterIconRenderer,java.lang.Object):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-a:com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler
-- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- <init>():V
-- pa:doShowPopup(com.intellij.openapi.project.Project,javax.swing.JComponent,java.awt.Point,java.lang.Object):V
-- editBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.lang.Object,com.intellij.openapi.editor.markup.GutterIconRenderer):V
-- editBreakpoint(com.intellij.openapi.project.Project,javax.swing.JComponent,java.awt.Point,com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem):V
-- perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.impl.actions.ForceRunToCursorAction
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
@@ -408,26 +392,6 @@ c:com.intellij.xdebugger.impl.breakpoints.XExpressionState
 - <init>(Z,com.intellij.xdebugger.XExpression):V
 - <init>(Z,java.lang.String,java.lang.String,java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):V
 - toXExpression():com.intellij.xdebugger.XExpression
-a:com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-- com.intellij.ui.popup.util.ItemWrapper
-- com.intellij.pom.Navigatable
-- java.lang.Comparable
-- sf:EDITOR_ONLY:com.intellij.openapi.util.Key
-- <init>():V
-- p:dispose():V
-- equals(java.lang.Object):Z
-- a:getBreakpoint():java.lang.Object
-- a:getDisplayText():java.lang.String
-- a:getIcon():javax.swing.Icon
-- hashCode():I
-- a:isDefaultBreakpoint():Z
-- a:isEnabled():Z
-- a:saveState():V
-- a:setEnabled(Z):V
-- a:setupGenericRenderer(com.intellij.ui.SimpleColoredComponent,Z):V
-- setupRenderer(com.intellij.ui.ColoredListCellRenderer,com.intellij.openapi.project.Project,Z):V
-- setupRenderer(com.intellij.ui.ColoredTreeCellRenderer,com.intellij.openapi.project.Project,Z):V
-- updateAccessoryView(javax.swing.JComponent):V
 a:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase
 - com.intellij.openapi.Disposable
 - p:myMode:com.intellij.xdebugger.impl.dfaassist.DfaAssistBase$AssistMode
@@ -740,7 +704,7 @@ c:com.intellij.xdebugger.impl.inline.DebuggerInlayListener
 com.intellij.xdebugger.impl.inline.InlineValuePopupProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
-- a:showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
+- showPopup(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator,com.intellij.openapi.editor.Editor,java.awt.Point,java.lang.Runnable):V
 f:com.intellij.xdebugger.impl.inline.InlineWatch
 - <init>(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition):V
 - f:getExpression():com.intellij.xdebugger.XExpression

@@ -5,16 +5,22 @@ import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.CleanupSnapshots
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
+import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Path
 import kotlin.io.path.div
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val testSnapshotDir = Path.of(getCommunityPath(), "platform/platform-tests/testSnapshots/plugin-validator")
 
@@ -24,7 +30,7 @@ private const val TEST_PLUGIN_ID = "plugin"
 class PluginModelValidatorTest {
   @Rule
   @JvmField
-  val inMemoryFs = InMemoryFsRule()
+  val tempDirectory = TempDirectory()
 
   @Rule
   @JvmField
@@ -34,7 +40,7 @@ class PluginModelValidatorTest {
     get() = testSnapshotDir / "${sanitizeFileName(testName.methodName)}.json"
 
   private val root: Path
-    get() = inMemoryFs.fs.getPath("/")
+    get() = tempDirectory.rootPath
 
   companion object {
     @ClassRule
@@ -44,66 +50,70 @@ class PluginModelValidatorTest {
 
   @Test
   fun `dependency on a plugin is specified as a plugin`() {
-    val modules = produceDependencyAndDependentPlugins()
-    val result = validatePluginModel(modules)
+    val project = produceDependencyAndDependentPlugins()
+    val result = validatePluginModel(project)
     assertThat(result.errors).isEmpty()
-    assertWithMatchSnapshot(result.graphAsString())
+    assertWithMatchSnapshot(result.graphAsString(root))
   }
 
   @Test
   fun `dependency on a plugin must be specified as a plugin`() {
-    val modules = produceDependencyAndDependentPlugins {
+    val project = produceDependencyAndDependentPlugins {
       it.replace("<plugin id=\"dependency\"/>", "<module name=\"intellij.dependent\"/>")
     }
 
-    val errors = validatePluginModel(modules).errorsAsString()
+    val errors = validatePluginModel(project).errorsAsString()
     assertWithMatchSnapshot(errors)
   }
 
   @Test
   fun `dependency on a plugin must be resolvable`() {
-    val modules = produceDependencyAndDependentPlugins {
+    val project = produceDependencyAndDependentPlugins {
       it.replace("<plugin id=\"dependency\"/>", "<plugin id=\"incorrectId\"/>")
     }
 
-    val errors = validatePluginModel(modules).errorsAsString()
+    val errors = validatePluginModel(project).errorsAsString()
     assertWithMatchSnapshot(errors)
   }
 
   @Test
   fun `module must not depend on a parent plugin`() {
-    val modules = producePluginWithContentModule {
+    val project = producePluginWithContentModule {
       it.replace("<plugin id=\"com.intellij.modules.lang\"/>", "<plugin id=\"$TEST_PLUGIN_ID\"/>")
     }
 
-    val errors = validatePluginModel(modules)
+    val errors = validatePluginModel(project)
       .errors
     assertThat(errors).isEmpty()
   }
 
   @Test
   fun `content module in the same source module`() {
-    val modules = producePluginWithContentModuleInTheSameSourceModule()
-    val result = validatePluginModel(modules)
+    val project = producePluginWithContentModuleInTheSameSourceModule()
+    val result = validatePluginModel(project)
     assertThat(result.errors).isEmpty()
-    assertWithMatchSnapshot(result.graphAsString())
+    assertWithMatchSnapshot(result.graphAsString(root))
   }
 
   @Test
   fun `validate dependencies of content module in the same source module`() {
-    val modules = producePluginWithContentModuleInTheSameSourceModule {
+    val project = producePluginWithContentModuleInTheSameSourceModule {
       it.replace("<dependencies>", "<dependencies><module name=\"com.intellij.diagram\"/>")
     }
 
-    val result = validatePluginModel(modules)
+    val result = validatePluginModel(project)
     assertWithMatchSnapshot(result.errorsAsString())
   }
 
+  private fun validatePluginModel(project: JpsProject): PluginValidationResult = validatePluginModel(project, root)
+
   private fun producePluginWithContentModuleInTheSameSourceModule(
     mutator: (String) -> String = { it },
-  ): List<PluginModelValidator.Module> {
-    val module = writeIdeaPluginXml(
+  ): JpsProject {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
       name = "intellij.angularJs",
+      project = project,
       sourceRoot = root / "intellij.angularJs",
       content = """
         <!--suppress PluginXmlValidity -->
@@ -126,41 +136,43 @@ class PluginModelValidatorTest {
     """,
       mutator = mutator,
     )
-    return listOf(module)
+    return project
   }
 
   @Test
   fun `module must not have dependencies in old format`() {
-    val modules = producePluginWithContentModule {
+    val project = producePluginWithContentModule {
       it.replace("</dependencies>", "</dependencies><depends>com.intellij.modules.lang</depends>")
     }
-    val result = validatePluginModel(modules, PluginValidationOptions(
+    val result = validatePluginModel(project, root, PluginValidationOptions(
       referencedPluginIdsOfExternalPlugins = setOf("com.intellij.modules.lang")
     ))
     assertThat(result.errors.joinToString { it.message!! }).isEqualTo("""
       Old format must be not used for a module but `depends` tag is used (
-        descriptorFile=/intellij.plugin.module/intellij.plugin.module.xml,
+        descriptorFile=intellij.plugin.module/intellij.plugin.module.xml,
         depends=DependsElement(pluginId=com.intellij.modules.lang)
       )
     """.trimIndent())
   }
 
-  private fun produceDependencyAndDependentPlugins(mutator: (String) -> String = { it }): List<PluginModelValidator.Module> {
-    return listOf(
-      writeIdeaPluginXml(
-        name = "intellij.dependency",
-        sourceRoot = root / "dependency",
-        content = """
+  private fun produceDependencyAndDependentPlugins(mutator: (String) -> String = { it }): JpsProject {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.dependency",
+      project = project,
+      sourceRoot = root / "dependency",
+      content = """
             <!--suppress PluginXmlValidity -->
             <idea-plugin package="dependencyPackagePrefix">
               <id>dependency</id>
             </idea-plugin>
           """,
-      ),
-      writeIdeaPluginXml(
-        name = "intellij.dependent",
-        sourceRoot = root / "dependent",
-        content = """
+    )
+    createModuleWithXml(
+      name = "intellij.dependent",
+      project = project,
+      sourceRoot = root / "dependent",
+      content = """
             <idea-plugin package="dependentPackagePrefix">
               <id>dependent</id>
               <dependencies>
@@ -168,17 +180,18 @@ class PluginModelValidatorTest {
               </dependencies>
             </idea-plugin>
           """,
-        mutator = mutator,
-      ),
+      mutator = mutator,
     )
+    return project
   }
 
-  private fun producePluginWithContentModule(mutator: (String) -> String = { it }): List<PluginModelValidator.Module> {
-    return listOf(
-      writeIdeaPluginXml(
-        name = "intellij.plugin",
-        sourceRoot = root / "plugin",
-        content = """
+  private fun producePluginWithContentModule(mutator: (String) -> String = { it }): JpsProject {
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.plugin",
+      project = project,
+      sourceRoot = root / "plugin",
+      content = """
             <!--suppress PluginXmlValidity -->
             <idea-plugin package="plugin">
               <id>${TEST_PLUGIN_ID}</id>
@@ -187,21 +200,22 @@ class PluginModelValidatorTest {
               </content>
             </idea-plugin>
           """,
-      ),
-      writeIdeaPluginXml(
-        name = "intellij.plugin.module",
-        sourceRoot = root / "intellij.plugin.module",
-        path = "intellij.plugin.module",
-        content = """
+    )
+    createModuleWithXml(
+      name = "intellij.plugin.module",
+      project = project,
+      sourceRoot = root / "intellij.plugin.module",
+      path = "intellij.plugin.module",
+      content = """
                   <idea-plugin package="plugin.module">
                     <dependencies>
                       <plugin id="com.intellij.modules.lang"/>
                     </dependencies>
                   </idea-plugin>
                 """,
-        mutator = mutator,
-      )
+      mutator = mutator,
     )
+    return project
   }
 
   private fun assertWithMatchSnapshot(charSequence: CharSequence) = assertThat(charSequence).toMatchSnapshot(snapshot)
@@ -211,23 +225,17 @@ private fun writeIdeaPluginXml(file: Path, @Language("xml") content: String, mut
   return file.write(mutator(content).trimIndent())
 }
 
-private fun writeIdeaPluginXml(
+private fun createModuleWithXml(
   name: String,
+  project: JpsProject,
   sourceRoot: Path,
   path: String = "META-INF/plugin",
   @Language("xml") content: String,
   mutator: (String) -> String = { it },
-): PluginModelValidator.Module {
+) {
   writeIdeaPluginXml(file = sourceRoot.resolve("$path.xml"), content = content, mutator = mutator)
-  return PluginModel(name, sequenceOf(sourceRoot))
-}
-
-private data class PluginModel(
-  override val name: String,
-  override val sourceRoots: Sequence<Path>,
-) : PluginModelValidator.Module {
-  override val testSourceRoots: Sequence<Path> 
-    get() = emptySequence()
+  val module = project.addModule(name, JpsJavaModuleType.INSTANCE)
+  module.addSourceRoot(JpsPathUtil.pathToUrl(sourceRoot.invariantSeparatorsPathString), JavaSourceRootType.SOURCE)
 }
 
 private fun PluginValidationResult.errorsAsString(): CharSequence {

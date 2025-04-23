@@ -52,6 +52,7 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "@lib//:jsoup",
     "//platform/util/coroutines",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [":vcs-gitlab_resources"]
 )
@@ -113,6 +114,7 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [
     ":vcs-gitlab_resources",

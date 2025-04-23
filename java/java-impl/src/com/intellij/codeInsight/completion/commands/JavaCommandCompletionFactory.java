@@ -76,6 +76,9 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
         }
         results.add(currentOffset);
         if (element == null) continue;
+        if (element.getParent() instanceof PsiLiteralExpression literalExpression && literalExpression.getValue() instanceof String) {
+          results.add(literalExpression.getTextRange().getEndOffset() - (literalExpression.isTextBlock() ? 3 : 1));
+        }
         PsiElement parent = element.getParent();
         if (element instanceof PsiJavaToken) {
           Character open = braces.get(element.getText().charAt(0));

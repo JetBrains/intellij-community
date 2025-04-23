@@ -502,6 +502,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addConstructorParameterFromSuperTypeCall/basic4.kt");
         }
 
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("testData/quickfix/addConstructorParameterFromSuperTypeCall/enumEntry.kt");
+        }
+
         @TestMetadata("fewerArguments.kt")
         public void testFewerArguments() throws Exception {
             runTest("testData/quickfix/addConstructorParameterFromSuperTypeCall/fewerArguments.kt");
@@ -3547,9 +3552,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
         }
 
+        @TestMetadata("changeFunctionReturnTypeToNothing.kt")
+        public void testChangeFunctionReturnTypeToNothing() throws Exception {
+            runTest("testData/quickfix/changeSignature/changeFunctionReturnTypeToNothing.kt");
+        }
+
         @TestMetadata("changeParameterType.kt")
         public void testChangeParameterType() throws Exception {
             runTest("testData/quickfix/changeSignature/changeParameterType.kt");
+        }
+
+        @TestMetadata("changePropertyTypeToNothing.kt")
+        public void testChangePropertyTypeToNothing() throws Exception {
+            runTest("testData/quickfix/changeSignature/changePropertyTypeToNothing.kt");
         }
 
         @TestMetadata("complexHierarchy.kt")

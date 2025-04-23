@@ -18,7 +18,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
@@ -166,7 +170,7 @@ public final class XDebuggerWatchesManager {
 
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
                                 @NotNull Editor mainEditor,
-                                @NotNull XDebugSession session,
+                                @NotNull XDebugSessionProxy session,
                                 @Nullable XExpression expression) {
     InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(presentationPosition, session, mainEditor, expression);
     inplaceEditor.show();
@@ -221,8 +225,8 @@ public final class XDebuggerWatchesManager {
   }
 
   private Stream<XInlineWatchesView> getWatchesViews() {
-    return Arrays.stream(XDebuggerManager.getInstance(myProject).getDebugSessions())
-      .map(s -> ((XDebugSessionImpl)s).getSessionTab())
+    return XDebugManagerProxy.getInstance().getSessions(myProject).stream()
+      .map(XDebugSessionProxy::getSessionTab)
       .filter(t -> t != null && t.getWatchesView() instanceof XInlineWatchesView)
       .map(t -> (XInlineWatchesView)t.getWatchesView());
   }

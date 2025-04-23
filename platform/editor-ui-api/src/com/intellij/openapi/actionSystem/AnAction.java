@@ -355,6 +355,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * This method is always called under the {@link com.intellij.openapi.application.ReadAction}.
    *
    * @see #getActionUpdateThread()
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
    */
   @ApiStatus.OverrideOnly
   @RequiresReadLock(generateAssertion = false)

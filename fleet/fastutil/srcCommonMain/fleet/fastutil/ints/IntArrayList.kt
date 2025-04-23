@@ -105,7 +105,7 @@ class IntArrayList: MutableIntList, Comparable<IntList> {
    *
    * @return the backing array.
    */
-  fun elements(): IntArray {
+  fun backingArray(): IntArray {
     return a
   }
 

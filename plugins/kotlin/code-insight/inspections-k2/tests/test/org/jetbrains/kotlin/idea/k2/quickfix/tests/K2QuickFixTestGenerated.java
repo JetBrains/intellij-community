@@ -376,9 +376,19 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
         }
 
+        @TestMetadata("changeFunctionReturnTypeToNothing.kt")
+        public void testChangeFunctionReturnTypeToNothing() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionReturnTypeToNothing.kt");
+        }
+
         @TestMetadata("changeParameterType.kt")
         public void testChangeParameterType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/changeParameterType.kt");
+        }
+
+        @TestMetadata("changePropertyTypeToNothing.kt")
+        public void testChangePropertyTypeToNothing() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changePropertyTypeToNothing.kt");
         }
 
         @TestMetadata("complexHierarchy.kt")

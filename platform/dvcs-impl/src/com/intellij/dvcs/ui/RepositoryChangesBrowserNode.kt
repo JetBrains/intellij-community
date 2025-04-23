@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
@@ -11,11 +11,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.TEXT_COLOR
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
 import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.CheckboxIcon
+import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.vcs.branch.BranchPresentation.getPresentableText
@@ -25,6 +27,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
@@ -77,6 +80,10 @@ open class RepositoryChangesBrowserNode(repository: Repository,
     }
 
     fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
-      CheckboxIcon.createAndScale(colorManager.getRootColor(repository.root))
+      getRepositoryIcon(colorManager, repository.root)
+
+    @ApiStatus.Internal
+    fun getRepositoryIcon(colorManager: VcsLogColorManager, root: VirtualFile): ColorIcon =
+      CheckboxIcon.createAndScale(colorManager.getRootColor(root))
   }
 }

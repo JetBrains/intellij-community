@@ -12719,80 +12719,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality")
-    public static class ReplaceAssertBooleanWithAssertEquality extends AbstractLocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("assertFalse.kt")
-        public void testAssertFalse() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertFalse.kt");
-        }
-
-        @TestMetadata("assertFalseEQEQ.kt")
-        public void testAssertFalseEQEQ() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertFalseEQEQ.kt");
-        }
-
-        @TestMetadata("assertFalseEQEQEQ.kt")
-        public void testAssertFalseEQEQEQ() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertFalseEQEQEQ.kt");
-        }
-
-        @TestMetadata("assertFalseWithMessage.kt")
-        public void testAssertFalseWithMessage() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertFalseWithMessage.kt");
-        }
-
-        @TestMetadata("assertTrue.kt")
-        public void testAssertTrue() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertTrue.kt");
-        }
-
-        @TestMetadata("assertTrueEQEQ.kt")
-        public void testAssertTrueEQEQ() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertTrueEQEQ.kt");
-        }
-
-        @TestMetadata("assertTrueEQEQEQ.kt")
-        public void testAssertTrueEQEQEQ() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertTrueEQEQEQ.kt");
-        }
-
-        @TestMetadata("assertTrueWithMessage.kt")
-        public void testAssertTrueWithMessage() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/assertTrueWithMessage.kt");
-        }
-
-        @TestMetadata("notSubtype.kt")
-        public void testNotSubtype() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/notSubtype.kt");
-        }
-
-        @TestMetadata("notSubtype2.kt")
-        public void testNotSubtype2() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/notSubtype2.kt");
-        }
-
-        @TestMetadata("subtype.kt")
-        public void testSubtype() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/subtype.kt");
-        }
-
-        @TestMetadata("subtype2.kt")
-        public void testSubtype2() throws Exception {
-            runTest("testData/inspectionsLocal/replaceAssertBooleanWithAssertEquality/subtype2.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceCollectionCountWithSize")
     public static class ReplaceCollectionCountWithSize extends AbstractLocalInspectionTest {
         @java.lang.Override
@@ -13011,11 +12937,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("usedAsExpression.kt")
             public void testUsedAsExpression() throws Exception {
                 runTest("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/usedAsExpression.kt");
-            }
-
-            @TestMetadata("version12.kt")
-            public void testVersion12() throws Exception {
-                runTest("testData/inspectionsLocal/replaceGuardClauseWithFunctionCall/version12.kt");
             }
         }
     }
@@ -15099,6 +15020,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/extension2.kt");
         }
 
+        @TestMetadata("lowercase.kt")
+        public void testLowercase() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/lowercase.kt");
+        }
+
         @TestMetadata("notApplicable.kt")
         public void testNotApplicable() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/notApplicable.kt");
@@ -15142,6 +15068,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("toUpperCase.kt")
         public void testToUpperCase() throws Exception {
             runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/toUpperCase.kt");
+        }
+
+        @TestMetadata("uppercase.kt")
+        public void testUppercase() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithIgnoreCaseEquals/uppercase.kt");
         }
     }
 
@@ -19320,6 +19251,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt")
             public void testDontReplaceIfPropertyHasLambdaAndSetterInsideIsLast() throws Exception {
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
+            }
+
+            @TestMetadata("dontReplaceMapGetValuesCaptured.kt")
+            public void testDontReplaceMapGetValuesCaptured() throws Exception {
+                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/referenceExpression/dontReplaceMapGetValuesCaptured.kt");
             }
 
             @TestMetadata("dontReplaceOverridenNotProperty.kt")

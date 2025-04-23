@@ -272,7 +272,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     SwingUtilities.invokeLater {
       val currentScheme = EditorColorsManager.getInstance().globalScheme
-      if (currentScheme.baseName != expectedScheme.baseName) {
+      if (expectedScheme != null && currentScheme.baseName != expectedScheme.baseName) {
         EditorColorsManager.getInstance().setGlobalScheme(expectedScheme)
       }
     }

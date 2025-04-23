@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
-  suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int = Int.MAX_VALUE): JavaThreadDumpResponseDto?
+  suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int = Int.MAX_VALUE, onlyPlatformThreads: Boolean): JavaThreadDumpResponseDto?
 
   companion object {
     @JvmStatic

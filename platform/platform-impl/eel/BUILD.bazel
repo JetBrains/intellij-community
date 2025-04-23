@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.ide.impl.wsl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-impl-wsl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-impl-wsl",
+  module_name = "intellij.platform.ide.impl.wsl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:pty4j",
+    "//platform/core-nio-fs",
+    "//platform/eel-provider",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ijent",
+    "//platform/ijent/impl:community-impl",
+    "//platform/execution",
+    "//platform/util-ex",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":ide-impl-wsl_resources"]
+)
+### auto-generated section `build intellij.platform.ide.impl.wsl` end

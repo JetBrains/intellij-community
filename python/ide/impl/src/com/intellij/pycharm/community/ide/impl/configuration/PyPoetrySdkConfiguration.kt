@@ -27,7 +27,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryFromFilePanel
-import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -125,13 +125,13 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
         ProjectJdkTable.getInstance().allJdks,
         file,
         PythonSdkType.getInstance(),
-        PyPoetrySdkAdditionalData(),
+        PyPoetrySdkAdditionalData(module.basePath?.let { Path.of(it) }),
         suggestedSdkName(basePath)
       )
 
       withContext(Dispatchers.EDT) {
         LOGGER.debug("Adding associated poetry environment: ${path}, $basePath")
-        sdk.setAssociationToModule(module)
+        sdk.setAssociationToModuleAsync(module)
         SdkConfigurationUtil.addSdk(sdk)
       }
 

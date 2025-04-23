@@ -14,21 +14,17 @@ import com.intellij.python.community.impl.venv.createVenv
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.failure
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.isConda
-import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
-import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 
 // todo should it be overriden for targets?
-suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path): com.jetbrains.python.Result<Sdk, PyError> {
+suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path, moduleOrProject: ModuleOrProject?): com.jetbrains.python.Result<Sdk, PyError> {
   val baseSdk = state.baseInterpreter.get()!!
 
 
@@ -57,16 +53,22 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
   val newSdk = createSdk(homeFile, projectPath, existingSdks.toTypedArray())
 
   // todo check exclude
-  val module = ProjectManager.getInstance().openProjects
-    .firstNotNullOfOrNull {
+  val module = when (moduleOrProject) {
+    is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
+    is ModuleOrProject.ProjectOnly -> {
       withContext(Dispatchers.IO) {
-        ModuleUtil.findModuleForFile(homeFile, it)
+        ModuleUtil.findModuleForFile(homeFile, moduleOrProject.project)
       }
     }
+    null -> null
+  }
 
-  module?.excludeInnerVirtualEnv(newSdk)
-  if (!this.state.makeAvailable.get()) {
-    module?.let { newSdk.setAssociationToModule(module) }
+
+  if (module != null) {
+    module.excludeInnerVirtualEnv(newSdk)
+    if (!this.state.makeAvailableForAllProjects.get()) {
+      newSdk.setAssociationToModuleAsync(module)
+    }
   }
 
   return com.jetbrains.python.Result.success(newSdk)

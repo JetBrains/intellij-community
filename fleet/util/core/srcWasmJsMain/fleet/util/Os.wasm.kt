@@ -12,7 +12,7 @@ internal fun getNameWasmJs(): String = osName
 internal fun getVersionWasmJs(): String = ""
 
 @Actual("getArch")
-internal fun getArchWasmJs(): String = ""
+internal fun getArchWasmJs(): String = "wasm"
 
 private val osName: String by lazy {
   window.navigator.userAgent

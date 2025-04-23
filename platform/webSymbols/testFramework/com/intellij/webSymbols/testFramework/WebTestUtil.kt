@@ -541,7 +541,8 @@ fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarat
       declarationSignature) != targetEditor.caretModel.offset) {
     assertEquals("For go to from: $actualSignature",
                  declarationSignature + if (!declarationSignature.contains("<caret>")) ""
-                 else (" [" + file.findOffsetBySignature(declarationSignature) + "]"),
+                 else (" [" + InjectedLanguageManager.getInstance(project).getTopLevelFile(file)
+                   .findOffsetBySignature(declarationSignature) + "]"),
                  targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
   }
 }

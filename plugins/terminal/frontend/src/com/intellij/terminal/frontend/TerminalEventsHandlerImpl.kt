@@ -233,7 +233,7 @@ internal open class TerminalEventsHandlerImpl(
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }
-    if (terminalState.isAlternateScreenBuffer && settings.sendArrowKeysInAlternativeMode()) {
+    else if (terminalState.isAlternateScreenBuffer && settings.sendArrowKeysInAlternativeMode()) {
       //Send Arrow keys instead
       val arrowKeys = if (event.wheelRotation < 0) {
         encodingManager.getCode(KeyEvent.VK_UP, 0)

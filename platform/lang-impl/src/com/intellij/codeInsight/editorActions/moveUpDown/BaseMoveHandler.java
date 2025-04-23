@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -21,6 +21,11 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
 
   public BaseMoveHandler(boolean down) {
     isDown = down;
+  }
+
+  @Override
+  protected boolean reverseCaretOrder() {
+    return isDown;
   }
 
   @Override

@@ -195,15 +195,18 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
       }
       try {
         build(context)
+
+        val softly = SoftAssertions()
         if (checkIntegrityOfEmbeddedFrontend) {
           val frontendRootModule = context.productProperties.embeddedFrontendRootModule
           if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
-            val softly = SoftAssertions()
             RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
             checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
-            softly.assertAll()
           }
         }
+
+        checkPrivatePluginModulesAreNotBundled(context, softly)
+        softly.assertAll()
       }
       catch (e: CancellationException) {
         throw e

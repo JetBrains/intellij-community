@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -349,27 +350,28 @@ public class Tool implements SchemeElement {
       exePathStr = MacroManager.getInstance().expandMacrosInString(exePathStr, false, dataContext);
       if (exePathStr == null) return null;
 
+      String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
+      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
+      final var workDirPath = !StringUtil.isEmpty(workDirExpanded) ? Path.of(workDirExpanded) : null;
+      if (workDirPath != null) {
+        commandLine.withWorkingDirectory(workDirPath);
+      }
+
       Path exePath = Path.of(exePathStr);
       DataContext paramContext = SimpleDataContext
         .builder()
         .add(MacroManager.PATH_CONVERTER_KEY, new EelMacroPathConverter())
-        .add(MacroManager.CONTEXT_PATH, exePath)
+        .add(MacroManager.CONTEXT_PATH, getContextPath(exePath, workDirPath))
         .setParent(dataContext)
         .build();
 
       String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, paramContext);
-      String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
 
       commandLine.getParametersList().addParametersString(
         MacroManager.getInstance().expandMacrosInString(paramString, false, paramContext));
-      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
-      if (!StringUtil.isEmpty(workDirExpanded)) {
-        commandLine.setWorkDirectory(workDirExpanded);
-      }
 
-      File exeFile = exePath.toFile();
-      if (exeFile.isDirectory() && exeFile.getName().endsWith(".app")) {
-        commandLine.setExePath("open");
+      if (Files.isDirectory(exePath) && exePath.getFileName().endsWith(".app")) {
+        commandLine.withExePath("open");
         commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
       else {
@@ -448,5 +450,11 @@ public class Tool implements SchemeElement {
       List<String> paths = StringUtil.split(pathList, File.pathSeparator);
       return Strings.join(ContainerUtil.map(paths, p -> convertPath(p)), ":");
     }
+  }
+
+  private static @Nullable Path getContextPath(@NotNull Path cmd, @Nullable Path workDir) {
+    if(JEelUtils.toEelPath(cmd) != null) return cmd;
+    if (workDir != null && JEelUtils.toEelPath(workDir) != null) return workDir;
+    return null;
   }
 }

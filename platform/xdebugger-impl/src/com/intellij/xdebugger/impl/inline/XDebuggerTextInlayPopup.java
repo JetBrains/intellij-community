@@ -17,6 +17,7 @@ import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTextPopup;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.Collections;
 public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
 
   private final @NotNull XSourcePosition myPosition;
-  private final @NotNull XDebugSession mySession;
+  private final @NotNull XDebugSessionProxy mySession;
   private final @NotNull XValueNodeImpl myValueNode;
 
   private XDebuggerTextInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
@@ -40,7 +41,7 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
                                   @NotNull Editor editor,
                                   @NotNull Point point,
                                   @NotNull XSourcePosition presentationPosition,
-                                  @NotNull XDebugSession session,
+                                  @NotNull XDebugSessionProxy session,
                                   @Nullable Runnable hideRunnable,
                                   @NotNull XValueNodeImpl valueNode) {
     super(valueNode.getFullValueEvaluator(), value, creator, initialItem, editor, point, session.getProject(), hideRunnable);
@@ -75,7 +76,7 @@ public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
                                    @NotNull Editor editor,
                                    @NotNull Point point,
                                    @NotNull XSourcePosition position,
-                                   @NotNull XDebugSession session,
+                                   @NotNull XDebugSessionProxy session,
                                    Runnable hideRunnable) {
     new XDebuggerTextInlayPopup<>(creator, initialItem.first, initialItem, editor, point, position, session, hideRunnable, valueNode)
       .show(initialText);

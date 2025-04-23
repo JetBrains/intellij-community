@@ -3,7 +3,6 @@ package com.intellij.webSymbols.references.impl
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
@@ -13,16 +12,18 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
 import com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider
@@ -31,7 +32,11 @@ import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
-import com.intellij.webSymbols.utils.*
+import com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
+import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.getProblemKind
+import com.intellij.webSymbols.utils.hasOnlyExtensions
+import com.intellij.webSymbols.utils.nameSegments
 import org.jetbrains.annotations.Nls
 import java.util.*
 
@@ -74,8 +79,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
     val (nameSegment, offset) = queue.removeFirst()
     val symbols = nameSegment.symbols
     val range = TextRange(nameSegment.start + offset, nameSegment.end + offset)
-    if (symbols.any { it.properties[IJ_IGNORE_REFS] == true })
-      continue
+    if (symbols.any { it.properties[IJ_IGNORE_REFS] == true }) continue
     if (symbols.all { it.nameSegments.size == 1 }) {
       if (nameSegment.problem != null || symbols.let { it.isNotEmpty() && !it.hasOnlyExtensions() }) {
         result.putValue(range, nameSegment)
@@ -118,7 +122,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
           ?.firstOrNull()
       }.takeIf { it.size == segments.size }?.firstOrNull()
       if (showProblems && (deprecation != null || problemOnly || segments.any { it.problem != null })) {
-        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, symbolNameOffset, deprecation, problemOnly)
+        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, symbolNameOffset,deprecation, problemOnly)
       }
       else if (!range.isEmpty && !problemOnly) {
         NameSegmentReference(element, range.shiftRight(symbolNameOffset), segments)
@@ -130,9 +134,6 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
     )
     .toList()
 }
-
-private fun isSymbolDeclaration(symbol: WebSymbol, element: PsiElement, range: TextRange): Boolean =
-  symbol is WebSymbolDeclaredInPsi && symbol.sourceElement == element && symbol.textRangeInSourceElement == range
 
 private open class NameSegmentReference(
   private val element: PsiElement,
@@ -149,15 +150,6 @@ private open class NameSegmentReference(
     nameSegments
       .flatMap { it.symbols }
       .filter { !it.extension }
-      .map {
-        if (isSymbolDeclaration(it, element, rangeInElement))
-          if (it is PsiSourcedWebSymbol)
-            NoNavigationTargetPsiSourcedWebSymbolDeclaredInPsiDelegate(it)
-          else
-            NoNavigationTargetWebSymbolDeclaredInPsiDelegate(it as WebSymbolDeclaredInPsi)
-        else
-          it
-      }
       .asSingleSymbol(force = true)
       ?.let { listOf(it) }
     ?: emptyList()
@@ -256,62 +248,3 @@ private fun @Nls String.sanitizeHtmlOutputForProblemMessage(): @Nls String =
     .let {
       StringUtil.unescapeXmlEntities(it)
     }
-
-/**
- * Special delegate class to disable navigation. This is used only in case the referenced symbol is present in its declaration location.
- * Platform prioritizes references over declarations, so to enable the find usages action on CMD+Click, we need to disable navigation
- * for the symbol.
- */
-private open class NoNavigationTargetWebSymbolDeclaredInPsiDelegate(delegate: WebSymbolDeclaredInPsi) : WebSymbolDelegate<WebSymbolDeclaredInPsi>(delegate), WebSymbolDeclaredInPsi {
-
-  override val psiContext: PsiElement?
-    get() = delegate.psiContext
-
-  override val sourceElement: PsiElement?
-    get() = delegate.sourceElement
-
-  override val textRangeInSourceElement: TextRange?
-    get() = delegate.textRangeInSourceElement
-
-  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> = emptyList()
-
-  override fun isEquivalentTo(symbol: Symbol): Boolean =
-    this == symbol || delegate.isEquivalentTo(symbol)
-
-  override fun equals(other: Any?): Boolean =
-    other === this ||
-    (other is NoNavigationTargetWebSymbolDeclaredInPsiDelegate && other.delegate == delegate) ||
-    other == delegate
-
-  override fun hashCode(): Int =
-    delegate.hashCode()
-
-  override fun createPointer(): Pointer<out NoNavigationTargetWebSymbolDeclaredInPsiDelegate> {
-    val delegatePtr = delegate.createPointer()
-    return Pointer {
-      delegatePtr.dereference()?.let { NoNavigationTargetWebSymbolDeclaredInPsiDelegate(it) }
-    }
-  }
-}
-
-private class NoNavigationTargetPsiSourcedWebSymbolDeclaredInPsiDelegate(delegate: PsiSourcedWebSymbol) : NoNavigationTargetWebSymbolDeclaredInPsiDelegate(delegate as WebSymbolDeclaredInPsi), PsiSourcedWebSymbol {
-
-  override val source: PsiElement?
-    get() = (delegate as PsiSourcedWebSymbol).source
-
-  override val psiContext: PsiElement?
-    get() = super<PsiSourcedWebSymbol>.psiContext
-
-  override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
-    emptyList()
-
-  override fun isEquivalentTo(symbol: Symbol): Boolean =
-    this == symbol || delegate.isEquivalentTo(symbol)
-
-  override fun createPointer(): Pointer<NoNavigationTargetPsiSourcedWebSymbolDeclaredInPsiDelegate> {
-    val delegatePtr = delegate.createPointer()
-    return Pointer {
-      delegatePtr.dereference()?.let { NoNavigationTargetPsiSourcedWebSymbolDeclaredInPsiDelegate(it as PsiSourcedWebSymbol) }
-    }
-  }
-}

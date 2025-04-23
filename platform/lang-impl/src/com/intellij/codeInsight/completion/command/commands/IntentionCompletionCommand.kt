@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -22,7 +20,7 @@ internal class IntentionCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val myOffset: Int,
   private val previewProvider: () -> IntentionPreviewInfo?,
-  ) : CompletionCommand(), CompletionCommandWithPreview {
+) : CompletionCommand(), CompletionCommandWithPreview {
 
   override val name: String
     get() = intentionAction.text
@@ -41,11 +39,14 @@ internal class IntentionCompletionCommand(
           ShowIntentionActionsHandler.availableFor(psiFile, editor, myOffset, intentionAction.action)
         }
       }
+    if (!intentionAction.action.startInWriteAction() && availableFor) {
+      editor.putUserData(KEY_FORCE_CARET_OFFSET, ForceOffsetData(myOffset, offset))
+    }
     if (availableFor) {
       ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, name)
     }
-    if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
-      //probably, intention moves the cursor
+    if (!intentionAction.action.startInWriteAction() || (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset)) {
+      //probably, intention moves the cursor or async gui
       return
     }
     if (marker.isValid) {

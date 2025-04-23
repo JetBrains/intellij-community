@@ -51,7 +51,7 @@ include("module1")
 }
 
 // FILE: build.gradle.kts.highlighting.k2
-<!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>plugins<!> {
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>plugins<!> {
     <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>`kotlin-dsl`<!>
 }
 

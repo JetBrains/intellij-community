@@ -68,24 +68,24 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   }
 
   override fun fetchDefaultRemote(repositories: Collection<GitRepository>): GitFetchResult {
-    val remotesToFetch = mutableListOf<RemoteRefCoordinates>()
+    val remotesToFetch = mutableListOf<GitFetchSpec>()
     for (repository in repositories) {
       val remote = getDefaultRemoteToFetch(repository)
-      if (remote != null) remotesToFetch.add(RemoteRefCoordinates(repository, remote))
+      if (remote != null) remotesToFetch.add(GitFetchSpec(repository, remote))
       else LOG.info("No remote to fetch found in $repository")
     }
     return fetch(remotesToFetch)
   }
 
   override fun fetchAllRemotes(repositories: Collection<GitRepository>): GitFetchResult {
-    val remotesToFetch = mutableListOf<RemoteRefCoordinates>()
+    val remotesToFetch = mutableListOf<GitFetchSpec>()
     for (repository in repositories) {
       if (repository.remotes.isEmpty()) {
         LOG.info("No remote to fetch found in $repository")
       }
       else {
         for (remote in repository.remotes) {
-          remotesToFetch.add(RemoteRefCoordinates(repository, remote))
+          remotesToFetch.add(GitFetchSpec(repository, remote))
         }
       }
     }
@@ -93,22 +93,22 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
   }
 
   override fun fetch(repository: GitRepository, remote: GitRemote): GitFetchResult {
-    return fetch(listOf(RemoteRefCoordinates(repository, remote)))
+    return fetch(listOf(GitFetchSpec(repository, remote)))
   }
 
   override fun fetchUnshallow(repository: GitRepository, remote: GitRemote): GitFetchResult {
-    return fetch(listOf(RemoteRefCoordinates(repository, remote, unshallow = true)))
+    return fetch(listOf(GitFetchSpec(repository, remote, unshallow = true)))
   }
 
   override fun fetch(repository: GitRepository, remote: GitRemote, refspec: @NonNls String): GitFetchResult {
-    return fetch(listOf(RemoteRefCoordinates(repository, remote, refspec)))
+    return fetch(listOf(GitFetchSpec(repository, remote, refspec)))
   }
 
   override fun fetchRemotes(remotes: Collection<Pair<GitRepository, GitRemote>>): GitFetchResult {
-    return fetch(remotes.map { RemoteRefCoordinates(it.first, it.second) })
+    return fetch(remotes.map { GitFetchSpec(it.first, it.second) })
   }
 
-  private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {
+  override fun fetch(fetchSpec: Collection<GitFetchSpec>): GitFetchResult {
     try {
       val counterAfterIncrement = fetchRequestCounter.incrementAndGet()
       if (counterAfterIncrement == 1) {
@@ -118,7 +118,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return withIndicator {
         val activity = VcsStatisticsCollector.FETCH_ACTIVITY.started(project)
 
-        val tasks = fetchInParallel(arguments)
+        val tasks = fetchInParallel(fetchSpec)
         val results = waitForFetchTasks(tasks)
 
         val mergedResults = mutableMapOf<GitRepository, RepoResult>()
@@ -155,7 +155,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
   override fun isFetchRunning() = fetchRequestCounter.get() > 0
 
-  private fun fetchInParallel(remotes: List<RemoteRefCoordinates>): List<FetchTask> {
+  private fun fetchInParallel(remotes: Collection<GitFetchSpec>): List<FetchTask> {
     val tasks = mutableListOf<FetchTask>()
     val maxThreads = getMaxThreads(remotes.mapTo(HashSet()) { it.repository }, remotes.size)
     LOG.debug("Fetching $remotes using $maxThreads threads")
@@ -242,7 +242,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
   }
 
-  private fun doFetch(fetchTarget: RemoteRefCoordinates, authenticationGate: AuthenticationGate?): SingleRemoteResult {
+  private fun doFetch(fetchTarget: GitFetchSpec, authenticationGate: AuthenticationGate?): SingleRemoteResult {
     val indicator = progressManager.progressIndicator
     val progressListener = GitLineHandlerListener { line, outputType ->
       if (indicator != null && outputType == ProcessOutputTypes.STDERR) {
@@ -274,13 +274,6 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     val matcher = PRUNE_PATTERN.matcher(line)
     return if (matcher.matches()) matcher.group(1) else null
   }
-
-  private data class RemoteRefCoordinates(
-    val repository: GitRepository,
-    val remote: GitRemote,
-    val refspec: String? = null,
-    val unshallow: Boolean = false,
-  )
 
   private class FetchTask(val repository: GitRepository, val remote: GitRemote, val future: Future<SingleRemoteResult>)
 

@@ -9,11 +9,11 @@ module fleet.util.core {
   exports fleet.util.reducible;
   exports fleet.util.serialization;
   exports fleet.util.text;
-  exports fleet.util.text.matcher;
   exports fleet.util.tree;
 
   requires kotlin.stdlib;
   requires kotlinx.coroutines.core;
+  requires java.management;
   requires transitive kotlinx.collections.immutable.jvm;
   requires transitive fleet.util.logging.api;
   requires transitive fleet.fastutil;

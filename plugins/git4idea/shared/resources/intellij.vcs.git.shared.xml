@@ -1,11 +1,12 @@
 <idea-plugin>
-  <resource-bundle>messages.GitSharedBundle</resource-bundle>
+  <resource-bundle>messages.GitBundle</resource-bundle>
 
   <dependencies>
     <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
 
-  <actions resource-bundle="messages.GitSharedBundle">
+  <actions resource-bundle="messages.GitBundle">
     <group id="MainToolbarVCSGroup">
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
@@ -18,5 +19,16 @@
                  description="WIP: Enables RD-friendly version of the Git branches widget"/>
 
     <platform.entityTypes implementation="com.intellij.vcs.git.shared.rhizome.GitEntityTypeProvider"/>
+
+    <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
+    <projectSettings service="git4idea.config.GitVcsSettings"/>
+
+    <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Git4Idea.gitRepoIconProvider"
+                    interface="com.intellij.vcs.git.shared.ui.GitRepoIconProvider"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

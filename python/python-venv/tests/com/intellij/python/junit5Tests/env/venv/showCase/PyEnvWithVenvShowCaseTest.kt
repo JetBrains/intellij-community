@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 @PyEnvTestCase
 class PyEnvWithVenvShowCaseTest {
   private val tempPathFixture = tempPathFixture()
-  private val moduleFixture = projectFixture().moduleFixture()
+  private val moduleFixture = projectFixture().moduleFixture(tempPathFixture, addPathToSourceRoot = true)
   private val venvFixture = pySdkFixture().pyVenvFixture( // <-- venv fixture
     where = tempPathFixture,
     addToSdkTable = true,

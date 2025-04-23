@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.client.sessions
@@ -13,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -214,6 +216,13 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.mouse.reporting"))
             .bindSelected(optionsProvider::mouseReporting)
+        }
+        row {
+          checkBox(ApplicationBundle.message("advanced.setting.terminal.escape.moves.focus.to.editor"))
+            .bindSelected(
+              getter = { AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor") },
+              setter = { AdvancedSettings.setBoolean("terminal.escape.moves.focus.to.editor", it) },
+            )
         }
         row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))

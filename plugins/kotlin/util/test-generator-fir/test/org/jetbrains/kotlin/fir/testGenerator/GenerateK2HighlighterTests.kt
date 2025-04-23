@@ -4,12 +4,16 @@ package org.jetbrains.kotlin.fir.testGenerator
 import org.jetbrains.kotlin.idea.k2.highlighting.*
 import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.HIGHLIGHTING
 
 internal fun MutableTWorkspace.generateK2HighlighterTests() {
     testGroup("highlighting/highlighting-k2", category = HIGHLIGHTING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2HighlightingMetaInfoTest> {
             model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
+        }
+
+        testClass<AbstractK2MainKtsHighlightingTest> {
+            model("mainKts", pattern = Patterns.MAIN_KTS)
         }
 
         testClass<AbstractK2HighlightingMetaInfoTest>(

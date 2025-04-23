@@ -23,6 +23,7 @@ open class WhatsNewInVisionContentProvider {
 
   companion object {
     suspend fun getInstance(): WhatsNewInVisionContentProvider = serviceAsync()
+    private const val visionFileName = "vision.json"
   }
 
   suspend fun isAvailable(): Boolean {
@@ -48,20 +49,28 @@ open class WhatsNewInVisionContentProvider {
   @Serializable
   internal data class PublicVar(val value: String, val description: String)
 
+  @Deprecated("Use getResource(resourceName: String) instead")
   protected fun getResourceName(): String {
-    val fileName = "vision.json"
+    return getResourceNameByPath(visionFileName)
+  }
+
+  protected open fun getResourceNameByPath(path: String): String {
     val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
     val isEap = ApplicationInfo.getInstance().isEAP
     return "com/intellij/platform/whatsNew/$appName${
       if (isEap) {
-        "/eap/$fileName"
+        "/eap/$path"
       }
       else {
-        "/release/$fileName"
+        "/release/$path"
       }
     }"
   }
 
+  protected open fun getResource(resourceName: String): ContentSource =
+    ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, resourceName)
+
+  @Deprecated("Use getResource(resourceName: String) instead")
   protected open fun getResource(): ContentSource =
     ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getResourceName())
 
@@ -78,6 +87,8 @@ open class WhatsNewInVisionContentProvider {
       json.decodeFromStream<Container>(inputStream)
     } ?: error("Vision page not found")
   }
+
+  internal fun getWhatsNewResource(resourceName: String): ContentSource = getResource(getResourceNameByPath(resourceName))
 }
 
 private const val PROPERTY_WHATS_NEW_VISION_JSON = "intellij.whats.new.vision.json"

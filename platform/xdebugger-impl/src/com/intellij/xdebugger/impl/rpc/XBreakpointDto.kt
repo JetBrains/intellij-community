@@ -212,7 +212,7 @@ private fun XBreakpointType<*, *>.toRpc(project: Project): XBreakpointTypeDto {
 
 private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState {
   val breakpoint = this
-  return withContext(Dispatchers.EDT) {
+  return withContext(Dispatchers.Default) {
     XBreakpointDtoState(
       displayText = XBreakpointUtil.getShortText(breakpoint),
       sourcePosition = sourcePosition?.toRpc(),

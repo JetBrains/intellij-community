@@ -11,7 +11,6 @@ plugins {
   id("fleet.sdk-repositories-publishing-conventions")
   id("fleet.open-source-module-conventions")
   id("fleet-build-jps-module-plugin")
-  id("fleet.multiplatform-module-conventions")
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   // GRADLE_PLUGINS__MARKER_END
@@ -30,6 +29,14 @@ kotlin {
   compilerOptions.freeCompilerArgs = listOf(
     "-Xlambdas=class",
   )
+  targets {
+    jvm {
+      withJava()
+    }
+    wasmJs {
+      browser {}
+    }
+  }
   pluginManager.withPlugin("fleet-build-jps-module-plugin") {
     tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { destinationDirectory.set(layout.buildDirectory.dir("copiedSources/jvmMain")) }
     tasks.named("syncJvmMainJpsSources", fleet.buildtool.jps.module.plugin.SyncJpsSourcesTask::class.java) { sources.add(layout.projectDirectory.dir("../src")) }

@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole.HYPERLINK
+import javax.accessibility.AccessibleValue
 import javax.swing.*
 
 open class ActionLink() : JButton() {
@@ -74,6 +75,7 @@ open class ActionLink() : JButton() {
     if (accessibleContext == null) {
       accessibleContext = object : AccessibleAbstractButton() {
         override fun getAccessibleRole() = HYPERLINK
+        override fun getAccessibleValue(): AccessibleValue? = null
       }
     }
     return accessibleContext

@@ -21,6 +21,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/util",
     "//platform/util-ex",
+    "//platform/ijent",
+    "//platform/util/coroutines",
   ]
 )
 
@@ -46,6 +48,10 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util",
     "//platform/util-ex",
+    "@lib//:junit5Pioneer",
+    "//platform/ijent",
+    "//platform/ijent:ijent_test_lib",
+    "//platform/util/coroutines",
   ]
 )
 

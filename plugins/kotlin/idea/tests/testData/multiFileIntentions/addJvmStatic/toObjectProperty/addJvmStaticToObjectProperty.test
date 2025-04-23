@@ -1,0 +1,6 @@
+{
+  "mainFile": "test/test.kt",
+  "intentionClass": "org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddJvmStaticIntention",
+  "intentionK2Class": "org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddJvmStaticIntention",
+  "withRuntime": "true"
+}

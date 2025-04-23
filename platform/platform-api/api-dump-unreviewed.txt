@@ -2055,6 +2055,7 @@ a:com.intellij.openapi.editor.actionSystem.EditorActionHandler
 - isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):Z
 - f:isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
 - p:isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
+- p:reverseCaretOrder():Z
 - runForAllCarets():Z
 a:com.intellij.openapi.editor.actionSystem.EditorActionHandler$ForEachCaret
 - com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -8933,6 +8934,7 @@ c:com.intellij.ui.speedSearch.SpeedSearch
 - activate():V
 - addChangeListener(java.beans.PropertyChangeListener):V
 - backspace():V
+- p:createNewMatcher(java.lang.String):com.intellij.util.text.Matcher
 - p:doActivate():V
 - findAndSelectElement(java.lang.String):V
 - getEnteredPrefix():java.lang.String

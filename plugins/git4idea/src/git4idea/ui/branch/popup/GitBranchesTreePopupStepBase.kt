@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.popup
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
@@ -10,10 +11,15 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
 import git4idea.GitBranch
+import git4idea.GitReference
+import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchesMatcherWrapper
+import git4idea.ui.branch.getCommonText
+import git4idea.ui.branch.getInRepoText
+import git4idea.ui.branch.getText
 import git4idea.ui.branch.tree.GitBranchesTreeModel
-import git4idea.ui.branch.tree.GitBranchesTreeTextProvider
+import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.createTreePathFor
 import javax.swing.tree.TreePath
 
@@ -95,8 +101,26 @@ internal abstract class GitBranchesTreePopupStepBase(
     }
   }
 
-  internal fun getNodeText(node: Any?): @NlsSafe String? =
-    GitBranchesTreeTextProvider.getText(node, selectedRepository, repositories.size > 1, treeModel.isPrefixGrouping)
+  internal fun getNodeText(node: Any?): @NlsSafe String? {
+    val value = node ?: return null
+    return when (value) {
+      is GitRefType -> when {
+        selectedRepository != null -> value.getInRepoText(DvcsUtil.getShortRepositoryName(selectedRepository))
+        repositories.size > 1 -> value.getCommonText()
+        else -> value.getText()
+      }
+      is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
+      is GitBranchesTreeModel.RefTypeUnderRepository -> value.type.getText()
+      is RefUnderRepository -> getRefText(value.ref, treeModel.isPrefixGrouping)
+      is GitReference -> getRefText(value, treeModel.isPrefixGrouping)
+      is PopupFactoryImpl.ActionItem -> value.text
+      is GitBranchesTreeModel.PresentableNode -> value.presentableText
+      else -> null
+    }
+  }
+
+  private fun getRefText(value: GitReference, prefixGrouping: Boolean): String =
+    if (prefixGrouping) value.name.split('/').last() else value.name
 
   override fun isAutoSelectionEnabled() = false
 }

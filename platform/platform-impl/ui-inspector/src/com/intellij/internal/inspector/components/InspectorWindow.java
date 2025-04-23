@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,8 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.InlineBanner;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
@@ -33,7 +36,9 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.MethodInvocator;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBInsets;
@@ -182,6 +187,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
         });
       }
     });
+
+    if (isDoubleBufferingDisabled(window)) {
+      String message = "Double buffering is disabled for this window. See 'com.intellij.util.ui.GraphicsUtil.safelyGetGraphics' JavaDoc.";
+      if (SystemProperties.getBooleanProperty("idea.debug.mode", false)) {
+        message += "<br>To find the cause, you may pass a '-Dswing.logDoubleBufferingDisable=true' option " +
+                   "or put a breakpoint into 'javax.swing.JRootPane.disableTrueDoubleBuffering', " +
+                   "and restart IDE. Please report an issue in YouTrack.";
+      }
+      InlineBanner banner = new InlineBanner(message, EditorNotificationPanel.Status.Error);
+      topPanel.add(banner);
+    }
+
     topPanel.add(navBarScroll);
     add(topPanel, BorderLayout.NORTH);
 
@@ -225,7 +242,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (dialogWrapper != null) {
       return dialogWrapper.getPeer().getWindow();
     }
-    return null;
+    return UIUtil.getWindow(component);
   }
 
   private InspectorTable getCurrentTable() {
@@ -437,6 +454,25 @@ public final class InspectorWindow extends JDialog implements Disposable {
       return parts[0];
     }
     return null;
+  }
+
+
+  private static boolean isDoubleBufferingDisabled(Window window) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+      try {
+        MethodInvocator invocator = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
+        if (invocator.isAvailable()) {
+          boolean useTrueDoubleBuffering = (boolean)invocator.invoke(rootPane);
+          return !useTrueDoubleBuffering;
+        }
+      }
+      catch (Throwable e) {
+        Logger.getInstance(InspectorWindow.class).warn(e);
+        return false;
+      }
+    }
+    return false;
   }
 
   private class MyRootPane extends JRootPane implements UiDataProvider {

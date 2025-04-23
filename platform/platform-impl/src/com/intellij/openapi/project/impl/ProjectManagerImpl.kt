@@ -63,6 +63,7 @@ import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -1045,7 +1046,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return withContext(Dispatchers.EDT) {
       try {
         writeIntentReadAction {
-          (WindowManager.getInstance() as WindowManagerImpl).withFrameReuseEnabled().use {
+          (WindowManager.getInstance() as WindowManagerEx).withFrameReuseEnabled().use {
             closeProject(project, checkCanClose = true)
           }
         }

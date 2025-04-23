@@ -67,7 +67,7 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
   checkNotNull(action) { "Action $actionId was not found" }
   fileLogger().info("Invoking action $actionId on $target")
   val actionCallback = step("Invoke action ${action.getTemplateText()}") {
-    withContext(OnDispatcher.EDT) {
+    withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
       actionManager.tryToExecute(action, null, component, place, now)
     }
   }

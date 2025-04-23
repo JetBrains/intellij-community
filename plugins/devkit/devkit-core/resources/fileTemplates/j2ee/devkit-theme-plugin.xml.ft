@@ -1,37 +1,37 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-  <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-  <id>${context.artifact}</id>
-  <version>1.0.0</version>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>${context.artifact}</id>
+    <version>1.0.0</version>
 
-  <!-- Public plugin name should be written in Title Case.
-       Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
-  <name>${context.getProperty("pluginTitle")}</name>
-  <category>UI</category>
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+    <name>${context.getProperty("pluginTitle")}</name>
+    <category>UI</category>
 
-  <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-  <vendor url="https://www.yourcompany.com">YourCompany</vendor>
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://www.yourcompany.com">YourCompany</vendor>
 
-  <idea-version since-build="${context.getBomProperty("intellij.since.build")}"/>
+    <idea-version since-build="${context.getBomProperty("intellij.since.build")}"/>
 
-  <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-       Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
-  <description><![CDATA[
-    Enter short description for your theme here.<br>
-    <em>most HTML tags may be used</em>
-  ]]></description>
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+    <description><![CDATA[
+        Enter short description for your theme here.<br>
+        <em>most HTML tags may be used</em>
+    ]]></description>
 
-  <!-- Short summary of new features and bugfixes in the latest plugin version.
-       Displayed on the Plugin Page and IDE Plugin Manager. Simple HTML elements can be included between <![CDATA[  ]]> tags. -->
-  <change-notes><![CDATA[
-    Initial release of the theme.
-  ]]></change-notes>
+    <!-- Short summary of new features and bugfixes in the latest plugin version.
+         Displayed on the Plugin Page and IDE Plugin Manager. Simple HTML elements can be included between <![CDATA[  ]]> tags. -->
+    <change-notes><![CDATA[
+        Initial release of the theme.
+    ]]></change-notes>
 
-  <!-- Product and plugin compatibility requirements.
-       Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
-  <depends>com.intellij.modules.platform</depends>
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.platform</depends>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <themeProvider id="${context.artifact}" path="/theme/${context.getProperty("themeName")}.theme.json"/>
-  </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <themeProvider id="${context.artifact}" path="/theme/${context.getProperty("themeName")}.theme.json"/>
+    </extensions>
 </idea-plugin>

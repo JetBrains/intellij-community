@@ -1248,6 +1248,32 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     return list;
   }
 
+  @VisibleForTesting
+  public @Nullable Rectangle getActiveGutterRendererRectangle(int lineNum, String accessibleName) {
+    int firstVisibleOffset = myEditor.visualLineStartOffset(lineNum);
+    int lastVisibleOffset = EditorUtil.getVisualLineEndOffset(myEditor, lineNum);
+    Rectangle[] rectangle = {null};
+    processRangeHighlighters(firstVisibleOffset, lastVisibleOffset, highlighter -> {
+      LineMarkerRenderer renderer = highlighter.getLineMarkerRenderer();
+      if (renderer instanceof ActiveGutterRenderer activeRenderer) {
+        if (!activeRenderer.getAccessibleName().equals(accessibleName) || rectangle[0] != null) return;
+        Rectangle rect = getLineRendererRectangle(highlighter);
+        if (rect != null) {
+          Rectangle bounds = activeRenderer.calcBounds(myEditor, lineNum, rect);
+          if (bounds != null) {
+            int[] lineToYRange = myEditor.visualLineToYRange(lineNum);
+            boolean isAtLine =
+              lineToYRange[0] >= bounds.y && lineToYRange[1] <= (bounds.y + bounds.height);
+            if (isAtLine) {
+              rectangle[0] = bounds;
+            }
+          }
+        }
+      }
+    });
+    return rectangle[0];
+  }
+
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
     return !FoldingUtil.isHighlighterFolded(myEditor, highlighter);
   }

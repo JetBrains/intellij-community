@@ -142,7 +142,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
    * Created visitor must not be recursive (e.g., it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
-   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
+   * If the inspection should not run in the given context, return {@link PsiElementVisitor#EMPTY_VISITOR}.
+   * Please make sure the builder returned from this method is creating problems with the text range lying within the current PSI element passed to the visitor,
+   * to minimize annoying flickering and inconsistencies.
    *
    * @param holder     where the visitor will register problems it found.
    * @param isOnTheFly true if inspection was run in non-batch mode

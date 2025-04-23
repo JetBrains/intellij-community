@@ -29,12 +29,11 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
-import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
-import java.awt.Insets
 import java.io.FileNotFoundException
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -124,7 +123,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       withContext(Dispatchers.EDT) {
         LOGGER.debug("Adding associated pipenv environment: $path, $basePath")
-        sdk.setAssociationToModule(module)
+        sdk.setAssociationToModuleAsync(module)
         SdkConfigurationUtil.addSdk(sdk)
       }
 
@@ -146,7 +145,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
     override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
-        val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
+        val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0))
         val message = PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.permission")
 
         add(

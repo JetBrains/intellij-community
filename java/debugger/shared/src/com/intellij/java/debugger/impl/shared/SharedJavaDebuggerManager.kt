@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -39,15 +39,15 @@ class SharedJavaDebuggerManager(private val project: Project, private val cs: Co
       }
     }
     project.messageBus.connect(cs).subscribe(FrontendXDebuggerManagerListener.TOPIC, object : FrontendXDebuggerManagerListener {
-      override fun processStopped(sessionId: XDebugSessionId) {
+      override fun sessionStopped(session: XDebugSessionProxy) {
         synchronousExecutor.trySend {
-          debugSessions.remove(sessionId)?.close()
+          debugSessions.remove(session.id)?.close()
         }
       }
 
-      override fun processStarted(sessionId: XDebugSessionId, sessionDto: XDebugSessionDto) {
+      override fun sessionStarted(session: XDebugSessionProxy) {
         synchronousExecutor.trySend {
-          requestJavaSession(sessionId)
+          requestJavaSession(session.id)
         }
       }
     })

@@ -23,6 +23,8 @@ java_library(
   visibility = ["//visibility:public"],
   runtime_deps = [
     "//plugins/editorconfig/plugin",
+    "//plugins/editorconfig/common",
+    "//plugins/editorconfig/frontend",
     "//plugins/editorconfig/backend",
   ]
 )

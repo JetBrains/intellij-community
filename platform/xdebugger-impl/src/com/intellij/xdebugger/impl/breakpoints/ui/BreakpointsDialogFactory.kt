@@ -7,6 +7,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 
 @Service(Service.Level.PROJECT)
@@ -23,12 +27,14 @@ import org.jetbrains.annotations.ApiStatus
 class BreakpointsDialogFactory(private val project: Project) {
   private var balloonToHide: Balloon? = null
   private var breakpointFromBalloon: Any? = null
-  private var showingDialog: BreakpointsDialog? = null
 
-  private val showDialogEvents = MutableSharedFlow<Any?>(extraBufferCapacity = 1)
+  @VisibleForTesting
+  var showingDialog: BreakpointsDialog? = null
+
+  private val showDialogEvents = MutableSharedFlow<XBreakpointId?>(extraBufferCapacity = 1)
 
   // should be used only by backend RPC, so frontend will handle backend requests
-  fun subscribeToShowDialogEvents(cs: CoroutineScope, onShowDialogRequest: suspend (breakpoint: Any?) -> Unit) {
+  fun subscribeToShowDialogEvents(cs: CoroutineScope, onShowDialogRequest: suspend (breakpointId: XBreakpointId?) -> Unit) {
     cs.launch(Dispatchers.EDT) {
       showDialogEvents.collectLatest {
         onShowDialogRequest(it)
@@ -47,28 +53,28 @@ class BreakpointsDialogFactory(private val project: Project) {
     }
   }
 
-  fun popupRequested(breakpoint: Any?): Boolean {
+  fun popupRequested(breakpoint: XBreakpoint<*>?): Boolean {
     if (balloonToHide != null && !balloonToHide!!.isDisposed()) {
       return true
     }
-    return selectInDialogShowing(breakpoint)
+    return selectInDialogShowing((breakpoint as? XBreakpointBase<*, *, *>)?.breakpointId)
   }
 
-  fun showDialog(initialBreakpoint: Any?) {
+  fun showDialog(initialBreakpoint: XBreakpoint<*>?) {
+    val initialBreakpointId = (initialBreakpoint as? XBreakpointBase<*, *, *>)?.breakpointId
     if (useFeProxy()) {
       hideBalloon()
-      showDialogEvents.tryEmit(initialBreakpoint)
+      showDialogEvents.tryEmit(initialBreakpointId)
       return
     }
-    showDialogImpl(initialBreakpoint)
+    showDialogImpl(initialBreakpointId)
   }
 
   @ApiStatus.Internal
-  fun showDialogImpl(initialBreakpoint: Any?) {
+  fun showDialogImpl(initialBreakpoint: XBreakpointId?) {
     if (selectInDialogShowing(initialBreakpoint)) return
 
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-    val initialBreakpoint = convertToInitialBreakpoint(initialBreakpoint ?: breakpointFromBalloon)
     val dialog = object : BreakpointsDialog(project, initialBreakpoint, breakpointManager) {
       override fun dispose() {
         breakpointFromBalloon = null
@@ -84,16 +90,6 @@ class BreakpointsDialogFactory(private val project: Project) {
     dialog.show()
   }
 
-  private fun convertToInitialBreakpoint(initialBreakpoint: Any?): BreakpointsDialogInitialBreakpoint? {
-    if (initialBreakpoint == null) {
-      return null
-    }
-    return when (initialBreakpoint) {
-      is XBreakpointId -> BreakpointsDialogInitialBreakpoint.BreakpointId(initialBreakpoint)
-      else -> BreakpointsDialogInitialBreakpoint.GenericBreakpoint(initialBreakpoint)
-    }
-  }
-
   private fun hideBalloon() {
     if (balloonToHide != null) {
       if (!balloonToHide!!.isDisposed()) {
@@ -103,7 +99,7 @@ class BreakpointsDialogFactory(private val project: Project) {
     }
   }
 
-  private fun selectInDialogShowing(initialBreakpoint: Any?): Boolean {
+  private fun selectInDialogShowing(initialBreakpoint: XBreakpointId?): Boolean {
     if (showingDialog != null) {
       val window = showingDialog!!.window
       if (window != null && window.isDisplayable) { // workaround for IDEA-197804

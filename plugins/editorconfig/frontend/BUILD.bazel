@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.editorconfig.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.editorconfig.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//plugins/editorconfig/common",
+    "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/platform-frontend:frontend",
+  ],
+  runtime_deps = [":frontend_resources"]
+)
+### auto-generated section `build intellij.editorconfig.frontend` end

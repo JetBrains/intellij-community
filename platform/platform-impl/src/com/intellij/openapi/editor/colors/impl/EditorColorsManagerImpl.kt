@@ -328,7 +328,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   fun setGlobalScheme(scheme: EditorColorsScheme?, processChangeSynchronously: Boolean) {
     val notify = LoadingState.COMPONENTS_LOADED.isOccurred
-    schemeManager.setCurrent(scheme ?: getDefaultScheme(), notify, processChangeSynchronously)
+    schemeManager.setCurrent(scheme ?: getEditableDefaultScheme(), notify, processChangeSynchronously)
   }
 
   override fun setGlobalScheme(scheme: EditorColorsScheme?) {
@@ -374,7 +374,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }.getOrLogException(LOG)
   }
 
-  override fun getGlobalScheme(): EditorColorsScheme = activeVisibleScheme ?: getDefaultScheme()
+  override fun getGlobalScheme(): EditorColorsScheme = activeVisibleScheme ?: getEditableDefaultScheme()
 
   override fun getActiveVisibleScheme(): EditorColorsScheme? {
     val scheme = schemeManager.activeScheme
@@ -394,7 +394,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     return scheme?.let { getEditableCopy(it) } ?: scheme
   }
 
-  private fun getDefaultScheme(): EditorColorsScheme {
+  private fun getEditableDefaultScheme(): EditorColorsScheme {
     val defaultScheme = DefaultColorSchemesManager.getInstance().firstScheme
     val editableCopyName = defaultScheme.editableCopyName
     val editableCopy = getScheme(editableCopyName)
@@ -501,7 +501,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       editorSchemeId = "Darcula"
     }
 
-    val scheme = editorSchemeId?.let { getScheme(it) } ?: getDefaultScheme()
+    val scheme = editorSchemeId?.let { getScheme(it) } ?: getEditableDefaultScheme()
     schemeManager.setCurrent(scheme = scheme, notify = isInitialConfigurationLoaded)
     isInitialConfigurationLoaded = true
     activity.end()

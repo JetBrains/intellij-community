@@ -7,11 +7,11 @@ Line 4 coverage: FULL
 Hits: 1
 Line 8 coverage: FULL
 Hits: 1
-Line 13 coverage: FULL
-Hits: 1
-Line 15 coverage: PARTIAL
+Line 13 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
+Line 15 coverage: FULL
+Hits: 1
 Line 17 coverage: FULL
 Hits: 1
 Line 18 coverage: FULL
@@ -58,40 +58,40 @@ Covered 1/2 branches
 Line 43 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
-Line 47 coverage: FULL
+Line 47 coverage: PARTIAL
 Hits: 1
+Covered 1/2 branches
 Line 49 coverage: PARTIAL
 Hits: 1
-Line 51 coverage: PARTIAL
+Line 51 coverage: FULL
 Hits: 1
-Covered 1/2 branches
 Line 55 coverage: FULL
 Hits: 1
-Line 58 coverage: FULL
-Hits: 1
-Line 60 coverage: PARTIAL
+Line 58 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
+Line 60 coverage: PARTIAL
+Hits: 1
 Line 64 coverage: FULL
 Hits: 1
 Line 67 coverage: FULL
 Hits: 1
-Line 69 coverage: FULL
-Hits: 1
-Line 71 coverage: PARTIAL
+Line 69 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
+Line 71 coverage: FULL
+Hits: 1
 Line 76 coverage: FULL
 Hits: 1
 Line 79 coverage: FULL
 Hits: 1
 Line 81 coverage: FULL
 Hits: 1
-Line 84 coverage: FULL
-Hits: 1
-Line 86 coverage: PARTIAL
+Line 84 coverage: PARTIAL
 Hits: 1
 Covered 1/2 branches
+Line 86 coverage: FULL
+Hits: 1
 Line 88 coverage: FULL
 Hits: 1
 Line 90 coverage: FULL

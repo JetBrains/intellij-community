@@ -73,7 +73,7 @@ object XBreakpointUtil {
     StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.extensionList)
 
   @JvmStatic
-  fun findSelectedBreakpoint(project: Project, editor: Editor): Pair<GutterIconRenderer?, Any?> {
+  fun findSelectedBreakpoint(project: Project, editor: Editor): Pair<GutterIconRenderer?, XBreakpoint<*>?> {
     var offset = editor.caretModel.offset
     val editorDocument = editor.document
 

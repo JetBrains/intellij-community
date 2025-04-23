@@ -12,11 +12,11 @@ import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommon
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
 import org.jetbrains.kotlin.idea.gradleJava.run.isProvidedByMultiplatformProducer
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
-class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleConfigurationProducer(),
-                                                            KotlinMultiplatformCommonProducersProvider {
+class KotlinMultiplatformAllInPackageConfigurationProducer :
+    KotlinAllInPackageGradleConfigurationProducer(),
+    KotlinMultiplatformCommonProducersProvider {
 
     private val mppTestTasksChooser = MultiplatformTestTasksChooser()
 

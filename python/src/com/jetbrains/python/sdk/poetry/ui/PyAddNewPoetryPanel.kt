@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
@@ -33,6 +32,7 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.ui.pyModalBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -135,7 +135,7 @@ class PyAddNewPoetryPanel(
 
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
-    return runBlockingCancellable {
+    return pyModalBlocking {
       setupPoetrySdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
                                   baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath

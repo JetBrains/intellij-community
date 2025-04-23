@@ -18,8 +18,8 @@ import java.util.Locale;
  * @author Konstantin Bulenkov
  */
 public class OnOffButton extends JToggleButton {
-  private @NlsContexts.Button String myOnText = IdeBundle.message("onoff.button.on");
-  private @NlsContexts.Button String myOffText = IdeBundle.message("onoff.button.off");
+  private @NlsContexts.Button String myOnText = IdeBundle.message("ui.button.on");
+  private @NlsContexts.Button String myOffText = IdeBundle.message("ui.button.off");
 
   public OnOffButton() {
     setBorder(null);

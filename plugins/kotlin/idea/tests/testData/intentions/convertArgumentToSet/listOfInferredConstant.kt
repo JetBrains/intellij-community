@@ -7,5 +7,3 @@ fun foo(a: Iterable<Int>) {
     val b = listOf(1, x + 1, 3)
     val c = a - <caret>b
 }
-
-// IGNORE_K2

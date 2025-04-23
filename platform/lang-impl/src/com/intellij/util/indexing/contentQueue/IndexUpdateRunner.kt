@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -40,7 +41,6 @@ import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.events.FileIndexingRequest
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
@@ -272,7 +272,7 @@ class IndexUpdateRunner(
     private val fileBasedIndex: FileBasedIndexImpl,
     private val indexingRequest: IndexingRequestToken,
   ) {
-    private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", false)
+    private val doubleCheckFilesAreStillInProject = Registry.`is`("indexing.double.check.files.still.in.project", true)
     private val indexingAttemptCount = AtomicInteger()
     private val indexingSuccessfulCount = AtomicInteger()
 
@@ -296,8 +296,8 @@ class IndexUpdateRunner(
       // which indexes file out/classes/production/intellij.flex/com/intellij/lang/javascript/flex/library/ECMAScript.js2
       if (doubleCheckFilesAreStillInProject && !fileIndexingRequest.isDeleteRequest) {
         // we check workspace, not content, because content does not contain libraries
-        val stillInWorkspace = readAction { WorkspaceFileIndex.getInstance(project).isInWorkspace(file) }
-        if (!stillInWorkspace) {
+        val excluded = readAction { ProjectRootManager.getInstance(project).fileIndex.isExcluded(file) }
+        if (excluded) {
           LOG.debug { "File is not in workspace anymore: #${(file as VirtualFileWithId).id}" }
           return
         }

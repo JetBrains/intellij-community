@@ -82,8 +82,7 @@ internal class ReplacePutWithAssignmentInspection : KotlinApplicableInspectionBa
     override fun getProblemDescription(
         element: KtDotQualifiedExpression,
         context: Context,
-    ): @InspectionMessage String =
-        KotlinBundle.message("java.map.foreach.method.call.should.be.replaced.with.kotlin.s.foreach")
+    ): @InspectionMessage String = KotlinBundle.message("map.put.should.be.converted.to.assignment")
 
     override fun createQuickFix(
         element: KtDotQualifiedExpression,

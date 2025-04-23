@@ -22,7 +22,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
-import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -35,6 +34,7 @@ import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.util.preferredHeight
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
@@ -250,7 +250,7 @@ internal fun Row.pythonInterpreterComboBox(
   val cell = cell(comboBox)
     .bindItem(selectedSdkProperty)
     .applyToComponent {
-      preferredHeight = 30
+      preferredHeight = JBUI.scale(30)
       isEditable = true
     }.validationOnApply {
       // This component must set sdk: clients expect it not to be null (PY-77463)

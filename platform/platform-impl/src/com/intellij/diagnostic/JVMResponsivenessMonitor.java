@@ -5,12 +5,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SlowOperations;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.diagnostic.UILatencyLogger.SLOW_OPERATIONS_ISSUES;
 import static com.intellij.util.SystemProperties.getIntProperty;
 
 /**
@@ -115,6 +118,8 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
           reportAccumulatedStats(taskDurationHisto);
           taskDurationHisto.reset();
           memorySampler.logToFus();
+
+          logSlowOperations();
         }
       }
     }
@@ -125,6 +130,11 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
       memorySampler.close();
       LOG.info("Sampling thread exiting normally");
     }
+  }
+
+  private static void logSlowOperations() {
+    var knownIssues = SlowOperations.reportKnownIssues();
+    SLOW_OPERATIONS_ISSUES.log(new ArrayList<>(knownIssues));
   }
 
   private static void reportAccumulatedStats(@NotNull Histogram taskDurationHisto) {

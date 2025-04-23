@@ -97,6 +97,7 @@ data class XDebugSessionDto(
   val id: XDebugSessionId,
   val editorsProviderDto: XDebuggerEditorsProviderDto,
   val initialSessionState: XDebugSessionState,
+  val initialSuspendData: SuspendData?,
   val sessionName: String,
   val sessionEvents: RpcFlow<XDebuggerSessionEvent>,
   val sessionDataDto: XDebugSessionDataDto,
@@ -120,7 +121,6 @@ data class XDebugSessionDataDto(
   val configurationName: String,
   val initialBreakpointsMuted: Boolean,
   val breakpointsMutedFlow: RpcFlow<Boolean>,
-  val initialSuspendData: SuspendData?,
 )
 
 @ApiStatus.Internal

@@ -2,11 +2,14 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.util.ThreeState
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -22,6 +25,10 @@ interface XValueApi : RemoteApi<Unit> {
 
   suspend fun computeExpression(xValueId: XValueId): XExpressionDto?
 
+  suspend fun computeSourcePosition(xValueId: XValueId): XSourcePositionDto?
+  suspend fun computeTypeSourcePosition(xValueId: XValueId): XSourcePositionDto?
+  suspend fun computeInlineData(xValueId: XValueId): XInlineDebuggerDataDto?
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XValueApi {
@@ -29,3 +36,10 @@ interface XValueApi : RemoteApi<Unit> {
     }
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class XInlineDebuggerDataDto(
+  val canCompute: ThreeState,
+  val sourcePositionsFlow: RpcFlow<XSourcePositionDto>,
+)

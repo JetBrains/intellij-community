@@ -42,5 +42,6 @@
 
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.execution.impl.backend"/>
+    <module name="intellij.platform.eel.impl" />
   </content>
 </idea-plugin>

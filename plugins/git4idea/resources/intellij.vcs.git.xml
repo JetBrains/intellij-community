@@ -681,7 +681,6 @@
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
                                  location="confirmations"/>
 
-    <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
     <projectService serviceImplementation="git4idea.config.GitPullSettings"/>
@@ -877,7 +876,6 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
-    <gitCommitModeProvider implementation="git4idea.commit.GitStagingAreaCommitModeProvider" order="first"/>
   </extensions>
 
   <extensionPoints>
@@ -898,9 +896,6 @@
                     qualifiedName="Git4Idea.gitPushNotificationCustomizer"
                     dynamic="true"
                     area="IDEA_PROJECT"/>
-    <extensionPoint interface="git4idea.commit.GitCommitModeProvider"
-                    qualifiedName="Git4Idea.gitCommitModeProvider"
-                    dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
@@ -929,5 +924,7 @@
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="git4idea.remoteApi.rhizome.GitRepositoryEntitiesStorage$VcsMappingListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    <listener class="git4idea.config.GitBackendVcsSettingsListener"
+              topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
   </projectListeners>
 </idea-plugin>

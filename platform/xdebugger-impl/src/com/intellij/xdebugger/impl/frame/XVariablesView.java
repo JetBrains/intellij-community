@@ -36,7 +36,7 @@ public class XVariablesView extends XVariablesViewBase {
    */
   @Deprecated
   public XVariablesView(@NotNull XDebugSessionImpl session) {
-    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    this(XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   public XVariablesView(@NotNull XDebugSessionProxy proxy) {
@@ -159,20 +159,27 @@ public class XVariablesView extends XVariablesViewBase {
 
     private List<InlineDebugRenderer> myInlays = null;
 
+    @ApiStatus.Obsolete
     public static @Nullable InlineVariablesInfo get(@Nullable XDebugSession session) {
+      if (session == null) return null;
+     return get(XDebugSessionProxyKeeperKt.asProxy(session));
+    }
+
+    @ApiStatus.Internal
+    public static @Nullable InlineVariablesInfo get(@Nullable XDebugSessionProxy session) {
       if (session != null) {
-        return DEBUG_VARIABLES.get(((XDebugSessionImpl)session).getSessionData());
+        return DEBUG_VARIABLES.get(session.getSessionData());
       }
       return null;
     }
 
     /**
-     * @deprecated Use {@link InlineVariablesInfo#set(XDebugSessionProxy, InlineVariablesInfo)} instead
+     * Use {@link InlineVariablesInfo#set(XDebugSessionProxy, InlineVariablesInfo)} instead
      */
-    @Deprecated
+    @ApiStatus.Obsolete
     public static void set(@Nullable XDebugSession session, InlineVariablesInfo info) {
       if (session != null) {
-        set(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), info);
+        set(XDebugSessionProxyKeeperKt.asProxy(session), info);
       }
     }
 

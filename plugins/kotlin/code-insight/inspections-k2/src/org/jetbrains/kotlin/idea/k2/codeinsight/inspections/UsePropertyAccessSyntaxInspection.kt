@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -513,10 +514,13 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                 )
             }
         } else { // For getters
+            val propertyExpression = KtPsiFactory(callExpression.project).createExpressionByPattern("$0", syntheticPropertyName)
             if (qualifiedExpressionForSelector != null) {
-                return true // We don't need to check how this resolves (and nullable getters resolve to null)
+                val copiedQualified = qualifiedExpressionForSelector.copied()
+                copiedQualified.selectorExpression?.replace(propertyExpression) ?: return true
+                copiedQualified
             } else {
-                KtPsiFactory(callExpression.project).createExpressionByPattern("$0", syntheticPropertyName)
+                propertyExpression
             }
         }
 
@@ -531,7 +535,8 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         } else {
             // Check that the call resolves without errors, for example, that we don't do `a?.stringProperty = 1`
             // After KTIJ-29110 is fixed, will be covered with tests propertyTypeIsMoreSpecific1 and propertyTypeIsMoreSpecific2
-            return getSuccessfullyResolvedCall(qualifiedExpressionForSelector, newExpression) != null
+            val resolvedCall = getSuccessfullyResolvedCall(qualifiedExpressionForSelector, newExpression)?.successfulVariableAccessCall() ?: return false
+            return resolvedCall.symbol is KaSyntheticJavaPropertySymbol
         }
     }
 

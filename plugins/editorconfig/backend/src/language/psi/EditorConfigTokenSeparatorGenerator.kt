@@ -9,9 +9,9 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.impl.source.tree.Factory
 
 class EditorConfigTokenSeparatorGenerator : TokenSeparatorGenerator {
-  override fun generateWhitespaceBetweenTokens(left: ASTNode, right: ASTNode): ASTNode? {
+  override fun generateWhitespaceBetweenTokens(left: ASTNode?, right: ASTNode): ASTNode? {
     val manager = right.treeParent.psi.manager
-    if (left.elementType == EditorConfigElementTypes.LINE_COMMENT) {
+    if (left?.elementType == EditorConfigElementTypes.LINE_COMMENT) {
       return createLineBreak(manager)
     }
 

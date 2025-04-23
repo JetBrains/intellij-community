@@ -47,9 +47,20 @@
 - getPriority():java.lang.Integer
 - getSynonyms():java.util.List
 *f:com.intellij.codeInsight.completion.command.CompletionCommandKt
+- sf:KEY_FORCE_CARET_OFFSET:com.intellij.openapi.util.Key
 - sf:getCommandContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 *:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
 - a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+*f:com.intellij.codeInsight.completion.command.ForceOffsetData
+- <init>(I,I):V
+- f:component1():I
+- f:component2():I
+- f:copy(I,I):com.intellij.codeInsight.completion.command.ForceOffsetData
+- bs:copy$default(com.intellij.codeInsight.completion.command.ForceOffsetData,I,I,I,java.lang.Object):com.intellij.codeInsight.completion.command.ForceOffsetData
+- equals(java.lang.Object):Z
+- f:getNewOffset():I
+- f:getOldOffset():I
+- hashCode():I
 *f:com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - <init>(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):V
 - f:component1():com.intellij.openapi.util.TextRange

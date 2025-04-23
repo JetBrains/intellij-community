@@ -55,6 +55,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.border.NamedBorderKt.withName;
 
+/**
+ * See also {@link InlineBanner} that supports multiple lines
+ */
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
 
   private static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
