@@ -56,14 +56,14 @@ public final class GradleTaskUtil {
     if (is51OrBetter) {
       return task.getArchiveFile().get().getAsFile();
     }
-    return GradleReflectionUtil.reflectiveCall(task, "getArchivePath", File.class);
+    return GradleReflectionUtil.getValue(task, "getArchivePath", File.class);
   }
 
   public static @NotNull String getTaskArchiveFileName(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
       return task.getArchiveFileName().get();
     }
-    return GradleReflectionUtil.reflectiveCall(task, "getArchiveName", String.class);
+    return GradleReflectionUtil.getValue(task, "getArchiveName", String.class);
   }
 
   public static void setTaskTestForkEvery(@NotNull Test task, long forkEvery) {
