@@ -89,5 +89,6 @@
     <indexingFlavor filetype="JAVA" implementationClass="com.intellij.index.JavaFileIndexingFlavor"/>
     <indexingFlavor filetype="CLASS" implementationClass="com.intellij.index.ClassFileIndexingFlavor"/>
     <indexingFlavor filetype="kotlin_builtins" implementationClass="com.intellij.index.KtBuiltInFileIndexingFlavorProvider"/>
+    <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
   </extensions>
 </idea-plugin>
