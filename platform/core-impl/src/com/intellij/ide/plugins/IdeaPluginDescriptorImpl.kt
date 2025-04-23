@@ -402,11 +402,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
     // "Show broken plugins in Settings | Plugins so that users can uninstall them and resolve 'Plugin Error' (IDEA-232675)"
     if (isPluginBroken(id, version)) {
-      return onInitError(PluginLoadingError(
-        plugin = this,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.marked.as.broken", name, version) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.marked.as.broken") }
-      ))
+      return onInitError(PluginIsMarkedBroken(this))
     }
     return null
   }

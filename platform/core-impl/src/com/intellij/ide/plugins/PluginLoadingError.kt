@@ -116,3 +116,17 @@ class NonBundledPluginsAreExplicitlyDisabled(
     get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is not loaded because non-bundled plugins are explicitly disabled"
   override val shouldNotifyUser: Boolean = false
 }
+
+@ApiStatus.Internal
+class PluginIsMarkedBroken(
+  override val plugin: IdeaPluginDescriptor,
+): PluginNonLoadReason {
+  // FIXME confusing messages
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.marked.as.broken", plugin.name, plugin.version)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.marked.as.broken")
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}, version=${plugin.version}) is marked incompatible with the current version of the IDE"
+  override val shouldNotifyUser: Boolean = true
+}
