@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.test
 
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class JavaVersionTest {
   @Test fun `1_0`(): Unit = doTest("1.0", 0)
@@ -114,12 +114,7 @@ class JavaVersionTest {
     assertThat(JavaVersion.compose(9, 1, 2, 3, true).toFeatureString()).isEqualTo("9")
   }
 
-  private fun doTest(versionString: String,
-                     feature: Int,
-                     minor: Int = 0,
-                     update: Int = 0,
-                     build: Int = 0,
-                     ea: Boolean = false) {
+  private fun doTest(versionString: String, feature: Int, minor: Int = 0, update: Int = 0, build: Int = 0, ea: Boolean = false) {
     val expected = JavaVersion.compose(feature, minor, update, build, ea)
 
     val parsed = JavaVersion.parse(versionString)
