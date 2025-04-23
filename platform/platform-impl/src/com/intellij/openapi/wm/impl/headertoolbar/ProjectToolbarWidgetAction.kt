@@ -265,10 +265,13 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
             val providerPath = action.providerPathToDisplay
             if (providerPath != null) {
               row {
+                icon(action.providerIcon ?: AllIcons.Nodes.Console)
+                  .align(AlignY.CENTER)
+                  .customize(customGaps = UnscaledGaps(right = 5))
                 providerPathLbl = label(providerPath)
                   .customize(textGaps)
+                  .align(AlignY.CENTER)
                   .applyToComponent {
-                    icon = AllIcons.Nodes.Console
                     font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
                   }.component
@@ -350,5 +353,6 @@ interface ProjectToolbarWidgetPresentable {
   val projectPathToDisplay: @NlsSafe String?
   val branchName: @NlsSafe String?
   val projectIcon: Icon
+  val providerIcon: Icon?
   val activationTimestamp: Long?
 }

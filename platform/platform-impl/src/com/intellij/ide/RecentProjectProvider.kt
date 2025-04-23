@@ -48,6 +48,8 @@ interface RecentProject {
 
   val icon: Icon?
 
+  val providerIcon: Icon?
+
   fun openProject()
   fun removeFromRecent()
 }

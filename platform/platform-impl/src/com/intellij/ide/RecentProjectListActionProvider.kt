@@ -317,6 +317,7 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
   override val projectIcon: Icon
     get() = project.icon
             ?: RecentProjectsManagerBase.getInstanceEx().getNonLocalProjectIcon(projectId, true, unscaledProjectIconSize(), project.displayName)
+  override val providerIcon: Icon? get() = project.providerIcon
   override val activationTimestamp: Long? get() = project.activationTimestamp
 }
 
