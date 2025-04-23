@@ -50,6 +50,11 @@ public class MockDumbService extends DumbService {
   public void waitForSmartMode() { }
 
   @Override
+  public boolean waitForSmartMode(long timeoutMillis) {
+    return true;
+  }
+
+  @Override
   public void queueTask(@NotNull DumbModeTask task) {
     task.performInDumbMode(new EmptyProgressIndicator());
     Disposer.dispose(task);

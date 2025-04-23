@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -87,7 +87,7 @@ public final class FindInProjectUtil {
       if (session != null) editor = session.getEditor();
     }
     PsiElement psiElement = null;
-    if (project != null && editor == null && !DumbServiceImpl.getInstance(project).isDumb()) {
+    if (project != null && editor == null && !DumbService.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }

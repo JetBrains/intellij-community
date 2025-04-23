@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -146,8 +145,8 @@ public final class LeakHunter {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
       for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
-        while (DumbServiceImpl.getInstance(project).isDumb()) {
-          DumbServiceImpl.getInstance(project).waitForSmartMode(100L);
+        while (DumbService.getInstance(project).isDumb()) {
+          DumbService.getInstance(project).waitForSmartMode(100L);
           UIUtil.dispatchAllInvocationEvents();
         }
         FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));

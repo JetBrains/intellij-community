@@ -76,6 +76,14 @@ abstract class DumbService {
   abstract fun waitForSmartMode()
 
   /**
+   * @see [waitForSmartMode]
+   * @return false if waiting timed out, true otherwise
+   */
+  @ApiStatus.Internal
+  @RequiresBlockingContext
+  abstract fun waitForSmartMode(timeoutMillis: Long): Boolean
+
+  /**
    * DEPRECATED.
    *
    * Use instead:

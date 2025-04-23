@@ -530,10 +530,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   }
 
   override fun waitForSmartMode() {
-    waitForSmartMode(milliseconds = null)
+    doWaitForSmartMode(milliseconds = null)
   }
 
-  fun waitForSmartMode(milliseconds: Long?): Boolean {
+  override fun waitForSmartMode(timeoutMillis: Long): Boolean {
+    return doWaitForSmartMode(timeoutMillis)
+  }
+
+  private fun doWaitForSmartMode(milliseconds: Long?): Boolean {
     if (ALWAYS_SMART) return true
     val application = ApplicationManager.getApplication()
     if (application.holdsReadLock()) {

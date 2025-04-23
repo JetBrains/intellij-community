@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.testFramework.DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import kotlinx.coroutines.*
@@ -167,7 +168,7 @@ object DumbModeTestUtils {
       PlatformTestUtil.waitWithEventsDispatching("Dumb mode didn't finish", { !DumbService.isDumb(project) }, 10)
     }
     else {
-      DumbServiceImpl.getInstance(project).waitForSmartMode(10_000)
+      DumbService.getInstance(project).waitForSmartMode(10_000)
     }
     assertFalse("Dumb mode didn't finish", DumbService.isDumb(project))
   }
