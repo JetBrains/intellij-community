@@ -27,6 +27,6 @@ Plugin missing2 requires plugin com.intellij.missing to be installed
 Plugin missing3 requires plugin missing2 to be enabled
 Plugin missing1 requires plugin com.intellij.modules.missing to be installed
 Plugin cycle0 requires plugin cycle1 to be enabled
-Plugin incompatible_with_enabled_module is not compatible with the IDE because the IDE contains module com.intellij.modules.plugin0 which conflicts with the plugin
+Plugin incompatible_with_enabled_module is not compatible with the IDE because the IDE contains module plugin0 which conflicts with the plugin
 <a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>

@@ -232,3 +232,18 @@ class PluginPackagePrefixConflict(
 
   private val IdeaPluginDescriptorImpl.moduleId: String get() = moduleName ?: pluginId.idString
 }
+
+@ApiStatus.Internal
+class PluginIsIncompatibleWithAnotherPlugin(
+  override val plugin: IdeaPluginDescriptor,
+  val incompatiblePlugin: IdeaPluginDescriptor,
+  override val shouldNotifyUser: Boolean,
+): PluginNonLoadReason {
+  // FIXME confusing message
+  override val detailedMessage: @NlsContexts.DetailedDescription String
+    get() = CoreBundle.message("plugin.loading.error.long.ide.contains.conflicting.module", plugin.name, incompatiblePlugin.pluginId)
+  override val shortMessage: @NlsContexts.Label String
+    get() = CoreBundle.message("plugin.loading.error.short.ide.contains.conflicting.module", incompatiblePlugin.pluginId)
+  override val logMessage: @NonNls String
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) is incompatible with another plugin '${incompatiblePlugin.name}' (${incompatiblePlugin.pluginId})"
+}

@@ -15,6 +15,7 @@ import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.TriConsumer
@@ -35,6 +36,9 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamWriter
 
 class PluginManagerTest {
+  @TestDataPath("\$CONTENT_ROOT/testData/plugins/sort") @Suppress("unused")
+  private class TestDataRef // for easy navigation
+
   @Rule
   @JvmField
   val tempDir: TempDirectory = TempDirectory()

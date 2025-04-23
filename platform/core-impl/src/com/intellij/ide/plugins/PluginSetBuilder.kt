@@ -284,14 +284,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       if (!enabledPluginIds.containsKey(incompatibleId) || isPluginDisabled(incompatibleId)) {
         continue
       }
-
-      val presentableName = incompatibleId.idString
-      return PluginLoadingError(
-        plugin = descriptor,
-        detailedMessageSupplier = message("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.name, presentableName),
-        shortMessageSupplier = message("plugin.loading.error.short.ide.contains.conflicting.module", presentableName),
-        shouldNotifyUser = isNotifyUser,
-      )
+      return PluginIsIncompatibleWithAnotherPlugin(descriptor, enabledPluginIds[incompatibleId]!!, isNotifyUser)
     }
 
     getAllPluginDependencies(descriptor)
