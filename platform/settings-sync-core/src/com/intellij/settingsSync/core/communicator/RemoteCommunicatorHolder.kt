@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.loadDescriptor
-import com.intellij.ide.plugins.loadAndInitDescriptorFromArtifact
+import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
@@ -166,7 +166,7 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
           logger.error("cannot download backup & sync plugin")
           return@withContext false
         }
-        val syncPluginDescriptor = loadAndInitDescriptorFromArtifact(syncPluginFile, null) ?: let {
+        val syncPluginDescriptor = loadDescriptorFromArtifact(syncPluginFile, null) ?: let {
           logger.error("Cannot load b&s plugin descriptor")
           return@withContext false
         }
