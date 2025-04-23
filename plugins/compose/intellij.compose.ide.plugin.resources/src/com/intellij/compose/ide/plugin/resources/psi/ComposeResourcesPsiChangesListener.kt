@@ -40,6 +40,13 @@ private val PsiTreeChangeEvent.isIgnorable: Boolean
 class ComposeResourcesPsiChangesListener(private val project: Project) : PsiTreeChangeAdapter() {
   private var ignoreChildrenChanged = false
 
+  /** propagating file rename events */
+  override fun propertyChanged(event: PsiTreeChangeEvent) {
+    ignoreChildrenChanged = true
+    if (event.propertyName != "fileName" || event.isIgnorable) return
+    notice(event)
+  }
+
   override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
     ignoreChildrenChanged = false
   }
