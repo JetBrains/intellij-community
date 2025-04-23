@@ -90,9 +90,9 @@
 - setTokenTypeRemapper(com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper):V
 - setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
-- <init>(I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):V
-- f:getBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):V
 - f:getParserUserState():com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState
+- f:getSyntaxBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - f:init(kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V
 - bs:init$default(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[],I,java.lang.Object):V
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$BracePair
@@ -157,7 +157,7 @@
 - *sf:_NOT_:I
 - *sf:_UPPER_:I
 - *sf:addVariant(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String):V
-- sf:advanceToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
+- *sf:advanceToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
 - *sf:consumeToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
 - *sf:consumeToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
 - *sf:consumeToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String,Z):Z

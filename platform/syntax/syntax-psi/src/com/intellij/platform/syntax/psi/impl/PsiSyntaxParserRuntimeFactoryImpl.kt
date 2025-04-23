@@ -3,9 +3,10 @@
 package com.intellij.platform.syntax.psi.impl
 
 import com.intellij.lang.Language
-import com.intellij.platform.syntax.logger.noopLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+import com.intellij.platform.syntax.psi.asSyntaxLogger
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 import com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
 
@@ -18,7 +19,7 @@ internal class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language)
       isCaseSensitive = language.isCaseSensitive,
       braces = languageInformer.getPairedBraces(),
       maxRecursionDepth = 1000,
-      LOG = noopLogger(),
+      LOG = logger<SyntaxGeneratedParserRuntime>().asSyntaxLogger(),
       parserUserState = extendedState
     )
   }

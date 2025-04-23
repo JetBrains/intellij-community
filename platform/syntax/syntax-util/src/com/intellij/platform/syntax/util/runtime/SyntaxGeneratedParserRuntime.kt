@@ -46,51 +46,43 @@ private const val FRAMES_POOL_SIZE = 500
 @ApiStatus.Experimental
 @JvmField
 val _NONE_: Int = 0x0
+
 @ApiStatus.Experimental
 @JvmField
 val _COLLAPSE_: Int = 0x1
+
 @ApiStatus.Experimental
 @JvmField
 val _LEFT_: Int = 0x2
+
 @ApiStatus.Experimental
 @JvmField
 val _LEFT_INNER_: Int = 0x4
+
 @ApiStatus.Experimental
 @JvmField
 val _AND_: Int = 0x8
+
 @ApiStatus.Experimental
 @JvmField
 val _NOT_: Int = 0x10
+
 @ApiStatus.Experimental
 @JvmField
 val _UPPER_: Int = 0x20
 
 @ApiStatus.Experimental
 @JvmField
-val TOKEN_ADVANCER: Parser = object : Parser {
-  override fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean {
-    if (stateHolder.builder.eof()) return false
-    stateHolder.builder.advanceLexer()
-    return true
-  }
-}
-
-fun advanceToken(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean {
-  if (stateHolder.builder.eof()) return false
-  stateHolder.builder.advanceLexer()
-  return true
-}
+val TOKEN_ADVANCER: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntime, level: Int -> advanceToken(parserRuntime, level)}
 
 @ApiStatus.Experimental
 @JvmField
-val TRUE_CONDITION: Parser = object : Parser {
-  override fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean = true
-}
+val TRUE_CONDITION: Parser = Parser { parserRuntime: SyntaxGeneratedParserRuntime, level: Int -> true }
 
 @ApiStatus.Experimental
 @JvmField
 val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
-  override fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
+  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(param, null)
     return marker
   }
@@ -99,7 +91,7 @@ val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<Whitespaces
 @ApiStatus.Experimental
 @JvmField
 val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
-  override fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
+  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(null, param)
     return marker
   }
@@ -108,7 +100,7 @@ val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<Whitespace
 @ApiStatus.Experimental
 @JvmField
 val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder?>> = object : Hook<Array<WhitespacesAndCommentsBinder?>> {
-  override fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder?>?): SyntaxTreeBuilder.Marker? {
+  override fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder?>?): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(param!![0], param[1])
     return marker
   }
@@ -120,19 +112,17 @@ val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
 
 @ApiStatus.Experimental
 class SyntaxGeneratedParserRuntime(
+  val syntaxBuilder: SyntaxTreeBuilder,
   private val maxRecursionDepth: Int,
-  private val syntaxBuilder: SyntaxTreeBuilder,
   private val isCaseSensitive: Boolean,
   private val braces: Collection<BracePair>?,
   internal val LOG: Logger,
   val parserUserState: ParserUserState?, 
 ) {
-
   private val error: ErrorState = ErrorState()
 
   internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
   internal val MAX_RECURSION_LEVEL: Int get() = maxRecursionDepth
-  val builder: SyntaxTreeBuilder get() = syntaxBuilder
   internal val isLanguageCaseSensitive get() = isCaseSensitive
   internal val errorState get() = error
 
@@ -144,12 +134,12 @@ class SyntaxGeneratedParserRuntime(
   interface ParserUserState {}
 
   fun interface Parser {
-    fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean
+    fun parse(parserRuntime: SyntaxGeneratedParserRuntime, level: Int): Boolean
   }
 
   interface Hook<T> {
     @Contract("_,null,_->null")
-    fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: T?): SyntaxTreeBuilder.Marker?
+    fun run(parserRuntime: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: T?): SyntaxTreeBuilder.Marker?
   }
 
   internal class Hooks<T>(val hook: Hook<T?>?, val param: T?, val level: Int, val next: Hooks<*>?) {
@@ -213,8 +203,8 @@ class SyntaxGeneratedParserRuntime(
         }
       }
       
-      fun isIdentifierStart(ch: Char): Boolean {
-        return ch.isLetter() || ch == '$' || ch == '_'
+      fun shouldPutInQuotes(ch: Char): Boolean {
+        return ch != '$' && ch != '_' && ch != '<' && !ch.isLetter()
       }
 
       return when {
@@ -224,11 +214,11 @@ class SyntaxGeneratedParserRuntime(
             .sorted()
             .take(MAX_VARIANTS_TO_DISPLAY)
             .joinToString(separator = ", ", postfix = " ${SyntaxRuntimeBundle.message("parsing.error.and.ellipsis")}") { s ->
-              if (s[0] == '<' || isIdentifierStart(s[0])) s else "'$s'"
+              if (shouldPutInQuotes(s[0])) "'$s'" else s
             }
         }
         strings.size > 1 -> {
-          val sorted = strings.sorted().map { s -> if (s[0] == '<' || isIdentifierStart(s[0])) s else "'$s'" }
+          val sorted = strings.sorted().map { s -> if (shouldPutInQuotes(s[0])) "'$s'" else s }
           val last = sorted.last()
           sorted
             .dropLast(1)
@@ -236,7 +226,7 @@ class SyntaxGeneratedParserRuntime(
         }
         else -> {
           strings.singleOrNull()?.let {
-            if (it[0] == '<' || isIdentifierStart(it[0])) it else "'$it'"
+            if (shouldPutInQuotes(it[0])) "'$it'" else it
           }.orEmpty()
         }
       }
@@ -348,6 +338,13 @@ class SyntaxGeneratedParserRuntime(
 }
 
 @ApiStatus.Experimental
+fun advanceToken(parserRuntime: SyntaxGeneratedParserRuntime, level: Int): Boolean {
+  if (parserRuntime.syntaxBuilder.eof()) return false
+  parserRuntime.syntaxBuilder.advanceLexer()
+  return true
+}
+
+@ApiStatus.Experimental
 fun create_token_set_(vararg tokenTypes: SyntaxElementType): SyntaxElementTypeSet {
   return syntaxElementTypeSetOf(*tokenTypes)
 }
@@ -356,18 +353,18 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType): SyntaxElementTypeSe
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.eof(level: Int): Boolean {
-  return builder.eof()
+  return syntaxBuilder.eof()
 }
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.current_position_(): Int {
-  return builder.rawTokenIndex()
+  return syntaxBuilder.rawTokenIndex()
 }
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String): Boolean {
   if (level > MAX_RECURSION_LEVEL) {
-    builder.mark().error(SyntaxRuntimeBundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
+    syntaxBuilder.mark().error(SyntaxRuntimeBundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
     return false
   }
   return true
@@ -377,7 +374,7 @@ fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String):
 fun SyntaxGeneratedParserRuntime.empty_element_parsed_guard_(funcName: String, pos: Int): Boolean {
   if (pos == current_position_()) {
     // sometimes this is a correct situation, therefore no explicit marker
-    builder.error(SyntaxRuntimeBundle.message("parsing.error.empty.element.parsed.in.at.offset", funcName, builder.currentOffset))
+    syntaxBuilder.error(SyntaxRuntimeBundle.message("parsing.error.empty.element.parsed.in.at.offset", funcName, syntaxBuilder.currentOffset))
     return false
   }
   return true
@@ -393,7 +390,7 @@ fun SyntaxGeneratedParserRuntime.invalid_left_marker_guard_(marker: SyntaxTreeBu
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.leftMarkerIs(type: SyntaxElementType?): Boolean {
-  val lastDoneMarker = builder.lastDoneMarker
+  val lastDoneMarker = syntaxBuilder.lastDoneMarker
   return lastDoneMarker?.getNodeType() === type
 }
 
@@ -440,7 +437,7 @@ fun SyntaxGeneratedParserRuntime.parseTokensSmart(pin: Int, vararg tokens: Synta
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.parseTokens(smart: Boolean, pin: Int, vararg tokens: SyntaxElementType?): Boolean {
-  val marker: SyntaxTreeBuilder.Marker = builder.mark()
+  val marker: SyntaxTreeBuilder.Marker = syntaxBuilder.mark()
   val result: Boolean = consumeTokens(smart, pin, *tokens)
   if (!result) {
     marker.rollbackTo()
@@ -471,7 +468,7 @@ fun SyntaxGeneratedParserRuntime.consumeToken(token: SyntaxElementType): Boolean
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.consumeTokenFast(token: SyntaxElementType): Boolean {
   if (nextTokenIsFast(token)) {
-    builder.advanceLexer()
+    syntaxBuilder.advanceLexer()
     return true
   }
   return false
@@ -483,7 +480,7 @@ fun SyntaxGeneratedParserRuntime.consumeToken(text: String, caseSensitive: Boole
   addVariantSmart(text, true)
   var count: Int = nextTokenIsFast(text, caseSensitive)
   if (count > 0) {
-    while (count-- > 0) builder.advanceLexer()
+    while (count-- > 0) syntaxBuilder.advanceLexer()
     return true
   }
   return false
@@ -493,7 +490,7 @@ fun SyntaxGeneratedParserRuntime.consumeToken(text: String, caseSensitive: Boole
 fun SyntaxGeneratedParserRuntime.consumeTokenFast(text: String): Boolean {
   var count: Int = nextTokenIsFast(text, isLanguageCaseSensitive)
   if (count > 0) {
-    while (count-- > 0) builder.advanceLexer()
+    while (count-- > 0) syntaxBuilder.advanceLexer()
     return true
   }
   return false
@@ -513,7 +510,7 @@ fun SyntaxGeneratedParserRuntime.consumeTokenSmart(vararg tokens: SyntaxElementT
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.consumeTokenFast(vararg tokens: SyntaxElementType): Boolean {
   if (nextTokenIsFast(*tokens)) {
-    builder.advanceLexer()
+    syntaxBuilder.advanceLexer()
     return true
   }
   return false
@@ -521,18 +518,18 @@ fun SyntaxGeneratedParserRuntime.consumeTokenFast(vararg tokens: SyntaxElementTy
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.nextTokenIsFast(token: SyntaxElementType?): Boolean {
-  return builder.tokenType === token
+  return syntaxBuilder.tokenType === token
 }
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.nextTokenIsFast(vararg tokens: SyntaxElementType): Boolean {
-  val tokenType: SyntaxElementType? = builder.tokenType
+  val tokenType: SyntaxElementType? = syntaxBuilder.tokenType
   return tokens.indexOf(tokenType) >= 0
 }
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokens: SyntaxElementTypeSet): Boolean {
-  return tokens.contains(builder.tokenType)
+  return tokens.contains(syntaxBuilder.tokenType)
 }
 
 @ApiStatus.Experimental
@@ -553,9 +550,9 @@ fun SyntaxGeneratedParserRuntime.nextTokenIs(frameName: String?, vararg tokens: 
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.nextTokenIsSlow(frameName: String?, vararg tokens: SyntaxElementType): Boolean {
-  val tokenType: SyntaxElementType? = builder.tokenType
+  val tokenType: SyntaxElementType? = syntaxBuilder.tokenType
   if (!frameName.isNullOrEmpty()) {
-    addVariantInner(errorState, errorState.currentFrame, builder.rawTokenIndex(), frameName)
+    addVariantInner(errorState, errorState.currentFrame, syntaxBuilder.rawTokenIndex(), frameName)
   }
   else {
     for (token in tokens) {
@@ -585,15 +582,15 @@ fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokenText: String): Boolean {
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokenText: String, caseSensitive: Boolean): Int {
-  val sequence: CharSequence = builder.text
-  val offset: Int = builder.currentOffset
+  val sequence: CharSequence = syntaxBuilder.text
+  val offset: Int = syntaxBuilder.currentOffset
   val endOffset = offset + tokenText.length
   val subSequence = sequence.subSequence(offset, min(endOffset.toDouble(), sequence.length.toDouble()).toInt())
   if (!subSequence.contentEquals(tokenText, caseSensitive)) return 0
 
   var count = 0
   while (true) {
-    val nextOffset: Int = builder.rawTokenTypeStart(++count)
+    val nextOffset: Int = syntaxBuilder.rawTokenTypeStart(++count)
     if (nextOffset > endOffset) {
       return -count
     }
@@ -605,7 +602,7 @@ fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokenText: String, caseSensitiv
 }
 
 private fun SyntaxGeneratedParserRuntime.addVariantSmart(token: Any, force: Boolean): Boolean {
-  builder.eof()
+  syntaxBuilder.eof()
   if (!errorState.suppressErrors && errorState.predicateCount < 2) {
     addVariant(errorState, token)
   }
@@ -621,8 +618,8 @@ private fun SyntaxGeneratedParserRuntime.addVariant(
   state: SyntaxGeneratedParserRuntime.ErrorState,
   o: Any,
 ) {
-  builder.eof() // skip whitespaces
-  addVariantInner(state, state.currentFrame, builder.rawTokenIndex(), o)
+  syntaxBuilder.eof() // skip whitespaces
+  addVariantInner(state, state.currentFrame, syntaxBuilder.rawTokenIndex(), o)
 }
 
 private fun SyntaxGeneratedParserRuntime.addVariantInner(
@@ -645,7 +642,7 @@ private fun SyntaxGeneratedParserRuntime.addVariantInner(
 
 private fun SyntaxGeneratedParserRuntime.wasAutoSkipped(steps: Int): Boolean {
   for (i in -1 downTo -steps) {
-    if (!isWhitespaceOrComment(builder.rawLookup(i))) return false
+    if (!isWhitespaceOrComment(syntaxBuilder.rawLookup(i))) return false
   }
   return true
 }
@@ -655,7 +652,7 @@ private fun SyntaxGeneratedParserRuntime.wasAutoSkipped(steps: Int): Boolean {
 fun SyntaxGeneratedParserRuntime.enter_section_(): SyntaxTreeBuilder.Marker {
   reportFrameError(errorState)
   errorState.level++
-  return builder.mark()
+  return syntaxBuilder.mark()
 }
 
 @ApiStatus.Experimental
@@ -681,16 +678,16 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int): Syn
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int, elementType: SyntaxElementType?, frameName: String?): SyntaxTreeBuilder.Marker {
   reportFrameError(errorState)
-  val marker: SyntaxTreeBuilder.Marker = builder.mark()
+  val marker: SyntaxTreeBuilder.Marker = syntaxBuilder.mark()
   enter_section_impl_(level, modifiers, elementType, frameName)
   return marker
 }
 
 private fun SyntaxGeneratedParserRuntime.enter_section_impl_(level: Int, modifiers: Int, elementType: SyntaxElementType?, frameName: String?) {
   errorState.level++
-  val frame: SyntaxGeneratedParserRuntime.Frame = errorState.FRAMES.alloc().init(builder, errorState, level, modifiers, elementType, frameName)
+  val frame: SyntaxGeneratedParserRuntime.Frame = errorState.FRAMES.alloc().init(syntaxBuilder, errorState, level, modifiers, elementType, frameName)
   if (((frame.modifiers and _LEFT_) or (frame.modifiers and _LEFT_INNER_)) != 0) {
-    val left: SyntaxTreeBuilder.Marker? = builder.lastDoneMarker
+    val left: SyntaxTreeBuilder.Marker? = syntaxBuilder.lastDoneMarker
     if (invalid_left_marker_guard_(left, frameName)) {
       frame.leftMarker = left
     }
@@ -759,9 +756,9 @@ fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<Array<T?>?>?, var
 
 private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedParserRuntime.ErrorState, elementType: SyntaxElementType?) {
   state.hooks?.let { hooks ->
-    var marker: SyntaxTreeBuilder.Marker? = if (elementType == null) null else builder.lastDoneMarker
+    var marker: SyntaxTreeBuilder.Marker? = if (elementType == null) null else syntaxBuilder.lastDoneMarker
     if (elementType != null && marker == null) {
-      builder.mark().error(SyntaxRuntimeBundle.message("parsing.error.no.expected.done.marker.at.offset", builder.currentOffset))
+      syntaxBuilder.mark().error(SyntaxRuntimeBundle.message("parsing.error.no.expected.done.marker.at.offset", syntaxBuilder.currentOffset))
     }
     while (hooks.level >= state.level) {
       if (hooks.level == state.level) {
@@ -780,29 +777,29 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
   pinned: Boolean,
   eatMoreParser: Parser?,
 ) {
-  val initialPos: Int = builder.rawTokenIndex()
+  val initialPos: Int = syntaxBuilder.rawTokenIndex()
   replace_variants_with_name_(state, frame, elementType, result, pinned)
   val lastErrorPos = if (frame.lastVariantAt < 0) initialPos else frame.lastVariantAt
   if (!state.suppressErrors && eatMoreParser != null) {
     state.suppressErrors = true
-    val eatMoreFlagOnce = !builder.eof() && eatMoreParser.parse(this, frame.level + 1)
+    val eatMoreFlagOnce = !syntaxBuilder.eof() && eatMoreParser.parse(this, frame.level + 1)
     var eatMoreFlag = eatMoreFlagOnce || !result && frame.position == initialPos && lastErrorPos > frame.position
 
     val latestDoneMarker: SyntaxTreeBuilder.Marker? =
       if ((pinned || result) && (state.altMode || elementType != null) &&
-          eatMoreFlagOnce) getLatestExtensibleDoneMarker(builder)
+          eatMoreFlagOnce) getLatestExtensibleDoneMarker(syntaxBuilder)
       else null
     // advance to the last error pos
     // skip tokens until lastErrorPos. parseAsTree might look better here...
     var parenCount = 0
-    while ((eatMoreFlag || parenCount > 0) && builder.rawTokenIndex() < lastErrorPos) {
-      val tokenType: SyntaxElementType? = builder.tokenType
+    while ((eatMoreFlag || parenCount > 0) && syntaxBuilder.rawTokenIndex() < lastErrorPos) {
+      val tokenType: SyntaxElementType? = syntaxBuilder.tokenType
       parenCount = state.braces?.let { braces ->
         if (tokenType === braces[0].myLeftBrace) return@let 1
         else if (tokenType === braces[0].myRightBrace) return@let -1
         return@let 0
       } ?: 0
-      if (builder.rawTokenIndex() >= lastErrorPos) break
+      if (syntaxBuilder.rawTokenIndex() >= lastErrorPos) break
       TOKEN_ADVANCER.parse(this, frame.level + 1)
       eatMoreFlag = eatMoreParser.parse(this, frame.level + 1)
     }
@@ -818,7 +815,7 @@ private fun SyntaxGeneratedParserRuntime.exit_section_impl_(
         parseAsTree(state, frame.level + 1, DUMMY_BLOCK, true, TOKEN_ADVANCER, eatMoreParser)
       }
     }
-    else if (eatMoreFlagOnce || !result && frame.position != builder.rawTokenIndex() || frame.errorReportedAt > initialPos) {
+    else if (eatMoreFlagOnce || !result && frame.position != syntaxBuilder.rawTokenIndex() || frame.errorReportedAt > initialPos) {
       errorReported = reportError(state, frame, false, true, false)
     }
     else if (!result && pinned && frame.errorReportedAt < 0) {
@@ -873,20 +870,20 @@ private fun SyntaxGeneratedParserRuntime.close_frame_impl_(
   var marker: SyntaxTreeBuilder.Marker? = marker
   var elementType: SyntaxElementType? = elementType
   if (((frame.modifiers and _AND_) or (frame.modifiers and _NOT_)) != 0) {
-    val resetLastPos = !state.suppressErrors && frame.lastVariantAt < 0 && frame.position < builder.rawTokenIndex()
+    val resetLastPos = !state.suppressErrors && frame.lastVariantAt < 0 && frame.position < syntaxBuilder.rawTokenIndex()
     close_marker_impl_(frame, marker, null, false)
     state.predicateCount--
     if ((frame.modifiers and _NOT_) != 0) state.predicateSign = !state.predicateSign
-    marker = if (elementType != null && marker != null && (result || pinned)) builder.mark() else null
-    if (resetLastPos) frame.lastVariantAt = builder.rawTokenIndex()
+    marker = if (elementType != null && marker != null && (result || pinned)) syntaxBuilder.mark() else null
+    if (resetLastPos) frame.lastVariantAt = syntaxBuilder.rawTokenIndex()
   }
   if (elementType != null && marker != null) {
     if (result || pinned) {
       if ((frame.modifiers and _COLLAPSE_) != 0) {
-        val last: SyntaxTreeBuilder.Marker? = builder.lastDoneMarker
+        val last: SyntaxTreeBuilder.Marker? = syntaxBuilder.lastDoneMarker
         if (last != null && last.getStartTokenIndex() == frame.position &&
             state.typeExtends(last.getNodeType(), elementType) &&
-            wasAutoSkipped(builder.rawTokenIndex() - last.getEndTokenIndex())) {
+            wasAutoSkipped(syntaxBuilder.rawTokenIndex() - last.getEndTokenIndex())) {
           elementType = last.getNodeType()
           last.drop()
         }
@@ -913,7 +910,7 @@ private fun SyntaxGeneratedParserRuntime.close_frame_impl_(
         frame.leftMarker?.precede()?.done(elementType)
       }
       else {
-        if (frame.level == 0) builder.eof() // skip whitespaces
+        if (frame.level == 0) syntaxBuilder.eof() // skip whitespaces
 
         marker.done(elementType)
       }
@@ -978,7 +975,7 @@ private fun SyntaxGeneratedParserRuntime.replace_variants_with_name_(
   result: Boolean,
   pinned: Boolean,
 ) {
-  val initialPos: Int = builder.rawTokenIndex()
+  val initialPos: Int = syntaxBuilder.rawTokenIndex()
   val willFail = !result && !pinned
   if (willFail && initialPos == frame.position && frame.lastVariantAt == frame.position && frame.name != null && state.variants.size >= frame.variantCount + (if (elementType == null) 0 else 2)) {
     state.clearVariants(true, frame.variantCount)
@@ -999,7 +996,7 @@ fun SyntaxGeneratedParserRuntime.report_error_(state: SyntaxGeneratedParserRunti
     LOG.error("unbalanced enter/exit section call: got null")
     return
   }
-  val position: Int = builder.rawTokenIndex()
+  val position: Int = syntaxBuilder.rawTokenIndex()
   if (frame.errorReportedAt < position && frame.lastVariantAt > -1 && frame.lastVariantAt <= position) {
     reportError(state, frame, false, true, advance)
   }
@@ -1018,11 +1015,11 @@ private fun SyntaxGeneratedParserRuntime.reportError(
   force: Boolean,
   advance: Boolean,
 ): Boolean {
-  val position: Int = builder.rawTokenIndex()
+  val position: Int = syntaxBuilder.rawTokenIndex()
   val expected: String = state.getExpected(position, true)
   if (!force && expected.isEmpty() && !advance) return false
 
-  val actual: CharSequence? = builder.tokenText?.trim()
+  val actual: CharSequence? = syntaxBuilder.tokenText?.trim()
   val message: String
   if (expected.isEmpty()) {
     if (actual.isNullOrEmpty()) {
@@ -1041,36 +1038,36 @@ private fun SyntaxGeneratedParserRuntime.reportError(
     }
   }
   if (advance) {
-    val mark: SyntaxTreeBuilder.Marker = builder.mark()
+    val mark: SyntaxTreeBuilder.Marker = syntaxBuilder.mark()
     TOKEN_ADVANCER.parse(this, frame.level + 1)
     mark.error(message)
   }
   else if (inner) {
-    val latestDoneMarker: SyntaxTreeBuilder.Marker? = getLatestExtensibleDoneMarker(builder)
-    builder.error(message)
+    val latestDoneMarker: SyntaxTreeBuilder.Marker? = getLatestExtensibleDoneMarker(syntaxBuilder)
+    syntaxBuilder.error(message)
     if (latestDoneMarker != null && frame.position >= latestDoneMarker.getStartTokenIndex() && frame.position <= latestDoneMarker.getEndTokenIndex()) {
       extend_marker_impl(latestDoneMarker)
     }
   }
   else {
-    builder.error(message)
+    syntaxBuilder.error(message)
   }
-  builder.eof() // skip whitespaces
-  frame.errorReportedAt = builder.rawTokenIndex()
+  syntaxBuilder.eof() // skip whitespaces
+  frame.errorReportedAt = syntaxBuilder.rawTokenIndex()
   return true
 }
 
 private fun SyntaxGeneratedParserRuntime.reportFrameError(state: SyntaxGeneratedParserRuntime.ErrorState) {
   if (state.currentFrame == null || state.suppressErrors) return
   val frame: SyntaxGeneratedParserRuntime.Frame? = state.currentFrame
-  val pos: Int = builder.rawTokenIndex()
+  val pos: Int = syntaxBuilder.rawTokenIndex()
   if (frame != null && frame.errorReportedAt > pos) {
     // report error for previous unsuccessful frame
-    val marker: SyntaxTreeBuilder.Marker? = builder.lastDoneMarker
+    val marker: SyntaxTreeBuilder.Marker? = syntaxBuilder.lastDoneMarker
     var endOffset = marker?.getEndTokenIndex() ?: (pos + 1)
-    while (endOffset <= pos && isWhitespaceOrComment(builder.rawLookup(endOffset - pos))) endOffset++
+    while (endOffset <= pos && isWhitespaceOrComment(syntaxBuilder.rawLookup(endOffset - pos))) endOffset++
     val inner = endOffset == pos
-    builder.eof()
+    syntaxBuilder.eof()
     reportError(state, frame, inner, true, false)
   }
 }
@@ -1117,15 +1114,15 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
   var tokenCount = 0
   if (lBrace != null) {
     var tokenIdx = -1
-    while (builder.rawLookup(tokenIdx) === SyntaxTokenTypes.WHITE_SPACE) tokenIdx--
-    val doneMarker = if (builder.rawLookup(tokenIdx) == lBrace) builder.lastDoneMarker else null
-    if (doneMarker != null && doneMarker.getStartOffset() == builder.rawTokenTypeStart(tokenIdx) && doneMarker.getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) {
+    while (syntaxBuilder.rawLookup(tokenIdx) === SyntaxTokenTypes.WHITE_SPACE) tokenIdx--
+    val doneMarker = if (syntaxBuilder.rawLookup(tokenIdx) == lBrace) syntaxBuilder.lastDoneMarker else null
+    if (doneMarker != null && doneMarker.getStartOffset() == syntaxBuilder.rawTokenTypeStart(tokenIdx) && doneMarker.getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) {
       parens.add(Pair(doneMarker.precede(), null))
     }
   }
   var c: Int = current_position_()
   while (true) {
-    val tokenType: SyntaxElementType? = builder.tokenType
+    val tokenType: SyntaxElementType? = syntaxBuilder.tokenType
     if (lBrace != null && (tokenType == lBrace || tokenType == rBrace && !parens.isEmpty())) {
       if (marker != null) {
         marker.done(chunkType)
@@ -1135,7 +1132,7 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
       }
       if (tokenType == lBrace) {
         val prev = siblings.first()
-        parens.addFirst(Pair(builder.mark(), prev.first))
+        parens.addFirst(Pair(syntaxBuilder.mark(), prev.first))
       }
       checkSiblings(chunkType, parens, siblings)
       TOKEN_ADVANCER.parse(this, level)
@@ -1154,7 +1151,7 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
     }
     else {
       if (marker == null) {
-        marker = builder.mark()
+        marker = syntaxBuilder.mark()
         marker.setCustomEdgeTokenBinders(WhitespacesBinders.greedyLeftBinder(), null)
       }
       val result = (!parens.isEmpty() || eatMoreConditionParser.parse(this, level + 1)) &&
@@ -1189,7 +1186,7 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
 
 @ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.isWhitespaceOrComment(type: SyntaxElementType?): Boolean {
-  return type != null && builder.isWhitespaceOrComment(type)
+  return type != null && syntaxBuilder.isWhitespaceOrComment(type)
 }
 
 private fun CharSequence.crop(length: Int, addEllipses: Boolean): CharSequence {
