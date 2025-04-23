@@ -2,16 +2,21 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.extensions.ExtensionPointAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.flow.buffer
@@ -35,6 +40,16 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       initialTypes,
       typesFlow.toRpc()
     )
+  }
+
+  override suspend fun getAvailableBreakpointTypesForLine(projectId: ProjectId, editorId: EditorId, positionDto: XSourcePositionDto): List<XBreakpointTypeId> {
+    val project = projectId.findProjectOrNull() ?: return emptyList()
+    val editor = editorId.findEditorOrNull() ?: return emptyList()
+    val position = positionDto.sourcePosition()
+    val types = readAction {
+      XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, editor)
+    }
+    return types.map { XBreakpointTypeId(it.id) }
   }
 
   private fun getCurrentBreakpointTypeDtos(project: Project): List<XBreakpointTypeDto> {

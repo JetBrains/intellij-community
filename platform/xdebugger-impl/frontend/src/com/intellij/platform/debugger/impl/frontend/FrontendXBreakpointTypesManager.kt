@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
@@ -13,10 +14,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 
-internal interface FrontendXBreakpointTypesManager {
-  fun getTypeById(id: XBreakpointTypeId): FrontendXBreakpointType?
+@ApiStatus.Internal
+interface FrontendXBreakpointTypesManager {
+  fun getTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy?
 
   companion object {
     suspend fun getInstanceSuspending(project: Project): FrontendXBreakpointTypesManager {

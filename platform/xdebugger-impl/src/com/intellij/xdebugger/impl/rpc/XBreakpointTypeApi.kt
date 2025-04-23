@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XBreakpointTypeApi : RemoteApi<Unit> {
   suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList
+
+  suspend fun getAvailableBreakpointTypesForLine(projectId: ProjectId, editorId: EditorId, positionDto: XSourcePositionDto): List<XBreakpointTypeId>
 
   companion object {
     @JvmStatic
