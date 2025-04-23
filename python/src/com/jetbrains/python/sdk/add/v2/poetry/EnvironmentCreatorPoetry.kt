@@ -12,7 +12,6 @@ import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.text.nullize
-import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -133,7 +132,7 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
     with(panel) {
       row("") {
         checkBox(PyBundle.message("python.sdk.poetry.dialog.add.new.environment.in.project.checkbox"))
-          .bindSelected(isInProjectEnvProp)
+          .bindSelected(service<PoetryConfigService>().state::isInProjectEnv)
       }
     }
   }
@@ -141,21 +140,16 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
 
 @Service(Service.Level.APP)
 @State(name = "PyPoetrySettings", storages = [Storage("pyPoetrySettings.xml")])
-internal class PoetryConfigService : PersistentStateComponent<PoetryConfigService> {
-  var isInProjectEnv: Boolean = false
-
-  override fun getState(): PoetryConfigService = this
-
-  override fun loadState(state: PoetryConfigService) {
-    XmlSerializerUtil.copyBean(state, this)
+private class PoetryConfigService : SerializablePersistentStateComponent<PoetryConfigService.PyPoetrySettingsState>(PyPoetrySettingsState()) {
+  class PyPoetrySettingsState: BaseState() {
+    var isInProjectEnv = false
   }
 
   suspend fun setInProjectEnv(module: Module) {
     val hasPoetryToml = poetryToml(module) != null
-
-    if (isInProjectEnv || hasPoetryToml) {
+    if (state.isInProjectEnv || hasPoetryToml) {
       val modulePath = withContext(Dispatchers.IO) { pyProjectToml(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) } }
-      configurePoetryEnvironment(modulePath, "virtualenvs.in-project", isInProjectEnv.toString(), "--local")
+      configurePoetryEnvironment(modulePath, "virtualenvs.in-project", state.isInProjectEnv.toString(), "--local")
     }
   }
 }
