@@ -29,15 +29,15 @@ class PluginLoadingError internal constructor(
   val detailedMessage: @NlsContexts.DetailedDescription String
     get() = detailedMessageSupplier!!.get()
 
-  internal val isDisabledError: Boolean
-    get() = shortMessageSupplier === DISABLED
+  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
+  val shortMessage: @NlsContexts.Label String
+    get() = shortMessageSupplier.get()
 
   val internalMessage: @NonNls String
     get() = formatErrorMessage(plugin, (detailedMessageSupplier ?: shortMessageSupplier).get())
 
-  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-  val shortMessage: @NlsContexts.Label String
-    get() = shortMessageSupplier.get()
+  internal val isDisabledError: Boolean
+    get() = shortMessageSupplier === DISABLED
 
   override fun toString(): @NonNls String = internalMessage
 
