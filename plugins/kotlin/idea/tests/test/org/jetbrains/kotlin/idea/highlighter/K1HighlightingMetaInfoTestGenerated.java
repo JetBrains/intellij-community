@@ -82,6 +82,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
         }
 
+        @TestMetadata("ImplicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/dsl/ImplicitReceiver.kt");
+        }
+
         @TestMetadata("NestedReceivers.kt")
         public void testNestedReceivers() throws Exception {
             runTest("testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
