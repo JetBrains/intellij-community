@@ -4,7 +4,6 @@ package com.intellij.notebooks.ui.visualization
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -41,23 +40,4 @@ object NotebookUtil {
 
     actionBetweenBackgroundAndStripe()
   }
-
-  fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
-    if (editor.settings.isCaretRowShown) {
-      val caretModel = editor.caretModel
-      val caretLine = caretModel.logicalPosition.line
-      if (caretLine in lines) {
-        g.color = editor.colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
-        g.fillRect(
-          0,
-          editor.visualLineToY(caretModel.visualPosition.line),
-          g.clipBounds.width,
-          editor.lineHeight
-        )
-      }
-    }
-  }
 }
-
-
-
