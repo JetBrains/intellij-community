@@ -16,13 +16,12 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.*
+import com.jetbrains.python.configuration.associateWithModule
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -86,8 +85,12 @@ suspend fun createVenvAndSdk(
     VfsUtil.markDirtyAndRefresh(false, true, true, vfsProjectPath)
   }
   configurePythonSdk(project, module, sdk)
-  sdk.getOrCreateAdditionalData().associateWithModule(module)
-  module.pythonSdk
+  with(sdk.sdkModificator) {
+    writeAction {
+      associateWithModule(module)
+      commitChanges()
+    }
+  }
   return Result.success(sdk)
 }
 
