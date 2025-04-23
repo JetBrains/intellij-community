@@ -1,6 +1,7 @@
 package com.intellij.cce.actions
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -10,7 +11,7 @@ import kotlin.coroutines.resume
 
 object ImportOptimiser {
   suspend fun optimiseImports(project: Project, file: VirtualFile) {
-    val psiFile = PsiManager.getInstance(project).findFile(file)!!
+    val psiFile = readAction { PsiManager.getInstance(project).findFile(file)!! }
     optimizeImportsAsync(project, psiFile)
   }
 
