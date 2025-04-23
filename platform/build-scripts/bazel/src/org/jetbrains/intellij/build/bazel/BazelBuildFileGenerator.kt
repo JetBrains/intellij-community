@@ -133,7 +133,7 @@ internal class BazelBuildFileGenerator(
 
       val groupedByTargetName = sortedList.groupBy { it.lib.targetName }
 
-      val labelTracker = fileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet<String>() }
+      val labelTracker = fileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
       buildFile(out = bazelFileUpdater, sectionName = owner.sectionName) {
         load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 
@@ -300,15 +300,20 @@ internal class BazelBuildFileGenerator(
                               ?: (if (jvmTarget == 17) null else "@community//:k$jvmTarget")
     val javacOptionsLabel = computeJavacOptions(module, jvmTarget)
 
-    val resourceDependencies = mutableListOf<String>()
+    val resourceTargets = mutableListOf<String>()
+    val productionCompileTargets = mutableListOf<String>()
+    val testCompileTargets = mutableListOf<String>()
+
     val sources = moduleDescriptor.sources
     if (moduleDescriptor.resources.isNotEmpty()) {
       val result = generateResources(module = moduleDescriptor, forTests = false)
-      resourceDependencies.addAll(result.resourceTargets)
+      resourceTargets.addAll(result.resourceTargets)
+      productionCompileTargets.addAll(result.resourceTargets)
     }
     if (moduleDescriptor.testResources.isNotEmpty()) {
       val result = generateResources(module = moduleDescriptor, forTests = true)
-      resourceDependencies.addAll(result.resourceTargets)
+      resourceTargets.addAll(result.resourceTargets)
+      testCompileTargets.addAll(result.resourceTargets)
     }
 
     // if someone depends on such a test module from another production module
@@ -319,6 +324,8 @@ internal class BazelBuildFileGenerator(
 
       target("jvm_library") {
         option("name", moduleDescriptor.targetName)
+        productionCompileTargets.add(moduleDescriptor.targetName)
+
         option("module_name", module.name)
         visibility(arrayOf("//visibility:public"))
         option("srcs", sourcesToGlob(sources, moduleDescriptor))
@@ -367,7 +374,7 @@ internal class BazelBuildFileGenerator(
           deps = deps.copy(deps = deps.deps + extraDeps)
         }
 
-        renderDeps(deps = deps, target = this, resourceDependencies = resourceDependencies, forTests = false)
+        renderDeps(deps = deps, target = this, resourceDependencies = resourceTargets, forTests = false)
       }
     }
     else {
@@ -387,6 +394,8 @@ internal class BazelBuildFileGenerator(
         module.name != "intellij.platform.compose.compilerPlugin"
       }) {
         option("name", moduleDescriptor.targetName)
+        productionCompileTargets.add(moduleDescriptor.targetName)
+
         visibility(arrayOf("//visibility:public"))
 
         if (moduleDescriptor.testSources.isEmpty()) {
@@ -394,7 +403,7 @@ internal class BazelBuildFileGenerator(
           renderDeps(
             deps = deps?.copy(plugins = emptyList()), // do not apply plugins to an empty library regardless of dependencies
             target = this,
-            resourceDependencies = resourceDependencies,
+            resourceDependencies = resourceTargets,
             forTests = false
           )
         }
@@ -403,35 +412,24 @@ internal class BazelBuildFileGenerator(
 
     if (moduleDescriptor.testSources.isNotEmpty()) {
       load("@rules_jvm//:jvm.bzl", "jvm_test")
+      load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-      if (isUsedAsTestDependency) {
-        load("@rules_jvm//:jvm.bzl", "jvm_library")
+      val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
+      target("jvm_library") {
+        option("name", testLibTargetName)
+        testCompileTargets.add(testLibTargetName)
 
-        val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
-        target("jvm_library") {
-          option("name", testLibTargetName)
-          visibility(arrayOf("//visibility:public"))
-          option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
-          javacOptionsLabel?.let { option("javac_opts", it) }
-          kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
+        visibility(arrayOf("//visibility:public"))
+        option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
+        javacOptionsLabel?.let { option("javac_opts", it) }
+        kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-          renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies, forTests = true)
-        }
-
-        target("jvm_test") {
-          option("name", "${moduleDescriptor.targetName}_test")
-          option("runtime_deps", arrayOf(":$testLibTargetName"))
-        }
+        renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceTargets, forTests = true)
       }
-      else {
-        target("jvm_test") {
-          option("name", "${moduleDescriptor.targetName}_test")
-          option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
-          javacOptionsLabel?.let { option("javac_opts", it) }
-          kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
 
-          renderDeps(deps = moduleList.testDeps.get(moduleDescriptor), target = this, resourceDependencies = resourceDependencies, forTests = true)
-        }
+      target("jvm_test") {
+        option("name", "${moduleDescriptor.targetName}_test")
+        option("runtime_deps", arrayOf(":$testLibTargetName"))
       }
     }
   }
