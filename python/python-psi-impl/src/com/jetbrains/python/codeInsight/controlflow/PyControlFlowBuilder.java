@@ -747,21 +747,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final Instruction finallyFailInstruction;
 
     // Store pending normal exit instructions from try-except-else parts
-    if (finallyPart != null) {
-      myBuilder.processPending((pendingScope, instruction) -> {
-        final PsiElement pendingElement = instruction.getElement();
-        if (pendingElement != null) {
-          final boolean isPending = PsiTreeUtil.isAncestor(node, pendingElement, false) &&
-                                    !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
-          if (isPending && pendingScope != null) {
-            pendingNormalExits.add(Pair.createNonNull(pendingScope, instruction));
-          }
-          else {
-            myBuilder.addPendingEdge(pendingScope, instruction);
-          }
-        }
-      });
-    }
+    myBuilder.processPending((pendingScope, instruction) -> {
+      final PsiElement pendingElement = instruction.getElement();
+      final boolean isPending = pendingElement == null || 
+                                PsiTreeUtil.isAncestor(node, pendingElement, false) &&
+                                !PsiTreeUtil.isAncestor(finallyPart, pendingElement, false);
+      if (isPending && pendingScope != null) {
+        pendingNormalExits.add(Pair.createNonNull(pendingScope, instruction));
+      }
+      else {
+        myBuilder.addPendingEdge(pendingScope, instruction);
+      }
+    });
 
     // Finally-fail part handling
     if (finallyPart != null) {
@@ -805,6 +802,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
     }
 
+    final Instruction exitInstruction;
     if (finallyPart != null) {
       myBuilder.processPending((pendingScope, instruction) -> {
         final PsiElement e = instruction.getElement();
@@ -825,7 +823,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
       // Duplicate CFG for finally (-fail and -success) only if there are some successful exits from the
       // try part. Otherwise, a single CFG for finally provides the correct control flow
-      final Instruction finallyInstruction;
       if (!pendingNormalExits.isEmpty()) {
         // Finally-success part handling
         pendingBackup = new ArrayList<>(myBuilder.pending);
@@ -836,24 +833,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         for (Pair<PsiElement, Instruction> pair : pendingBackup) {
           myBuilder.addPendingEdge(pair.first, pair.second);
         }
-        finallyInstruction = finallySuccessInstruction;
+        exitInstruction = finallySuccessInstruction;
       }
       else {
-        finallyInstruction = finallyFailInstruction;
+        exitInstruction = finallyFailInstruction;
       }
+    }
+    else {
+      exitInstruction = addTransparentInstruction();    
+      myBuilder.prevInstruction = exitInstruction;
+    }
 
-      // Connect normal exits from try and else parts to the finally part
-      for (Pair<PsiElement, Instruction> pendingScopeAndInstruction : pendingNormalExits) {
-        final PsiElement pendingScope = pendingScopeAndInstruction.first;
-        final Instruction instruction = pendingScopeAndInstruction.second;
+    // Connect normal exits from try and else parts to the finally part or exit instruction
+    for (Pair<PsiElement, Instruction> pendingScopeAndInstruction : pendingNormalExits) {
+      final PsiElement pendingScope = pendingScopeAndInstruction.first;
+      final Instruction instruction = pendingScopeAndInstruction.second;
 
-        myBuilder.addEdge(instruction, finallyInstruction);
+      myBuilder.addEdge(instruction, exitInstruction);
 
-        // When instruction continues outside try-except statement scope
-        // the last instruction in finally-block is marked as pointing to that continuation
-        if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
-          myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
-        }
+      // When instruction continues outside try-except statement scope
+      // the last instruction in finally-block is marked as pointing to that continuation
+      if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
+        myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
       }
     }
   }
