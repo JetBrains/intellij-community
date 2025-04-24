@@ -1,13 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.SingleFileSourcesTracker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,7 +53,14 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         if (identifier == null) {
           return;
         }
-        holder.registerProblem(identifier, message, new ReplaceWithExplicitClassFix());
+        if (InspectionProjectProfileManager.isInformationLevel(getShortName(), identifier)) {
+          TextRange textRange =
+            TextRange.create(0, method.getParameterList().getTextRange().getEndOffset() - method.getTextRange().getStartOffset());
+          holder.registerProblem(method, textRange, message, new ReplaceWithExplicitClassFix());
+        }
+        else {
+          holder.registerProblem(identifier, message, new ReplaceWithExplicitClassFix());
+        }
       }
     };
   }
@@ -64,6 +76,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiImplicitClass implicitClass;
+      PsiFile originalFile = updater.getOriginalFile(element.getContainingFile());
       if (element instanceof PsiImplicitClass elementAsClass) {
         implicitClass = elementAsClass;
       }
@@ -103,7 +116,24 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       }
       addImplicitStaticImports(project, staticImports, implicitClass, importList);
       addImplicitJavaModuleImports(project, moduleImports, importList);
+      addPackageStatement(newPsiJavaFile, originalFile);
       JavaCodeStyleManager.getInstance(project).optimizeImports(newPsiJavaFile);
+    }
+
+    private static void addPackageStatement(@NotNull PsiJavaFile javaFile, PsiFile originalFile) {
+      PsiDirectory directory = originalFile.getContainingDirectory();
+      if (directory == null) return;
+      PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      if (dirPackage == null) return;
+      PsiPackageStatement packageStatement = javaFile.getPackageStatement();
+      if (packageStatement != null) return;
+      String packageName = dirPackage.getQualifiedName();
+      SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(originalFile.getProject());
+      String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(originalFile.getVirtualFile());
+      if (singleFileSourcePackageName != null) packageName = singleFileSourcePackageName;
+      if(packageName.isEmpty()) return;
+      if(!PsiDirectoryFactory.getInstance(javaFile.getProject()).isValidPackageName(packageName)) return;
+      AdjustPackageNameFix.applyFix(javaFile, originalFile, originalFile.getContainingDirectory());
     }
 
     private static void addImplicitJavaModuleImports(@NotNull Project project,

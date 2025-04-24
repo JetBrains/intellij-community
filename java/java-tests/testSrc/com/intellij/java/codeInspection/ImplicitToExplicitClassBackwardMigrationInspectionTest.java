@@ -66,4 +66,14 @@ public class ImplicitToExplicitClassBackwardMigrationInspectionTest extends Ligh
       doTest();
     });
   }
+
+  public void testWithPackageStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      myFixture.enableInspections(new ImplicitToExplicitClassBackwardMigrationInspection());
+      myFixture.testHighlighting(true, false, true, "foo/before" + getTestName(false) + ".java");
+      myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(
+        JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.fix.name")));
+      myFixture.checkResultByFile("foo/after" + getTestName(false) + ".java");
+    });
+  }
 }
