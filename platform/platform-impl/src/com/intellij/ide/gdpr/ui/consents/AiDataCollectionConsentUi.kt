@@ -7,8 +7,9 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 
-class AiDataCollectionConsentUi(private val consent: Consent) : ConsentUi {
+internal class AiDataCollectionConsentUi(private val consent: Consent) : ConsentUi {
   override fun getCheckBoxText(): @NlsSafe String = StringUtil.capitalize(consent.name)
 
   override fun getCheckBoxCommentText(): @NlsSafe String = """${consent.text}
@@ -26,6 +27,7 @@ ${IdeBundle.message("gdpr.ai.data.collection.consent.additional.notice.2")}"""
   }
 }
 
+@ApiStatus.Internal
 interface AiDataCollectionExternalSettings {
   companion object {
     val EP_NAME: ExtensionPointName<AiDataCollectionExternalSettings> =
