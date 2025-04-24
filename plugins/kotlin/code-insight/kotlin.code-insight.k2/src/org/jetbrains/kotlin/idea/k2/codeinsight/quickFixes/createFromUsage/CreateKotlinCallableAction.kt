@@ -114,8 +114,6 @@ internal class CreateKotlinCallableAction(
             listOf(), listOf()
         )
 
-        val call = call
-        require(call != null)
         val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
             project, callableInfo,
         )
@@ -123,9 +121,10 @@ internal class CreateKotlinCallableAction(
             callableInfo.definitionAsString
         )
         val passedContainerElement = pointerToContainer.element ?: return
-        val anchor = call
-        val shouldComputeContainerFromAnchor =
-            if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
+        val anchor = call ?: passedContainerElement
+
+        val shouldComputeContainerFromAnchor = if (call == null) false
+        else if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
             else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             anchor.getExtractionContainers().firstOrNull() ?:return
@@ -134,7 +133,7 @@ internal class CreateKotlinCallableAction(
         }
         createKotlinCallablePsiEditor.showEditor(
             function,
-            call,
+            anchor,
             isExtension,
             requestTargetClassPointer?.element,
             insertContainer,
@@ -148,11 +147,19 @@ internal class CreateKotlinCallableAction(
 
     private fun buildCallableAsString(request: CreateMethodRequest): String? {
         val container = getContainer()
-        if (call == null || container == null) return null
-        val modifierListAsString =
-            request.modifiers.mapNotNull(CreateFromUsageUtil::visibilityModifierToString).joinToString(separator = " ")
+            ?: return null
+
+        val annotationListAsString = request.annotations
+            .joinToString(separator = " ") { "@${it.qualifiedName}" }
+
+        val modifierListAsString = request.modifiers
+            .mapNotNull(CreateFromUsageUtil::visibilityModifierToString)
+            .joinToString(separator = " ")
+
         return buildString {
+            append(annotationListAsString)
             append(modifierListAsString)
+
             if (abstract) {
                 if (isNotEmpty()) append(" ")
                 append("abstract")
