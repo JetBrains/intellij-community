@@ -15,7 +15,7 @@ class TextMateString private constructor(val bytes: ByteArray) {
     return TextMateRange(startOffset, endOffset)
   }
 
-  private fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int {
+  fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int {
     return if (targetByteOffset <= 0) {
       0
     }
