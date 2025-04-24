@@ -34,6 +34,11 @@ interface PluginUiModel {
    */
   val requiresUpgrade: Boolean
 
+  /*
+   * Returns true if the model was loaded from marketplace.
+   */
+  val isFromMarketplace: Boolean
+
   val tags: List<String>
 
   val isBundled: Boolean

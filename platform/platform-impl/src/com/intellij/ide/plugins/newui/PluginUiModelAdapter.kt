@@ -39,6 +39,9 @@ class PluginUiModelAdapter(
     get() {
       return pluginDescriptor is PluginNode && pluginDescriptor.suggestedCommercialIde != null
     }
+  
+  override val isFromMarketplace: Boolean
+    get() = pluginDescriptor is PluginNode
 
   override val tags: List<String>
     get() {
