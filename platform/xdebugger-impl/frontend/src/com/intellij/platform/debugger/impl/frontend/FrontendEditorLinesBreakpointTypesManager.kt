@@ -98,9 +98,11 @@ private class EditorBreakpointTypesMap(
         val currentStamp = readAction { editor.document.modificationStamp }
         val (firstIndex, lastIndex) = calculateWindowIndices(editor)
         if (currentBreakpointTypesMap == null || currentBreakpointTypesMap.shouldBeUpdated(currentStamp, firstIndex, lastIndex)) {
-          val types = getAvailableBreakpointTypesFromServer(project, editor, firstIndex, lastIndex)
-          if (types != null) {
-            breakpointTypesMap = StampedBreakpointTypesMap(currentStamp, firstIndex, lastIndex, types)
+          val newTypesMap = calculateNewMap(currentBreakpointTypesMap, currentStamp, firstIndex, lastIndex) { firstIndex, lastIndexInclusive ->
+            getAvailableBreakpointTypesFromServer(project, editor, firstIndex, lastIndexInclusive)
+          }
+          if (newTypesMap != null) {
+            breakpointTypesMap = newTypesMap
           }
           else {
             breakpointTypesMap = null
@@ -161,6 +163,15 @@ private class EditorBreakpointTypesMap(
   }
 
   companion object {
+    private suspend fun calculateNewMap(
+      oldMap: StampedBreakpointTypesMap?,
+      currentStamp: Long, firstIndex: Int, lastIndexInclusive: Int,
+      calculate: suspend (firstIndex: Int, lastIndexInclusive: Int) -> List<List<XBreakpointTypeProxy>>?,
+    ): StampedBreakpointTypesMap? {
+      val newTypes = calculate(firstIndex, lastIndexInclusive) ?: return null
+      return StampedBreakpointTypesMap(currentStamp, firstIndex, lastIndexInclusive, newTypes)
+    }
+
     // both indices are inclusive
     private suspend fun calculateWindowIndices(editor: Editor): Pair<Int, Int> {
       val visibleRange = withContext(Dispatchers.EDT) {
