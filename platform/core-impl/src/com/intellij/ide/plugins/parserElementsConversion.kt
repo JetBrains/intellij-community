@@ -8,17 +8,13 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
-import com.intellij.platform.plugins.parser.impl.elements.ComponentElement
-import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
-import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
-import com.intellij.platform.plugins.parser.impl.elements.OS
+import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.platform.plugins.parser.impl.elements.OS.*
-import com.intellij.platform.plugins.parser.impl.elements.PreloadMode
 import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
-import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as ModuleLoadingRuleElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },
@@ -90,4 +86,12 @@ fun PreloadMode.convert(): ServiceDescriptor.PreloadMode = when (this) {
   AWAIT -> ServiceDescriptor.PreloadMode.AWAIT
   NOT_HEADLESS -> ServiceDescriptor.PreloadMode.NOT_HEADLESS
   NOT_LIGHT_EDIT -> ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
+}
+
+fun ModuleLoadingRuleElement.convert(): ModuleLoadingRule = when (this) {
+  ModuleLoadingRuleElement.REQUIRED -> ModuleLoadingRule.REQUIRED
+  ModuleLoadingRuleElement.EMBEDDED -> ModuleLoadingRule.EMBEDDED
+  ModuleLoadingRuleElement.OPTIONAL -> ModuleLoadingRule.OPTIONAL
+  ModuleLoadingRuleElement.ON_DEMAND -> ModuleLoadingRule.ON_DEMAND
+  else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
 }

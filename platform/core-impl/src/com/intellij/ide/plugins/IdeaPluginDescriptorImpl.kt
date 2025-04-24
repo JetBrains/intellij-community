@@ -5,7 +5,6 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl.Type
-import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -609,7 +608,7 @@ class IdeaPluginDescriptorImpl private constructor(
             val configFile: String? = if (index != -1) {
               "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
             } else null
-            PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.fromElementValue())
+            PluginContentDescriptor.ModuleItem(elem.name, configFile, elem.embeddedDescriptorContent, elem.loadingRule.convert())
           }
           else -> {
             LOG.error("Unknown content element: $elem")

@@ -3,8 +3,6 @@ package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as ElementModuleLoadingRule
-
 /**
  * Specified when a content module of a plugin should be loaded.
  */
@@ -38,14 +36,4 @@ enum class ModuleLoadingRule(val required: Boolean) {
    * This *isn't implemented yet* and currently treated the same way as [OPTIONAL].
    */
   ON_DEMAND(required = false);
-
-  companion object {
-    fun ElementModuleLoadingRule.fromElementValue(): ModuleLoadingRule = when (this) {
-      ElementModuleLoadingRule.REQUIRED -> REQUIRED
-      ElementModuleLoadingRule.EMBEDDED -> EMBEDDED
-      ElementModuleLoadingRule.OPTIONAL -> OPTIONAL
-      ElementModuleLoadingRule.ON_DEMAND -> ON_DEMAND
-      else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
-    }
-  }
 }
