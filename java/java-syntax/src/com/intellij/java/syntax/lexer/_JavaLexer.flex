@@ -5,6 +5,8 @@ import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.util.lexer.FlexLexer
 import com.intellij.pom.java.LanguageLevel
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 @Suppress("ALL")
 %%

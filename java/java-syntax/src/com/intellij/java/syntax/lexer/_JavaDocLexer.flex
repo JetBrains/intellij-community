@@ -3,6 +3,8 @@ package com.intellij.java.syntax.lexer;
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementType;
 import com.intellij.platform.syntax.util.lexer.FlexLexer
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 @Suppress("ALL")
 %%

@@ -8,6 +8,8 @@ import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.JavaVersion.Companion.compose
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 
 /**
  * Represents a language level (i.e. features available) of a Java code.
