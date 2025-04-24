@@ -16,13 +16,13 @@ class AutoImportProjectNotificationAware(private val project: Project) : Externa
 
   override fun notificationNotify(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
-    LOG.debug("${projectId.debugName}: Notify notification")
+    LOG.debug("$projectId: Notify notification")
     projectsWithNotification.add(projectId)
     fireNotificationUpdated()
   }
 
   override fun notificationExpire(projectId: ExternalSystemProjectId) {
-    LOG.debug("${projectId.debugName}: Expire notification")
+    LOG.debug("$projectId: Expire notification")
     projectsWithNotification.remove(projectId)
     fireNotificationUpdated()
   }

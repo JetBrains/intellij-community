@@ -182,7 +182,7 @@ class AutoImportProjectTracker(
     }
 
     for (projectData in projectsToReload) {
-      LOG.debug("${projectData.projectAware.projectId.debugName}: Project reload")
+      LOG.debug("${projectData.projectAware.projectId}: Project reload")
       val hasUndefinedModifications = !projectData.status.isUpToDate()
       val settingsContext = projectData.settingsTracker.getSettingsContext()
       val context = ProjectReloadContext(explicitReload, hasUndefinedModifications, settingsContext)
@@ -220,10 +220,9 @@ class AutoImportProjectTracker(
 
   override fun register(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
-    val projectIdName = projectId.debugName
     val activationProperty = AtomicBooleanProperty(false)
-    val projectStatus = ProjectStatus(debugName = projectIdName)
-    val parentDisposable = Disposer.newDisposable(serviceDisposable, projectIdName)
+    val projectStatus = ProjectStatus(debugName = projectId.toString())
+    val parentDisposable = Disposer.newDisposable(serviceDisposable, projectId.toString())
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
     val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
 
@@ -231,7 +230,7 @@ class AutoImportProjectTracker(
 
     settingsTracker.beforeApplyChanges(parentDisposable) { projectReloadOperation.traceStart() }
     settingsTracker.afterApplyChanges(parentDisposable) { projectReloadOperation.traceFinish() }
-    activationProperty.whenPropertySet(parentDisposable) { LOG.debug("$projectIdName is activated") }
+    activationProperty.whenPropertySet(parentDisposable) { LOG.debug("$projectId is activated") }
     activationProperty.whenPropertySet(parentDisposable) { scheduleChangeProcessing() }
 
     projectAware.subscribe(createProjectReloadListener(projectData), parentDisposable)
