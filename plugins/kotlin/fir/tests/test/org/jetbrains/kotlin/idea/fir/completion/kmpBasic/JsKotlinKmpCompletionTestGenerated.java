@@ -2154,6 +2154,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/override/ContextReceiver.kt");
         }
 
+        @TestMetadata("EnumMethodNameMatch.kt")
+        public void testEnumMethodNameMatch() throws Exception {
+            runTest("../../completion/testData/basic/common/override/EnumMethodNameMatch.kt");
+        }
+
         @TestMetadata("Generics.kt")
         public void testGenerics() throws Exception {
             runTest("../../completion/testData/basic/common/override/Generics.kt");

@@ -282,6 +282,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../../completion/testData/keywords/InEnumScope2.kt");
         }
 
+        @TestMetadata("InFunctionDefinition.kt")
+        public void testInFunctionDefinition() throws Exception {
+            runTest("../../completion/testData/keywords/InFunctionDefinition.kt");
+        }
+
         @TestMetadata("InFunctionExpressionBody.kt")
         public void testInFunctionExpressionBody() throws Exception {
             runTest("../../completion/testData/keywords/InFunctionExpressionBody.kt");

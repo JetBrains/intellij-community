@@ -280,6 +280,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/InEnumScope2.kt");
     }
 
+    @TestMetadata("InFunctionDefinition.kt")
+    public void testInFunctionDefinition() throws Exception {
+        runTest("../testData/keywords/InFunctionDefinition.kt");
+    }
+
     @TestMetadata("InFunctionExpressionBody.kt")
     public void testInFunctionExpressionBody() throws Exception {
         runTest("../testData/keywords/InFunctionExpressionBody.kt");

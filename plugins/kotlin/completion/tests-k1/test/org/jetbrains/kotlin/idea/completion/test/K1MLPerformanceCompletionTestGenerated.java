@@ -2025,6 +2025,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/override/ContextReceiver.kt");
             }
 
+            @TestMetadata("EnumMethodNameMatch.kt")
+            public void testEnumMethodNameMatch() throws Exception {
+                runTest("../testData/basic/common/override/EnumMethodNameMatch.kt");
+            }
+
             @TestMetadata("Generics.kt")
             public void testGenerics() throws Exception {
                 runTest("../testData/basic/common/override/Generics.kt");
