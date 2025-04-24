@@ -26,8 +26,6 @@ class PluginDescriptorLoadingContext(
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
-  private val globalErrors: CopyOnWriteArrayList<Supplier<@Nls String>> = CopyOnWriteArrayList<Supplier<String>>()
-
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
     val factory = MyXmlInterner()
@@ -56,11 +54,13 @@ class PluginDescriptorLoadingContext(
 
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
-  internal fun copyGlobalErrors(): MutableList<Supplier<@Nls String>> = ArrayList(globalErrors)
+  private val descriptorLoadingErrors: CopyOnWriteArrayList<Supplier<@Nls String>> = CopyOnWriteArrayList<Supplier<String>>()
+
+  internal fun copyDescriptorLoadingErrors(): MutableList<Supplier<@Nls String>> = ArrayList(descriptorLoadingErrors)
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)
-    globalErrors.add(Supplier {
+    descriptorLoadingErrors.add(Supplier {
       CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", PluginUtils.pluginPathToUserString(file))
     })
   }

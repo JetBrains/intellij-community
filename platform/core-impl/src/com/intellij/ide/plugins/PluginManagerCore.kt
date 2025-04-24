@@ -33,7 +33,10 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.future.asCompletableFuture
-import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandle
@@ -614,7 +617,7 @@ object PluginManagerCore {
     parentActivity: Activity?,
   ): PluginManagerState {
     val pluginErrorsById = loadingResult.copyPluginErrors()
-    val globalErrors = loadingContext.copyGlobalErrors()
+    val globalErrors = loadingContext.copyDescriptorLoadingErrors()
     if (loadingResult.duplicateModuleMap != null) {
       for ((key, value) in loadingResult.duplicateModuleMap!!) {
         globalErrors.add(Supplier {
