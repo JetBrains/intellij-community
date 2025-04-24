@@ -19,106 +19,66 @@ import java.util.Locale
 @ApiStatus.Internal
 interface PluginUiModel {
   val pluginId: PluginId
-
-  val isIncompatibleWithCurrentOs: Boolean
-
-  val canBeEnabled: Boolean
-
   @get:NlsSafe
   val name: String
-
-  val source: PluginSource
-
-  /**
-   * Returns true if the plugin requires an upgrade to a commercial IDE.
-   */
-  val requiresUpgrade: Boolean
-
-  /*
-   * Returns true if the model was loaded from marketplace.
-   */
-  val isFromMarketplace: Boolean
-
-  val tags: List<String>
-
-  val isBundled: Boolean
-
   @get:NlsSafe
   val version: String?
+  val isBundled: Boolean
+  val isDeleted: Boolean
+
+  val isIncompatibleWithCurrentOs: Boolean
+  val canBeEnabled: Boolean
+  val requiresUpgrade: Boolean
+  val isFromMarketplace: Boolean
+  val isLicenseOptional: Boolean
+  val isConverted: Boolean
+  val detailsLoaded: Boolean
+
+  val source: PluginSource
+  val tags: List<String>
+  val dependencies: List<PluginDependencyModel>
+  val dependencyNames: Collection<String>?
+  val suggestedCommercialIde: String?
 
   @get:NlsSafe
   val vendor: String?
-
   @get:NlsSafe
   val organization: String?
-
   @get:NlsSafe
   val downloads: String?
-
   @get:NlsSafe
   val rating: String?
-
   @get:NlsSafe
   val productCode: String?
-
   @get:NlsSafe
   val size: String?
-
-  val isDeleted: Boolean
-  
-  val dependencies: List<PluginDependencyModel>
-
-  val isLicenseOptional: Boolean
-
-  val suggestedCommercialIde: String?
-
-  // URL-related properties
-  @get:NlsSafe
-  var forumUrl: String?
-  
-  @get:NlsSafe
-  var licenseUrl: String?
-  
-  @get:NlsSafe
-  var bugtrackerUrl: String?
-  
-  @get:NlsSafe
-  var documentationUrl: String?
-  
-  @get:NlsSafe
-  var sourceCodeUrl: String?
-  
-  @get:NlsSafe
-  var reportPluginUrl: String?
-  
-  val dependencyNames: Collection<String>?
-  
   @get:NlsSafe
   val repositoryName: String?
-  
   val reviewComments: PageContainer<PluginReviewComment>?
-  
+  val externalPluginIdForScreenShots: String?
+
+  @get:NlsSafe
+  var forumUrl: String?
+  @get:NlsSafe
+  var licenseUrl: String?
+  @get:NlsSafe
+  var bugtrackerUrl: String?
+  @get:NlsSafe
+  var documentationUrl: String?
+  @get:NlsSafe
+  var sourceCodeUrl: String?
+  @get:NlsSafe
+  var reportPluginUrl: String?
+
   @get:NlsSafe
   var verifiedName: String?
-  
   var isVerified: Boolean
-  
   var isTrader: Boolean
-  
-  val isConverted: Boolean
-  
+
   var screenShots: List<String>?
-  
-  val externalPluginIdForScreenShots: String?
-  
   var externalPluginId: String?
-  
   var externalUpdateId: String?
-  
   var defaultTrialPeriod: Int?
-
-  val detailsLoaded: Boolean
-
   var customTrialPeriods: Map<String, Int>?
 
   /**
