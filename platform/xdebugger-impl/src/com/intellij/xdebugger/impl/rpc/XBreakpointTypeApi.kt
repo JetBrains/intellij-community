@@ -20,7 +20,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun getAvailableBreakpointTypesForLine(projectId: ProjectId, editorId: EditorId, line: Int): List<XBreakpointTypeId>
 
-  suspend fun getAvailableBreakpointTypesForEditor(projectId: ProjectId, editorId: EditorId): List<List<XBreakpointTypeId>>?
+  suspend fun getAvailableBreakpointTypesForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<List<XBreakpointTypeId>>?
 
   companion object {
     @JvmStatic

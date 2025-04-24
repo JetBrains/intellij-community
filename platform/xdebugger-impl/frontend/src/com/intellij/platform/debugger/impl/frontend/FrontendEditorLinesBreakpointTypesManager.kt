@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -26,7 +28,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val DOCUMENTS_UPDATE_DEBOUNCE = 600.milliseconds
 
-private const val MAX_LINES_COUNT = 1000
+private const val WINDOW_LINES_COUNT = 100
+
+private val LOG = logger<FrontendEditorLinesBreakpointTypesManager>()
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -75,7 +79,7 @@ private class EditorBreakpointTypesMap(
   private val project: Project,
 ) {
   private val mapUpdateRequest = MutableSharedFlow<Unit>(replay = 1)
-  private val documentUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  private val debouncedUpdateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   private val cs: CoroutineScope = parentCs.childScope("EditorBreakpointTypesMap")
 
   @Volatile
@@ -84,26 +88,23 @@ private class EditorBreakpointTypesMap(
   init {
     mapUpdateRequest.tryEmit(Unit)
     cs.launch {
-      documentUpdates.debounce(DOCUMENTS_UPDATE_DEBOUNCE).collectLatest {
+      debouncedUpdateRequests.debounce(DOCUMENTS_UPDATE_DEBOUNCE).collectLatest {
         mapUpdateRequest.tryEmit(Unit)
       }
     }
     cs.launch {
       mapUpdateRequest.collectLatest {
-        val lines = readAction {
-          editor.document.lineCount
-        }
-        if (lines > MAX_LINES_COUNT) {
-          breakpointTypesMap = null
-          return@collectLatest
-        }
-
-        val currentStamp = readAction { editor.document.modificationStamp }
         val currentBreakpointTypesMap = breakpointTypesMap
-        if (currentBreakpointTypesMap == null || currentBreakpointTypesMap.modificationStamp != currentStamp) {
-          val types = getAvailableBreakpointTypesFromServer(project, editor)
+        val currentStamp = readAction { editor.document.modificationStamp }
+        val (firstIndex, lastIndex) = calculateWindowIndices(editor)
+        if (currentBreakpointTypesMap == null || currentBreakpointTypesMap.shouldBeUpdated(currentStamp, firstIndex, lastIndex)) {
+          val types = getAvailableBreakpointTypesFromServer(project, editor, firstIndex, lastIndex)
           if (types != null) {
-            breakpointTypesMap = StampedBreakpointTypesMap(currentStamp, types)
+            breakpointTypesMap = StampedBreakpointTypesMap(currentStamp, firstIndex, lastIndex, types)
+          }
+          else {
+            breakpointTypesMap = null
+            LOG.warn("Debugger breakpoints map is not calculated for $editor")
           }
         }
       }
@@ -111,23 +112,21 @@ private class EditorBreakpointTypesMap(
 
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        documentUpdates.tryEmit(Unit)
+        debouncedUpdateRequests.tryEmit(Unit)
       }
     }, cs.asDisposable())
+
+    editor.scrollingModel.addVisibleAreaListener({ debouncedUpdateRequests.tryEmit(Unit) }, cs.asDisposable())
   }
 
   suspend fun getTypesForLine(line: Int): List<XBreakpointTypeProxy> {
     // let's try to find breakpoint types from the current map
-    val breakpointTypes = readAction {
-      val currentTimestampedMap = breakpointTypesMap
-      if (currentTimestampedMap != null && editor.document.modificationStamp == currentTimestampedMap.modificationStamp) {
-        return@readAction currentTimestampedMap.types[line]
+    val currentTimestampedMap = breakpointTypesMap
+    if (currentTimestampedMap != null) {
+      val breakpointTypes = currentTimestampedMap.getLineBreakpointTypes(editor, line)
+      if (breakpointTypes != null) {
+        return breakpointTypes
       }
-      return@readAction null
-    }
-
-    if (breakpointTypes != null) {
-      return breakpointTypes
     }
 
     // No cached data or document was modified, let's make an rpc call for that, data will be fetched later
@@ -139,9 +138,44 @@ private class EditorBreakpointTypesMap(
   }
 
   private class StampedBreakpointTypesMap(
-    val modificationStamp: Long,
-    val types: List<List<XBreakpointTypeProxy>>,
-  )
+    private val modificationStamp: Long,
+    private val firstIndex: Int,
+    private val lastIndex: Int,
+    private val types: List<List<XBreakpointTypeProxy>>,
+  ) {
+    fun shouldBeUpdated(currentStamp: Long, firstIndex: Int, lastIndexInclusive: Int): Boolean {
+      return modificationStamp != currentStamp || this.firstIndex != firstIndex || this.lastIndex != lastIndexInclusive
+    }
+
+    suspend fun getLineBreakpointTypes(editor: Editor, line: Int): List<XBreakpointTypeProxy>? {
+      val currentStamp = readAction { editor.document.modificationStamp }
+      if (modificationStamp != currentStamp) {
+        return null
+      }
+      if (line !in firstIndex..lastIndex) {
+        return null
+      }
+      return types[line - firstIndex]
+    }
+  }
+
+  companion object {
+    // both indices are inclusive
+    private suspend fun calculateWindowIndices(editor: Editor): Pair<Int, Int> {
+      val visibleRange = withContext(Dispatchers.EDT) {
+        editor.calculateVisibleRange()
+      }
+
+      return readAction {
+        val lastDocumentIndex = (editor.document.lineCount - 1).coerceAtLeast(0)
+        val firstVisibleLine = editor.document.getLineNumber(visibleRange.startOffset)
+        val lastVisibleLine = editor.document.getLineNumber(visibleRange.endOffset)
+        val firstIndex = ((firstVisibleLine / WINDOW_LINES_COUNT - 2) * WINDOW_LINES_COUNT).coerceIn(0, lastDocumentIndex)
+        val lastIndex = ((lastVisibleLine / WINDOW_LINES_COUNT + 2) * WINDOW_LINES_COUNT).coerceIn(0, lastDocumentIndex)
+        firstIndex to lastIndex
+      }
+    }
+  }
 }
 
 internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, line: Int): List<XBreakpointTypeProxy> {
@@ -150,12 +184,12 @@ internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, edi
   return availableTypeIds.mapNotNull { breakpointTypesManager.getTypeById(it) }
 }
 
-private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor): List<List<XBreakpointTypeProxy>>? {
+private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, start: Int, endInclusive: Int): List<List<XBreakpointTypeProxy>>? {
   val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
   // TODO: is it possible to avoid this retry?
   val retriesCount = 5
   repeat(retriesCount) {
-    val availableTypeIds = XBreakpointTypeApi.getInstance().getAvailableBreakpointTypesForEditor(project.projectId(), editor.editorId())
+    val availableTypeIds = XBreakpointTypeApi.getInstance().getAvailableBreakpointTypesForEditor(project.projectId(), editor.editorId(), start, endInclusive)
     val types = availableTypeIds?.map { it.mapNotNull { id -> breakpointTypesManager.getTypeById(id) } }
     if (types != null) {
       return types

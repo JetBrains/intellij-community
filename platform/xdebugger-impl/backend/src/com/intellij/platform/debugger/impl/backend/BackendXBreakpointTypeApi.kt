@@ -59,14 +59,15 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     return types.map { XBreakpointTypeId(it.id) }
   }
 
-  override suspend fun getAvailableBreakpointTypesForEditor(projectId: ProjectId, editorId: EditorId): List<List<XBreakpointTypeId>>? {
+  override suspend fun getAvailableBreakpointTypesForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<List<XBreakpointTypeId>>? {
     val project = projectId.findProjectOrNull() ?: return null
     val editor = editorId.findEditorOrNull() ?: return null
     return readAction {
       blockingContextToIndicator {
         val editorBreakpointTypes = mutableListOf<List<XBreakpointTypeId>>()
-
-        for (line in 0 until editor.document.lineCount) {
+        val startIndex = start.coerceIn(0 until editor.document.lineCount)
+        val endIndex = endInclusive.coerceIn(0 until editor.document.lineCount)
+        for (line in startIndex..endIndex) {
           ProgressManager.checkCanceled()
           val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
           if (position == null) {
