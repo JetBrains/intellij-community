@@ -2,23 +2,24 @@ package org.jetbrains.plugins.textmate.language.syntax
 
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.fetchAndIncrement
 import kotlin.math.max
 
 private typealias RuleId = Int
 private typealias ReferenceRuleId = Int
 
 class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
-  // todo: import kotlinx.atomicfu.atomic
-  private val currentRuleId = AtomicInteger(0)
+  private val currentRuleId = AtomicInt(0)
   private val syntaxNodes = AtomicReference(persistentMapOf<CharSequence, SyntaxRawNode>())
 
   /**
-   * Append table with new syntax rules to support the new language.
+   * Append a table with new syntax rules to support the new language.
    *
    * @param plist Plist represented a syntax file (*.tmLanguage) of the target language.
    * @return language scope root name
@@ -40,7 +41,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
 
     val rules = mutableMapOf<CharSequence, SyntaxNodeDescriptor>()
     val syntaxTable = TextMateSyntaxTableCore(rules = rules)
-    val syntaxNodes = syntaxNodes.get()
+    val syntaxNodes = syntaxNodes.load()
     syntaxNodes.forEach { (scopeName, nodeBuilder) ->
       nodeBuilder.compile(syntaxNodes,
                           compiledRules,
@@ -62,7 +63,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     val scopeNameValue: String? = scopeNamePlistValue?.string
     val scopeName: CharSequence? = if (scopeNameValue != null) interner.intern(scopeNameValue) else null
 
-    val ruleId = currentRuleId.getAndIncrement()
+    val ruleId = currentRuleId.fetchAndIncrement()
     val result = SyntaxRawNodeImpl(ruleId, parentBuilder, scopeName)
     for (entry in plist.entries()) {
       val pListValue: PListValue? = entry.value
@@ -108,7 +109,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   private fun loadNestedSyntax(plist: Plist, parentBuilder: SyntaxRawNodeImpl): SyntaxRawNode {
     val include = plist.getPlistValue(Constants.INCLUDE_KEY)?.string
     return if (include != null) {
-      SyntaxIncludeRawNode(currentRuleId.getAndIncrement(), parentBuilder, include)
+      SyntaxIncludeRawNode(currentRuleId.fetchAndIncrement(), parentBuilder, include)
     }
     else {
       loadRealNode(plist, parentBuilder)
@@ -123,10 +124,10 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
         val captureDict = value.plist
         val captureName = captureDict.getPlistValue(Constants.NAME_KEY)
         if (captureName != null) {
-          map.put(index, TextMateRawCapture.Name(interner.intern(captureName.string.orEmpty())))
+          map[index] = TextMateRawCapture.Name(interner.intern(captureName.string.orEmpty()))
         }
         else {
-          map.put(index, TextMateRawCapture.Rule(loadRealNode(captureDict, parent)))
+          map[index] = TextMateRawCapture.Rule(loadRealNode(captureDict, parent))
         }
         maxGroupIndex = max(maxGroupIndex, index)
       }
@@ -205,7 +206,7 @@ private class SyntaxIncludeRawNode(
       }
       else -> {
         val i = include.indexOf('#')
-        val topLevelScope = if (i >= 0) include.substring(0, i) else include
+        val topLevelScope = if (i >= 0) include.take(i) else include
         val scopeName = if (i >= 0) include.substring(i + 1) else ""
         if (scopeName.isNotEmpty()) {
           topLevelNodes[topLevelScope]?.findInRepository(scopeName, topLevelNodes)

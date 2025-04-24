@@ -3,10 +3,11 @@ package org.jetbrains.plugins.textmate.language.preferences
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicReference
 
 class SnippetsRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
   private val snippets = AtomicReference(persistentMapOf<String, PersistentList<TextMateSnippet>>())
@@ -18,7 +19,7 @@ class SnippetsRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
   }
 
   fun build(): SnippetsRegistry {
-    return SnippetsRegistryImpl(weigher, snippets.get())
+    return SnippetsRegistryImpl(weigher, snippets.load())
   }
 }
 

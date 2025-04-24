@@ -3,10 +3,11 @@ package org.jetbrains.plugins.textmate.language.preferences
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicReference
 
 class ShellVariablesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
   private val variables = AtomicReference(persistentMapOf<String, PersistentList<TextMateShellVariable>>())
@@ -20,7 +21,7 @@ class ShellVariablesRegistryBuilder(private val weigher: TextMateSelectorWeigher
   }
 
   fun build(): ShellVariablesRegistry {
-    return ShellVariablesRegistryImpl(weigher, variables.get())
+    return ShellVariablesRegistryImpl(weigher, variables.load())
   }
 }
 
@@ -31,7 +32,7 @@ class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher,
    * Returns variable value by scope selector.
    *
    * @param scope scope of current context.
-   * @return preferences from table for given scope sorted by descending weigh
+   * @return preferences from table for given scope sorted by descending weight
    * of rule selector relative to scope selector.
    */
   override fun getVariableValue(name: String, scope: TextMateScope?): TextMateShellVariable? {

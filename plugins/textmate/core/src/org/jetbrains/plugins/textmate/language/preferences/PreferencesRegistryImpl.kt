@@ -3,10 +3,11 @@ package org.jetbrains.plugins.textmate.language.preferences
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicReference
 
 class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
   private val preferences = AtomicReference(persistentListOf<Preferences>())
@@ -27,10 +28,10 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     if (highlightingPairs != null) {
       for (pair in highlightingPairs) {
         if (!pair.left.isEmpty()) {
-          leftHighlightingBraces.getAndUpdate { it.add(pair.left[0].code) }
+          leftHighlightingBraces.updateAndGet { it.add(pair.left[0].code) }
         }
         if (!pair.right.isEmpty()) {
-          rightHighlightingBraces.getAndUpdate { it.add(pair.right[pair.right.length - 1].code) }
+          rightHighlightingBraces.updateAndGet { it.add(pair.right[pair.right.length - 1].code) }
         }
       }
     }
@@ -40,10 +41,10 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     if (smartTypingPairs != null) {
       for (pair in smartTypingPairs) {
         if (!pair.left.isEmpty()) {
-          leftSmartTypingBraces.getAndUpdate { it.add(pair.left[pair.left.length - 1].code) }
+          leftSmartTypingBraces.updateAndGet { it.add(pair.left[pair.left.length - 1].code) }
         }
         if (!pair.right.isEmpty()) {
-          rightSmartTypingBraces.getAndUpdate { it.add(pair.right[pair.right.length - 1].code) }
+          rightSmartTypingBraces.updateAndGet { it.add(pair.right[pair.right.length - 1].code) }
         }
       }
     }
@@ -53,11 +54,11 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS)
     fillSmartTypingBraces(Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS)
     return PreferencesRegistryImpl(weigher = weigher,
-                                   preferences = preferences.get(),
-                                   leftHighlightingBraces = leftHighlightingBraces.get(),
-                                   rightHighlightingBraces = rightHighlightingBraces.get(),
-                                   leftSmartTypingBraces = leftSmartTypingBraces.get(),
-                                   rightSmartTypingBraces = rightSmartTypingBraces.get())
+                                   preferences = preferences.load(),
+                                   leftHighlightingBraces = leftHighlightingBraces.load(),
+                                   rightHighlightingBraces = rightHighlightingBraces.load(),
+                                   leftSmartTypingBraces = leftSmartTypingBraces.load(),
+                                   rightSmartTypingBraces = rightSmartTypingBraces.load())
   }
 }
 
