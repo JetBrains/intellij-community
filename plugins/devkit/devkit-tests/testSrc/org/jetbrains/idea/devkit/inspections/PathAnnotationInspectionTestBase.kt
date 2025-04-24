@@ -7,6 +7,7 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection
 
 abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
@@ -139,33 +140,33 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
     doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.NativePath;
-      import com.intellij.platform.eel.annotations.Filename;
-      import java.nio.file.Path;
+
       import java.nio.file.FileSystem;
       import java.nio.file.FileSystems;
+      import java.nio.file.Path;
 
       public class StringLiteralFilename {
           public void testMethod() {
               // String literals that denote a filename (without slashes) should be allowed in Path.of() more parameters
               @MultiRoutingFileSystemPath String basePath = "/base/path";
               Path path1 = Path.of(basePath, "file.txt"); // No warning, "file.txt" is a valid filename
-              Path path2 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">"invalid/filename"</warning>); // Warning, contains slash
+              Path path2 = Path.of(basePath, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">"invalid/filename"</warning>); // Warning, contains slash
 
               // String literals that denote a filename should be allowed in FileSystem.getPath() more parameters
               FileSystem fs = FileSystems.getDefault();
               @NativePath String nativePath = "/usr/local/bin";
               fs.getPath(nativePath, "file.txt"); // No warning, "file.txt" is a valid filename
-              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">"invalid/filename"</warning>); // Warning, contains slash
+              fs.getPath(nativePath, <warning descr="${message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")}">"invalid/filename"</warning>); // Warning, contains slash
 
               // String constants that denote a filename should also be allowed
               final String validFilename = "file.txt";
               final String invalidFilename = "invalid/filename";
 
               Path path3 = Path.of(basePath, validFilename); // No warning, validFilename is a valid filename
-              Path path4 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">invalidFilename</warning>); // Warning, contains slash
+              Path path4 = Path.of(basePath, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">invalidFilename</warning>); // Warning, contains slash
 
               fs.getPath(nativePath, validFilename); // No warning, validFilename is a valid filename
-              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">invalidFilename</warning>); // Warning, contains slash
+              fs.getPath(nativePath, <warning descr="${message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")}">invalidFilename</warning>); // Warning, contains slash
           }
       }      
       """.trimIndent())
@@ -189,7 +190,7 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
 
               // Test with string literals
               Path path1 = base.resolve("file.txt"); // No warning, "file.txt" is a valid filename
-              Path path2 = base.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">"invalid/filename"</weak_warning>); // Warning, contains slash
+              Path path2 = base.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">"invalid/filename"</weak_warning>); // Warning, contains slash
 
               // Test with annotated strings
               @MultiRoutingFileSystemPath String multiRoutingPath = "some/path";
@@ -203,7 +204,7 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
               final String invalidFilename = "invalid/filename";
 
               Path path5 = base.resolve(validFilename); // No warning, validFilename is a valid filename
-              Path path6 = base.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">invalidFilename</weak_warning>); // Warning, contains slash
+              Path path6 = base.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">invalidFilename</weak_warning>); // Warning, contains slash
           }
       }      
       """.trimIndent())
@@ -225,16 +226,16 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
           public void testMethod() {
               // Test @LocalPath in Path.of()
               @LocalPath String localPath = "/local/path";
-              Path path1 = <warning descr="A string annotated with @NativePath should not be used directly in Path constructor or factory method">Path.of(localPath)</warning>; // Warning, @LocalPath should not be used directly in Path.of()
+              Path path1 = <warning descr="${message("inspections.message.nativepath.should.not.be.used.directly.constructing.path")}">Path.of(localPath)</warning>; // Warning, @LocalPath should not be used directly in Path.of()
 
               // Test @LocalPath in Path.resolve()
               @MultiRoutingFileSystemPath String basePath = "/base/path";
               Path base = Path.of(basePath);
-              Path path2 = base.resolve(<warning descr="String without path annotation is used in Path.resolve() method">localPath</warning>); // Warning, @LocalPath should not be used in Path.resolve()
+              Path path2 = base.resolve(<warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">localPath</warning>); // Warning, @LocalPath should not be used in Path.resolve()
 
               // Test @LocalPath in FileSystem.getPath()
               FileSystem fs = FileSystems.getDefault();
-              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">localPath</warning>, "file.txt"); // Warning, first argument should be @NativePath
+              fs.getPath(<warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">localPath</warning>, "file.txt"); // Warning, first argument should be @NativePath
           }
       }      
       """.trimIndent())

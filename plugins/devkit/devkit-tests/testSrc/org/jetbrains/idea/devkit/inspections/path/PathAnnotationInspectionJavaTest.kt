@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 
 class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
@@ -20,7 +21,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
               // First argument should be annotated with @NativePath
               String nonAnnotatedPath = "/usr/local/bin";
-              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">nonAnnotatedPath</warning>, "file.txt");
+              fs.getPath(<warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">nonAnnotatedPath</warning>, "file.txt");
 
               // First argument with @NativePath is correct
               @NativePath String nativePath = "/usr/local/bin";
@@ -28,7 +29,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
               // Elements of 'more' parameter should be annotated with either @NativePath or @Filename
               String nonAnnotatedMore = "invalid/path";
-              fs.getPath(nativePath, <warning descr="Elements of 'more' parameter in FileSystem.getPath() should be annotated with either @NativePath or @Filename">nonAnnotatedMore</warning>);
+              fs.getPath(nativePath, <warning descr="${message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")}">nonAnnotatedMore</warning>);
 
               // Elements of 'more' parameter with @NativePath is correct
               @NativePath String nativeMore = "subdir";
@@ -51,7 +52,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
           public void testMethod() {
               @NativePath String nativePath = "/usr/local/bin";
               // This should be highlighted as an error because @NativePath strings should not be used directly in Path.of()
-              Path path = <warning descr="A string annotated with @NativePath should not be used directly in Path constructor or factory method">Path.of(nativePath)</warning>;
+              Path path = <warning descr="${message("inspections.message.nativepath.should.not.be.used.directly.constructing.path")}">Path.of(nativePath)</warning>;
           }
       }      
       """.trimIndent())
@@ -68,7 +69,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               @MultiRoutingFileSystemPath String multiRoutingPath = "/home/user/documents";
 
               // This method expects a @NativePath string
-              processNativePath(<warning descr="A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @NativePath">multiRoutingPath</warning>);
+              processNativePath(<warning descr="${message("inspections.message.multiroutingfilesystempath.passed.to.nativepath.method.parameter")}">multiRoutingPath</warning>);
           }
 
           public void processNativePath(@NativePath String path) {
@@ -94,10 +95,10 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
           public void testMethod() {
               String nonAnnotatedPath = "/usr/local/bin";
               // This should be highlighted as a normal warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(nonAnnotatedPath)</warning>;
+              Path path = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath)</warning>;
 
               // Direct string literal should also be highlighted
-              Path directPath = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/another/path")</warning>;
+              Path directPath = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of("/another/path")</warning>;
           }
       }      
       """.trimIndent())
@@ -112,14 +113,14 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
       public class NonAnnotatedStringInPathResolve {
           public void testMethod() {
-              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get("/base/path")</warning>;
+              Path basePath = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Paths.get("/base/path")</warning>;
 
               String nonAnnotatedPath = "invalid/path";
               // This should be highlighted as a warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = basePath.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">nonAnnotatedPath</weak_warning>);
+              Path path = basePath.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">nonAnnotatedPath</weak_warning>);
 
               // Direct string literal should also be highlighted
-              Path directPath = basePath.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">"another/subdir"</weak_warning>);
+              Path directPath = basePath.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">"another/subdir"</weak_warning>);
 
               // Annotated string should not be highlighted
               @MultiRoutingFileSystemPath String annotatedPath = "annotated/subdir";
@@ -139,11 +140,11 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
       public class FilenameAnnotatedStringInPathResolve {
           public void testMethod() {
-              Path basePath = <warning descr="String without path annotation is used in Path constructor or factory method">Paths.get("/base/path")</warning>;
+              Path basePath = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Paths.get("/base/path")</warning>;
 
               // Non-annotated string should be highlighted
               String nonAnnotatedPath = "invalid/path";
-              Path path = basePath.resolve(<weak_warning descr="String without path annotation is used in Path.resolve() method">nonAnnotatedPath</weak_warning>);
+              Path path = basePath.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">nonAnnotatedPath</weak_warning>);
 
               // String annotated with @Filename should not be highlighted
               @Filename String filenameAnnotatedPath = "file.txt";
@@ -172,11 +173,11 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
 
               // Non-annotated string in 'more' parameter should be highlighted
               String nonAnnotatedMore = "invalid/path";
-              Path path1 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nonAnnotatedMore</warning>);
+              Path path1 = Path.of(basePath, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">nonAnnotatedMore</warning>);
 
               // @NativePath string in 'more' parameter should be highlighted
               @NativePath String nativeMore = "invalid/path";
-              Path path2 = Path.of(basePath, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nativeMore</warning>);
+              Path path2 = Path.of(basePath, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">nativeMore</warning>);
 
               // @Filename string in 'more' parameter should not be highlighted
               @Filename String filenameMore = "file.txt";
@@ -187,7 +188,7 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
               Path path4 = Path.of(basePath, multiRoutingMore);
 
               // Multiple 'more' parameters should be checked
-              Path path5 = Path.of(basePath, filenameMore, <warning descr="Elements of 'more' parameter in Path.of() should be annotated with either @MultiRoutingFileSystemPath or @Filename">nonAnnotatedMore</warning>, multiRoutingMore);
+              Path path5 = Path.of(basePath, filenameMore, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">nonAnnotatedMore</warning>, multiRoutingMore);
           }
       }      
       """.trimIndent())

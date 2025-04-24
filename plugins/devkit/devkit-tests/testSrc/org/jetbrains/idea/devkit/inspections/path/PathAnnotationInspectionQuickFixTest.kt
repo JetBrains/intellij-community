@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 
 /**
@@ -20,7 +21,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
           public void testMethod() {
               String nonAnnotatedPath = "/usr/local/bin";
               // This should be highlighted as a normal warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(nonAnnotatedPath)</warning>;
+              Path path = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath)</warning>;
           }
       }      
       """.trimIndent())
@@ -28,7 +29,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
 
   /**
    * Test for AddMultiRoutingAnnotationFix.
-   * 
+   *
    * This test verifies that the quick fix correctly adds the @MultiRoutingFileSystemPath annotation
    * to a string variable used in Path.of().
    */
@@ -40,7 +41,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
           public void testMethod() {
               String nonAnnotatedPath = "/usr/local/bin";
               // This should be highlighted as a normal warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of(nonAnnotatedPath)</warning>;
+              Path path = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath)</warning>;
           }
       }      
       """.trimIndent())
@@ -48,7 +49,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
 
   /**
    * Test for AddNativePathAnnotationFix.
-   * 
+   *
    * This test verifies that the quick fix correctly adds the @NativePath annotation
    * to a string variable used in FileSystem.getPath().
    */
@@ -62,7 +63,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
               FileSystem fs = FileSystems.getDefault();
               String nonAnnotatedPath = "/usr/local/bin";
               // This should be highlighted as an error because first argument of FileSystem.getPath() should be annotated with @NativePath
-              fs.getPath(<warning descr="First argument of FileSystem.getPath() should be annotated with @NativePath">nonAnnotatedPath</warning>, "file.txt");
+              fs.getPath(<warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">nonAnnotatedPath</warning>, "file.txt");
           }
       }      
       """.trimIndent())
