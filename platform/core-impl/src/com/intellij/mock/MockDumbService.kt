@@ -27,6 +27,8 @@ class MockDumbService(override val project: Project) : DumbService() {
     get() = false
     set(enabled) {}
 
+  override fun canRunSmart(): Boolean = true
+
   override fun runWhenSmart(runnable: Runnable) {
     runnable.run()
   }

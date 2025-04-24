@@ -53,6 +53,12 @@ abstract class DumbService {
   abstract val isDumb: Boolean
 
   /**
+   * Opportunistic check for [runWhenSmart] condition
+   */
+  @ApiStatus.Internal
+  abstract fun canRunSmart(): Boolean
+
+  /**
    * Executes the runnable as soon as possible on AWT Event Dispatch when:
    *  * project is initialized
    *  * and there's no dumb mode in progress

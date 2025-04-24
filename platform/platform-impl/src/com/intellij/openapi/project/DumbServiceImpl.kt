@@ -49,7 +49,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
-import java.util.function.BooleanSupplier
 import javax.swing.JComponent
 
 @Internal
@@ -341,12 +340,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
   }
 
+  override fun canRunSmart(): Boolean {
+    return myProject.service<SmartModeScheduler>().canRunSmart()
+  }
+
   override fun runWhenSmart(@Async.Schedule runnable: Runnable) {
     myProject.getService(SmartModeScheduler::class.java).runWhenSmart(runnable)
   }
-
-  internal val runWhenSmartCondition: BooleanSupplier
-    get() = myProject.service<SmartModeScheduler>().runWhenSmartCondition
 
   override fun unsafeRunWhenSmart(@Async.Schedule runnable: Runnable) {
     // we probably don't need unsafeRunWhenSmart anymore
@@ -592,7 +592,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   override fun smartInvokeLater(runnable: Runnable, modalityState: ModalityState) {
     ApplicationManager.getApplication().invokeLater({
-                                                      if (runWhenSmartCondition.asBoolean) {
+                                                      if (canRunSmart()) {
                                                         runnable.run()
                                                       }
                                                       else {
