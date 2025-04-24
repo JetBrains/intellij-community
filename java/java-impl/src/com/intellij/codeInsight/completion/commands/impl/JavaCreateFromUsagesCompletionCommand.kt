@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
+import com.intellij.analysis.AnalysisBundle.message
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.CommandProvider
@@ -11,8 +12,10 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.lang.java.actions.CreateMethodAction
 import com.intellij.lang.java.request.generateActions
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -28,8 +31,8 @@ internal class JavaCreateFromUsagesCommandProvider : CommandProvider {
     if (InjectedLanguageEditorUtil.getTopLevelEditor(editor) != editor) return emptyList()
     if (context.isReadOnly) return emptyList()
     val originalPsiFile = context.originalPsiFile
-    val offset = context.offset
-    var psiElement = originalPsiFile.findElementAt(offset)
+    val offset = context.originalOffset
+    var psiElement = originalPsiFile.findElementAt(offset - 1)
     if (psiElement is PsiJavaToken || psiElement is PsiIdentifier) {
       psiElement = psiElement.parent
     }
@@ -62,9 +65,10 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
       val addSemicolon = previousElement?.parentOfType<PsiExpressionStatement>() != null
       if (fileDocument.charsSequence[currentOffset - 1] == '.') {
         fileDocument.insertString(currentOffset, "method")
-        currentOffset = currentOffset + 6
+        currentOffset += 6
       }
-      if (previousElement == null || PsiTreeUtil.nextLeaf(previousElement) !is PsiJavaToken) {
+      if (previousElement == null ||
+          (PsiTreeUtil.nextLeaf(previousElement) as? PsiJavaToken)?.text != "(") {
         fileDocument.insertString(currentOffset, "()")
         if (addSemicolon) {
           fileDocument.insertString(currentOffset + 2, ";")
@@ -74,7 +78,12 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
     }
     val psiElement = psiFile.findElementAt(currentOffset) ?: return
     val expression = psiElement.parentOfType<PsiMethodCallExpression>() ?: return
-    val action = generateActions(expression).firstOrNull { it is CreateMethodAction } ?: return
+    val action =
+      runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")) {
+        readAction {
+          generateActions(expression).firstOrNull { it is CreateMethodAction }
+        }
+      }?: return
     ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, name)
   }
 

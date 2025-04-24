@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
+import org.jetbrains.kotlin.psi.stubs.elements.KtNameReferenceExpressionElementType
 import javax.swing.Icon
 
 
@@ -50,19 +50,21 @@ internal class KotlinCreateFromUsagesCommandProvider : CommandProvider {
         if (context.isReadOnly) return emptyList()
 
         val originalPsiFile = context.originalPsiFile
-        val offset = context.offset
-        var psiElement = originalPsiFile.findElementAt(offset)
+        val offset = context.originalOffset
+        var psiElement = originalPsiFile.findElementAt(offset - 1)
         val elementType = psiElement.elementType
         if ((elementType is KtSingleValueToken && elementType.value == ".") ||
             elementType == KtTokens.IDENTIFIER
         ) {
             psiElement = psiElement?.parent
+            if (psiElement.elementType is KtNameReferenceExpressionElementType) {
+                psiElement = psiElement?.parent
+            }
         }
         if (psiElement !is KtDotQualifiedExpression) return emptyList()
         val qualifier = psiElement.receiverExpression
-        if (qualifier !is KtNameReferenceExpression) return emptyList()
         val psiClass = analyze(qualifier) {
-            (qualifier.referenceExpression()?.expressionType as? KaClassType)?.symbol?.psi
+            (qualifier.expressionType as? KaClassType)?.symbol?.psi
         } as? KtClass
         if (psiClass?.isWritable != true) return emptyList()
         val text = (psiElement.selectorExpression as? KtNameReferenceExpression)?.text
@@ -96,7 +98,7 @@ internal class KotlinCreateFromUsagesCompletionCommand(val ktClass: KtClass) : C
                 fileDocument.insertString(currentOffset, "method")
                 currentOffset = currentOffset + 6
             }
-            if (previousElement == null || PsiTreeUtil.nextLeaf(previousElement).elementType !is KtSingleValueToken) {
+            if (previousElement == null || PsiTreeUtil.nextLeaf(previousElement)?.text?.startsWith("(") != true) {
                 fileDocument.insertString(currentOffset, "()")
             }
             PsiDocumentManager.getInstance(psiFile.project).commitDocument(fileDocument)

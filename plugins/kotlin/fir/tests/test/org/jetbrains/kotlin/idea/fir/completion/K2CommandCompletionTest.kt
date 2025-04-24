@@ -5,10 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
@@ -277,7 +277,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testMoveMethod() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(JavaFileType.INSTANCE, """
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
       class Main {
       
           fun a(a2: String): String {
@@ -293,7 +293,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testCopyClass() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
-        myFixture.configureByText(JavaFileType.INSTANCE, """
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
       public class Main.<caret> {
       }
       """.trimIndent())
@@ -335,6 +335,36 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
             }
         """.trimIndent()
         )
+    }
+
+    fun testNoCreateFromUsagesAfterDoubleDot() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        enum class Color {
+          RED, GREEN, BLUE, YELLOW, BROWN
+        }
+
+        class A {
+          val color = Color.BROWN..<caret>
+        }
+      """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertNull(elements.firstOrNull { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
+    }
+
+    fun testCreateFromUsagesBeforeSemiComa() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+        enum class Color {
+          RED, GREEN, BLUE, YELLOW, BROWN
+        }
+
+        class A {
+          val color = Color.BROWN.<caret>;
+        }
+      """.trimIndent())
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
     }
 
     private fun selectItem(item: LookupElement, completionChar: Char = 0.toChar()) {

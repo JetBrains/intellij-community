@@ -181,7 +181,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.checkResult("""
       class A {
           String y;
-      
+
           public String getY() {
               return y;
           }
@@ -194,7 +194,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
           String y;
-      
+
           public String getY() {
               return y;.<caret>
           }
@@ -204,7 +204,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.checkResult("""
       class A {
           String y;
-      
+
           public String getY() {
           }
       }""".trimIndent())
@@ -287,7 +287,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
               return "y";
           }
       }*/
-      
+
       """.trimIndent())
   }
 
@@ -333,7 +333,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           int y = 1;
           int x = y..<caret>;
         }
-        
+
         class B {}
       }
       """.trimIndent())
@@ -346,7 +346,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           int <caret>y = 1;
           int x = y;
         }
-        
+
         class B {}
       }
     """.trimIndent())
@@ -356,14 +356,14 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       interface A{
-          
+
           public void a.<caret>();
-          
+
           class B implements A{
-      
+
               @Override
               public void a() {
-                  
+
               }
           }
       }      
@@ -373,14 +373,14 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       interface A{
-          
+
           public void a();
-          
+
           class B implements A{
-      
+
               @Override
               public void <caret>a() {
-                  
+
               }
           }
       }      
@@ -517,7 +517,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Test {
-      
+
           public static void main(String[] args){
               new Test()<caret>
           }
@@ -530,11 +530,11 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
       class Test {
-      
+
           public static void main(String[] args){
               new Test().test();
           }
-      
+
           private void test() {
           }
       }
@@ -649,7 +649,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         void foo(String y) {
         }
     }
-    
+
     """.trimIndent())
   }
 
@@ -669,11 +669,11 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     class A {
 
         public static final String Y = "1";
-    
+
         void foo() {
         }
     }
-    
+
     """.trimIndent())
   }
 
@@ -681,12 +681,12 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       public class Main {
-      
+
           public static String a(String a2) {
               System.out.println(a2);
               return "1";
           }.<caret>
-      
+
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
@@ -697,12 +697,12 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       public class Main.<caret> {
-      
+
           public static String a(String a2) {
               System.out.println(a2);
               return "1";
           }
-      
+
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
@@ -716,7 +716,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
             void foo(){
             }
         }
-        
+
         class C extends B {
             @Override..<caret>
             void foo() {
@@ -759,6 +759,37 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     val elements = myFixture.completeBasic()
     assertTrue(elements.none { element -> element.lookupString.contains("toString", ignoreCase = true) })
   }
+
+  fun testNoCreateFromUsagesAfterDoubleDot() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        enum Color {
+          RED, GREEN, BLUE, YELLOW, BROWN
+        }
+
+        class A {
+          Color color = Color.BROWN..<caret>;
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertNull(elements.firstOrNull { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
+  }
+
+  fun testCreateFromUsagesBeforeSemiComa() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        enum Color {
+          RED, GREEN, BLUE, YELLOW, BROWN
+        }
+
+        class A {
+          Color color = Color.BROWN.<caret>;
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
+  }
+
 
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
