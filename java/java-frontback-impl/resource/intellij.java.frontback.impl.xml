@@ -67,6 +67,15 @@
     <applicationService serviceInterface="com.intellij.codeInsight.folding.JavaCodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl"/>
 
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.JavaDeclarationMover" id="declaration"
+                          order="before xml"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.JavaStatementMover" id="statement"
+                          order="before declaration"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.JavaCaseBlockMover" id="caseBlock"
+                          order="before statement"/>
+    <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.JavaCatchBlockMover" id="catchBlock"
+                          order="before statement"/>
+
     <registryKey key="java.formatter.chained.calls.pre212.compatibility"
                  defaultValue="false"
                  description="Format chained calls as in versions prior to 2021.2"/>

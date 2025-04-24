@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,15 +14,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
-import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.jsp.IJspClassLevelDeclarationStatement;
+import com.intellij.psi.jsp.IJspTemplateStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-final class StatementMover extends LineMover {
-  private static final Logger LOG = Logger.getInstance(StatementMover.class);
+final class JavaStatementMover extends LineMover {
+  private static final Logger LOG = Logger.getInstance(JavaStatementMover.class);
   private static final Key<PsiElement> STATEMENT_TO_SURROUND_WITH_CODE_BLOCK_KEY = Key.create("STATEMENT_TO_SURROUND_WITH_CODE_BLOCK_KEY");
 
   @Override
@@ -84,7 +84,7 @@ final class StatementMover extends LineMover {
     info.toMove = range;
     int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0));
-    PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
+    PsiElement[] statements = CodeInsightFrontbackUtil.findStatementsInRange(file, startOffset, endOffset);
     if (statements.length == 0) return false;
 
     range.firstElement = statements[0];
@@ -163,14 +163,14 @@ final class StatementMover extends LineMover {
   }
 
   private static boolean statementCanBePlacedAlong(PsiElement element) {
-    if (element instanceof JspTemplateStatement) {
+    if (element instanceof IJspTemplateStatement) {
       PsiElement neighbour = element.getPrevSibling();
       // we can place statement inside scriptlet only
-      return neighbour != null && !(neighbour instanceof JspTemplateStatement);
+      return neighbour != null && !(neighbour instanceof IJspTemplateStatement);
     }
     PsiElement parent = element.getParent();
     if (element instanceof PsiBlockStatement && !(parent instanceof PsiCodeBlock)) return false;
-    if (parent instanceof JspClassLevelDeclarationStatement) return false;
+    if (parent instanceof IJspClassLevelDeclarationStatement) return false;
     if (statementsCanBeMovedWithin(parent)) return true;
     if (parent instanceof PsiIfStatement &&
         (element == ((PsiIfStatement)parent).getThenBranch() || element == ((PsiIfStatement)parent).getElseBranch())) {

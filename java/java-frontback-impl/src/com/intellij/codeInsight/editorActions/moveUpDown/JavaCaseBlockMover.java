@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class CaseBlockMover extends LineMover {
+public final class JavaCaseBlockMover extends LineMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
@@ -28,7 +28,7 @@ public final class CaseBlockMover extends LineMover {
     int endOffset = getLineStartSafeOffset(document, info.toMove.endLine);
     List<PsiSwitchLabelStatement> statements = new SmartList<>();
     PsiElement firstElement = null;
-    for (PsiElement element : CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset)) {
+    for (PsiElement element : CodeInsightFrontbackUtil.findStatementsInRange(file, startOffset, endOffset)) {
       if (element instanceof PsiSwitchLabelStatement) {
         statements.add((PsiSwitchLabelStatement)element);
       }

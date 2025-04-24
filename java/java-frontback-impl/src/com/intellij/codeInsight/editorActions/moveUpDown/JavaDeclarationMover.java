@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -13,10 +13,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.jsp.IJspClassLevelDeclarationStatement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-final class DeclarationMover extends LineMover {
-  private static final Logger LOG = Logger.getInstance(DeclarationMover.class);
+final class JavaDeclarationMover extends LineMover {
+  private static final Logger LOG = Logger.getInstance(JavaDeclarationMover.class);
   @SuppressWarnings("StatefulEp")
   private PsiEnumConstant myEnumToInsertSemicolonAfter;
   private boolean moveEnumConstant;
@@ -324,7 +324,7 @@ final class DeclarationMover extends LineMover {
         return new LineRange(rBrace, rBrace, editor.getDocument());
       }
     }
-    if (sibling instanceof JspClassLevelDeclarationStatement) {
+    if (sibling instanceof IJspClassLevelDeclarationStatement) {
       // there should be another scriptlet/decl to move
       if (firstNonWhiteElement(isDown ? sibling.getNextSibling() : sibling.getPrevSibling(), isDown) == null) throw new IllegalMoveException();
     }
