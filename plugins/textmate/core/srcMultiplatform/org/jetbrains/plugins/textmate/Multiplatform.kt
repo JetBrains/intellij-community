@@ -17,10 +17,10 @@ import kotlin.reflect.KClass
  * and every target should provide its own implementation.
  */
 
-fun <T> AtomicReference<T>.update(f: (T) -> T) {
+internal fun <T> AtomicReference<T>.update(f: (T) -> T) {
   updateAndGet(f)
 }
 
-fun getLogger(clazz: KClass<*>): TextMateLogger {
+internal fun getLogger(clazz: KClass<*>): TextMateLogger {
   return Slf4jTextMateLogger(LoggerFactory.getLogger(clazz.java))
 }

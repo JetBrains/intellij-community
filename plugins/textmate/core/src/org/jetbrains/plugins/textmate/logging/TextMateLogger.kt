@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.logging
 
-interface TextMateLogger {
+internal interface TextMateLogger {
   val isTraceEnabled: Boolean
   val isDebugEnabled: Boolean
   val isInfoEnabled: Boolean

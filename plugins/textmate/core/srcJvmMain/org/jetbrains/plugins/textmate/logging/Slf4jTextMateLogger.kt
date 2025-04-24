@@ -2,7 +2,7 @@ package org.jetbrains.plugins.textmate.logging
 
 import org.slf4j.Logger
 
-class Slf4jTextMateLogger(private val logger: Logger) : TextMateLogger {
+internal class Slf4jTextMateLogger(private val logger: Logger) : TextMateLogger {
   override val isTraceEnabled: Boolean
     get() = logger.isTraceEnabled
   override val isDebugEnabled: Boolean
