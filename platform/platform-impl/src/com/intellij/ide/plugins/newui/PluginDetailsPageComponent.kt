@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagerCore.buildPluginIdMap
 import com.intellij.ide.plugins.PluginManagerCore.findPlugin
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
@@ -245,13 +244,19 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   val descriptorForActions: IdeaPluginDescriptor?
     get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin?.getDescriptor() else installedDescriptorForMarketplace
 
-  fun setPlugin(plugin: IdeaPluginDescriptor?) {
-    if (plugin != null) {
-      this.plugin = PluginUiModelAdapter(plugin)
+  fun setPlugin(pluginDescriptor: IdeaPluginDescriptor?) {
+    if (pluginDescriptor != null) {
+      this.plugin = PluginUiModelAdapter(pluginDescriptor)
     }
+  }
+  
+  fun setPlugin(model: PluginUiModel?) {
+    this.plugin = model
   }
 
   fun isShowingPlugin(pluginDescriptor: IdeaPluginDescriptor): Boolean = plugin?.pluginId == pluginDescriptor.pluginId
+  
+  fun isShowingPlugin(model: PluginUiModel): Boolean = plugin?.pluginId == model.pluginId
 
   override fun create(key: Int): JComponent {
     if (key == 0) {
@@ -671,69 +676,67 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
     else {
       var syncLoading = true
-      val descriptor = component.pluginDescriptor
-      if (descriptor is PluginNode) {
-        if (!descriptor.detailsLoaded()) {
+      val pluginUiModel = component.pluginModel
+      if (pluginUiModel.isFromMarketplace) {
+        if (!pluginUiModel.detailsLoaded) {
           syncLoading = false
           doLoad(component) {
-            val marketplace = MarketplaceRequests.getInstance()
-            val pluginNode = marketplace.loadPluginDetails(descriptor)
-            if (pluginNode != null) {
+            pluginModel.loadPluginDetails(pluginUiModel)
+            val loadedModel = pluginModel.loadPluginDetails(pluginUiModel)
+            if (loadedModel != null) {
               coroutineContext.ensureActive()
-              loadAllPluginDetails(marketplace = marketplace, node = descriptor, resultNode = pluginNode)
-              component.pluginDescriptor = pluginNode
+              pluginModel.loadAllPluginDetails(pluginUiModel,loadedModel)
+              component.pluginModel = loadedModel
             }
           }
         }
-        else if (!descriptor.isConverted &&
-                 (descriptor.screenShots == null || descriptor.reviewComments == null || descriptor.dependencyNames == null)) {
+        else if (!pluginUiModel.isConverted &&
+                 (pluginUiModel.screenShots == null || pluginUiModel.reviewComments == null || pluginUiModel.dependencyNames == null)) {
           syncLoading = false
           doLoad(component) {
-            val marketplace = MarketplaceRequests.getInstance()
-            if (descriptor.screenShots == null && descriptor.externalPluginIdForScreenShots != null) {
-              val metadata = marketplace.loadPluginMetadata(descriptor.externalPluginIdForScreenShots!!)
+            if (pluginUiModel.screenShots == null && pluginUiModel.externalPluginIdForScreenShots != null) {
+              val metadata = pluginModel.loadPluginMetadata(pluginUiModel.source, pluginUiModel.externalPluginIdForScreenShots!!)
               if (metadata != null) {
                 if (metadata.screenshots != null) {
-                  descriptor.setScreenShots(metadata.screenshots)
+                  pluginUiModel.screenShots = metadata.screenshots
                 }
-                metadata.toPluginNode(descriptor)
+                metadata.toPluginUiModel(pluginUiModel)
               }
             }
 
-            if (descriptor.reviewComments == null) {
+            if (pluginUiModel.reviewComments == null) {
               coroutineContext.ensureActive()
-              loadReviews(marketplace, descriptor, descriptor)
+              pluginModel.loadReviews( pluginUiModel)
             }
-            if (descriptor.dependencyNames == null) {
+            if (pluginUiModel.dependencyNames == null) {
               coroutineContext.ensureActive()
-              loadDependencyNames(marketplace, descriptor)
+              pluginModel.loadDependencyNames(pluginUiModel)
             }
           }
         }
-        else if (!descriptor.isConverted && !isMarketplace) {
-          component.setInstalledPluginMarketplaceNode(descriptor)
+        else if (!pluginUiModel.isConverted && !isMarketplace) {
+          component.setInstalledPluginMarketplaceNode(pluginUiModel.getDescriptor() as PluginNode)
         }
       }
-      else if (!descriptor.isBundled && component.installedPluginMarketplaceNode == null) {
+      else if (!pluginUiModel.isBundled && component.installedPluginMarketplaceNode == null) {
         syncLoading = false
         doLoad(component) {
-          val marketplace = MarketplaceRequests.getInstance()
-          val node = marketplace.getLastCompatiblePluginUpdate(component.pluginDescriptor.pluginId) ?: return@doLoad
+          val lastUpdateModel = pluginModel.getLastCompatiblePluginUpdate(component.pluginModel) ?: return@doLoad
 
           coroutineContext.ensureActive()
-          val update = getLastCompatiblePluginUpdate(java.util.Set.of(component.pluginDescriptor.pluginId))
+          val update = getLastCompatiblePluginUpdate(setOf(component.pluginModel.pluginId))
           if (!update.isEmpty()) {
             val compatibleUpdate = update[0]
-            node.externalPluginId = compatibleUpdate.externalPluginId
-            node.externalUpdateId = compatibleUpdate.externalUpdateId
+            lastUpdateModel.externalPluginId = compatibleUpdate.externalPluginId
+            lastUpdateModel.externalUpdateId = compatibleUpdate.externalUpdateId
           }
 
           coroutineContext.ensureActive()
 
-          val fullNode = marketplace.loadPluginDetails(node)
+          val fullNode = pluginModel.loadPluginDetails(lastUpdateModel)
           if (fullNode != null) {
-            loadAllPluginDetails(marketplace, node, fullNode)
-            component.setInstalledPluginMarketplaceNode(fullNode)
+            pluginModel.loadAllPluginDetails(lastUpdateModel, fullNode)
+            component.setInstalledPluginMarketplaceNode(fullNode.getDescriptor() as PluginNode)
           }
         }
       }
@@ -1474,7 +1477,7 @@ private fun loadDependencyNames(marketplace: MarketplaceRequests, resultNode: Pl
     .toList()
 }
 
-private fun isNotPlatformAlias(pluginId: PluginId): Boolean {
+internal fun isNotPlatformAlias(pluginId: PluginId): Boolean {
   return if ("com.intellij" == pluginId.idString) false else !looksLikePlatformPluginAlias(pluginId)
 }
 

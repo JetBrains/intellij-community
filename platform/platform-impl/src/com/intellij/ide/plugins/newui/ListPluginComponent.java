@@ -1172,6 +1172,10 @@ public final class ListPluginComponent extends JPanel {
     myPlugin = new PluginUiModelAdapter(plugin);
   }
 
+  public void setPluginModel(@NotNull PluginUiModel pluginModel) {
+    myPlugin = pluginModel;
+  }
+
   public synchronized @Nullable PluginNode getInstalledPluginMarketplaceNode() {
     return myInstalledPluginMarketplaceNode;
   }

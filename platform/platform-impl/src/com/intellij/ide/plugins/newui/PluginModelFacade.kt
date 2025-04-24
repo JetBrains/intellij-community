@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
@@ -114,6 +115,30 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return getController(model).isDisabledInDiff(model)
   }
 
+  fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+    return getController(model).loadPluginDetails(model)
+  }
+
+  fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
+    return getController(existingModel).loadAllPluginDetails(existingModel, targetModel)
+  }
+
+  fun getLastCompatiblePluginUpdate(model: PluginUiModel): PluginUiModel? {
+    return getController(model).getLastCompatiblePluginUpdate(model)
+  }
+
+  fun loadPluginMetadata(source: PluginSource, pluginId: String): IntellijPluginMetadata? {
+    return getController(source).loadPluginMetadata(pluginId)
+  }
+
+  fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
+    return getController(existingModel).loadReviews(existingModel)
+  }
+
+  fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
+    return getController(targetModel.source).loadDependencyNames(targetModel)
+  }
+
   private fun getController(model: PluginUiModel): PluginManagerController {
     return getController(model.source)
   }
@@ -161,4 +186,10 @@ interface PluginManagerController {
   fun getPluginManagerUrl(model: PluginUiModel) : String
   fun isDisabledInDiff(model: PluginUiModel): Boolean
   fun findPlugin(model: PluginUiModel): PluginUiModel?
+  fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
+  fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel?
+  fun getLastCompatiblePluginUpdate(model: PluginUiModel): PluginUiModel?
+  fun loadPluginMetadata(pluginId: String): IntellijPluginMetadata?
+  fun loadReviews(existingModel: PluginUiModel): PluginUiModel?
+  fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel?
 }
