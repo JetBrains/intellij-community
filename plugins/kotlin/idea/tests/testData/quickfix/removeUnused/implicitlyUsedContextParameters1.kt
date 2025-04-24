@@ -4,7 +4,11 @@
 
 context(myCo<caret>ntext: Int)
 private fun m(): Int {
-    return myContext
+    return n
 }
+
+context(myContext: Int)
+private val n: Int
+    get() = 42
 
 // IGNORE_K1

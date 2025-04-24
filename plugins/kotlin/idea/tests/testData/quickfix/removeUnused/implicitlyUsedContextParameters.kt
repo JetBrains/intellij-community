@@ -4,6 +4,11 @@
 
 context(myCo<caret>ntext: Int)
 private fun m(): Int {
+    return n()
+}
+
+context(myContext: Int)
+private fun n(): Int {
     return myContext
 }
 

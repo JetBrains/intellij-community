@@ -14637,6 +14637,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/removeUnused/deledage.kt");
         }
 
+        @TestMetadata("implicitlyUsedContextParameters.kt")
+        public void testImplicitlyUsedContextParameters() throws Exception {
+            runTest("testData/quickfix/removeUnused/implicitlyUsedContextParameters.kt");
+        }
+
+        @TestMetadata("implicitlyUsedContextParameters1.kt")
+        public void testImplicitlyUsedContextParameters1() throws Exception {
+            runTest("testData/quickfix/removeUnused/implicitlyUsedContextParameters1.kt");
+        }
+
         @TestMetadata("importEnumValues.kt")
         public void testImportEnumValues() throws Exception {
             runTest("testData/quickfix/removeUnused/importEnumValues.kt");
@@ -14685,6 +14695,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("unusedConstructor.kt")
         public void testUnusedConstructor() throws Exception {
             runTest("testData/quickfix/removeUnused/unusedConstructor.kt");
+        }
+
+        @TestMetadata("unusedContextParameters.kt")
+        public void testUnusedContextParameters() throws Exception {
+            runTest("testData/quickfix/removeUnused/unusedContextParameters.kt");
         }
 
         @TestMetadata("unusedDelegatedConstructor.kt")

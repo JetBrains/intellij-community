@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
@@ -82,6 +83,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun registerLocalReferences(elements: List<PsiElement>) {
         val registerDeclarationAccessVisitor = object : KtVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
@@ -89,9 +91,14 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                     // usage of parameter in form of named argument is not counted
                     return
                 }
+                val resolvedSymbol =
+                    expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                resolvedSymbol?.contextArguments?.forEach {
+                    refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
+                }
 
-                val symbol = expression.mainReference.resolveToSymbol()
-                if (symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol || symbol is KaKotlinPropertySymbol) {
+                val symbol = resolvedSymbol?.symbol ?: expression.mainReference.resolveToSymbol()
+                if (symbol is KaLocalVariableSymbol || symbol is KaValueParameterSymbol || symbol is KaKotlinPropertySymbol || symbol is KaContextParameterSymbol) {
                     refHolder.registerLocalRef(symbol.psi)
                 }
                 if (!expression.isCalleeExpression()) {
