@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.State
@@ -13,7 +14,9 @@ import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @State(
@@ -105,19 +108,36 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
   }
 }
 
+// The following three classes use the Private Data Class pattern
+// to deal with a known Kotlin problem (KT-11914): a data class exposes its private constructor
+// through the copy() function because it's always private.
+// So we're hiding all data classes as implementation details here,
+// exposing only the abstract interfaces.
+
 internal sealed class TerminalFontSize {
   companion object {
-    fun ofFloat(value: Float): TerminalFontSize = TerminalFontSizeImpl(TerminalSettingsFloatValueImpl.ofFloat(value))
+    fun ofFloat(value: Float): TerminalFontSize =
+      TerminalFontSizeImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = FONT_SIZE_PRECISION))
+
+    fun parse(value: String): TerminalFontSize = TerminalFontSizeImpl(TerminalSettingsFloatValueImpl.parse(
+      value = value,
+      minValue = EditorFontsConstants.getMinEditorFontSize().toFloat(),
+      maxValue = EditorFontsConstants.getMaxEditorFontSize().toFloat(),
+      defaultValue = EditorFontsConstants.getDefaultEditorFontSize().toFloat(),
+      digits = FONT_SIZE_PRECISION,
+    ))
   }
 
   abstract val floatValue: Float
   abstract val intValue: Int
+  abstract fun toFormattedString(): String
 
   fun scale(): TerminalFontSize = ofFloat(UISettingsUtils.getInstance().scaleFontSize(floatValue))
 
   private data class TerminalFontSizeImpl(private val impl: TerminalSettingsFloatValueImpl) : TerminalFontSize() {
     override val floatValue: Float get() = impl.toFloat()
     override val intValue: Int get() = floatValue.roundToInt()
+    override fun toFormattedString(): String = impl.toFormattedString()
   }
 }
 
@@ -125,25 +145,49 @@ internal sealed class TerminalFontSize {
 
 internal sealed class TerminalLineSpacing {
   companion object {
-    fun ofFloat(value: Float): TerminalLineSpacing = TerminalLineSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value))
+    fun ofFloat(value: Float): TerminalLineSpacing =
+      TerminalLineSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = SPACING_PRECISION))
+
+    fun parse(value: String): TerminalLineSpacing = TerminalLineSpacingImpl(TerminalSettingsFloatValueImpl.parse(
+      value = value,
+      minValue = EditorFontsConstants.getMinEditorLineSpacing(),
+      maxValue = EditorFontsConstants.getMaxEditorLineSpacing(),
+      defaultValue = 1.0f,
+      digits = SPACING_PRECISION,
+    ))
   }
 
   abstract val floatValue: Float
+  abstract fun toFormattedString(): String
 
   private data class TerminalLineSpacingImpl(private val impl: TerminalSettingsFloatValueImpl) : TerminalLineSpacing() {
     override val floatValue: Float get() = impl.toFloat()
+    override fun toFormattedString(): String = impl.toFormattedString()
   }
 }
 
 internal sealed class TerminalColumnSpacing {
   companion object {
-    fun ofFloat(value: Float): TerminalColumnSpacing = TerminalColumnSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value))
+    fun ofFloat(value: Float): TerminalColumnSpacing =
+      TerminalColumnSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = SPACING_PRECISION))
+
+    fun parse(value: String): TerminalColumnSpacing = TerminalColumnSpacingImpl(TerminalSettingsFloatValueImpl.parse(
+      value = value,
+      // there are no default column spacing values in the API,
+      // but these will do just fine
+      minValue = EditorFontsConstants.getMinEditorLineSpacing(),
+      maxValue = EditorFontsConstants.getMaxEditorLineSpacing(),
+      defaultValue = 1.0f,
+      digits = SPACING_PRECISION,
+    ))
   }
 
   abstract val floatValue: Float
+  abstract fun toFormattedString(): String
 
   private data class TerminalColumnSpacingImpl(private val impl: TerminalSettingsFloatValueImpl) : TerminalColumnSpacing() {
     override val floatValue: Float get() = impl.toFloat()
+    override fun toFormattedString(): String = impl.toFormattedString()
   }
 }
 
@@ -151,14 +195,29 @@ internal sealed class TerminalColumnSpacing {
  * A container for floating-point values with equality support and sensible precision.
  */
 private data class TerminalSettingsFloatValueImpl(
-  private val valueTimes10000: Int,
+  private val rawIntValue: Int,
+  private val digits: Int,
 ) {
   companion object {
-    fun ofFloat(value: Float): TerminalSettingsFloatValueImpl =
-      TerminalSettingsFloatValueImpl((value * 10000).toInt())
+    fun ofFloat(value: Float, digits: Int): TerminalSettingsFloatValueImpl =
+      TerminalSettingsFloatValueImpl(rawIntValue = (value * multiplier(digits)).roundToInt(), digits = digits)
+
+    fun parse(value: String, minValue: Float, maxValue: Float, defaultValue: Float, digits: Int): TerminalSettingsFloatValueImpl =
+      try {
+        ofFloat(value.toFloat().coerceIn(minValue..maxValue), digits)
+      }
+      catch (_: Exception) {
+        ofFloat(defaultValue, digits)
+      }
+
+    private fun multiplier(digits: Int): Float = 10f.pow(digits)
   }
 
-  fun toFloat(): Float = valueTimes10000.toFloat() / 10000.0f
+  private val multiplier: Float = multiplier(digits)
+
+  fun toFloat(): Float = rawIntValue.toFloat() / multiplier
+
+  fun toFormattedString(): String = String.format(Locale.ROOT, "%.${digits}f", toFloat())
 }
 
 @ApiStatus.Internal
@@ -202,3 +261,5 @@ class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPref
 internal val DEFAULT_TERMINAL_FONT_SIZE: TerminalFontSize get() = TerminalFontSize.ofFloat(FontPreferences.DEFAULT_FONT_SIZE.toFloat())
 internal val DEFAULT_TERMINAL_LINE_SPACING = TerminalLineSpacing.ofFloat(1.0f)
 internal val DEFAULT_TERMINAL_COLUMN_SPACING = TerminalColumnSpacing.ofFloat(1.0f)
+private const val FONT_SIZE_PRECISION = 1
+private const val SPACING_PRECISION = 2
