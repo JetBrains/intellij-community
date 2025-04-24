@@ -600,6 +600,10 @@
                     interface="com.intellij.ide.RecentProjectProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="updatesInfoProvider"
+                    interface="com.intellij.ide.UpdatesInfoProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="applicationSettings"
                     beanClass="com.intellij.ide.settings.SettingsComponentDescriptor"
                     dynamic="true">

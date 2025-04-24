@@ -18,13 +18,20 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ClientProperty
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.Colors
+import com.intellij.ui.Gradient
 import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.IconManager
 import com.intellij.ui.IdeUICustomization
+import com.intellij.ui.JBColor
+import com.intellij.ui.JBGradientPaint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -35,6 +42,7 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.GradientPaint
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyBoundsListener
@@ -97,8 +105,16 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.putClientProperty(projectKey, project)
     val customizer = ProjectWindowCustomizerService.getInstance()
     if (project != null && customizer.isAvailable()) {
-      e.presentation.icon = customizer.getProjectIcon(project)
+      val updatesManager = UpdatesInfoProviderManager.getInstance()
+      val icon = customizer.getProjectIcon(project)
+        .let { if (updatesManager.updateAvailable) it.withBadge() else it }
+      e.presentation.icon = icon
     }
+  }
+
+  private fun Icon.withBadge(): Icon {
+    val badgePaint = JBColor(0xEC26F0, 0xEC26F0)
+    return IconManager.getInstance().withIconBadge(this, badgePaint)
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {
@@ -223,11 +239,13 @@ private class WidgetPositionListeners(private val widget: ToolbarComboButton, pr
 }
 
 private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
-  override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,
-                                            value: PopupFactoryImpl.ActionItem?,
-                                            index: Int,
-                                            isSelected: Boolean,
-                                            cellHasFocus: Boolean): Component {
+  override fun getListCellRendererComponent(
+    list: JList<out PopupFactoryImpl.ActionItem>?,
+    value: PopupFactoryImpl.ActionItem?,
+    index: Int,
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
     return createRecentProjectPane(value as PopupFactoryImpl.ActionItem, isSelected, getSeparator(list, value), index == 0)
   }
 
