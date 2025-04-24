@@ -2,15 +2,19 @@
 package com.intellij.platform.find
 
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.usages.TextChunk
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 
 @ApiStatus.Internal
 @Rpc
@@ -46,7 +50,7 @@ data class FindInProjectModel (
 )
 
 @Serializable
-data class FindInProjectResult (
+data class FindInProjectResult(
   val presentation: List<RdTextChunk>,
   val line: Int,
   val offset: Int,
@@ -61,7 +65,15 @@ data class FindInProjectResult (
 data class RdTextChunk (
   val text: @Nls String,
   val attributes: RdSimpleTextAttributes
-)
+) {
+  fun toTextChunk(): TextChunk {
+    val textAttributes = attributes.toInstance().toTextAttributes()
+    if (textAttributes.effectType == EffectType.SEARCH_MATCH) {
+      textAttributes.fontType = SimpleTextAttributes.STYLE_BOLD
+    }
+    return TextChunk(textAttributes, text)
+  }
+}
 
 @Serializable
 data class RdSimpleTextAttributes (
@@ -69,4 +81,14 @@ data class RdSimpleTextAttributes (
   val bgColor: Int? = null,
   val waveColor: Int? = null,
   val style: Int = 0
-)
+) {
+  fun toInstance(): SimpleTextAttributes {
+    return SimpleTextAttributes(
+      this.bgColor?.let { Color(it) },
+      this.fgColor?.let { Color(it) },
+      this.waveColor?.let { Color(it) },
+      this.style
+    )
+  }
+}
+

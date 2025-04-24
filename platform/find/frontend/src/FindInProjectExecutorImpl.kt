@@ -23,10 +23,6 @@ import javax.swing.table.TableCellRenderer
 @ApiStatus.Internal
 open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindInProjectExecutor() {
 
-  override fun createTableCellRenderer(): TableCellRenderer? {
-    return if (FindKey.isEnabled) ThinClientFindInProjectTableCellRenderer() else null
-  }
-
   override fun findUsages(
     project: Project,
     progressIndicator: ProgressIndicatorEx,
@@ -79,13 +75,4 @@ private fun getModel(project: Project, findModel: FindModel): FindInProjectModel
                             searchContext = findModel.searchContext.name,
                             scopeId = findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }, //TODO rework
                             )
-}
-
-fun RdSimpleTextAttributes.toInstance(): SimpleTextAttributes {
-  return SimpleTextAttributes(
-    this.bgColor?.let { Color(it) },
-    this.fgColor?.let { Color(it) },
-    this.waveColor?.let { Color(it) },
-    this.style
-  )
 }

@@ -18,7 +18,7 @@ import java.awt.Color
 
 
 @ApiStatus.Internal
-class FindPopupItem(
+class FindPopupItem (
   val usage: UsageInfoAdapter,
   val presentation: UsagePresentation?,
 ) {
@@ -71,19 +71,6 @@ class UsagePresentation(
 internal fun usagePresentation(
   project: Project,
   scope: GlobalSearchScope,
-  usage: UsageInfoAdapter,
-): UsagePresentation? {
-  return if (usage is UsageInfo2UsageAdapter) {
-    usagePresentation(project, scope, usage)
-  }
-  else {
-    null
-  }
-}
-
-internal fun usagePresentation(
-  project: Project,
-  scope: GlobalSearchScope,
   usage: UsageInfo2UsageAdapter,
 ): UsagePresentation {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
@@ -93,6 +80,13 @@ internal fun usagePresentation(
     backgroundColor = VfsPresentationUtil.getFileBackgroundColor(project, usage.file),
     fileString = getFilePath(project, scope, usage),
   )
+}
+
+internal class UsageInfo2UsageAdapterPresentationProvider : UsagePresentationProvider {
+  override fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
+    if (usageInfo !is UsageInfo2UsageAdapter) return null
+    return usagePresentation(project, scope, usageInfo)
+  }
 }
 
 private fun getFilePath(project: Project, scope: GlobalSearchScope, usage: UsageInfo2UsageAdapter): @NlsSafe String {

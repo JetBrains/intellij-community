@@ -658,5 +658,8 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.editor.rd.localSupport" dynamic="true"
                     beanClass="com.intellij.openapi.editor.rd.LocalEditorSupportBean"/>
+    <extensionPoint name="usagePresentationProvider"
+                    interface="com.intellij.find.impl.UsagePresentationProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

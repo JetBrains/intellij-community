@@ -111,7 +111,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.find.impl.UiModelKt.usagePresentation;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
@@ -1203,7 +1202,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
               ((UsageInfo2UsageAdapter)usage).updateCachedPresentation();
             }
 
-            newItem = new FindPopupItem(usage, usagePresentation(project, scope, usage));
+            UsagePresentation usagePresentation = UsagePresentationProvider.Companion.getPresentation(usage, project, scope);
+            newItem = new FindPopupItem(usage, usagePresentation);
           }
           else {
             // recompute presentation of a merged instance
@@ -1211,8 +1211,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             if (recentItemUsage instanceof UsageInfo2UsageAdapter) {
               ((UsageInfo2UsageAdapter)recentItemUsage).updateCachedPresentation();
             }
-
-            newItem = recentItem.withPresentation(usagePresentation(project, scope, recentItemUsage));
+            UsagePresentation recentUsagePresentation = UsagePresentationProvider.Companion.getPresentation(recentItemUsage, project, scope);
+            newItem = recentItem.withPresentation(recentUsagePresentation);
           }
           recentItemRef.set(new WeakReference<>(newItem));
 
