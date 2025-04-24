@@ -315,7 +315,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
           }
           catch (ce: CancellationException) {
-            LOG.info("closeAllOpenedProjects was cancelled", ce)
             throw ce
           }
 
