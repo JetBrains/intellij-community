@@ -1,0 +1,78 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.debugger.impl.backend
+
+import com.intellij.openapi.project.Project
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProject
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
+import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager
+import com.intellij.xdebugger.impl.rpc.XBreakpointDependenciesDto
+import com.intellij.xdebugger.impl.rpc.XBreakpointDependencyDto
+import com.intellij.xdebugger.impl.rpc.XBreakpointDependencyEvent
+import com.intellij.xdebugger.impl.rpc.XDependentBreakpointManagerApi
+import fleet.rpc.core.toRpc
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+
+internal class BackendXDependentBreakpointManagerApi : XDependentBreakpointManagerApi {
+  override suspend fun breakpointDependencies(projectId: ProjectId): XBreakpointDependenciesDto {
+    val project = projectId.findProject()
+    val dependentBreakpointManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).breakpointManager.dependentBreakpointManager
+
+    val dependencyEvents = createDependencyEventsFlow(project, dependentBreakpointManager)
+
+    val initialDependencies = collectInitialDependencies(dependentBreakpointManager)
+
+    return XBreakpointDependenciesDto(
+      initialDependencies = initialDependencies,
+      dependencyEvents = dependencyEvents.toRpc()
+    )
+  }
+
+  private fun collectInitialDependencies(dependentBreakpointManager: XDependentBreakpointManager): List<XBreakpointDependencyDto> {
+    return dependentBreakpointManager.allSlaveBreakpoints.mapNotNull { childBreakpoint ->
+      return@mapNotNull createDto(dependentBreakpointManager, childBreakpoint)
+    }
+  }
+
+  private fun createDto(
+    dependentBreakpointManager: XDependentBreakpointManager,
+    childBreakpoint: XBreakpoint<*>,
+    parentBreakpoint: XBreakpoint<*>? = dependentBreakpointManager.getMasterBreakpoint(childBreakpoint),
+  ): XBreakpointDependencyDto? {
+    if (parentBreakpoint !is XBreakpointBase<*, *, *> || childBreakpoint !is XBreakpointBase<*, *, *>) {
+      return null
+    }
+    val isLeaveEnabled = dependentBreakpointManager.isLeaveEnabled(childBreakpoint)
+    return XBreakpointDependencyDto(
+      child = childBreakpoint.breakpointId,
+      parent = parentBreakpoint.breakpointId,
+      isLeaveEnabled = isLeaveEnabled
+    )
+  }
+
+  private fun createDependencyEventsFlow(project: Project, dependentBreakpointManager: XDependentBreakpointManager): Flow<XBreakpointDependencyEvent> =
+    channelFlow {
+      val channel = this
+      project.messageBus.connect(this).subscribe(XDependentBreakpointListener.TOPIC, object : XDependentBreakpointListener {
+        override fun dependencySet(slave: XBreakpoint<*>, master: XBreakpoint<*>) {
+          val breakpointDependency = createDto(dependentBreakpointManager, slave, master) ?: return
+          channel.trySend(XBreakpointDependencyEvent.Add(breakpointDependency))
+        }
+
+        override fun dependencyCleared(slave: XBreakpoint<*>) {
+          val childBreakpointId = (slave as? XBreakpointBase<*, *, *>)?.breakpointId ?: return
+          channel.trySend(XBreakpointDependencyEvent.Remove(childBreakpointId))
+        }
+      })
+
+      awaitCancellation()
+    }.buffer(Channel.BUFFERED)
+}
