@@ -23,7 +23,7 @@ enum class ActionRemoteBehavior {
   /**
    * The action updates on both backend and frontend,
    * if a frontend action is available, its presentation will be taken, and the action will be performed on the frontend.
-   * Otherwise, backend's presentation will be used, and the action will be performed on the frontend
+   * Otherwise, backend's presentation will be used, and the action will be performed on the backend
    */
   FrontendOtherwiseBackend,
 
