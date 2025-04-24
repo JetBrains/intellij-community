@@ -9,6 +9,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.repo.GitRepositoryState
 import com.intellij.vcs.git.shared.rpc.GitReferencesSet
@@ -20,6 +21,7 @@ import git4idea.GitDisposable
 import git4idea.GitStandardRemoteBranch
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitTagType
+import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
@@ -130,10 +132,8 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         repository.info.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
         repository.tags.keys,
       )
-      val currentRef = repository.info.currentBranch?.fullName
-
       return GitRepositoryState(
-        currentRef,
+        GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repository)),
         refsSet,
         repository.branches.recentCheckoutBranches,
       )
