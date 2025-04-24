@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -158,6 +159,7 @@ public class JavaHomeFinderBasic {
           dirsToCheck.addAll(listPossibleJdkInstallRootsFromHomes(parentFile));
         }
         catch (Exception e) {
+          if (e instanceof ControlFlowException) throw e;
           log.warn("Failed to get Java home path for " + p, e);
         }
       }
