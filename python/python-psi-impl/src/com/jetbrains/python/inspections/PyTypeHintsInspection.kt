@@ -267,6 +267,8 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(annotationValue, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
       }
 
+      checkForwardReferencesInBinaryExpression(annotationValue)
+
       checkRawConcatenateUsage(annotationValue)
 
       fun PyAnnotation.findSelvesInAnnotation(context: TypeEvalContext): List<PyReferenceExpression> =
@@ -1212,6 +1214,20 @@ class PyTypeHintsInspection : PyInspection() {
                           PyPsiBundle.message("INSP.type.hints.concatenate.can.only.be.used.inside.callable"),
                           ProblemHighlightType.WARNING)
         }
+    }
+
+    private fun checkForwardReferencesInBinaryExpression(expression: PyExpression) {
+      if (expression is PyBinaryExpression && expression.operator == PyTokenTypes.OR) {
+        expression.accept(object : PyRecursiveElementVisitor() {
+          override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
+            if (node.parent is PyBinaryExpression) {
+              registerProblem(node, PyPsiBundle.message("INSP.type.hints.forward.reference.in.union"),
+                              ProblemHighlightType.GENERIC_ERROR)
+            }
+            super.visitPyStringLiteralExpression(node)
+          }
+        })
+      }
     }
 
     private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {

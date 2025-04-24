@@ -2629,6 +2629,18 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+  // PY-76862
+  public void testUnionsInTypeAnnotationsWithMultipleElements() {
+    doTestByText("""
+               bad1: <error descr="Union type annotations with forward references must be wrapped in quotes entirely">"ClassA"</error> | int
+               bad2: int | <error descr="Union type annotations with forward references must be wrapped in quotes entirely">"ClassA"</error>
+               bad3: int | str | bool | <error descr="Union type annotations with forward references must be wrapped in quotes entirely">"ClassA"</error>
+               bad4: int | <error descr="Union type annotations with forward references must be wrapped in quotes entirely">"ClassA"</error> | str | bool
+               good1: int | list["ClassA"]
+               class ClassA: ...
+               """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
