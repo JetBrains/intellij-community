@@ -34,12 +34,14 @@ import com.intellij.xdebugger.impl.ui.tree.*;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
@@ -186,6 +188,13 @@ public abstract class XVariablesViewBase extends XDebugView {
 
   public JComponent getPanel() {
     return myTreePanel.getMainPanel();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected void sessionStopped() {
+    disposeTreeRestorer();
+    getTree().disposeRestorer();
   }
 
   @Override

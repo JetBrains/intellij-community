@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -44,6 +44,10 @@ public abstract class XDebugView implements Disposable {
   }
 
   protected abstract void clear();
+
+  @ApiStatus.Internal
+  protected void sessionStopped() {
+  }
 
   @ApiStatus.OverrideOnly
   @ApiStatus.Internal
