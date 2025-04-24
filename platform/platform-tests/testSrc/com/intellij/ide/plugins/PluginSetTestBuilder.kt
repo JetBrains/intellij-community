@@ -51,7 +51,7 @@ class PluginSetTestBuilder(private val path: Path) {
   fun buildLoadingResult(initContext: PluginInitializationContext? = null): PluginLoadingResult {
     val initContext = initContext ?: buildInitContext()
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
-    val result = PluginLoadingResult(checkModuleDependencies = false)
+    val result = PluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins = false)
     // constant order in tests
     val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
     loadingContext.use {

@@ -48,8 +48,8 @@ internal fun loadAndInitDescriptorInTest(
 }
 
 @JvmOverloads
-internal fun createPluginLoadingResult(checkModuleDependencies: Boolean = false): PluginLoadingResult {
-  return PluginLoadingResult(checkModuleDependencies = checkModuleDependencies)
+internal fun createPluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins: Boolean = false): PluginLoadingResult {
+  return PluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins = requirePlatformAliasDependencyForLegacyPlugins)
 }
 
 @JvmOverloads
