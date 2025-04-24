@@ -195,20 +195,22 @@ data class ReviewCommentPlugin(
   val link: @Nls String = ""
 )
 
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class SalesMetadata(
+data class SalesMetadata(
   val trialPeriod: Int? = null,
   val customTrialPeriods: List<CustomTrialPeriod>? = null
 )
-
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class CustomTrialPeriod(
+data class CustomTrialPeriod(
   @JsonProperty("productCode") val productCode: String,
   @JsonProperty("trialPeriod") val trialPeriod: Int
 )
 
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class IntellijPluginMetadata(
+data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
   val vendor: PluginVendorMetadata? = null,
   val forumUrl: String? = null,
@@ -266,8 +268,9 @@ internal data class IntellijPluginMetadata(
   }
 }
 
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class PluginVendorMetadata(
+data class PluginVendorMetadata(
   val name: String = "",
   val url: String? = null,
   @get:JsonProperty("isTrader")
