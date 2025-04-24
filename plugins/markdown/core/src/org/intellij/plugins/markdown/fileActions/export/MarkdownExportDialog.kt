@@ -71,7 +71,7 @@ internal class MarkdownExportDialog(
 
   override fun Panel.createSettingsComponents() {
     supportedExportProviders
-      .mapNotNull {
+      .map {
         with(it) {
           val file = VfsUtil.findFileByIoFile(File(suggestedFilePath), true)
           if (file != null) {

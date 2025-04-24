@@ -8,6 +8,9 @@ import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.handler.CefDisplayHandlerAdapter
 import org.intellij.lang.annotations.Language
+import org.intellij.markdown.ast.ASTNode
+import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.executeJavaScript
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.waitForPageLoad
 import java.net.URL
@@ -162,7 +165,9 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
 
     internal fun altHighlighterAvailable() = available
 
-    internal fun parseToHighlightedHtml(language: String, content: String, startOffset: Int): String? {
+    private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
+
+    internal fun parseToHighlightedHtml(language: String, content: String, node: ASTNode): String? {
       synchronized(browser) {
         startupLatch?.await(10, TimeUnit.SECONDS)
         startupLatch = null
@@ -187,11 +192,24 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
         execThread.start()
         execThread.join(2000)
 
-        if (jsError || jsResult == null) {
+        if (jsError || jsResult.isNullOrEmpty()) {
           return null
         }
 
-        return convertToRangedSpans(jsResult!!, startOffset)
+        val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
+        var html = convertToRangedSpans(jsResult!!, startOffset)
+
+        if (node.startOffset < startOffset) {
+          // Needed to match code fence start, even though the fence start text itself isn't inside the span.
+          html = "<span $md_src_pos=\"${node.startOffset}..$startOffset\"></span>" + html
+        }
+
+        if (node.endOffset > startOffset + content.length) {
+          // Needed to match code fence end, even though the fence end text itself isn't inside the span.
+          html += "<span $md_src_pos=\"${startOffset + content.length}..${node.endOffset}\"></span>"
+        }
+
+        return html
       }
     }
   }

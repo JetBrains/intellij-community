@@ -44,25 +44,14 @@ private fun parseContent(project: Project?, language: Language, text: String, no
   }
 
   if (settings.useAlternativeHighlighting && altHighlighterAvailable()) {
-    val lang = if (language == Language.ANY) ((node as MarkdownASTNode).language ?: "") else language.id.lowercase()
-    val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
-    var html = parseToHighlightedHtml(lang, text, startOffset)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
+    val lang = if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase()
+    val html = parseToHighlightedHtml(lang, text, node)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
 
     if (html.isNullOrEmpty() && language == Language.ANY) {
       // Alterative highlighting failed, and default highlighting doesn't work for the current language.
       return
     }
     else if (html?.isNotEmpty() == true) {
-      if (node.startOffset < startOffset) {
-        // Needed to match code fence start, even though the fence start text itself isn't inside the span.
-        html = "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}=\"${node.startOffset}..$startOffset\"></span>" + html
-      }
-
-      if (node.endOffset > startOffset + text.length) {
-        // Needed to match code fence end, even though the fence end text itself isn't inside the span.
-        html += "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}=\"${startOffset + text.length}..${node.endOffset}\"></span>"
-      }
-
       collector(text, 0..text.length, null, html)
       return
     }
