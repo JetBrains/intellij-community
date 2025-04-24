@@ -173,6 +173,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         if (arguments.isNotEmpty()) {
           val arg = arguments[0]
 
+          // Check if the argument is of type java.nio.file.Path
+          val parameter = getParameterForArgument(target, 0)
+          if (parameter != null && isPathType(parameter)) {
+            // If the parameter is of type Path, don't register any problems
+            return true
+          }
+
           // Check if the argument is a string literal that denotes a valid filename
           if (arg is UInjectionHost) {
             val stringValue = arg.evaluateToString()
@@ -358,6 +365,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       // Check if the method expects a specific path annotation
       for ((index, arg) in node.valueArguments.withIndex()) {
         val parameter = getParameterForArgument(target, index) ?: continue
+
+        // Skip validation if the parameter is of type java.nio.file.Path
+        if (isPathType(parameter)) {
+          continue
+        }
+
         val expectedInfo = PathAnnotationInfo.forModifierListOwner(parameter)
         val actualInfo = PathAnnotationInfo.forExpression(arg)
 
@@ -510,11 +523,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     }
 
     private fun isPathResolveMethod(method: PsiElement): Boolean {
-      // Check if the method is Path.resolve()
+      // Check if the method is Path.resolve() or other similar methods
       if (method is com.intellij.psi.PsiMethod) {
         val containingClass = method.containingClass
         if (containingClass != null && containingClass.qualifiedName == "java.nio.file.Path") {
-          return method.name == "resolve"
+          // List of Path methods that can take either String or Path parameters
+          val pathMethods = setOf("resolve", "resolveSibling", "startsWith", "endsWith")
+          return pathMethods.contains(method.name)
         }
       }
       return false
@@ -580,6 +595,14 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         }
       }
       return null
+    }
+
+    private fun isPathType(parameter: PsiModifierListOwner): Boolean {
+      if (parameter is com.intellij.psi.PsiParameter) {
+        val type = parameter.type
+        return type.canonicalText == "java.nio.file.Path"
+      }
+      return false
     }
   }
 
