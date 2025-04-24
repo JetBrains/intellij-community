@@ -122,22 +122,23 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
       }
       metadata.toPluginNode(marketPlaceNode)
     }
-    loadReviews(targetModel)
-    loadDependencyNames(targetModel)
+    fetchReviews(targetModel)
+    fetchDependecyNames(targetModel)
     return targetModel
   }
 
-  override fun loadReviews(targetModel: PluginUiModel): PluginUiModel? {
-    val existingNode = targetModel.getPluginDescriptor() as? PluginNode ?: return null
+  override fun fetchReviews(targetModel: PluginUiModel): PluginUiModel? {
     val reviewComments = PageContainer<PluginReviewComment>(20, 0)
-    marketplaceRequests.loadPluginReviews(existingNode, reviewComments.nextPage)?.let {
-      reviewComments.addItems(it)
-    }
+    reviewComments.addItems(loadPluginReviews(targetModel, reviewComments.nextPage))
     (targetModel.getDescriptor() as PluginNode).setReviewComments(reviewComments)
     return targetModel
   }
 
-  override fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
+  override fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment> {
+    return marketplaceRequests.loadPluginReviews(targetModel.getPluginDescriptor() as PluginNode, page) ?: emptyList()
+  }
+
+  override fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel? {
     val resultNode = targetModel.getPluginDescriptor() as? PluginNode ?: return null
     resultNode.dependencyNames = resultNode.dependencies.asSequence()
       .filter { !it.isOptional }

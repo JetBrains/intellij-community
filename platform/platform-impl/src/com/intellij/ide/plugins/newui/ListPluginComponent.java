@@ -72,7 +72,7 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myIsEssential;
   private final boolean myIsNotFreeInFreeMode;
   private @NotNull PluginUiModel myPlugin;
-  private PluginNode myInstalledPluginMarketplaceNode;
+  private PluginUiModel myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
@@ -1176,12 +1176,12 @@ public final class ListPluginComponent extends JPanel {
     myPlugin = pluginModel;
   }
 
-  public synchronized @Nullable PluginNode getInstalledPluginMarketplaceNode() {
+  public synchronized @Nullable PluginUiModel getInstalledPluginMarketplaceModel() {
     return myInstalledPluginMarketplaceNode;
   }
 
-  public synchronized void setInstalledPluginMarketplaceNode(@NotNull PluginNode installedPluginMarketplaceNode) {
-    myInstalledPluginMarketplaceNode = installedPluginMarketplaceNode;
+  public synchronized void setInstalledPluginMarketplaceModel(@NotNull PluginUiModel model) {
+    myInstalledPluginMarketplaceNode = model;
   }
 
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {

@@ -45,6 +45,10 @@ interface PluginUiModel {
   @get:NlsSafe
   val organization: String?
   @get:NlsSafe
+  val description: String?
+  @get:NlsSafe
+  val changeNotes: String?
+  @get:NlsSafe
   val downloads: String?
   @get:NlsSafe
   val rating: String?

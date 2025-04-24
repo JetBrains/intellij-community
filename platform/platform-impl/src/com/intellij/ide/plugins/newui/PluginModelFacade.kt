@@ -5,9 +5,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -132,11 +132,15 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
-    return getController(existingModel).loadReviews(existingModel)
+    return getController(existingModel).fetchReviews(existingModel)
   }
 
   fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel? {
-    return getController(targetModel.source).loadDependencyNames(targetModel)
+    return getController(targetModel.source).fetchDependecyNames(targetModel)
+  }
+
+  fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment> {
+    return getController(targetModel.source).loadPluginReviews(targetModel, page)
   }
 
   private fun getController(model: PluginUiModel): PluginManagerController {
@@ -190,6 +194,7 @@ interface PluginManagerController {
   fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel?
   fun getLastCompatiblePluginUpdate(model: PluginUiModel): PluginUiModel?
   fun loadPluginMetadata(pluginId: String): IntellijPluginMetadata?
-  fun loadReviews(existingModel: PluginUiModel): PluginUiModel?
-  fun loadDependencyNames(targetModel: PluginUiModel): PluginUiModel?
+  fun fetchReviews(targetModel: PluginUiModel): PluginUiModel?
+  fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel?
+  fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment>
 }

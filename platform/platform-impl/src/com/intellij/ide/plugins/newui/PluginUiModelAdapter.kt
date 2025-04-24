@@ -59,6 +59,10 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.vendor
   override val organization: String?
     get() = pluginDescriptor.organization
+  override val description: String?
+    get() = pluginDescriptor.description
+  override val changeNotes: String?
+    get() = pluginDescriptor.changeNotes
   override val downloads: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloads else null
   override val rating: String?

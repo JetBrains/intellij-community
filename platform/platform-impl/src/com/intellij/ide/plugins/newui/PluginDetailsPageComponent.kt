@@ -584,17 +584,17 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       reviewNextPageButton!!.isEnabled = false
 
       val component = showComponent
-      val installedNode = installedPluginMarketplaceNode
-      val node = installedNode ?: component!!.pluginDescriptor as PluginNode
+      val installedModel = installedPluginMarketplaceNode
+      val node = installedModel ?: component!!.pluginModel
       val reviewComments = node.reviewComments!!
       val page = reviewComments.nextPage
       ProcessIOExecutorService.INSTANCE.execute {
-        val items = MarketplaceRequests.getInstance().loadPluginReviews(node, page)
+        val items = pluginModel.loadPluginReviews(node, page)
         ApplicationManager.getApplication().invokeLater({
                                                           if (showComponent != component) {
                                                             return@invokeLater
                                                           }
-                                                          if (items != null) {
+                                                          if (items.isNotEmpty()) {
                                                             reviewComments.addItems(items)
                                                             reviewPanel!!.addComments(items)
                                                             reviewPanel!!.fullRepaint()
@@ -715,10 +715,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           }
         }
         else if (!pluginUiModel.isConverted && !isMarketplace) {
-          component.setInstalledPluginMarketplaceNode(pluginUiModel.getDescriptor() as PluginNode)
+          component.setInstalledPluginMarketplaceModel(pluginUiModel)
         }
       }
-      else if (!pluginUiModel.isBundled && component.installedPluginMarketplaceNode == null) {
+      else if (!pluginUiModel.isBundled && component.installedPluginMarketplaceModel == null) {
         syncLoading = false
         doLoad(component) {
           val lastUpdateModel = pluginModel.getLastCompatiblePluginUpdate(component.pluginModel) ?: return@doLoad
@@ -736,7 +736,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           val fullNode = pluginModel.loadPluginDetails(lastUpdateModel)
           if (fullNode != null) {
             pluginModel.loadAllPluginDetails(lastUpdateModel, fullNode)
-            component.setInstalledPluginMarketplaceNode(fullNode.getDescriptor() as PluginNode)
+            component.setInstalledPluginMarketplaceModel(fullNode)
           }
         }
       }
@@ -866,7 +866,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       val node = installedPluginMarketplaceNode
       updateMarketplaceTabsVisible(node != null)
       if (node != null) {
-        showMarketplaceData(PluginUiModelAdapter(node))
+        showMarketplaceData(node)
       }
       updateEnabledForProject()
     }
@@ -945,7 +945,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     if (myImagesComponent != null) {
       val node = installedPluginMarketplaceNode
-      myImagesComponent!!.show((node ?: plugin.getDescriptor()))
+      myImagesComponent!!.show((node ?: plugin))
     }
 
     ApplicationManager.getApplication().invokeLater({
@@ -1021,8 +1021,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     tabbedPane!!.setEnabledAt(3, show) // additional info
   }
 
-  private val installedPluginMarketplaceNode: PluginNode?
-    get() = if (showComponent == null) null else showComponent!!.installedPluginMarketplaceNode
+  private val installedPluginMarketplaceNode: PluginUiModel?
+    get() = if (showComponent == null) null else showComponent!!.installedPluginMarketplaceModel
 
   private fun updateReviews(model: PluginUiModel) {
     val comments = model.reviewComments
