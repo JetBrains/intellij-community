@@ -21,21 +21,23 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 
 class RedundantElvisReturnNullInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return returnExpressionVisitor(fun(returnExpression: KtReturnExpression) {
-            if ((returnExpression.returnedExpression?.deparenthesize() as? KtConstantExpression)?.text != KtTokens.NULL_KEYWORD.value) return
+        return returnExpressionVisitor(fun(innerReturnExpression: KtReturnExpression) {
+            if ((innerReturnExpression.returnedExpression?.deparenthesize() as? KtConstantExpression)?.text != KtTokens.NULL_KEYWORD.value) return
 
-            val binaryExpression = returnExpression.getStrictParentOfType<KtBinaryExpression>()?.takeIf {
-                it == it.getStrictParentOfType<KtReturnExpression>()?.returnedExpression?.deparenthesize()
-            } ?: return
-            val right = binaryExpression.right?.deparenthesize()?.takeIf { it == returnExpression } ?: return
-            if (binaryExpression.operationToken == KtTokens.ELSE_KEYWORD) return
-            if (binaryExpression.left?.resolveToCall()?.resultingDescriptor?.returnType?.isMarkedNullable != true) return
+            val elvisExpression = innerReturnExpression.getStrictParentOfType<KtBinaryExpression>() ?: return
+            if (elvisExpression.operationToken == KtTokens.ELSE_KEYWORD) return
+
+            val outerReturnExpression = elvisExpression.getStrictParentOfType<KtReturnExpression>() ?: return
+            if (elvisExpression != outerReturnExpression.returnedExpression?.deparenthesize()) return
+
+            val right = elvisExpression.right?.deparenthesize()?.takeIf { it == innerReturnExpression } ?: return
+            if (elvisExpression.left?.resolveToCall()?.resultingDescriptor?.returnType?.isMarkedNullable != true) return
 
             holder.registerProblem(
-                binaryExpression,
+                elvisExpression,
                 KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                TextRange(binaryExpression.operationReference.startOffset, right.endOffset).shiftLeft(binaryExpression.startOffset),
+                TextRange(elvisExpression.operationReference.startOffset, right.endOffset).shiftLeft(elvisExpression.startOffset),
                 RemoveRedundantElvisReturnNull()
             )
         })
