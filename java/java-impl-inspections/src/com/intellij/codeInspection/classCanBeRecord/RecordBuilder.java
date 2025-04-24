@@ -73,7 +73,7 @@ class RecordBuilder {
   }
 
   void addFieldAccessor(@NotNull FieldAccessorCandidate fieldAccessorCandidate) {
-    PsiMethod fieldAccessor = fieldAccessorCandidate.getAccessor();
+    PsiMethod fieldAccessor = fieldAccessorCandidate.method();
     if (fieldAccessorCandidate.isDefault()) {
       trimEndingWhiteSpaces();
       return;
@@ -131,7 +131,7 @@ class RecordBuilder {
       .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
     String annotationsText = fieldAnnotationsText.isEmpty() ? fieldAnnotationsText : fieldAnnotationsText + " ";
     if (fieldAccessorCandidate != null && fieldAccessorCandidate.isDefault()) {
-      String accessorAnnotationsText = Arrays.stream(fieldAccessorCandidate.getAccessor().getAnnotations())
+      String accessorAnnotationsText = Arrays.stream(fieldAccessorCandidate.method().getAnnotations())
         .filter(accessorAnn -> !CommonClassNames.JAVA_LANG_OVERRIDE.equals(accessorAnn.getQualifiedName()))
         .filter(anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
         .filter(accessorAnn -> !ContainerUtil.exists(fieldAnnotations, fieldAnn -> AnnotationUtil.equal(fieldAnn, accessorAnn)))
