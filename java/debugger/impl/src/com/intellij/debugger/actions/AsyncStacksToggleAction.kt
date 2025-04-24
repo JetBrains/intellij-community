@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions
 
-import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -16,7 +15,11 @@ class AsyncStacksToggleAction : DumbAwareToggleAction() {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     ASYNC_STACKS_ENABLED.set(DebuggerUIUtil.getSessionData(e), state)
-    JavaDebugProcess.getCurrentDebugProcess(e)?.session?.refresh(true)
+    DebuggerUIUtil.getSessionProxy(e)?.apply {
+      if (isSuspended) {
+        rebuildViews()
+      }
+    }
   }
 
   override fun update(e: AnActionEvent) {
