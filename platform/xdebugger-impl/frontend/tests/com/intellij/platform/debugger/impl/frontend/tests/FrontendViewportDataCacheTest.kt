@@ -93,4 +93,21 @@ internal class FrontendViewportDataCacheTest {
 
     assertEquals(cachedLines, cachedLinesNew)
   }
+
+  @Test
+  fun `test first and last indices in huge list, huge viewport`() = runBlocking {
+    val cache = createSimpleDataIdentityCache()
+    val stamp = 0L
+    val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 20_000)
+    cache.update(viewportStartList, 50_000, stamp)
+    for (i in 0..20_000) {
+      assertEquals(i, cache.getData(i, stamp))
+    }
+
+    val viewportEndList = FrontendViewportDataCache.ViewportInfo(20_000, 50_000)
+    cache.update(viewportEndList, 50_000, stamp)
+    for (i in viewportEndList.firstVisibleIndex..50_000) {
+      assertEquals(i, cache.getData(i, stamp))
+    }
+  }
 }
