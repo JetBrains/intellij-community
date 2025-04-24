@@ -18,6 +18,8 @@ internal class FrontendViewportDataCache<T>(
     val currentCache = cache
     if (currentCache == null || currentCache.shouldBeUpdated(viewport, currentStamp)) {
       val (firstIndex, lastIndex) = indicesToLoad(viewport, lastPossibleIndex)
+      // TODO: we may optimize it more by reusing already calculated lines,
+      //   since now we recalculate full viewport when indices to load are changed even a bit.
       val newData = loadData(firstIndex, lastIndex)
       if (newData != null) {
         cache = StampedCache(currentStamp, firstIndex, lastIndex, newData)
