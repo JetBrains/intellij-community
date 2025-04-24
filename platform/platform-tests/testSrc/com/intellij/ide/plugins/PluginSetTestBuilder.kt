@@ -49,7 +49,7 @@ class PluginSetTestBuilder(private val path: Path) {
     )
   }
 
-  fun buildLoadingResult(initContext: PluginInitializationContext? = null): PluginLoadingResult {
+  fun buildLoadingResult(initContext: PluginInitializationContext? = null): Pair<PluginDescriptorLoadingContext, PluginLoadingResult> {
     val initContext = initContext ?: buildInitContext()
     val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
     val result = PluginLoadingResult()
@@ -64,13 +64,12 @@ class PluginSetTestBuilder(private val path: Path) {
         )
       }
     }
-    return result
+    return loadingContext to result
   }
 
   fun build(): PluginSet {
     val initContext = buildInitContext()
-    val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { productBuildNumber })
-    val loadingResult = buildLoadingResult(initContext)
+    val (loadingContext, loadingResult) = buildLoadingResult(initContext)
     return PluginManagerCore.initializePlugins(
       loadingContext = loadingContext,
       initContext = initContext,

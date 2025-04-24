@@ -60,7 +60,7 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val result = PluginSetTestBuilder(pluginsDirPath)
+    val (_, result) = PluginSetTestBuilder(pluginsDirPath)
       .withDisabledPlugins("foo")
       .buildLoadingResult()
 
@@ -89,7 +89,7 @@ class PluginSetLoadingTest {
         <idea-version until-build="4"/>
       </idea-plugin>""")
 
-    val result = PluginSetTestBuilder(pluginsDirPath)
+    val (_, result) = PluginSetTestBuilder(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
       .buildLoadingResult()
 
