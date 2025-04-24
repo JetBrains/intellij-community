@@ -1,11 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.RecordAugmentProvider;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -152,7 +154,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
           .withLocalQuickFixes(() -> new SafeDeleteFix(existedMethod));
       }
       else {
-        builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", paramTypes.size())
+        final String name = HighlightMessageUtil.getSymbolName(existedMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_TYPE);
+        builder.addErrorMessage("inspection.message.constructor.with.d.parameters.already.defined", name)
           .withLocalQuickFixes(() -> new SafeDeleteFix(existedMethod));
       }
       result = false;
