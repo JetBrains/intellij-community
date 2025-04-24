@@ -371,7 +371,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return ourSettingsPagesProviders.updateAndGet(providers -> providers != null ? providers : calcSettingPagesProviders());
   }
 
-  public static void cleanSettingsPagesProvidersCache() {
+  static void cleanSettingsPagesProvidersCache() {
     ourSettingsPagesProviders.set(null);
   }
 
