@@ -6,6 +6,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -17,7 +18,6 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.*
@@ -34,12 +34,18 @@ private val DOCUMENTS_UPDATE_DEBOUNCE = 600.milliseconds
 internal class FrontendEditorLinesBreakpointTypesManager(private val project: Project, private val cs: CoroutineScope) {
   private val editorsMap = ConcurrentHashMap<Editor, EditorBreakpointTypesMap>()
 
-  fun editorCreated(editor: Editor) {
-    editorsMap.putIfAbsent(editor, EditorBreakpointTypesMap(cs, editor, project))
-  }
+  init {
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorCreated(event: EditorFactoryEvent) {
+        val editor = event.editor
+        editorsMap.putIfAbsent(editor, EditorBreakpointTypesMap(cs, editor, project))
+      }
 
-  fun editorReleased(editor: Editor) {
-    editorsMap.remove(editor)?.dispose()
+      override fun editorReleased(event: EditorFactoryEvent) {
+        val editor = event.editor
+        editorsMap.remove(editor)?.dispose()
+      }
+    }, cs.asDisposable())
   }
 
   suspend fun getTypesForLine(editor: Editor, line: Int): List<XBreakpointTypeProxy> {
@@ -52,26 +58,6 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
 
   companion object {
     fun getInstance(project: Project): FrontendEditorLinesBreakpointTypesManager = project.service()
-  }
-}
-
-internal class FrontendEditorLinesBreakpointTypesManagerEditorsListener : EditorFactoryListener {
-  override fun editorCreated(event: EditorFactoryEvent) {
-    if (!useFeProxy()) {
-      return
-    }
-    val editor = event.editor
-    val project = editor.project ?: return
-    FrontendEditorLinesBreakpointTypesManager.getInstance(project).editorCreated(editor)
-  }
-
-  override fun editorReleased(event: EditorFactoryEvent) {
-    if (!useFeProxy()) {
-      return
-    }
-    val editor = event.editor
-    val project = editor.project ?: return
-    FrontendEditorLinesBreakpointTypesManager.getInstance(project).editorReleased(editor)
   }
 }
 

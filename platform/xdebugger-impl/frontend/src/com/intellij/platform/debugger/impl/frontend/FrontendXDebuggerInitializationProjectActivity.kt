@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,5 +14,10 @@ private class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
 
     // Subscribe to breakpoints dialog requests from backend
     subscribeOnBreakpointsDialogRequest(project)
+
+    // initialize debugger editor lines breakpoints manager
+    if (useFeProxy()) {
+      FrontendEditorLinesBreakpointTypesManager.getInstance(project)
+    }
   }
 }
