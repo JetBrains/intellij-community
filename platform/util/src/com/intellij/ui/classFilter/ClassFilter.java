@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.classFilter;
 
@@ -57,7 +57,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   public void setPattern(String pattern) {
     if (pattern != null && !pattern.equals(PATTERN)) {
       PATTERN = pattern;
-      myMatcher = null;
+      getMatcher(""); // compile the pattern in advance to have it ready before doing deepCopy
     }
   }
   public void setEnabled(boolean value) {
