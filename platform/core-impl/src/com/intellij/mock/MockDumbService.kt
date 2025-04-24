@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SimpleModificationTracker
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -22,6 +24,10 @@ class MockDumbService(override val project: Project) : DumbService() {
     get() = SimpleModificationTracker()
 
   override val isDumb: Boolean = false
+  override val state: StateFlow<DumbState> = MutableStateFlow(object : DumbState {
+    override val isDumb: Boolean = false
+  })
+  override val dumbModeStartTrace: Throwable? = null
 
   override var isAlternativeResolveEnabled: Boolean
     get() = false

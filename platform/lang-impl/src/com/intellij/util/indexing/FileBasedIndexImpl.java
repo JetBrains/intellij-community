@@ -905,7 +905,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static void handleDumbMode(@Nullable Project project) throws IndexNotReadyException {
     ProgressManager.checkCanceled();
-    throw IndexNotReadyException.create(project == null ? null : DumbServiceImpl.getInstance(project).getDumbModeStartTrace());
+    throw IndexNotReadyException.create(project == null ? null : DumbService.getInstance(project).getDumbModeStartTrace());
   }
 
 

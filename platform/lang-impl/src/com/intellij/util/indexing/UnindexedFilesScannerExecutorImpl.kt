@@ -10,7 +10,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.PingProgress
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.FilesScanningTask
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
@@ -239,8 +242,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // We want scanning to start after all these "extra" dumb tasks are finished.
     // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
     if (scanningWaitsForNonDumbMode()) {
-      flow = flow.combine(DumbServiceImpl.getInstance(project).isDumbAsFlow) { state, isDumb ->
-        state.copy(isDumb = isDumb)
+      flow = flow.combine(DumbService.getInstance(project).state) { state, dumbState ->
+        state.copy(isDumb = dumbState.isDumb)
       }.combine(scanningWaitsForNonDumbModeOverride) { state, scanningWaitsOverride ->
         state.copy(shouldWaitForNonDumb = scanningWaitsForNonDumbMode(scanningWaitsOverride))
       }

@@ -268,7 +268,7 @@ class DumbServiceImplTest {
     phaser.arriveAndDeregister()
   }
 
-  private val dumbService by lazy { DumbServiceImpl.getInstance(project) }
+  private val dumbService by lazy { DumbService.getInstance(project) }
 
   @Test
   @RunsInEdt
@@ -819,9 +819,9 @@ class DumbServiceImplTest {
     withTimeout(10.seconds) {
       dumbTaskStarted.join()
 
-      dumbService.isDumbAsFlow.first { isDumb -> isDumb }
+      dumbService.state.first { it.isDumb }
       dumbTask.cancel("Cancel dumb task")
-      dumbService.isDumbAsFlow.first { isDumb -> !isDumb }
+      dumbService.state.first { !it.isDumb }
     }
     return@runBlocking
   }

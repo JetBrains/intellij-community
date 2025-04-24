@@ -57,12 +57,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   private val publisher: DumbModeListener,
   private val scope: CoroutineScope,
 ) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
-  private val state: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
+  private val _state = MutableStateFlow(DumbStateImpl(!myProject.isDefault, 0L, 0))
+  final override val state: StateFlow<DumbState> = _state.asStateFlow()
 
   private val initialDumbTaskRequiredForSmartModeSubmitted = AtomicBoolean(false)
 
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
-  private var lastPublishedState: DumbState = state.value
+  private var lastPublishedState: DumbStateImpl = _state.value
 
   @Volatile
   private var isDisposed = false
@@ -134,7 +135,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     get() = this
 
   @Volatile
-  var dumbModeStartTrace: Throwable? = null
+  final override var dumbModeStartTrace: Throwable? = null
     private set
   private var scheduledTasksScope: CoroutineScope = scope.childScope()
   private val taskQueue = DumbServiceMergingTaskQueue()
@@ -224,17 +225,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       return state.value.isDumb
     }
 
-  /**
-   * Same as [isDumb], but if form of a flow with the following properties:
-   *   * This flow never completes
-   *   * Last emitted value is always immediately available
-   *   * Conflation and other properties of the flow are not specified
-   *
-   * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
-   *  have little sense except a few very special use cases.
-   */
-  val isDumbAsFlow: Flow<Boolean> = state.map { it.isDumb }
-
   override suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
 
@@ -274,11 +264,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   @RequiresBlockingContext
   private fun incrementDumbCounter(trace: Throwable) {
     ThreadingAssertions.assertEventDispatchThread()
-    if (state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
+    if (_state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
       val enteredDumb = application.runWriteAction(Computable {
-        val old = state.getAndUpdate { it.incrementDumbCounter() }
+        val old = _state.getAndUpdate { it.incrementDumbCounter() }
         return@Computable old.isSmart
       })
       if (enteredDumb) {
@@ -305,9 +295,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
     // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
     // Otherwise, decrement the counter under write action because this will change dumb state
-    if (state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
+    if (_state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
       val exitDumb = application.runWriteAction(Computable {
-        val new = state.updateAndGet { it.decrementDumbCounter() }
+        val new = _state.updateAndGet { it.decrementDumbCounter() }
         return@Computable new.isSmart
       })
       if (exitDumb) {
@@ -320,7 +310,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   private fun publishDumbModeChangedEvent() {
     ThreadingAssertions.assertEventDispatchThread()
-    val currentState = state.value
+    val currentState = _state.value
     if (lastPublishedState.modificationCounter >= currentState.modificationCounter) {
       return // already published
     }
@@ -328,7 +318,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     // First change lastPublishedState, then publish. This is to address the situation that new event
     // should be published while publishing current event
     val wasDumb = lastPublishedState.isDumb
-    lastPublishedState = state.value
+    lastPublishedState = _state.value
 
     if (wasDumb != currentState.isDumb) {
       if (currentState.isDumb) {
@@ -669,32 +659,32 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
   override fun getModificationCount(): Long {
     // todo: drop mod tracker in scanner executor after there is a proper way to track indexes updates IJPL-472
-    return state.value.modificationCounter + UnindexedFilesScannerExecutor.getInstance(project).modificationTracker.modificationCount
+    return _state.value.modificationCounter + UnindexedFilesScannerExecutor.getInstance(project).modificationTracker.modificationCount
   }
 
-  internal val dumbStateAsFlow: StateFlow<DumbState> = state
-
-  internal data class DumbState(
-    @JvmField val isDumb: Boolean,
+  private data class DumbStateImpl(
+    @JvmField val dumb: Boolean,
     @JvmField val modificationCounter: Long,
     @JvmField val dumbCounter: Int,
-  ) {
-    private fun nextCounterState(nextVal: Int): DumbState {
+  ) : DumbState {
+    override val isDumb: Boolean = dumb
+
+    private fun nextCounterState(nextVal: Int): DumbStateImpl {
       if (nextVal > 0) {
-        return DumbState(true, modificationCounter + 1, nextVal)
+        return DumbStateImpl(true, modificationCounter + 1, nextVal)
       }
       else {
         LOG.assertTrue(nextVal == 0) { "Invalid nextVal=$nextVal" }
-        return DumbState(false, modificationCounter + 1, 0)
+        return DumbStateImpl(false, modificationCounter + 1, 0)
       }
     }
 
     val incrementWillChangeDumbState: Boolean = isSmart
     val decrementWillChangeDumbState: Boolean = dumbCounter == 1
-    fun incrementDumbCounter(): DumbState = nextCounterState(dumbCounter + 1)
-    fun decrementDumbCounter(): DumbState = nextCounterState(dumbCounter - 1)
-    fun tryIncrementDumbCounter(): DumbState = if (incrementWillChangeDumbState) this else incrementDumbCounter()
-    fun tryDecrementDumbCounter(): DumbState = if (decrementWillChangeDumbState) this else decrementDumbCounter()
+    fun incrementDumbCounter(): DumbStateImpl = nextCounterState(dumbCounter + 1)
+    fun decrementDumbCounter(): DumbStateImpl = nextCounterState(dumbCounter - 1)
+    fun tryIncrementDumbCounter(): DumbStateImpl = if (incrementWillChangeDumbState) this else incrementDumbCounter()
+    fun tryDecrementDumbCounter(): DumbStateImpl = if (decrementWillChangeDumbState) this else decrementDumbCounter()
     val isSmart: Boolean
       get() = !isDumb
   }
@@ -724,6 +714,15 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
 
     private val LOG = logger<DumbServiceImpl>()
 
+    @Deprecated("Implementation details should not be accessed in production code",
+                replaceWith = ReplaceWith("DumbService.isDumb(project)", "com.intellij.openapi.project.DumbService.Companion"))
+    @JvmStatic
+    fun isDumb(project: Project): Boolean {
+      return getInstance(project).isDumb
+    }
+
+    @Deprecated("Implementation details should not be accessed in production code",
+                replaceWith = ReplaceWith("DumbService.getInstance(project)", "com.intellij.openapi.project.DumbService"))
     @JvmStatic
     fun getInstance(project: Project): DumbServiceImpl {
       return DumbService.getInstance(project) as DumbServiceImpl

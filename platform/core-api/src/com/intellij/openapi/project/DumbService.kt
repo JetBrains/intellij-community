@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -51,6 +52,24 @@ abstract class DumbService {
    * The IDE offers only limited functionality at such times, e.g., plain text file editing and version control operations.
    */
   abstract val isDumb: Boolean
+
+  /**
+   * Same as [isDumb], but if form of a flow with the following properties:
+   *   * This flow never completes
+   *   * Last emitted value is always immediately available
+   *   * The flow is not conflated by [DumbState] fields, but only by the underlying state
+   *
+   * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
+   *  have little sense except a few very special use cases.
+   */
+  @get:ApiStatus.Internal
+  abstract val state: StateFlow<DumbState>
+
+  /**
+   * Last dumb mode start stack trace for diagnostic purposes
+   */
+  @get:ApiStatus.Internal
+  abstract val dumbModeStartTrace: Throwable?
 
   /**
    * Opportunistic check for [runWhenSmart] condition
@@ -551,6 +570,11 @@ abstract class DumbService {
     fun allowStartingDumbModeInside(permission: DumbModePermission, runnable: Runnable) {
       runnable.run()
     }
+  }
+
+  @ApiStatus.Internal
+  interface DumbState {
+    val isDumb: Boolean
   }
 }
 

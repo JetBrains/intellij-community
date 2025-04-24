@@ -8,10 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.DumbServiceImpl
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor
+import com.intellij.openapi.project.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -115,7 +112,7 @@ private class IndexWaiter(private val project: Project) {
   }
 
   private fun shouldWait(): Boolean {
-    val dumbService = DumbServiceImpl.getInstance(project)
+    val dumbService = DumbService.getInstance(project) as DumbServiceImpl
 
     dumbService.ensureInitialDumbTaskRequiredForSmartModeSubmitted() // TODO IJPL-578: don't submit
 
