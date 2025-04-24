@@ -17,7 +17,6 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -138,7 +137,7 @@ internal class CommandCompletionService(
     if (endOffset - startOffset != 1) return
     if (lookup.items.none { it.`as`(CommandCompletionLookupElement::class.java) != null }) return
     if (editor.inlayModel.getInlineElementsInRange(startOffset, endOffset).isNotEmpty()) return
-    val applicationCommandCompletionService = ApplicationManager.getApplication().getService(ApplicationCommandCompletionService::class.java)
+    val applicationCommandCompletionService = ApplicationCommandCompletionService.getInstance()
     val state = applicationCommandCompletionService.state
     if (state.showCounts > 5) return
     state.showCounts += 1
