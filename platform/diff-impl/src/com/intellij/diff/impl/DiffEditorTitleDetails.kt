@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.components.JBLabel
 import org.jetbrains.annotations.ApiStatus
@@ -46,13 +47,13 @@ class DiffEditorTitleDetails(val pathLabel: DetailsLabelProvider?, val revisionL
     )
 
     private fun getRelativeOrFullPath(project: Project?, file: FilePath): @NlsSafe String {
+      val fileNioPath = file.path.toNioPathOrNull() ?: return file.path
+
       val guessedProjectDir = project?.guessProjectDir()
       if (guessedProjectDir == null) return FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
 
-      val filePath = file.ioFile.toPath()
       val projectDirPath = guessedProjectDir.toNioPath()
-
-      return if (filePath.startsWith(projectDirPath)) projectDirPath.relativize(filePath).toString()
+      return if (fileNioPath.startsWith(projectDirPath)) projectDirPath.relativize(fileNioPath).toString()
       else FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
     }
   }
