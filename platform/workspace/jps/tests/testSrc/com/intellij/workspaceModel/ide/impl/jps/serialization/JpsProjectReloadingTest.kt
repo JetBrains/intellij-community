@@ -116,7 +116,7 @@ class JpsProjectReloadingTest {
   @Test
   fun `modify library`() {
     checkProjectAfterReload("directoryBased/modifyLibrary",
-                            "fileBased/modifyLibrary") { (storage, originalUnloadedEntitiesBuilder, projectDirUrl) ->
+                            "fileBased/modifyLibrary") { (storage, _, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
       assertEquals(3, libraries.size)
       val junitLibrary = libraries[1]
@@ -128,7 +128,7 @@ class JpsProjectReloadingTest {
 
   @Test
   fun `remove library`() {
-    checkProjectAfterReload("directoryBased/removeLibrary", "fileBased/removeLibrary") { (storage, originalUnloadedEntitiesBuilder, _) ->
+    checkProjectAfterReload("directoryBased/removeLibrary", "fileBased/removeLibrary") { (storage, _, _) ->
       assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) { it.name })
     }
   }
@@ -136,14 +136,14 @@ class JpsProjectReloadingTest {
   @Test
   fun `remove all libraries`() {
     checkProjectAfterReload("directoryBased/removeAllLibraries",
-                            "fileBased/removeAllLibraries") { (storage, originalUnloadedEntitiesBuilder, _) ->
+                            "fileBased/removeAllLibraries") { (storage, _, _) ->
       assertEquals(emptySet<String>(), storage.projectLibraries.mapTo(HashSet()) { it.name })
     }
   }
 
   private fun checkProjectAfterReload(directoryNameForDirectoryBased: String,
                                       directoryNameForFileBased: String,
-                                      unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
+                                      unloadedModulesNameHolder: UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                                       checkAction: (ReloadedProjectData) -> Unit) {
     val dirBasedData = reload(sampleDirBasedProjectFile, directoryNameForDirectoryBased, unloadedModulesNameHolder)
     checkAction(dirBasedData)
@@ -152,7 +152,7 @@ class JpsProjectReloadingTest {
   }
 
   private fun reload(originalProjectFile: File,
-                     unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder,
+                     unloadedModulesNameHolder: UnloadedModulesNameHolder,
                      updateAction: (LoadedProjectData) -> JpsConfigurationFilesChange): ReloadedProjectData {
     val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModulesNameHolder)
     val change = updateAction(projectData)
@@ -170,7 +170,7 @@ class JpsProjectReloadingTest {
 
   private fun reload(originalProjectDir: File,
                      directoryName: String,
-                     unloadedModulesNameHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder): ReloadedProjectData {
+                     unloadedModulesNameHolder: UnloadedModulesNameHolder): ReloadedProjectData {
     return reload(originalProjectDir, unloadedModulesNameHolder) { projectData ->
       val changedDir = PathManagerEx.findFileUnderCommunityHome(
         "platform/workspace/jps/tests/testData/serialization/reload/$directoryName")
