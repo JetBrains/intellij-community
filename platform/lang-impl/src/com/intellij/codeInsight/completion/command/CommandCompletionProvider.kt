@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
@@ -53,7 +54,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     context: ProcessingContext,
     resultSet: CompletionResultSet,
   ) {
-    if (!commandCompletionEnabled()) return
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (parameters.completionType != CompletionType.BASIC) return
     if (parameters.position is PsiComment) return
     //not support injected fragment, it is not so obvious how to do it
@@ -224,6 +225,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
   ) {
     val element = copyFile.findElementAt(offset - 1)
     if (element == null) return
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     for (provider in commandCompletionFactory.commandProviders(project, element.language)) {
       try {
         if (isReadOnly && !provider.supportsReadOnly()) continue

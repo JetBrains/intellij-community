@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.injected.editor.DocumentWindow
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
-    if (!commandCompletionEnabled()) return false
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
     val project = editor.project ?: return false
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return false
@@ -62,7 +63,7 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
   }
 
   override fun handle(editor: Editor, charTyped: Char, dataContext: DataContext) {
-    if (!commandCompletionEnabled()) return
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     val accessCommandCompletionService = editor.project?.getService(NonWriteAccessCommandCompletionService::class.java)
     if (accessCommandCompletionService == null) return
     accessCommandCompletionService.insertNewEditor(editor)
@@ -79,7 +80,7 @@ internal class NonWriteAccessCommandCompletionService(
 ) {
 
   fun insertNewEditor(editor: Editor) {
-    if (!commandCompletionEnabled()) return
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
     if (editor !is EditorImpl) return
     val project = editor.project ?: return
     val offset = editor.caretModel.offset

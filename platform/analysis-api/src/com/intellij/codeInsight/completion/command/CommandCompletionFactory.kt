@@ -3,11 +3,9 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 
 /**
@@ -40,7 +38,6 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    * and register with 'com.intellij.codeInsight.completion.applicable.command' language extension
    */
   fun commandProviders(project: Project, language: Language): List<CommandProvider> {
-    if (!commandCompletionEnabled()) return mutableListOf()
     return DumbService.getInstance(project).filterByDumbAwareness(EP_NAME.allForLanguageOrAny(language))
   }
 
@@ -65,11 +62,5 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    */
   fun createFile(originalFile: PsiFile, text: String): PsiFile? = null
 }
-
-fun commandCompletionEnabled(): Boolean =
-  Registry.`is`("ide.completion.command.force.enabled") ||
-  (ApplicationManager.getApplication().isInternal &&
-   !ApplicationManager.getApplication().isUnitTestMode &&
-   Registry.`is`("ide.completion.command.enabled"))
 
 private val EP_NAME = LanguageExtension<CommandProvider>("com.intellij.codeInsight.completion.command.provider")

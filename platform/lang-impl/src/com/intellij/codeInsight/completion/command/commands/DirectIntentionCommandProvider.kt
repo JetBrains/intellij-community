@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
@@ -67,7 +68,7 @@ import java.util.function.Predicate
  */
 internal class DirectIntentionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    if (!commandCompletionEnabled()) return emptyList()
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return emptyList()
     val originalEditor = context.originalEditor
     val psiFile = context.psiFile
     val offset = context.offset
