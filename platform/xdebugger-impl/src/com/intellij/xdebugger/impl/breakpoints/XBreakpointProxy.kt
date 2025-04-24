@@ -53,6 +53,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   @NlsSafe
   fun getGeneralDescription(): String
+  fun getTooltipDescription(): @NlsSafe String
 
   fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean
 
@@ -145,6 +146,10 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     override fun getConditionExpressionInt(): XExpression? = breakpoint.conditionExpressionInt
 
     override fun getGeneralDescription(): String = XBreakpointUtil.getGeneralDescription(breakpoint)
+
+    override fun getTooltipDescription(): @NlsSafe String {
+      return breakpoint.description
+    }
 
     override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
       if (other is Monolith) {

@@ -10,14 +10,17 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
-  private final XBreakpointBase<?, ?, ?> myBreakpoint;
+  private final XBreakpointProxy myBreakpoint;
 
-  BreakpointGutterIconRenderer(XBreakpointBase<?, ?, ?> breakpoint) { myBreakpoint = breakpoint; }
+  BreakpointGutterIconRenderer(XBreakpointProxy breakpoint) { myBreakpoint = breakpoint; }
 
   @Override
   public @NotNull Icon getIcon() {
@@ -28,7 +31,7 @@ final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRende
   public @NotNull String getAccessibleName() {
     // [tav] todo: add "hit" state
     return XDebuggerBundle.message("accessible.name.icon.0.1.2", myBreakpoint.getType().getTitle(),
-                                   myBreakpoint.getCondition() != null
+                                   myBreakpoint.getConditionExpression() != null
                                    ? " " + XDebuggerBundle.message("accessible.name.icon.conditional")
                                    : "",
                                    !myBreakpoint.isEnabled() ? " " + XDebuggerBundle.message("accessible.name.icon.disabled") : "");
@@ -37,52 +40,61 @@ final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRende
   @Override
   public @NotNull AnAction getClickAction() {
     if (Registry.is("debugger.click.disable.breakpoints")) {
-      return new ToggleBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
+      return new ToggleBreakpointGutterIconAction(myBreakpoint);
     }
     else {
-      return new RemoveBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
+      return new RemoveBreakpointGutterIconAction(myBreakpoint);
     }
   }
 
   @Override
   public @NotNull AnAction getMiddleButtonClickAction() {
     if (!Registry.is("debugger.click.disable.breakpoints")) {
-      return new ToggleBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
+      return new ToggleBreakpointGutterIconAction(myBreakpoint);
     }
     else {
-      return new RemoveBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
+      return new RemoveBreakpointGutterIconAction(myBreakpoint);
     }
   }
 
   @Override
   public @NotNull AnAction getRightButtonClickAction() {
-    return new EditBreakpointAction.ContextAction(this, XBreakpointProxyKt.asProxy(myBreakpoint));
+    return new EditBreakpointAction.ContextAction(this, myBreakpoint);
   }
 
   @Override
-  public @NotNull ActionGroup getPopupMenuActions() {
-    return new DefaultActionGroup(
-      myBreakpoint.getAdditionalPopupMenuActions(myBreakpoint.getBreakpointManager().getDebuggerManager().getCurrentSession()));
+  public @Nullable ActionGroup getPopupMenuActions() {
+    XDebugSessionProxy currentSessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myBreakpoint.getProject());
+    // TODO IJPL-185111
+    if (myBreakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint
+        && currentSessionProxy instanceof XDebugSessionProxy.Monolith sessionProxy) {
+      return new DefaultActionGroup(monolithBreakpoint.getBreakpoint().getAdditionalPopupMenuActions(sessionProxy.getSession()));
+    }
+    return super.getPopupMenuActions();
   }
 
   @Override
   public @NotNull String getTooltipText() {
-    return myBreakpoint.getDescription();
+    return myBreakpoint.getTooltipDescription();
   }
 
   @Override
   public GutterDraggableObject getDraggableObject() {
-    return myBreakpoint.createBreakpointDraggableObject();
+    // TODO IJPL-185111
+    if (myBreakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint) {
+      return monolithBreakpoint.getBreakpoint().createBreakpointDraggableObject();
+    }
+    return null;
   }
 
-  XBreakpointBase<?, ?, ?> getBreakpoint() {
+  XBreakpointProxy getBreakpoint() {
     return myBreakpoint;
   }
 
   @Override
   public boolean equals(Object obj) {
     return obj instanceof BreakpointGutterIconRenderer renderer
-           && getBreakpoint() == renderer.getBreakpoint()
+           && myBreakpoint.equals(renderer.myBreakpoint)
            && Comparing.equal(getIcon(), renderer.getIcon());
   }
 

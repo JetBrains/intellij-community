@@ -30,7 +30,7 @@ final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     for (GutterMark mark : marks) {
       assert !(mark instanceof MultipleBreakpointGutterIconRenderer) : "they are not expected to be created before processing";
       if (mark instanceof BreakpointGutterIconRenderer singleBreakpointMark) {
-        breakpoints.add(XBreakpointProxyKt.asProxy(singleBreakpointMark.getBreakpoint()));
+        breakpoints.add(singleBreakpointMark.getBreakpoint());
         breakpointMarkPosition = newMarks.size();
         continue;
       }

@@ -596,7 +596,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   // TODO IJPL-185111
   public @NotNull GutterIconRenderer createGutterIconRenderer() {
-    return new BreakpointGutterIconRenderer(this);
+    return new BreakpointGutterIconRenderer(XBreakpointProxyKt.asProxy(this));
   }
 
   public void clearIcon() {

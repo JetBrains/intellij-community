@@ -160,6 +160,10 @@ class FrontendXBreakpointProxy(
     return _state.value.generalDescription
   }
 
+  override fun getTooltipDescription(): @NlsSafe String {
+    return _state.value.tooltipDescription
+  }
+
   override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
     if (other !is FrontendXBreakpointProxy) {
       return false
