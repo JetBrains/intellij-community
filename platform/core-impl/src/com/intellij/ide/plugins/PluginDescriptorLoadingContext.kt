@@ -56,7 +56,7 @@ class PluginDescriptorLoadingContext(
 
   private val descriptorLoadingErrors: CopyOnWriteArrayList<Supplier<@Nls String>> = CopyOnWriteArrayList<Supplier<String>>()
 
-  internal fun copyDescriptorLoadingErrors(): MutableList<Supplier<@Nls String>> = ArrayList(descriptorLoadingErrors)
+  fun copyDescriptorLoadingErrors(): MutableList<Supplier<@Nls String>> = ArrayList(descriptorLoadingErrors)
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
     PluginManagerCore.logger.warn("Cannot load $file", e)

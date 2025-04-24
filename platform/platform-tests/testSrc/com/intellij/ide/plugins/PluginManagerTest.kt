@@ -415,7 +415,7 @@ class PluginManagerTest {
         initContext = initContext
       )
       return PluginManagerCore.initializePlugins(
-        loadingContext = loadingContext,
+        descriptorLoadingErrors = loadingContext.copyDescriptorLoadingErrors(),
         initContext = initContext,
         loadingResult = result,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),

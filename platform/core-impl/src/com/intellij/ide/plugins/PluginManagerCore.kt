@@ -608,7 +608,7 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun initializePlugins(
-    loadingContext: PluginDescriptorLoadingContext,
+    descriptorLoadingErrors: List<Supplier<@Nls String>>,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
@@ -617,7 +617,7 @@ object PluginManagerCore {
     parentActivity: Activity?,
   ): PluginManagerState {
     val pluginErrorsById = loadingResult.copyPluginErrors()
-    val globalErrors = loadingContext.copyDescriptorLoadingErrors()
+    val globalErrors = descriptorLoadingErrors.toMutableList()
     if (loadingResult.duplicateModuleMap != null) {
       for ((key, value) in loadingResult.duplicateModuleMap!!) {
         globalErrors.add(Supplier {
@@ -874,7 +874,7 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    loadingContext: PluginDescriptorLoadingContext,
+    descriptorLoadingErrors: List<Supplier<@Nls String>>,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
   ): PluginSet {
@@ -882,7 +882,7 @@ object PluginManagerCore {
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
       val initResult = initializePlugins(
-        loadingContext = loadingContext,
+        descriptorLoadingErrors = descriptorLoadingErrors,
         initContext = initContext,
         loadingResult = loadingResult,
         coreLoader = coreLoader,
