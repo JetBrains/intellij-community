@@ -40,6 +40,8 @@
                          key="settings.configurable.display.name"/>
     <statistics.applicationUsagesCollector
       implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
+    <statistics.projectUsagesCollector
+      implementation="org.jetbrains.plugins.github.pullrequest.GHPRProjectMetricsCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>

@@ -26,7 +26,7 @@ import java.util.*
 
 // TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
 internal object GHPRStatisticsCollector : CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 9)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 10)
 
   private val LOG = logger<GHPRStatisticsCollector>()
 

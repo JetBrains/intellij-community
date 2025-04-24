@@ -517,6 +517,7 @@ private object TestCases {
       GHGQLRequests.PullRequest.mergeabilityData(DUMMY_REPO_COORDINATES, DUMMY_NUMBER),
       GHGQLRequests.PullRequest.search(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.search(DUMMY_SERVER_PATH, DUMMY_TEXT, null),
+      GHGQLRequests.PullRequest.metrics(DUMMY_REPO_COORDINATES),
       GHGQLRequests.PullRequest.reviewThreads(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.reviewThreads(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, null),
       GHGQLRequests.PullRequest.commits(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),

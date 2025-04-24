@@ -91,5 +91,6 @@ enum class GithubApiRequestOperation {
   GraphQLResolveReviewThread,
   GraphQLUnresolveReviewThread,
   GraphQLSearchPullRequests,
+  GraphQLPullRequestsMetrics,
   GraphQLSubmitReview,
 }
