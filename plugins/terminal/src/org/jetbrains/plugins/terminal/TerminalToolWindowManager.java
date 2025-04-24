@@ -65,6 +65,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionStartHelper;
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab;
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay;
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
@@ -369,6 +370,7 @@ public final class TerminalToolWindowManager implements Disposable {
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     new TerminalTabCloseListener(content, myProject, this);
+    ReworkedTerminalUsageCollector.logTabOpened(myProject, contentManager.getContentCount());
     Runnable selectRunnable = () -> {
       contentManager.setSelectedContent(content, requestFocus);
     };
