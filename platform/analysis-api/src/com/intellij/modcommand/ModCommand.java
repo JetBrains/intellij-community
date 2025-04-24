@@ -28,8 +28,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A transparent command, which modifies the project/workspace state (writes file, changes setting, moves editor caret, etc.),
- * or produces a user interaction (displays question, launches browser, etc.).
+ * A transparent command that modifies the project/workspace state (writes file, changes setting, moves editor caret, etc.).
+ * <p>
+ * There are commands that don't modify state, but produce a user interaction (e.g., ask questions, display chooser, launch browser),
+ * but they should be followed by commands that <i>do modify</i> state.
+ * Otherwise, there's no purpose in such a command.
+ * And to some extent, showing UI could also be considered a modification (of things visible on the screen).
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
  * Instead of creating the commands directly, it's preferred to use static methods in this class to create individual commands.

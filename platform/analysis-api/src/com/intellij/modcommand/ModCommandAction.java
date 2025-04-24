@@ -17,6 +17,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * Intention action replacement that operates on {@link ModCommand}.
+ * <p>
  * If you need your action to work in the dumb mode, extend it with {@link com.intellij.openapi.project.DumbAware}
  * or override {@link PossiblyDumbAware#isDumbAware()}
  * (please see <a href="https://plugins.jetbrains.com/docs/intellij/indexing-and-psi-stubs.html#dumb-mode">dumb mode docs</a> for details)

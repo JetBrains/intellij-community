@@ -16,7 +16,6 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -51,7 +50,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     if (m_shortName == null) {
       final Class<? extends BaseInspection> aClass = getClass();
       final String name = aClass.getSimpleName();
-      m_shortName = InspectionProfileEntry.getShortName(name);
+      m_shortName = getShortName(name);
       if (m_shortName.equals(name)) {
         throw new AssertionError("class name must end with 'Inspection' to correctly calculate the short name: " + name);
       }
@@ -71,12 +70,12 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   /**
-   * Build a fix for this inspection based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)}
-   * or similar methods. Override this method in concrete inspection to provide a fix.
-   *
+   * Builds a fix for this inspection based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)}
+   * or similar methods.
+   * Override this method in a concrete inspection to provide the fix.
    * <p>
-   * This method is ignored is {@link #buildFixes(Object...)} is overridden as well and returns a non-empty result.
-   * Normally one should not override both this method and {@link #buildFixes(Object...)}.
+   * This method is ignored if {@link #buildFixes(Object...)} is also overridden and returns a non-empty result.
+   * Usually, you should override either this method or {@link #buildFixes(Object...)}, but not both.
    *
    * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
    * @return a new fix or null if no fix is available
@@ -86,21 +85,25 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   /**
-   * Build fixes based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)} or similar methods.
-   * Override this method in concrete inspection to provide fixes.
+   * Builds fixes based on infos passed to {@link BaseInspectionVisitor#registerError(PsiElement, Object...)}
+   * or similar methods.
+   * Override this method in a concrete inspection to provide the fixes.
+   * <p>
+   * Usually, you should override either this method or {@link #buildFix(Object...)}, but not both.
    *
    * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
    * @return an array of fixes (empty array if no fix is available).
    */
-  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+  protected @NotNull LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
   /**
    * Writes a boolean option field. Does NOT write when the field has the default value.
-   * @param node  the xml element node the field is written to.
-   * @param property  the name of the field
-   * @param defaultValueToIgnore  the default value. When the field has this value it is NOT written.
+   *
+   * @param node                 the XML element node the field is written to.
+   * @param property             the name of the field
+   * @param defaultValueToIgnore the default value. When the field has this value, it is NOT written.
    */
   protected void writeBooleanOption(@NotNull Element node, @NotNull @NonNls String property, boolean defaultValueToIgnore) {
     final Boolean value = ReflectionUtil.getField(this.getClass(), this, boolean.class, property);
@@ -124,8 +127,9 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
 
   /**
    * Writes fields even if they have a default value.
-   * @param node  the xml element node the fields are written to.
-   * @param excludedProperties  fields with names specified here are not written, and have to be handled separately
+   *
+   * @param node               the XML element node the fields are written to.
+   * @param excludedProperties fields with names specified here are not written and have to be handled separately
    */
   protected void defaultWriteSettings(@NotNull Element node, final @NonNls String... excludedProperties) throws WriteExternalException {
     DefaultJDOMExternalizer.write(this, node, field -> {
@@ -152,9 +156,11 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
 
   /**
    * To check precondition(s) on the entire file, to prevent doing the check on every PsiElement visited.
-   * Useful for e.g. a {@link com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(PsiElement)} check
-   * which will be the same for all elements in the specified file.
+   * <p>
+   * Useful for performing check which would be the same for all elements in the specified,
+   * for example {@link com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(PsiElement)}.
    * When this method returns false, {@link #buildVisitor()} will not be called.
+   *
    * @deprecated use {@link #isAvailableForFile(PsiFile)} or {@link #requiredFeatures()}
    */
   @Deprecated

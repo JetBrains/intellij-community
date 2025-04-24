@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
  * {@link com.intellij.openapi.project.IndexNotReadyException IndexNotReadyException}.
  * In this case, the inspection shall just silently catch it and not report any warnings.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections-and-intentions.html">Code Inspections and Intentions (IntelliJ Platform Docs)</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see GlobalInspectionTool
  */
