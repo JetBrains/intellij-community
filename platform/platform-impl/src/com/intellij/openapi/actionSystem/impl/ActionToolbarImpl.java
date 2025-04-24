@@ -43,7 +43,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlinx.coroutines.Job;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -145,6 +145,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final ToolbarUpdater myUpdater;
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private boolean myForcedUpdateRequested = true;
+  @Nullable Job myUpdateOnFirstShowJob;
 
   private int myUpdatesWithNewButtons = 0;
   private String myLastNewButtonActionClass;
@@ -359,11 +360,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       updateActionsImmediately();
     }
     else {
-      UiNotifyConnector.doWhenFirstShown(this, () -> {
-        if (myForcedUpdateRequested && myLastUpdate == null) { // a first update really
-          updateActionsImmediately();
-        }
-      });
+      ToolbarUtilsKt.updateActionsOnFirstShow(this);
+    }
+  }
+
+  void updateActionsFirstTime() {
+    if (myForcedUpdateRequested && myLastUpdate == null) { // a first update really
+      updateActionsImmediately();
     }
   }
 
