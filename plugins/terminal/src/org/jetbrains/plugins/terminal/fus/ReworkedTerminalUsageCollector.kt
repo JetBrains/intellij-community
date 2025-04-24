@@ -31,6 +31,9 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val TEXT_LENGTH_FIELD = EventFields.Int("text_length")
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
   private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
+  private val TABS_COUNT = EventFields.Int("tab_count")
+
+  private val tabOpenedEvent = GROUP.registerEvent("tab.opened", TABS_COUNT)
 
   private val localShellStartedEvent = GROUP.registerEvent("local.exec",
                                                            OS_VERSION_FIELD,
@@ -115,6 +118,11 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     TERMINAL_OPENING_WAY,
     DURATION_FIELD,
   )
+
+  @JvmStatic
+  fun logTabOpened(project: Project, tabCount: Int) {
+    tabOpenedEvent.log(project, tabCount)
+  }
 
   @JvmStatic
   fun logLocalShellStarted(project: Project, shellCommand: Array<String>) {
