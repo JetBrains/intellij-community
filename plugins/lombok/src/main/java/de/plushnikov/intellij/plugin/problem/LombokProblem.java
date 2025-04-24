@@ -3,13 +3,14 @@ package de.plushnikov.intellij.plugin.problem;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
 public interface LombokProblem {
   LombokProblem BLACKHOLE = new LombokProblem() {
     @Override
-    public void withLocalQuickFixes(Supplier<LocalQuickFix>... quickFixSuppliers) {
+    public void withLocalQuickFixes(Supplier<@Nullable LocalQuickFix>... quickFixSuppliers) {
     }
 
     @Override
@@ -28,7 +29,7 @@ public interface LombokProblem {
     }
   };
 
-  void withLocalQuickFixes(Supplier<LocalQuickFix>... quickFixSuppliers);
+  void withLocalQuickFixes(Supplier<@Nullable LocalQuickFix>... quickFixSuppliers);
 
   ProblemHighlightType getHighlightType();
 

@@ -1,5 +1,37 @@
 <html>
 <body>
 Offers general inspections for Lombok annotations.
+<p>
+Warnings and errors reported by this inspection aim to match 1:1 the warnings and errors reported
+by the Lombok annotation processor at compile-time, such as:
+<ul>
+  <li>
+    Redundantly applied annotation (reported as a warning)
+    <p><b>Example:</b></p>
+    <pre><code>
+      @ToString
+      class Person {
+        final String name;
+        final int age;
+
+        @Override
+        public String toString() {
+            return "Person{name='" + name + "', age=" + age + '}';
+        }
+      }
+    </code></pre>
+    Quick-fix suggests removing the redundant annotation.
+  </li>
+  <li>
+    Incorrectly applied annotation (reported as an error)
+    <p><b>Example:</b></p>
+    <pre><code>
+      @Value
+      record Person(String name, int age) {}
+    </code></pre>
+    Quick-fix suggests removing the invalid annotation.
+  </li>
+</ul>
+
 </body>
 </html>
