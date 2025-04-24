@@ -607,8 +607,8 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       result = result,
     ))
     result.addAll(loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool))
-    bundledPluginDir?.let {
-      result.addAll(loadDescriptorsFromDir(dir = it, loadingContext = loadingContext, isBundled = true, pool = zipPool))
+    if (bundledPluginDir != null) {
+      result.addAll(loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool))
     }
     return result
   }
