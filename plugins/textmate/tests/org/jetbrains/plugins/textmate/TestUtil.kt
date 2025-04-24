@@ -2,10 +2,11 @@ package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
+import org.jetbrains.plugins.textmate.plist.XmlPlistReader
 
 fun TextMateSyntaxTableBuilder.loadBundle(bundleName: String): Map<TextMateFileNameMatcher, CharSequence> {
   val matchers = HashMap<TextMateFileNameMatcher, CharSequence>()
-  val grammars = TestUtil.readBundle(bundleName).readGrammars().iterator()
+  val grammars = TestUtil.readBundle(bundleName, XmlPlistReader()).readGrammars().iterator()
   while (grammars.hasNext()) {
     val grammar = grammars.next()
     addSyntax(grammar.plist.value)?.let { rootScope ->

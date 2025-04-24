@@ -11,7 +11,7 @@ import java.io.ByteArrayInputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class XmlPlistReaderTest {
+class XmlPlistReaderTestBase {
   @Test
   fun getStringMethod() {
     val plist = read("<dict><key>someKey</key><string>someValue</string></dict>")
@@ -100,7 +100,7 @@ class XmlPlistReaderTest {
   }
 
   private fun read(string: String?): Plist {
-    return XmlPlistReader().read(ByteArrayInputStream(prepareText(string).toByteArray(Charsets.UTF_8)))
+    return XmlPlistReaderForTests().read(ByteArrayInputStream(prepareText(string).toByteArray(Charsets.UTF_8)))
   }
 
   companion object {

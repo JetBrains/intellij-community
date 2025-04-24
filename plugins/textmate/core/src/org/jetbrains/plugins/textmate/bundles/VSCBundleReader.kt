@@ -9,7 +9,6 @@ import kotlinx.serialization.json.*
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateStandardTokenType
 import org.jetbrains.plugins.textmate.language.preferences.*
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistReader

@@ -2,12 +2,13 @@ package org.jetbrains.plugins.textmate.plist
 
 import java.io.IOException
 import java.io.InputStream
+import kotlin.jvm.Throws
 
-class CompositePlistReader : PlistReader {
-  private val myJsonReader: PlistReader = JsonPlistReader()
-  private val myXmlReader: PlistReader = XmlPlistReader()
-
-  @Throws(IOException::class)
+class JsonOrXmlPlistReader(
+  private val jsonReader: PlistReader,
+  private val xmlReader: PlistReader,
+) : PlistReader {
+  @Throws
   override fun read(inputStream: InputStream): Plist {
     inputStream.mark(256)
     var symbol = inputStream.read()
@@ -18,10 +19,10 @@ class CompositePlistReader : PlistReader {
     }
     inputStream.reset()
     if (symbol == '{'.code) {
-      return myJsonReader.read(inputStream)
+      return jsonReader.read(inputStream)
     }
     if (symbol == '<'.code) {
-      return myXmlReader.read(inputStream)
+      return xmlReader.read(inputStream)
     }
     throw IOException("Unknown bundle type, first char: " + symbol.toChar())
   }

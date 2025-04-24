@@ -5,7 +5,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.textmate.bundles.*
 import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleType
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader
+import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader
+import org.jetbrains.plugins.textmate.plist.PlistReader
 import java.nio.file.Path
 import kotlin.io.path.exists
 
@@ -54,10 +56,10 @@ object TestUtil {
     }
   }
 
-  fun readBundle(bundleName: String): TextMateBundleReader {
+  fun readBundle(bundleName: String, xmlPlistReader: PlistReader): TextMateBundleReader {
     val resourceReader = getResourceReader(bundleName)
     val bundleType = detectBundleType(resourceReader, bundleName)
-    val plistReader = CompositePlistReader()
+    val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = xmlPlistReader)
     return when (bundleType) {
       BundleType.TEXTMATE -> readTextMateBundle(bundleName, plistReader, resourceReader)
       BundleType.SUBLIME -> readSublimeBundle(bundleName, plistReader, resourceReader)

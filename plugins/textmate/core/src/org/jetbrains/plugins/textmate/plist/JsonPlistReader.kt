@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.plist
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
 import java.io.InputStream
+import kotlin.jvm.Throws
 
 class JsonPlistReader : PlistReader {
   companion object {

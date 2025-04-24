@@ -34,7 +34,9 @@ import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextA
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader
+import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader
+import org.jetbrains.plugins.textmate.plist.XmlPlistReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -224,10 +226,11 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     if (directory != null) {
       val resourceReader = TextMateNioResourceReader(directory)
       val bundleType = detectBundleType(resourceReader, directory.name)
+      val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = XmlPlistReader())
       return when (bundleType) {
-        BundleType.TEXTMATE -> readTextMateBundle(directory.name, CompositePlistReader(), resourceReader)
-        BundleType.SUBLIME -> readSublimeBundle(directory.name, CompositePlistReader(), resourceReader)
-        BundleType.VSCODE -> readVSCBundle(CompositePlistReader(), resourceReader)
+        BundleType.TEXTMATE -> readTextMateBundle(directory.name, plistReader, resourceReader)
+        BundleType.SUBLIME -> readSublimeBundle(directory.name, plistReader, resourceReader)
+        BundleType.VSCODE -> readVSCBundle(plistReader, resourceReader)
         BundleType.UNDEFINED -> null
       }
     }

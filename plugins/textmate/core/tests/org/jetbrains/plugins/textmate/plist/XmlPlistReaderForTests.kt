@@ -2,14 +2,13 @@ package org.jetbrains.plugins.textmate.plist
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.jetbrains.plugins.textmate.plist.PListValue.Companion.value
 import java.io.IOException
 import java.io.InputStream
 import java.lang.Boolean
-import kotlin.String
-import kotlin.let
+import kotlin.text.toDouble
+import kotlin.text.toInt
 
-class XmlPlistReader : PlistReader {
+class XmlPlistReaderForTests : PlistReader {
   override fun read(inputStream: InputStream): Plist {
     return internalRead(readXmlAsModel(inputStream))
   }
@@ -47,7 +46,7 @@ class XmlPlistReader : PlistReader {
         }
       }
 
-      return value(Plist(map), PlistValueType.DICT)
+      return PListValue.value(Plist(map), PlistValueType.DICT)
     }
 
     private fun readValue(key: String, valueElement: XmlElement): PListValue? {
@@ -65,7 +64,7 @@ class XmlPlistReader : PlistReader {
     }
 
     private fun readArray(key: String, element: XmlElement): PListValue {
-      return value(element.children.mapNotNull { readValue(key, it) }, PlistValueType.ARRAY)
+      return PListValue.value(element.children.mapNotNull { readValue(key, it) }, PlistValueType.ARRAY)
     }
 
     private fun readBasicValue(type: String, valueElement: XmlElement): PListValue? {
@@ -73,19 +72,19 @@ class XmlPlistReader : PlistReader {
 
       return when {
         "string" == type && content != null -> {
-          value(content, PlistValueType.STRING)
+          PListValue.value(content, PlistValueType.STRING)
         }
         "true" == type -> {
-          value(Boolean.TRUE, PlistValueType.BOOLEAN)
+          PListValue.value(Boolean.TRUE, PlistValueType.BOOLEAN)
         }
         "false" == type -> {
-          value(Boolean.FALSE, PlistValueType.BOOLEAN)
+          PListValue.value(Boolean.FALSE, PlistValueType.BOOLEAN)
         }
         "integer" == type && content != null -> {
-          value(content.toInt(), PlistValueType.INTEGER)
+          PListValue.value(content.toInt(), PlistValueType.INTEGER)
         }
         "real" == type && content != null -> {
-          value(content.toDouble(), PlistValueType.REAL)
+          PListValue.value(content.toDouble(), PlistValueType.REAL)
         }
         else -> null
       }
