@@ -227,7 +227,7 @@ class PluginManagerTest {
       get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"
 
     private fun assertPluginPreInstalled(expectedPluginId: PluginId?, vararg descriptors: IdeaPluginDescriptorImpl) {
-      val loadingResult = PluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins = false)
+      val loadingResult = PluginLoadingResult()
       loadingResult.initAndAddAll(
         descriptors = descriptors.asSequence(),
         overrideUseIfCompatible = false,
@@ -235,7 +235,8 @@ class PluginManagerTest {
           disabledPlugins = emptySet(), // TODO refactor the test
           expiredPlugins = emptySet(),
           brokenPluginVersions = emptyMap(),
-          getProductBuildNumber = { BuildNumber.fromString("2042.42")!! }
+          getProductBuildNumber = { BuildNumber.fromString("2042.42")!! },
+          requirePlatformAliasDependencyForLegacyPlugins = false
         )
       )
       Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
@@ -313,7 +314,8 @@ class PluginManagerTest {
         disabledPlugins = emptySet(),
         expiredPlugins = emptySet(),
         brokenPluginVersions = emptyMap(),
-        getProductBuildNumber = { buildNumber }
+        getProductBuildNumber = { buildNumber },
+        requirePlatformAliasDependencyForLegacyPlugins = false
       )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)
@@ -406,7 +408,7 @@ class PluginManagerTest {
         descriptor.jarFiles = mutableListOf<Path>()
       }
       loadingContext.close()
-      val result = PluginLoadingResult(false)
+      val result = PluginLoadingResult()
       result.initAndAddAll(
         descriptors = list.asSequence(),
         overrideUseIfCompatible = false,

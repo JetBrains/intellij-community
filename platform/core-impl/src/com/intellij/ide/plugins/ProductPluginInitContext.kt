@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -29,4 +30,7 @@ class ProductPluginInitContext(
   }
 
   override fun isPluginExpired(id: PluginId): Boolean = expiredPlugins.contains(id)
+
+  override val requirePlatformAliasDependencyForLegacyPlugins: Boolean
+    get() = !PlatformUtils.isIntelliJ()
 }

@@ -30,7 +30,8 @@ internal fun loadAndInitDescriptorInTest(
     disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),
-    getProductBuildNumber = { buildNumber }
+    getProductBuildNumber = { buildNumber },
+    requirePlatformAliasDependencyForLegacyPlugins = false
   )
   val result = runBlocking {
     loadDescriptorFromFileOrDirInTests(

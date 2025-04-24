@@ -3,17 +3,13 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.PlatformUtils
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 
-// https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
-// If a plugin does not include any module dependency tags in its plugin.xml,
-// it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
 @ApiStatus.Internal
-class PluginLoadingResult(private val requirePlatformAliasDependencyForLegacyPlugins: Boolean = !PlatformUtils.isIntelliJ()) {
+class PluginLoadingResult {
   private val incompletePlugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   @JvmField
@@ -81,7 +77,7 @@ class PluginLoadingResult(private val requirePlatformAliasDependencyForLegacyPlu
       return
     }
 
-    if (requirePlatformAliasDependencyForLegacyPlugins && isLegacyPluginWithoutPlatformAliasDependencies(descriptor)) {
+    if (initContext.requirePlatformAliasDependencyForLegacyPlugins && isLegacyPluginWithoutPlatformAliasDependencies(descriptor)) {
       addIncompletePlugin(descriptor, PluginIsCompatibleOnlyWithIntelliJIDEA(descriptor))
       return
     }

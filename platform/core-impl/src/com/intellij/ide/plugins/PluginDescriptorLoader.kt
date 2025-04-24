@@ -1211,11 +1211,12 @@ fun loadAndInitDescriptorsFromClassPathInTest(
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),
     getProductBuildNumber = { buildNumber },
+    requirePlatformAliasDependencyForLegacyPlugins = false,
   )
   val loadingContext = PluginDescriptorLoadingContext(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber },
   )
-  val result = PluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins = false)
+  val result = PluginLoadingResult()
   result.initAndAddAll(
     descriptors = toSequence(
       list = @Suppress("RAW_RUN_BLOCKING") runBlocking {
