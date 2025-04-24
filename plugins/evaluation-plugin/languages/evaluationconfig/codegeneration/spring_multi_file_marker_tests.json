@@ -7,7 +7,7 @@
   "strategy": {
     "model": "",
     "mode": "",
-    "behaviour": "SELECT_ENTIRE_NODE_AND_CALL_FEATURE",
+    "behaviour": "MULTI_FILE_GENERATION",
     "collectContextOnly": false,
     "userPrompts": {}
   },
