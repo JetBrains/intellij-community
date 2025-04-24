@@ -160,6 +160,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
     brokenPluginVersions = emptyMap(),
     getProductBuildNumber = { buildNumber },
     requirePlatformAliasDependencyForLegacyPlugins = false,
+    checkEssentialPlugins = false,
   )
   val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { buildNumber })
 

@@ -612,7 +612,6 @@ object PluginManagerCore {
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
-    checkEssentialPlugins: Boolean,
     parentActivity: Activity?,
   ): PluginManagerState {
     val pluginErrorsById = loadingResult.copyPluginErrors()
@@ -634,7 +633,7 @@ object PluginManagerCore {
                     }.toMap()
 
 
-    if (checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
+    if (initContext.checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
     }
 
@@ -682,7 +681,7 @@ object PluginManagerCore {
       }
     }
 
-    if (checkEssentialPlugins) {
+    if (initContext.checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins)
     }
 
@@ -884,7 +883,6 @@ object PluginManagerCore {
         initContext = initContext,
         loadingResult = loadingResult,
         coreLoader = coreLoader,
-        checkEssentialPlugins = !isUnitTestMode,
         parentActivity = tracerShim.getTraceActivity()
       )
       pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)

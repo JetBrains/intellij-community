@@ -237,7 +237,8 @@ class PluginManagerTest {
           expiredPlugins = emptySet(),
           brokenPluginVersions = emptyMap(),
           getProductBuildNumber = { BuildNumber.fromString("2042.42")!! },
-          requirePlatformAliasDependencyForLegacyPlugins = false
+          requirePlatformAliasDependencyForLegacyPlugins = false,
+          checkEssentialPlugins = false,
         )
       )
       Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
@@ -317,7 +318,8 @@ class PluginManagerTest {
         expiredPlugins = emptySet(),
         brokenPluginVersions = emptyMap(),
         getProductBuildNumber = { buildNumber },
-        requirePlatformAliasDependencyForLegacyPlugins = false
+        requirePlatformAliasDependencyForLegacyPlugins = false,
+        checkEssentialPlugins = false,
       )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)
@@ -421,7 +423,6 @@ class PluginManagerTest {
         initContext = initContext,
         loadingResult = result,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
-        checkEssentialPlugins = false,
         parentActivity = null
       )
     }

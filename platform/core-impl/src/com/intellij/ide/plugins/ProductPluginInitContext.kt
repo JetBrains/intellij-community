@@ -35,4 +35,7 @@ class ProductPluginInitContext(
 
   override val requirePlatformAliasDependencyForLegacyPlugins: Boolean
     get() = !PlatformUtils.isIntelliJ()
+
+  override val checkEssentialPlugins: Boolean
+    get() = !PluginManagerCore.isUnitTestMode
 }

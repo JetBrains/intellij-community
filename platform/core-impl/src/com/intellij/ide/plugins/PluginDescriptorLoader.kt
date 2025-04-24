@@ -1213,6 +1213,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
     brokenPluginVersions = emptyMap(),
     getProductBuildNumber = { buildNumber },
     requirePlatformAliasDependencyForLegacyPlugins = false,
+    checkEssentialPlugins = false,
   )
   val loadingContext = PluginDescriptorLoadingContext(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber },

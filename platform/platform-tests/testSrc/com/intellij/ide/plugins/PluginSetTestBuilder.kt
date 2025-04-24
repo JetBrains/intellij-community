@@ -46,7 +46,8 @@ class PluginSetTestBuilder(private val path: Path) {
       expiredPlugins = expiredPluginIds.toSet(),
       brokenPluginVersions = brokenPlugins.mapValues { it.value.toSet() }.toMap(),
       getProductBuildNumber = { buildNumber },
-      requirePlatformAliasDependencyForLegacyPlugins = false
+      requirePlatformAliasDependencyForLegacyPlugins = false,
+      checkEssentialPlugins = false,
     )
   }
 
@@ -76,7 +77,6 @@ class PluginSetTestBuilder(private val path: Path) {
       initContext = initContext,
       loadingResult = loadingResult,
       coreLoader = UrlClassLoader.build().get(),
-      checkEssentialPlugins = false,
       parentActivity = null,
     ).pluginSet
   }

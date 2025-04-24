@@ -22,6 +22,8 @@ interface PluginInitializationContext {
    */
   val requirePlatformAliasDependencyForLegacyPlugins: Boolean
 
+  val checkEssentialPlugins: Boolean
+
   @ApiStatus.Internal
   companion object {
     fun build(
@@ -31,6 +33,7 @@ interface PluginInitializationContext {
       brokenPluginVersions: Map<PluginId, Set<String?>>,
       getProductBuildNumber: () -> BuildNumber,
       requirePlatformAliasDependencyForLegacyPlugins: Boolean,
+      checkEssentialPlugins: Boolean
     ): PluginInitializationContext =
       object : PluginInitializationContext {
         override val productBuildNumber: BuildNumber get() = getProductBuildNumber()
@@ -39,6 +42,7 @@ interface PluginInitializationContext {
         override fun isPluginExpired(id: PluginId): Boolean = id in expiredPlugins
         override fun isPluginBroken(id: PluginId, version: String?): Boolean = brokenPluginVersions[id]?.contains(version) == true
         override val requirePlatformAliasDependencyForLegacyPlugins: Boolean = requirePlatformAliasDependencyForLegacyPlugins
+        override val checkEssentialPlugins: Boolean = checkEssentialPlugins
       }
   }
 }

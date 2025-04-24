@@ -20,6 +20,7 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
     brokenPluginVersions = emptyMap(),
     getProductBuildNumber = { PluginManagerCore.buildNumber },
     requirePlatformAliasDependencyForLegacyPlugins = false,
+    checkEssentialPlugins = false,
   )
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {

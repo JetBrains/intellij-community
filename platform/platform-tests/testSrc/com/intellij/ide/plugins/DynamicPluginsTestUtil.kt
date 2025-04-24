@@ -32,7 +32,8 @@ internal fun loadAndInitDescriptorInTest(
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),
     getProductBuildNumber = { buildNumber },
-    requirePlatformAliasDependencyForLegacyPlugins = false
+    requirePlatformAliasDependencyForLegacyPlugins = false,
+    checkEssentialPlugins = false,
   )
   val result = runBlocking {
     loadDescriptorFromFileOrDirInTests(
