@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -68,7 +67,6 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
       }
     }
 
-    sc.childScope()
     sc.launch {
       projectDumbState.collect {
         onStateChanged()
