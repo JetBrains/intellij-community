@@ -3,7 +3,7 @@ package com.intellij.ide.gdpr.ui.consents
 
 import com.intellij.openapi.util.NlsSafe
 
-interface ConsentUi {
+internal interface ConsentUi {
   fun getCheckBoxText(): @NlsSafe String
 
   fun getCheckBoxCommentText(): @NlsSafe String
