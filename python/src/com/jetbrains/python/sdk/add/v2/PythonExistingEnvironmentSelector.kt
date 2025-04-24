@@ -11,8 +11,10 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.flow.map
 
 class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : PythonExistingEnvironmentConfigurator(model) {
 
@@ -32,7 +34,7 @@ class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel, privat
   }
 
   override fun onShown() {
-    comboBox.setItems(model.allInterpreters)
+    comboBox.setItems(model.allInterpreters.map { sortForExistingEnvironment(it, moduleOrProject?.moduleIfExists) })
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {

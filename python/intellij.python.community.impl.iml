@@ -148,5 +148,6 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="library" name="commons-lang3" level="project" />
   </component>
 </module>

@@ -45,6 +45,7 @@ import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.apache.commons.lang3.builder.CompareToBuilder
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -355,7 +356,7 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams) : PythonM
 }
 
 
-sealed class PythonSelectableInterpreter {
+sealed class PythonSelectableInterpreter : Comparable<PythonSelectableInterpreter> {
   /**
    * Base python is some system python (not venv) which can be used as a base for venv.
    * In terms of flavors we call it __not__ [PythonSdkFlavor.isPlatformIndependent]
@@ -368,6 +369,12 @@ sealed class PythonSelectableInterpreter {
   abstract val languageLevel: LanguageLevel
   open val uiCustomization: UICustomization? = null
   override fun toString(): String = "PythonSelectableInterpreter(homePath='$homePath')"
+
+  override fun compareTo(other: PythonSelectableInterpreter): Int =
+    CompareToBuilder()
+      .append(uiCustomization?.hashCode(), other.uiCustomization?.hashCode())
+      .append(other.languageLevel, languageLevel)
+      .toComparison()
 }
 
 class ExistingSelectableInterpreter(
@@ -379,7 +386,13 @@ class ExistingSelectableInterpreter(
     !sdk.sdkFlavor.isPlatformIndependent
   }
 
+  override fun toString(): String {
+    return "ExistingSelectableInterpreter(sdk=$sdk, languageLevel=$languageLevel, isSystemWide=$isSystemWide, homePath='$homePath')"
+  }
+
   override val homePath = sdk.homePath!! // todo is it safe
+
+
 }
 
 /**
@@ -390,14 +403,12 @@ class DetectedSelectableInterpreter(
   override val languageLevel: LanguageLevel,
   private val isBase: Boolean,
   override val uiCustomization: UICustomization? = null,
-) : PythonSelectableInterpreter(), Comparable<DetectedSelectableInterpreter> {
+) : PythonSelectableInterpreter() {
   override suspend fun isBasePython(): Boolean = isBase
-
-
-  override fun compareTo(other: DetectedSelectableInterpreter): Int { // First by type
-    val byType = (uiCustomization?.title ?: "").compareTo(other.uiCustomization?.title ?: "") // Then from the highest python to the lowest
-    return if (byType != 0) byType else (languageLevel.compareTo(other.languageLevel) * -1)
+  override fun toString(): String {
+    return "DetectedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel, isBase=$isBase, uiCustomization=$uiCustomization)"
   }
+
 }
 
 class ManuallyAddedSelectableInterpreter(
@@ -405,6 +416,12 @@ class ManuallyAddedSelectableInterpreter(
   override val languageLevel: LanguageLevel,
 ) : PythonSelectableInterpreter() {
   constructor(python: PythonWithLanguageLevel) : this(python.pythonBinary.pathString, python.languageLevel)
+
+  override fun toString(): String {
+    return "ManuallyAddedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel)"
+  }
+
+
 }
 
 class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {

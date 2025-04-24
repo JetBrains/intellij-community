@@ -9,12 +9,14 @@ import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -64,7 +66,7 @@ internal abstract class CustomExistingEnvironmentSelector(private val name: Stri
   }
 
   override fun onShown() {
-    comboBox.setItems(existingEnvironments)
+    comboBox.setItems(existingEnvironments.map { sortForExistingEnvironment(it, moduleOrProject.moduleIfExists) })
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

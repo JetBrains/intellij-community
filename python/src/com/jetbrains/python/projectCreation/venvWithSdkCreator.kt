@@ -21,7 +21,6 @@ import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModuleAsync
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -87,7 +86,6 @@ suspend fun createVenvAndSdk(
   }
   configurePythonSdk(project, module, sdk)
   sdk.setAssociationToModuleAsync(module)
-  module.pythonSdk
   return Result.success(sdk)
 }
 

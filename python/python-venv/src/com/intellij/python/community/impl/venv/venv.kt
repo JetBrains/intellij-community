@@ -20,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CheckReturnValue
-import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -37,7 +36,7 @@ suspend fun createVenv(
   venvDir: Directory,
   inheritSitePackages: Boolean = false,
   envReader: VirtualEnvReader = VirtualEnvReader.Instance,
-): Result<Path, PyError> {
+): Result<PythonBinary, PyError> {
   val execService = ExecService()
   val args = buildList {
     if (inheritSitePackages) {
