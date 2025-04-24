@@ -1,45 +1,43 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.diff.util.Range;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
+import com.intellij.diff.util.Range
 
 /**
  * Represents computed differences between two sequences.
- * <p/>
- * All {@link Range} are not empty (have at least one element in one of the sides). Ranges do not overlap.
- * <p/>
- * Differences are guaranteed to be 'squashed': there are no two changed or two unchanged {@link Range} with
- * <code>(range1.end1 == range2.start1 && range1.end2 == range2.start2)</code>.
+ *
+ *
+ * All [Range] are not empty (have at least one element in one of the sides). Ranges do not overlap.
+ *
+ *
+ * Differences are guaranteed to be 'squashed': there are no two changed or two unchanged [Range] with
+ * `(range1.end1 == range2.start1 && range1.end2 == range2.start2)`.
  *
  * @see FairDiffIterable
- * @see DiffIterableUtil#iterateAll(DiffIterable)
- * @see DiffIterableUtil#verify(DiffIterable)
+ *
+ * @see DiffIterableUtil.iterateAll
+ * @see DiffIterableUtil.verify
  */
-public interface DiffIterable {
+interface DiffIterable {
   /**
    * @return length of the first sequence
    */
-  int getLength1();
+  val length1: Int
 
   /**
    * @return length of the second sequence
    */
-  int getLength2();
+  val length2: Int
 
-  @NotNull
-  Iterator<Range> changes();
+  fun changes(): Iterator<Range>
 
-  @NotNull
-  Iterator<Range> unchanged();
+  fun unchanged(): Iterator<Range>
 
-  default @NotNull Iterable<Range> iterateChanges() {
-    return this::changes;
+  fun iterateChanges(): Iterable<Range> {
+    return Iterable { this.changes() }
   }
 
-  default @NotNull Iterable<Range> iterateUnchanged() {
-    return this::unchanged;
+  fun iterateUnchanged(): Iterable<Range> {
+    return Iterable { this.unchanged() }
   }
 }

@@ -1,71 +1,46 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.diff.util.Range;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.Range
 
-import java.util.Iterator;
-
-class ExpandedDiffIterable extends ChangeDiffIterableBase {
-  private final @NotNull DiffIterable myIterable;
-  private final int myOffset1;
-  private final int myOffset2;
-
-  ExpandedDiffIterable(@NotNull DiffIterable iterable, int offset1, int offset2, int length1, int length2) {
-    super(length1, length2);
-    myIterable = iterable;
-    myOffset1 = offset1;
-    myOffset2 = offset2;
+internal class ExpandedDiffIterable(
+  private val myIterable: DiffIterable,
+  private val myOffset1: Int,
+  private val myOffset2: Int,
+  length1: Int,
+  length2: Int
+) : ChangeDiffIterableBase(length1, length2) {
+  override fun createChangeIterable(): ChangeIterable {
+    return ShiftedChangeIterable(myIterable, myOffset1, myOffset2)
   }
 
-  @Override
-  protected @NotNull ChangeIterable createChangeIterable() {
-    return new ShiftedChangeIterable(myIterable, myOffset1, myOffset2);
-  }
+  private class ShiftedChangeIterable(iterable: DiffIterable, private val myOffset1: Int, private val myOffset2: Int) : ChangeIterable {
+    private val myIterator: Iterator<Range> = iterable.changes()
 
-  private static class ShiftedChangeIterable implements ChangeIterable {
-    private final Iterator<Range> myIterator;
-    private final int myOffset1;
-    private final int myOffset2;
+    private var myLast: Range? = null
 
-    private Range myLast;
-
-    ShiftedChangeIterable(@NotNull DiffIterable iterable, int offset1, int offset2) {
-      myIterator = iterable.changes();
-      myOffset1 = offset1;
-      myOffset2 = offset2;
-
-      next();
+    init {
+      next()
     }
 
-    @Override
-    public boolean valid() {
-      return myLast != null;
+    override fun valid(): Boolean {
+      return myLast != null
     }
 
-    @Override
-    public void next() {
-      myLast = myIterator.hasNext() ? myIterator.next() : null;
+    override fun next() {
+      myLast = if (myIterator.hasNext()) myIterator.next() else null
     }
 
-    @Override
-    public int getStart1() {
-      return myLast.start1 + myOffset1;
-    }
+    override val start1: Int
+      get() = myLast!!.start1 + myOffset1
 
-    @Override
-    public int getStart2() {
-      return myLast.start2 + myOffset2;
-    }
+    override val start2: Int
+      get() = myLast!!.start2 + myOffset2
 
-    @Override
-    public int getEnd1() {
-      return myLast.end1 + myOffset1;
-    }
+    override val end1: Int
+      get() = myLast!!.end1 + myOffset1
 
-    @Override
-    public int getEnd2() {
-      return myLast.end2 + myOffset2;
-    }
+    override val end2: Int
+      get() = myLast!!.end2 + myOffset2
   }
 }

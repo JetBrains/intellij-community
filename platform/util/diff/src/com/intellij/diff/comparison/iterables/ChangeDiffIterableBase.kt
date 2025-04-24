@@ -1,127 +1,93 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.diff.util.Range;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
+import com.intellij.diff.util.Range
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public abstract class ChangeDiffIterableBase implements DiffIterable {
-  private final int myLength1;
-  private final int myLength2;
-
-  ChangeDiffIterableBase(int length1, int length2) {
-    myLength1 = length1;
-    myLength2 = length2;
+abstract class ChangeDiffIterableBase(override val length1: Int, override val length2: Int) : DiffIterable {
+  override fun changes(): Iterator<Range> {
+    return ChangedIterator(createChangeIterable())
   }
 
-  @Override
-  public int getLength1() {
-    return myLength1;
+  override fun unchanged(): Iterator<Range> {
+    return UnchangedIterator(createChangeIterable(), this.length1,
+                             this.length2)
   }
 
-  @Override
-  public int getLength2() {
-    return myLength2;
-  }
-
-  @Override
-  public @NotNull Iterator<Range> changes() {
-    return new ChangedIterator(createChangeIterable());
-  }
-
-  @Override
-  public @NotNull Iterator<Range> unchanged() {
-    return new UnchangedIterator(createChangeIterable(), myLength1, myLength2);
-  }
-
-  private static final class ChangedIterator implements Iterator<Range> {
-    private final @NotNull ChangeIterable myIterable;
-
-    private ChangedIterator(@NotNull ChangeIterable iterable) {
-      myIterable = iterable;
+  private class ChangedIterator(private val myIterable: ChangeIterable) : Iterator<Range> {
+    override fun hasNext(): Boolean {
+      return myIterable.valid()
     }
 
-    @Override
-    public boolean hasNext() {
-      return myIterable.valid();
-    }
-
-    @Override
-    public Range next() {
-      Range range = new Range(myIterable.getStart1(), myIterable.getEnd1(), myIterable.getStart2(), myIterable.getEnd2());
-      myIterable.next();
-      return range;
+    override fun next(): Range {
+      val range = Range(myIterable.start1, myIterable.end1, myIterable.start2,
+                        myIterable.end2)
+      myIterable.next()
+      return range
     }
   }
 
-  private static final class UnchangedIterator implements Iterator<Range> {
-    private final @NotNull ChangeIterable myIterable;
-    private final int myLength1;
-    private final int myLength2;
+  private class UnchangedIterator(
+    private val myIterable: ChangeIterable,
+    private val myLength1: Int,
+    private val myLength2: Int
+  ) : Iterator<Range> {
+    private var lastIndex1 = 0
+    private var lastIndex2 = 0
 
-    private int lastIndex1 = 0;
-    private int lastIndex2 = 0;
-
-    private UnchangedIterator(@NotNull ChangeIterable iterable, int length1, int length2) {
-      myIterable = iterable;
-      myLength1 = length1;
-      myLength2 = length2;
-
+    init {
       if (myIterable.valid()) {
-        if (myIterable.getStart1() == 0 && myIterable.getStart2() == 0) {
-          lastIndex1 = myIterable.getEnd1();
-          lastIndex2 = myIterable.getEnd2();
-          myIterable.next();
+        if (myIterable.start1 == 0 && myIterable.start2 == 0) {
+          lastIndex1 = myIterable.end1
+          lastIndex2 = myIterable.end2
+          myIterable.next()
         }
       }
     }
 
-    @Override
-    public boolean hasNext() {
-      return myIterable.valid() || (lastIndex1 != myLength1 || lastIndex2 != myLength2);
+    override fun hasNext(): Boolean {
+      return myIterable.valid() || (lastIndex1 != myLength1 || lastIndex2 != myLength2)
     }
 
-    @Override
-    public Range next() {
+    override fun next(): Range {
       if (myIterable.valid()) {
-        assert (myIterable.getStart1() - lastIndex1 != 0) || (myIterable.getStart2() - lastIndex2 != 0);
-        Range chunk = new Range(lastIndex1, myIterable.getStart1(), lastIndex2, myIterable.getStart2());
+        assert((myIterable.start1 - lastIndex1 != 0) || (myIterable.start2 - lastIndex2 != 0))
+        val chunk = Range(lastIndex1, myIterable.start1, lastIndex2,
+                          myIterable.start2)
 
-        lastIndex1 = myIterable.getEnd1();
-        lastIndex2 = myIterable.getEnd2();
+        lastIndex1 = myIterable.end1
+        lastIndex2 = myIterable.end2
 
-        myIterable.next();
+        myIterable.next()
 
-        return chunk;
+        return chunk
       }
       else {
-        assert (myLength1 - lastIndex1 != 0) || (myLength2 - lastIndex2 != 0);
-        Range chunk = new Range(lastIndex1, myLength1, lastIndex2, myLength2);
+        assert((myLength1 - lastIndex1 != 0) || (myLength2 - lastIndex2 != 0))
+        val chunk = Range(lastIndex1, myLength1, lastIndex2, myLength2)
 
-        lastIndex1 = myLength1;
-        lastIndex2 = myLength2;
+        lastIndex1 = myLength1
+        lastIndex2 = myLength2
 
-        return chunk;
+        return chunk
       }
     }
   }
 
-  protected abstract @NotNull ChangeIterable createChangeIterable();
+  protected abstract fun createChangeIterable(): ChangeIterable
 
   protected interface ChangeIterable {
-    boolean valid();
+    fun valid(): Boolean
 
-    void next();
+    fun next()
 
-    int getStart1();
+    val start1: Int
 
-    int getStart2();
+    val start2: Int
 
-    int getEnd1();
+    val end1: Int
 
-    int getEnd2();
+    val end2: Int
   }
 }

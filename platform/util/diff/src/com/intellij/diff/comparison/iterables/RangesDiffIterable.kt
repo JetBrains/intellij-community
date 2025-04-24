@@ -1,63 +1,43 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.diff.util.Range;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.Range
 
-import java.util.Collection;
-import java.util.Iterator;
-
-class RangesDiffIterable extends ChangeDiffIterableBase {
-  private final @NotNull Collection<? extends Range> myRanges;
-
-  RangesDiffIterable(@NotNull Collection<? extends Range> ranges, int length1, int length2) {
-    super(length1, length2);
-    myRanges = ranges;
+internal class RangesDiffIterable(
+  private val myRanges: Collection<Range>,
+  length1: Int,
+  length2: Int
+) : ChangeDiffIterableBase(length1, length2) {
+  override fun createChangeIterable(): ChangeIterable {
+    return RangesChangeIterable(myRanges)
   }
 
-  @Override
-  protected @NotNull ChangeIterable createChangeIterable() {
-    return new RangesChangeIterable(myRanges);
-  }
+  private class RangesChangeIterable(ranges: Collection<Range>) : ChangeIterable {
+    private val myIterator: Iterator<Range> = ranges.iterator()
+    private var myLast: Range? = null
 
-  private static final class RangesChangeIterable implements ChangeIterable {
-    private final Iterator<? extends Range> myIterator;
-    private Range myLast;
-
-    private RangesChangeIterable(@NotNull Collection<? extends Range> ranges) {
-      myIterator = ranges.iterator();
-
-      next();
+    init {
+      next()
     }
 
-    @Override
-    public boolean valid() {
-      return myLast != null;
+    override fun valid(): Boolean {
+      return myLast != null
     }
 
-    @Override
-    public void next() {
-      myLast = myIterator.hasNext() ? myIterator.next() : null;
+    override fun next() {
+      myLast = if (myIterator.hasNext()) myIterator.next() else null
     }
 
-    @Override
-    public int getStart1() {
-      return myLast.start1;
-    }
+    override val start1: Int
+      get() = myLast!!.start1
 
-    @Override
-    public int getStart2() {
-      return myLast.start2;
-    }
+    override val start2: Int
+      get() = myLast!!.start2
 
-    @Override
-    public int getEnd1() {
-      return myLast.end1;
-    }
+    override val end1: Int
+      get() = myLast!!.end1
 
-    @Override
-    public int getEnd2() {
-      return myLast.end2;
-    }
+    override val end2: Int
+      get() = myLast!!.end2
   }
 }

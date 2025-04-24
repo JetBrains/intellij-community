@@ -1,19 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.tools.util.text;
+package com.intellij.diff.tools.util.text
 
-public interface LineOffsets {
-  int getLineStart(int line);
+interface LineOffsets {
+  fun getLineStart(line: Int): Int
 
   /**
    * includeNewline = false
    */
-  int getLineEnd(int line);
+  fun getLineEnd(line: Int): Int
 
-  int getLineEnd(int line, boolean includeNewline);
+  fun getLineEnd(line: Int, includeNewline: Boolean): Int
 
-  int getLineNumber(int offset);
+  fun getLineNumber(offset: Int): Int
 
-  int getLineCount();
+  val lineCount: Int
 
-  int getTextLength();
+  val textLength: Int
 }

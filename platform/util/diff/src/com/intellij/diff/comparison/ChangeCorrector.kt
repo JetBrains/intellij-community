@@ -1,177 +1,127 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison;
+package com.intellij.diff.comparison
 
-import com.intellij.diff.comparison.ByLineRt.Line;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
-import com.intellij.diff.comparison.iterables.FairDiffIterable;
-import com.intellij.diff.util.Range;
-import com.intellij.util.IntPair;
-import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
-
-import static com.intellij.diff.comparison.TrimUtil.expand;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.diff;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
+import com.intellij.diff.comparison.ByCharRt.compare
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.comparison.iterables.FairDiffIterable
+import com.intellij.util.IntPair
+import it.unimi.dsi.fastutil.ints.IntList
 
 /*
  * Base class for two-step diff algorithms.
  * Given matching between some sub-sequences of base sequences - build matching on whole base sequences
  */
-abstract class ChangeCorrector {
-  private final int myLength1;
-  private final int myLength2;
-  private final @NotNull FairDiffIterable myChanges;
+internal abstract class ChangeCorrector(
+  private val myLength1: Int,
+  private val myLength2: Int,
+  private val myChanges: FairDiffIterable,
+  protected val myIndicator: CancellationChecker
+) {
+  protected val myBuilder: DiffIterableUtil.ChangeBuilder = DiffIterableUtil.ChangeBuilder(myLength1, myLength2)
 
-  protected final @NotNull CancellationChecker myIndicator;
-
-  protected final @NotNull DiffIterableUtil.ChangeBuilder myBuilder;
-
-  ChangeCorrector(int length1,
-                         int length2,
-                         @NotNull FairDiffIterable changes,
-                         @NotNull CancellationChecker indicator) {
-    myLength1 = length1;
-    myLength2 = length2;
-    myChanges = changes;
-    myIndicator = indicator;
-
-    myBuilder = new DiffIterableUtil.ChangeBuilder(length1, length2);
+  fun build(): FairDiffIterable {
+    execute()
+    return DiffIterableUtil.fair(myBuilder.finish())
   }
 
-  public @NotNull FairDiffIterable build() {
-    execute();
-    return fair(myBuilder.finish());
-  }
+  protected fun execute() {
+    var last1 = 0
+    var last2 = 0
 
-  protected void execute() {
-    int last1 = 0;
-    int last2 = 0;
+    for (ch in myChanges.iterateUnchanged()) {
+      val count = ch.end1 - ch.start1
+      for (i in 0..<count) {
+        val range1 = getOriginalRange1(ch.start1 + i)
+        val range2 = getOriginalRange2(ch.start2 + i)
 
-    for (Range ch : myChanges.iterateUnchanged()) {
-      int count = ch.end1 - ch.start1;
-      for (int i = 0; i < count; i++) {
-        IntPair range1 = getOriginalRange1(ch.start1 + i);
-        IntPair range2 = getOriginalRange2(ch.start2 + i);
+        val start1 = range1.first
+        val start2 = range2.first
+        val end1 = range1.second
+        val end2 = range2.second
 
-        int start1 = range1.first;
-        int start2 = range2.first;
-        int end1 = range1.second;
-        int end2 = range2.second;
+        matchGap(last1, start1, last2, start2)
+        myBuilder.markEqual(start1, start2, end1, end2)
 
-        matchGap(last1, start1, last2, start2);
-        myBuilder.markEqual(start1, start2, end1, end2);
-
-        last1 = end1;
-        last2 = end2;
+        last1 = end1
+        last2 = end2
       }
     }
-    matchGap(last1, myLength1, last2, myLength2);
+    matchGap(last1, myLength1, last2, myLength2)
   }
 
   // match elements in range [start1 - end1) -> [start2 - end2)
-  protected abstract void matchGap(int start1, int end1, int start2, int end2);
+  protected abstract fun matchGap(start1: Int, end1: Int, start2: Int, end2: Int)
 
-  protected abstract IntPair getOriginalRange1(int index);
+  protected abstract fun getOriginalRange1(index: Int): IntPair
 
-  protected abstract IntPair getOriginalRange2(int index);
+  protected abstract fun getOriginalRange2(index: Int): IntPair
 
   //
   // Implementations
   //
+  class DefaultCharChangeCorrector(
+    private val myCodePoints1: ByCharRt.CodePointsOffsets,
+    private val myCodePoints2: ByCharRt.CodePointsOffsets,
+    private val myText1: CharSequence,
+    private val myText2: CharSequence,
+    changes: FairDiffIterable,
+    indicator: CancellationChecker
+  ) : ChangeCorrector(myText1.length, myText2.length, changes, indicator) {
+    override fun matchGap(start1: Int, end1: Int, start2: Int, end2: Int) {
+      val inner1 = myText1.subSequence(start1, end1)
+      val inner2 = myText2.subSequence(start2, end2)
+      val innerChanges = compare(inner1, inner2, myIndicator)
 
-  public static class DefaultCharChangeCorrector extends ChangeCorrector {
-    private final @NotNull ByCharRt.CodePointsOffsets myCodePoints1;
-    private final @NotNull ByCharRt.CodePointsOffsets myCodePoints2;
-    private final @NotNull CharSequence myText1;
-    private final @NotNull CharSequence myText2;
-
-    public DefaultCharChangeCorrector(@NotNull ByCharRt.CodePointsOffsets codePoints1,
-                                      @NotNull ByCharRt.CodePointsOffsets codePoints2,
-                                      @NotNull CharSequence text1,
-                                      @NotNull CharSequence text2,
-                                      @NotNull FairDiffIterable changes,
-                                      @NotNull CancellationChecker indicator) {
-      super(text1.length(), text2.length(), changes, indicator);
-      myCodePoints1 = codePoints1;
-      myCodePoints2 = codePoints2;
-      myText1 = text1;
-      myText2 = text2;
-    }
-
-    @Override
-    protected void matchGap(int start1, int end1, int start2, int end2) {
-      CharSequence inner1 = myText1.subSequence(start1, end1);
-      CharSequence inner2 = myText2.subSequence(start2, end2);
-      FairDiffIterable innerChanges = ByCharRt.compare(inner1, inner2, myIndicator);
-
-      for (Range chunk : innerChanges.iterateUnchanged()) {
-        myBuilder.markEqual(start1 + chunk.start1, start2 + chunk.start2, chunk.end1 - chunk.start1);
+      for (chunk in innerChanges.iterateUnchanged()) {
+        myBuilder.markEqual(start1 + chunk.start1, start2 + chunk.start2, chunk.end1 - chunk.start1)
       }
     }
 
-    @Override
-    protected IntPair getOriginalRange1(int index) {
-      int startOffset = myCodePoints1.charOffset(index);
-      int endOffset = myCodePoints1.charOffsetAfter(index);
-      return new IntPair(startOffset, endOffset);
+    override fun getOriginalRange1(index: Int): IntPair {
+      val startOffset = myCodePoints1.charOffset(index)
+      val endOffset = myCodePoints1.charOffsetAfter(index)
+      return IntPair(startOffset, endOffset)
     }
 
-    @Override
-    protected IntPair getOriginalRange2(int index) {
-      int startOffset = myCodePoints2.charOffset(index);
-      int endOffset = myCodePoints2.charOffsetAfter(index);
-      return new IntPair(startOffset, endOffset);
+    override fun getOriginalRange2(index: Int): IntPair {
+      val startOffset = myCodePoints2.charOffset(index)
+      val endOffset = myCodePoints2.charOffsetAfter(index)
+      return IntPair(startOffset, endOffset)
     }
   }
 
-  public static final class SmartLineChangeCorrector extends ChangeCorrector {
-    private final @NotNull IntList myIndexes1;
-    private final @NotNull IntList myIndexes2;
-    private final @NotNull List<Line> myLines1;
-    private final @NotNull List<Line> myLines2;
+  class SmartLineChangeCorrector(
+    private val myIndexes1: IntList,
+    private val myIndexes2: IntList,
+    private val myLines1: List<ByLineRt.Line>,
+    private val myLines2: List<ByLineRt.Line>,
+    changes: FairDiffIterable,
+    indicator: CancellationChecker
+  ) : ChangeCorrector(myLines1.size, myLines2.size, changes, indicator) {
+    override fun matchGap(start1: Int, end1: Int, start2: Int, end2: Int) {
+      val expand = expand(myLines1, myLines2, start1, start2, end1, end2)
 
-    public SmartLineChangeCorrector(@NotNull IntList indexes1,
-                                    @NotNull IntList indexes2,
-                                    @NotNull List<Line> lines1,
-                                    @NotNull List<Line> lines2,
-                                    @NotNull FairDiffIterable changes,
-                                    @NotNull CancellationChecker indicator) {
-      super(lines1.size(), lines2.size(), changes, indicator);
-      myIndexes1 = indexes1;
-      myIndexes2 = indexes2;
-      myLines1 = lines1;
-      myLines2 = lines2;
-    }
+      val inner1 = myLines1.subList(expand.start1, expand.end1)
+      val inner2 = myLines2.subList(expand.start2, expand.end2)
+      val innerChanges = DiffIterableUtil.diff(inner1, inner2, myIndicator)
 
-    @Override
-    protected void matchGap(int start1, int end1, int start2, int end2) {
-      Range expand = expand(myLines1, myLines2, start1, start2, end1, end2);
+      myBuilder.markEqual(start1, start2, expand.start1, expand.start2)
 
-      List<Line> inner1 = myLines1.subList(expand.start1, expand.end1);
-      List<Line> inner2 = myLines2.subList(expand.start2, expand.end2);
-      FairDiffIterable innerChanges = diff(inner1, inner2, myIndicator);
-
-      myBuilder.markEqual(start1, start2, expand.start1, expand.start2);
-
-      for (Range chunk : innerChanges.iterateUnchanged()) {
-        myBuilder.markEqual(expand.start1 + chunk.start1, expand.start2 + chunk.start2, chunk.end1 - chunk.start1);
+      for (chunk in innerChanges.iterateUnchanged()) {
+        myBuilder.markEqual(expand.start1 + chunk.start1, expand.start2 + chunk.start2, chunk.end1 - chunk.start1)
       }
 
-      myBuilder.markEqual(expand.end1, expand.end2, end1, end2);
+      myBuilder.markEqual(expand.end1, expand.end2, end1, end2)
     }
 
-    @Override
-    protected IntPair getOriginalRange1(int index) {
-      int offset = myIndexes1.getInt(index);
-      return new IntPair(offset, offset + 1);
+    override fun getOriginalRange1(index: Int): IntPair {
+      val offset = myIndexes1.getInt(index)
+      return IntPair(offset, offset + 1)
     }
 
-    @Override
-    protected IntPair getOriginalRange2(int index) {
-      int offset = myIndexes2.getInt(index);
-      return new IntPair(offset, offset + 1);
+    override fun getOriginalRange2(index: Int): IntPair {
+      val offset = myIndexes2.getInt(index)
+      return IntPair(offset, offset + 1)
     }
   }
 }

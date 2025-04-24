@@ -1,145 +1,134 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.util;
+package com.intellij.diff.util
 
-import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.fragments.LineFragment;
-import com.intellij.openapi.util.Couple;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.fragments.DiffFragment
+import com.intellij.diff.fragments.LineFragment
+import com.intellij.openapi.util.Couple
+import org.jetbrains.annotations.Contract
 
-import java.util.List;
-
-public enum Side {
+enum class Side(open val index: Int) {
   LEFT(0),
   RIGHT(1);
 
-  private final int myIndex;
+  open val isLeft: Boolean
+    get() = index == 0
 
-  Side(int index) {
-    myIndex = index;
-  }
-
-  public static @NotNull Side fromIndex(int index) {
-    if (index == 0) return LEFT;
-    if (index == 1) return RIGHT;
-    throw new IndexOutOfBoundsException("index: " + index);
-  }
-
-  public static @NotNull Side fromLeft(boolean isLeft) {
-    return isLeft ? LEFT : RIGHT;
-  }
-
-  public static @NotNull Side fromRight(boolean isRight) {
-    return isRight ? RIGHT : LEFT;
-  }
-
-  public int getIndex() {
-    return myIndex;
-  }
-
-  public boolean isLeft() {
-    return myIndex == 0;
+  @Contract(pure = true)
+  open fun other(): Side {
+    return if (isLeft) RIGHT else LEFT
   }
 
   @Contract(pure = true)
-  public @NotNull Side other() {
-    return isLeft() ? RIGHT : LEFT;
-  }
-
-  @Contract(pure = true)
-  public @NotNull Side other(boolean other) {
-    return other ? other() : this;
+  open fun other(other: Boolean): Side {
+    return if (other) other() else this
   }
 
   //
   // Helpers
   //
-
-  public int select(int left, int right) {
-    return isLeft() ? left : right;
+  open fun select(left: Int, right: Int): Int {
+    return if (isLeft) left else right
   }
 
   @Contract(value = "!null, !null -> !null; null, null -> null", pure = true)
-  public @Nullable <T> T select(@Nullable T left, @Nullable T right) {
-    return isLeft() ? left : right;
+  open fun <T> select(left: T, right: T): T {
+    return if (isLeft) left else right
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull T left, @NotNull T right) {
-    return isLeft() ? left : right;
+  open fun <T : Any> selectNotNull(left: T, right: T): T {
+    return if (isLeft) left else right
   }
 
   @Contract(pure = true)
-  public boolean select(boolean @NotNull [] array) {
-    assert array.length == 2;
-    return array[myIndex];
+  open fun select(array: BooleanArray): Boolean {
+    assert(array.size == 2)
+    return array[index]
   }
 
   @Contract(pure = true)
-  public int select(int @NotNull [] array) {
-    assert array.length == 2;
-    return array[myIndex];
+  open fun select(array: IntArray): Int {
+    assert(array.size == 2)
+    return array[index]
   }
 
   @Contract(pure = true)
-  public <T> T select(T @NotNull [] array) {
-    assert array.length == 2;
-    return array[myIndex];
+  open fun <T> select(array: Array<T>): T {
+    assert(array.size == 2)
+    return array[index]
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(T @NotNull [] array) {
-    assert array.length == 2;
-    return array[myIndex];
+  open fun <T : Any> selectNotNull(array: Array<T>): T {
+    assert(array.size == 2)
+    return array[index]
   }
 
   @Contract(pure = true)
-  public <T> T select(@NotNull List<T> list) {
-    assert list.size() == 2;
-    return list.get(myIndex);
+  open fun <T> select(list: List<T>): T {
+    assert(list.size == 2)
+    return list[index]
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull List<T> list) {
-    assert list.size() == 2;
-    return list.get(myIndex);
+  open fun <T : Any> selectNotNull(list: List<T>): T {
+    assert(list.size == 2)
+    return list[index]
   }
 
   @Contract(pure = true)
-  public <T> T select(@NotNull Couple<T> region) {
-    return isLeft() ? region.first : region.second;
+  open fun <T> select(region: Couple<T>): T {
+    return if (isLeft) region.first else region.second
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull Couple<T> region) {
-    return isLeft() ? region.first : region.second;
-  }
-
-  @Contract(pure = true)
-  public static @Nullable <T> Side fromValue(@NotNull List<? extends T> list, @Nullable T value) {
-    assert list.size() == 2;
-    int index = list.indexOf(value);
-    return index != -1 ? fromIndex(index) : null;
+  open fun <T : Any> selectNotNull(region: Couple<T>): T {
+    return if (isLeft) region.first else region.second
   }
 
   //
   // Fragments
   //
-
-  public int getStartOffset(@NotNull DiffFragment fragment) {
-    return isLeft() ? fragment.getStartOffset1() : fragment.getStartOffset2();
+  open fun getStartOffset(fragment: DiffFragment): Int {
+    return if (isLeft) fragment.startOffset1 else fragment.startOffset2
   }
 
-  public int getEndOffset(@NotNull DiffFragment fragment) {
-    return isLeft() ? fragment.getEndOffset1() : fragment.getEndOffset2();
+  open fun getEndOffset(fragment: DiffFragment): Int {
+    return if (isLeft) fragment.endOffset1 else fragment.endOffset2
   }
 
-  public int getStartLine(@NotNull LineFragment fragment) {
-    return isLeft() ? fragment.getStartLine1() : fragment.getStartLine2();
+  open fun getStartLine(fragment: LineFragment): Int {
+    return if (isLeft) fragment.startLine1 else fragment.startLine2
   }
 
-  public int getEndLine(@NotNull LineFragment fragment) {
-    return isLeft() ? fragment.getEndLine1() : fragment.getEndLine2();
+  open fun getEndLine(fragment: LineFragment): Int {
+    return if (isLeft) fragment.endLine1 else fragment.endLine2
+  }
+
+  companion object {
+    @JvmStatic
+    fun fromIndex(index: Int): Side {
+      if (index == 0) return LEFT
+      if (index == 1) return RIGHT
+      throw IndexOutOfBoundsException("index: $index")
+    }
+
+    @JvmStatic
+    fun fromLeft(isLeft: Boolean): Side {
+      return if (isLeft) LEFT else RIGHT
+    }
+
+    @JvmStatic
+    fun fromRight(isRight: Boolean): Side {
+      return if (isRight) RIGHT else LEFT
+    }
+
+    @JvmStatic
+    @Contract(pure = true)
+    fun <T> fromValue(list: List<T>, value: T): Side? {
+      assert(list.size == 2)
+      val index = list.indexOf(value)
+      return if (index != -1) fromIndex(index) else null
+    }
   }
 }

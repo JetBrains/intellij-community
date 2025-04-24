@@ -1,23 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.fragments;
-
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+package com.intellij.diff.fragments
 
 /**
  * Modified part of the text
  *
  * Offset ranges cover whole line, including '\n' at the end. But '\n' can be absent for the last line.
  */
-public interface LineFragment extends DiffFragment {
-  int getStartLine1();
+interface LineFragment : DiffFragment {
+  val startLine1: Int
 
-  int getEndLine1();
+  val endLine1: Int
 
-  int getStartLine2();
+  val startLine2: Int
 
-  int getEndLine2();
+  val endLine2: Int
 
   /**
    * High-granularity changes inside line fragment (ex: detected by ByWord)
@@ -25,6 +21,5 @@ public interface LineFragment extends DiffFragment {
    *
    * null - no inner similarities was found
    */
-  @Nullable
-  List<DiffFragment> getInnerFragments();
+  val innerFragments: List<DiffFragment>?
 }

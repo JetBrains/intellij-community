@@ -1,59 +1,36 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.util.diff.Diff;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.diff.Diff
 
-class DiffChangeDiffIterable extends ChangeDiffIterableBase {
-  private final @Nullable Diff.Change myChange;
-
-  DiffChangeDiffIterable(@Nullable Diff.Change change, int length1, int length2) {
-    super(length1, length2);
-    myChange = change;
+internal class DiffChangeDiffIterable(
+  private val myChange: Diff.Change?,
+  length1: Int,
+  length2: Int
+) : ChangeDiffIterableBase(length1, length2) {
+  override fun createChangeIterable(): ChangeIterable {
+    return DiffChangeChangeIterable(myChange)
   }
 
-  @Override
-  protected @NotNull ChangeIterable createChangeIterable() {
-    return new DiffChangeChangeIterable(myChange);
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  private static class DiffChangeChangeIterable implements ChangeIterable {
-    private @Nullable Diff.Change myChange;
-
-    DiffChangeChangeIterable(@Nullable Diff.Change change) {
-      myChange = change;
+  private class DiffChangeChangeIterable(private var myChange: Diff.Change?) : ChangeIterable {
+    override fun valid(): Boolean {
+      return myChange != null
     }
 
-    @Override
-    public boolean valid() {
-      return myChange != null;
+    override fun next() {
+      myChange = myChange!!.link
     }
 
-    @Override
-    public void next() {
-      myChange = myChange.link;
-    }
+    override val start1: Int
+      get() = myChange!!.line0
 
-    @Override
-    public int getStart1() {
-      return myChange.line0;
-    }
+    override val start2: Int
+      get() = myChange!!.line1
 
-    @Override
-    public int getStart2() {
-      return myChange.line1;
-    }
+    override val end1: Int
+      get() = myChange!!.run { line0 + deleted }
 
-    @Override
-    public int getEnd1() {
-      return myChange.line0 + myChange.deleted;
-    }
-
-    @Override
-    public int getEnd2() {
-      return myChange.line1 + myChange.inserted;
-    }
+    override val end2: Int
+      get() = myChange!!.run { line1 + inserted }
   }
 }

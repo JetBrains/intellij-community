@@ -1,213 +1,229 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.diff;
+package com.intellij.util.diff
 
-import org.jetbrains.annotations.ApiStatus;
-
-import java.util.BitSet;
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sqrt
 
 /**
  * Algorithm for finding the longest common subsequence of two strings
  * Based on E.W. Myers / An O(ND) Difference Algorithm and Its Variations / 1986
  * O(ND) runtime, O(N) memory
- * <p/>
+ *
+ *
  * Created by Anton Bannykh
  */
 @ApiStatus.Internal
-public final class MyersLCS {
-  private final int[] myFirst;
-  private final int[] mySecond;
+class MyersLCS(
+  private val first: IntArray,
+  private val second: IntArray,
+  private val start1: Int,
+  private val count1: Int,
+  private val start2: Int,
+  private val count2: Int,
+  private val changes1: BitSet,
+  private val changes2: BitSet
+) {
+  private val VForward: IntArray
+  private val VBackward: IntArray
 
-  private final int myStart1;
-  private final int myStart2;
-  private final int myCount1;
-  private final int myCount2;
+  constructor(first: IntArray, second: IntArray) : this(first = first,
+                                                        second = second,
+                                                        start1 = 0,
+                                                        count1 = first.size,
+                                                        start2 = 0,
+                                                        count2 = second.size,
+                                                        changes1 = BitSet(first.size),
+                                                        changes2 = BitSet(second.size))
 
-  private final BitSet myChanges1;
-  private final BitSet myChanges2;
+  init {
+    changes1.set(start1, start1 + count1)
+    changes2.set(start2, start2 + count2)
 
-  private final int[] VForward;
-  private final int[] VBackward;
-
-  public MyersLCS(int[] first, int[] second) {
-    this(first, second, 0, first.length, 0, second.length, new BitSet(first.length), new BitSet(second.length));
-  }
-
-  public MyersLCS(int[] first, int[] second, int start1, int count1, int start2, int count2, BitSet changes1, BitSet changes2) {
-    myFirst = first;
-    mySecond = second;
-    myStart1 = start1;
-    myStart2 = start2;
-    myCount1 = count1;
-    myCount2 = count2;
-
-    myChanges1 = changes1;
-    myChanges2 = changes2;
-
-    myChanges1.set(myStart1, myStart1 + myCount1);
-    myChanges2.set(myStart2, myStart2 + myCount2);
-
-    final int totalSequenceLength = myCount1 + myCount2;
-    VForward = new int[totalSequenceLength + 1];
-    VBackward = new int[totalSequenceLength + 1];
+    val totalSequenceLength = count1 + count2
+    VForward = IntArray(totalSequenceLength + 1)
+    VBackward = IntArray(totalSequenceLength + 1)
   }
 
   /**
    * Runs O(ND) Myers algorithm where D is bound by A + B * sqrt(N)
-   * <p/>
+   *
+   *
    * Under certains assumptions about the distribution of the elements of the sequences the expected
    * running time of the myers algorithm is O(N + D^2). Thus under given constraints it reduces to O(N).
    */
-  public void executeLinear() {
+  fun executeLinear() {
     try {
-      int threshold = 20000 + 10 * (int)Math.sqrt(myCount1 + myCount2);
-      execute(threshold, false);
+      val threshold = 20000 + 10 * sqrt((count1 + count2).toDouble()).toInt()
+      execute(threshold, false)
     }
-    catch (FilesTooBigForDiffException e) {
-      throw new IllegalStateException(e); // should not happen
+    catch (e: FilesTooBigForDiffException) {
+      throw IllegalStateException(e) // should not happen
     }
   }
 
-  public void execute() {
+  fun execute() {
     try {
-      execute(myCount1 + myCount2, false);
+      execute(count1 + count2, false)
     }
-    catch (FilesTooBigForDiffException e) {
-      throw new IllegalStateException(e); // should not happen
+    catch (e: FilesTooBigForDiffException) {
+      throw IllegalStateException(e) // should not happen
     }
   }
 
-  public void executeWithThreshold() throws FilesTooBigForDiffException {
-    int threshold = Math.max(20000 + 10 * (int)Math.sqrt(myCount1 + myCount2),
-                             DiffConfig.DELTA_THRESHOLD_SIZE);
-    execute(threshold, true);
+  @Throws(FilesTooBigForDiffException::class)
+  fun executeWithThreshold() {
+    val threshold = max(20000 + 10 * sqrt((count1 + count2).toDouble()).toInt(),
+                        DiffConfig.DELTA_THRESHOLD_SIZE)
+    execute(threshold, true)
   }
 
-  private void execute(int threshold, boolean throwException) throws FilesTooBigForDiffException {
-    if (myCount1 == 0 || myCount2 == 0) return;
-    execute(0, myCount1, 0, myCount2, Math.min(threshold, myCount1 + myCount2), throwException);
+  @Throws(FilesTooBigForDiffException::class)
+  private fun execute(threshold: Int, throwException: Boolean) {
+    if (count1 == 0 || count2 == 0) return
+    execute(0, count1, 0, count2, min(threshold, count1 + count2), throwException)
   }
 
   //LCS( old[oldStart, oldEnd), new[newStart, newEnd) )
-  private void execute(int oldStart, int oldEnd, int newStart, int newEnd, int differenceEstimate,
-                       boolean throwException) throws FilesTooBigForDiffException {
-    assert oldStart <= oldEnd && newStart <= newEnd;
+  @Throws(FilesTooBigForDiffException::class)
+  private fun execute(
+    oldStart: Int, oldEnd: Int, newStart: Int, newEnd: Int, differenceEstimate: Int,
+    throwException: Boolean
+  ) {
+    assert(oldStart <= oldEnd && newStart <= newEnd)
     if (oldStart < oldEnd && newStart < newEnd) {
-      final int oldLength = oldEnd - oldStart;
-      final int newLength = newEnd - newStart;
-      VForward[newLength + 1] = 0;
-      VBackward[newLength + 1] = 0;
-      final int halfD = (differenceEstimate + 1) / 2;
-      int xx, kk, td;
-      xx = kk = td = -1;
+      val oldLength = oldEnd - oldStart
+      val newLength = newEnd - newStart
+      VForward[newLength + 1] = 0
+      VBackward[newLength + 1] = 0
+      val halfD = (differenceEstimate + 1) / 2
+      var xx: Int
+      var kk: Int
+      var td: Int
+      td = -1
+      kk = td
+      xx = kk
 
-      loop:
-      for (int d = 0; d <= halfD; ++d) {
-        final int L = newLength + Math.max(-d, -newLength + ((d ^ newLength) & 1));
-        final int R = newLength + Math.min(d, oldLength - ((d ^ oldLength) & 1));
-        for (int k = L; k <= R; k += 2) {
-          int x = k == L || k != R && VForward[k - 1] < VForward[k + 1] ? VForward[k + 1] : VForward[k - 1] + 1;
-          int y = x - k + newLength;
-          x += commonSubsequenceLengthForward(oldStart + x, newStart + y,
-                                              Math.min(oldEnd - oldStart - x, newEnd - newStart - y));
-          VForward[k] = x;
-        }
-
-        if ((oldLength - newLength) % 2 != 0) {
-          for (int k = L; k <= R; k += 2) {
-            if (oldLength - (d - 1) <= k && k <= oldLength + (d - 1)) {
-              if (VForward[k] + VBackward[newLength + oldLength - k] >= oldLength) {
-                xx = VForward[k];
-                kk = k;
-                td = 2 * d - 1;
-                break loop;
-              }
-            }
+      loop@ for (d in 0..halfD) {
+        val L = newLength + max(-d, -newLength + ((d xor newLength) and 1))
+        val R = newLength + min(d, oldLength - ((d xor oldLength) and 1))
+        run {
+          var k = L
+          while (k <= R) {
+            var x = if (k == L || k != R && VForward[k - 1] < VForward[k + 1]) VForward[k + 1] else VForward[k - 1] + 1
+            val y = x - k + newLength
+            x += commonSubsequenceLengthForward(oldStart + x, newStart + y,
+                                                min(oldEnd - oldStart - x, newEnd - newStart - y))
+            VForward[k] = x
+            k += 2
           }
         }
 
-        for (int k = L; k <= R; k += 2) {
-          int x = k == L || k != R && VBackward[k - 1] < VBackward[k + 1] ? VBackward[k + 1] : VBackward[k - 1] + 1;
-          int y = x - k + newLength;
+        if ((oldLength - newLength) % 2 != 0) {
+          var k = L
+          while (k <= R) {
+            if (oldLength - (d - 1) <= k && k <= oldLength + (d - 1)) {
+              if (VForward[k] + VBackward[newLength + oldLength - k] >= oldLength) {
+                xx = VForward[k]
+                kk = k
+                td = 2 * d - 1
+                break@loop
+              }
+            }
+            k += 2
+          }
+        }
+
+        var k = L
+        while (k <= R) {
+          var x = if (k == L || k != R && VBackward[k - 1] < VBackward[k + 1]) VBackward[k + 1] else VBackward[k - 1] + 1
+          val y = x - k + newLength
           x += commonSubsequenceLengthBackward(oldEnd - 1 - x, newEnd - 1 - y,
-                                               Math.min(oldEnd - oldStart - x, newEnd - newStart - y));
-          VBackward[k] = x;
+                                               min(oldEnd - oldStart - x, newEnd - newStart - y))
+          VBackward[k] = x
+          k += 2
         }
 
         if ((oldLength - newLength) % 2 == 0) {
-          for (int k = L; k <= R; k += 2) {
+          var k = L
+          while (k <= R) {
             if (oldLength - d <= k && k <= oldLength + d) {
               if (VForward[oldLength + newLength - k] + VBackward[k] >= oldLength) {
-                xx = oldLength - VBackward[k];
-                kk = oldLength + newLength - k;
-                td = 2 * d;
-                break loop;
+                xx = oldLength - VBackward[k]
+                kk = oldLength + newLength - k
+                td = 2 * d
+                break@loop
               }
             }
+            k += 2
           }
         }
       }
 
       if (td > 1) {
-        final int yy = xx - kk + newLength;
-        final int oldDiff = (td + 1) / 2;
-        if (0 < xx && 0 < yy) execute(oldStart, oldStart + xx, newStart, newStart + yy, oldDiff, throwException);
-        if (oldStart + xx < oldEnd && newStart + yy < newEnd) execute(oldStart + xx, oldEnd, newStart + yy, newEnd, td - oldDiff, throwException);
+        val yy = xx - kk + newLength
+        val oldDiff = (td + 1) / 2
+        if (0 < xx && 0 < yy) execute(oldStart, oldStart + xx, newStart, newStart + yy, oldDiff, throwException)
+        if (oldStart + xx < oldEnd && newStart + yy < newEnd) execute(oldStart + xx, oldEnd, newStart + yy, newEnd, td - oldDiff, throwException)
       }
       else if (td >= 0) {
-        int x = oldStart;
-        int y = newStart;
+        var x = oldStart
+        var y = newStart
         while (x < oldEnd && y < newEnd) {
-          final int commonLength = commonSubsequenceLengthForward(x, y, Math.min(oldEnd - x, newEnd - y));
+          val commonLength = commonSubsequenceLengthForward(x, y, min(oldEnd - x, newEnd - y))
           if (commonLength > 0) {
-            addUnchanged(x, y, commonLength);
-            x += commonLength;
-            y += commonLength;
+            addUnchanged(x, y, commonLength)
+            x += commonLength
+            y += commonLength
           }
           else if (oldEnd - oldStart > newEnd - newStart) {
-            ++x;
+            ++x
           }
           else {
-            ++y;
+            ++y
           }
         }
       }
       else {
         //The difference is more than the given estimate
-        if (throwException) throw new FilesTooBigForDiffException();
+        if (throwException) throw FilesTooBigForDiffException()
       }
     }
   }
 
-  private void addUnchanged(int start1, int start2, int count) {
-    myChanges1.set(myStart1 + start1, myStart1 + start1 + count, false);
-    myChanges2.set(myStart2 + start2, myStart2 + start2 + count, false);
+  private fun addUnchanged(start1: Int, start2: Int, count: Int) {
+    changes1.set(this@MyersLCS.start1 + start1, this@MyersLCS.start1 + start1 + count, false)
+    changes2.set(this@MyersLCS.start2 + start2, this@MyersLCS.start2 + start2 + count, false)
   }
 
-  private int commonSubsequenceLengthForward(int oldIndex, int newIndex, int maxLength) {
-    int x = oldIndex;
-    int y = newIndex;
+  private fun commonSubsequenceLengthForward(oldIndex: Int, newIndex: Int, maxLength: Int): Int {
+    var maxLength = maxLength
+    var x = oldIndex
+    var y = newIndex
 
-    maxLength = Math.min(maxLength, Math.min(myCount1 - oldIndex, myCount2 - newIndex));
-    while (x - oldIndex < maxLength && myFirst[myStart1 + x] == mySecond[myStart2 + y]) {
-      ++x;
-      ++y;
+    maxLength = min(maxLength, min(count1 - oldIndex, count2 - newIndex))
+    while (x - oldIndex < maxLength && first[start1 + x] == second[start2 + y]) {
+      ++x
+      ++y
     }
-    return x - oldIndex;
+    return x - oldIndex
   }
 
-  private int commonSubsequenceLengthBackward(int oldIndex, int newIndex, int maxLength) {
-    int x = oldIndex;
-    int y = newIndex;
+  private fun commonSubsequenceLengthBackward(oldIndex: Int, newIndex: Int, maxLength: Int): Int {
+    var maxLength = maxLength
+    var x = oldIndex
+    var y = newIndex
 
-    maxLength = Math.min(maxLength, Math.min(oldIndex, newIndex) + 1);
-    while (oldIndex - x < maxLength && myFirst[myStart1 + x] == mySecond[myStart2 + y]) {
-      --x;
-      --y;
+    maxLength = min(maxLength, min(oldIndex, newIndex) + 1)
+    while (oldIndex - x < maxLength && first[start1 + x] == second[start2 + y]) {
+      --x
+      --y
     }
-    return oldIndex - x;
+    return oldIndex - x
   }
 
-  public BitSet[] getChanges() {
-    return new BitSet[]{myChanges1, myChanges2};
-  }
+  val changes: Array<BitSet>
+    get() = arrayOf(changes1, changes2)
 }

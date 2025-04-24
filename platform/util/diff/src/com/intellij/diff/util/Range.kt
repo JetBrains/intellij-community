@@ -1,53 +1,53 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.util;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.diff.util
 
 /**
  * Stores half-open intervals [start, end).
  */
-public final class Range {
-  public final int start1;
-  public final int end1;
-  public final int start2;
-  public final int end2;
+class Range(start1: Int, end1: Int, start2: Int, end2: Int) {
+  @JvmField
+  val start1: Int
+  @JvmField
+  val end1: Int
+  @JvmField
+  val start2: Int
+  @JvmField
+  val end2: Int
 
-  public Range(int start1, int end1, int start2, int end2) {
-    assert start1 <= end1 && start2 <= end2 : String.format("[%s, %s, %s, %s]", start1, end1, start2, end2);
-    this.start1 = start1;
-    this.end1 = end1;
-    this.start2 = start2;
-    this.end2 = end2;
+  init {
+    assert(start1 <= end1 && start2 <= end2) { "[$start1, $end1, $start2, $end2]" }
+    this.start1 = start1
+    this.end1 = end1
+    this.start2 = start2
+    this.end2 = end2
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || this::class != o::class) return false
 
-    Range range = (Range)o;
+    val range = o as Range
 
-    if (start1 != range.start1) return false;
-    if (end1 != range.end1) return false;
-    if (start2 != range.start2) return false;
-    if (end2 != range.end2) return false;
+    if (start1 != range.start1) return false
+    if (end1 != range.end1) return false
+    if (start2 != range.start2) return false
+    if (end2 != range.end2) return false
 
-    return true;
+    return true
   }
 
-  @Override
-  public int hashCode() {
-    int result = start1;
-    result = 31 * result + end1;
-    result = 31 * result + start2;
-    result = 31 * result + end2;
-    return result;
+  override fun hashCode(): Int {
+    var result = start1
+    result = 31 * result + end1
+    result = 31 * result + start2
+    result = 31 * result + end2
+    return result
   }
 
-  @Override
-  public String toString() {
-    return "[" + start1 + ", " + end1 + ") - [" + start2 + ", " + end2 + ")";
+  override fun toString(): String {
+    return "[$start1, $end1) - [$start2, $end2)"
   }
 
-  public boolean isEmpty() {
-    return start1 == end1 && start2 == end2;
-  }
+  val isEmpty: Boolean
+    get() = start1 == end1 && start2 == end2
 }

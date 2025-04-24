@@ -1,35 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.diff.util.Range;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.Range
 
-import java.util.Iterator;
+internal class FairDiffIterableWrapper(private val myIterable: DiffIterable) : FairDiffIterable {
+  override val length1: Int
+    get() = myIterable.length1
 
-class FairDiffIterableWrapper implements FairDiffIterable {
-  private final @NotNull DiffIterable myIterable;
+  override val length2: Int
+    get() = myIterable.length2
 
-  FairDiffIterableWrapper(@NotNull DiffIterable iterable) {
-    myIterable = iterable;
+  override fun changes(): Iterator<Range> {
+    return myIterable.changes()
   }
 
-  @Override
-  public int getLength1() {
-    return myIterable.getLength1();
-  }
-
-  @Override
-  public int getLength2() {
-    return myIterable.getLength2();
-  }
-
-  @Override
-  public @NotNull Iterator<Range> changes() {
-    return myIterable.changes();
-  }
-
-  @Override
-  public @NotNull Iterator<Range> unchanged() {
-    return myIterable.unchanged();
+  override fun unchanged(): Iterator<Range> {
+    return myIterable.unchanged()
   }
 }

@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.fragments;
+package com.intellij.diff.fragments
 
-import com.intellij.diff.util.ThreeSide;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.ThreeSide
 
-public interface MergeLineFragment {
-  int getStartLine(@NotNull ThreeSide side);
+interface MergeLineFragment {
+  fun getStartLine(side: ThreeSide): Int
 
-  int getEndLine(@NotNull ThreeSide side);
+  fun getEndLine(side: ThreeSide): Int
 }

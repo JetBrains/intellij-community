@@ -1,117 +1,109 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.diff;
+package com.intellij.util.diff
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.VisibleForTesting;
-
-import java.util.Arrays;
+import it.unimi.dsi.fastutil.ints.Int2IntMap
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
-public final class UniqueLCS {
-  private final int[] myFirst;
-  private final int[] mySecond;
+class UniqueLCS internal constructor(
+  private val first: IntArray,
+  private val second: IntArray,
+  private val start1: Int,
+  private val count1: Int,
+  private val start2: Int,
+  private val count2: Int
+) {
+  constructor(first: IntArray, second: IntArray) : this(first = first,
+                                                        second = second,
+                                                        start1 = 0,
+                                                        count1 = first.size,
+                                                        start2 = 0,
+                                                        count2 = second.size)
 
-  private final int myStart1;
-  private final int myStart2;
-  private final int myCount1;
-  private final int myCount2;
-
-  @VisibleForTesting
-  public UniqueLCS(int[] first, int[] second) {
-    this(first, second, 0, first.length, 0, second.length);
-  }
-
-  UniqueLCS(int[] first, int[] second, int start1, int count1, int start2, int count2) {
-    myFirst = first;
-    mySecond = second;
-    myStart1 = start1;
-    myStart2 = start2;
-    myCount1 = count1;
-    myCount2 = count2;
-  }
-
-  public int[][] execute() {
+  fun execute(): Array<IntArray>? {
     // map: key -> (offset1 + 1)
     // match: offset1 -> (offset2 + 1)
-    Int2IntMap map = new Int2IntOpenHashMap(myCount1 + myCount2);
-    int[] match = new int[myCount1];
+    val map: Int2IntMap = Int2IntOpenHashMap(count1 + count2)
+    val match = IntArray(count1)
 
-    for (int i = 0; i < myCount1; i++) {
-      int index = myStart1 + i;
-      int val = map.get(myFirst[index]);
+    for (i in 0..<count1) {
+      val index = start1 + i
+      val value = map.get(first[index])
 
-      if (val == -1) continue;
-      if (val == 0) {
-        map.put(myFirst[index], i + 1);
+      if (value == -1) continue
+      if (value == 0) {
+        map.put(first[index], i + 1)
       }
       else {
-        map.put(myFirst[index], -1);
+        map.put(first[index], -1)
       }
     }
 
-    int count = 0;
-    for (int i = 0; i < myCount2; i++) {
-      int index = myStart2 + i;
-      int val = map.get(mySecond[index]);
+    var count = 0
+    for (i in 0..<count2) {
+      val index = start2 + i
+      val value = map.get(second[index])
 
-      if (val == 0 || val == -1) continue;
-      if (match[val - 1] == 0) {
-        match[val - 1] = i + 1;
-        count++;
+      if (value == 0 || value == -1) continue
+      if (match[value - 1] == 0) {
+        match[value - 1] = i + 1
+        count++
       }
       else {
-        match[val - 1] = 0;
-        map.put(mySecond[index], -1);
-        count--;
+        match[value - 1] = 0
+        map.put(second[index], -1)
+        count--
       }
     }
 
     if (count == 0) {
-      return null;
+      return null
     }
 
     // Largest increasing subsequence on unique elements
-    int[] sequence = new int[count];
-    int[] lastElement = new int[count];
-    int[] predecessor = new int[myCount1];
+    val sequence = IntArray(count)
+    val lastElement = IntArray(count)
+    val predecessor = IntArray(count1)
 
-    int length = 0;
-    for (int i = 0; i < myCount1; i++) {
-      if (match[i] == 0) continue;
+    var length = 0
+    for (i in 0..<count1) {
+      if (match[i] == 0) continue
 
-      int j = binarySearch(sequence, match[i], length);
+      val j = binarySearch(sequence, match[i], length)
       if (j == length || match[i] < sequence[j]) {
-        sequence[j] = match[i];
-        lastElement[j] = i;
-        predecessor[i] = j > 0 ? lastElement[j - 1] : -1;
+        sequence[j] = match[i]
+        lastElement[j] = i
+        predecessor[i] = if (j > 0) lastElement[j - 1] else -1
         if (j == length) {
-          length++;
+          length++
         }
       }
     }
 
-    int[][] ret = new int[][]{new int[length], new int[length]};
+    val ret = arrayOf(IntArray(length), IntArray(length))
 
-    int i = length - 1;
-    int curr = lastElement[length - 1];
+    var i = length - 1
+    var curr = lastElement[length - 1]
     while (curr != -1) {
-      ret[0][i] = curr;
-      ret[1][i] = match[curr] - 1;
-      i--;
-      curr = predecessor[curr];
+      ret[0][i] = curr
+      ret[1][i] = match[curr] - 1
+      i--
+      curr = predecessor[curr]
     }
 
-    return ret;
+    return ret
   }
 
-  // find max i: a[i] < val
-  // return i + 1
-  // assert a[i] != val
-  private static int binarySearch(final int[] sequence, final int val, int length) {
-    int i = Arrays.binarySearch(sequence, 0, length, val);
-    assert i < 0;
-    return -i - 1;
+  companion object {
+    // find max i: a[i] < val
+    // return i + 1
+    // assert a[i] != val
+    private fun binarySearch(sequence: IntArray, value: Int, length: Int): Int {
+      val i = Arrays.binarySearch(sequence, 0, length, value)
+      assert(i < 0)
+      return -i - 1
+    }
   }
 }

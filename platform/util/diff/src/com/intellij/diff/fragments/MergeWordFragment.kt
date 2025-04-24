@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.fragments;
+package com.intellij.diff.fragments
 
-import com.intellij.diff.util.ThreeSide;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.ThreeSide
 
-public interface MergeWordFragment {
-  int getStartOffset(@NotNull ThreeSide side);
+interface MergeWordFragment {
+  fun getStartOffset(side: ThreeSide): Int
 
-  int getEndOffset(@NotNull ThreeSide side);
+  fun getEndOffset(side: ThreeSide): Int
 }

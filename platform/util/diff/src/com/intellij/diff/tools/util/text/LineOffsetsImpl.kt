@@ -1,85 +1,67 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.tools.util.text;
+package com.intellij.diff.tools.util.text
 
-import com.intellij.openapi.util.text.Strings;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.text.Strings
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
+import java.util.*
 
-import java.util.Arrays;
+class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, override val textLength: Int) : LineOffsets {
+  override fun getLineStart(line: Int): Int {
+    checkLineIndex(line)
+    if (line == 0) return 0
+    return myLineEnds[line - 1] + 1
+  }
 
-public final class LineOffsetsImpl implements LineOffsets {
-  public static @NotNull LineOffsets create(@NotNull CharSequence text) {
-    IntList ends = new IntArrayList();
+  override fun getLineEnd(line: Int): Int {
+    checkLineIndex(line)
+    return myLineEnds[line]
+  }
 
-    int index = 0;
-    while (true) {
-      int lineEnd = Strings.indexOf(text, '\n', index);
-      if (lineEnd != -1) {
-        ends.add(lineEnd);
-        index = lineEnd + 1;
-      }
-      else {
-        ends.add(text.length());
-        break;
-      }
+  override fun getLineEnd(line: Int, includeNewline: Boolean): Int {
+    checkLineIndex(line)
+    return myLineEnds[line] + (if (includeNewline && line != myLineEnds.size - 1) 1 else 0)
+  }
+
+  override fun getLineNumber(offset: Int): Int {
+    if (offset < 0 || offset > textLength) {
+      throw IndexOutOfBoundsException("Wrong offset: $offset. Available text length: $textLength")
     }
+    if (offset == 0) return 0
+    if (offset == textLength) return lineCount - 1
 
-    return new LineOffsetsImpl(ends.toIntArray(), text.length());
+    val bsResult = Arrays.binarySearch(myLineEnds, offset)
+    return if (bsResult >= 0) bsResult else -bsResult - 1
   }
 
-  private final int[] myLineEnds;
-  private final int myTextLength;
+  override val lineCount: Int
+    get() = myLineEnds.size
 
-  private LineOffsetsImpl(int[] lineEnds, int textLength) {
-    myLineEnds = lineEnds;
-    myTextLength = textLength;
-  }
-
-  @Override
-  public int getLineStart(int line) {
-    checkLineIndex(line);
-    if (line == 0) return 0;
-    return myLineEnds[line - 1] + 1;
-  }
-
-  @Override
-  public int getLineEnd(int line) {
-    checkLineIndex(line);
-    return myLineEnds[line];
-  }
-
-  @Override
-  public int getLineEnd(int line, boolean includeNewline) {
-    checkLineIndex(line);
-    return myLineEnds[line] + (includeNewline && line != myLineEnds.length - 1 ? 1 : 0);
-  }
-
-  @Override
-  public int getLineNumber(int offset) {
-    if (offset < 0 || offset > getTextLength()) {
-      throw new IndexOutOfBoundsException("Wrong offset: " + offset + ". Available text length: " + getTextLength());
+  private fun checkLineIndex(index: Int) {
+    if (index < 0 || index >= lineCount) {
+      throw IndexOutOfBoundsException("Wrong line: $index. Available lines count: $lineCount")
     }
-    if (offset == 0) return 0;
-    if (offset == getTextLength()) return getLineCount() - 1;
-
-    int bsResult = Arrays.binarySearch(myLineEnds, offset);
-    return bsResult >= 0 ? bsResult : -bsResult - 1;
   }
 
-  @Override
-  public int getLineCount() {
-    return myLineEnds.length;
-  }
+  companion object {
+    @JvmStatic
+    fun create(text: CharSequence): LineOffsets {
+      val ends: IntList = IntArrayList()
 
-  @Override
-  public int getTextLength() {
-    return myTextLength;
-  }
+      var index = 0
+      while (true) {
+        val lineEnd = Strings.indexOf(text, '\n', index)
+        if (lineEnd != -1) {
+          ends.add(lineEnd)
+          index = lineEnd + 1
+        }
+        else {
+          ends.add(text.length)
+          break
+        }
+      }
 
-  private void checkLineIndex(int index) {
-    if (index < 0 || index >= getLineCount()) {
-      throw new IndexOutOfBoundsException("Wrong line: " + index + ". Available lines count: " + getLineCount());
+      return LineOffsetsImpl(ends.toIntArray(), text.length)
     }
   }
 }

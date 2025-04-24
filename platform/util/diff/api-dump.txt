@@ -36,21 +36,24 @@ com.intellij.diff.comparison.CancellationChecker
 - a:checkCanceled():V
 f:com.intellij.diff.comparison.CancellationChecker$Companion
 f:com.intellij.diff.comparison.ComparisonMergeUtil
-- s:buildSimple(com.intellij.diff.comparison.iterables.FairDiffIterable,com.intellij.diff.comparison.iterables.FairDiffIterable,com.intellij.diff.comparison.CancellationChecker):java.util.List
-- s:tryResolveConflict(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence):java.lang.CharSequence
+- sf:INSTANCE:com.intellij.diff.comparison.ComparisonMergeUtil
+- sf:buildSimple(com.intellij.diff.comparison.iterables.FairDiffIterable,com.intellij.diff.comparison.iterables.FairDiffIterable,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:tryResolveConflict(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence):java.lang.CharSequence
 e:com.intellij.diff.comparison.ComparisonPolicy
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.diff.comparison.ComparisonPolicy
 - sf:IGNORE_WHITESPACES:com.intellij.diff.comparison.ComparisonPolicy
 - sf:TRIM_WHITESPACES:com.intellij.diff.comparison.ComparisonPolicy
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.diff.comparison.ComparisonPolicy
 - s:values():com.intellij.diff.comparison.ComparisonPolicy[]
 f:com.intellij.diff.comparison.ComparisonUtil
-- s:equalsTrimWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
-- s:getUnimportantLineCharCount():I
-- s:hashCode(java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):I
-- s:isEqualTexts(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
-- s:isEquals(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
+- sf:INSTANCE:com.intellij.diff.comparison.ComparisonUtil
+- sf:equalsTrimWhitespaces(java.lang.CharSequence,java.lang.CharSequence):Z
+- sf:getUnimportantLineCharCount():I
+- sf:hashCode(java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):I
+- sf:isEqualTexts(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
+- sf:isEquals(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
 c:com.intellij.diff.comparison.DiffTooBigException
 - com.intellij.openapi.progress.ProcessCanceledException
 - <init>():V
@@ -102,22 +105,23 @@ com.intellij.diff.comparison.iterables.DiffIterable
 - iterateUnchanged():java.lang.Iterable
 - a:unchanged():java.util.Iterator
 f:com.intellij.diff.comparison.iterables.DiffIterableUtil
-- s:create(com.intellij.util.diff.Diff$Change,I,I):com.intellij.diff.comparison.iterables.DiffIterable
-- s:create(java.util.List,I,I):com.intellij.diff.comparison.iterables.DiffIterable
-- s:createFragments(java.util.List,I,I):com.intellij.diff.comparison.iterables.DiffIterable
-- s:createUnchanged(java.util.List,I,I):com.intellij.diff.comparison.iterables.DiffIterable
-- s:diff(java.util.List,java.util.List,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:diff(I[],I[],com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:diff(java.lang.Object[],java.lang.Object[],com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:expandedIterable(com.intellij.diff.comparison.iterables.DiffIterable,I,I,I,I):com.intellij.diff.comparison.iterables.DiffIterable
-- s:extractDataRanges(java.util.List,java.util.List,com.intellij.diff.comparison.iterables.DiffIterable):java.util.List
-- s:fair(com.intellij.diff.comparison.iterables.DiffIterable):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:getRangeDelta(com.intellij.diff.util.Range):I
-- s:invert(com.intellij.diff.comparison.iterables.DiffIterable):com.intellij.diff.comparison.iterables.DiffIterable
-- s:iterateAll(com.intellij.diff.comparison.iterables.DiffIterable):java.lang.Iterable
-- s:setVerifyEnabled(Z):V
-- s:verify(com.intellij.diff.comparison.iterables.DiffIterable):V
-- s:verifyFair(com.intellij.diff.comparison.iterables.DiffIterable):V
+- sf:INSTANCE:com.intellij.diff.comparison.iterables.DiffIterableUtil
+- sf:create(com.intellij.util.diff.Diff$Change,I,I):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:create(java.util.List,I,I):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:createFragments(java.util.List,I,I):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:createUnchanged(java.util.List,I,I):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:diff(java.util.List,java.util.List,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:diff(I[],I[],com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:diff(java.lang.Object[],java.lang.Object[],com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:expandedIterable(com.intellij.diff.comparison.iterables.DiffIterable,I,I,I,I):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:extractDataRanges(java.util.List,java.util.List,com.intellij.diff.comparison.iterables.DiffIterable):java.util.List
+- sf:fair(com.intellij.diff.comparison.iterables.DiffIterable):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:getRangeDelta(com.intellij.diff.util.Range):I
+- sf:invert(com.intellij.diff.comparison.iterables.DiffIterable):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:iterateAll(com.intellij.diff.comparison.iterables.DiffIterable):java.lang.Iterable
+- sf:setVerifyEnabled(Z):V
+- sf:verify(com.intellij.diff.comparison.iterables.DiffIterable):V
+- sf:verifyFair(com.intellij.diff.comparison.iterables.DiffIterable):V
 c:com.intellij.diff.comparison.iterables.DiffIterableUtil$ChangeBuilder
 - com.intellij.diff.comparison.iterables.DiffIterableUtil$ChangeBuilderBase
 - <init>(I,I):V
@@ -152,6 +156,7 @@ com.intellij.diff.fragments.DiffFragment
 - a:getStartOffset2():I
 c:com.intellij.diff.fragments.DiffFragmentImpl
 - com.intellij.diff.fragments.DiffFragment
+- sf:Companion:com.intellij.diff.fragments.DiffFragmentImpl$Companion
 - <init>(I,I,I,I):V
 - f:equals(java.lang.Object):Z
 - getEndOffset1():I
@@ -159,6 +164,7 @@ c:com.intellij.diff.fragments.DiffFragmentImpl
 - getStartOffset1():I
 - getStartOffset2():I
 - hashCode():I
+f:com.intellij.diff.fragments.DiffFragmentImpl$Companion
 com.intellij.diff.fragments.LineFragment
 - com.intellij.diff.fragments.DiffFragment
 - a:getEndLine1():I
@@ -168,8 +174,10 @@ com.intellij.diff.fragments.LineFragment
 - a:getStartLine2():I
 c:com.intellij.diff.fragments.LineFragmentImpl
 - com.intellij.diff.fragments.LineFragment
+- sf:Companion:com.intellij.diff.fragments.LineFragmentImpl$Companion
 - <init>(I,I,I,I,I,I,I,I):V
 - <init>(I,I,I,I,I,I,I,I,java.util.List):V
+- b:<init>(I,I,I,I,I,I,I,I,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(com.intellij.diff.fragments.LineFragment,java.util.List):V
 - f:equals(java.lang.Object):Z
 - getEndLine1():I
@@ -182,6 +190,7 @@ c:com.intellij.diff.fragments.LineFragmentImpl
 - getStartOffset1():I
 - getStartOffset2():I
 - hashCode():I
+f:com.intellij.diff.fragments.LineFragmentImpl$Companion
 com.intellij.diff.fragments.MergeLineFragment
 - a:getEndLine(com.intellij.diff.util.ThreeSide):I
 - a:getStartLine(com.intellij.diff.util.ThreeSide):I
@@ -210,19 +219,24 @@ com.intellij.diff.tools.util.text.LineOffsets
 - a:getTextLength():I
 f:com.intellij.diff.tools.util.text.LineOffsetsImpl
 - com.intellij.diff.tools.util.text.LineOffsets
-- s:create(java.lang.CharSequence):com.intellij.diff.tools.util.text.LineOffsets
+- sf:Companion:com.intellij.diff.tools.util.text.LineOffsetsImpl$Companion
+- b:<init>(I[],I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:create(java.lang.CharSequence):com.intellij.diff.tools.util.text.LineOffsets
 - getLineCount():I
 - getLineEnd(I):I
 - getLineEnd(I,Z):I
 - getLineNumber(I):I
 - getLineStart(I):I
 - getTextLength():I
+f:com.intellij.diff.tools.util.text.LineOffsetsImpl$Companion
+- f:create(java.lang.CharSequence):com.intellij.diff.tools.util.text.LineOffsets
 f:com.intellij.diff.util.DiffRangeUtil
-- s:getLines(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets):java.util.List
-- s:getLines(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.util.List
-- s:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.lang.CharSequence
-- s:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):java.lang.CharSequence
-- s:getLinesRange(com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):com.intellij.openapi.util.TextRange
+- sf:INSTANCE:com.intellij.diff.util.DiffRangeUtil
+- sf:getLines(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets):java.util.List
+- sf:getLines(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.util.List
+- sf:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I):java.lang.CharSequence
+- sf:getLinesContent(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):java.lang.CharSequence
+- sf:getLinesRange(com.intellij.diff.tools.util.text.LineOffsets,I,I,Z):com.intellij.openapi.util.TextRange
 e:com.intellij.diff.util.MergeConflictResolutionStrategy
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.diff.util.MergeConflictResolutionStrategy
@@ -234,6 +248,7 @@ e:com.intellij.diff.util.MergeConflictResolutionStrategy
 c:com.intellij.diff.util.MergeConflictType
 - <init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z):V
 - <init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z,com.intellij.diff.util.MergeConflictResolutionStrategy):V
+- b:<init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z,com.intellij.diff.util.MergeConflictResolutionStrategy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(com.intellij.diff.util.MergeConflictType$Type,Z,Z,Z):V
 - canBeResolved():Z
 - getResolutionStrategy():com.intellij.diff.util.MergeConflictResolutionStrategy
@@ -247,6 +262,7 @@ e:com.intellij.diff.util.MergeConflictType$Type
 - sf:DELETED:com.intellij.diff.util.MergeConflictType$Type
 - sf:INSERTED:com.intellij.diff.util.MergeConflictType$Type
 - sf:MODIFIED:com.intellij.diff.util.MergeConflictType$Type
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.diff.util.MergeConflictType$Type
 - s:values():com.intellij.diff.util.MergeConflictType$Type[]
 c:com.intellij.diff.util.MergeRange
@@ -261,12 +277,13 @@ c:com.intellij.diff.util.MergeRange
 - hashCode():I
 - isEmpty():Z
 f:com.intellij.diff.util.MergeRangeUtil
-- s:compareWordMergeContents(com.intellij.diff.fragments.MergeWordFragment,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide):Z
-- s:getLineLeftToRightThreeSideDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
-- s:getLineMergeType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
-- s:getLineThreeWayDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
-- s:getMergeType(java.util.function.Predicate,java.util.function.BiPredicate,java.util.function.BiPredicate,java.util.function.BooleanSupplier):com.intellij.diff.util.MergeConflictType
-- s:getWordMergeType(com.intellij.diff.fragments.MergeWordFragment,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
+- sf:INSTANCE:com.intellij.diff.util.MergeRangeUtil
+- sf:compareWordMergeContents(com.intellij.diff.fragments.MergeWordFragment,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.util.ThreeSide,com.intellij.diff.util.ThreeSide):Z
+- sf:getLineLeftToRightThreeSideDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
+- sf:getLineMergeType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
+- sf:getLineThreeWayDiffType(com.intellij.diff.fragments.MergeLineFragment,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
+- sf:getMergeType(java.util.function.Predicate,java.util.function.BiPredicate,java.util.function.BiPredicate,java.util.function.BooleanSupplier):com.intellij.diff.util.MergeConflictType
+- sf:getWordMergeType(com.intellij.diff.fragments.MergeWordFragment,java.util.List,com.intellij.diff.comparison.ComparisonPolicy):com.intellij.diff.util.MergeConflictType
 f:com.intellij.diff.util.Range
 - f:end1:I
 - f:end2:I
@@ -275,17 +292,19 @@ f:com.intellij.diff.util.Range
 - <init>(I,I,I,I):V
 - equals(java.lang.Object):Z
 - hashCode():I
-- isEmpty():Z
+- f:isEmpty():Z
 e:com.intellij.diff.util.Side
 - java.lang.Enum
+- sf:Companion:com.intellij.diff.util.Side$Companion
 - sf:LEFT:com.intellij.diff.util.Side
 - sf:RIGHT:com.intellij.diff.util.Side
-- s:fromIndex(I):com.intellij.diff.util.Side
-- s:fromLeft(Z):com.intellij.diff.util.Side
-- s:fromRight(Z):com.intellij.diff.util.Side
-- s:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.Side
+- sf:fromIndex(I):com.intellij.diff.util.Side
+- sf:fromLeft(Z):com.intellij.diff.util.Side
+- sf:fromRight(Z):com.intellij.diff.util.Side
+- sf:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.Side
 - getEndLine(com.intellij.diff.fragments.LineFragment):I
 - getEndOffset(com.intellij.diff.fragments.DiffFragment):I
+- s:getEntries():kotlin.enums.EnumEntries
 - getIndex():I
 - getStartLine(com.intellij.diff.fragments.LineFragment):I
 - getStartOffset(com.intellij.diff.fragments.DiffFragment):I
@@ -305,15 +324,22 @@ e:com.intellij.diff.util.Side
 - selectNotNull(java.lang.Object[]):java.lang.Object
 - s:valueOf(java.lang.String):com.intellij.diff.util.Side
 - s:values():com.intellij.diff.util.Side[]
+f:com.intellij.diff.util.Side$Companion
+- f:fromIndex(I):com.intellij.diff.util.Side
+- f:fromLeft(Z):com.intellij.diff.util.Side
+- f:fromRight(Z):com.intellij.diff.util.Side
+- f:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.Side
 e:com.intellij.diff.util.ThreeSide
 - java.lang.Enum
 - sf:BASE:com.intellij.diff.util.ThreeSide
+- sf:Companion:com.intellij.diff.util.ThreeSide$Companion
 - sf:LEFT:com.intellij.diff.util.ThreeSide
 - sf:RIGHT:com.intellij.diff.util.ThreeSide
-- s:fromIndex(I):com.intellij.diff.util.ThreeSide
-- s:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.ThreeSide
+- sf:fromIndex(I):com.intellij.diff.util.ThreeSide
+- sf:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.ThreeSide
+- s:getEntries():kotlin.enums.EnumEntries
 - getIndex():I
-- s:map(com.intellij.util.Function):java.util.List
+- sf:map(com.intellij.util.Function):java.util.List
 - select(I,I,I):I
 - select(java.lang.Object,java.lang.Object,java.lang.Object):java.lang.Object
 - select(java.util.List):java.lang.Object
@@ -324,16 +350,22 @@ e:com.intellij.diff.util.ThreeSide
 - selectNotNull(java.lang.Object[]):java.lang.Object
 - s:valueOf(java.lang.String):com.intellij.diff.util.ThreeSide
 - s:values():com.intellij.diff.util.ThreeSide[]
+f:com.intellij.diff.util.ThreeSide$Companion
+- f:fromIndex(I):com.intellij.diff.util.ThreeSide
+- f:fromValue(java.util.List,java.lang.Object):com.intellij.diff.util.ThreeSide
+- f:map(com.intellij.util.Function):java.util.List
 f:com.intellij.util.diff.Diff
-- s:buildChanges(java.lang.CharSequence,java.lang.CharSequence):com.intellij.util.diff.Diff$Change
-- s:buildChanges(I[],I[]):com.intellij.util.diff.Diff$Change
-- s:buildChanges(java.lang.Object[],java.lang.Object[]):com.intellij.util.diff.Diff$Change
-- s:buildChanges(java.lang.Object[],java.lang.Object[],com.intellij.util.containers.HashingStrategy):com.intellij.util.diff.Diff$Change
-- s:linesDiff(java.lang.CharSequence[],java.lang.CharSequence[]):java.lang.CharSequence
-- s:splitLines(java.lang.CharSequence):java.lang.String[]
-- s:translateLine(com.intellij.util.diff.Diff$Change,I):I
-- s:translateLine(com.intellij.util.diff.Diff$Change,I,Z):I
-- s:translateLine(java.lang.CharSequence,java.lang.CharSequence,I,Z):I
+- sf:INSTANCE:com.intellij.util.diff.Diff
+- sf:buildChanges(java.lang.CharSequence,java.lang.CharSequence):com.intellij.util.diff.Diff$Change
+- sf:buildChanges(I[],I[]):com.intellij.util.diff.Diff$Change
+- sf:buildChanges(java.lang.Object[],java.lang.Object[]):com.intellij.util.diff.Diff$Change
+- sf:buildChanges(java.lang.Object[],java.lang.Object[],com.intellij.util.containers.HashingStrategy):com.intellij.util.diff.Diff$Change
+- sf:linesDiff(java.lang.CharSequence[],java.lang.CharSequence[]):java.lang.CharSequence
+- sf:splitLines(java.lang.CharSequence):java.lang.String[]
+- sf:translateLine(com.intellij.util.diff.Diff$Change,I):I
+- sf:translateLine(com.intellij.util.diff.Diff$Change,I,Z):I
+- sf:translateLine(java.lang.CharSequence,java.lang.CharSequence,I,Z):I
+- bs:translateLine$default(com.intellij.util.diff.Diff$Change,I,Z,I,java.lang.Object):I
 c:com.intellij.util.diff.Diff$Change
 - f:deleted:I
 - f:inserted:I

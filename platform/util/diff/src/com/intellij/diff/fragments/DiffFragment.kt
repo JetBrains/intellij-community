@@ -1,15 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.fragments;
+package com.intellij.diff.fragments
 
 /**
  * Modified part of the text
  */
-public interface DiffFragment {
-  int getStartOffset1();
+interface DiffFragment {
+  val startOffset1: Int
 
-  int getEndOffset1();
+  val endOffset1: Int
 
-  int getStartOffset2();
+  val startOffset2: Int
 
-  int getEndOffset2();
+  val endOffset2: Int
 }

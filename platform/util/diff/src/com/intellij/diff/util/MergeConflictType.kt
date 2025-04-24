@@ -1,62 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.util;
+package com.intellij.diff.util
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+open class MergeConflictType @JvmOverloads constructor(
+  open val type: Type,
+  private val myLeftChange: Boolean,
+  private val myRightChange: Boolean,
+  open var resolutionStrategy: MergeConflictResolutionStrategy? = MergeConflictResolutionStrategy.DEFAULT
+) {
+  constructor(type: Type, leftChange: Boolean, rightChange: Boolean, canBeResolved: Boolean) :
+    this(type, leftChange, rightChange, if (canBeResolved) MergeConflictResolutionStrategy.DEFAULT else null)
 
-public class MergeConflictType {
-  private final @NotNull Type myType;
-  private final boolean myLeftChange;
-  private final boolean myRightChange;
-  private @Nullable MergeConflictResolutionStrategy myResolutionStrategy;
-
-  public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange) {
-    this(type, leftChange, rightChange, true);
+  open fun canBeResolved(): Boolean {
+    return resolutionStrategy != null
   }
 
-  public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange, boolean canBeResolved) {
-    this(type, leftChange, rightChange, canBeResolved ? MergeConflictResolutionStrategy.DEFAULT : null);
+  open fun isChange(side: Side): Boolean {
+    return if (side.isLeft) myLeftChange else myRightChange
   }
 
-  public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange, @Nullable MergeConflictResolutionStrategy resolutionStrategy) {
-    myType = type;
-    myLeftChange = leftChange;
-    myRightChange = rightChange;
-    myResolutionStrategy = resolutionStrategy;
-  }
-
-  public @NotNull Type getType() {
-    return myType;
-  }
-
-  public @Nullable MergeConflictResolutionStrategy getResolutionStrategy() {
-    return myResolutionStrategy;
-  }
-
-  public void setResolutionStrategy(@Nullable MergeConflictResolutionStrategy resolutionStrategy) {
-    myResolutionStrategy = resolutionStrategy;
-  }
-
-  public boolean canBeResolved() {
-    return myResolutionStrategy != null;
-  }
-
-  public boolean isChange(@NotNull Side side) {
-    return side.isLeft() ? myLeftChange : myRightChange;
-  }
-
-  public boolean isChange(@NotNull ThreeSide side) {
-    switch (side) {
-      case LEFT:
-        return myLeftChange;
-      case BASE:
-        return true;
-      case RIGHT:
-        return myRightChange;
-      default:
-        throw new IllegalArgumentException(side.toString());
+  open fun isChange(side: ThreeSide): Boolean {
+    when (side) {
+      ThreeSide.LEFT -> return myLeftChange
+      ThreeSide.BASE -> return true
+      ThreeSide.RIGHT -> return myRightChange
     }
   }
 
-  public enum Type {INSERTED, DELETED, MODIFIED, CONFLICT}
+  enum class Type {
+    INSERTED, DELETED, MODIFIED, CONFLICT
+  }
 }

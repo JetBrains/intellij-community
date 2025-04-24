@@ -1,63 +1,43 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.comparison.iterables;
+package com.intellij.diff.comparison.iterables
 
-import com.intellij.diff.fragments.DiffFragment;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.fragments.DiffFragment
 
-import java.util.Collection;
-import java.util.Iterator;
-
-class DiffFragmentsDiffIterable extends ChangeDiffIterableBase {
-  private final @NotNull Collection<? extends DiffFragment> myFragments;
-
-  DiffFragmentsDiffIterable(@NotNull Collection<? extends DiffFragment> ranges, int length1, int length2) {
-    super(length1, length2);
-    myFragments = ranges;
+internal class DiffFragmentsDiffIterable(
+  private val myFragments: Collection<DiffFragment>,
+  length1: Int,
+  length2: Int
+) : ChangeDiffIterableBase(length1, length2) {
+  override fun createChangeIterable(): ChangeIterable {
+    return FragmentsChangeIterable(myFragments)
   }
 
-  @Override
-  protected @NotNull ChangeIterable createChangeIterable() {
-    return new FragmentsChangeIterable(myFragments);
-  }
+  private class FragmentsChangeIterable(fragments: Collection<DiffFragment>) : ChangeIterable {
+    private val myIterator: Iterator<DiffFragment> = fragments.iterator()
+    private var myLast: DiffFragment? = null
 
-  private static final class FragmentsChangeIterable implements ChangeIterable {
-    private final Iterator<? extends DiffFragment> myIterator;
-    private DiffFragment myLast;
-
-    private FragmentsChangeIterable(@NotNull Collection<? extends DiffFragment> fragments) {
-      myIterator = fragments.iterator();
-
-      next();
+    init {
+      next()
     }
 
-    @Override
-    public boolean valid() {
-      return myLast != null;
+    override fun valid(): Boolean {
+      return myLast != null
     }
 
-    @Override
-    public void next() {
-      myLast = myIterator.hasNext() ? myIterator.next() : null;
+    override fun next() {
+      myLast = if (myIterator.hasNext()) myIterator.next() else null
     }
 
-    @Override
-    public int getStart1() {
-      return myLast.getStartOffset1();
-    }
+    override val start1: Int
+      get() = myLast!!.startOffset1
 
-    @Override
-    public int getStart2() {
-      return myLast.getStartOffset2();
-    }
+    override val start2: Int
+      get() = myLast!!.startOffset2
 
-    @Override
-    public int getEnd1() {
-      return myLast.getEndOffset1();
-    }
+    override val end1: Int
+      get() = myLast!!.endOffset1
 
-    @Override
-    public int getEnd2() {
-      return myLast.getEndOffset2();
-    }
+    override val end2: Int
+      get() = myLast!!.endOffset2
   }
 }

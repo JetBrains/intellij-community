@@ -1,102 +1,92 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diff.util;
+package com.intellij.diff.util
 
-import com.intellij.util.Function;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Function
+import org.jetbrains.annotations.Contract
+import java.util.*
 
-import java.util.Arrays;
-import java.util.List;
-
-public enum ThreeSide {
+enum class ThreeSide(open val index: Int) {
   LEFT(0),
   BASE(1),
   RIGHT(2);
 
-  private final int myIndex;
-
-  ThreeSide(int index) {
-    myIndex = index;
-  }
-
-  public static @NotNull ThreeSide fromIndex(int index) {
-    if (index == 0) return LEFT;
-    if (index == 1) return BASE;
-    if (index == 2) return RIGHT;
-    throw new IndexOutOfBoundsException("index: " + index);
-  }
-
-  public int getIndex() {
-    return myIndex;
-  }
-
   //
   // Helpers
   //
-
   @Contract(value = "!null, !null, !null -> !null; null, null, null -> null", pure = true)
-  public @Nullable <T> T select(@Nullable T left, @Nullable T base, @Nullable T right) {
-    if (myIndex == 0) return left;
-    if (myIndex == 1) return base;
-    if (myIndex == 2) return right;
-    throw new IllegalStateException();
+  open fun <T> select(left: T, base: T, right: T): T {
+    if (this.index == 0) return left
+    if (this.index == 1) return base
+    if (this.index == 2) return right
+    throw IllegalStateException()
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull T left, @NotNull T base, @NotNull T right) {
-    if (myIndex == 0) return left;
-    if (myIndex == 1) return base;
-    if (myIndex == 2) return right;
-    throw new IllegalStateException();
+  open fun <T : Any> selectNotNull(left: T, base: T, right: T): T {
+    if (this.index == 0) return left
+    if (this.index == 1) return base
+    if (this.index == 2) return right
+    throw IllegalStateException()
   }
 
   @Contract(pure = true)
-  public int select(int left, int base, int right) {
-    if (myIndex == 0) return left;
-    if (myIndex == 1) return base;
-    if (myIndex == 2) return right;
-    throw new IllegalStateException();
+  open fun select(left: Int, base: Int, right: Int): Int {
+    if (this.index == 0) return left
+    if (this.index == 1) return base
+    if (this.index == 2) return right
+    throw IllegalStateException()
   }
 
   @Contract(pure = true)
-  public int select(int @NotNull [] array) {
-    assert array.length == 3;
-    return array[myIndex];
+  open fun select(array: IntArray): Int {
+    assert(array.size == 3)
+    return array[this.index]
   }
 
   @Contract(pure = true)
-  public <T> T select(T @NotNull [] array) {
-    assert array.length == 3;
-    return array[myIndex];
+  open fun <T> select(array: Array<T>): T {
+    assert(array.size == 3)
+    return array[this.index]
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(T @NotNull [] array) {
-    assert array.length == 3;
-    return array[myIndex];
+  open fun <T : Any> selectNotNull(array: Array<T>): T {
+    assert(array.size == 3)
+    return array[this.index]
   }
 
   @Contract(pure = true)
-  public <T> T select(@NotNull List<T> list) {
-    assert list.size() == 3;
-    return list.get(myIndex);
+  open fun <T> select(list: List<T>): T {
+    assert(list.size == 3)
+    return list[this.index]
   }
 
   @Contract(pure = true)
-  public @NotNull <T> T selectNotNull(@NotNull List<T> list) {
-    assert list.size() == 3;
-    return list.get(myIndex);
+  open fun <T : Any> selectNotNull(list: List<T>): T {
+    assert(list.size == 3)
+    return list[this.index]
   }
 
-  @Contract(pure = true)
-  public static @Nullable <T> ThreeSide fromValue(@NotNull List<? extends T> list, @Nullable T value) {
-    assert list.size() == 3;
-    int index = list.indexOf(value);
-    return index != -1 ? fromIndex(index) : null;
-  }
+  companion object {
+    @JvmStatic
+    fun fromIndex(index: Int): ThreeSide {
+      if (index == 0) return LEFT
+      if (index == 1) return BASE
+      if (index == 2) return RIGHT
+      throw IndexOutOfBoundsException("index: $index")
+    }
 
-  public static @NotNull <T> List<T> map(@NotNull Function<? super ThreeSide, ? extends T> function) {
-    return Arrays.asList(function.fun(LEFT), function.fun(BASE), function.fun(RIGHT));
+    @Contract(pure = true)
+    @JvmStatic
+    fun <T> fromValue(list: List<T>, value: T): ThreeSide? {
+      assert(list.size == 3)
+      val index = list.indexOf(value)
+      return if (index != -1) fromIndex(index) else null
+    }
+
+    @JvmStatic
+    fun <T> map(function: Function<in ThreeSide, out T>): MutableList<T> {
+      return Arrays.asList<T>(function.`fun`(LEFT), function.`fun`(BASE), function.`fun`(RIGHT))
+    }
   }
 }
