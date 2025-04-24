@@ -132,12 +132,10 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
   private inner class LazyRepositoryBranchesHolder {
     private val repositoryNodes = repositories.map { RepositoryNode(it, isLeaf = false) }
 
-    private val tree by lazy {
-      if (repositories.size > 1) hashMapOf(*repositories.map { it to LazyRepositoryBranchesSubtreeHolder(it) }.toTypedArray())
-      else hashMapOf()
-    }
+    private val tree: Map<GitRepository, LazyRepositoryBranchesSubtreeHolder> =
+      repositories.associateWith { LazyRepositoryBranchesSubtreeHolder(it) }
 
-    operator fun get(repository: GitRepository) = tree.getOrPut(repository) { LazyRepositoryBranchesSubtreeHolder(repository) }
+    operator fun get(repository: GitRepository) = tree[repository] ?: error("Repository $repository is not present in the model")
 
     fun isLocalBranchesEmpty() = tree.values.all { it.localBranches.isEmpty() }
     fun isLocalBranchesEmpty(repository: GitRepository) = tree[repository]?.localBranches?.isEmpty() ?: true
