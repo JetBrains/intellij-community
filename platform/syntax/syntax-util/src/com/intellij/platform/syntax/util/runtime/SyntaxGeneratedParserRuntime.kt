@@ -171,7 +171,7 @@ class SyntaxGeneratedParserRuntime(
     internal var level: Int = 0
     internal var predicateSign: Boolean = true
     internal var suppressErrors: Boolean = false
-    internal var hooks: ArrayDeque<HookBatch<*>> = ArrayDeque()
+    internal var hooks: ArrayDeque<HookBatch<*>> = ArrayDeque(8)
 
     internal var extendsSets: Array<SyntaxElementTypeSet> = emptyArray()
     internal var braces: Array<BracePair> = emptyArray()
@@ -738,6 +738,7 @@ fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<Array<T?>>, varar
 }
 
 private fun SyntaxGeneratedParserRuntime.run_hooks_impl_(state: SyntaxGeneratedParserRuntime.ErrorState, elementType: SyntaxElementType?) {
+  if (state.hooks.isEmpty()) return
   val batch = state.hooks.last()
   var marker: SyntaxTreeBuilder.Marker? = if (elementType == null) null else syntaxBuilder.lastDoneMarker
   if (elementType != null && marker == null) {
