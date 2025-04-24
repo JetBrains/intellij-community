@@ -52,7 +52,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
             isOnTheFly,
             inspectionHighlightType(element),
             range,
-            LocalFix(this, fixText(element))
+            createQuickFix(element),
         )
     }
 
@@ -73,6 +73,10 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     abstract fun applyTo(element: TElement, project: Project = element.project, editor: Editor? = null)
 
     open val startFixInWriteAction: Boolean = true
+
+    open fun createQuickFix(element: TElement): LocalQuickFix {
+        return LocalFix(this, fixText(element))
+    }
 
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,
