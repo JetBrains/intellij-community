@@ -2714,4 +2714,40 @@ def foo(param: str | int) -> TypeGuard[str]:
                    Node.<warning descr="Access to generic instance variables via class is ambiguous">m</warning>
                    """);
   }
+
+  // PY-79733
+  public void testLiteralTypeInferredForComprehensions() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   def func(strings: list[str]):
+                       l1: list[Literal[1]] = [1 for x in strings]
+                       l2: list[Literal[1]] = <warning descr="Expected type 'list[Literal[1]]', got 'list[Literal[2]]' instead">[2 for x in strings]</warning>
+                       s1: set[Literal[1]] = {1 for x in strings}
+                       s2: set[Literal[1]] = <warning descr="Expected type 'set[Literal[1]]', got 'set[Literal[2]]' instead">{2 for x in strings}</warning>
+                       d1: dict[str, Literal[1]] = {x: 1 for x in strings}
+                       d2: dict[str, Literal[1]] = <warning descr="Expected type 'dict[str, Literal[1]]', got 'dict[str, Literal[2]]' instead">{x: 2 for x in strings}</warning>
+                   """);
+  }
+
+  // PY-79733
+  public void testTypedDictTypeInferredForComprehensions() {
+    doTestByText("""
+                   from typing import TypedDict
+                   
+                   
+                   class Foo(TypedDict):
+                       foo: str
+                   
+                   
+                   foo: Foo = {"foo": "bar"}
+                   foo_list1: list[Foo] = [{"foo": bar} for bar in ["bar"]]
+                   foo_list2: list[Foo] = <warning descr="Expected type 'list[Foo]', got 'list[dict[str, str]]' instead">[{"foo": bar, "buz": "qux"} for bar in ["bar"]]</warning>
+                   foo_set1: set[Foo] = {{"foo": bar} for bar in ["bar"]}
+                   foo_set2: set[Foo] = <warning descr="Expected type 'set[Foo]', got 'set[dict[str, str]]' instead">{{"foo": bar, "buz": "qux"} for bar in ["bar"]}</warning>
+                   foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
+                   foo_dict2: dict[str, Foo] = <warning descr="Expected type 'dict[str, Foo]', got 'dict[str, dict[str, str]]' instead">{bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}</warning>
+                   """);
+  }
 }
