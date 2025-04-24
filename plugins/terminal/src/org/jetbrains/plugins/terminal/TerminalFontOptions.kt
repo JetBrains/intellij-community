@@ -30,7 +30,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
 
   private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
 
-  private var columnSpacing: Float = DEFAULT_TERMINAL_COLUMN_SPACING.floatValue
+  private var columnSpacing: TerminalColumnSpacing = DEFAULT_TERMINAL_COLUMN_SPACING
 
   fun addListener(listener: TerminalFontOptionsListener, disposable: Disposable) {
     listeners.add(listener)
@@ -47,7 +47,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
       fontFamily = preferences.fontFamily,
       fontSize = TerminalFontSize.ofFloat(preferences.getSize2D(preferences.fontFamily)),
       lineSpacing = TerminalLineSpacing.ofFloat(preferences.lineSpacing),
-      columnSpacing = TerminalColumnSpacing.ofFloat(columnSpacing),
+      columnSpacing = columnSpacing,
     )
   }
 
@@ -63,7 +63,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     newPreferences.setFontSize(settings.fontFamily, settings.fontSize.floatValue)
     newPreferences.lineSpacing = settings.lineSpacing.floatValue
     // then apply the settings that aren't a part of FontPreferences
-    columnSpacing = settings.columnSpacing.floatValue
+    columnSpacing = settings.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
 
@@ -74,11 +74,11 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
 
   override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
     PersistentTerminalFontPreferences(fontPreferences).also {
-      it.COLUMN_SPACING = columnSpacing
+      it.COLUMN_SPACING = columnSpacing.floatValue
     }
 
   override fun loadState(state: PersistentTerminalFontPreferences) {
-    columnSpacing = state.COLUMN_SPACING
+    columnSpacing = TerminalColumnSpacing.ofFloat(state.COLUMN_SPACING)
     super.loadState(state)
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
