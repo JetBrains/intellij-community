@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.utils.yieldIfNotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.internal.*
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSymbolAnnotation
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
@@ -48,6 +50,22 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     fun isSupportedFile(file: KtFile): Boolean = true
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        val ktDeclaration = ktElement.getStrictParentOfType<KtModifierList>()?.parent as? KtDeclaration
+        // SLC won't model a declaration with value class in its signature.
+        if (ktDeclaration != null && hasTypeForValueClassInSignature(ktDeclaration)) {
+            (ktElement as? KtAnnotationEntry)?.let { entry ->
+                analyzeForUast(ktDeclaration) {
+                    val declaration = ktDeclaration.symbol
+                    declaration.annotations.find { it.psi == entry }?.let { annoApp ->
+                        return UastFakeDeserializedSymbolAnnotation(
+                            declaration.createPointer(),
+                            annoApp.classId,
+                            ktDeclaration
+                        )
+                    }
+                }
+            }
+        }
         return ktElement.toLightAnnotation()
     }
 

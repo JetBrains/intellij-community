@@ -68,8 +68,12 @@ abstract class UastFakeLightMethodBase(
         return _annotations
     }
 
+    override fun getAnnotation(fqn: String): PsiAnnotation? {
+        return _annotations.find { it.hasQualifiedName(fqn) }
+    }
+
     override fun hasAnnotation(fqn: String): Boolean {
-        return _annotations.find { it.hasQualifiedName(fqn) } != null
+        return getAnnotation(fqn) != null
     }
 
     override fun isDeprecated(): Boolean {

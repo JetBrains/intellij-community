@@ -3,7 +3,9 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
@@ -40,6 +42,18 @@ sealed class KotlinUMethodWithFakeLightDelegateBase<T : KtDeclaration>(
         original.annotationEntries.mapTo(annotations) {
             baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
         }
+    }
+
+    override fun getAnnotations(): Array<PsiAnnotation> {
+        return javaPsi.annotations
+    }
+
+    override fun getAnnotation(fqn: @NonNls String): PsiAnnotation? {
+        return javaPsi.getAnnotation(fqn)
+    }
+
+    override fun hasAnnotation(fqName: String): Boolean {
+        return javaPsi.hasAnnotation(fqName)
     }
 
     override fun getTextRange(): TextRange {
