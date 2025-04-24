@@ -222,6 +222,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected static String toDisplayableString(SourcePosition sourcePosition) {
+    if (sourcePosition == null) return "unknown source position";
     int line = sourcePosition.getLine();
     if (line >= 0) {
       line++;
@@ -237,7 +238,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void printContext(@NotNull String prefix, StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
-        systemPrintln(prefix + toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))));
+        systemPrintln(prefix + toDisplayableString(PositionUtil.getSourcePosition(context)));
       }
       else {
         systemPrintln("Context thread is null");
