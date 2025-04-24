@@ -40,7 +40,8 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.streams.asStream
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -101,18 +102,22 @@ class AutoImportProjectTracker(
   }
 
   override fun scheduleProjectRefresh() {
-    LOG.debug("Schedule project reload", Throwable())
+    LOG.debug("Schedule change processing (isExplicitReload=true)", Throwable())
+
     schedule(priority = 0, dispatchIterations = 1) {
-      reloadProject(explicitReload = true)
+      processChanges(isExplicitReload = true)
     }
   }
 
   override fun scheduleChangeProcessing() {
-    LOG.debug("Schedule change processing")
-    schedule(priority = 1, dispatchIterations = 1) { processChanges() }
+    LOG.debug("Schedule change processing (isExplicitReload=false)")
+
+    schedule(priority = 1, dispatchIterations = 1) {
+      processChanges(isExplicitReload = false)
+    }
   }
 
-  private fun scheduleDelayedSmartProjectReload() {
+  private fun scheduleDelayedProjectReload(projectsToReload: List<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>) {
     LOG.debug("Schedule delayed project reload")
 
     // See AutoImportProjectTracker.scheduleChangeProcessing for details
@@ -125,7 +130,9 @@ class AutoImportProjectTracker(
     // smartProjectReloadDispatcherIterations can be negative if smartProjectReloadDelay is less than MERGING_TIME_SPAN
     val dispatchIterations = maxOf(smartProjectReloadDispatcherIterations, 1)
 
-    schedule(priority = 2, dispatchIterations = dispatchIterations) { reloadProject(explicitReload = false) }
+    schedule(priority = 2, dispatchIterations = dispatchIterations) {
+      reloadProject(projectsToReload)
+    }
   }
 
   private val currentActivity = AtomicReference<ProjectInitializationDiagnosticService.ActivityTracker?>()
@@ -149,73 +156,119 @@ class AutoImportProjectTracker(
     })
   }
 
-  private fun processChanges() {
-    LOG.debug("Process changes")
+  private fun processChanges(isExplicitReload: Boolean) {
+    LOG.debug("Process changes (isExplicitReload=$isExplicitReload)")
 
-    when (settings.autoReloadType) {
-      AutoReloadType.ALL -> when (getModificationType()) {
-        INTERNAL -> scheduleDelayedSmartProjectReload()
-        EXTERNAL -> scheduleDelayedSmartProjectReload()
-        HIDDEN -> updateProjectNotification()
-        UNKNOWN -> updateProjectNotification()
-      }
-      AutoReloadType.SELECTIVE -> when (getModificationType()) {
-        INTERNAL -> updateProjectNotification()
-        EXTERNAL -> scheduleDelayedSmartProjectReload()
-        HIDDEN -> updateProjectNotification()
-        UNKNOWN -> updateProjectNotification()
-      }
-      AutoReloadType.NONE -> updateProjectNotification()
-    }
-  }
-
-  private fun reloadProject(explicitReload: Boolean) {
-    LOG.debug("Incremental project reload")
-
-    val projectsToReload = projectDataMap.values
-      .filter { (explicitReload || it.isActivated) && !it.isUpToDate() }
-
-    if (isDisabledAutoReload() || projectsToReload.isEmpty()) {
-      LOG.debug("Skipped all projects reload")
-      updateProjectNotification()
-      return
-    }
-
-    for (projectData in projectsToReload) {
-      LOG.debug("${projectData.projectAware.projectId}: Project reload")
-      val hasUndefinedModifications = !projectData.status.isUpToDate()
-      val settingsContext = projectData.settingsTracker.getSettingsContext()
-      val context = ProjectReloadContext(explicitReload, hasUndefinedModifications, settingsContext)
-      projectData.projectAware.reloadProject(context)
-    }
-  }
-
-  private fun updateProjectNotification() {
-    LOG.debug("Notification status update")
-
-    val isDisabledAutoReload = isDisabledAutoReload()
-    for ((projectId, data) in projectDataMap) {
-      when (isDisabledAutoReload || data.isUpToDate()) {
-        true -> notificationAware.notificationExpire(projectId)
-        else -> notificationAware.notificationNotify(data.projectAware)
+    val projectsToReload = ArrayList<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>()
+    for (projectData in projectDataMap.values) {
+      val context = ProjectReloadContext(
+        isExplicitReload = isExplicitReload,
+        hasUndefinedModifications = !projectData.status.isUpToDate(),
+        settingsFilesContext = projectData.settingsTracker.getSettingsContext()
+      )
+      val projectId = projectData.projectAware.projectId
+      when {
+        projectData.isUpToDate() -> {
+          LOG.debug("$projectId: Skip project reload (UpToDate)")
+          notificationAware.notificationExpire(projectId)
+        }
+        isDisabledReload(projectData) -> {
+          LOG.debug("$projectId: Skip project reload (disabled)")
+          notificationAware.notificationExpire(projectId)
+        }
+        !isExplicitReload && isDisabledAutoReload(projectData) -> {
+          LOG.debug("$projectId: Skip project auto-reload (disabled)")
+          notificationAware.notificationNotify(projectData.projectAware)
+        }
+        else -> {
+          LOG.debug("$projectId: Schedule project reload")
+          notificationAware.notificationExpire(projectId)
+          projectsToReload.add(projectData.projectAware to context)
+        }
       }
     }
+
+    if (projectsToReload.isEmpty()) {
+      LOG.debug("Skip all project reloads")
+    }
+    else if (isExplicitReload) {
+      reloadProject(projectsToReload)
+    }
+    else {
+      scheduleDelayedProjectReload(projectsToReload)
+    }
   }
 
-  private fun isDisabledAutoReload(): Boolean {
-    return !isEnabledAutoReload ||
-           projectChangeOperation.isOperationInProgress() ||
-           projectReloadOperation.isOperationInProgress() ||
-           isProjectLookupActivateProperty.get()
+  private fun reloadProject(projectsToReload: List<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>) {
+    LOG.debug("Reload projects")
+    for ((projectAware, context) in projectsToReload) {
+      LOG.debug("${projectAware.projectId}: reload project")
+      projectAware.reloadProject(context)
+    }
   }
 
-  private fun getModificationType(): ExternalSystemModificationType {
-    return projectDataMap.values
-      .asSequence()
-      .map { it.getModificationType() }
-      .asStream()
-      .reduce(ProjectStatus::merge)
-      .orElse(UNKNOWN)
+  private fun isDisabledReload(projectData: ProjectData): Boolean {
+    val projectId = projectData.projectAware.projectId
+
+    if (!isEnabledReload) {
+      LOG.debug("$projectId: Disabled reload (global property)")
+      return true
+    }
+
+    if (projectChangeOperation.isOperationInProgress()) {
+      LOG.debug("$projectId: Disabled reload (project change)")
+      return true
+    }
+
+    if (projectReloadOperation.isOperationInProgress()) {
+      LOG.debug("$projectId: Disabled reload (project reload)")
+      return true
+    }
+
+    return false
+  }
+
+  private fun isDisabledAutoReload(projectData: ProjectData): Boolean {
+    val projectId = projectData.projectAware.projectId
+
+    if (!isEnableAutoReload) {
+      LOG.debug("$projectId: Disabled auto-reload (global property)")
+      return true
+    }
+
+    if (!projectData.isActivated) {
+      LOG.debug("$projectId: Disabled auto-reload (activation)")
+      return true
+    }
+
+    if (isProjectLookupActivateProperty.get()) {
+      LOG.debug("$projectId: Disabled auto-reload (project lookup)")
+      return true
+    }
+
+    val autoReloadType = settings.autoReloadType
+    val modificationType = projectData.getModificationType()
+    val isDisabledAutoReload = when (autoReloadType) {
+      AutoReloadType.ALL -> when (modificationType) {
+        EXTERNAL -> false
+        INTERNAL -> false
+        HIDDEN -> true
+        UNKNOWN -> true
+      }
+      AutoReloadType.SELECTIVE -> when (modificationType) {
+        EXTERNAL -> false
+        INTERNAL -> true
+        HIDDEN -> true
+        UNKNOWN -> true
+      }
+      AutoReloadType.NONE -> true
+    }
+    if (isDisabledAutoReload) {
+      LOG.debug("$projectId: Disabled auto-reload ($autoReloadType, $modificationType)")
+      return true
+    }
+
+    return false
   }
 
   override fun register(projectAware: ExternalSystemProjectAware) {
@@ -326,7 +379,7 @@ class AutoImportProjectTracker(
 
     projectReloadOperation.whenOperationStarted(serviceDisposable) {
       LOG.debug("Detected project reload start event")
-      notificationAware.notificationExpire()
+      scheduleChangeProcessing()
     }
     projectReloadOperation.whenOperationFinished(serviceDisposable) {
       LOG.debug("Detected project reload finish event")
@@ -334,7 +387,7 @@ class AutoImportProjectTracker(
     }
     projectChangeOperation.whenOperationStarted(serviceDisposable) {
       LOG.debug("Detected project change start event")
-      notificationAware.notificationExpire()
+      scheduleChangeProcessing()
     }
     projectChangeOperation.whenOperationFinished(serviceDisposable) {
       LOG.debug("Detected project change finish event")
@@ -342,6 +395,7 @@ class AutoImportProjectTracker(
     }
     isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) {
       LOG.debug("Detected project lookup start event")
+      scheduleChangeProcessing()
     }
     isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) {
       LOG.debug("Detected project lookup finish event")
@@ -416,13 +470,13 @@ class AutoImportProjectTracker(
       || java.lang.Boolean.getBoolean("external.system.auto.import.headless.async")
     )
 
-    private val isEnabledAutoReload: Boolean
-      get() = enableAutoReloadProperty.get() &&
-              (onceIgnoreDisableAutoReloadRegistryProperty.getAndSet(false) ||
-               !Registry.`is`("external.system.auto.import.disabled"))
+    private val isEnabledReload: Boolean
+      get() = onceIgnoreDisableAutoReloadRegistryProperty.getAndSet(false) ||
+              !Registry.`is`("external.system.auto.import.disabled")
 
-    val isAsyncChangesProcessing: Boolean
-      get() = asyncChangesProcessingProperty.get()
+    private val isEnableAutoReload: Boolean by enableAutoReloadProperty
+
+    val isAsyncChangesProcessing: Boolean by asyncChangesProcessingProperty
 
     /**
      * Enables auto-import in tests
