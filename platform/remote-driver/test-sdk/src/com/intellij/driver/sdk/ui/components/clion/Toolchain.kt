@@ -15,14 +15,14 @@ sealed class Toolchain(
     name: ToolchainNames = ToolchainNames.DEFAULT
   ) : Toolchain(name, compiler, debugger, buildTool)
 
-  class GCC(
+  class Gnu(
     compiler: Compiler = Compiler.GCC,
     debugger: Debugger = Debugger.BUNDLED_GDB,
     buildTool: Make = Make.DEFAULT,
     name: ToolchainNames = ToolchainNames.GCC
   ) : Toolchain(name, compiler, debugger, buildTool)
 
-  class CLang(
+  class Llvm(
     compiler: Compiler = Compiler.CLANG,
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: Make = Make.DEFAULT,
