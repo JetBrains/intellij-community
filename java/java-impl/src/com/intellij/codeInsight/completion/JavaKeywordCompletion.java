@@ -1343,7 +1343,8 @@ public class JavaKeywordCompletion {
     PsiElement parent = position.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement) {
       PsiElement typeHolder = psiApi().parents(parent.getParent()).skipWhile(Conditions.instanceOf(PsiTypeElement.class)).first();
-      return typeHolder instanceof PsiMember || typeHolder instanceof PsiClassLevelDeclarationStatement;
+     return typeHolder instanceof PsiMember || typeHolder instanceof PsiClassLevelDeclarationStatement ||
+             (typeHolder instanceof PsiJavaFile && PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, position));
     }
 
     return false;

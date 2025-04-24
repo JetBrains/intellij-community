@@ -10,6 +10,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -316,6 +317,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
       """);
     complete();
     assertNotContainItems("package");
+  }
+
+  public void testVoidAtBeginningImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+      configureFromFileText("Test.java", """
+      vo<caret>""");
+      complete();
+      assertContainsItems("void");
+    });
   }
 
   public void testNoPrimitivesAfterExpressions() { doTest(); }
