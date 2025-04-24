@@ -8,6 +8,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.constant
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.console.addDefaultEnvironments
 import com.jetbrains.python.run.PythonModuleExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
 import org.jetbrains.annotations.ApiStatus
@@ -20,11 +21,17 @@ object PythonExecuteUtils {
     sdk: Sdk,
     pyModuleToRun: String,
     runArgs: List<String>,
+    envs: Map<String, String> = emptyMap()
   ): ProcessOutput {
     val targetEnvConfiguration = sdk.targetEnvConfiguration
     val execution = PythonModuleExecution()
     execution.moduleName = pyModuleToRun
     execution.parameters += runArgs.map { constant(it) }
+
+    val patchedEnvs = addDefaultEnvironments(sdk, envs.toMutableMap())
+    patchedEnvs.forEach {
+      execution.addEnvironmentVariable(it.key, it.value)
+    }
 
     val request = targetEnvConfiguration?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
     val targetEnvironment = request.prepareEnvironment(TargetProgressIndicator.EMPTY)
