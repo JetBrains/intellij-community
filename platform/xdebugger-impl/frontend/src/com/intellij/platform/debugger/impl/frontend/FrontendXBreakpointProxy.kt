@@ -4,13 +4,8 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
@@ -29,22 +24,35 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-@ApiStatus.Internal
-class FrontendXBreakpointProxy(
+internal fun createXBreakpointProxy(
+  project: Project,
+  parentCs: CoroutineScope,
+  dto: XBreakpointDto,
+  type: XBreakpointTypeProxy,
+  onBreakpointChange: () -> Unit,
+): XBreakpointProxy {
+  return if (type.isLineBreakpoint) {
+    FrontendXLineBreakpointProxy(project, parentCs, dto, type, onBreakpointChange)
+  }
+  else {
+    FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange)
+  }
+}
+
+internal open class FrontendXBreakpointProxy(
   override val project: Project,
   parentCs: CoroutineScope,
   private val dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  private val onBreakpointChange: () -> Unit,
+  protected val onBreakpointChange: () -> Unit,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
 
   private val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
 
-  private val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
+  protected val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
   private val editorsProvider = dto.localEditorsProvider ?: createFrontendEditorsProvider()
 
@@ -228,18 +236,6 @@ class FrontendXBreakpointProxy(
     return editorsProvider
   }
 
-  override fun isTemporary(): Boolean {
-    return _state.value.isTemporary
-  }
-
-  override fun setTemporary(isTemporary: Boolean) {
-    _state.update { it.copy(isTemporary = isTemporary) }
-    onBreakpointChange()
-    project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
-      XBreakpointApi.getInstance().setTemporary(id, isTemporary)
-    }
-  }
-
   override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
     // TODO: let's convert it once on state change rather then on every getCustomizedPresentation call
     return _state.value.customPresentation?.toPresentation()
@@ -254,50 +250,8 @@ class FrontendXBreakpointProxy(
     return !cs.isActive
   }
 
-  override fun getFile(): VirtualFile? {
-    // TODO IJPL-185111 pass through line breakpoint info
-    return null
-  }
-
   override fun updateIcon() {
     // TODO IJPL-185111 does nothing since we calculate icon for each getIcon request
-  }
-
-  override fun getRangeMarker(): RangeMarker? {
-    // TODO IJPL-185111
-    return null
-  }
-
-  override fun getLine(): Int {
-    // TODO IJPL-185111 pass through line breakpoint info
-    return 0
-  }
-
-  override fun setFileUrl(url: String) {
-    // TODO IJPL-185111 implement set file url
-  }
-
-  override fun setLine(line: Int) {
-    // TODO IJPL-185111 implement set line
-  }
-
-  override fun setHighlighter(rangeMarker: RangeMarker) {
-    // TODO IJPL-185111 implement set highlighter
-  }
-
-  override fun getHighlightRange(): TextRange? {
-    // TODO IJPL-185111 implement highlight range
-    return null
-  }
-
-  override fun getHighlighter(): RangeHighlighter? {
-    // TODO IJPL-185111 implement range highlighter
-    return null
-  }
-
-  override fun createGutterIconRenderer(): GutterIconRenderer? {
-    // TODO IJPL-185111 implement create gutter icon renderer
-    return null
   }
 
   private fun XBreakpointCustomPresentationDto.toPresentation(): CustomizedBreakpointPresentation {
@@ -309,7 +263,7 @@ class FrontendXBreakpointProxy(
     }
   }
 
-  internal fun dispose() {
+  override fun dispose() {
     cs.cancel()
   }
 
@@ -337,4 +291,4 @@ class FrontendXBreakpointProxy(
 }
 
 @Service(Service.Level.PROJECT)
-private class FrontendXBreakpointProjectCoroutineService(val cs: CoroutineScope)
+internal class FrontendXBreakpointProjectCoroutineService(val cs: CoroutineScope)

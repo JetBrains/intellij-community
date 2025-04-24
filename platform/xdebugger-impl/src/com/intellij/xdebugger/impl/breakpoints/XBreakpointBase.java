@@ -557,7 +557,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       }
     }
 
-    if (breakpoint.isTemporary() && type.getTemporaryIcon() != null) {
+    if (
+      (breakpoint instanceof XLineBreakpointProxy) &&
+      ((XLineBreakpointProxy)breakpoint).isTemporary() &&
+      type.getTemporaryIcon() != null
+    ) {
       return type.getTemporaryIcon();
     }
 

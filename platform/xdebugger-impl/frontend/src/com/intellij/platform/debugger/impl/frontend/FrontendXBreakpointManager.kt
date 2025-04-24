@@ -30,7 +30,7 @@ private val LOG = logger<FrontendXBreakpointManager>()
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-  private val breakpoints: ConcurrentMap<XBreakpointId, FrontendXBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
+  private val breakpoints: ConcurrentMap<XBreakpointId, XBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
 
@@ -61,7 +61,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
             LOG.error("Breakpoint type with id ${breakpointDto.typeId} not found")
             continue
           }
-          breakpoints[breakpointDto.id] = FrontendXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
+          breakpoints[breakpointDto.id] = createXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
             breakpointsChanged.tryEmit(Unit)
           })
         }

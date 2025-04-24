@@ -1,18 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
-import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
@@ -74,27 +72,15 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun getEditorsProvider(): XDebuggerEditorsProvider?
 
-  fun isTemporary(): Boolean
-
-  // Supported only for line breakpoints
-  fun setTemporary(isTemporary: Boolean)
-
   fun getCustomizedPresentation(): CustomizedBreakpointPresentation?
 
   fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation?
   fun isDisposed(): Boolean
-  fun getFile(): VirtualFile?
   fun updateIcon()
-  fun getRangeMarker(): RangeMarker?
-  fun getLine(): Int
-  fun setFileUrl(url: String)
-  fun setLine(line: Int)
-  fun setHighlighter(rangeMarker: RangeMarker)
-  fun getHighlightRange(): TextRange?
-  fun getHighlighter(): RangeHighlighter?
-  fun createGutterIconRenderer(): GutterIconRenderer?
 
-  class Monolith(val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
+  fun dispose()
+
+  open class Monolith(open val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     override val id: XBreakpointId = breakpoint.breakpointId
 
     override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.project, breakpoint.getType())
@@ -200,14 +186,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
       breakpoint.logExpressionObject = logExpression
     }
 
-    override fun isTemporary(): Boolean = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false
-
-    override fun setTemporary(isTemporary: Boolean) {
-      if (breakpoint is XLineBreakpoint<*>) {
-        breakpoint.isTemporary = isTemporary
-      }
-    }
-
     override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
       return breakpoint.customizedPresentation
     }
@@ -217,41 +195,13 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     }
 
     override fun isDisposed(): Boolean = breakpoint.isDisposed
-    override fun getFile(): VirtualFile? = (breakpoint as? XLineBreakpointImpl<*>)?.file
+    
     override fun updateIcon() {
       breakpoint.updateIcon()
     }
 
-    override fun getRangeMarker(): RangeMarker? {
-      return (breakpoint as? XLineBreakpointImpl<*>)?.rangeMarker
-    }
-
-    override fun getLine(): Int {
-      return (breakpoint as? XLineBreakpointImpl<*>)?.line ?: 0
-    }
-
-    override fun setFileUrl(url: String) {
-      (breakpoint as? XLineBreakpointImpl<*>)?.fileUrl = url
-    }
-
-    override fun setLine(line: Int) {
-      (breakpoint as? XLineBreakpointImpl<*>)?.line = line
-    }
-
-    override fun setHighlighter(rangeMarker: RangeMarker) {
-      (breakpoint as? XLineBreakpointImpl<*>)?.setHighlighter(rangeMarker)
-    }
-
-    override fun getHighlightRange(): TextRange? {
-      return (breakpoint as? XLineBreakpointImpl<*>)?.highlightRange
-    }
-
-    override fun getHighlighter(): RangeHighlighter? {
-      return (breakpoint as? XLineBreakpointImpl<*>)?.highlighter
-    }
-
-    override fun createGutterIconRenderer(): GutterIconRenderer? {
-      return (breakpoint as? XLineBreakpointImpl<*>)?.createGutterIconRenderer()
+    override fun dispose() {
+      breakpoint.dispose()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -295,3 +245,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
 @ApiStatus.Internal
 fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy = XBreakpointProxy.Monolith(this)
+
+@ApiStatus.Internal
+fun <T : XLineBreakpointImpl<*>> T.asLineBreakpointProxy(): XLineBreakpointProxy = XLineBreakpointProxy.Monolith(this)
