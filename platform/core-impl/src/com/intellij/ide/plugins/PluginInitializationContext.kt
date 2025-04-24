@@ -16,6 +16,8 @@ interface PluginInitializationContext {
    * https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
    * If a plugin does not include any platform alias dependency tags in its plugin.xml,
    * it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
+   *
+   * @see [PluginCompatibilityUtils.isLegacyPluginWithoutPlatformAliasDependencies]
    */
   val requirePlatformAliasDependencyForLegacyPlugins: Boolean
 
