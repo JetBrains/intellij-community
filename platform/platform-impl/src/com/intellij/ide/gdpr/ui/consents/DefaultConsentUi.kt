@@ -5,7 +5,7 @@ import com.intellij.ide.gdpr.Consent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
-class DefaultConsentUi(private val consent: Consent) : ConsentUi {
+internal class DefaultConsentUi(private val consent: Consent) : ConsentUi {
   override fun getCheckBoxText(): @NlsSafe String = StringUtil.capitalize(consent.name)
 
   override fun getCheckBoxCommentText(): @NlsSafe String = consent.text

@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
-class UsageStatisticsConsentUi(private val consent: Consent) : ConsentUi {
+internal class UsageStatisticsConsentUi(private val consent: Consent) : ConsentUi {
   override fun getCheckBoxText(): @NlsSafe String {
     val checkBoxText = StringUtil.capitalize(consent.name)
     if (ConsentOptions.getInstance().isEAP) {
