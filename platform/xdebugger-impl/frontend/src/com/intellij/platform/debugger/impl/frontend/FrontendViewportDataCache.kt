@@ -15,6 +15,10 @@ internal class FrontendViewportDataCache<T>(
   private var cache: StampedCache<T>? = null
 
   suspend fun update(viewport: ViewportInfo, lastPossibleIndex: Int, currentStamp: Long) {
+    if (lastPossibleIndex < 0) {
+      cache = null
+      return
+    }
     val currentCache = cache
     if (currentCache == null || currentCache.shouldBeUpdated(viewport, currentStamp)) {
       val (firstIndex, lastIndex) = indicesToLoad(viewport, lastPossibleIndex)

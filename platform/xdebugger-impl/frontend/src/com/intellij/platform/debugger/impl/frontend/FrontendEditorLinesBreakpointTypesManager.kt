@@ -104,8 +104,7 @@ private class EditorBreakpointTypesMap(
           editor.document.modificationStamp to editor.document.lineCount
         }
         val (firstViewportIndex, lastViewportIndex) = editor.viewportIndicesInclusive()
-        val lastPossibleIndex = (editorLinesCount - 1).coerceAtLeast(0)
-        breakpointsMap.update(ViewportInfo(firstViewportIndex, lastViewportIndex), lastPossibleIndex, currentStamp)
+        breakpointsMap.update(ViewportInfo(firstViewportIndex, lastViewportIndex), editorLinesCount - 1, currentStamp)
       }
     }
 

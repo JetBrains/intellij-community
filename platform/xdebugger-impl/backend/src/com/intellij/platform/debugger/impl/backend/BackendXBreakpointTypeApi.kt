@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
+import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -65,9 +66,10 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     return readAction {
       blockingContextToIndicator {
         val editorBreakpointTypes = mutableListOf<List<XBreakpointTypeId>>()
-        val startIndex = start.coerceIn(0 until editor.document.lineCount)
-        val endIndex = endInclusive.coerceIn(0 until editor.document.lineCount)
-        for (line in startIndex..endIndex) {
+        for (line in start..endInclusive) {
+          if (!DocumentUtil.isValidLine(line, editor.document)) {
+            continue
+          }
           ProgressManager.checkCanceled()
           val position = XDebuggerUtil.getInstance().createPosition(FileDocumentManager.getInstance().getFile(editor.document), line)
           if (position == null) {

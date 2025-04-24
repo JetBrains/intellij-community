@@ -110,4 +110,15 @@ internal class FrontendViewportDataCacheTest {
       assertEquals(i, cache.getData(i, stamp))
     }
   }
+
+  @Test
+  fun `test cache is empty for negative last possible index`() = runBlocking {
+    val cache = createSimpleDataIdentityCache()
+    val stamp = 0L
+    val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 0)
+    cache.update(viewportStartList, -1, stamp)
+    for (i in 0..20_000) {
+      assertNull(cache.getData(i, stamp))
+    }
+  }
 }
