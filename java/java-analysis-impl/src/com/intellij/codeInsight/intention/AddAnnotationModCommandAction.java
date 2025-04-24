@@ -22,7 +22,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A common action to add an annotation into Java code (either in code or externally)
+ * A common action to add an annotation into Java code (either in code or externally).
+ * 
+ * @see com.intellij.codeInspection.RemoveAnnotationQuickFix
  */
 public class AddAnnotationModCommandAction extends PsiBasedModCommandAction<PsiModifierListOwner> {
   private final @NotNull String myAnnotation;

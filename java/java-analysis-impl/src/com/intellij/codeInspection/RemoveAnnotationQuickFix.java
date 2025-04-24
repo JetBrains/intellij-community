@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-
+/**
+ * @see com.intellij.codeInsight.intention.AddAnnotationModCommandAction
+ */
 public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
   private final SmartPsiElementPointer<PsiAnnotation> myAnnotation;
   private final SmartPsiElementPointer<PsiModifierListOwner> myListOwner;
