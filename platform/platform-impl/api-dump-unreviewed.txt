@@ -1868,6 +1868,7 @@ c:com.intellij.ide.ReopenProjectAction
 - getProjectNameToDisplay():java.lang.String
 - f:getProjectPath():java.lang.String
 - getProjectPathToDisplay():java.lang.String
+- getProviderIcon():javax.swing.Icon
 - f:isRemoved():Z
 - f:setProjectGroup(com.intellij.ide.ProjectGroup):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
