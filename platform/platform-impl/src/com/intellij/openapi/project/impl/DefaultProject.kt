@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.project.impl
@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.project.PROJECT_ID
+import com.intellij.platform.project.ProjectId
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
@@ -66,6 +68,11 @@ internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerE
       (project as DefaultProjectImpl).init()
       application.messageBus.syncPublisher(DefaultProjectListener.TOPIC).defaultProjectImplCreated(project)
     }
+  }
+
+  init {
+    @Suppress("LeakingThis")
+    putUserData(PROJECT_ID, ProjectId.create())
   }
 
   override fun <T> instantiateClass(aClass: Class<T>, pluginId: PluginId): T = delegate.instantiateClass(aClass, pluginId)
@@ -262,6 +269,11 @@ private const val DEFAULT_HASH_CODE = 4
 private class DefaultProjectImpl(
   private val actualContainerInstance: Project
 ) : ClientAwareComponentManager(ApplicationManager.getApplication().getComponentManagerImpl()), Project {
+  init {
+    @Suppress("LeakingThis")
+    putUserData(PROJECT_ID, ProjectId.create())
+  }
+
   override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     // see ConfigurableEP - prefer constructor that accepts our instance
