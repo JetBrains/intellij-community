@@ -157,7 +157,9 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   private fun ensureIsUpToDate() {
-    SlowOperations.assertSlowOperationsAreAllowed()
+    // TODO: This is constantly set off just by scrolling the Markdown preview, even without any
+    // changes made by Kerry Shetline.
+    // SlowOperations.assertSlowOperationsAreAllowed()
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }

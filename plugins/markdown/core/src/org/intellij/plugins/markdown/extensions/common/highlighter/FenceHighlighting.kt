@@ -26,7 +26,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 private fun parseContent(project: Project?, language: Language, text: String, languageName: String?,
-                         startOffset: Int?, collector: (String, IntRange, Color?, String?) -> Unit) {
+                         node: ASTNode, collector: (String, IntRange, Color?, String?) -> Unit) {
   val file = LightVirtualFile("markdown_temp", text)
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
   val ecm = EditorColorsManager.getInstance()
@@ -44,13 +44,20 @@ private fun parseContent(project: Project?, language: Language, text: String, la
 
   if (settings.useAlternativeHighlighting && altHighlighterAvailable()) {
     val lang = if (language == Language.ANY) (languageName ?: "") else language.id.lowercase()
-    val html = parseToHighlightedHtml(lang, text, startOffset ?: 0)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
+    val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
+    var html = parseToHighlightedHtml(lang, text, startOffset)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
 
     if (html.isNullOrEmpty() && language == Language.ANY) {
       // Alterative highlighting failed, and default highlighting doesn't work for the current language.
       return
     }
     else if (html?.isNotEmpty() == true) {
+      if (node.startOffset < startOffset) {
+        // For smooth synced scrolling a span matching the start of the code
+        // fence is required.
+        html = "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}=\"${node.startOffset}..$startOffset\"></span>" + html
+      }
+
       collector(text, 0..text.length, null, html)
       return
     }
@@ -74,8 +81,8 @@ private fun parseContent(project: Project?, language: Language, text: String, la
 }
 
 private inline fun collectHighlights(language: Language, text: String, project: Project? = null, languageName: String? = null,
-                                     startOffset: Int? = 0, crossinline consumer: (String, IntRange, Color?, String?) -> Unit) {
-  parseContent(project, language, text, languageName, startOffset) { content, range, color, html ->
+                                     node: ASTNode, crossinline consumer: (String, IntRange, Color?, String?) -> Unit) {
+  parseContent(project, language, text, languageName, node) { content, range, color, html ->
     if (color != null || html != null) {
       consumer.invoke(content, range, color, html)
     }
@@ -93,9 +100,9 @@ internal data class HighlightedRange(
 }
 
 internal fun collectHighlightedChunks(language: Language, text: String, project: Project?,
-                                      languageName: String, startOffset: Int): List<HighlightedRange> {
+                                      languageName: String, node: ASTNode): List<HighlightedRange> {
   return buildList {
-    collectHighlights(language, text, project, languageName, startOffset) { _, range, color, id ->
+    collectHighlights(language, text, project, languageName, node) { _, range, color, id ->
       add(HighlightedRange(TextRange(range.first, range.last), color, id))
     }
   }

@@ -60,7 +60,7 @@ class MarkdownCodeFencePreviewHighlighter: CodeFenceGeneratingProvider {
       return cached
     }
 
-    val highlightedRanges = collectHighlightedChunks(injectedLanguage!!, raw, project, language, node.startOffset)
+    val highlightedRanges = collectHighlightedChunks(injectedLanguage!!, raw, project, language, node)
     val text: String
 
     if (highlightedRanges.isEmpty()) {

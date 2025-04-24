@@ -134,11 +134,9 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
       val chunks = html.split(Regex("""(?<=(>|\r\n|\r|\n))|(?=<)""")).toTypedArray()
       val nesting = ArrayDeque<TagInfo>()
       var offset = startOffset
-      var wasNewLine = false
 
       for (i in chunks.indices) {
         val chunk = chunks[i]
-        val isNewLine = Regex("[\\n\\r]").containsMatchIn(chunk) || i == chunk.lastIndex
 
         if (chunk.startsWith("</")) {
           val match = nesting.removeLastOrNull()
@@ -150,19 +148,12 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
         else if (chunk.startsWith("<")) {
           nesting.addLast(TagInfo(i, offset))
         }
-        else {
+        else if (chunk.isNotEmpty()) {
           val decodedChunk = decodeEntities(chunk)
 
-          if (nesting.isNotEmpty() && !isNewLine && !wasNewLine) {
-            offset += decodedChunk.length
-          }
-          else if (chunk.isNotEmpty()) {
-            chunks[i] = addSourceRange("<span>$chunk</span>", offset, offset + decodedChunk.length)
-            offset += decodedChunk.length
-          }
+          chunks[i] = addSourceRange("<span>$chunk</span>", offset, offset + decodedChunk.length)
+          offset += decodedChunk.length
         }
-
-        wasNewLine = isNewLine
       }
 
       return chunks.joinToString("")
