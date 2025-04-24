@@ -51,6 +51,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
 
+  private val sessionRestoredEvent = GROUP.registerEvent("session.restored", TABS_COUNT)
+
   private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
 
   private val osVersion: String by lazy {
@@ -146,6 +148,10 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                              EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds)
   }
 
+  @JvmStatic
+  fun logSessionRestored(project: Project, tabCount: Int) {
+    sessionRestoredEvent.log(project, tabCount)
+  }
 
   fun logFrontendTypingLatency(inputEventId: Int, duration: Duration) {
     frontendTypingLatencyEvent.log(

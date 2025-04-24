@@ -245,6 +245,8 @@ public final class TerminalToolWindowManager implements Disposable {
       createNewSession(myTerminalRunner, tabState, tab, null, false, true);
     }
 
+    ReworkedTerminalUsageCollector.logSessionRestored(myProject, tabs.size());
+
     ContentManager contentManager = myToolWindow.getContentManager();
     Content firstContent = contentManager.getContent(0);
     if (firstContent != null) {
