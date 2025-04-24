@@ -9845,6 +9845,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantElvisReturnNull/basic_explicitLabel_rhs.kt");
         }
 
+        @TestMetadata("nonElvisBinaryOperator.kt")
+        public void testNonElvisBinaryOperator() throws Exception {
+            runTest("testData/inspectionsLocal/redundantElvisReturnNull/nonElvisBinaryOperator.kt");
+        }
+
         @TestMetadata("notInReturn.kt")
         public void testNotInReturn() throws Exception {
             runTest("testData/inspectionsLocal/redundantElvisReturnNull/notInReturn.kt");

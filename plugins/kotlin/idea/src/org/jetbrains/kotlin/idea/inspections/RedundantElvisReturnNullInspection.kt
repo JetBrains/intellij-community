@@ -27,7 +27,7 @@ class RedundantElvisReturnNullInspection : AbstractKotlinInspection() {
             if ((innerReturnExpression.returnedExpression?.deparenthesize() as? KtConstantExpression)?.text != KtTokens.NULL_KEYWORD.value) return
 
             val elvisExpression = innerReturnExpression.getStrictParentOfType<KtBinaryExpression>() ?: return
-            if (elvisExpression.operationToken == KtTokens.ELSE_KEYWORD) return
+            if (elvisExpression.operationToken != KtTokens.ELVIS) return
 
             val outerReturnExpression = elvisExpression.getStrictParentOfType<KtReturnExpression>() ?: return
             if (elvisExpression != outerReturnExpression.returnedExpression?.deparenthesize()) return

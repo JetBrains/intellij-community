@@ -1850,6 +1850,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/basic_explicitLabel_rhs.kt");
         }
 
+        @TestMetadata("nonElvisBinaryOperator.kt")
+        public void testNonElvisBinaryOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/nonElvisBinaryOperator.kt");
+        }
+
         @TestMetadata("notInReturn.kt")
         public void testNotInReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/notInReturn.kt");
