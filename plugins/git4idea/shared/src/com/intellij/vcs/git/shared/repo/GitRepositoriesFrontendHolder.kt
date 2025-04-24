@@ -7,21 +7,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.vcs.git.frontend.widget.GitWidgetUpdateListener
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.milliseconds
 
+// This class is temporarily moved to the shared module until the branch widget can be fully moved to the frontend.
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class GitRepositoriesFrontendHolder(
+class GitRepositoriesFrontendHolder(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
@@ -35,13 +34,6 @@ internal class GitRepositoriesFrontendHolder(
 
     GitRepositoryApi.getInstance().getRepositories(project.projectId()).forEach {
       repositories[it.repositoryId] = convertToRepositoryInfo(it)
-    }
-
-    syncScope.launch {
-      @OptIn(FlowPreview::class)
-      widgetUpdateFlow.debounce(100.milliseconds).collect {
-        project.messageBus.syncPublisher(GitWidgetUpdateListener.TOPIC).triggerUpdate()
-      }
     }
 
     syncScope.launch {
