@@ -42,7 +42,8 @@ class ThreadDumpAction {
 
     @JvmStatic
     fun buildThreadStates(vmProxy: VirtualMachineProxyImpl): List<ThreadState> {
-      return buildThreadStates(vmProxy, emptyList())
+      val platformThreads = vmProxy.virtualMachine.allThreads()
+      return buildThreadStates(vmProxy, platformThreads, virtualThreads = emptyList())
     }
 
     @JvmStatic
@@ -53,16 +54,12 @@ class ThreadDumpAction {
 
     @ApiStatus.Internal
     suspend fun buildThreadDump(context: DebuggerContextImpl, onlyPlatformThreads: Boolean, dumpItemsChannel: SendChannel<List<MergeableDumpItem>>) {
-
-      suspend fun fallback() =
-        dumpItemsChannel.send(
-          buildJavaPlatformThreadDump(context).toDumpItems()
-        )
-
+      val platformThreads = buildJavaPlatformThreadDump(context).toDumpItems()
+      dumpItemsChannel.send(platformThreads)
       if (onlyPlatformThreads || !Registry.`is`("debugger.thread.dump.extended")) {
-        fallback()
         return
       }
+
       try {
         val providers = extendedProviders.extensionList.map { it.getProvider(context) }
 
@@ -95,7 +92,6 @@ class ThreadDumpAction {
           }
           catch (_: TimeoutCancellationException) {
             thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
-            fallback()
           }
         }
         else {
@@ -111,13 +107,8 @@ class ThreadDumpAction {
       }
       catch (e: Throwable) {
         when (e) {
-          is CancellationException, is ControlFlowException -> {
-            throw e
-          }
-          else -> {
-            thisLogger().error(e)
-            fallback()
-          }
+          is CancellationException, is ControlFlowException -> throw e
+          else -> thisLogger().error(e)
         }
       }
     }
@@ -215,6 +206,7 @@ private fun getThreadField(
 
 private fun buildThreadStates(
   vmProxy: VirtualMachineProxyImpl,
+  platformThreads: List<ThreadReference>,
   virtualThreads: List<Triple<ThreadReference, String, Long>>,
 ): List<ThreadState> {
 
@@ -373,18 +365,17 @@ private fun buildThreadStates(
     ThreadDumpParser.inferThreadStateDetail(threadState)
   }
 
-  // By default, it includes only platform threads. Unless JDWP's option includevirtualthreads is enabled.
-  val threadsFromVM = vmProxy.virtualMachine.allThreads()
-  threadsFromVM.forEach {
-    processOne(it, null)
+  // For the sake of better UX (i.e., showing platform threads immediately and only then evaluating extended dump)
+  // we process platform and virtual threads independently.
+  // However, there might be duplicates (rare case, when JDWP's option includevirtualthreads is enabled)
+  // and there might be broken awaiting threads links between platform and virtual threads (not so important feature, might be ignored).
+
+  platformThreads.forEach { pthread ->
+    processOne(pthread, virtualThreadInfo = null)
   }
 
-  val threadsFromVMSet = threadsFromVM.toSet()
   virtualThreads.forEach { (vthread, stackTrace, tid) ->
-    // thread might be already processed if JDWP's option includevirtualthreads is enabled.
-    if (vthread !in threadsFromVMSet) {
-      processOne(vthread, stackTrace to tid)
-    }
+    processOne(vthread, stackTrace to tid)
   }
 
   for ((waiting, awaited) in waitingMap) {
@@ -442,11 +433,11 @@ private fun splitFirstTwoAndRemainingLines(text: String): Triple<String, String,
   return Triple(first, second, remaining)
 }
 
-private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
+private class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
     val vm = context.debugProcess!!.virtualMachineProxy
 
-    private val shouldDumpVirtualThreads =
+    private val enabled =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
       // Virtual threads first appeared in Java 19 as part of Project Loom.
       JavaVersion.parse(vm.version()).feature >= 19 &&
@@ -454,18 +445,15 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
       vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
     override val progressText: String
-      get() = JavaDebuggerBundle.message(
-        if (shouldDumpVirtualThreads) "thread.dump.platform.and.virtual.threads.progress" else "thread.dump.platform.threads.progress"
-      )
+      get() = JavaDebuggerBundle.message("thread.dump.virtual.threads.progress")
 
-    override val requiresEvaluation get() = shouldDumpVirtualThreads
+    override val requiresEvaluation get() = enabled
 
     override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
-      val virtualThreads =
-        if (shouldDumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
-        else emptyList()
+      if (!enabled) return emptyList()
 
-      return buildThreadStates(vm, virtualThreads).toDumpItems()
+      val virtualThreads = evaluateAndGetAllVirtualThreads(suspendContext!!)
+      return buildThreadStates(vm, platformThreads = emptyList(), virtualThreads).toDumpItems()
     }
 
     private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Triple<ThreadReference, String, Long>> {

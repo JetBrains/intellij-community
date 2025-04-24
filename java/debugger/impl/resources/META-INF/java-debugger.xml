@@ -136,7 +136,7 @@
 
     <debugger.asyncStackTraceProvider
       implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
-    <debugger.dumpItemsProvider implementation="com.intellij.debugger.actions.JavaThreadsProvider"/>
+    <debugger.dumpItemsProvider implementation="com.intellij.debugger.actions.JavaVirtualThreadsProvider"/>
     <xdebugger.controlExceptionBreakpointSupport implementation="com.intellij.debugger.codeinsight.ControlExceptionBreakpointJVMSupport"/>
     <iconProvider implementation="com.intellij.debugger.engine.evaluation.AdditionalContextIconProvider"/>
 
