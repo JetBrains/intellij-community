@@ -51,14 +51,11 @@ abstract class CodeExecutionManager {
     // Create and increase a setup script with commands for test environment initialization
     val setupFile = File("$basePath/setup_tests.sh")
     var content = javaClass.getResourceAsStream("/scriptFiles/setup_tests.sh")!!.bufferedReader().readText()
-
-    content = content.replace("\$SETUP_COMMANDS", setupCommands.joinToString("\n"))
-
+      .replace("\$SETUP_COMMANDS", setupCommands.joinToString("\n"))
     setupFile.writeText(content)
 
     // Create a run script for test execution
     val runFile = File("$basePath/run_tests.sh")
-
     content = javaClass.getResourceAsStream("/scriptFiles/run_tests.sh")!!.bufferedReader().readText()
     runFile.writeText(content)
   }
