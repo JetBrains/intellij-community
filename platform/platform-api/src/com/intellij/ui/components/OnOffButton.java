@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -20,6 +22,11 @@ import java.util.Locale;
 public class OnOffButton extends JToggleButton {
   private @NlsContexts.Button String myOnText = IdeBundle.message("ui.button.on");
   private @NlsContexts.Button String myOffText = IdeBundle.message("ui.button.off");
+
+  /**
+   * Internal padding
+   */
+  private Insets myIpad = JBUI.insets(3);
 
   public OnOffButton() {
     setBorder(null);
@@ -58,6 +65,22 @@ public class OnOffButton extends JToggleButton {
           UIManager.getUI(this));
   }
 
+  /**
+   * Sets specified internal paddings
+   *
+   * @param ipad insets
+   */
+  public void setIpad(@NotNull Insets ipad) {
+    myIpad = ipad;
+  }
+
+  /**
+   * @return internal paddings of the component
+   */
+  public @NotNull Insets getIpad() {
+    return myIpad;
+  }
+
   private static class DefaultOnOffButtonUI extends BasicToggleButtonUI {
     private static final Color BORDER_COLOR = JBColor.namedColor("ToggleButton.borderColor", new JBColor(Gray._192, Gray._80));
     private static final Color BUTTON_COLOR = JBColor.namedColor("ToggleButton.buttonColor", new JBColor(Gray._200, Gray._100));
@@ -75,15 +98,14 @@ public class OnOffButton extends JToggleButton {
 
     @Override
     public Dimension getPreferredSize(JComponent c) {
-      int vGap = JBUIScale.scale(3);
-
       OnOffButton button = (OnOffButton)c;
+      Insets ipad = button.getIpad();
       String text = button.getOffText().length() > button.getOnText().length() ? button.getOffText() : button.getOnText();
       text = text.toUpperCase(Locale.getDefault());
       FontMetrics fm = c.getFontMetrics(c.getFont());
       int w = fm.stringWidth(text);
       int h = fm.getHeight();
-      h += 2 * vGap;
+      h += ipad.top + ipad.bottom;
       w += 1.25 * h;
       return new Dimension(w, h);
     }
@@ -94,12 +116,10 @@ public class OnOffButton extends JToggleButton {
 
       int toggleArc = JBUIScale.scale(3);
       int buttonArc = JBUIScale.scale(5);
-      int vGap = JBUIScale.scale(3);
-      int hGap = JBUIScale.scale(3);
-
       Dimension size = button.getSize();
-      int w = size.width - 2 * vGap;
-      int h = size.height - 2 * hGap;
+      Insets ipad = button.getIpad();
+      int w = size.width - (ipad.left + ipad.right);
+      int h = size.height - (ipad.top + ipad.bottom);
       if (h % 2 == 1) {
         h--;
       }
