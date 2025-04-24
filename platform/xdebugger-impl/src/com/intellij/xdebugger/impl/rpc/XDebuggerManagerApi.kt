@@ -29,6 +29,8 @@ interface XDebuggerManagerApi : RemoteApi<Unit> {
 
   suspend fun sessionTabClosed(sessionId: XDebugSessionId)
 
+  suspend fun showLibraryFrames(show: Boolean)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerManagerApi {

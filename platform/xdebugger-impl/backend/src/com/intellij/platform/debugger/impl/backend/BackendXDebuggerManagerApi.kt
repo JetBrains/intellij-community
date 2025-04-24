@@ -20,6 +20,7 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -182,6 +183,10 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val session = sessionId.findValue() ?: return
     val managerImpl = XDebuggerManagerImpl.getInstance(session.project) as XDebuggerManagerImpl
     managerImpl.removeSessionNoNotify(session)
+  }
+
+  override suspend fun showLibraryFrames(show: Boolean) {
+    XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = show
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
