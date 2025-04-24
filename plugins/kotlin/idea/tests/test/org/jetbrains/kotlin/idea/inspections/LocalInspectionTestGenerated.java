@@ -9835,6 +9835,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantElvisReturnNull/basic.kt");
         }
 
+        @TestMetadata("basic_explicitLabel_lhs.kt")
+        public void testBasic_explicitLabel_lhs() throws Exception {
+            runTest("testData/inspectionsLocal/redundantElvisReturnNull/basic_explicitLabel_lhs.kt");
+        }
+
+        @TestMetadata("basic_explicitLabel_rhs.kt")
+        public void testBasic_explicitLabel_rhs() throws Exception {
+            runTest("testData/inspectionsLocal/redundantElvisReturnNull/basic_explicitLabel_rhs.kt");
+        }
+
         @TestMetadata("notInReturn.kt")
         public void testNotInReturn() throws Exception {
             runTest("testData/inspectionsLocal/redundantElvisReturnNull/notInReturn.kt");
@@ -9843,6 +9853,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notReturnNull.kt")
         public void testNotReturnNull() throws Exception {
             runTest("testData/inspectionsLocal/redundantElvisReturnNull/notReturnNull.kt");
+        }
+
+        @TestMetadata("unrelatedReturn.kt")
+        public void testUnrelatedReturn() throws Exception {
+            runTest("testData/inspectionsLocal/redundantElvisReturnNull/unrelatedReturn.kt");
         }
 
         @TestMetadata("uselessElvis.kt")

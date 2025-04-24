@@ -1840,6 +1840,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/basic.kt");
         }
 
+        @TestMetadata("basic_explicitLabel_lhs.kt")
+        public void testBasic_explicitLabel_lhs() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/basic_explicitLabel_lhs.kt");
+        }
+
+        @TestMetadata("basic_explicitLabel_rhs.kt")
+        public void testBasic_explicitLabel_rhs() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/basic_explicitLabel_rhs.kt");
+        }
+
         @TestMetadata("notInReturn.kt")
         public void testNotInReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/notInReturn.kt");
@@ -1848,6 +1858,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("notReturnNull.kt")
         public void testNotReturnNull() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/notReturnNull.kt");
+        }
+
+        @TestMetadata("unrelatedReturn.kt")
+        public void testUnrelatedReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantElvisReturnNull/unrelatedReturn.kt");
         }
 
         @TestMetadata("uselessElvis.kt")
