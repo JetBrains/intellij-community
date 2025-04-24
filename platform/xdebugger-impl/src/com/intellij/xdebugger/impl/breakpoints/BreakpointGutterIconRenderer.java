@@ -37,26 +37,26 @@ final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRende
   @Override
   public @NotNull AnAction getClickAction() {
     if (Registry.is("debugger.click.disable.breakpoints")) {
-      return new ToggleBreakpointGutterIconAction(myBreakpoint);
+      return new ToggleBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
     }
     else {
-      return new RemoveBreakpointGutterIconAction(myBreakpoint);
+      return new RemoveBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
     }
   }
 
   @Override
   public @NotNull AnAction getMiddleButtonClickAction() {
     if (!Registry.is("debugger.click.disable.breakpoints")) {
-      return new ToggleBreakpointGutterIconAction(myBreakpoint);
+      return new ToggleBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
     }
     else {
-      return new RemoveBreakpointGutterIconAction(myBreakpoint);
+      return new RemoveBreakpointGutterIconAction(XBreakpointProxyKt.asProxy(myBreakpoint));
     }
   }
 
   @Override
   public @NotNull AnAction getRightButtonClickAction() {
-    return new EditBreakpointAction.ContextAction(this, myBreakpoint);
+    return new EditBreakpointAction.ContextAction(this, XBreakpointProxyKt.asProxy(myBreakpoint));
   }
 
   @Override

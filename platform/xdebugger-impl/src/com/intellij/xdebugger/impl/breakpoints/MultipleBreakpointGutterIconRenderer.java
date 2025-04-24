@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,9 +22,9 @@ import java.util.List;
 
 class MultipleBreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
 
-  private final List<XBreakpointBase<?, ?, ?>> breakpoints;
+  private final List<XBreakpointProxy> breakpoints;
 
-  MultipleBreakpointGutterIconRenderer(List<XBreakpointBase<?, ?, ?>> breakpoints) {
+  MultipleBreakpointGutterIconRenderer(List<XBreakpointProxy> breakpoints) {
     this.breakpoints = breakpoints;
     assert breakpoints.size() >= 2;
   }
@@ -34,7 +35,7 @@ class MultipleBreakpointGutterIconRenderer extends CommonBreakpointGutterIconRen
 
   @Override
   public @NotNull Icon getIcon() {
-    var session = breakpoints.get(0).getBreakpointManager().getDebuggerManager().getCurrentSession();
+    var session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(breakpoints.get(0).getProject());
     if (session != null && session.areBreakpointsMuted()) {
       return AllIcons.Debugger.MultipleBreakpointsMuted;
     }
@@ -104,7 +105,7 @@ class MultipleBreakpointGutterIconRenderer extends CommonBreakpointGutterIconRen
       // Initially we select the newest breakpoint, it's shown above other breakpoints in the dialog.
       @SuppressWarnings("OptionalGetWithoutIsPresent") // there are always at least two breakpoints
       var initialOne = breakpoints.stream().sorted().findFirst().get();
-      BreakpointsDialogFactory.getInstance(project).showDialog(initialOne);
+      BreakpointsDialogFactory.getInstance(project).showDialog(initialOne.getId());
     });
   }
 

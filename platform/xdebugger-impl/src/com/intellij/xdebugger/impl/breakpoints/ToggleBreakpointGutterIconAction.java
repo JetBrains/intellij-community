@@ -6,13 +6,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 
 class ToggleBreakpointGutterIconAction extends DumbAwareAction {
-  private final XBreakpoint<?> myBreakpoint;
+  private final XBreakpointProxy myBreakpoint;
 
-  ToggleBreakpointGutterIconAction(XBreakpoint<?> breakpoint) {
+  ToggleBreakpointGutterIconAction(XBreakpointProxy breakpoint) {
     super(breakpoint.isEnabled() ? XDebuggerBundle.message("xdebugger.disable.breakpoint.action.text") : XDebuggerBundle.message("xdebugger.enable.breakpoint.action.text"));
     this.myBreakpoint = breakpoint;
     AnAction action = ActionManager.getInstance().getAction("ToggleBreakpointEnabled");

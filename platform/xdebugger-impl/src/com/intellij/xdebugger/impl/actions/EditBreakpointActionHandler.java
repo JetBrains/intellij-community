@@ -11,7 +11,9 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
@@ -38,12 +40,13 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
     GutterIconRenderer breakpointGutterRenderer = pair.first;
 
     if (breakpointGutterRenderer == null) return;
-    editBreakpoint(project, editor, breakpoint, breakpointGutterRenderer);
+    if (!(breakpoint instanceof XBreakpointBase<?,?,?> breakpointBase)) return;
+    editBreakpoint(project, editor, XBreakpointProxyKt.asProxy(breakpointBase), breakpointGutterRenderer);
   }
 
   public void editBreakpoint(@NotNull Project project,
                              @NotNull Editor editor,
-                             @NotNull XBreakpoint<?> breakpoint,
+                             @NotNull XBreakpointProxy breakpoint,
                              @NotNull GutterIconRenderer breakpointGutterRenderer) {
     if (BreakpointsDialogFactory.getInstance(project).popupRequested(breakpoint)) {
       return;
@@ -54,7 +57,10 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
       point = new Point(gutterComponent.getWidth(),
                         editor.visualPositionToXY(editor.getCaretModel().getVisualPosition()).y + editor.getLineHeight() / 2);
     }
-    doShowPopup(project, gutterComponent, point, breakpoint);
+    // TODO IJPL-185111
+    if (breakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint) {
+      doShowPopup(project, gutterComponent, point, monolithBreakpoint.getBreakpoint());
+    }
   }
 
   public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull BreakpointItem breakpoint) {

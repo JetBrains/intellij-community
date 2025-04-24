@@ -25,12 +25,12 @@ final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     }
 
     var newMarks = new ArrayList<GutterMark>(marks.size() - breakpointCount + 1);
-    var breakpoints = new ArrayList<XBreakpointBase<?, ?, ?>>(breakpointCount);
+    var breakpoints = new ArrayList<XBreakpointProxy>(breakpointCount);
     var breakpointMarkPosition = -1;
     for (GutterMark mark : marks) {
       assert !(mark instanceof MultipleBreakpointGutterIconRenderer) : "they are not expected to be created before processing";
       if (mark instanceof BreakpointGutterIconRenderer singleBreakpointMark) {
-        breakpoints.add(singleBreakpointMark.getBreakpoint());
+        breakpoints.add(XBreakpointProxyKt.asProxy(singleBreakpointMark.getBreakpoint()));
         breakpointMarkPosition = newMarks.size();
         continue;
       }

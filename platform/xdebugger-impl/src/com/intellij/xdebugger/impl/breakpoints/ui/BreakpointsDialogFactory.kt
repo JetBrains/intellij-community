@@ -53,15 +53,19 @@ class BreakpointsDialogFactory(private val project: Project) {
     }
   }
 
-  fun popupRequested(breakpoint: XBreakpoint<*>?): Boolean {
+  fun popupRequested(breakpoint: XBreakpointProxy?): Boolean {
     if (balloonToHide != null && !balloonToHide!!.isDisposed()) {
       return true
     }
-    return selectInDialogShowing((breakpoint as? XBreakpointBase<*, *, *>)?.breakpointId)
+    return selectInDialogShowing(breakpoint?.id)
   }
 
   fun showDialog(initialBreakpoint: XBreakpoint<*>?) {
     val initialBreakpointId = (initialBreakpoint as? XBreakpointBase<*, *, *>)?.breakpointId
+    showDialog(initialBreakpointId)
+  }
+
+  fun showDialog(initialBreakpointId: XBreakpointId?) {
     if (useFeProxy()) {
       hideBalloon()
       showDialogEvents.tryEmit(initialBreakpointId)

@@ -234,7 +234,7 @@ class XBreakpointVisualRepresentation implements Serializable {
 
       @Override
       public void remove() {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(XBreakpointProxyKt.asProxy(myBreakpoint));
       }
 
       @Override

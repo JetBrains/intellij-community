@@ -7,11 +7,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.breakpoints.SuspendPolicy
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties
-import com.intellij.xdebugger.breakpoints.XBreakpointType
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
@@ -92,7 +88,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     override fun getShortText(): @NlsSafe String = XBreakpointUtil.getShortText(breakpoint)
 
     override fun getUserDescription(): String? = breakpoint.userDescription
-    
+
     override fun setUserDescription(description: String?) {
       breakpoint.userDescription = description
     }
@@ -237,3 +233,6 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     }
   }
 }
+
+@ApiStatus.Internal
+fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy = XBreakpointProxy.Monolith(this)

@@ -16,9 +16,9 @@ import java.awt.event.MouseEvent;
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
 
 class RemoveBreakpointGutterIconAction extends DumbAwareAction {
-  private final XBreakpointBase<?,?,?> myBreakpoint;
+  private final XBreakpointProxy myBreakpoint;
 
-  RemoveBreakpointGutterIconAction(XBreakpointBase<?, ?, ?> breakpoint) {
+  RemoveBreakpointGutterIconAction(XBreakpointProxy breakpoint) {
     super(XDebuggerBundle.message("xdebugger.remove.line.breakpoint.action.text"));
     myBreakpoint = breakpoint;
     AnAction action = ActionManager.getInstance().getAction("ToggleLineBreakpoint");
