@@ -1579,6 +1579,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/WhenEntryExprNoIndentBeforeArrow.after.kt");
             }
 
+            @TestMetadata("WhenGuardsFormatting.after.kt")
+            public void testWhenGuardsFormatting() throws Exception {
+                runTest("testData/formatter/WhenGuardsFormatting.after.kt");
+            }
+
             @TestMetadata("WhenIfGuardUnnecessarySpace.after.kt")
             public void testWhenIfGuardUnnecessarySpace() throws Exception {
                 runTest("testData/formatter/WhenIfGuardUnnecessarySpace.after.kt");
