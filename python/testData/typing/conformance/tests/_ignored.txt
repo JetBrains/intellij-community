@@ -26,7 +26,6 @@ dataclasses_usage.py
 directives_deprecated.py
 directives_type_checking.py
 directives_version_platform.py
-enums_members.py
 generics_base_class.py
 generics_basic.py
 generics_defaults.py
