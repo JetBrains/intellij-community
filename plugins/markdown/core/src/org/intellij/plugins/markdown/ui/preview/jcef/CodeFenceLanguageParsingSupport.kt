@@ -131,7 +131,7 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
     }
 
     private fun convertToRangedSpans(html: String, startOffset: Int): String {
-      val chunks = html.split(Regex("""(?<=(>|\r\n|\r|\n))|(?=<)""")).toTypedArray()
+      val chunks = html.split(Regex("""(?<=(>|\r\n|\r|\n))|(?=(<|\r\n|\r|\n))""")).toTypedArray()
       val nesting = ArrayDeque<TagInfo>()
       var offset = startOffset
 
@@ -149,6 +149,7 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
           nesting.addLast(TagInfo(i, offset))
         }
         else if (chunk.isNotEmpty()) {
+          // highlight.js doesn't wrap all text in span tags, but the preview display expects that.
           val decodedChunk = decodeEntities(chunk)
 
           chunks[i] = addSourceRange("<span>$chunk</span>", offset, offset + decodedChunk.length)

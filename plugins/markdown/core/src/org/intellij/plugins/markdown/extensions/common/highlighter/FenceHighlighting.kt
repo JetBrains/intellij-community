@@ -53,9 +53,13 @@ private fun parseContent(project: Project?, language: Language, text: String, la
     }
     else if (html?.isNotEmpty() == true) {
       if (node.startOffset < startOffset) {
-        // For smooth synced scrolling a span matching the start of the code
-        // fence is required.
+        // Needed to match code fence start, even though the fence start text itself isn't inside the span.
         html = "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}=\"${node.startOffset}..$startOffset\"></span>" + html
+      }
+
+      if (node.endOffset > startOffset + text.length) {
+        // Needed to match code fence end, even though the fence end text itself isn't inside the span.
+        html += "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}=\"${startOffset + text.length}..${node.endOffset}\"></span>"
       }
 
       collector(text, 0..text.length, null, html)
@@ -151,25 +155,20 @@ private fun processLines(
 ) {
   for (lineRange in text.lineRanges(includeDelimiter = true)) {
     val ranges = highlightedRanges.filter { (range, _) -> lineRange.intersects(range) }
-
     if (ranges.isEmpty()) {
       val span = createSpan(lineRange.shiftRight(contentOffset), lineRange.substring(text))
       builder.appendChunk(span)
       continue
     }
-
     var left = lineRange.startOffset
-
     for ((range, color) in ranges) {
       val start = max(left, range.startOffset)
       val end = min(lineRange.endOffset, range.endOffset)
-
       if (start != left) {
         val range = TextRange(left, start)
         val span = createSpan(range.shiftRight(contentOffset), range.substring(text))
         builder.appendChunk(span)
       }
-
       if (end - start > 0) {
         val range = TextRange(start, end)
         if (!range.isEmpty()) {
@@ -177,16 +176,13 @@ private fun processLines(
           builder.appendChunk(span)
         }
       }
-
       left = end
     }
-
     if (left != lineRange.endOffset) {
       val range = TextRange(left, lineRange.endOffset)
       val span = createSpan(range.shiftRight(contentOffset), range.substring(text))
       builder.appendChunk(span)
     }
-
     if (additionalLineProcessor != null) {
       val processed = additionalLineProcessor.invoke(lineRange.substring(text))
       builder.append(processed)
@@ -198,20 +194,12 @@ private fun CharSequence.lineRanges(includeDelimiter: Boolean = true): Sequence<
   return splitToTextRanges(this, delimiter = "\n", includeDelimiter = includeDelimiter)
 }
 
-private val replacements: Map<Char, String> = mapOf('&' to "&amp;", '>' to "&gt;", '<' to "&lt;", '"' to "&quot;")
-
-private fun encodeEntities(text: String): String {
-  return text.replace(Regex("""([&><"])""")) { match -> replacements[match.groupValues[1][0]].orEmpty() }
-}
-
 private fun createSpan(range: TextRange, text: String = "", color: Color? = null): HtmlChunk {
   val span = HtmlChunk.span().sourceRange(range)
-
   if (text.isEmpty() && color == null) {
     return span
   }
-
-  return span.addRaw(encodeEntities(text)).color(color)
+  return span.escapedText(text).color(color)
 }
 
 private fun StringBuilder.appendChunk(chunk: HtmlChunk): StringBuilder {
@@ -221,6 +209,11 @@ private fun StringBuilder.appendChunk(chunk: HtmlChunk): StringBuilder {
 
 private fun HtmlChunk.Element.sourceRange(range: TextRange): HtmlChunk.Element {
   return attr(HtmlGenerator.SRC_ATTRIBUTE_NAME, "${range.startOffset}..${range.endOffset}")
+}
+
+private fun HtmlChunk.Element.escapedText(text: String): HtmlChunk.Element {
+  @Suppress("HardCodedStringLiteral")
+  return addRaw(DefaultCodeFenceGeneratingProvider.escape(text))
 }
 
 private fun HtmlChunk.Element.color(color: Color?): HtmlChunk.Element {

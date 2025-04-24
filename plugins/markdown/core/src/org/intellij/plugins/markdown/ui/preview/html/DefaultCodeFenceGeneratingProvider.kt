@@ -100,7 +100,7 @@ internal class DefaultCodeFenceGeneratingProvider(
         attributes.add("class=\"language-${language.split(" ").joinToString(separator = "-")}\"")
       }
       if (state == 0 && child.type == MarkdownTokenTypes.EOL) {
-        visitor.consumeTagOpen(node, "code", *attributes.toTypedArray()) // TODO: Where <code...> tag is added
+        visitor.consumeTagOpen(node, "code", *attributes.toTypedArray())
         state = 1
       }
     }
