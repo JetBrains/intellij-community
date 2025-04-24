@@ -4,6 +4,7 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.settingsSync.core.SettingsSyncMain
 import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SettingsSyncStatusTracker
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.CloudConfigServerCommunicator
 import com.intellij.settingsSync.jba.CloudConfigVersionContext
@@ -89,7 +90,7 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
 
   @Test
   @TestFor(issues = ["IDEA-343073"])
-  fun `disable setting sync logged out on invalid idToken`() {
+  fun `setting sync set action required on invalid idToken`() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
 
@@ -120,7 +121,7 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
 
     communicator.checkServerState()
     //assertFalse(authServiceSpy.isLoggedIn())
-    assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+    assertTrue(SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
   }
 
   @Test
