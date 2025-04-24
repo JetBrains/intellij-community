@@ -3,10 +3,10 @@ package org.jetbrains.plugins.textmate.language.preferences
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.plugins.textmate.Constants
-import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import org.jetbrains.plugins.textmate.update
 import kotlin.concurrent.atomics.AtomicReference
 
 class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
@@ -19,7 +19,7 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
   fun add(preferences: Preferences) {
     fillHighlightingBraces(preferences.highlightingPairs)
     fillSmartTypingBraces(preferences.smartTypingPairs)
-    this.preferences.updateAndGet {
+    this.preferences.update {
       it.add(preferences)
     }
   }
@@ -28,10 +28,10 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     if (highlightingPairs != null) {
       for (pair in highlightingPairs) {
         if (!pair.left.isEmpty()) {
-          leftHighlightingBraces.updateAndGet { it.add(pair.left[0].code) }
+          leftHighlightingBraces.update { it.add(pair.left[0].code) }
         }
         if (!pair.right.isEmpty()) {
-          rightHighlightingBraces.updateAndGet { it.add(pair.right[pair.right.length - 1].code) }
+          rightHighlightingBraces.update { it.add(pair.right[pair.right.length - 1].code) }
         }
       }
     }
@@ -41,10 +41,10 @@ class PreferencesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
     if (smartTypingPairs != null) {
       for (pair in smartTypingPairs) {
         if (!pair.left.isEmpty()) {
-          leftSmartTypingBraces.updateAndGet { it.add(pair.left[pair.left.length - 1].code) }
+          leftSmartTypingBraces.update { it.add(pair.left[pair.left.length - 1].code) }
         }
         if (!pair.right.isEmpty()) {
-          rightSmartTypingBraces.updateAndGet { it.add(pair.right[pair.right.length - 1].code) }
+          rightSmartTypingBraces.update { it.add(pair.right[pair.right.length - 1].code) }
         }
       }
     }

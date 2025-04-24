@@ -1,16 +1,16 @@
 package org.jetbrains.plugins.textmate.bundles
 
 import org.jetbrains.plugins.textmate.Constants
+import org.jetbrains.plugins.textmate.getLogger
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistReader
-import org.slf4j.LoggerFactory
 import java.io.InputStream
 
 interface TextMateBundleReader {
   companion object {
-    internal val logger = LoggerFactory.getLogger(TextMateBundleReader::class.java)
+    internal val logger = getLogger(TextMateBundleReader::class)
   }
 
   val bundleName: String
@@ -177,6 +177,6 @@ internal fun readPlist(inputStream: InputStream, plistReader: PlistReader, debug
   return runCatching {
     inputStream.use { plistReader.read(it) }
   }.onFailure { e ->
-    TextMateBundleReader.logger.warn("Can't load plist from file: $debugName", e)
+    TextMateBundleReader.logger.warn(e) { "Can't load plist from file: $debugName" }
   }.getOrNull()
 }

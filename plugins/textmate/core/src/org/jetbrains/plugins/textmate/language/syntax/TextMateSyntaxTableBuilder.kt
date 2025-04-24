@@ -2,10 +2,10 @@ package org.jetbrains.plugins.textmate.language.syntax
 
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.plugins.textmate.Constants
-import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
+import org.jetbrains.plugins.textmate.update
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.fetchAndIncrement
@@ -28,7 +28,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     val topLevelNode = loadRealNode(plist, null)
     val scopeName = topLevelNode.scopeName
     if (scopeName != null) {
-      syntaxNodes.updateAndGet {
+      syntaxNodes.update {
         it.put(scopeName, topLevelNode)
       }
     }

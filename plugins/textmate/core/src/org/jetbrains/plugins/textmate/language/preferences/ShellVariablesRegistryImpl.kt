@@ -3,10 +3,10 @@ package org.jetbrains.plugins.textmate.language.preferences
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import org.jetbrains.plugins.textmate.atomics.updateAndGet
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
+import org.jetbrains.plugins.textmate.update
 import kotlin.concurrent.atomics.AtomicReference
 
 class ShellVariablesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
@@ -14,7 +14,7 @@ class ShellVariablesRegistryBuilder(private val weigher: TextMateSelectorWeigher
 
   fun addVariable(variable: TextMateShellVariable) {
     if (variable.name.isNotEmpty()) {
-      variables.updateAndGet {
+      variables.update {
         it.put(variable.name, it[variable.name]?.add(variable) ?: persistentListOf(variable))
       }
     }
