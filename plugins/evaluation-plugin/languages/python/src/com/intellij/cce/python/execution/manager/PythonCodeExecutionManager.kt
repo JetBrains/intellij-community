@@ -41,7 +41,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
 
     basePath ?: return
 
-    constructSetupFile(basePath, setupCommands)
+    constructScriptFiles(basePath, setupCommands)
 
     if (sdk?.sdkType !is PythonSdkType) return
 

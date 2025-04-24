@@ -47,7 +47,7 @@ abstract class CodeExecutionManager {
     }
   }
 
-  protected fun constructSetupFile(basePath: String, setupCommands: List<String>) {
+  protected fun constructScriptFiles(basePath: String, setupCommands: List<String>) {
     val setupFile = File("$basePath/setup_tests.sh")
     var content = StringBuilder("#!/bin/bash\n" +
                                 "\n" +
