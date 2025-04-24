@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
-    // todo we should handle it on the platform side
+    // todo we should handle it on the platform side IJPL-185339
     if (element.getLanguage().equals(JavaLanguage.INSTANCE) && AppMode.isRemoteDevHost()) {
       return false;
     }
