@@ -3,7 +3,7 @@ package com.intellij.execution.junit.references
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementResolveResult
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiElement
 
-class PsiMethodSourceResolveResult(method: PsiMethod, val owners: List<PsiClass>): PsiElementResolveResult(method) {
+class PsiSourceResolveResult(element: PsiElement, val owners: List<PsiClass>): PsiElementResolveResult(element) {
 }

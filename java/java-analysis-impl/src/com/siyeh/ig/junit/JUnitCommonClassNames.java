@@ -33,6 +33,7 @@ public final @NonNls class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_PARAMS_PARAMETER = "org.junit.jupiter.params.Parameter";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST = "org.junit.jupiter.params.ParameterizedTest";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE = "org.junit.jupiter.params.provider.MethodSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE = "org.junit.jupiter.params.provider.FieldSource";
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF = "org.junit.jupiter.api.condition.EnabledIf";
   public static final String ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF = "org.junit.jupiter.api.condition.DisabledIf";
   public static final String ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE_SHORT = "EnumSource";
@@ -47,7 +48,7 @@ public final @NonNls class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE = "org.junit.jupiter.params.provider.ArgumentsSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES = "org.junit.jupiter.params.provider.ArgumentsSources";
   public static final Collection<String> SOURCE_ANNOTATIONS =
-    List.of(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE,
+    List.of(ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE,
             ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
             ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE,
             ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES,

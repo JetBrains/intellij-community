@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
 import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
@@ -43,8 +43,8 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
       import java.util.stream.*
       
       class MyTest {
-        @org.junit.jupiter.params.provider.MethodSource
         @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource
         fun foo(input: String) {
           System.out.println(input)
         }
@@ -54,6 +54,26 @@ abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProvid
           private fun foo(): Stream<String> {
               return Stream.of("")
           }      
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test implicit usage of field source with implicit field name`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.FieldSource
+
+      class MyTest {
+        @ParameterizedTest
+        @FieldSource
+        fun foo(input: String) {
+          println(input)
+        }
+
+        companion object {
+          @JvmStatic
+          val foo = listOf("a", "b")
         }
       }
     """.trimIndent())

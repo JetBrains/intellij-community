@@ -724,6 +724,16 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         }
       }
       
+      class FieldSource {
+         @org.junit.jupiter.params.ParameterizedTest
+         @org.junit.jupiter.params.provider.FieldSource("list")
+         fun simpleMutableCollection(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
+
+         companion object {
+           val list: MutableCollection<Any>? = null
+         }
+      }
+      
       class EnumSource { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.EnumSource(names = ["FIRST"])
@@ -855,6 +865,26 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
     """.trimIndent())
   }
 
+  fun `test field source in another class`() {
+    myFixture.addFileToProject("SampleTest.kt", """"
+        open class SampleTest {
+          companion object {
+              val list: MutableCollection<Any>? = null
+          }
+      }""".trimIndent())
+    myFixture.testHighlighting(
+      JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.FieldSource;
+
+      class FieldSourceUsage {
+        @ParameterizedTest
+        @FieldSource("SampleTest#list")
+        void testSquares(String param) {}
+      }
+    """.trimIndent())
+  }
+
   fun `test malformed parameterized value source multiple parameters`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -951,6 +981,34 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
       }        
     """.trimIndent())
   }
+  fun `test malformed parameterized field source wrong return type`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      class FieldSource {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.FieldSource(
+          <error descr="Field source 'list' type must be convertible to a Stream">"list"</error>
+        )
+        fun simpleMutableCollection(x: Int, y: Int) { System.out.println("${'$'}{'$'}x, ${'$'}{'$'}y") }
+
+        companion object {
+          val list: Int = 1
+        }
+      }      
+    """.trimIndent())
+  }
+  fun `test malformed parameterized field source not found`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      class FieldSource {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.FieldSource(
+         <error descr="Cannot resolve target field source: 'list'">"list"</error>
+        )
+        fun simpleMutableCollection(x: Int, y: Int) { System.out.println("${'$'}{'$'}x, ${'$'}{'$'}y") }
+      }      
+    """.trimIndent())
+  }
   fun `test malformed parameterized enum source unresolvable entry`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -1038,6 +1096,33 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
           }
       }
     """.trimIndent(), "Add method 'parameters' to 'Test'") // TODO make createMethod preview work
+  }
+  fun `test malformed parameterized introduce field source quick fix`() {
+    myFixture.testQuickFix(
+      JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.FieldSource
+      
+      class Test {
+        @FieldSource("para<caret>meters")
+        @ParameterizedTest
+        fun foo(param: String) { }
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.FieldSource
+
+      class Test {
+        @FieldSource("parameters")
+        @ParameterizedTest
+        fun foo(param: String) { }
+
+          companion object {
+              @JvmField
+              const val parameters: MutableCollection<Any> = 0L
+          }
+      }
+    """.trimIndent(), "Add 'const val' property 'parameters' to 'Test'")
   }
   fun `test malformed parameterized create csv source quick fix`() {
     val file = myFixture.addFileToProject("CsvFile.kt", """

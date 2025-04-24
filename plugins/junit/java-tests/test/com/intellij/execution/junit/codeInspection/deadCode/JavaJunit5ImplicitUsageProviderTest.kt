@@ -215,4 +215,146 @@ class JavaJunit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(
       
     """.trimIndent())
   }
+
+  fun `test implicit usage of field source field`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.*;
+    
+      import java.util.List;
+      import java.util.Arrays;
+
+      class MyTest {
+        @ParameterizedTest
+        @FieldSource("values")
+        void test() {}
+
+        static final List<String> values = Arrays.asList("one", "two");
+      }
+    """.trimIndent())
+  }
+
+  fun `test implicit usage of field source`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.*;
+    
+      import java.util.List;
+      import java.util.Arrays;
+
+      class MyTest {
+        @ParameterizedTest
+        @FieldSource
+        void test() {}
+
+        public static List<String> test = Arrays.asList("one", "two");
+      }
+    """.trimIndent())
+  }
+
+  fun `test implicit usage of field source multiple fields`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.*;
+    
+      import java.util.List;
+      import java.util.Arrays;
+
+      class MyTest {
+        @ParameterizedTest
+        @FieldSource({"field1", "field2"})
+        void test() {}
+
+        static final List<String> field1 = Arrays.asList("a");
+        static final List<String> field2 = Arrays.asList("b");
+      }
+    """.trimIndent())
+  }
+
+  fun `test field source inner annotation`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.lang.annotation.*;
+      import java.util.*;
+      import org.junit.jupiter.params.provider.*;
+      import org.junit.jupiter.params.ParameterizedTest;
+    
+      class MyTest {
+        static final List<String> <caret>values = Arrays.asList("A", "B");
+
+        @TestWithValues
+        public void test(String input) {
+          System.out.println("input: " + input);
+        }
+
+        @ParameterizedTest(name = "input {0}")
+        @FieldSource("values")
+        @Retention(RetentionPolicy.RUNTIME)
+        @interface TestWithValues {
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test field source outer annotation`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.lang.annotation.*;
+      import java.util.*;
+      import org.junit.jupiter.params.provider.*;
+      import org.junit.jupiter.params.ParameterizedTest;
+
+      class MyTest {
+        static final List<String> <caret>values = Arrays.asList("A", "B");
+
+        @TestWithValues
+        public void test(String input) {
+          System.out.println("input: " + input);
+        }
+
+        @ParameterizedTest(name = "input {0}")
+        @FieldSource("values")
+        @Retention(RetentionPolicy.RUNTIME)
+        @interface TestWithValues {
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test field source direct link`() {
+    myFixture.addClass("""
+      package org.example;
+
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.FieldSource;
+
+      import java.lang.annotation.Retention;
+      import java.lang.annotation.RetentionPolicy;
+
+      @ParameterizedTest(name = "input {0}")
+      @FieldSource("org.implementation.MyTest${'$'}NewData#dataList")
+      @Retention(RetentionPolicy.RUNTIME)
+      public @interface TestWithExternalValues {
+      }
+    """.trimIndent())
+
+    val clazz = myFixture.addClass("""
+      package org.implementation;
+
+      import java.util.List;
+      import java.util.Arrays;
+
+      public class MyTest {
+        @org.example.TestWithExternalValues
+        public void test(String input) {
+            System.out.println(input);
+        }
+
+        public static final class <warning descr="Class 'NewData' is never used">NewData</warning> {
+            public static final List<String> <caret>dataList = Arrays.asList("X", "Y");
+        }
+    }
+    """.trimIndent())
+
+    myFixture.configureFromExistingVirtualFile(clazz.containingFile.virtualFile)
+    myFixture.checkHighlighting()
+  }
 }

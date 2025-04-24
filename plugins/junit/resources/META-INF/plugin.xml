@@ -71,7 +71,8 @@
                             order="before commonJavaCustomizer"/>
 
     <dependencySupport kind="java" coordinate="junit:junit" displayName="JUnit"/>
-    <gotoRelatedProvider implementation="com.intellij.execution.junit.JUnitParameterizedSourceGotoRelatedProvider"/>
+    <gotoRelatedProvider implementation="com.intellij.execution.junit.JUnitParameterizedFieldSourceGotoRelatedProvider"/>
+    <gotoRelatedProvider implementation="com.intellij.execution.junit.JUnitParameterizedMethodSourceGotoRelatedProvider"/>
     <psi.referenceContributor language="UAST" implementation="com.intellij.execution.junit.references.JUnitReferenceContributor"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="MigrateAssertToMatcherAssert"
                      groupBundle="messages.JUnitBundle" bundle="messages.JUnitBundle"

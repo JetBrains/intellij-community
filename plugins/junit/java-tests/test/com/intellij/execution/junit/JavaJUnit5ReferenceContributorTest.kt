@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit
 
 import com.intellij.junit.testFramework.JUnit5ReferenceContributorTestBase
@@ -21,6 +21,25 @@ class JavaJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase() 
     """.trimIndent()) { reference, resolved ->
       assertContainsElements(reference.lookupStringVariants(), "abc", "cde")
     }
+  }
+
+  fun `test resolve to source field`() {
+    myFixture.assertResolvableReference(JvmLanguage.JAVA, """
+      import org.junit.jupiter.params.ParameterizedTest;
+      import org.junit.jupiter.params.provider.FieldSource;
+      
+      import java.util.Arrays;
+      import java.util.List;
+      
+      class ParameterizedFieldSourceTestsDemo {
+         @ParameterizedTest
+         @FieldSource(value = {"aaa", "bb<caret>b2"})
+         void testWithProvider(String abc) {}
+         
+         static final List<String> aaa = Arrays.asList("something1", "something2");
+         static final List<String> bbb2 = Arrays.asList("something1", "something2");
+      }
+    """.trimIndent())
   }
 
   fun `test resolve to enum source`() {

@@ -15,14 +15,16 @@ import com.intellij.codeInspection.options.OptPane.stringList
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.*
+import com.intellij.execution.junit.references.FieldSourceReference
 import com.intellij.execution.junit.references.MethodSourceReference
-import com.intellij.execution.junit.references.PsiMethodSourceResolveResult
+import com.intellij.execution.junit.references.PsiSourceResolveResult
 import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
 import com.intellij.jvm.analysis.quickFix.createModifierQuickfixes
 import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
@@ -31,6 +33,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
@@ -42,6 +45,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.asSafely
+import com.siyeh.ig.fixes.SerialVersionUIDBuilder
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
@@ -514,6 +518,7 @@ private class JUnitMalformedSignatureVisitor(
     usedSourceAnnotations.forEach { annotation ->
       when (annotation.qualifiedName) {
         ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> checkMethodSource(declaration, annotation)
+        ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE -> checkFieldSource(declaration, annotation)
         ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE -> checkValuesSource(declaration, annotation)
         ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE -> checkEnumSource(declaration, annotation)
         ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE -> checkCsvSource(annotation)
@@ -607,16 +612,16 @@ private class JUnitMalformedSignatureVisitor(
       annotationMemberValue.forEach { attributeValue ->
         for (reference in attributeValue.references) {
           if (reference is MethodSourceReference) {
-            val factoryMethods = reference.multiResolve(false)
-            val factoryMethod = factoryMethods
-              .mapNotNull { it as? PsiMethodSourceResolveResult }
-              .firstNotNullOfOrNull { it.getSourceMethodForClass(testClass) }
-            if (factoryMethod == null) {
+            val sourceProviders = reference.multiResolve(false)
+            val sourceProvider = sourceProviders
+              .mapNotNull { it as? PsiSourceResolveResult }
+              .firstNotNullOfOrNull { it.getSourceForClass(testClass) }
+            if (sourceProvider !is PsiMethod) {
               return checkAbsentSourceProvider(testClass, attributeValue, reference.value)
             }
             else {
-              val uFactoryMethod = factoryMethod.toUElementOfType<UMethod>() ?: return
-              return checkSourceProvider(uFactoryMethod, testClass, attributeValue, declaration)
+              val uSourceProvider = sourceProvider.toUElementOfType<UMethod>() ?: return
+              return checkSourceProvider(uSourceProvider, testClass, attributeValue, declaration)
             }
           }
         }
@@ -624,10 +629,52 @@ private class JUnitMalformedSignatureVisitor(
     }
   }
 
-  private fun PsiMethodSourceResolveResult.getSourceMethodForClass(owner: PsiClass): PsiMethod? {
-    val method = element as? PsiMethod ?: return null
-    if (owners.isEmpty()) return method // direct link
-    return owner.findMethodBySignature(method, true)
+  private fun PsiSourceResolveResult.getSourceForClass(owner: PsiClass): PsiElement? {
+    if(element is PsiMethod) {
+      if (owners.isEmpty()) return element // direct link
+      return owner.findMethodBySignature(element as PsiMethod, true)
+    } else if (element is PsiField) {
+      if (owners.isEmpty()) return element // direct link
+      return owner.findFieldByName((element as PsiField).name, true)
+    }
+    return null
+  }
+
+  private fun checkFieldSource(declaration: UDeclaration, methodSource: PsiAnnotation) {
+    if(declaration !is UMethod) return
+    val psiMethod = declaration.javaPsi
+    val containingClass = psiMethod.containingClass ?: return
+    val annotationMemberValue = methodSource.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+    if (annotationMemberValue.isEmpty()) {
+      if (methodSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) == null) return
+      val foundField = containingClass.findFieldByName(declaration.name, true)
+      val uFoundField = foundField.toUElementOfType<UField>()
+      return if (uFoundField != null) {
+        checkFieldSourceProvider(uFoundField, containingClass, methodSource, declaration)
+      }
+      else {
+        checkAbsentFieldSourceProvider(containingClass, methodSource, declaration.name, declaration)
+      }
+    }
+    else {
+      annotationMemberValue.forEach { attributeValue ->
+        for (reference in attributeValue.references) {
+          if (reference is FieldSourceReference) {
+            val fields = reference.multiResolve(false)
+            val field = fields
+              .mapNotNull { it as? PsiSourceResolveResult }
+              .firstNotNullOfOrNull { it.getSourceForClass(declaration.javaPsi.containingClass ?: return) }
+            if (field !is PsiField) {
+              return checkAbsentFieldSourceProvider(containingClass, attributeValue, reference.value, declaration)
+            }
+            else {
+              val uSourceProvider = field.toUElementOfType<UField>() ?: return
+              return checkFieldSourceProvider(uSourceProvider, containingClass, attributeValue, declaration)
+            }
+          }
+        }
+      }
+    }
   }
 
   private fun checkAbsentSourceProvider(
@@ -649,6 +696,39 @@ private class JUnitMalformedSignatureVisitor(
       )
       val request = methodRequest(containingClass.project, sourceProviderName, modifiers, typeFromText)
       val actions = createMethodActions(containingClass, request)
+      val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, containingClass.containingFile).toTypedArray()
+
+      holder.registerProblem(anchor.navigationElement, message, *quickFixes)
+    }
+    else {
+      holder.registerProblem(anchor.navigationElement, message)
+    }
+  }
+
+  private fun checkAbsentFieldSourceProvider(
+    containingClass: PsiClass, anchor: PsiElement, sourceProviderName: String, method: UMethod
+  ) {
+    val message = JUnitBundle.message(
+      "jvm.inspections.junit.malformed.param.field.source.unresolved.descriptor",
+      sourceProviderName
+    )
+    val className = StringUtil.getPackageName(sourceProviderName, '#')
+    return if (isOnTheFly && className.isEmpty()) {
+      val modifiers = mutableListOf(JvmModifier.PUBLIC)
+      if (!TestUtils.testInstancePerClass(containingClass)) modifiers.add(JvmModifier.STATIC)
+      val typeFromText = JavaPsiFacade.getElementFactory(containingClass.project).createTypeFromText(
+        FIELD_SOURCE_TYPE, containingClass
+      )
+      val request = fieldRequest(
+        fieldName = sourceProviderName,
+        annotations = emptyList(),
+        modifiers = modifiers,
+        fieldType = expectedTypes(typeFromText),
+        targetSubstitutor = PsiJvmSubstitutor(containingClass.project, PsiSubstitutor.EMPTY),
+        initializer = JvmValue.createLongValue(SerialVersionUIDBuilder.computeDefaultSUID(containingClass)),
+        isConstant = true
+      )
+      val actions = createAddFieldActions(containingClass, request)
       val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, containingClass.containingFile).toTypedArray()
 
       holder.registerProblem(anchor.navigationElement, message, *quickFixes)
@@ -699,6 +779,54 @@ private class JUnitMalformedSignatureVisitor(
         holder.registerProblem(anchor.navigationElement, message)
       }
       else if (declaration.hasInjectedParameterMismatch()
+               && !InheritanceUtil.isInheritor(componentType, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS)
+               && !componentType.equalsToText(JAVA_LANG_OBJECT)
+               && !componentType.deepComponentType.equalsToText(JAVA_LANG_OBJECT)
+      ) {
+        val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.wrapped.in.arguments.descriptor")
+        holder.registerProblem(anchor.navigationElement, message)
+      }
+    }
+  }
+
+  private fun checkFieldSourceProvider(sourceProvider: UField, containingClass: PsiClass?, anchor: PsiElement, method: UMethod) {
+    val providerName = sourceProvider.name
+    if (!sourceProvider.isStatic &&
+        containingClass != null && !TestUtils.testInstancePerClass(containingClass) &&
+        !implementationsTestInstanceAnnotated(containingClass)
+    ) {
+      val actions = mutableListOf<IntentionAction>()
+      val sameClass = sourceProvider.containingClass == containingClass
+      if(sameClass) {
+        val annotation = JavaPsiFacade.getElementFactory(containingClass.project).createAnnotationFromText(
+          TEST_INSTANCE_PER_CLASS, containingClass
+        )
+        val value = (annotation.attributes.first() as PsiNameValuePairImpl).value
+        if (value != null) {
+          actions.addAll(createAddAnnotationActions(
+            containingClass,
+            annotationRequest(
+              ORG_JUNIT_JUPITER_API_TEST_INSTANCE,
+              constantAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, value.text)
+            )
+          ))
+        }
+        actions.addAll(createModifierActions(sourceProvider, modifierRequest(JvmModifier.STATIC, true)))
+      }
+      val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, sourceProvider.containingFile).toTypedArray()
+      val message = JUnitBundle.message("jvm.inspections.junit.malformed.param.field.source.static.descriptor",
+                                        providerName)
+      holder.registerProblem(anchor.navigationElement, message, *quickFixes)
+    }
+    else {
+      val componentType = getComponentType(sourceProvider.type, method.javaPsi)
+      if (componentType == null) {
+        val message = JUnitBundle.message(
+          "jvm.inspections.junit.malformed.param.field.source.return.type.descriptor", providerName
+        )
+        holder.registerProblem(anchor.navigationElement, message)
+      }
+      else if (method.hasInjectedParameterMismatch()
                && !InheritanceUtil.isInheritor(componentType, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS)
                && !componentType.equalsToText(JAVA_LANG_OBJECT)
                && !componentType.deepComponentType.equalsToText(JAVA_LANG_OBJECT)
@@ -1310,6 +1438,7 @@ private class JUnitMalformedSignatureVisitor(
 
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
+    const val FIELD_SOURCE_TYPE = "java.util.Collection<java.lang.Object>"
 
     val checkableRunners = listOf(
       "org.junit.runners.AllTests",
@@ -1359,6 +1488,7 @@ private class JUnitMalformedSignatureVisitor(
 
     val multipleParameterProviders = listOf(
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE,
+      ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE
     )
@@ -1372,6 +1502,7 @@ private class JUnitMalformedSignatureVisitor(
 
     val parameterizedSources = listOf(
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE,
+      ORG_JUNIT_JUPITER_PARAMS_PROVIDER_FIELD_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_VALUE_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE,
       ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE,
