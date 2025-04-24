@@ -177,7 +177,7 @@ internal class ToolWindowImpl(
     return decorator!!
   }
 
-  fun createCellDecorator() : InternalDecoratorImpl {
+  fun createCellDecorator(): InternalDecoratorImpl {
     val cellContentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable, ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
       ToolWindowContentUi(this, contentManager, componentGetter.get())
     })
@@ -221,10 +221,11 @@ internal class ToolWindowImpl(
     })
     object : ComponentTreeWatcher(ArrayUtil.EMPTY_CLASS_ARRAY) {
       override fun processComponent(component: Component) {
-        if (component is ActionToolbar) {
-          updateToolbarsVisibility()
-        }
+        if (component !is ActionToolbar) return
+        ToggleToolbarAction.updateToolbarVisibility(
+          this@ToolWindowImpl, component, PropertiesComponent.getInstance(project))
       }
+
       override fun unprocessComponent(component: Component) = Unit
     }.register(decorator)
     if (ExperimentalUI.isNewUI()) {
@@ -251,8 +252,13 @@ internal class ToolWindowImpl(
     return contentManager
   }
 
-  private fun updateToolbarsVisibility() {
-    ToggleToolbarAction.updateToolbarsVisibility(this, PropertiesComponent.getInstance(project))
+  internal fun hasTopToolbar(): Boolean {
+    val decorator = decorator ?: return false
+    val header = decorator.header
+    val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+    val component = UIUtil.getDeepestComponentAt(
+      decorator, headerBounds.width/2, headerBounds.height * 3 / 2)
+    return UIUtil.getParentOfType(ActionToolbar::class.java, component) != null
   }
 
   private fun updateScrolledState() {
@@ -363,7 +369,7 @@ internal class ToolWindowImpl(
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
   }
 
-  fun getLastFocusedContent() : Content? {
+  fun getLastFocusedContent(): Content? {
     val lastFocusedComponent = toolWindowFocusWatcher?.focusedComponent
     if (lastFocusedComponent is JComponent) {
       if (!lastFocusedComponent.isShowing) return null
