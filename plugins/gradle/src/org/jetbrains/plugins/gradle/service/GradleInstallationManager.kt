@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -12,7 +13,10 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.getLockPermitContext
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -24,6 +28,10 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -45,6 +53,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.exists
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
@@ -141,11 +150,27 @@ open class GradleInstallationManager : Disposable.Default {
     val settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath) ?: return getAvailableJavaHome(project)
     val gradleJvm = settings.gradleJvm
     val sdkLookupProvider = getGradleJvmLookupProvider(project, settings)
-    val sdkInfo = runBlockingCancellable { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
+    val sdkInfo = runBlockingCancellableInternalIgnoreError { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
     if (sdkInfo is SdkLookupProvider.SdkInfo.Resolved) {
       return sdkInfo.homePath
     }
     return null
+  }
+
+  // b/411744564 and https://youtrack.jetbrains.com/issue/IDEA-370663
+  private fun <T> runBlockingCancellableInternalIgnoreError(action: suspend CoroutineScope.() -> T): T {
+    return prepareThreadContext { ctx ->
+      try {
+          @OptIn(InternalCoroutinesApi::class)
+          IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + getLockPermitContext(), action)
+      }
+      catch (pce: ProcessCanceledException) {
+        throw pce
+      }
+      catch (ce: CancellationException) {
+        throw CeProcessCanceledException(ce)
+      }
+    }
   }
 
   /**
