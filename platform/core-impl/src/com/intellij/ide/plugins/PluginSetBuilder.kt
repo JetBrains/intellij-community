@@ -311,21 +311,13 @@ private fun createCannotLoadError(
   val dependencyIdString = dependencyPluginId.idString
   val dependency = errors.get(dependencyPluginId)?.plugin
 
-  val detailedMessageSupplier = dependency?.let {
-    message(
-      "plugin.loading.error.long.depends.on.failed.to.load.plugin",
-      descriptor.name,
-      it.name ?: dependencyIdString,
-    )
-  } ?: message(
-    "plugin.loading.error.long.depends.on.not.installed.plugin",
-    descriptor.name,
-    dependencyIdString,
-  )
-
-  val shortMessageSupplier = dependency?.let {
-    message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyIdString)
-  } ?: message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyIdString)
+  val (detailedMessageSupplier, shortMessageSupplier) = if (dependency != null) {
+    message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.name, dependency.name ?: dependencyIdString) to
+      message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyIdString)
+  } else {
+    message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, dependencyIdString) to
+      message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyIdString)
+  }
 
   return PluginLoadingError(
     plugin = descriptor,
