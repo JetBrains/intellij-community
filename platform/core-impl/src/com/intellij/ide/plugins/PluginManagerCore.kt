@@ -874,7 +874,7 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    context: PluginDescriptorLoadingContext,
+    loadingContext: PluginDescriptorLoadingContext,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
   ): PluginSet {
@@ -882,7 +882,7 @@ object PluginManagerCore {
     return tracerShim.span("plugin initialization") {
       val coreLoader = PluginManagerCore::class.java.classLoader
       val initResult = initializePlugins(
-        loadingContext = context,
+        loadingContext = loadingContext,
         initContext = initContext,
         loadingResult = loadingResult,
         coreLoader = coreLoader,
