@@ -417,16 +417,6 @@ c:com.intellij.ide.highlighter.custom.tokens.WhitespaceParser
 - com.intellij.ide.highlighter.custom.tokens.TokenParser
 - <init>():V
 - hasToken(I):Z
-f:com.intellij.ide.plugins.PluginLoadingError
-- sf:Companion:com.intellij.ide.plugins.PluginLoadingError$Companion
-- f:disabledDependency:com.intellij.openapi.extensions.PluginId
-- f:getDetailedMessage():java.lang.String
-- f:getDetailedMessageSupplier():java.util.function.Supplier
-- f:getInternalMessage():java.lang.String
-- f:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
-- f:getShortMessage():java.lang.String
-- f:isNotifyUser():Z
-f:com.intellij.ide.plugins.PluginLoadingError$Companion
 f:com.intellij.ide.plugins.PluginManager
 - sf:EXPLICIT_BIG_NUMBER_PATTERN:java.util.regex.Pattern
 - sf:INSTALLED_TXT:java.lang.String
@@ -462,19 +452,19 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - s:isIgnoreCompatibility:Z
 - s:isUnitTestMode:Z
 - sf:addDisablePluginListener(java.lang.Runnable):V
-- sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginLoadingError
+- sf:checkBuildNumberCompatibility(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):com.intellij.ide.plugins.PluginNonLoadReason
 - sf:disablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:disablePlugin(java.lang.String):Z
 - sf:enablePlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:enablePlugin(java.lang.String):Z
 - sf:getBuildNumber():com.intellij.openapi.util.BuildNumber
-- f:getIncompatibleOs(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:getLoadedPlugins():java.util.List
-- f:getLoadingError(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginLoadingError
+- f:getLoadingError(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginNonLoadReason
 - sf:getPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 - sf:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
+- f:getUnfulfilledOsRequirement(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:invalidatePlugins():V
 - sf:isCompatible(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - f:isCompatible(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.openapi.util.BuildNumber):Z
