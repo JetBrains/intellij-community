@@ -1,6 +1,6 @@
 <idea-plugin package="com.intellij.grazie" allow-bundled-update="true">
   <id>tanvd.grazi</id>
-  <name>Grazie Lite</name>
+  <name>Natural Languages</name>
   <vendor>JetBrains</vendor>
 
   <incompatible-with>com.intellij.cwm.guest</incompatible-with>
@@ -9,7 +9,6 @@
 
   <description><![CDATA[
     <p>Intelligent spelling and grammar checks for any text you write in the IDE.</p>
-
     <ul>
       <li>
         Supports over 20 languages, including English, German, Russian, and Chinese.
@@ -22,13 +21,13 @@
       </li>
       <li>Uses <a href="https://www.languagetool.org/">LanguageTool</a> as its proofreading engine.</li>
     </ul>
-
     <p>Data privacy: all verification is performed locally, inside your IDE.</p>
-    ]]></description>
+  ]]></description>
 
   <dependencies>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
+
   <content>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
