@@ -112,6 +112,7 @@ private class EditorBreakpointTypesMap(
 
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
+        breakpointTypesMap = null
         debouncedUpdateRequests.tryEmit(Unit)
       }
     }, cs.asDisposable())
