@@ -410,10 +410,11 @@ public class MockApplication extends MockComponentManager implements Application
   private static volatile boolean warningLogged = false;
 
   @SuppressWarnings("SameParameterValue")
-  private static void logInsufficientIsolation(String methodName, Object... args) {
-    if (warningLogged) {
+  private void logInsufficientIsolation(String methodName, Object... args) {
+    if (warningLogged || !isUnitTestMode()) {
       return;
     }
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     warningLogged = true;
     getLogger().warn("Attempt to execute method \"" + methodName + "\" with arguments `" +
                      Arrays.toString(args) + "` within a MockApplication.\n" +
