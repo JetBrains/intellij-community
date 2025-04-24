@@ -96,9 +96,7 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
     changedListener?.inlaysChanged()
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose(): Unit = Unit
 }
 
 private val UPDATE_MANAGER_KEY = Key<UpdateManager>("UPDATE_MANAGER_KEY")
