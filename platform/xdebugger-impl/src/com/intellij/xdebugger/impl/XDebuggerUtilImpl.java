@@ -52,6 +52,8 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -814,9 +816,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static void rebuildAllSessionsViews(@Nullable Project project) {
     if (project == null) return;
-    Arrays.stream(XDebuggerManager.getInstance(project).getDebugSessions())
-      .filter(XDebugSession::isSuspended)
-      .forEach(XDebugSession::rebuildViews);
+    XDebugManagerProxy.getInstance().getSessions(project).stream()
+      .filter(XDebugSessionProxy::isSuspended)
+      .forEach(XDebugSessionProxy::rebuildViews);
   }
 
   public static void rebuildTreeAndViews(XDebuggerTree tree) {
