@@ -4,11 +4,18 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.moveTo
 
 /**
  To enable debug logging in Bazel: --sandbox_debug --verbose_failures --define=kt_trace=1
@@ -31,14 +38,14 @@ internal class JpsModuleToBazel {
       val generator = BazelBuildFileGenerator(projectDir = projectDir, project = project, urlCache = urlCache)
       val moduleList = generator.computeModuleList()
       // first, generate community to collect libs, that used by community (to separate community and ultimate libs)
-      val communityFiles = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
-      val ultimateFiles = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
-      generator.save(communityFiles)
-      generator.save(ultimateFiles)
+      val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
+      val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
+      generator.save(communityResult.moduleBuildFiles)
+      generator.save(ultimateResult.moduleBuildFiles)
 
       deleteOldFiles(
         projectDir = projectDir,
-        generatedFiles = (communityFiles.keys.asSequence() + ultimateFiles.keys.asSequence())
+        generatedFiles = (communityResult.moduleBuildFiles.keys.asSequence() + ultimateResult.moduleBuildFiles.keys.asSequence())
           .filter { it != projectDir }
           .sortedBy { projectDir.relativize(it).invariantSeparatorsPathString }
           .toList(),
@@ -46,8 +53,46 @@ internal class JpsModuleToBazel {
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
 
+      val targetsFile = projectDir.resolve("build/bazel-targets.json")
+      saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets)
+
       // save cache only on success. do not surround with try/finally
       urlCache.save()
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>) {
+      @Serializable
+      data class TargetsFileModuleDescription(
+        val productionTargets: List<String>,
+        val productionJars: List<String>,
+        val testTargets: List<String>,
+        val testJars: List<String>,
+      )
+
+      @Serializable
+      data class TargetsFile(
+        val modules: Map<String, TargetsFileModuleDescription>,
+      )
+
+      val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
+      try {
+        Files.writeString(
+          tempFile, jsonSerializer.encodeToString(
+          TargetsFile(
+            modules = targets.associate { moduleTarget ->
+              moduleTarget.moduleDescriptor.module.name to TargetsFileModuleDescription(
+                productionTargets = moduleTarget.productionTargets,
+                productionJars = moduleTarget.productionJars,
+                testTargets = moduleTarget.testTargets,
+                testJars = moduleTarget.testJars,
+              )
+            }
+          )))
+        tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+      } finally {
+        tempFile.deleteIfExists()
+      }
     }
 
     fun searchUltimateRootUpwards(start: Path): Path {
@@ -59,6 +104,12 @@ internal class JpsModuleToBazel {
 
         current = current.parent ?: throw IllegalStateException("Cannot find ultimate root starting from $start")
       }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private val jsonSerializer = Json {
+      prettyPrint = true
+      prettyPrintIndent = "  "
     }
   }
 }

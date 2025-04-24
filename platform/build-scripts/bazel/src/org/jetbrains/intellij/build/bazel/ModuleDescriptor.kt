@@ -13,8 +13,27 @@ internal data class ModuleDescriptor(
   @JvmField val testResources: List<ResourceDescriptor>,
   @JvmField val isCommunity: Boolean,
   @JvmField val bazelBuildFileDir: Path,
+  @JvmField val relativePathFromProjectRoot: Path,
   @JvmField val targetName: String,
-)
+) {
+  init {
+    require(bazelBuildFileDir.isAbsolute) {
+      "bazelBuildFileDir must be absolute: $bazelBuildFileDir"
+    }
+
+    require(!relativePathFromProjectRoot.isAbsolute) {
+      "relativePathFromProjectRoot must be relative: $relativePathFromProjectRoot"
+    }
+
+    require(bazelBuildFileDir.endsWith(relativePathFromProjectRoot) || relativePathFromProjectRoot.toString().isEmpty()) {
+      "bazelBuildFileDir must end with relativePathFromProjectRoot: bazelBuildFileDir=$bazelBuildFileDir, relativePathFromProjectRoot=$relativePathFromProjectRoot"
+    }
+
+    require(relativePathFromProjectRoot.startsWith("community") == isCommunity) {
+      "relativePathFromProjectRoot must start with 'community' if isCommunity is true: $relativePathFromProjectRoot, isCommunity=$isCommunity"
+    }
+  }
+}
 
 internal data class ResourceDescriptor(
   @JvmField val baseDirectory: String,
