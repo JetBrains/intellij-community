@@ -191,15 +191,15 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
             IgnoreTests.DIRECTIVES.FIR_IDENTICAL
         )
 
-        val resultFile = if (isFirPlugin) {
-            if (InTextDirectivesUtils.isDirectiveDefined(
-                    goldenResultFile.readText(StandardCharsets.UTF_8),
-                    IgnoreTests.DIRECTIVES.IGNORE_K2
-                )
-            ) {
-                return
-            }
+        if (InTextDirectivesUtils.isDirectiveDefined(
+                goldenResultFile.readText(StandardCharsets.UTF_8),
+                IgnoreTests.DIRECTIVES.of(pluginMode)
+            )
+        ) {
+            return
+        }
 
+        val resultFile = if (isFirPlugin) {
             if (firIdenticalIsPresent) {
                 goldenResultFile
             } else {

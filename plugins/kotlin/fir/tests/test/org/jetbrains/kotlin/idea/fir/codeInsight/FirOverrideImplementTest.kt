@@ -240,6 +240,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testNoAnyMembersInInterface()
     }
 
+    override fun testNoAnyMembersInAnnotation() {
+        super.testNoAnyMembersInAnnotation()
+    }
+
     override fun testNoAnyMembersInValueClass() {
         super.testNoAnyMembersInValueClass()
     }

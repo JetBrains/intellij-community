@@ -1,4 +1,4 @@
-// IGNORE_K2
+// FIR_IDENTICAL
 @JvmInline
 value class V(val v: Int) {
     override fun toString(): String {

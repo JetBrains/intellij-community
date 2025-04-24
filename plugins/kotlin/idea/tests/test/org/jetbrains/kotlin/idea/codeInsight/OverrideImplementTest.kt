@@ -229,6 +229,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiOverrideFileTest()
     }
 
+    open fun testNoAnyMembersInAnnotation() {
+        doMultiOverrideFileTest()
+    }
+
     open fun testNoAnyMembersInValueClass() {
         doMultiOverrideFileTest()
     }
