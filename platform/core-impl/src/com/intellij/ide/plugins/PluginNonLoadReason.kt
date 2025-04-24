@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.util.function.Supplier
 
 @ApiStatus.Internal
 sealed interface PluginNonLoadReason {
@@ -18,51 +17,6 @@ sealed interface PluginNonLoadReason {
   val shortMessage: @NlsContexts.Label String
   val logMessage: @NonNls String
   val shouldNotifyUser: Boolean
-}
-
-@ApiStatus.Internal
-class PluginLoadingError internal constructor(
-  override val plugin: IdeaPluginDescriptor,
-  private val detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>,
-  private val shortMessageSupplier: Supplier<@NlsContexts.Label String>,
-  override val shouldNotifyUser: Boolean,
-) : PluginNonLoadReason {
-  internal constructor(
-    plugin: IdeaPluginDescriptor,
-    detailedMessageSupplier: Supplier<@NlsContexts.DetailedDescription String>,
-    shortMessageSupplier: Supplier<@NlsContexts.Label String>,
-  ) : this(
-    plugin = plugin,
-    detailedMessageSupplier = detailedMessageSupplier,
-    shortMessageSupplier = shortMessageSupplier,
-    shouldNotifyUser = true)
-
-  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-  override val detailedMessage: @NlsContexts.DetailedDescription String
-    get() = detailedMessageSupplier.get()
-
-  @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-  override val shortMessage: @NlsContexts.Label String
-    get() = shortMessageSupplier.get()
-
-  override val logMessage: @NonNls String
-    get() = formatErrorMessage(plugin, detailedMessageSupplier.get())
-
-  override fun toString(): @NonNls String = logMessage
-
-  companion object {
-    private fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
-      val builder = StringBuilder()
-      builder.append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
-      builder.append(PluginUtils.pluginPathToUserString(descriptor.pluginPath))
-      val version = descriptor.version
-      if (version != null && !descriptor.isBundled && version != PluginManagerCore.buildNumber.asString()) {
-        builder.append(", version=").append(version)
-      }
-      builder.append("): ").append(message)
-      return builder.toString()
-    }
-  }
 }
 
 @ApiStatus.Internal
