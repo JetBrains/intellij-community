@@ -40,7 +40,10 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     get() = setOf() // TODO: implement groups
 
 
-  override val dependentBreakpointManager: XDependentBreakpointManagerProxy = FrontendXDependentBreakpointManagerProxy()
+  override val dependentBreakpointManager: XDependentBreakpointManagerProxy =
+    FrontendXDependentBreakpointManagerProxy(project, cs, breakpointById = {
+      breakpoints[it]
+    })
 
   init {
     cs.launch {

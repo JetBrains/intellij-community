@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
@@ -14,6 +15,10 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XDependentBreakpointManagerApi : RemoteApi<Unit> {
   suspend fun breakpointDependencies(projectId: ProjectId): XBreakpointDependenciesDto
+
+  suspend fun clearMasterBreakpoint(breakpointId: XBreakpointId)
+
+  suspend fun setMasterDependency(breakpointId: XBreakpointId, masterBreakpointId: XBreakpointId, isLeaveEnabled: Boolean)
 
   companion object {
     @JvmStatic
@@ -34,8 +39,10 @@ data class XBreakpointDependenciesDto(
 @ApiStatus.Internal
 @Serializable
 sealed interface XBreakpointDependencyEvent {
+  @Serializable
   data class Add(val dependency: XBreakpointDependencyDto) : XBreakpointDependencyEvent
 
+  @Serializable
   data class Remove(val child: XBreakpointId) : XBreakpointDependencyEvent
 }
 

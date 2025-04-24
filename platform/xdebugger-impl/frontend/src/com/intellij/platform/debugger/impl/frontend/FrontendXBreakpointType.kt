@@ -42,11 +42,7 @@ internal class FrontendXBreakpointType(
   // TODO: should we support changes from the backend (so we need to subscribe on them)
   private var _defaultSuspendPolicy = dto.defaultSuspendPolicy
 
-  private val visibleStandardPanels: Set<StandardPanels> = dto.standardPanels.mapTo(mutableSetOf()) { it.standardPanel() }.also {
-    // TODO: support DEPENDENCY on the frontend side
-    //  see com.intellij.platform.debugger.impl.frontend.FrontendXDependentBreakpointManagerProxy
-    it.remove(StandardPanels.DEPENDENCY)
-  }
+  private val visibleStandardPanels: Set<StandardPanels> = dto.standardPanels.mapTo(mutableSetOf()) { it.standardPanel() }
 
   override val defaultSuspendPolicy: SuspendPolicy
     get() = _defaultSuspendPolicy
