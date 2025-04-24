@@ -232,6 +232,7 @@ class PluginManagerTest {
         descriptors = descriptors.asSequence(),
         overrideUseIfCompatible = false,
         initContext = PluginInitializationContext.build(
+          essentialPlugins = emptySet(),
           disabledPlugins = emptySet(), // TODO refactor the test
           expiredPlugins = emptySet(),
           brokenPluginVersions = emptyMap(),
@@ -311,6 +312,7 @@ class PluginManagerTest {
         getBuildNumberForDefaultDescriptorVersion = { buildNumber }
       )
       val initContext = PluginInitializationContext.build(
+        essentialPlugins = emptySet(),
         disabledPlugins = emptySet(),
         expiredPlugins = emptySet(),
         brokenPluginVersions = emptyMap(),
@@ -420,7 +422,6 @@ class PluginManagerTest {
         loadingResult = result,
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
         checkEssentialPlugins = false,
-        getEssentialPlugins = { emptyList() },
         parentActivity = null
       )
     }

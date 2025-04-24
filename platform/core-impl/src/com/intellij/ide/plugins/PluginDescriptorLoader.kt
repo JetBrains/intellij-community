@@ -1207,6 +1207,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
   val urlToFilename = collectPluginFilesInClassPath(loader)
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val initContext = PluginInitializationContext.build(
+    essentialPlugins = emptySet(),
     disabledPlugins = emptySet(),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),

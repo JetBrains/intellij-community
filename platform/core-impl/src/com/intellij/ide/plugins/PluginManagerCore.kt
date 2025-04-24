@@ -463,7 +463,7 @@ object PluginManagerCore {
     descriptors: Collection<IdeaPluginDescriptorImpl>,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     errors: MutableMap<PluginId, PluginNonLoadReason>,
-    essentialPlugins: List<PluginId>
+    essentialPlugins: Set<PluginId>
   ) {
     val selectedIds = System.getProperty("idea.load.plugins.id")
     val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
@@ -581,7 +581,7 @@ object PluginManagerCore {
     return null
   }
 
-  private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: List<PluginId>) {
+  private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: Set<PluginId>) {
     val corePlugin = idMap[CORE_ID]
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin =
@@ -613,7 +613,6 @@ object PluginManagerCore {
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
     checkEssentialPlugins: Boolean,
-    getEssentialPlugins: () -> List<PluginId>,
     parentActivity: Activity?,
   ): PluginManagerState {
     val pluginErrorsById = loadingResult.copyPluginErrors()
@@ -641,9 +640,8 @@ object PluginManagerCore {
 
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
 
-    val essentialPlugins = getEssentialPlugins()
     val pluginSetBuilder = PluginSetBuilder(loadingResult.enabledPluginsById.values)
-    disableIncompatiblePlugins(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = essentialPlugins)
+    disableIncompatiblePlugins(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = initContext.essentialPlugins)
     pluginSetBuilder.checkPluginCycles(globalErrors)
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
@@ -685,7 +683,7 @@ object PluginManagerCore {
     }
 
     if (checkEssentialPlugins) {
-      checkEssentialPluginsAreAvailable(idMap, essentialPlugins)
+      checkEssentialPluginsAreAvailable(idMap, initContext.essentialPlugins)
     }
 
     val pluginSet = pluginSetBuilder.createPluginSet(incompletePlugins = loadingResult.getIncompleteIdMap().values)
@@ -887,7 +885,6 @@ object PluginManagerCore {
         loadingResult = loadingResult,
         coreLoader = coreLoader,
         checkEssentialPlugins = !isUnitTestMode,
-        getEssentialPlugins = { ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() },
         parentActivity = tracerShim.getTraceActivity()
       )
       pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)

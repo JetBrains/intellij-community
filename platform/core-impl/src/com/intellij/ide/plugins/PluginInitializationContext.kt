@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PluginInitializationContext {
   val productBuildNumber: BuildNumber
+  val essentialPlugins: Set<PluginId>
   fun isPluginDisabled(id: PluginId): Boolean
   fun isPluginExpired(id: PluginId): Boolean
   fun isPluginBroken(id: PluginId, version: String?): Boolean
@@ -24,6 +25,7 @@ interface PluginInitializationContext {
   @ApiStatus.Internal
   companion object {
     fun build(
+      essentialPlugins: Set<PluginId>,
       disabledPlugins: Set<PluginId>,
       expiredPlugins: Set<PluginId>,
       brokenPluginVersions: Map<PluginId, Set<String?>>,
@@ -32,6 +34,7 @@ interface PluginInitializationContext {
     ): PluginInitializationContext =
       object : PluginInitializationContext {
         override val productBuildNumber: BuildNumber get() = getProductBuildNumber()
+        override val essentialPlugins: Set<PluginId> = essentialPlugins
         override fun isPluginDisabled(id: PluginId): Boolean = id in disabledPlugins
         override fun isPluginExpired(id: PluginId): Boolean = id in expiredPlugins
         override fun isPluginBroken(id: PluginId, version: String?): Boolean = brokenPluginVersions[id]?.contains(version) == true

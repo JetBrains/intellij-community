@@ -27,6 +27,7 @@ internal fun loadAndInitDescriptorInTest(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber }
   )
   val initContext = PluginInitializationContext.build(
+    essentialPlugins = emptySet(),
     disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),

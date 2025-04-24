@@ -154,6 +154,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val buildNumber = BuildNumber.fromString("2042.0")!!
   val result = PluginLoadingResult()
   val initContext = PluginInitializationContext.build(
+    essentialPlugins = emptySet(),
     disabledPlugins = emptySet(),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),

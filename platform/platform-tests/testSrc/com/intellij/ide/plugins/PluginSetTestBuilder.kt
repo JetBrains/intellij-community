@@ -41,6 +41,7 @@ class PluginSetTestBuilder(private val path: Path) {
     // copy just in case
     val buildNumber = productBuildNumber
     return PluginInitializationContext.build(
+      essentialPlugins = emptySet(),
       disabledPlugins = disabledPluginIds.toSet(),
       expiredPlugins = expiredPluginIds.toSet(),
       brokenPluginVersions = brokenPlugins.mapValues { it.value.toSet() }.toMap(),
@@ -76,7 +77,6 @@ class PluginSetTestBuilder(private val path: Path) {
       loadingResult = loadingResult,
       coreLoader = UrlClassLoader.build().get(),
       checkEssentialPlugins = false,
-      getEssentialPlugins = ::emptyList,
       parentActivity = null,
     ).pluginSet
   }

@@ -14,6 +14,7 @@ import java.nio.file.Path
 fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
   val loadingContext = PluginDescriptorLoadingContext()
   val initContext = PluginInitializationContext.build(
+    essentialPlugins = emptySet(),
     disabledPlugins = emptySet(),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),
