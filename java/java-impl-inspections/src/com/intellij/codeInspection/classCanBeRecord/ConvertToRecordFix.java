@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
@@ -22,7 +23,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -36,11 +36,11 @@ import java.util.stream.Collectors;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.PsiModifier.*;
 
-public class ConvertToRecordFix extends InspectionGadgetsFix {
+public final class ConvertToRecordFix implements LocalQuickFix {
   private final boolean mySuggestAccessorsRenaming;
   private final @NotNull List<String> myIgnoredAnnotations;
 
-  ConvertToRecordFix(boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
+  public ConvertToRecordFix(boolean suggestAccessorsRenaming, @NotNull List<String> ignoredAnnotations) {
     mySuggestAccessorsRenaming = suggestAccessorsRenaming;
     myIgnoredAnnotations = ignoredAnnotations;
   }
@@ -56,7 +56,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final ConvertToRecordProcessor processor = getRecordProcessor(descriptor);
     if (processor == null) return;
     // Without the next line, the conflicts view is not shown
@@ -81,7 +81,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
   private @Nullable ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement == null) return null;
+    if (psiElement == null || !psiElement.isValid()) return null;
     PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
     if (psiClass == null) return null;
 
@@ -470,10 +470,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
     @Override
     public String toString() {
-      return "FieldAccessorCandidate{" +
-             "myFieldAccessor=" + myFieldAccessor +
-             ", myBackingField=" + myBackingField +
-             '}';
+      return "FieldAccessorCandidate{" + "myFieldAccessor=" + myFieldAccessor + ", myBackingField=" + myBackingField + '}';
     }
   }
 
