@@ -69,7 +69,7 @@ class InEditorCodeIntegratorTest : BasePlatformTestCase() {
             
             }
     """.trimIndent()
-    val result = runBlocking { InEditorGeneratedCodeIntegrator().integrate(project, code, listOf("java.util.List")) }
+    val result = runBlocking { InEditorGeneratedCodeIntegrator().integrate(project, code, listOf("import java.util.List;")) }
     assertEquals(expectedResult, result)
   }
 

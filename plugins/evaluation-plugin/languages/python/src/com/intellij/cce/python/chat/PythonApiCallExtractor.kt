@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import com.intellij.lang.Language as PlatformLanguage
 
 class PythonApiCallExtractor : ApiCallExtractor {
-  override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
+  override suspend fun extractApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
     val psiFile = edtWriteAction { parsePsiFile(project, code) }
     return readAction { extractApiCalls(psiFile) }
   }

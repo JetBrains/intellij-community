@@ -6,7 +6,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 interface ApiCallExtractor {
-  suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String>
+  suspend fun extractApiCalls(
+    code: String,
+    allCodeSnippets: List<String>,
+    project: Project,
+    tokenProperties: TokenProperties,
+  ): List<String>
 }
 
 interface ApiCallExtractorProvider {
