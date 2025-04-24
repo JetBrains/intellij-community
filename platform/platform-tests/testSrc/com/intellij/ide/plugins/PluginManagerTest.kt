@@ -227,7 +227,7 @@ class PluginManagerTest {
       get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"
 
     private fun assertPluginPreInstalled(expectedPluginId: PluginId?, vararg descriptors: IdeaPluginDescriptorImpl) {
-      val loadingResult = createPluginLoadingResult()
+      val loadingResult = PluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins = false)
       loadingResult.initAndAddAll(
         descriptors = descriptors.asSequence(),
         overrideUseIfCompatible = false,

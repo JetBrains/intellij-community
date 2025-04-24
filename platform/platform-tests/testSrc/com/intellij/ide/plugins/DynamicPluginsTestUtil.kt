@@ -48,11 +48,6 @@ internal fun loadAndInitDescriptorInTest(
 }
 
 @JvmOverloads
-internal fun createPluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins: Boolean = false): PluginLoadingResult {
-  return PluginLoadingResult(requirePlatformAliasDependencyForLegacyPlugins = requirePlatformAliasDependencyForLegacyPlugins)
-}
-
-@JvmOverloads
 fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Disposable {
   return loadPluginWithText(
     pluginBuilder = PluginBuilder.withModulesLang().extensions(extensionTag, ns),
