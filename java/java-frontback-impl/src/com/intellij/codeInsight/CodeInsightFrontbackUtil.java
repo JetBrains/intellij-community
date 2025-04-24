@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Set;
 
-public final class CodeInsightFrontbackUtil {
+public class CodeInsightFrontbackUtil {
   public static @Nullable PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if (!file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) return null;
     PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
