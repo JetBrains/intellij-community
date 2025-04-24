@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.AsyncTooltipAction
 import com.intellij.openapi.editor.ex.TooltipAction
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -128,7 +129,7 @@ internal class DaemonTooltipWithActionRenderer(
   ) {
     super.fillPanel(editor, grid, hint, hintHint, actions, tooltipReloader, highlightActions)
     val hasMore = isActiveHtml(myText!!)
-    if (tooltipAction == null && !hasMore) {
+    if (isTooltipActionNull() && !hasMore) {
       return
     }
     val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
@@ -147,7 +148,7 @@ internal class DaemonTooltipWithActionRenderer(
     )
     grid.add(settingsComponent, settingsConstraints)
     if (isShowActions()) {
-      addActionsRow(hintHint, hint, editor, actions, grid, highlightActions)
+      addActionsRow(hintHint, hint, editor, actions, grid, highlightActions, tooltipReloader)
     }
   }
 
@@ -158,8 +159,9 @@ internal class DaemonTooltipWithActionRenderer(
     actions: MutableList<in AnAction>,
     grid: JComponent,
     highlightActions: Boolean,
+    tooltipReloader: TooltipReloader,
   ) {
-    if (tooltipAction == null || !hintHint.isAwtTooltip) {
+    if (isTooltipActionNull() || !hintHint.isAwtTooltip) {
       return
     }
 
@@ -188,6 +190,20 @@ internal class DaemonTooltipWithActionRenderer(
     val topInset = 5
     val bottomInset = (if (highlightActions) 4 else 10)
     val gridBag = GridBag().fillCellHorizontally().anchor(GridBagConstraints.WEST)
+
+    if (tooltipAction is AsyncTooltipAction && !tooltipAction.isLoaded()) {
+      val loadingLabel = createLoadingActionsRow(hintHint.textBackground)
+      buttons.add(loadingLabel, gridBag.next().insets(topInset, CONTENT_PADDING, bottomInset, 4))
+      scheduleReloadWhenReady(tooltipAction, tooltipReloader)
+      return
+    }
+
+    val tooltipAction = if (tooltipAction is AsyncTooltipAction) {
+      tooltipAction.getLoaded()!!
+    }
+    else {
+      tooltipAction!! // impossible to get NPE because if isTooltipActionNull() check
+    }
 
     val runFixAction = { event: InputEvent? ->
       hint.hide()
@@ -281,6 +297,20 @@ internal class DaemonTooltipWithActionRenderer(
     return fixHint
   }
 
+  private fun createLoadingActionsRow(textBackground: Color): JComponent {
+    val label = object : JBLabel(DaemonBundle.message("daemon.tooltip.loading.actions.text")) {
+      override fun getForeground(): Color {
+        return getKeymapColor()
+      }
+      override fun getBackground(): Color? {
+        return textBackground
+      }
+    }
+    label.border = JBUI.Borders.empty()
+    label.font = getActionFont()
+    return label
+  }
+
   override fun createRenderer(text: String?, width: Int): LineTooltipRenderer {
     return DaemonTooltipWithActionRenderer(text, tooltipAction, width, equalityObjects)
   }
@@ -340,6 +370,17 @@ internal class DaemonTooltipWithActionRenderer(
     wrapper.background = hintHint.textBackground
     wrapper.isOpaque = false
     return wrapper
+  }
+
+  private fun isTooltipActionNull(): Boolean {
+    return tooltipAction == null || (tooltipAction is AsyncTooltipAction && tooltipAction.isLoaded() && tooltipAction.getLoaded() == null)
+  }
+
+  private fun scheduleReloadWhenReady(tooltipAction: AsyncTooltipAction, tooltipReloader: TooltipReloader) {
+    tooltipAction.invokeWhenLoaded {
+      val toExpand = false // dressDescription depends on it
+      tooltipReloader.reload(toExpand)
+    }
   }
 
   private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean)
