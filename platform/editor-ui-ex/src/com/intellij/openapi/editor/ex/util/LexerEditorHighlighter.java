@@ -603,7 +603,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @ApiStatus.Internal
-  public @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(@NotNull Document document, int offset, @NotNull CharSequence s) {
+  public synchronized @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(@NotNull Document document, int offset, @NotNull CharSequence s) {
     var lexerWrapper = getLexerWrapper(StringUtil.replaceSubSequence(document.getImmutableCharSequence(), offset, offset, s), offset);
     int data;
 
