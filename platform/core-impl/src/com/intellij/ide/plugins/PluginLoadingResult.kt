@@ -81,7 +81,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       return
     }
 
-    if (checkModuleDependencies && isCheckingForImplicitDependencyNeeded(descriptor)) {
+    if (checkModuleDependencies && isLegacyPluginWithoutPlatformAliasDependencies(descriptor)) {
       addIncompletePlugin(descriptor, PluginIsCompatibleOnlyWithIntelliJIDEA(descriptor))
       return
     }
@@ -136,7 +136,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 }
 
 // skip our plugins as expected to be up to date whether bundled or not
-internal fun isCheckingForImplicitDependencyNeeded(descriptor: IdeaPluginDescriptorImpl): Boolean {
+internal fun isLegacyPluginWithoutPlatformAliasDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
   return !descriptor.isBundled &&
          descriptor.packagePrefix == null &&
          !descriptor.isImplementationDetail &&
