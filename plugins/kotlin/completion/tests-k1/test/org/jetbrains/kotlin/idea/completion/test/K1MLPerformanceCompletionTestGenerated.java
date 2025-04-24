@@ -3738,6 +3738,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/parameterDefaultValueInFunction.kt");
             }
 
+            @TestMetadata("PreferConstructorInReturn.kt")
+            public void testPreferConstructorInReturn() throws Exception {
+                runTest("../testData/basic/common/PreferConstructorInReturn.kt");
+            }
+
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
                 runTest("../testData/basic/common/PreferLessParameters.kt");

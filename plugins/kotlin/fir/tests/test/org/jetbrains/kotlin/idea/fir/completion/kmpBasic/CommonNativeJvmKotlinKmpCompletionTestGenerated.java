@@ -3927,6 +3927,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/parameterDefaultValueInFunction.kt");
         }
 
+        @TestMetadata("PreferConstructorInReturn.kt")
+        public void testPreferConstructorInReturn() throws Exception {
+            runTest("../../completion/testData/basic/common/PreferConstructorInReturn.kt");
+        }
+
         @TestMetadata("PreferLessParameters.kt")
         public void testPreferLessParameters() throws Exception {
             runTest("../../completion/testData/basic/common/PreferLessParameters.kt");

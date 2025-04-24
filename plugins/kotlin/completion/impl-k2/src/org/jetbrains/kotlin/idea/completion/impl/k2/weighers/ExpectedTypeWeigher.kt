@@ -60,7 +60,7 @@ internal object ExpectedTypeWeigher {
         symbol is KaEnumEntrySymbol && expectedType.isEnum() && symbol.returnType.semanticallyEquals(expectedType) ->
             MatchesExpectedType.MATCHES_PREFERRED
 
-        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol.isSubClassOf(it) } == true ->
+        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol == it || symbol.isSubClassOf(it) } == true ->
             MatchesExpectedType.MATCHES
 
         symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
