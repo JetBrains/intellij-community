@@ -6,8 +6,8 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.runInDumbMode
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode
@@ -78,7 +78,7 @@ object DumbModeTestUtils {
         val dumbTaskStarted = CompletableDeferred<Boolean>()
         val context = coroutineContext.contextModality()?.asContextElement()?.let { it + Job() } ?: Job()
         CoroutineScope(context).launch {
-          DumbServiceImpl.getInstance(project).runInDumbMode {
+          DumbService.getInstance(project).runInDumbMode {
             dumbTaskStarted.complete(true)
             finishDumbTask.await()
           }

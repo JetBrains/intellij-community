@@ -236,25 +236,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
    */
   val isDumbAsFlow: Flow<Boolean> = state.map { it.isDumb }
 
-  /**
-   * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
-   *
-   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
-   * method's invocation context (thread).
-   */
-  @TestOnly
-  suspend fun <T> runInDumbMode(block: suspend () -> T): T = runInDumbMode("test", block)
-
-  /**
-   * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
-   *
-   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
-   * method's invocation context (thread).
-   *
-   * @param debugReason will only be printed to logs
-   */
-  @Internal
-  suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
+  override suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
 
     suspend fun incrementCounter() {

@@ -20,11 +20,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.annotations.Contract
-import org.jetbrains.annotations.Unmodifiable
 import java.util.*
 import javax.swing.JComponent
 
@@ -283,6 +281,17 @@ abstract class DumbService {
   abstract fun completeJustSubmittedTasks()
 
   /**
+   * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation context (thread).
+   *
+   * @param debugReason will only be printed to logs
+   */
+  @ApiStatus.Internal
+  abstract suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T
+
+  /**
    * Replaces given component temporarily with "Not available until indices are built" label during dumb mode.
    *
    * @return Wrapped component.
@@ -524,3 +533,10 @@ abstract class DumbService {
     }
   }
 }
+
+/**
+ * @see [DumbService.runInDumbMode]
+ */
+@ApiStatus.Internal
+@TestOnly
+suspend fun <T> DumbService.runInDumbMode(block: suspend () -> T): T = runInDumbMode("test", block)

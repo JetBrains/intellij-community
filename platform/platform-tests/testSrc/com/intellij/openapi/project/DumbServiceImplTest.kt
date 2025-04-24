@@ -147,7 +147,7 @@ class DumbServiceImplTest {
     }
   }
 
-  private fun DumbServiceImpl.queue(task: (ProgressIndicator) -> Unit) {
+  private fun DumbService.queue(task: (ProgressIndicator) -> Unit) {
     queueTask(object : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) = task(indicator)
     })
@@ -808,7 +808,7 @@ class DumbServiceImplTest {
   fun `DumbService_runInDumbMode should properly handle coroutine cancellation`() = runBlocking(Dispatchers.EDT) {
     val dumbTaskStarted = Job()
     val dumbTask = launch(Dispatchers.Default) {
-      DumbServiceImpl.getInstance(project).runInDumbMode("Test dumb task that awaits cancellation") {
+      dumbService.runInDumbMode("Test dumb task that awaits cancellation") {
         dumbTaskStarted.complete()
         awaitCancellation()
       }
@@ -816,9 +816,9 @@ class DumbServiceImplTest {
     withTimeout(10.seconds) {
       dumbTaskStarted.join()
 
-      DumbServiceImpl.getInstance(project).isDumbAsFlow.first { isDumb -> isDumb }
+      dumbService.isDumbAsFlow.first { isDumb -> isDumb }
       dumbTask.cancel("Cancel dumb task")
-      DumbServiceImpl.getInstance(project).isDumbAsFlow.first { isDumb -> !isDumb }
+      dumbService.isDumbAsFlow.first { isDumb -> !isDumb }
     }
     return@runBlocking
   }

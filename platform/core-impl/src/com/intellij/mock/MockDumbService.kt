@@ -96,4 +96,6 @@ class MockDumbService(override val project: Project) : DumbService() {
   }
 
   override fun runWithWaitForSmartModeDisabled(): AccessToken = AccessToken.EMPTY_ACCESS_TOKEN
+
+  override suspend fun <T> runInDumbMode(debugReason: String, block: suspend () -> T): T = block()
 }
