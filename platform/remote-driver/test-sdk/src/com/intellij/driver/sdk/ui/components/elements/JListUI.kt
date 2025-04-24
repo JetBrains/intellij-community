@@ -29,7 +29,12 @@ fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[
                                                                 JListUiComponent::class.java)
 
 open class JListUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy { driver.new(JListFixtureRef::class, robot, component) }
+  private var cellRendererReader: CellRendererReader? = null
+  private val fixture by lazy {
+    driver.new(JListFixtureRef::class, robot, component).apply {
+      cellRendererReader?.let { replaceCellRendererReader(it) }
+    }
+  }
 
   val listComponent: JListComponent get() = driver.cast(component, JListComponent::class)
 
@@ -43,7 +48,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     get() = fixture.collectSelectedItems()
 
   fun replaceCellRendererReader(reader: CellRendererReader) {
-    fixture.replaceCellRendererReader(reader)
+    cellRendererReader = reader
   }
 
   fun clickItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
