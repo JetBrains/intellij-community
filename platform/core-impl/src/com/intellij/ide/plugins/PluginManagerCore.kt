@@ -1001,9 +1001,6 @@ object PluginManagerCore {
   @JvmStatic
   fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = shadowedBundledPlugins.contains(plugin.getPluginId())
 
-  private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String?, vararg params: Any?): @Nls Supplier<String> =
-    Supplier { CoreBundle.message(key!!, *params) }
-
   private fun prepareActions(pluginNamesToDisable: Collection<String>, pluginNamesToEnable: Collection<String>): List<Supplier<HtmlChunk>> {
     if (pluginNamesToDisable.isEmpty()) {
       return emptyList()
