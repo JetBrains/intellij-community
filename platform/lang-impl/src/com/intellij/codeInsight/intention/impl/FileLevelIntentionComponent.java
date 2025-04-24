@@ -109,8 +109,10 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
 
     if (intentions != null && !intentions.isEmpty()) {
       IntentionAction intentionAction = intentions.get(0).getFirst().getAction();
-      if (!(intentionAction instanceof UserDataHolder) ||
-          !Boolean.FALSE.equals(((UserDataHolder)intentionAction).getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
+      if (!(intentionAction instanceof UserDataHolder userDataHolder &&
+          Boolean.FALSE.equals((userDataHolder).getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) &&
+          !(intentionAction.asModCommandAction() instanceof UserDataHolder commandUserDataHolder &&
+           Boolean.FALSE.equals((commandUserDataHolder).getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY)))) {
         // do not show gear icon if this intention action is explicitly marked with `SHOW_INTENTION_OPTIONS_KEY = false`
 
         myGearLabel.setIcon(AllIcons.General.GearPlain);
