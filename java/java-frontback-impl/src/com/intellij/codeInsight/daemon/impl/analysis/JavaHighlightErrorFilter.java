@@ -12,7 +12,7 @@ public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     // todo we should handle it on the platform side
-    if (element.getLanguage() == JavaLanguage.INSTANCE && AppMode.isRemoteDevHost()) {
+    if (element.getLanguage().equals(JavaLanguage.INSTANCE) && AppMode.isRemoteDevHost()) {
       return false;
     }
     return JavaSyntaxErrorChecker.shouldHighlightErrorElement(element);
