@@ -1061,6 +1061,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/unextractable/multipleReturnsWithDefault.kt");
             }
 
+            @TestMetadata("returnAndOutputValue.kt")
+            public void testReturnAndOutputValue() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/unextractable/returnAndOutputValue.kt");
+            }
+
             @TestMetadata("unmatchedReturnTargets.kt")
             public void testUnmatchedReturnTargets() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/unextractable/unmatchedReturnTargets.kt");

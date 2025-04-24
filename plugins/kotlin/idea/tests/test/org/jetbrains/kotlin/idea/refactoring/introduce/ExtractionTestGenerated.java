@@ -2292,6 +2292,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/unextractable/multipleReturnsWithDefault.kt");
                 }
 
+                @TestMetadata("returnAndOutputValue.kt")
+                public void testReturnAndOutputValue() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/unextractable/returnAndOutputValue.kt");
+                }
+
                 @TestMetadata("unmatchedReturnTargets.kt")
                 public void testUnmatchedReturnTargets() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/unextractable/unmatchedReturnTargets.kt");

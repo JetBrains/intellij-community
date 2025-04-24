@@ -53,7 +53,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     override fun createTuple(outputValues: List<OutputValue<KaType>>): KaType {
         analyze(data.commonParent) {
             val boxingClass = when (outputValues.size) {
-                1 -> return outputValues.first().valueType
+                1 -> return approximateWithResolvableType(outputValues.first().valueType, data.commonParent) ?: builtinTypes.any
                 2 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Pair")))!!
                 3 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Triple")))!!
                 else -> return builtinTypes.unit
