@@ -349,6 +349,11 @@ class FrontendXDebuggerSession private constructor(
     return sessionData.isBreakpointsMuted
   }
 
+  override fun muteBreakpoints(value: Boolean) {
+    // Optimistic update
+    sessionData.isBreakpointsMuted = value
+  }
+
   override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {
     // TODO: support dependent manager
     return false

@@ -86,6 +86,7 @@ interface XDebugSessionProxy {
   fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache
 
   fun areBreakpointsMuted(): Boolean
+  fun muteBreakpoints(value: Boolean)
   fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean
 
   companion object {
@@ -232,6 +233,10 @@ interface XDebugSessionProxy {
 
     override fun areBreakpointsMuted(): Boolean {
       return session.areBreakpointsMuted()
+    }
+
+    override fun muteBreakpoints(value: Boolean) {
+      session.setBreakpointMuted(value)
     }
 
     override fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean {

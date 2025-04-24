@@ -17,12 +17,19 @@ public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandle
 
   @Override
   protected boolean isSelected(final @Nullable XDebugSessionProxy session, final AnActionEvent event) {
+    if (session != null) {
+      return session.areBreakpointsMuted();
+    }
     XDebugSessionData sessionData = DebuggerUIUtil.getSessionData(event);
     return sessionData != null && sessionData.isBreakpointsMuted();
   }
 
   @Override
   protected void setSelected(final @Nullable XDebugSessionProxy session, final AnActionEvent event, final boolean state) {
+    if (session != null) {
+      session.muteBreakpoints(state);
+      return;
+    }
     XDebugSessionData data = DebuggerUIUtil.getSessionData(event);
     if (data != null) {
       data.setBreakpointsMuted(state);
