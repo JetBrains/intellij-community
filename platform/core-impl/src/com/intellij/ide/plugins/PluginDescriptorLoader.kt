@@ -1157,7 +1157,7 @@ fun loadAndInitDescriptorsFromOtherIde(
     isMissingSubDescriptorIgnored = true,
   ).use { loadingContext ->
     val result = PluginLoadingResult()
-    @Suppress("SSBasedInspection")
+    @Suppress("RAW_RUN_BLOCKING")
     result.initAndAddAll(
       descriptors = toSequence(runBlocking {
         val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
