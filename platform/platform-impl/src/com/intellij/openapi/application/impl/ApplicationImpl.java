@@ -695,6 +695,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
       stopServicePreloading();
 
+      try {
+        lifecycleListener.beforeAppWillBeClosed(restart);
+      }
+      catch (Throwable t) {
+        logErrorDuringExit("Failed to invoke lifecycle listeners", t);
+      }
+
       if (BitUtil.isSet(flags, SAVE)) {
         try {
           TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),

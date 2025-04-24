@@ -52,6 +52,12 @@ public interface AppLifecycleListener {
   default void appClosing() { }
 
   /**
+   * Fired after the final "can exit?" check, but before saving settings.
+   */
+  @ApiStatus.Internal
+  default void beforeAppWillBeClosed(boolean isRestart) { }
+
+  /**
    * Fired after saving settings and after the final "can exit?" check.
    */
   default void appWillBeClosed(boolean isRestart) { }
