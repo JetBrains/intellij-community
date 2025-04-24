@@ -310,21 +310,11 @@ private fun createCannotLoadError(
 ): PluginNonLoadReason {
   val dependencyIdString = dependencyPluginId.idString
   val dependency = errors.get(dependencyPluginId)?.plugin
-
-  val (detailedMessageSupplier, shortMessageSupplier) = if (dependency != null) {
-    message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.name, dependency.name ?: dependencyIdString) to
-      message("plugin.loading.error.short.depends.on.failed.to.load.plugin", dependencyIdString)
+  return if (dependency != null) {
+    PluginDependencyCannotBeLoaded(descriptor, dependency.name ?: dependencyIdString, isNotifyUser)
   } else {
-    message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.name, dependencyIdString) to
-      message("plugin.loading.error.short.depends.on.not.installed.plugin", dependencyIdString)
+    PluginDependencyIsNotInstalled(descriptor, dependencyIdString, isNotifyUser)
   }
-
-  return PluginLoadingError(
-    plugin = descriptor,
-    detailedMessageSupplier = detailedMessageSupplier,
-    shortMessageSupplier = shortMessageSupplier,
-    shouldNotifyUser = isNotifyUser,
-  )
 }
 
 private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String, vararg params: Any): @Nls Supplier<String> {
