@@ -11,11 +11,9 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverListRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaFunctionLikeBodyRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
@@ -126,7 +124,6 @@ internal class OverrideKeywordHandler(
         val memberSymbol = symbolPointer.restoreSymbol()
         requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
         check(memberSymbol is KaNamedSymbol)
-        check(classOrObject !is KtEnumEntry)
 
         val baseIcon = getBaseIcon(memberSymbol)
         val isImplement = memberSymbol.modality == KaSymbolModality.ABSTRACT
