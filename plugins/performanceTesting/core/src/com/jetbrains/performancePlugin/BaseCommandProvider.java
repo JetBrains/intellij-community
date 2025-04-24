@@ -130,7 +130,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(WaitForVfsRefreshSelectedEditorCommand.PREFIX, WaitForVfsRefreshSelectedEditorCommand::new),
       Map.entry(CloseLookupCommand.PREFIX, CloseLookupCommand::new),
       Map.entry(OpenProblemViewPanelCommand.PREFIX, OpenProblemViewPanelCommand::new),
-      Map.entry(AssertProblemsViewCountCommand.PREFIX, AssertProblemsViewCountCommand::new)
+      Map.entry(AssertProblemsViewCountCommand.PREFIX, AssertProblemsViewCountCommand::new),
+      Map.entry(DetectProjectLeaksCommand.PREFIX, DetectProjectLeaksCommand::new)
     );
   }
 }

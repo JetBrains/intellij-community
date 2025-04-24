@@ -103,9 +103,8 @@ fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
   addCommand("${CMD_PREFIX}openRandomFile", extension)
 }
 
-fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T = apply {
-  if (detectProjectLeak && openInNewWindow) throw IllegalArgumentException("To analyze the project leak, we need to close the project")
-  addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
+fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true): T = apply {
+  addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString())
 }
 
 fun <T : CommandChain> T.reopenProject(): T = apply {
@@ -1298,4 +1297,10 @@ fun <T : CommandChain> T.openProblemViewPanel(): T = apply {
 
 fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = apply {
   addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
+}
+
+/** @see com.jetbrains.performancePlugin.commands.DetectProjectLeaksCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.detectProjectLeaks(): T = apply {
+  addCommand("${CMD_PREFIX}detectProjectLeaks")
 }
