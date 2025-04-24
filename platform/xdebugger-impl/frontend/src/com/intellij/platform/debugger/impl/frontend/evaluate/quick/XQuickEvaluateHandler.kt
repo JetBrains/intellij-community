@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
 import com.intellij.platform.project.projectId
@@ -64,16 +65,17 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         return@async null
       }
       val frontendType = FrontendApplicationInfo.getFrontendType()
-      if (useFeProxy() || (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported)) {
+
+      if (frontendType is FrontendType.RemoteDev && Registry.`is`("xdebugger.lux.evaluation.popup")) {
+        RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
+      }
+      else if (useFeProxy() || frontendType is FrontendType.RemoteDev) {
         val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value ?: return@async null
         val frontendEvaluator = currentSession.currentEvaluator ?: return@async null
         val valueMarkers = currentSession.valueMarkers
         val editorsProvider = currentSession.editorsProvider
         val sourcePosition = currentSession.sourcePosition.value
         XValueHint(project, editorsProvider, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, valueMarkers, sourcePosition, false)
-      }
-      else if (frontendType is FrontendType.RemoteDev) {
-        RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
       }
       else {
         val session = XDebuggerManager.getInstance(project).getCurrentSession()

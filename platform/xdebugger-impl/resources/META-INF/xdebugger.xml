@@ -165,6 +165,10 @@
                  key="xdebugger.toolwindow.split"/>
 
     <registryKey defaultValue="false"
+                 description="Use LUXed evaluation debugger popup"
+                 key="xdebugger.lux.evaluation.popup"/>
+
+    <registryKey defaultValue="false"
                  description="Throw warnings and errors about misusages of frontend components on the backend (and vice versa)"
                  key="xdebugger.toolwindow.split.warnings"/>
 
