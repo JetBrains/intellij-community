@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
@@ -49,8 +48,6 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
   private final Map<Pair<VirtualFile, CodeInsightContext>, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
-
-  private static final Key<Boolean> USE_WEAK_FILE_SCOPE = Key.create("virtual.file.use.weak.scope");
 
   public ResolveScopeManagerImpl(Project project) {
     myProject = project;
@@ -92,12 +89,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
       }
     }
     if (original != null && !scope.contains(key.first)) {
-      if (key.first.getUserData(USE_WEAK_FILE_SCOPE) == Boolean.TRUE) {
-        scope = scope.union(GlobalSearchScope.fileWeakScope(myProject, key.first, null));
-      }
-      else {
-        scope = scope.union(GlobalSearchScope.fileScope(myProject, key.first));
-      }
+      scope = scope.union(GlobalSearchScope.fileScope(myProject, key.first));
     }
     return scope;
   }
@@ -241,13 +233,6 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     return projectFileIndex.getModuleForFile(notNullVFile);
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  @Override
-  public void markFileForWeakScope(@NotNull VirtualFile file) {
-    file.putUserData(USE_WEAK_FILE_SCOPE, Boolean.TRUE);
   }
 
   @Override
