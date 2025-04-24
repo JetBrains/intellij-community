@@ -2616,6 +2616,19 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+  public void testUnresolvedReferenceNotReportedAsInvalidTypeArgument() {
+    doTestByText("""
+               from missing_module import SomeType  # type: ignore
+               
+               def func4(some_type_tuple: tuple[SomeType, ...]):
+                   pass
+               
+               class Clazz[T, T1]: ...
+               
+               c = Clazz[RefToNoWhere, WrongRef]() # will be reported by PyUnresolvedReferencesInspection, but not here
+               """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

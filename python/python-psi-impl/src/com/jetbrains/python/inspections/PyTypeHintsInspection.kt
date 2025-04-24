@@ -1077,12 +1077,21 @@ class PyTypeHintsInspection : PyInspection() {
           is PyStarExpression,
           is PyStringLiteralExpression,
           is PyListLiteralExpression, -> {
-            val isOpaque =  it is PyReferenceExpression &&
-                PyTypingTypeProvider.resolveToQualifiedNames(it, myTypeEvalContext)
-                  .any { qName -> PyTypingTypeProvider.OPAQUE_NAMES.contains(qName) }
-
             val typeRef = PyTypingTypeProvider.getType(it, myTypeEvalContext)
-            if (typeRef == null && !isOpaque) registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
+            if (typeRef == null) {
+              val shouldReportError = when {
+                it is PyReferenceExpression -> {
+                  val isUnresolved = PyResolveUtil.resolveDeclaration(it.reference, resolveContext) == null
+                  val isOpaque = PyTypingTypeProvider.resolveToQualifiedNames(it, myTypeEvalContext)
+                    .any { qName -> PyTypingTypeProvider.OPAQUE_NAMES.contains(qName) }
+                  !isOpaque && !isUnresolved
+                }
+                else -> true
+              }
+              if (shouldReportError) {
+                registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
+              }
+            }
             typeArgumentTypes.add(Ref.deref(typeRef))
           }
           is PyNoneLiteralExpression -> {
