@@ -11,5 +11,5 @@ import org.jetbrains.annotations.ApiStatus
 @Actual("currentJavaVersionPlatformSpecific")
 @ApiStatus.Internal
 fun currentJavaVersionPlatformSpecificWasmJs(): JavaVersion {
-  return JavaVersion(21, 0, 0, 0, false)
+  return JavaVersion.compose(21, 0, 0, 0, false)
 }
