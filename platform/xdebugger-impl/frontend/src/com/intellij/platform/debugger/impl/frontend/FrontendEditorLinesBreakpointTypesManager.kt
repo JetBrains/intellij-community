@@ -17,6 +17,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.*
@@ -56,12 +57,18 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
 
 internal class FrontendEditorLinesBreakpointTypesManagerEditorsListener : EditorFactoryListener {
   override fun editorCreated(event: EditorFactoryEvent) {
+    if (!useFeProxy()) {
+      return
+    }
     val editor = event.editor
     val project = editor.project ?: return
     FrontendEditorLinesBreakpointTypesManager.getInstance(project).editorCreated(editor)
   }
 
   override fun editorReleased(event: EditorFactoryEvent) {
+    if (!useFeProxy()) {
+      return
+    }
     val editor = event.editor
     val project = editor.project ?: return
     FrontendEditorLinesBreakpointTypesManager.getInstance(project).editorReleased(editor)
