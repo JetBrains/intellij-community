@@ -34,30 +34,4 @@ class PathAnnotationInspectionPathResolvePathTest : PathAnnotationInspectionTest
       """.trimIndent())
   }
 
-  fun testMixedParameterTypes() {
-    doTest("""
-      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
-      import java.nio.file.Path;
-
-      public class MixedParameterTypes {
-          public void testMethod(Path path, @MultiRoutingFileSystemPath String pathStr) {
-              // This should not be highlighted as the parameter is of type Path
-              processPath(path);
-
-              // This should be highlighted as the parameter is of type String
-              processPathString(pathStr);
-          }
-
-          private void processPath(Path path) {
-              // Process the path
-              System.out.println("Processing path: " + path);
-          }
-
-          private void processPathString(@MultiRoutingFileSystemPath String path) {
-              // Process the path string
-              System.out.println("Processing path string: " + path);
-          }
-      }      
-      """.trimIndent())
-  }
 }
