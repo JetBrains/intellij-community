@@ -14,7 +14,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.applyIf
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
 internal fun disabledSignatureAlpha(isDarkTheme: Boolean) =
@@ -49,30 +51,44 @@ internal fun renderSignaturePresentationToHtml(
   val currentParameter = currentParameterIndex
 
   val mismatchedParameterBgColor = "#${ColorUtil.toHex(ColorUtil.blendColorsInRgb(backgroundColor, JBColor.RED, mismatchedParameterAlpha))}"
+  val backgroundColorHex = "#${ColorUtil.toHex(backgroundColor)}"
+  val separatorStr = "<span style=\"color:#${ColorUtil.toHex(textAttributes.foregroundColor)};\">$separator</span>"
   val parameters = parametersPresentation
     .mapIndexed { index, parameter ->
-      val defaultParam = parameter.defaultValue?.let {
-        blendColors(getStyledFragment(it, textAttributes), backgroundColor, defaultParamAlpha)
-      }
-                         ?: ""
+      val defaultParam =
+        parameter.defaultValue
+          ?.let { blendColors(getStyledFragment(it, textAttributes), backgroundColor, defaultParamAlpha) }
+        ?: ""
+      val addSeparator = if (index < parametersPresentation.size - 1) separatorStr else ""
       val result = if (index == currentParameter)
-        "<b>${getStyledFragment(parameter.nameAndType, textAttributes) + defaultParam}</b>"
+        "<b>${getStyledFragment(parameter.nameAndType, textAttributes) + defaultParam + addSeparator}</b>"
       else
-        blendColors(getStyledFragment(parameter.nameAndType, textAttributes) + defaultParam, backgroundColor, deselectedParamAlpha)
+        blendColors(getStyledFragment(parameter.nameAndType, textAttributes) + defaultParam + addSeparator, backgroundColor, deselectedParamAlpha)
       result
         .replace(Regex("</?a([^a-zA-Z>][^>]*>|>)"), "")
-        .applyIf(parameter.isMismatched) {
-          if (isUnitTestMode)
-            "<mismatched>$this</mismatched>"
-          else
-            "<code style='background-color: $mismatchedParameterBgColor;'>$this</code>"
+        .let {
+          if (parameter.isMismatched) {
+            if (isUnitTestMode)
+              "<mismatched>$it</mismatched>"
+            else
+              "<code style='background-color: $mismatchedParameterBgColor; border-color: $mismatchedParameterBgColor'>$it</code>"
+          }
+          else if (!isUnitTestMode) {
+            "<code>$it</code>"
+          } else it
         }
     }
 
-  return buildContents(parameters, parametersPresentation, isDeprecated, currentParameter, editor,
-                       blendColors(getStyledFragment("$separator ", textAttributes), backgroundColor, deselectedParamAlpha),
-                       backgroundColor, disabledSignatureAlpha,
-                       context.isSingleOverload)
+  return """<style>
+    |code {
+    |  background-color: $backgroundColorHex; 
+    |  border-color: $backgroundColorHex; 
+    |  padding: ${JBUIScale.scale(3)}px ${JBUIScale.scale(3)}px;
+    |}
+    |</style>
+    |""".trimMargin() +
+         buildContents(parameters, parametersPresentation, isDeprecated, currentParameter, editor, backgroundColor,
+                       disabledSignatureAlpha, context.isSingleOverload)
 }
 
 @NlsSafe
@@ -82,7 +98,6 @@ private fun buildContents(
   isDeprecated: Boolean,
   currentParameter: Int,
   editor: Editor,
-  separator: String,
   backgroundColor: Color,
   disabledSignatureAlpha: Double,
   singleOverload: Boolean,
@@ -114,7 +129,9 @@ private fun buildContents(
   val lineSeparator = "<br>" + if (!singleOverload) "&nbsp;&nbsp;&nbsp;&nbsp;" else ""
 
   while (index < parameters.size) {
-    val parameterText = parameters[index].applyIf(index < parameters.size - 1) { this + separator }.replace("<br>", lineSeparator)
+    val parameterText = parameters[index]
+      .applyIf(index < parameters.size - 1) { if (isUnitTestMode) "$this " else "$this&ThinSpace;" }
+      .replace("<br>", lineSeparator)
     val textNoHtml = StringUtil.unescapeXmlEntities(StringUtil.removeHtmlTags(parameterText))
     val firstLine = textNoHtml.takeWhile { it != '\n' }
     val firstLineTextWidth: Int = fontMetrics.stringWidth(firstLine)

@@ -2213,6 +2213,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       var hintText = hintFixture.getCurrentHintText();
       if (hintText == null) return null;
       hintText = hintText
+        .replaceAll("<style>[^<]*</style>\\s*", "")
         .replaceAll("</?span[^>]*>|</?html>", "")
         .replaceAll("&#32;|&nbsp;", " ");
 

@@ -46,8 +46,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -377,7 +377,7 @@ public final class ParameterInfoComponent extends JPanel {
       result.current = getCurrentParameterIndex();
       result.signatures.add(item);
 
-      myPanels[i].setup(htmlText, getDefaultParameterColor());
+      myPanels[i].setup(htmlText, getDefaultParameterColor(), false);
       if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
@@ -399,7 +399,7 @@ public final class ParameterInfoComponent extends JPanel {
       result.signatures.add(item);
 
       myPanels[i].setup(renderSignaturePresentationToHtml(myEditor, this, parameters, currentParameterIndex, separator, isDeprecated),
-                        getDefaultParameterColor());
+                        getDefaultParameterColor(), true);
       if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
@@ -545,6 +545,7 @@ public final class ParameterInfoComponent extends JPanel {
   private final class OneElementComponent extends JPanel {
     private final boolean myIsLast;
     private boolean myShowSelection;
+    private boolean myIsHtmlSignaturePresentation = false;
 
     private static final int LEFT_RIGHT_PADDING = 8;
 
@@ -552,10 +553,7 @@ public final class ParameterInfoComponent extends JPanel {
       super(new GridBagLayout());
       myIsLast = isLast;
       setOpaque(!mySimpleDesignMode);
-      if (mySimpleDesignMode) {
-        int lineGap = UISettings.getInstance().getCompactMode() ? 3 : 6;
-        setBorder(JBUI.Borders.empty(lineGap, LEFT_RIGHT_PADDING));
-      }
+      setupBorder();
     }
 
     @Override
@@ -579,7 +577,23 @@ public final class ParameterInfoComponent extends JPanel {
       }
     }
 
-    private void setup(@NlsContexts.Label String htmlText, Color background) {
+    private void setIsHtmlSignaturePresentation(boolean value) {
+      myIsHtmlSignaturePresentation = value;
+      setupBorder();
+    }
+
+    private void setupBorder() {
+      if (mySimpleDesignMode) {
+        int topBottomInsets = myIsHtmlSignaturePresentation ? 2 : 0;
+        int leftRightInsets = myIsHtmlSignaturePresentation ? 4 : 0;
+        int lineGap = UISettings.getInstance().getCompactMode() ? 3 : 6;
+        setBorder(JBUI.Borders.empty(Math.max(lineGap - topBottomInsets, 0),
+                                     Math.max(LEFT_RIGHT_PADDING - leftRightInsets, 0)));
+      }
+    }
+
+    private void setup(@NlsContexts.Label String htmlText, Color background, boolean isHtmlSignaturePresentation) {
+      setIsHtmlSignaturePresentation(isHtmlSignaturePresentation);
       configureColor(background);
       getOneLineComponent(0).doSetup(htmlText, background);
       trimComponents(1);
@@ -593,6 +607,7 @@ public final class ParameterInfoComponent extends JPanel {
                          boolean strikeout,
                          boolean isDisabledBeforeHighlight,
                          Color background) {
+      setIsHtmlSignaturePresentation(false);
       StringBuilder buf = new StringBuilder(text.length());
       configureColor(background);
 
@@ -636,6 +651,7 @@ public final class ParameterInfoComponent extends JPanel {
                                            Function<? super String, String> escapeFunction,
                                            final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                                            final Color background) {
+      setIsHtmlSignaturePresentation(false);
       @NlsContexts.Label StringBuilder buf = new StringBuilder();
       configureColor(background);
       int index = 0;
@@ -704,11 +720,11 @@ public final class ParameterInfoComponent extends JPanel {
       }
       Graphics2D g2 = (Graphics2D)g.create();
       try {
-        int topBottomInsets = JBUI.scale(3);
         GraphicsUtil.setupAAPainting(g2);
         if (myShowSelection) {
           g2.setColor(HIGHLIGHTED_BACKGROUND);
           int arc = JBUI.scale(8);
+          int topBottomInsets = JBUI.scale(3);
           g2.fillRoundRect(0, topBottomInsets, getWidth(), getHeight() - topBottomInsets * 2, arc, arc);
         }
         if (!myIsLast) {
