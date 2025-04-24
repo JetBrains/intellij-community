@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ObjectUtils;
@@ -79,7 +80,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
    */
   @Deprecated(forRemoval = true) // used externally
   public @NotNull JavaSdkVersion getJdkVersion() {
-    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(LanguageLevel.HIGHEST));
+    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(AcceptedLanguageLevelsSettings.getHighest()));
   }
 
   /**
@@ -146,7 +147,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   }
 
   public @NotNull LanguageLevel getLanguageLevel() {
-    return ObjectUtils.notNull(languageLevel, LanguageLevel.HIGHEST);
+    return ObjectUtils.notNull(languageLevel, AcceptedLanguageLevelsSettings.getHighest());
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel level) {

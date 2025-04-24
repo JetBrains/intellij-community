@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
@@ -70,7 +70,7 @@ internal object JavaProjectDataServiceUtil {
       if (highestAcceptedLevel.isLessThan(level)) {
         AcceptedLanguageLevelsSettings.showNotificationToAccept(project, level)
       }
-      return if (highestAcceptedLevel.isAtLeast(level)) LanguageLevel.HIGHEST else highestAcceptedLevel
+      return if (highestAcceptedLevel.isAtLeast(level)) AcceptedLanguageLevelsSettings.getHighest() else highestAcceptedLevel
     }
     return level
   }
