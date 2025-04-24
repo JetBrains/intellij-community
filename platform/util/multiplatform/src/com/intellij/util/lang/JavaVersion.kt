@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("JavaVersionConstructor")
 package com.intellij.util.lang
 
 import com.intellij.util.currentJavaVersionPlatformSpecific
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmOverloads
 
 /**
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
@@ -49,7 +51,7 @@ class JavaVersion private constructor(
    * `true` if the platform is an early access release, `false` otherwise (or when not known).
    */
   @JvmField
-  val ea: Boolean
+  val ea: Boolean,
 ) : Comparable<JavaVersion> {
   init {
     require(feature >= 0)
@@ -250,7 +252,8 @@ class JavaVersion private constructor(
             }
           }
         }
-        catch (_: NumberFormatException) { }
+        catch (_: NumberFormatException) {
+        }
       }
 
       throw IllegalArgumentException(versionString)
@@ -268,7 +271,8 @@ class JavaVersion private constructor(
         try {
           return parse(versionString)
         }
-        catch (_: IllegalArgumentException) { }
+        catch (_: IllegalArgumentException) {
+        }
       }
 
       return null
