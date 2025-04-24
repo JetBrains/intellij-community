@@ -1020,6 +1020,36 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         public void testSetter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/setter.kt");
         }
+
+        @TestMetadata("unusedContextParametersInFunction.kt")
+        public void testUnusedContextParametersInFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction.kt");
+        }
+
+        @TestMetadata("unusedContextParametersInProperty.kt")
+        public void testUnusedContextParametersInProperty() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInProperty.kt");
+        }
+
+        @TestMetadata("usedContextParametersInFunction.kt")
+        public void testUsedContextParametersInFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction.kt");
+        }
+
+        @TestMetadata("usedContextParametersInFunction1.kt")
+        public void testUsedContextParametersInFunction1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction1.kt");
+        }
+
+        @TestMetadata("usedContextParametersInNestedFunction.kt")
+        public void testUsedContextParametersInNestedFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInNestedFunction.kt");
+        }
+
+        @TestMetadata("usedContextParametersInProperty.kt")
+        public void testUsedContextParametersInProperty() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInProperty.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

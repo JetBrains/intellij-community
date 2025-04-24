@@ -1123,6 +1123,36 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         public void testSetter() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/setter.kt");
         }
+
+        @TestMetadata("unusedContextParametersInFunction.kt")
+        public void testUnusedContextParametersInFunction() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction.kt");
+        }
+
+        @TestMetadata("unusedContextParametersInProperty.kt")
+        public void testUnusedContextParametersInProperty() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInProperty.kt");
+        }
+
+        @TestMetadata("usedContextParametersInFunction.kt")
+        public void testUsedContextParametersInFunction() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction.kt");
+        }
+
+        @TestMetadata("usedContextParametersInFunction1.kt")
+        public void testUsedContextParametersInFunction1() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction1.kt");
+        }
+
+        @TestMetadata("usedContextParametersInNestedFunction.kt")
+        public void testUsedContextParametersInNestedFunction() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInNestedFunction.kt");
+        }
+
+        @TestMetadata("usedContextParametersInProperty.kt")
+        public void testUsedContextParametersInProperty() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInProperty.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

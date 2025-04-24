@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -17,10 +19,12 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.psi.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -131,26 +135,37 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
           __ -> Collections.emptyList(),
           IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
           __ -> {
-              try {
-                  SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
-                  for (int j = 0; j < filePaths.length; j++) {
-                      File file = new File(filePaths[j] + ".after");
-                      if (isFirPlugin()) {
-                          File firSpecific = new File(filePaths[j] + ".fir.after");
-                          if (firSpecific.exists()) {
-                              file = firSpecific;
+              return KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(myFixture.getFile().getText(), getProject(), getModule(), () -> {
+                  try {
+                      SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
+                      for (int j = 0; j < filePaths.length; j++) {
+                          File file = new File(filePaths[j] + ".after");
+                          if (isFirPlugin()) {
+                              File firSpecific = new File(filePaths[j] + ".fir.after");
+                              if (firSpecific.exists()) {
+                                  file = firSpecific;
+                              }
+                          }
+                          assertTrue("After file is expected to present", file.exists());
+                          String actualText = editors[j].getDocument().getText();
+                          String expectedText = FileUtil.loadFile(file);
+                          if (!StringUtil.equals(expectedText, actualText)) {
+                              //do not create missed files
+                              String message = "Text mismatch in file: " + file.getName();
+                              throw new FileComparisonFailedError(message, expectedText, actualText, FileUtil.toSystemIndependentName(file.getPath()));
                           }
                       }
-                      assertSameLinesWithFile(file.getAbsolutePath(), editors[j].getDocument().getText());
-                  }
-              } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-                  List<String> messages = new ArrayList<String>(e.getMessages());
-                  Collections.sort(messages);
+                  } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+                      List<String> messages = new ArrayList<String>(e.getMessages());
+                      Collections.sort(messages);
 
-                  File messageFile = new File(path + ".messages");
-                  assertSameLinesWithFile(messageFile.getAbsolutePath(), StringUtil.join(messages, "\n"));
-              }
-              return Unit.INSTANCE;
+                      File messageFile = new File(path + ".messages");
+                      assertSameLinesWithFile(messageFile.getAbsolutePath(), StringUtil.join(messages, "\n"));
+                  } catch (IOException e) {
+                      throw new AssertionError(e);
+                  }
+                  return Unit.INSTANCE;
+              });
           }
         );
     }

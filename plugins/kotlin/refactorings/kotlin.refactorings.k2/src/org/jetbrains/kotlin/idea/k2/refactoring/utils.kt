@@ -50,6 +50,7 @@ fun PsiElement?.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
 
     if (this is KtParameter) {
+        if (parent is KtContextReceiverList) return true
         val parameterList = parent as? KtParameterList ?: return false
         val declaration = parameterList.parent as? KtDeclaration ?: return false
         return declaration !is KtPropertyAccessor
