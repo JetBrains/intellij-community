@@ -2689,9 +2689,19 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/redundantSuspend/recursiveOperatorAssignment.kt");
         }
 
+        @TestMetadata("returnTodo.kt")
+        public void testReturnTodo() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/returnTodo.kt");
+        }
+
         @TestMetadata("selfCallWithDifferentReceiver.kt")
         public void testSelfCallWithDifferentReceiver() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
+        }
+
+        @TestMetadata("statementsAndTodo.kt")
+        public void testStatementsAndTodo() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/statementsAndTodo.kt");
         }
 
         @TestMetadata("suspendingLoop.kt")
@@ -2712,6 +2722,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("suspendingLoopLocalExtensionProperty.kt")
         public void testSuspendingLoopLocalExtensionProperty() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopLocalExtensionProperty.kt");
+        }
+
+        @TestMetadata("todo.kt")
+        public void testTodo() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/todo.kt");
         }
 
         @TestMetadata("unresolvedFunction.kt")

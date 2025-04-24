@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
@@ -44,7 +45,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 val functionSymbol = function.symbol as? KaNamedFunctionSymbol ?: return
                 if (functionSymbol.modality == KaSymbolModality.OPEN) return
 
-                if (function.hasSuspendOrUnresolvedCall()) return
+                if (!function.isSuspendModifierRedundant()) return
 
                 holder.registerProblem(
                     suspendModifier,
@@ -56,6 +57,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     }
 
     private val coroutineContextFqName = StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
+    private val todoFqName = FqName("kotlin.TODO")
 
     context(KaSession)
     private fun KaCallableSymbol.isSuspendSymbol(): Boolean {
@@ -67,16 +69,21 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     }
 
     context(KaSession)
-    private fun KtNamedFunction.hasSuspendOrUnresolvedCall(): Boolean {
-        var hasSuspendOrUnresolvedCall = false
+    private fun KaCallableSymbol.isTodoSymbol(): Boolean =
+        this is KaNamedFunctionSymbol && callableId?.asSingleFqName() == todoFqName
+
+    context(KaSession)
+    private fun KtNamedFunction.isSuspendModifierRedundant(): Boolean {
+        var isSuspendModifierRedundant = true
         val containingFunction = this
 
         val expressions = containingFunction.locallyExecutedExpressions()
 
         KotlinCallProcessor.process(expressions, object : KotlinCallTargetProcessor {
             override fun KaSession.processCallTarget(target: CallTarget): Boolean {
-                if (target.symbol.isSuspendSymbol() && target.symbol.psi != containingFunction) {
-                    hasSuspendOrUnresolvedCall = true
+                val symbol = target.symbol
+                if ((symbol.isSuspendSymbol() && symbol.psi != containingFunction) || symbol.isTodoSymbol()) {
+                    isSuspendModifierRedundant = false
                     return false
                 }
                 return true
@@ -86,18 +93,19 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 if (callInfo != null) {
                     // A callInfo of null means that the element could not be resolved at all, so it is not even unresolved.
                     // For example, if the element is not an expression, so we ignore those cases.
-                    hasSuspendOrUnresolvedCall = true
+                    isSuspendModifierRedundant = false
                     return false
                 }
                 return true
             }
         })
 
-        if (!hasSuspendOrUnresolvedCall) {
+        if (isSuspendModifierRedundant) {
             ReferencesSearch
                 .search(containingFunction, LocalSearchScope(containingFunction.parent))
                 .forEach(Processor { reference ->
-                    val expression = reference.element.parent.findParentOfType<KtExpression>() ?: return@Processor !hasSuspendOrUnresolvedCall
+                    val expression =
+                        reference.element.parent.findParentOfType<KtExpression>() ?: return@Processor isSuspendModifierRedundant
                     analyze(expression) {
                         val call = expression.resolveToCall() ?: return@analyze
                         val functionCall = call.singleFunctionCallOrNull() ?: return@analyze
@@ -107,14 +115,14 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                                 (it.value.returnType as? KaFunctionType)?.isSuspend == true
                             }
                         if (anySuspendFunctionType) {
-                            hasSuspendOrUnresolvedCall = true
+                            isSuspendModifierRedundant = false
                         }
                     }
-                    !hasSuspendOrUnresolvedCall
+                    isSuspendModifierRedundant
                 })
         }
 
-        return hasSuspendOrUnresolvedCall
+        return isSuspendModifierRedundant
     }
 
     /**
