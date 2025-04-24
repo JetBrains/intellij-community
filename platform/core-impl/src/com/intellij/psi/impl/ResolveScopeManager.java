@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -32,15 +31,4 @@ public abstract class ResolveScopeManager {
     }
     return getInstance(element.getProject()).getResolveScope(element);
   }
-
-  /**
-   * Marks a specified file to use a weak file scope. This is useful for modifying
-   * the scoping mechanism of a file to ensure it is treated under weaker constraints
-   * than the default resolve scope. It can be used to improve memory consumption.
-   *
-   * @param file the virtual file to be marked for weak scope; must not be null
-   */
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  public void markFileForWeakScope(@NotNull VirtualFile file){}
 }
