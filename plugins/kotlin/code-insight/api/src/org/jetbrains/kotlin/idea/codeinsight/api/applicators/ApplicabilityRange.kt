@@ -26,5 +26,14 @@ object ApplicabilityRange {
         element: E,
         function: (E) -> List<PsiElement>,
     ): List<TextRange> = function(element).map { it.textRangeIn(element) }
+
+    inline fun <E : PsiElement> union(
+        element: E,
+        function: (E) -> List<PsiElement>,
+    ): List<TextRange> {
+        val ranges = multiple(element, function)
+        val commonUnion = ranges.reduceOrNull(TextRange::union)
+        return listOfNotNull(commonUnion)
+    }
 }
 

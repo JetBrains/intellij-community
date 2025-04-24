@@ -1,0 +1,6 @@
+// WITH_STDLIB
+// K2_AFTER_ERROR: Initializer type mismatch: expected 'ConcurrentLinkedQueue<String>', actual 'ConcurrentLinkedQueue<String?>'.
+import java.util.concurrent.ConcurrentLinkedQueue
+
+val queue = ConcurrentLinkedQueue<String?>()
+val queue2: ConcurrentLinkedQueue<String?<caret>> = queue

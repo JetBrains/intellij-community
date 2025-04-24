@@ -15608,6 +15608,100 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes")
+    public static class JavaCollectionsWithNullableTypes extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("additionalBrackets.kt")
+        public void testAdditionalBrackets() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/additionalBrackets.kt");
+        }
+
+        @TestMetadata("asConstructorParameter.kt")
+        public void testAsConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/asConstructorParameter.kt");
+        }
+
+        @TestMetadata("constructorTypeParameterKey.kt")
+        public void testConstructorTypeParameterKey() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorTypeParameterKey.kt");
+        }
+
+        @TestMetadata("constructorTypeParameterKeyAndValue.kt")
+        public void testConstructorTypeParameterKeyAndValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorTypeParameterKeyAndValue.kt");
+        }
+
+        @TestMetadata("constructorTypeParameterValue.kt")
+        public void testConstructorTypeParameterValue() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorTypeParameterValue.kt");
+        }
+
+        @TestMetadata("constructorWithoutExplicitTypesOrParameters.kt")
+        public void testConstructorWithoutExplicitTypesOrParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorWithoutExplicitTypesOrParameters.kt");
+        }
+
+        @TestMetadata("dontFixNonNullableTypeReference.kt")
+        public void testDontFixNonNullableTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/dontFixNonNullableTypeReference.kt");
+        }
+
+        @TestMetadata("dontFixNonNullableTypes.kt")
+        public void testDontFixNonNullableTypes() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/dontFixNonNullableTypes.kt");
+        }
+
+        @TestMetadata("generic.kt")
+        public void testGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/generic.kt");
+        }
+
+        @TestMetadata("leftAndRight.kt")
+        public void testLeftAndRight() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/leftAndRight.kt");
+        }
+
+        @TestMetadata("nullableGeneric.kt")
+        public void testNullableGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nullableGeneric.kt");
+        }
+
+        @TestMetadata("nullableTypealias.kt")
+        public void testNullableTypealias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nullableTypealias.kt");
+        }
+
+        @TestMetadata("typeReference.kt")
+        public void testTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typeReference.kt");
+        }
+
+        @TestMetadata("typealias.kt")
+        public void testTypealias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typealias.kt");
+        }
+
+        @TestMetadata("typealiasInTypeReference.kt")
+        public void testTypealiasInTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typealiasInTypeReference.kt");
+        }
+
+        @TestMetadata("withManyQuestionMarks.kt")
+        public void testWithManyQuestionMarks() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/withManyQuestionMarks.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override

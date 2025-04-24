@@ -951,5 +951,14 @@
                      language="kotlin"
                      key="inspection.convert.na.n.equality.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.JavaCollectionWithNullableTypeArgumentInspection"
+                     shortName="JavaCollectionWithNullableTypeArgument"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.nullable.type.argument.in.java.collection.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

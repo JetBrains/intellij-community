@@ -112,6 +112,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceNotNullAssertionWithElvisReturn")
             model("${idea}/inspectionsLocal/replaceGuardClauseWithFunctionCall")
             model("${idea}/inspectionsLocal/convertNaNEquality")
+            model("${idea}/inspectionsLocal/javaCollectionsWithNullableTypes")
 
             // There is no `RemoveExplicitTypeArgumentsIntention` in K2 because `RemoveExplicitTypeArgumentsInspection` is available
             // and the inspection can have the "No highlighting (fix available)" severity.

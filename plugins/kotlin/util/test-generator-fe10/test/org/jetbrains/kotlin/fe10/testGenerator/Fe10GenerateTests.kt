@@ -615,6 +615,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "defaultAnnotationTarget", // K2-only
                     "orInWhenGuard", // K2-only
                     "convertFromMultiDollarToRegularString", // K2-only
+                    "javaCollectionsWithNullableTypes", // K2-only
                 )
             )
         }
