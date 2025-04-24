@@ -4,7 +4,6 @@ import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.IOException
 import java.io.InputStream
-import java.lang.Boolean
 import kotlin.text.toDouble
 import kotlin.text.toInt
 
@@ -75,10 +74,10 @@ class XmlPlistReaderForTests : PlistReader {
           PListValue.value(content, PlistValueType.STRING)
         }
         "true" == type -> {
-          PListValue.value(Boolean.TRUE, PlistValueType.BOOLEAN)
+          PListValue.value(true, PlistValueType.BOOLEAN)
         }
         "false" == type -> {
-          PListValue.value(Boolean.FALSE, PlistValueType.BOOLEAN)
+          PListValue.value(false, PlistValueType.BOOLEAN)
         }
         "integer" == type && content != null -> {
           PListValue.value(content.toInt(), PlistValueType.INTEGER)

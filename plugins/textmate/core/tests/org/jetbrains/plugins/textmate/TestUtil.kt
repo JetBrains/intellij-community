@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate
 
-import com.intellij.openapi.application.PathManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.textmate.bundles.*
 import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleType
@@ -8,8 +7,6 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.PlistReader
-import java.nio.file.Path
-import kotlin.io.path.exists
 
 object TestUtil {
   const val BAT: @NonNls String = "bat"
@@ -46,18 +43,8 @@ object TestUtil {
   const val GIT: @NonNls String = "git-base"
   const val RESTRUCTURED_TEXT: @NonNls String = "restructuredtext"
 
-  fun getBundleDirectory(bundleName: String): Path {
-    val bundleDirectory = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/testData/bundles").resolve(bundleName)
-    return if (bundleDirectory.exists()) {
-      bundleDirectory
-    }
-    else {
-      return Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/lib/bundles").resolve(bundleName)
-    }
-  }
-
   fun readBundle(bundleName: String, xmlPlistReader: PlistReader): TextMateBundleReader {
-    val resourceReader = getResourceReader(bundleName)
+    val resourceReader = TestUtilMultiplatform.getResourceReader(bundleName)
     val bundleType = detectBundleType(resourceReader, bundleName)
     val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = xmlPlistReader)
     return when (bundleType) {
@@ -66,11 +53,6 @@ object TestUtil {
       BundleType.VSCODE -> readVSCBundle(plistReader, resourceReader) ?: error("Cannot read VSCBundle")
       BundleType.UNDEFINED -> error("Unknown bundle type: $bundleName")
     }
-  }
-
-  fun getResourceReader(bundleName: String): TextMateResourceReader {
-    val bundleDirectory = getBundleDirectory(bundleName)
-    return TextMateNioResourceReader(bundleDirectory)
   }
 
   fun scopeFromString(scopeString: String): TextMateScope {
