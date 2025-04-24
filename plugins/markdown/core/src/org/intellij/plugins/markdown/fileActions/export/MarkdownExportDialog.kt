@@ -39,6 +39,10 @@ internal class MarkdownExportDialog(
     val provider = supportedExportProviders.find { it == selectedFileType } ?: return
     val outputFile = "$selectedFileUrl.${provider.formatDescription.extension}"
 
+    // `outputFile` *should* be deleted already if the file had existed and the user chose to overwrite it.
+    // However, due to an apparent race condition, it's possible to get here with `outputFile` still existing.
+    // When that's true, `exportFile` can crash and hang. Let's be safe and delete it here too.
+    FileUtil.delete(File(outputFile))
     provider.exportFile(project, file, outputFile)
   }
 

@@ -14,6 +14,7 @@ import com.intellij.util.text.splitToTextRanges
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.plugins.markdown.extensions.jcef.MarkdownASTNode
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.textRange
 import org.intellij.plugins.markdown.settings.MarkdownSettings
@@ -25,8 +26,8 @@ import java.awt.Color
 import kotlin.math.max
 import kotlin.math.min
 
-private fun parseContent(project: Project?, language: Language, text: String, languageName: String?,
-                         node: ASTNode, collector: (String, IntRange, Color?, String?) -> Unit) {
+private fun parseContent(project: Project?, language: Language, text: String, node: ASTNode,
+                         collector: (String, IntRange, Color?, String?) -> Unit) {
   val file = LightVirtualFile("markdown_temp", text)
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
   val ecm = EditorColorsManager.getInstance()
@@ -43,7 +44,7 @@ private fun parseContent(project: Project?, language: Language, text: String, la
   }
 
   if (settings.useAlternativeHighlighting && altHighlighterAvailable()) {
-    val lang = if (language == Language.ANY) (languageName ?: "") else language.id.lowercase()
+    val lang = if (language == Language.ANY) ((node as MarkdownASTNode).language ?: "") else language.id.lowercase()
     val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
     var html = parseToHighlightedHtml(lang, text, startOffset)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
 
@@ -84,9 +85,9 @@ private fun parseContent(project: Project?, language: Language, text: String, la
 	})
 }
 
-private inline fun collectHighlights(language: Language, text: String, project: Project? = null, languageName: String? = null,
+private inline fun collectHighlights(language: Language, text: String, project: Project? = null,
                                      node: ASTNode, crossinline consumer: (String, IntRange, Color?, String?) -> Unit) {
-  parseContent(project, language, text, languageName, node) { content, range, color, html ->
+  parseContent(project, language, text, node) { content, range, color, html ->
     if (color != null || html != null) {
       consumer.invoke(content, range, color, html)
     }
@@ -103,10 +104,9 @@ internal data class HighlightedRange(
   }
 }
 
-internal fun collectHighlightedChunks(language: Language, text: String, project: Project?,
-                                      languageName: String, node: ASTNode): List<HighlightedRange> {
+internal fun collectHighlightedChunks(language: Language, text: String, project: Project?, node: ASTNode): List<HighlightedRange> {
   return buildList {
-    collectHighlights(language, text, project, languageName, node) { _, range, color, id ->
+    collectHighlights(language, text, project, node) { _, range, color, id ->
       add(HighlightedRange(TextRange(range.first, range.last), color, id))
     }
   }
