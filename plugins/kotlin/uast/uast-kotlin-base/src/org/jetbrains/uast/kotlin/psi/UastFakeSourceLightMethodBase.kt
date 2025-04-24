@@ -100,7 +100,13 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
     }
 
     override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
-        original.annotationEntries.mapTo(annotations) { it.toPsiAnnotation() }
+        original.annotationEntries.mapTo(annotations) { entry ->
+            // Creation of PsiAnnotation may vary between frontends. For example,
+            // SLC doesn't model a declaration with value class in its signature
+            // and K2 UAST will fake it, while K1 doesn't need to.
+            baseResolveProviderService.convertToPsiAnnotation(entry)
+                ?: entry.toPsiAnnotation()
+        }
     }
 
     protected fun KtAnnotationEntry.toPsiAnnotation(): PsiAnnotation {

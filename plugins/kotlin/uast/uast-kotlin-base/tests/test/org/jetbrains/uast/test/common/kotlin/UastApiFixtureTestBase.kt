@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLiteral
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
@@ -2049,6 +2050,59 @@ interface UastApiFixtureTestBase {
                     val e = arg.evaluate()
                     TestCase.assertEquals(node.sourcePsi?.text, "clipboard", e)
                     return super.visitCallExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkAnnotationOnMemberWithValueClassInSignature(myFixture: JavaCodeInsightTestFixture) {
+        // https://youtrack.jetbrains.com/issue/KTIJ-33916
+        myFixture.configureByText(
+            "test.kt",
+            """
+                annotation class MySuppress(
+                  val message: String
+                )
+                
+                class Test {
+                    @MySuppress("Somehow")
+                    fun test(x: Result<Any>): String {
+                      return x.getOrNull()?.toString()
+                    }
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitMethod(node: UMethod): Boolean {
+                    if (node.name != "test")
+                        return super.visitMethod(node)
+
+                    val uAnno = node.uAnnotations.find { it.qualifiedName == "MySuppress" }
+                    TestCase.assertNotNull(uAnno)
+                    TestCase.assertEquals("MySuppress", uAnno!!.qualifiedName)
+
+                    val uAttr = uAnno.findAttributeValue("message")
+                    TestCase.assertEquals("Somehow", uAttr?.evaluate())
+                    val jAttr = uAnno.javaPsi!!.findAttributeValue("message")
+                    TestCase.assertEquals("Somehow", (jAttr as? PsiLiteral)?.value)
+
+                    val psiAnno = node.getAnnotation("MySuppress")
+                    TestCase.assertNotNull(psiAnno)
+                    TestCase.assertEquals("MySuppress", psiAnno!!.qualifiedName)
+                    TestCase.assertEquals(psiAnno.qualifiedName, uAnno.javaPsi?.qualifiedName)
+
+                    val pAttr = psiAnno.findAttributeValue("message")
+                    TestCase.assertEquals("Somehow", (pAttr as? PsiLiteral)?.value)
+
+                    val javaPsiAnno = node.javaPsi.getAnnotation("MySuppress")
+                    TestCase.assertNotNull(javaPsiAnno)
+                    TestCase.assertEquals("MySuppress", javaPsiAnno!!.qualifiedName)
+
+                    TestCase.assertEquals(psiAnno, javaPsiAnno)
+
+                    return super.visitMethod(node)
                 }
             }
         )
