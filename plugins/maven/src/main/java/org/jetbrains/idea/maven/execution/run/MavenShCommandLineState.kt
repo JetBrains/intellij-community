@@ -294,7 +294,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     val multimoduleDir = MavenDistributionsCache.getInstance(myConfiguration.project)
       .getMultimoduleDirectory(myConfiguration.runnerParameters.workingDirPath)
     val relativePath = Path(myConfiguration.runnerParameters.workingDirPath).relativize(Path(multimoduleDir)).toString()
-    return if (relativePath.isEmpty()) {
+    return if (relativePath.isEmpty() || relativePath == ".") {
       if (isWindows()) "mvnw.cmd" else "./mvnw"
     }
     else {

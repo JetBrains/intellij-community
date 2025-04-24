@@ -21,7 +21,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
   fun testShouldExecuteMavenWrapperScript() = runBlocking {
     importProjectAsync("""
          <groupId>test</groupId>
-         <artifactId>project<</artifactId>
+         <artifactId>project</artifactId>
          <version>1</version>"""
     )
     createProjectWrapper()
@@ -35,7 +35,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
   fun testShouldExecuteBundledMavenForAdditionalLinkedProjectIfThereIsNoWrapper() = runBlocking {
     importProjectAsync("""
          <groupId>test</groupId>
-         <artifactId>project<</artifactId>
+         <artifactId>project</artifactId>
          <version>1</version>"""
     )
     val anotherLinkedProject = createProjectSubFile("../projectA/pom.xml", createPomXml(
@@ -63,6 +63,33 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     else {
       createProjectSubFile("mvnw", "#!/bin/sh\necho $wrapperOutput\n echo $@")
     }
+  }
+
+  @Test
+  fun testShouldExecuteMavenWrapperForChildProject() = runBlocking {
+    createModulePom("m1",
+                    """
+                      <parent>
+                          <groupId>test</groupId>
+                          <artifactId>project<</artifactId>
+                          <version>1</version>
+                      </parent>
+                      <artifactId>m1</artifactId>
+                      """.trimIndent())
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         <modules>
+            <module>m1</module>
+         </modules>
+         """
+    )
+    createProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(MavenRunnerParameters(true, projectPath.resolve("m1").toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()))
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+
   }
 
 
