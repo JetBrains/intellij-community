@@ -27,6 +27,7 @@ GUI_QT = 'qt'
 GUI_QT4 = 'qt4'
 GUI_QT5 = 'qt5'
 GUI_QT6 = 'qt6'
+GUI_PYSIDE = 'pyside'
 GUI_GTK = 'gtk'
 GUI_TK = 'tk'
 GUI_OSX = 'osx'
@@ -180,9 +181,11 @@ class InputHookManager(object):
         self.clear_inputhook()
 
     def enable_qt(self, app=None):
-        from pydev_ipython.qt_for_kernel import QT_API, QT_API_PYQT5, QT_API_PYQT6
+        from pydev_ipython.qt_for_kernel import QT_API, QT_API_PYQT5, QT_API_PYQT6, QT_API_PYSIDE
         if QT_API == QT_API_PYQT6:
             self.enable_qt6(app)
+        elif QT_API == QT_API_PYSIDE:
+            self.enable_pyside(app)
         elif QT_API == QT_API_PYQT5:
             self.enable_qt5(app)
         else:
@@ -245,12 +248,22 @@ class InputHookManager(object):
 
     def enable_qt6(self, app=None):
         from pydev_ipython.inputhookqt6 import create_inputhook_qt6
-        app, inputhook_qt6 = create_inputhook_qt6(self, app)
+        app, inputhook_qt6 = create_inputhook_qt6(self, app, GUI_QT6)
         self.set_inputhook(inputhook_qt6)
 
         self._current_gui = GUI_QT6
         app._in_event_loop = True
         self._apps[GUI_QT6] = app
+        return app
+
+    def enable_pyside(self, app=None):
+        from pydev_ipython.inputhookqt6 import create_inputhook_qt6
+        app, inputhook_pyside = create_inputhook_qt6(self, app, GUI_PYSIDE)
+        self.set_inputhook(inputhook_pyside)
+
+        self._current_gui = GUI_PYSIDE
+        app._in_event_loop = True
+        self._apps[GUI_PYSIDE] = app
         return app
 
     def disable_qt6(self):
