@@ -3,12 +3,14 @@ package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -296,7 +298,8 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
 @Experimental
 @Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  val context = if (useBackgroundWriteAction) {
+  // TODO: Remove check for remote dev after fixing IJPL-168923
+  val context = if (useBackgroundWriteAction && !PlatformUtils.isJetBrainsClient() && !AppMode.isRemoteDevHost()) {
     Dispatchers.Default + RunInBackgroundWriteActionMarker
   }
   else {
