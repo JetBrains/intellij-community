@@ -58,9 +58,6 @@ class PluginLoadingResult {
     }
   }
 
-  /**
-   * @see [com.intellij.openapi.project.ex.ProjectManagerEx]
-   */
   fun initAndAddAll(
     descriptors: Sequence<IdeaPluginDescriptorImpl>,
     overrideUseIfCompatible: Boolean,
