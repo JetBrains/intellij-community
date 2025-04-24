@@ -48,51 +48,19 @@ abstract class CodeExecutionManager {
   }
 
   protected fun constructScriptFiles(basePath: String, setupCommands: List<String>) {
+    // Create and increase a setup script with commands for test environment initialization
     val setupFile = File("$basePath/setup_tests.sh")
-    var content = StringBuilder("#!/bin/bash\n" +
-                                "\n" +
-                                "# Set the path to your virtual environment\n" +
-                                "VENV_PATH=\"./venv\"  # Adjust this path if your virtual environment is located elsewhere\n" +
-                                "\n" +
-                                "# Remove the existing virtual environment to ensure a clean setup\n" +
-                                "if [ -d \"\$VENV_PATH\" ]; then\n" +
-                                "    echo \"Removing existing virtual environment...\"\n" +
-                                "    rm -rf \"\$VENV_PATH\"\n" +
-                                "fi\n" +
-                                "\n" +
-                                "# Create a new virtual environment\n" +
-                                "echo \"Creating a new virtual environment...\"\n" +
-                                "PYTHON_ENV=\${PYTHON:-\"python3\"}\n" +
-                                "\"\$PYTHON_ENV\" -m venv \"\$VENV_PATH\"\n" +
-                                "\n" +
-                                "# Activate the virtual environment\n" +
-                                "echo \"Activating virtual environment...\"\n" +
-                                "source \"\$VENV_PATH/bin/activate\"\n" +
-                                "\n" +
-                                "\n" +
-                                "# Install dependencies from README.md\n" +
-                                "echo \"Installing requirements...\"\n")
-    content.append(setupCommands.joinToString("\n"))
-    setupFile.writeText(content.toString())
+    var content = javaClass.getResourceAsStream("/scriptFiles/setup_tests.sh")!!.bufferedReader().readText()
 
+    content = content.replace("\$SETUP_COMMANDS", setupCommands.joinToString("\n"))
+
+    setupFile.writeText(content)
+
+    // Create a run script for test execution
     val runFile = File("$basePath/run_tests.sh")
-    content = StringBuilder("#!/bin/bash\n" +
-                            "\n" +
-                            "echo \"Activating virtual environment...\"\n" +
-                            "VENV_PATH=\"./venv\"\n" +
-                            "source \"\$VENV_PATH/bin/activate\"\n" +
-                            "\n" +
-                            "# Check if a specific test file or module is passed as an argument\n" +
-                            "if [ -z \"\$1\" ]; then\n" +
-                            "    TEST_TARGET=\"\"\n" +
-                            "else\n" +
-                            "    TEST_TARGET=\"\$1\"\n" +
-                            "fi\n" +
-                            "\n" +
-                            "# Run tests (with optional specific file/module)\n" +
-                            "echo \"Running tests...\"\n" +
-                            "PYTHONPATH=. pytest -v \"\$TEST_TARGET.py\" --rootdir=. --junit-xml=\$TEST_TARGET-junit --cov=\"\$2\" --cov-branch --cov-report json:\$TEST_TARGET-coverage\n")
-    runFile.writeText(content.toString())
+
+    content = javaClass.getResourceAsStream("/scriptFiles/run_tests.sh")!!.bufferedReader().readText()
+    runFile.writeText(content)
   }
 
 
