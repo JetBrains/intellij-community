@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
@@ -75,15 +76,16 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
 
   private fun checkHighlighting() {
     val document = myFixture.getDocument(myFixture.file)
-    val errors = myFixture.doHighlighting(HighlightSeverity.WARNING).associate {
+    val actualErrors = myFixture.doHighlighting(HighlightSeverity.WARNING).associate {
       document.getLineNumber(it.startOffset) to it.description
     }
-    compareErrors(extractExpectedErrors(), errors)
+    val lineToError = mutableMapOf<Int, Error>()
+    val errorGroups = mutableMapOf<CharSequence, ErrorGroup>()
+    extractExpectedErrors(lineToError, errorGroups)
+    compareErrors(lineToError, errorGroups, actualErrors)
   }
 
-  private fun extractExpectedErrors(): Errors {
-    val lineToError = mutableMapOf<Int, Error>()
-    val errorGroups = mutableMapOf<CharSequence, MutableList<Int>>()
+  private fun extractExpectedErrors(lineToError: MutableMap<Int, Error>, errorGroups: MutableMap<CharSequence, ErrorGroup>) {
     val document = myFixture.getDocument(myFixture.file)
     myFixture.file.accept(object : PyRecursiveElementVisitor() {
       override fun visitComment(comment: PsiComment) {
@@ -92,16 +94,18 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
         val lineStartOffset = document.getLineStartOffset(lineNumber)
         val lineWithoutComment = document.getText(TextRange(lineStartOffset, startOffset))
         if (lineWithoutComment.isNotBlank()) {
-          parseComment(comment.text,
-                       { lineToError[lineNumber] = it },
-                       { errorGroups.computeIfAbsent(it) { mutableListOf() }.add(lineNumber) })
+          parseComment(comment.text, lineNumber, lineToError, errorGroups)
         }
       }
     })
-    return Errors(lineToError, errorGroups)
   }
 
-  private fun parseComment(comment: CharSequence, onError: (Error) -> Unit, onErrorTag: (CharSequence) -> Unit) {
+  private fun parseComment(
+    comment: @NlsSafe String,
+    lineNumber: Int,
+    lineToError: MutableMap<Int, Error>,
+    errorGroups: MutableMap<CharSequence, ErrorGroup>,
+  ) {
     assert(comment.startsWith("#"))
     var index = 1
     while (index < comment.length && comment[index].isWhitespace()) {
@@ -113,7 +117,22 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       if (index < comment.length && comment[index] == '[') {
         val endIndex = comment.indexOfAny(charArrayOf(']', '\n'), index + 1, false)
         if (endIndex != -1 && comment[endIndex] != '\n') {
-          onErrorTag(comment.subSequence(index + 1, endIndex))
+          val tag: CharSequence
+          val allowMultiple: Boolean
+          if (comment[endIndex - 1] == '+') {
+            tag = comment.subSequence(index + 1, endIndex - 1)
+            allowMultiple = true
+          }
+          else {
+            tag = comment.subSequence(index + 1, endIndex)
+            allowMultiple = false
+          }
+          val errorGroup = errorGroups.computeIfAbsent(tag) { ErrorGroup(allowMultiple) }
+          if (errorGroup.allowMultiple != allowMultiple) {
+            val sb = StringBuilder("Inconsistent tag '$tag' usage at").appendLocation(lineNumber)
+            throw IllegalArgumentException(sb.toString())
+          }
+          errorGroup.lines.add(lineNumber)
         }
       }
       else {
@@ -133,21 +152,19 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
         else {
           message = null
         }
-        onError(Error(message, optional))
+        lineToError[lineNumber] = Error(message, optional)
       }
     }
   }
 
-  private data class Error(val message: CharSequence?, val isOptional: Boolean)
-
-  private data class Errors(val lineToError: Map<Int, Error>, val errorGroups: Map<CharSequence, List<Int>>)
-
-  private fun compareErrors(expectedErrors: Errors, actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
+  private fun compareErrors(lineToError: Map<Int, Error>,
+                            errorGroups: Map<CharSequence, ErrorGroup>,
+                            actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
     var missingErrorsCount = 0
     var unexpectedErrorsCount = 0
     val failMessage = StringBuilder()
 
-    for ((lineNumber, expectedError) in expectedErrors.lineToError) {
+    for ((lineNumber, expectedError) in lineToError) {
       if (!expectedError.isOptional) {
         val actualError = actualErrors[lineNumber]
         if (actualError == null) {
@@ -161,19 +178,29 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       }
     }
 
-    for ((tag, lineNumbers) in expectedErrors.errorGroups) {
-      if (!lineNumbers.any { it in actualErrors }) {
-        missingErrorsCount++
-        failMessage.append("Expected error (tag $tag) at ").appendLocation(lineNumbers[0])
-        lineNumbers.subList(1, lineNumbers.size).map { it + 1 }.joinTo(failMessage, ", ", "[", "]")
+    for ((tag, errorGroup) in errorGroups) {
+      val lines = errorGroup.lines
+      val errorsCount = lines.count { it in actualErrors }
+      if (errorsCount == 0 || errorsCount > 1 && !errorGroup.allowMultiple) {
+        failMessage.append("Expected ")
+        if (errorsCount == 0) {
+          missingErrorsCount++
+        }
+        else {
+          unexpectedErrorsCount++
+          failMessage.append("single ")
+        }
+        failMessage.append("error (tag $tag) at ")
+        failMessage.appendLocation(lines[0])
+        lines.subList(1, lines.size).map { it + 1 }.joinTo(failMessage, ", ", "[", "]")
         failMessage.appendLine()
       }
     }
 
-    val linesUsedByGroups = expectedErrors.errorGroups.values.flatten().toSet()
+    val linesUsedByGroups = errorGroups.values.flatMap { it.lines }.toSet()
 
     for ((lineNumber, message) in actualErrors) {
-      if (lineNumber !in expectedErrors.lineToError && !linesUsedByGroups.contains(lineNumber)) {
+      if (lineNumber !in lineToError && !linesUsedByGroups.contains(lineNumber)) {
         unexpectedErrorsCount++
         failMessage.append("Unexpected error at ").appendLocation(lineNumber).append(": ").appendLine(message)
       }
@@ -183,6 +210,12 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       failures.add(Failure(testFileName, missingErrorsCount, unexpectedErrorsCount))
       fail(failMessage.toString())
     }
+  }
+
+  private class Error(val message: CharSequence?, val isOptional: Boolean)
+
+  private class ErrorGroup(val allowMultiple: Boolean) {
+    val lines: MutableList<Int> = mutableListOf()
   }
 
   private fun StringBuilder.appendLocation(lineNumber: Int): StringBuilder {
