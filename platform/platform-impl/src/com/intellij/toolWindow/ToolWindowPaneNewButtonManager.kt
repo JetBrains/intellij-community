@@ -10,18 +10,11 @@ import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.DevicePoint
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue.UIInteger
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Dimension
-import java.awt.Graphics
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.UIManager
 
 internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean) : ToolWindowButtonManager {
 
@@ -49,24 +42,8 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
 
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
     return JPanel(BorderLayout()).apply {
-      val panel = object: JPanel(BorderLayout()) {
-        override fun paintComponent(g: Graphics) {
-          super.paintComponent(g)
-          val color = UIManager.get("Island.arc.fillColor")
-          if (color is Color) {
-            g.color = color
-            val config = GraphicsUtil.setupAAPainting(g)
-            val cornerRadius = UIInteger("Island.arc", 0).get()
-            g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
-            config.restore()
-          }
-        }
-      }
-      panel.background = JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
-      panel.border = JBUI.Borders.empty(JBInsets.create("Island.arc.borderInsets", JBInsets.emptyInsets()))
-      panel.add(pane, BorderLayout.CENTER)
-
-      add(panel, BorderLayout.CENTER)
+      background = JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
+      add(pane, BorderLayout.CENTER)
       add(left, BorderLayout.WEST)
       add(right, BorderLayout.EAST)
     }
