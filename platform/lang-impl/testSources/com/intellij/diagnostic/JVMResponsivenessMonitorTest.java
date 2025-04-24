@@ -1,20 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.common.ThreadLeakTracker;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class JVMResponsivenessMonitorTest {
   @Test
-  @Timeout(5000)
-  @Disabled("Test fails on TeamCity because JVMResponsivenessMonitor's thread is left running from some other test")
+  @Timeout(value = 5, unit = TimeUnit.SECONDS)
   public void monitorThreadIsTerminatedAfterClose() throws InterruptedException {
+    Assumptions.assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY);
+
     Map<String, Thread> threadByNameBefore = ThreadLeakTracker.getThreads();
     Thread monitorThreadBeforeStarted = threadByNameBefore.get(JVMResponsivenessMonitor.MONITOR_THREAD_NAME);
     assertNull(
@@ -34,10 +37,12 @@ public class JVMResponsivenessMonitorTest {
   }
 
   @Test
-  @Timeout(5000)
+  @Timeout(value = 5, unit = TimeUnit.SECONDS)
   public void threadLeakTrackerIgnoresResponsivenessMonitorThread() throws InterruptedException {
+    Assumptions.assumeFalse(UsefulTestCase.IS_UNDER_TEAMCITY);
+
     Map<String, Thread> threadsBefore = ThreadLeakTracker.getThreads();
-    try (JVMResponsivenessMonitor monitor = new JVMResponsivenessMonitor()) {
+    try (@SuppressWarnings("unused") JVMResponsivenessMonitor monitor = new JVMResponsivenessMonitor()) {
       ThreadLeakTracker.checkLeak(threadsBefore);
     }
   }
