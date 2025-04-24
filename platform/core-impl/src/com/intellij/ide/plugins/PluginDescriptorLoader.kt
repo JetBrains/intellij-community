@@ -105,7 +105,6 @@ fun loadDescriptorFromDir(
       pluginDir = pluginDir,
       isBundled = isBundled,
       useCoreClassLoader = useCoreClassLoader,
-      descriptorRelativePath = descriptorRelativePath,
       pool = pool,
       id = id,
     )
@@ -150,7 +149,6 @@ fun loadDescriptorFromJar(
       pluginDir = pluginDir,
       isBundled = isBundled,
       useCoreClassLoader = useCoreClassLoader,
-      descriptorRelativePath = descriptorRelativePath,
       pool = pool,
       id = id,
     )
@@ -178,7 +176,6 @@ private fun loadDescriptorFromStream(
   pluginDir: Path?,
   isBundled: Boolean,
   useCoreClassLoader: Boolean,
-  descriptorRelativePath: String,
   pool: ZipEntryResolverPool,
   id: PluginId? = null,
 ): IdeaPluginDescriptorImpl {
