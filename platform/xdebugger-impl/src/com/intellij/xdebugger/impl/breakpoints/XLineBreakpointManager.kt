@@ -93,7 +93,10 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     }
 
     // Check if two or more breakpoints occurred at the same position and remove duplicates.
-    val (valid, invalid) = breakpoints.partition { it.isValid }
+    val (valid, invalid) = breakpoints.partition {
+      val highlighter = it.highlighter
+      highlighter != null && highlighter.isValid
+    }
     removeBreakpoints(invalid)
     val areInlineBreakpoints = XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))
     val duplicates = valid

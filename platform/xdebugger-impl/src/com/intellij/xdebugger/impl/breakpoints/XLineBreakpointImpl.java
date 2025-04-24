@@ -28,8 +28,10 @@ import java.util.Objects;
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
 
+  // TODO IJPL-185111 move to some external manager
   private final XBreakpointVisualRepresentation myVisualRepresentation = new XBreakpointVisualRepresentation(this);
 
+  // TODO IJPL-185111 Should we install range highlighter in BE?
   private @Nullable RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
@@ -41,10 +43,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myType = type;
   }
 
+  // TODO IJPL-185111
   public void updateUI() {
     myVisualRepresentation.updateUI();
   }
 
+  // TODO IJPL-185111
   @RequiresBackgroundThread
   void doUpdateUI(@NotNull Runnable callOnUpdate) {
     myVisualRepresentation.doUpdateUI(callOnUpdate);
@@ -116,9 +120,11 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return mySourcePosition;
   }
 
+  @SuppressWarnings("deprecation") // for API compatibility
+  @Deprecated
   @Override
   public boolean isValid() {
-    return myHighlighter != null && myHighlighter.isValid();
+    return super.isValid();
   }
 
   @Override
@@ -127,6 +133,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myVisualRepresentation.redrawInlineInlays();
   }
 
+  // TODO IJPL-185111
   @Override
   protected GutterDraggableObject createBreakpointDraggableObject() {
     return myVisualRepresentation.createBreakpointDraggableObject();

@@ -285,6 +285,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return myState.getTimeStamp();
   }
 
+  /**
+   * @deprecated Do not use, this is a part of a breakpoint representation.
+   */
+  @Deprecated
   public boolean isValid() {
     return true;
   }
@@ -362,6 +366,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return "XBreakpointBase(type=" + myType + ")";
   }
 
+  // TODO
   protected @Nullable GutterDraggableObject createBreakpointDraggableObject() {
     return null;
   }
@@ -589,6 +594,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     // See XBreakpointManagerImpl.updateBreakpointPresentation()
   }
 
+  // TODO
   public @NotNull GutterIconRenderer createGutterIconRenderer() {
     return new BreakpointGutterIconRenderer(this);
   }
