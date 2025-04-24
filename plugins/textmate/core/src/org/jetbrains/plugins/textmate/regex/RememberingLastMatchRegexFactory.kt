@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.regex
 
 import kotlinx.coroutines.Runnable
+import org.jetbrains.plugins.textmate.createTextMateThreadLocal
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED
 
 class RememberingLastMatchRegexFactory(private val delegate: RegexFactory) : RegexFactory {
@@ -32,7 +33,7 @@ class RememberingLastMatchRegexFactory(private val delegate: RegexFactory) : Reg
 private class TextMateRegexFacadeRememberLastMatch(private val delegate: RegexFacade,
                                                    private val hasGMatch: Boolean,
                                                    private val hasAMatch: Boolean): RegexFacade {
-  private val matchResult = ThreadLocal<LastMatch?>()
+  private val matchResult: TextMateThreadLocal<LastMatch?> = createTextMateThreadLocal()
 
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
     return delegate.match(string, checkCancelledCallback)
