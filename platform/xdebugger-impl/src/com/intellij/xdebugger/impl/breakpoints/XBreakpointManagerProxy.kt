@@ -2,8 +2,11 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,6 +30,7 @@ interface XBreakpointManagerProxy {
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
   fun removeBreakpoint(breakpoint: XBreakpointProxy)
+  fun findBreakpointAtLine(type: XBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpoint<*>?
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -75,6 +79,10 @@ interface XBreakpointManagerProxy {
         return
       }
       breakpointManager.removeBreakpoint(breakpoint.breakpoint)
+    }
+
+    override fun findBreakpointAtLine(type: XBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpoint<*>? {
+      return breakpointManager.findBreakpointAtLine((type as XBreakpointTypeProxy.Monolith).breakpointType as XLineBreakpointType<*>, file, line)
     }
   }
 }

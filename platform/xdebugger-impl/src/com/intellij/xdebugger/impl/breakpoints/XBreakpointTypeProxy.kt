@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -39,6 +40,7 @@ interface XBreakpointTypeProxy {
   fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+  fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean
 
   class Monolith(
     val project: Project,
@@ -104,6 +106,10 @@ interface XBreakpointTypeProxy {
 
     override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+    }
+
+    override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
+      return (breakpointType as? XLineBreakpointType<*>)?.canPutAt(file, line, project) == true
     }
   }
 }

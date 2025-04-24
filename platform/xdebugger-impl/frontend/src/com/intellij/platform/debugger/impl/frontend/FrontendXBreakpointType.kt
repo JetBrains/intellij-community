@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -73,6 +74,11 @@ internal class FrontendXBreakpointType(
 
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
+  }
+
+  override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
+    // TODO IJPL-185111 implement it through cached breakpoint editor map
+    return true
   }
 }
 

@@ -7,9 +7,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
@@ -113,5 +115,10 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     cs.launch {
       XBreakpointApi.getInstance().removeBreakpoint(breakpoint.id)
     }
+  }
+
+  override fun findBreakpointAtLine(type: XBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpoint<*>? {
+    // TODO IJPL-185111 implement and migrate returned value to Proxy
+    return null
   }
 }

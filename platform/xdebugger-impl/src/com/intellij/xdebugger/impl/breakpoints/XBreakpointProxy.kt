@@ -1,8 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
@@ -77,6 +82,17 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun getCustomizedPresentation(): CustomizedBreakpointPresentation?
 
   fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation?
+  fun isDisposed(): Boolean
+  fun getFile(): VirtualFile?
+  fun updateIcon()
+  fun getRangeMarker(): RangeMarker?
+  fun getLine(): Int
+  fun setFileUrl(url: String)
+  fun setLine(line: Int)
+  fun setHighlighter(rangeMarker: RangeMarker)
+  fun getHighlightRange(): TextRange?
+  fun getHighlighter(): RangeHighlighter?
+  fun createGutterIconRenderer(): GutterIconRenderer?
 
   class Monolith(val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     override val id: XBreakpointId = breakpoint.breakpointId
@@ -198,6 +214,44 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation? {
       return (XDebuggerManager.getInstance(project).currentSession as? XDebugSessionImpl)?.getBreakpointPresentation(breakpoint)
+    }
+
+    override fun isDisposed(): Boolean = breakpoint.isDisposed
+    override fun getFile(): VirtualFile? = (breakpoint as? XLineBreakpointImpl<*>)?.file
+    override fun updateIcon() {
+      breakpoint.updateIcon()
+    }
+
+    override fun getRangeMarker(): RangeMarker? {
+      return (breakpoint as? XLineBreakpointImpl<*>)?.rangeMarker
+    }
+
+    override fun getLine(): Int {
+      return (breakpoint as? XLineBreakpointImpl<*>)?.line ?: 0
+    }
+
+    override fun setFileUrl(url: String) {
+      (breakpoint as? XLineBreakpointImpl<*>)?.fileUrl = url
+    }
+
+    override fun setLine(line: Int) {
+      (breakpoint as? XLineBreakpointImpl<*>)?.line = line
+    }
+
+    override fun setHighlighter(rangeMarker: RangeMarker) {
+      (breakpoint as? XLineBreakpointImpl<*>)?.setHighlighter(rangeMarker)
+    }
+
+    override fun getHighlightRange(): TextRange? {
+      return (breakpoint as? XLineBreakpointImpl<*>)?.highlightRange
+    }
+
+    override fun getHighlighter(): RangeHighlighter? {
+      return (breakpoint as? XLineBreakpointImpl<*>)?.highlighter
+    }
+
+    override fun createGutterIconRenderer(): GutterIconRenderer? {
+      return (breakpoint as? XLineBreakpointImpl<*>)?.createGutterIconRenderer()
     }
 
     override fun equals(other: Any?): Boolean {

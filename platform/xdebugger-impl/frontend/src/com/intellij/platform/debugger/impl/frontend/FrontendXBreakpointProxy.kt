@@ -4,8 +4,13 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
@@ -22,6 +27,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -242,6 +248,56 @@ class FrontendXBreakpointProxy(
   override fun getCustomizedPresentationForCurrentSession(): CustomizedBreakpointPresentation? {
     // TODO: let's convert it once on state change rather then on every getCustomizedPresentation call
     return _state.value.currentSessionCustomPresentation?.toPresentation()
+  }
+
+  override fun isDisposed(): Boolean {
+    return !cs.isActive
+  }
+
+  override fun getFile(): VirtualFile? {
+    // TODO IJPL-185111 pass through line breakpoint info
+    return null
+  }
+
+  override fun updateIcon() {
+    // TODO IJPL-185111 does nothing since we calculate icon for each getIcon request
+  }
+
+  override fun getRangeMarker(): RangeMarker? {
+    // TODO IJPL-185111
+    return null
+  }
+
+  override fun getLine(): Int {
+    // TODO IJPL-185111 pass through line breakpoint info
+    return 0
+  }
+
+  override fun setFileUrl(url: String) {
+    // TODO IJPL-185111 implement set file url
+  }
+
+  override fun setLine(line: Int) {
+    // TODO IJPL-185111 implement set line
+  }
+
+  override fun setHighlighter(rangeMarker: RangeMarker) {
+    // TODO IJPL-185111 implement set highlighter
+  }
+
+  override fun getHighlightRange(): TextRange? {
+    // TODO IJPL-185111 implement highlight range
+    return null
+  }
+
+  override fun getHighlighter(): RangeHighlighter? {
+    // TODO IJPL-185111 implement range highlighter
+    return null
+  }
+
+  override fun createGutterIconRenderer(): GutterIconRenderer? {
+    // TODO IJPL-185111 implement create gutter icon renderer
+    return null
   }
 
   private fun XBreakpointCustomPresentationDto.toPresentation(): CustomizedBreakpointPresentation {
