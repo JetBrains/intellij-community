@@ -192,7 +192,7 @@ enum class LanguageLevel {
 
   companion object {
     /**
-     * Should point to the latest released JDK.
+     * The highest language level supported by the analyzer.
      */
     @JvmField
     val HIGHEST: LanguageLevel = JDK_24

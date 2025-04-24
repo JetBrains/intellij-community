@@ -174,7 +174,9 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   }
 
   /**
-   * @return the highest stable language level for Java.
+   * Returns the highest known stable language level of the Java programming language at the current moment in time.
+   * This language level might be adjusted in the cloud registry, meaning the return value could change without a change in the distribution.
+   * The reference the highest language level supported by the analyzer, please use {@link LanguageLevel#HIGHEST}.
    */
   public static @NotNull LanguageLevel getHighest() {
     LanguageLevel languageLevel = LanguageLevel.forFeature(Registry.intValue("java.highest.language.level"));
