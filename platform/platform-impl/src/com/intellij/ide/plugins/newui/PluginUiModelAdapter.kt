@@ -44,6 +44,8 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isConverted else false
   override val detailsLoaded: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.detailsLoaded() else true
+  override val allowBundledUpdate: Boolean
+    get() = pluginDescriptor.allowBundledUpdate()
 
   override val source: PluginSource = PluginSource.LOCAL
   override val tags: List<String>

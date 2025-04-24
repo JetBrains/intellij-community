@@ -1160,8 +1160,8 @@ public final class ListPluginComponent extends JPanel {
     return myInstalledDescriptorForMarketplace;
   }
 
-  public IdeaPluginDescriptor getUpdatePluginDescriptor(){
-    return myUpdateDescriptor != null ? myUpdateDescriptor.getDescriptor() : null;
+  public PluginUiModel getUpdatePluginDescriptor(){
+    return myUpdateDescriptor != null ? myUpdateDescriptor : null;
   }
 
   public PluginUiModel getDescriptorForActions() {

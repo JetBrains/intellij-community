@@ -153,8 +153,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var plugin: PluginUiModel? = null
   private var isPluginAvailable = false
   private var isPluginCompatible = false
-  private var updateDescriptor: IdeaPluginDescriptor? = null
-  private var installedDescriptorForMarketplace: IdeaPluginDescriptor? = null
+  private var updateDescriptor: PluginUiModel? = null
+  private var installedDescriptorForMarketplace: PluginUiModel? = null
 
   private var showComponent: ListPluginComponent? = null
 
@@ -241,8 +241,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  val descriptorForActions: IdeaPluginDescriptor?
-    get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin?.getDescriptor() else installedDescriptorForMarketplace
+  val descriptorForActions: PluginUiModel?
+    get() = if (!isMarketplace || installedDescriptorForMarketplace == null) plugin else installedDescriptorForMarketplace
 
   fun setPlugin(pluginDescriptor: IdeaPluginDescriptor?) {
     if (pluginDescriptor != null) {
@@ -417,7 +417,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       action,
       false,
       java.util.List.of(this),
-      { it.descriptorForActions?.let { PluginUiModelAdapter(it) } },
+      { it.descriptorForActions },
       { updateNotifications() },
     )
   }
@@ -428,7 +428,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {
-      pluginModel.getModel().installOrUpdatePlugin(
+      pluginModel.installOrUpdatePlugin(
         this,
         descriptorForActions!!, updateDescriptor,
         ModalityState.stateForComponent(updateButton!!),
@@ -663,7 +663,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     showComponent = component
 
     if (indicator != null) {
-      MyPluginModel.removeProgress(descriptorForActions!!, indicator!!)
+      PluginModelFacade.removeProgress(descriptorForActions!!, indicator!!)
       hideProgress(false, false)
     }
 
@@ -763,14 +763,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  fun showPluginImpl(pluginModel: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?) {
-    plugin = pluginModel
+  fun showPluginImpl(pluginUiModel: PluginUiModel, updateDescriptor: PluginUiModel?) {
+    plugin = pluginUiModel
     val policy = PluginManagementPolicy.getInstance()
-    this.updateDescriptor = if (updateDescriptor != null && policy.canEnablePlugin(updateDescriptor)) updateDescriptor else null
-    isPluginCompatible = pluginModel.isIncompatibleWithCurrentOs
-    isPluginAvailable = isPluginCompatible && policy.canEnablePlugin(updateDescriptor)
+    this.updateDescriptor = if (updateDescriptor != null && policy.canEnablePlugin(updateDescriptor.getDescriptor())) updateDescriptor else null
+    isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
+    isPluginAvailable = isPluginCompatible && policy.canEnablePlugin(updateDescriptor?.getDescriptor())
     if (isMarketplace) {
-      installedDescriptorForMarketplace = findPlugin(plugin!!.pluginId)
+      installedDescriptorForMarketplace = pluginModel.findPlugin(plugin!!)
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton else updateButton)!!)
     }
     showPlugin()
@@ -828,11 +828,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val descriptorForActions = descriptorForActions!!
     var version = descriptorForActions.version
-    if (descriptorForActions.isBundled && !descriptorForActions.allowBundledUpdate()) {
+    if (descriptorForActions.isBundled && !descriptorForActions.allowBundledUpdate) {
       version = IdeBundle.message("plugin.version.bundled") + (if (Strings.isEmptyOrSpaces(version)) "" else " $version")
     }
     if (updateDescriptor != null) {
-      version = NewUiUtil.getVersion(descriptorForActions, updateDescriptor!!)
+      version = NewUiUtil.getUpdateVersionText(descriptorForActions.version, updateDescriptor!!.version)
     }
 
     val isVersion = !Strings.isEmptyOrSpaces(version)
@@ -1040,7 +1040,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun createUninstallAction(): SelectionBasedPluginModelAction.UninstallAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.UninstallAction(
       pluginModel, false, this, java.util.List.of(this),
-      { obj: PluginDetailsPageComponent -> obj.descriptorForActions?.let { PluginUiModelAdapter(it) } },
+      { obj: PluginDetailsPageComponent -> obj.descriptorForActions},
       {
         updateNotifications()
       })
@@ -1087,10 +1087,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       val update = updateDescriptor
       if (update != null && update.productCode != null &&
           !LicensePanel.isEA2Product(update.productCode) &&
-          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(PluginUiModelAdapter(update))
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(update)
       ) {
         licensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
-                                           { PluginUiModelAdapter(update) }, true,
+                                           { update }, true,
                                            true)
       }
       else {
@@ -1100,7 +1100,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     else if (isMarketplace) {
       var requiresCommercialIde = false
 
-      val message: String = if (descriptor is PluginNode) {
+      val message: String = if (descriptor.isFromMarketplace) {
         val ideProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
 
         val trialPeriod = descriptor.getTrialPeriodByProductCode(ideProductCode)
@@ -1115,7 +1115,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
       licensePanel.showBuyPluginWithText(
         message, false, false,
-        { PluginUiModelAdapter(descriptor) }, false,
+        { descriptor }, false,
         !requiresCommercialIde // if the descriptor requires a commercial IDE, we do not show the trial/price message
       )
     }
@@ -1134,7 +1134,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
           return
         }
 
-        if (descriptor.isLicenseOptional()) {
+        if (descriptor.isLicenseOptional) {
           licensePanel.hideWithChildren()
           return // do not show "No License" for Freemium plugins
         }
@@ -1154,7 +1154,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   fun updateAll() {
     if (plugin != null) {
       if (indicator != null) {
-        MyPluginModel.removeProgress(descriptorForActions!!, indicator!!)
+        PluginModelFacade.removeProgress(descriptorForActions!!, indicator!!)
         hideProgress(false, false)
       }
       showPluginImpl(plugin!!, updateDescriptor)
@@ -1190,7 +1190,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
       else {
         val state = getDeletedState(
-          installedDescriptorForMarketplace!!)
+          installedDescriptorForMarketplace!!.getDescriptor())
         val uninstalled = state[0]
         val uninstalledWithoutRestart = state[1]
 
@@ -1258,7 +1258,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
   }
 
-  private fun updateIcon(errors: List<HtmlChunk?> = pluginModel.getModel().getErrors(descriptorForActions!!)) {
+  private fun updateIcon(errors: List<HtmlChunk?> = pluginModel.getErrors(descriptorForActions!!)) {
     if (iconLabel == null) {
       return
     }
@@ -1272,14 +1272,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun updateErrors() {
     if (showComponent?.isNotFreeInFreeMode != true) {
-      val errors = pluginModel.getModel().getErrors(descriptorForActions!!)
+      val errors = pluginModel.getErrors(descriptorForActions!!)
       updateIcon(errors)
       errorComponent!!.setErrors(errors) { this.handleErrors() }
     }
   }
 
   private fun handleErrors() {
-    pluginModel.getModel().enableRequiredPlugins(descriptorForActions!!)
+    pluginModel.enableRequiredPlugins(descriptorForActions!!)
 
     updateIcon()
     updateEnabledState()
@@ -1288,10 +1288,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   fun showProgress() {
     indicator = OneLineProgressIndicator(false)
-    indicator!!.setCancelRunnable { pluginModel.getModel().finishInstall(descriptorForActions!!, null, false, false, true) }
+    indicator!!.setCancelRunnable { pluginModel.finishInstall(descriptorForActions!!, null, false, false, true) }
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
 
-    MyPluginModel.addProgress(descriptorForActions!!, indicator!!)
+    PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
 
     fullRepaint()
   }
@@ -1315,10 +1315,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         if (installButton != null) {
           installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
           if (installButton.isVisible) {
-            installedDescriptorForMarketplace = findPlugin(plugin!!.pluginId)
+            installedDescriptorForMarketplace = pluginModel.findPlugin(plugin!!)
             installedDescriptorForMarketplace?.let {
               installButton.isVisible = false
-              myVersion1!!.text = it.getVersion()
+              myVersion1!!.text = it.version
               myVersion1!!.isVisible = true
               updateEnabledState()
               return
@@ -1337,7 +1337,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updateEnableForNameAndIcon() {
-    val enabled = pluginModel.getModel().isEnabled(descriptorForActions!!)
+    val enabled = pluginModel.isEnabled(descriptorForActions!!)
     nameComponent.foreground = if (enabled) null else ListPluginComponent.DisabledColor
     if (iconLabel != null) {
       iconLabel!!.isEnabled = enabled
@@ -1349,7 +1349,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
 
-    if (!pluginModel.getModel().isUninstalled(descriptorForActions!!)) {
+    if (!pluginModel.isUninstalled(descriptorForActions!!)) {
       if (enableDisableController != null) {
         enableDisableController!!.update()
       }

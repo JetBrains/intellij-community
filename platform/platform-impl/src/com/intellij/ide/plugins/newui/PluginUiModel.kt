@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PageContainer
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
@@ -10,7 +11,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
-import java.util.Locale
+import java.util.*
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -33,12 +34,14 @@ interface PluginUiModel {
   val isLicenseOptional: Boolean
   val isConverted: Boolean
   val detailsLoaded: Boolean
+  val allowBundledUpdate: Boolean
 
   val source: PluginSource
   val tags: List<String>
   val dependencies: List<PluginDependencyModel>
   val dependencyNames: Collection<String>?
   val suggestedCommercialIde: String?
+  val suggestedFeatures: Collection<String>
 
   @get:NlsSafe
   val vendor: String?
@@ -60,6 +63,7 @@ interface PluginUiModel {
   val repositoryName: String?
   val reviewComments: PageContainer<PluginReviewComment>?
   val externalPluginIdForScreenShots: String?
+  val date: Long
 
   @get:NlsSafe
   var forumUrl: String?
@@ -113,7 +117,7 @@ enum class PluginSource {
 @ApiStatus.Internal
 data class PluginDependencyModel(
   val pluginId: PluginId,
-  val isOptional: Boolean
+  val isOptional: Boolean,
 )
 
 private val K_FORMAT = DecimalFormat("###.#K")
@@ -168,4 +172,20 @@ fun PluginUiModel.presentableSize(): String? {
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(): List<String> {
   return getTags(this.getDescriptor())
+}
+
+@NlsSafe
+@ApiStatus.Internal
+fun PluginUiModel.presentableDate(): String? {
+  return if (date > 0 && date != Long.MAX_VALUE) {
+    PluginManagerConfigurable.DATE_FORMAT.format(Date(date))
+  }
+  else {
+    null
+  }
+}
+
+@ApiStatus.Internal
+fun PluginUiModel.getTrialPeriodByProductCode(code: String): Int? {
+  return customTrialPeriods?.getOrDefault(code, defaultTrialPeriod!!)
 }
