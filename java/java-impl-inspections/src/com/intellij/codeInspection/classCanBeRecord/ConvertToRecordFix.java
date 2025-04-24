@@ -11,6 +11,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
@@ -328,8 +329,9 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
    */
   static class RecordConstructorCandidate {
     private final @NotNull PsiMethod constructorMethod;
+    /// True if this constructor becomes a Canonical Constructor after conversion to record. See JLS 8.10.4.
     private final boolean canonical;
-    private final @NotNull Map<PsiParameter, PsiField> ctorParamsToFields = new HashMap<>();
+    private final @NotNull Map<@NotNull PsiParameter, @NotNull PsiField> ctorParamsToFields = new HashMap<>();
 
     private RecordConstructorCandidate(@NotNull PsiMethod constructor, @NotNull Set<PsiField> instanceFields) {
       constructorMethod = constructor;
@@ -353,19 +355,41 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         return;
       }
 
-      final boolean allProcessed = PsiTreeUtil.processElements(ctorBody, PsiAssignmentExpression.class, (assignExpr) -> {
+      Ref<Boolean> hasUnresolvedRefs = new Ref<>(false);
+      PsiTreeUtil.processElements(ctorBody, PsiAssignmentExpression.class, (assignExpr) -> {
         if (!(assignExpr.getLExpression() instanceof PsiReferenceExpression leftRefExpr)) return true;
         if (!(leftRefExpr.resolve() instanceof PsiField field)) return true;
 
-        if (!(assignExpr.getRExpression() instanceof PsiReferenceExpression rightRefExpr)) return true;
-        final PsiElement assignmentValue = rightRefExpr.resolve();
+        final PsiExpression rightExpr = assignExpr.getRExpression();
+        if (rightExpr == null) return true;
 
-        if (assignmentValue == null) return false; // using 'false' as a sentinel value
-        if (!(assignmentValue instanceof PsiParameter parameter)) return true;
-        ctorParamsToFields.put(parameter, field);
+        Ref<@Nullable PsiParameter> matchingParameter = new Ref<>();
+        rightExpr.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement resolved = expression.resolve();
+            if (resolved == null) {
+              hasUnresolvedRefs.set(true);
+            }
+            else if (resolved instanceof PsiParameter parameter && !ctorParamsToFields.containsKey(parameter)) {
+              matchingParameter.set(parameter);
+            }
+          }
+        });
+
+        if (matchingParameter.get() == null) {
+          final PsiParameter[] ctorParameters = constructor.getParameterList().getParameters();
+          matchingParameter.set(ContainerUtil.find(ctorParameters, param -> param.getName().equals(leftRefExpr.getReferenceName())));
+        }
+        if (matchingParameter.get() == null) {
+          hasUnresolvedRefs.set(true);
+          return true;
+        }
+        ctorParamsToFields.put(matchingParameter.get(), field);
         return true;
       });
-      if (!allProcessed) {
+      if (hasUnresolvedRefs.get()) {
         canonical = false;
         return;
       }

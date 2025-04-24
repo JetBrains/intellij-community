@@ -7,6 +7,7 @@ import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAcce
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,6 +51,8 @@ import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.Re
  * Responsible for converting a single {@link RecordCandidate} that is {@link RecordCandidate#isValid valid}.
  */
 final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
+  private static final Logger LOG = Logger.getInstance(ConvertToRecordProcessor.class);
+
   private static final CallMatcher OBJECT_EQUALS = CallMatcher
     .instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals")
     .parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
@@ -94,8 +97,11 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     RecordConstructorCandidate ctorCandidate = myRecordCandidate.getCanonicalConstructorCandidate();
     if (ctorCandidate == null) return;
 
+    LOG.debug("rename of ctor params: started");
+
     ctorCandidate.getCtorParamsToFields().forEach((ctorParam, field) -> {
       if (!ctorParam.getName().equals(field.getName())) {
+        LOG.debug("renaming of ctor params: rename parameter '" + ctorParam.getName() + "' to field name '" + field.getName() + "'");
         RenameRefactoring renameRefactoring = RefactoringFactory.getInstance(myProject).createRename(ctorParam, field.getName());
         renameRefactoring.setPreviewUsages(false);
         renameRefactoring.setSearchInComments(false);
@@ -104,6 +110,8 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         renameRefactoring.setInteractive(null);
         renameRefactoring.run();
       }
+
+      LOG.debug("rename of ctor params: done");
     });
   }
 

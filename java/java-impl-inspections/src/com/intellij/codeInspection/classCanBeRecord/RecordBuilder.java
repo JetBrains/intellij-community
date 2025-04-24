@@ -56,12 +56,8 @@ class RecordBuilder {
         .map(parameter -> {
           PsiField field = canonicalCtorCandidate.getCtorParamsToFields().get(parameter);
           if (field == null) {
-            field = ContainerUtil.find(myOriginClass.getFields(), f -> f.getName().equals(parameter.getName()));
-            if (field == null) {
-              throw new IllegalStateException("no field found corresponding to constructor parameter '" + parameter.getName() + "'");
-            }
+            throw new IllegalStateException("no field found corresponding to constructor parameter '" + parameter.getName() + "'");
           }
-
           return generateComponentText(field, parameter, fieldToAccessorCandidateMap.get(field));
         })
         .forEach(recordComponentsJoiner::add);
