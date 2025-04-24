@@ -542,7 +542,6 @@ private suspend fun loadAndInitDescriptors(
     extraListDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
   }
 
-  val buildNumber = initContext.productBuildNumber
   val loadingResult = PluginLoadingResult()
 
   val isMainProcess = isMainProcess()
