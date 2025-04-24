@@ -8,9 +8,6 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.inputStream
-import kotlin.io.path.name
-import kotlin.jvm.JvmStatic
 
 object TestUtil {
   const val BAT: @NonNls String = "bat"
@@ -60,17 +57,20 @@ object TestUtil {
 
   @JvmStatic
   fun readBundle(bundleName: String): TextMateBundleReader {
-    val bundleDirectory = getBundleDirectory(bundleName)
-    val bundleType = detectBundleType(bundleDirectory)
-    val bundleName = bundleDirectory.name
+    val resourceReader = getResourceReader(bundleName)
+    val bundleType = detectBundleType(resourceReader, bundleName)
     val plistReader = CompositePlistReader()
-    val resourceReader = TextMateNioResourceReader(bundleDirectory)
     return when (bundleType) {
       BundleType.TEXTMATE -> readTextMateBundle(bundleName, plistReader, resourceReader)
       BundleType.SUBLIME -> readSublimeBundle(bundleName, plistReader, resourceReader)
-      BundleType.VSCODE -> readVSCBundle(plistReader, resourceReader) ?: error("Cannot read VSCBundle from $bundleDirectory")
+      BundleType.VSCODE -> readVSCBundle(plistReader, resourceReader) ?: error("Cannot read VSCBundle")
       BundleType.UNDEFINED -> error("Unknown bundle type: $bundleName")
     }
+  }
+
+  fun getResourceReader(bundleName: String): TextMateResourceReader {
+    val bundleDirectory = getBundleDirectory(bundleName)
+    return TextMateNioResourceReader(bundleDirectory)
   }
 
   @JvmStatic

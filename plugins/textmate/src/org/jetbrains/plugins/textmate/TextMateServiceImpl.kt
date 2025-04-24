@@ -205,11 +205,12 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
 
   override fun readBundle(directory: Path?): TextMateBundleReader? {
     if (directory != null) {
-      val bundleType = detectBundleType(directory)
+      val resourceReader = TextMateNioResourceReader(directory)
+      val bundleType = detectBundleType(resourceReader, directory.name)
       return when (bundleType) {
-        BundleType.TEXTMATE -> readTextMateBundle(directory.name, CompositePlistReader(), TextMateNioResourceReader(directory))
-        BundleType.SUBLIME -> readSublimeBundle(directory.name, CompositePlistReader(), TextMateNioResourceReader(directory))
-        BundleType.VSCODE -> readVSCBundle(CompositePlistReader(), TextMateNioResourceReader(directory))
+        BundleType.TEXTMATE -> readTextMateBundle(directory.name, CompositePlistReader(), resourceReader)
+        BundleType.SUBLIME -> readSublimeBundle(directory.name, CompositePlistReader(), resourceReader)
+        BundleType.VSCODE -> readVSCBundle(CompositePlistReader(), resourceReader)
         BundleType.UNDEFINED -> null
       }
     }
