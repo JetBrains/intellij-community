@@ -320,7 +320,21 @@ abstract class DumbService {
   abstract fun showDumbModeNotificationForFunctionality(message: @NlsContexts.PopupContent String,
                                                         functionality: DumbModeBlockedFunctionality)
 
+  /**
+   * Doesn't log new event if the equality object is equal to the previous one
+   */
+  @ApiStatus.Internal
+  abstract fun showDumbModeNotificationForFunctionalityWithCoalescing(message: @NlsContexts.PopupContent String,
+                                                                      functionality: DumbModeBlockedFunctionality,
+                                                                      equality: Any)
+
   abstract fun showDumbModeNotificationForAction(message: @NlsContexts.PopupContent String, actionId: String?)
+
+  /**
+   * This method is designed to be used when [DumbAware] action was invoked in dumb mode and threw [IndexNotReadyException]
+   */
+  @ApiStatus.Internal
+  abstract fun showDumbModeNotificationForFailedAction(message: @NlsContexts.PopupContent String, actionId: String?)
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.

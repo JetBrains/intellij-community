@@ -63,7 +63,15 @@ class MockDumbService(override val project: Project) : DumbService() {
     throw UnsupportedOperationException()
   }
 
+  override fun showDumbModeNotificationForFunctionalityWithCoalescing(message: String, functionality: DumbModeBlockedFunctionality, equality: Any) {
+    throw UnsupportedOperationException()
+  }
+
   override fun showDumbModeNotificationForAction(message: @NlsContexts.PopupContent String, actionId: String?) {
+    throw UnsupportedOperationException()
+  }
+
+  override fun showDumbModeNotificationForFailedAction(message: String, actionId: String?) {
     throw UnsupportedOperationException()
   }
 

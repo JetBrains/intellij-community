@@ -435,7 +435,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   /**
    * Doesn't log new event if the equality object is equal to the previous one
    */
-  fun showDumbModeNotificationForFunctionalityWithCoalescing(message: @NlsContexts.PopupContent String,
+  override fun showDumbModeNotificationForFunctionalityWithCoalescing(message: @NlsContexts.PopupContent String,
                                                              functionality: DumbModeBlockedFunctionality,
                                                              equality: Any) {
     DumbModeBlockedFunctionalityCollector.logFunctionalityBlockedWithCoalescing(project, functionality, equality)
@@ -462,10 +462,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     doShowDumbModeNotification(message)
   }
 
-  /**
-   * This method is designed to be used when [DumbAware] action was invoked in dumb mode and threw [IndexNotReadyException]
-   */
-  fun showDumbModeNotificationForFailedAction(message: @NlsContexts.PopupContent String, actionId: String?) {
+  override fun showDumbModeNotificationForFailedAction(message: @NlsContexts.PopupContent String, actionId: String?) {
     DumbModeBlockedFunctionalityCollector.logActionFailedToExecute(project, actionId)
     doShowDumbModeNotification(message)
   }

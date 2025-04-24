@@ -47,7 +47,6 @@ import com.intellij.openapi.keymap.impl.UpdateResult
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
@@ -1179,8 +1178,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       result.failureCause is IndexNotReadyException -> {
         LOG.info(result.failureCause)
         if (project != null) {
-          val dumbServiceImpl = DumbService.getInstance(project) as DumbServiceImpl
-          dumbServiceImpl.showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
+          DumbService.getInstance(project)
+            .showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
         }
       }
       else -> throw result.failureCause
