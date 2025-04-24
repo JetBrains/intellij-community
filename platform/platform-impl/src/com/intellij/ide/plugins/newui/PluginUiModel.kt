@@ -74,22 +74,22 @@ interface PluginUiModel {
 
   // URL-related properties
   @get:NlsSafe
-  val forumUrl: String?
+  var forumUrl: String?
   
   @get:NlsSafe
-  val licenseUrl: String?
+  var licenseUrl: String?
   
   @get:NlsSafe
-  val bugtrackerUrl: String?
+  var bugtrackerUrl: String?
   
   @get:NlsSafe
-  val documentationUrl: String?
+  var documentationUrl: String?
   
   @get:NlsSafe
-  val sourceCodeUrl: String?
+  var sourceCodeUrl: String?
   
   @get:NlsSafe
-  val reportPluginUrl: String?
+  var reportPluginUrl: String?
   
   val dependencyNames: Collection<String>?
   
@@ -99,11 +99,27 @@ interface PluginUiModel {
   val reviewComments: PageContainer<PluginReviewComment>?
   
   @get:NlsSafe
-  val verifiedName: String?
+  var verifiedName: String?
   
-  val isVerified: Boolean
+  var isVerified: Boolean
   
-  val isTrader: Boolean
+  var isTrader: Boolean
+  
+  val isConverted: Boolean
+  
+  var screenShots: List<String>?
+  
+  val externalPluginIdForScreenShots: String?
+  
+  var externalPluginId: String?
+  
+  var externalUpdateId: String?
+  
+  var defaultTrialPeriod: Int?
+
+  val detailsLoaded: Boolean
+
+  var customTrialPeriods: Map<String, Int>?
 
   /**
    * Java compatibility method. Going to be removed after refactoring is done.

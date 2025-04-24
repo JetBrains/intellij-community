@@ -87,23 +87,53 @@ class PluginUiModelAdapter(
   override val source: PluginSource = PluginSource.LOCAL
 
   // URL-related properties
-  override val forumUrl: String?
+  override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.forumUrl = value
+      }
+    }
 
-  override val licenseUrl: String?
+  override var licenseUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.licenseUrl else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.licenseUrl = value
+      }
+    }
 
-  override val bugtrackerUrl: String?
+  override var bugtrackerUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.bugtrackerUrl else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.bugtrackerUrl = value
+      }
+    }
 
-  override val documentationUrl: String?
+  override var documentationUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.documentationUrl else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.documentationUrl = value
+      }
+    }
 
-  override val sourceCodeUrl: String?
+  override var sourceCodeUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.sourceCodeUrl else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.sourceCodeUrl = value
+      }
+    }
 
-  override val reportPluginUrl: String?
+  override var reportPluginUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reportPluginUrl else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.reportPluginUrl = value
+      }
+    }
 
   override val dependencyNames: Collection<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
@@ -114,14 +144,76 @@ class PluginUiModelAdapter(
   override val reviewComments: PageContainer<PluginReviewComment>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
 
-  override val verifiedName: String?
+  override var verifiedName: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.verifiedName else null
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.verifiedName = value
+      }
+    }
 
-  override val isVerified: Boolean
+  override var isVerified: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isVerified else false
+set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.isVerified = value
+      }
+    }
 
-  override val isTrader: Boolean
+  override var isTrader: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isTrader else false
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.isTrader = value
+      }
+    }
+
+  override val isConverted: Boolean
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isConverted else false
+
+  override var screenShots: List<String>?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.screenShots else null
+    set(value) {
+      if (pluginDescriptor is PluginNode && value != null) {
+        pluginDescriptor.setScreenShots(value)
+      }
+    }
+
+  override val externalPluginIdForScreenShots: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginIdForScreenShots else null
+
+  override var externalPluginId: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginId else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.externalPluginId = value
+      }
+    }
+
+  override var externalUpdateId: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalUpdateId else null
+    set(value) {if (pluginDescriptor is PluginNode) {
+      pluginDescriptor.externalUpdateId = value
+    }}
+
+  override var defaultTrialPeriod: Int?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.defaultTrialPeriod else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.defaultTrialPeriod = value
+      }
+    }
+
+  override val detailsLoaded: Boolean
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.detailsLoaded() else true
+
+  override var customTrialPeriods: Map<String, Int>?
+    get() = null  // No direct getter in PluginNode
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.setCustomTrialPeriodMap(value)
+      }
+    }
 
   override fun getDescriptor(): IdeaPluginDescriptor = pluginDescriptor
 }

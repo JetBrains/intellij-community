@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
@@ -238,6 +239,30 @@ internal data class IntellijPluginMetadata(
     pluginNode.setCustomTrialPeriodMap(salesInfo?.customTrialPeriods?.associate {
       p -> p.productCode to p.trialPeriod
     })
+  }
+  
+
+  @ApiStatus.Internal
+  fun toPluginUiModel(model: PluginUiModel) {
+    if (vendor != null) {
+      model.verifiedName = vendor.name
+      model.isVerified = vendor.verified
+      model.isTrader = vendor.trader
+    }
+    
+    model.forumUrl = forumUrl
+    model.licenseUrl = licenseUrl
+    model.bugtrackerUrl = bugtrackerUrl
+    model.documentationUrl = documentationUrl
+    model.sourceCodeUrl = sourceCodeUrl
+    model.reportPluginUrl = reportPluginUrl
+    
+    screenshots?.let { model.screenShots = it }
+    
+    model.defaultTrialPeriod = salesInfo?.trialPeriod
+    model.customTrialPeriods = salesInfo?.customTrialPeriods?.associate {
+      p -> p.productCode to p.trialPeriod
+    }
   }
 }
 
