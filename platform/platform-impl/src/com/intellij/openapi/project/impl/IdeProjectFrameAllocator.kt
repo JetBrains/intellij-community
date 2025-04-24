@@ -13,6 +13,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.runOnceForProject
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -481,7 +482,7 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
       if (toolWindow != null) {
         // maybe readAction
         writeIntentReadAction {
-          toolWindow.activate(null)
+          toolWindow.activate(null, !AppMode.isRemoteDevHost())
         }
       }
     }
