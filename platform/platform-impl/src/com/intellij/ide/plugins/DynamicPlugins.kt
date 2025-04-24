@@ -1057,7 +1057,7 @@ private fun saveMemorySnapshot(pluginId: PluginId): Boolean {
       return true
     }
     else {
-      LOG.info("Snapshot analysis result: $analysisResult")
+      LOG.error("Snapshot analysis result: $analysisResult")
     }
   }
 
