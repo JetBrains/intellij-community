@@ -27,7 +27,6 @@ import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.createXmlStreamReader
 import kotlinx.coroutines.*
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -50,7 +49,6 @@ fun loadDescriptor(file: Path, loadingContext: PluginDescriptorLoadingContext, p
   return loadDescriptorFromFileOrDir(file = file, loadingContext = loadingContext, pool = pool)
 }
 
-@ApiStatus.Internal
 @JvmOverloads
 fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
@@ -260,7 +258,6 @@ fun loadDescriptorFromFileOrDirInTests(file: Path, loadingContext: PluginDescrip
   return loadDescriptorFromFileOrDir(file = file, loadingContext = loadingContext, pool = NonShareableJavaZipFilePool(), isBundled = isBundled, isEssential = true, isUnitTestMode = true)
 }
 
-@Internal
 fun loadDescriptorFromFileOrDir(
   file: Path,
   loadingContext: PluginDescriptorLoadingContext,
@@ -924,7 +921,6 @@ private fun CoroutineScope.loadCoreModules(
   return result
 }
 
-@Internal
 fun CoroutineScope.loadCorePlugin(
   platformPrefix: String,
   isInDevServerMode: Boolean,
@@ -953,7 +949,6 @@ fun CoroutineScope.loadCorePlugin(
 }
 
 // should be the only plugin in lib
-@Internal
 fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
   return platformPrefix == PlatformUtils.IDEA_PREFIX ||
          platformPrefix == PlatformUtils.WEB_PREFIX ||
@@ -1251,7 +1246,6 @@ fun loadAndInitDescriptorsFromClassPathInTest(
 }
 
 // do not use it
-@Internal
 fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: PluginDescriptorLoadingContext): List<Deferred<IdeaPluginDescriptorImpl?>> {
   return scope.loadDescriptorsFromDir(dir = dir, loadingContext = context, isBundled = false, pool = NonShareableJavaZipFilePool())
 }
