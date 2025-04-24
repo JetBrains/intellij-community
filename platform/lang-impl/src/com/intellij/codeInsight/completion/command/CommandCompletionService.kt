@@ -88,7 +88,7 @@ internal class CommandCompletionService(
       val offsetOfFullIndex = lookup.lookupOriginalStart - index
       if (index == 0 || offsetOfFullIndex < 0 ||
           offsetOfFullIndex >= editor.document.textLength ||
-          editor.document.immutableCharSequence.substring(offsetOfFullIndex, lookup.lookupOriginalStart) != fullSuffix) {
+          !editor.document.immutableCharSequence.substring(offsetOfFullIndex, editor.caretModel.offset).startsWith(fullSuffix)) {
         if (installed != true) return
         lookup.removeUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
         lookup.arranger.registerAdditionalMatcher { true }
@@ -233,10 +233,15 @@ private class CommandCompletionHighlightingListener(
   override fun uiRefreshed() {
     completionService?.addFilters(lookup, nonWrittenFiles, psiFile, editor)
     val item = lookup.currentItemOrEmpty
+    if (updateItem(item)) return
+    super.uiRefreshed()
+  }
+
+  private fun updateItem(item: LookupElement?): Boolean {
     val element = item?.`as`(CommandCompletionLookupElement::class.java)
     if (element == null) {
       clear(lookup.editor)
-      return
+      return true
     }
 
     if (element.useLookupString) {
@@ -246,7 +251,7 @@ private class CommandCompletionHighlightingListener(
       clearPromptHighlighting(lookup.editor)
     }
     updateHighlighting(lookup, element)
-    super.uiRefreshed()
+    return false
   }
 
   override fun lookupCanceled(event: LookupEvent) {
@@ -307,18 +312,8 @@ private class CommandCompletionHighlightingListener(
     if (lookup !is LookupImpl) return
     completionService?.setHint(lookup, editor, nonWrittenFiles)
     val item = event.item
-    val element = item?.`as`(CommandCompletionLookupElement::class.java)
-    if (element == null) {
-      clear(lookup.editor)
-      return
-    }
-    if (element.useLookupString) {
-      updatePromptHighlighting(lookup, element)
-    }
-    else {
-      clearPromptHighlighting(lookup.editor)
-    }
-    updateHighlighting(lookup, element)
+    if (updateItem(item)) return
+    val element = item?.`as`(CommandCompletionLookupElement::class.java) ?: return
     updateIcon(lookup, element)
     super.currentItemChanged(event)
   }

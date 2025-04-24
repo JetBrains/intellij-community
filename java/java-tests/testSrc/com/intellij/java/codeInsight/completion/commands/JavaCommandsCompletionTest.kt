@@ -747,6 +747,19 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertNotNull(lookup)
   }
 
+  fun testNoUsualCompletionAfterDoubleDot() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            void method() {
+                var l = new String("1"..to<caret>);
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.none { element -> element.lookupString.contains("toString", ignoreCase = true) })
+  }
+
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
     override fun showInformationHint(editor: Editor, component: JComponent, position: Short, onHintHidden: Runnable?) {
