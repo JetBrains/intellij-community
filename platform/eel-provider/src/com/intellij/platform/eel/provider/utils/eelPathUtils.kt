@@ -113,6 +113,23 @@ object EelPathUtils {
     }
   }
 
+  /** If [path] is `\\wsl.localhost\Ubuntu\mnt\c\Program Files`, then actual path is `C:\Program Files` */
+  @JvmStatic
+  fun getActualPath(path: Path): Path = path.run {
+    if (
+      isAbsolute &&
+      nameCount >= 2 &&
+      getName(0).toString() == "mnt" &&
+      getName(1).toString().run { length == 1 && first().isLetter() }
+    )
+      asSequence()
+        .drop(2)
+        .map(Path::toString)
+        .fold(fileSystem.getPath("${getName(1).toString().uppercase()}:\\"), Path::resolve)
+    else
+      this
+  }
+
   /**
    * ```kotlin
    * getUriLocalToEel(Path.of("\\\\wsl.localhost\\Ubuntu\\home\\user\\dir")).toString() = "file:/home/user/dir"

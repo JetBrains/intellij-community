@@ -35,6 +35,7 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -489,11 +490,20 @@ object MavenEelUtil {
   }
 
   private fun EelFileSystemApi.tryMavenRoot(path: String): MavenInSpecificPath? {
+    // we want to prevent paths like "\\wsl.localhost\Ubuntu\mnt\c\Something\something" from being leaked into the execution
+    if (!path.isActualPathString()) {
+      return null
+    }
     val home = getPath(path).asNioPath()
     if (isValidMavenHome(home)) {
       MavenLog.LOG.debug("Maven home found at $path")
       return MavenInSpecificPath(home)
     }
     return null
+  }
+
+  private fun String.isActualPathString(): Boolean {
+    val path = Path.of(this)
+    return path == getActualPath(path)
   }
 }

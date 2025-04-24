@@ -3,6 +3,7 @@ package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.execution.ijent.nio.IjentNioPosixFileAttributesWithDosAdapter
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
@@ -22,21 +23,7 @@ class IjentWslNioPath(
     require(presentablePath !is IjentWslNioPath) { "IjentWslNioPath should be a wrapper over other instances of path, namely WindowsPath or IjentNioPath" }
   }
 
-  /** If [presentablePath] is `\\wsl.localhost\Ubuntu\mnt\c\Program Files`, then [actualPath] is `C:\Program Files` */
-  val actualPath: Path = presentablePath.run {
-    if (
-      isAbsolute &&
-      nameCount >= 2 &&
-      getName(0).toString() == "mnt" &&
-      getName(1).toString().run { length == 1 && first().isLetter() }
-    )
-      asSequence()
-        .drop(2)
-        .map(Path::toString)
-        .fold(fileSystem.getPath("${getName(1).toString().uppercase()}:\\"), Path::resolve)
-    else
-      this
-  }
+  val actualPath: Path = getActualPath(presentablePath)
 
   override fun getFileSystem(): IjentWslNioFileSystem = fileSystem
 
