@@ -38,11 +38,11 @@ open class InlineCompletionLineRenderer(
 
   private var isDirty = false
 
-  var blocks: List<InlineCompletionRenderTextBlock> = formatTabs(initialBlocks)
+  var blocks: List<InlineCompletionRenderTextBlock> = format(initialBlocks)
     internal set(newBlocks) {
       ThreadingAssertions.assertEventDispatchThread()
       isDirty = true
-      field = newBlocks
+      field = format(newBlocks)
     }
 
   fun updateIfNeeded(inlay: Inlay<out InlineCompletionLineRenderer>) {
@@ -50,12 +50,15 @@ open class InlineCompletionLineRenderer(
     check(inlay.renderer === this)
     if (isDirty) {
       inlay.update()
+      isDirty = false
     }
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val result = InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
-      blocks.sumOf { block -> volumetricFactory.getVolumetric(block).widthInPixels }
+      blocks.sumOf { block ->
+        if (block.text.isEmpty()) 0.0 else volumetricFactory.getVolumetric(block).widthInPixels
+      }
     }
     return maxOf(1, accumulatedWidthToInt(result))
   }
@@ -135,7 +138,7 @@ open class InlineCompletionLineRenderer(
     }
   }
 
-  private fun formatTabs(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
+  private fun format(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
     val tabSize = editor.settings.getTabSize(editor.project)
     return blocks.filter { it.text.isNotEmpty() }.map { it.copy(text = it.text.formatTabs(tabSize)) }
   }
