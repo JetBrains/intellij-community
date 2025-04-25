@@ -90,8 +90,12 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     }
   }
 
-  override fun getAllBreakpointTypes(): List<XBreakpointType<*, *>> {
-    return listOf() // TODO: implement breakpoint types
+  override fun getAllBreakpointTypes(): List<XBreakpointTypeProxy> {
+    return FrontendXBreakpointTypesManager.getInstance(project).getBreakpointTypes()
+  }
+
+  override fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy> {
+    return FrontendXBreakpointTypesManager.getInstance(project).getLineBreakpointTypes()
   }
 
   override fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit) {

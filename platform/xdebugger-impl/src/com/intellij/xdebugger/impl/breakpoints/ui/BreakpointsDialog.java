@@ -313,6 +313,8 @@ public class BreakpointsDialog extends DialogWrapper {
     registerEditSourceAction(tree);
 
     List<AddXBreakpointAction> breakpointTypeActions = getBreakpointManager().getAllBreakpointTypes().stream()
+      // TODO IJPL-160384
+      .map(proxy -> ((XBreakpointTypeProxy.Monolith)proxy).getBreakpointType())
       .filter(XBreakpointType::isAddBreakpointButtonVisible)
       .map(AddXBreakpointAction::new)
       .toList();

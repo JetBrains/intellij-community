@@ -4,7 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
@@ -24,7 +24,8 @@ interface XBreakpointManagerProxy {
 
   fun getAllBreakpointItems(): List<BreakpointItem>
 
-  fun getAllBreakpointTypes(): List<XBreakpointType<*, *>>
+  fun getAllBreakpointTypes(): List<XBreakpointTypeProxy>
+  fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy>
 
   fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit)
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
@@ -56,8 +57,12 @@ interface XBreakpointManagerProxy {
       }
     }
 
-    override fun getAllBreakpointTypes(): List<XBreakpointType<*, *>> {
-      return XBreakpointUtil.breakpointTypes().toList()
+    override fun getAllBreakpointTypes(): List<XBreakpointTypeProxy> {
+      return XBreakpointUtil.breakpointTypes().map { it.asProxy(breakpointManager.project) }.toList()
+    }
+
+    override fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy> {
+      return XDebuggerUtil.getInstance().lineBreakpointTypes.map { it.asProxy(breakpointManager.project) }.toList()
     }
 
     override fun subscribeOnBreakpointsChanges(disposable: Disposable, listener: () -> Unit) {

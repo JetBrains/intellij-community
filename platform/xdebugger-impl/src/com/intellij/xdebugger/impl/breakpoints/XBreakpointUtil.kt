@@ -117,13 +117,13 @@ object XBreakpointUtil {
   }
 
   private fun findBreakpoint(project: Project, document: Document, offset: Int): XBreakpoint<*>? {
-    val breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager()
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val line = document.getLineNumber(offset)
     val file = FileDocumentManager.getInstance().getFile(document)
     if (file == null) {
       return null
     }
-    for (type in XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
+    for (type in breakpointManager.getLineBreakpointTypes()) {
       val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
       if (breakpoint != null) {
         return breakpoint
