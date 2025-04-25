@@ -492,7 +492,7 @@ object PluginManagerCore {
       if (pluginsToLoad != null) {
         if (!pluginsToLoad.contains(descriptor)) {
           descriptor.isMarkedForLoading = false
-          logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property")
+          logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property and won't be loaded")
         }
       }
       else if (!shouldLoadPlugins) {
@@ -508,7 +508,7 @@ object PluginManagerCore {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
           if (incompatiblePlugin.isMarkedForLoading) {
             incompatiblePlugin.isMarkedForLoading = false
-            logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}', hence disabled")
+            logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}' and won't be loaded")
           }
         }
       }
