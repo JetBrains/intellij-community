@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -52,7 +53,18 @@ public final class InspectionEngine {
     if (!tool.isAvailableForFile(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    PsiElementVisitor visitor;
+    try {
+      visitor = tool.buildVisitor(holder, isOnTheFly, session);
+    }
+    catch (Throwable e) {
+      if (Logger.shouldRethrow(e)) {
+        throw e;
+      }
+      Throwable t = PluginException.createByClass("Inspection tool '"+tool.getShortName()+"' ("+tool.getClass()+") thrown exception from its buildVisitor()", e, tool.getClass());
+      LOG.error(t);
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     //noinspection ConstantConditions
     if (visitor == null) {
       LOG.error("Tool " + tool + " (" + tool.getClass() + ") must not return null from the buildVisitor() method");
