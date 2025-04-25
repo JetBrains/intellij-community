@@ -13,7 +13,7 @@ import java.util.*;
  * Weak hash set.
  * Null keys are NOT allowed
  */
-final class WeakHashSet<T> extends AbstractSet<T> {
+final class WeakHashSet<T> extends AbstractSet<T> implements ReferenceQueueable {
   private final Set<MyRef<T>> set = new HashSet<>();
   private final ReferenceQueue<T> queue = new ReferenceQueue<>();
 
@@ -74,13 +74,16 @@ final class WeakHashSet<T> extends AbstractSet<T> {
     set.clear();
   }
 
-  private void processQueue() {
+  @Override
+  public boolean processQueue() {
+    boolean processed = false;
     MyRef<T> ref;
     //noinspection unchecked
     while ((ref = (MyRef<T>)queue.poll()) != null) {
       // could potentially remove irrelevant gced MyRef entry with the same hashCode, but it's ok,
       // because the removal of that other MyRef down the queue will lead to removal of this entry `ref` later.
-      set.remove(ref);
+      processed |= set.remove(ref);
     }
+    return processed;
   }
 }

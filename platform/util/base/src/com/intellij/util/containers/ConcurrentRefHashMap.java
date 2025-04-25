@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
  * Null keys are NOT allowed
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K> {
+abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K>, ReferenceQueueable {
   final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final ConcurrentMap<KeyReference<K>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   private final @NotNull HashingStrategy<? super K> myHashingStrategy;
@@ -54,7 +54,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   // returns true if some keys were processed
-  private boolean processQueue() {
+  @Override
+  public boolean processQueue() {
     KeyReference<K> wk;
     boolean processed = false;
     //noinspection unchecked
