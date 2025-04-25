@@ -431,33 +431,21 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
       if (expectedInfo is PathAnnotationInfo.MultiRouting) {
         // Check if the string literal is used in a context that expects @MultiRoutingFileSystemPath
-        val fixes = mutableListOf<LocalQuickFix>()
-        for (target in nonAnnotatedTargets) {
-          if (target is PsiModifierListOwner) {
-            fixes.add(AddMultiRoutingAnnotationFix())
-          }
-        }
-        if (fixes.isNotEmpty()) {
+        if (nonAnnotatedTargets.isNotEmpty()) {
           holder.registerProblem(
             sourcePsi,
             DevKitBundle.message("inspections.message.multiroutingfilesystempath.expected"),
-            *fixes.toTypedArray()
+            AddMultiRoutingAnnotationFix()
           )
         }
       }
       else if (expectedInfo is PathAnnotationInfo.Native) {
         // Check if the string literal is used in a context that expects @NativePath
-        val fixes = mutableListOf<LocalQuickFix>()
-        for (target in nonAnnotatedTargets) {
-          if (target is PsiModifierListOwner) {
-            fixes.add(AddNativePathAnnotationFix())
-          }
-        }
-        if (fixes.isNotEmpty()) {
+        if (nonAnnotatedTargets.isNotEmpty()) {
           holder.registerProblem(
             sourcePsi,
             DevKitBundle.message("inspections.message.nativepath.expected"),
-            *fixes.toTypedArray()
+            AddNativePathAnnotationFix()
           )
         }
       }
