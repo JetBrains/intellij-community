@@ -6,6 +6,7 @@ import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -68,8 +69,20 @@ class AutoImportProjectTracker(
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", MERGING_TIME_SPAN_MS.toInt(), true, null, serviceDisposable)
-  private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
+
+  private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    /* name = */ "AutoImportProjectTracker.backgroundExecutor",
+    /* maxThreads = */ 1
+  )
+
+  private val dispatcher = MergingUpdateQueue(
+    name = "AutoImportProjectTracker.dispatcher",
+    mergingTimeSpan = MERGING_TIME_SPAN_MS.toInt(),
+    isActive = true,
+    modalityStateComponent = null,
+    parent = serviceDisposable,
+    executeInDispatchThread = false
+  )
 
   private fun createProjectChangesListener() =
     object : ProjectBatchFileChangeListener(project) {
@@ -201,9 +214,12 @@ class AutoImportProjectTracker(
 
   private fun reloadProject(projectsToReload: List<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>) {
     LOG.debug("Reload projects")
-    for ((projectAware, context) in projectsToReload) {
-      LOG.debug("${projectAware.projectId}: reload project")
-      projectAware.reloadProject(context)
+
+    invokeAndWaitIfNeeded { // needed for backward compatibility
+      for ((projectAware, context) in projectsToReload) {
+        LOG.debug("${projectAware.projectId}: reload project")
+        projectAware.reloadProject(context)
+      }
     }
   }
 

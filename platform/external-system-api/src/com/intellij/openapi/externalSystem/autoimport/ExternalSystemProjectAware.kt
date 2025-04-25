@@ -20,6 +20,12 @@ interface ExternalSystemProjectAware {
 
   fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable)
 
+  /**
+   * Schedules build tool's project reload.
+   *
+   * Note: Build tool sync shouldn't block current thread,
+   * because it is used to dispatch all other reloads in the IDE project.
+   */
   fun reloadProject(context: ExternalSystemProjectReloadContext)
 
   /**
