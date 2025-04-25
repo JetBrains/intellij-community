@@ -10,7 +10,7 @@
 
   <xs:simpleType name="pubIdChars">
     <xs:restriction base="xs:string">
-      <xs:pattern value="[a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_% ]*"/>
+      <xs:pattern value="[a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_% \r\n]*"/>
     </xs:restriction>
   </xs:simpleType>
 
