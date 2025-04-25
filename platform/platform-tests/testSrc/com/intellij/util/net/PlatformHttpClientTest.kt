@@ -112,9 +112,10 @@ class PlatformHttpClientTest {
     val request = PlatformHttpClient.requestBuilder(URI(server.url))
       .header("Accept-Encoding", "gzip")
       .build()
-    val response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofByteArray()))
-    val bytes = response.body()
-    assertThat(bytes).startsWith(0x1f, 0x8b) // GZIP magic
+    val rawResponse = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofByteArray()))
+    assertThat(rawResponse.body()).startsWith(0x1f, 0x8b) // GZIP magic
+    val decodedResponse = PlatformHttpClient.checkResponse(client.send(request, PlatformHttpClient.gzipStringBodyHandler()))
+    assertThat(decodedResponse.body()).isEqualTo(text)
   }
 
   @Test fun tuning() {

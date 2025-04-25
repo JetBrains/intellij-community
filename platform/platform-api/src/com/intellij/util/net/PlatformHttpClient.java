@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -23,6 +24,8 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
@@ -31,10 +34,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
+import java.util.concurrent.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Collection of helpers for working with {@link HttpClient}.
@@ -50,7 +51,7 @@ import java.util.concurrent.Flow;
  * Notable differences with {@link HttpRequests}:
  * <ul>
  *   <li>No default read timeout. Clients should use {@link HttpClient#sendAsync} instead.</li>
- *   <li>No transparent GZIP handling. Clients should decode raw bytes with {@link java.util.zip.GZIPInputStream}.</li>
+ *   <li>No transparent GZIP handling. Clients should decode raw bytes with {@link GZIPInputStream} or use {@link #gzipStringBodyHandler}.</li>
  * </ul>
  *
  * @since 2025.2
@@ -121,6 +122,66 @@ public final class PlatformHttpClient {
       message = IdeCoreBundle.message("error.connection.failed.status", response.statusCode());
     }
     return message;
+  }
+
+  public static HttpResponse.BodyHandler<String> gzipStringBodyHandler() {
+    return responseInfo -> {
+      var isGzip = responseInfo.headers().firstValue("Content-Encoding").map(v -> "gzip".equalsIgnoreCase(v)).orElse(false);
+      var charset = findCharset(responseInfo.headers());
+
+      if (!isGzip) {
+        return HttpResponse.BodySubscribers.ofString(charset);
+      }
+
+      return new HttpResponse.BodySubscriber<>() {
+        private final HttpResponse.BodySubscriber<byte[]> delegate = HttpResponse.BodySubscribers.ofByteArray();
+
+        @Override
+        public void onSubscribe(Flow.Subscription subscription) {
+          delegate.onSubscribe(subscription);
+        }
+
+        @Override
+        public void onNext(List<ByteBuffer> item) {
+          delegate.onNext(item);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+          delegate.onError(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+          delegate.onComplete();
+        }
+
+        @Override
+        public CompletionStage<String> getBody() {
+          return delegate.getBody().thenApply(bytes -> {
+            try (var stream = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
+              return new String(stream.readAllBytes(), charset);
+            }
+            catch (IOException e) {
+              throw new CompletionException(e);
+            }
+          });
+        }
+      };
+    };
+  }
+
+  private static Charset findCharset(HttpHeaders headers) {
+    return headers.firstValue("Content-Type").map(v -> {
+      int p = v.indexOf("charset=");
+      if (p > 0) {
+        try {
+          return Charset.forName(v.substring(p + 8).trim());
+        }
+        catch (Exception ignored) { }
+      }
+      return null;
+    }).orElse(StandardCharsets.UTF_8);
   }
 
   //<editor-fold desc="Delegating HTTP client">
