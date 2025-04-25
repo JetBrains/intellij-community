@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit
 
 import com.intellij.codeInsight.navigation.LOG
@@ -26,6 +26,7 @@ import git4idea.repo.GitRepositoryStateChangeListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.atomic.AtomicReference
 
 internal class GitMergeCommitMessagePolicy: DefaultCommitMessagePolicy {
   override fun enabled(project: Project): Boolean = getSingleGitRepository(project) != null
@@ -50,9 +51,9 @@ internal class GitMergeCommitMessageHolder(
   val coroutineScope: CoroutineScope,
 ) : AsyncVfsEventsListener, GitRepositoryStateChangeListener {
 
-  private var currentMessage: String? = null
+  private var currentMessage: AtomicReference<String?> = AtomicReference(null)
 
-  fun getMessage(): GitMergeCommitMessage? = currentMessage?.let { GitMergeCommitMessage(it) }
+  fun getMessage(): GitMergeCommitMessage? = currentMessage.get()?.let { GitMergeCommitMessage(it) }
 
   fun initListeners() {
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
@@ -74,7 +75,7 @@ internal class GitMergeCommitMessageHolder(
   override suspend fun filesChanged(events: List<VFileEvent>) {
     val repository = getSingleGitRepository(project)
     if (repository == null) {
-      currentMessage = null
+      currentMessage.set(null)
       return
     }
 
@@ -99,8 +100,8 @@ internal class GitMergeCommitMessageHolder(
       }
     }
 
-    if (newMessage != currentMessage) {
-      currentMessage = newMessage
+    val oldValue = currentMessage.getAndSet(newMessage)
+    if (newMessage != oldValue) {
       project.messageBus.syncPublisher(GitMergeCommitMessageChangedListener.TOPIC).messageUpdated(newMessage)
     }
   }
