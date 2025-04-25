@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -168,7 +169,7 @@ public class InvertedFilenameHashBasedIndexTest {
     for (int i = 0; i < count; i++) {
       int fileId;
       do {
-        fileId = rnd.nextInt(Integer.MAX_VALUE);
+        fileId = rnd.nextInt(FSRecords.MIN_REGULAR_FILE_ID, Integer.MAX_VALUE);
       }
       while (fileIdToName.containsKey(fileId));
 
