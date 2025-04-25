@@ -69,16 +69,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testImportExceptImportError() {
-    doTest();
-  }
-
   public void testMro() {  // PY-3989
     doTest();
-  }
-
-  public void testConditionalImports() { // PY-983
-    doMultiFileTest("a.py");
   }
 
   public void testHasattrGuard() { // PY-2309
@@ -115,10 +107,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   public void testFromImportToContainingFile() {  // PY-4371
-    doMultiFileTest("p1/m1.py");
-  }
-
-  public void testFromImportToContainingFile2() {  // PY-5945
     doMultiFileTest("p1/m1.py");
   }
 
@@ -167,11 +155,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-7022
   public void testReturnedQualifiedReferenceUnionType() {
     doMultiFileTest("a.py");
-  }
-
-  // PY-2668
-  public void testUnusedImportsInPackage() {
-    doMultiFileTest("p1/__init__.py");
   }
 
   // PY-7032
@@ -358,11 +341,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
-  // PY-6955
-  public void testUnusedUnresolvedPackageImported() {
-    doTest();
-  }
-
   // PY-13418
   public void testOneUnsedOneMarked() {
     doMultiFileTest();
@@ -376,16 +354,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-9342, PY-13791
   public void testMethodSpecialAttributes() {
     doTest();
-  }
-
-  // PY-11472
-  public void testUnusedImportBeforeStarImport() {
-    doMultiFileTest();
-  }
-
-  // PY-13585
-  public void testUnusedImportBeforeStarDunderAll() {
-    doMultiFileTest();
   }
 
   // PY-12738
@@ -535,16 +503,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-18521
-  public void testFunctionTypeCommentUsesImportsFromTyping() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
-  }
-
-  // PY-22620
-  public void testTupleTypeCommentsUseImportsFromTyping() {
-    doTest();
-  }
-
   // PY-13734
   public void testDunderClass() {
     doTest();
@@ -614,10 +572,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-25695
   public void testDynamicDunderAll() {
-    doMultiFileTest();
-  }
-
-  public void testDunderAll() {
     doMultiFileTest();
   }
 
@@ -931,11 +885,5 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyUnresolvedReferencesInspection.class;
-  }
-
-  @Override
-  protected void configureInspection() {
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class, PyUnusedImportsInspection.class);
-    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 }
