@@ -574,7 +574,7 @@ public class GeneralCommandLine implements UserDataHolder {
     else {
       ptyOptions = null;
     }
-    return startProcessBlockingUsingEel(eelApi.getExec(), processBuilder, ptyOptions);
+    return startProcessBlockingUsingEel(eelApi.getExec(), processBuilder, ptyOptions, isPassParentEnvironment());
   }
 
   /** @deprecated please override {@link #createProcess(ProcessBuilder)} instead. */
