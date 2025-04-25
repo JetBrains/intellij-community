@@ -73,7 +73,7 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
     e.presentation.isEnabled = status?.hasChanges == true
     e.presentation.isVisible = Registry.`is`("debugger.hotswap.floating.toolbar")
     if (e.place != ActionPlaces.MAIN_MENU) {
-      e.presentation.isVisible = e.presentation.isVisible && status != null
+      e.presentation.isVisible = e.presentation.isVisible && status != null && status.status != HotSwapVisibleStatus.SESSION_COMPLETED
     }
     e.presentation.icon = hotSwapIcon
   }
