@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.feedback
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
@@ -14,29 +12,15 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
 
-internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<BlockTerminalUsageData>(project, forTest) {
-  override val myFeedbackReportId: String = "new_terminal"
+internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<ReworkedTerminalUsageData>(project, forTest) {
+  override val myFeedbackReportId: String = "reworked_terminal"
 
   override val myTitle: String = TerminalBundle.message("feedback.dialog.title")
 
-  override val mySystemInfoData: BlockTerminalUsageData by lazy {
-    val usageStorage = TerminalUsageLocalStorage.getInstance()
-    val rawMostUsedShell = usageStorage.mostUsedShell
-    val mostUsedShell = if (rawMostUsedShell == null && forTest) {
-      thisLogger().warn("No information about most used shell, because no commands were executed in the terminal")
-      "none"
-    }
-    else {
-      // It is guaranteed to be not null if it is not a test because of the check in BlockTerminalSurveyConfig.checkExtraConditionSatisfied
-      rawMostUsedShell!!
-    }
-
-    BlockTerminalUsageData(
-      mostUsedShell = mostUsedShell,
-      executedCommandsNumber = usageStorage.executedCommandsNumber,
+  override val mySystemInfoData: ReworkedTerminalUsageData by lazy {
+    ReworkedTerminalUsageData(
       feedbackMoment = getFeedbackMoment(project),
       systemInfo = CommonFeedbackSystemData.getCurrentData()
     )
@@ -45,12 +29,6 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
   @Suppress("HardCodedStringLiteral")
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
     showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
-      row(TerminalBundle.message("feedback.system.info.shell")) {
-        label(mySystemInfoData.mostUsedShell)
-      }
-      row(TerminalBundle.message("feedback.system.info.commands.number")) {
-        label(mySystemInfoData.executedCommandsNumber.toString())
-      }
       row(TerminalBundle.message("feedback.system.info.moment")) {
         label(mySystemInfoData.feedbackMoment.toString())
       }
@@ -79,9 +57,7 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
 }
 
 @Serializable
-internal data class BlockTerminalUsageData(
-  @NlsSafe val mostUsedShell: String,
-  val executedCommandsNumber: Int,
+internal data class ReworkedTerminalUsageData(
   val feedbackMoment: TerminalFeedbackMoment,
   val systemInfo: CommonFeedbackSystemData
 ) : SystemDataJsonSerializable {
@@ -90,10 +66,6 @@ internal data class BlockTerminalUsageData(
   }
 
   override fun toString(): String = buildString {
-    appendLine(TerminalBundle.message("feedback.system.info.shell"))
-    appendLine(mostUsedShell)
-    appendLine(TerminalBundle.message("feedback.system.info.commands.number"))
-    appendLine(executedCommandsNumber)
     appendLine(TerminalBundle.message("feedback.system.info.moment"))
     appendLine(feedbackMoment.toString())
     append(systemInfo.toString())
