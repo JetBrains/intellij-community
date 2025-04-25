@@ -459,7 +459,7 @@ object PluginManagerCore {
       return result
     }
 
-  private fun disableIncompatiblePlugins(
+  private fun selectPluginsForLoading(
     descriptors: Collection<IdeaPluginDescriptorImpl>,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     errors: MutableMap<PluginId, PluginNonLoadReason>,
@@ -637,7 +637,7 @@ object PluginManagerCore {
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
 
     val pluginSetBuilder = PluginSetBuilder(loadingResult.enabledPluginsById.values)
-    disableIncompatiblePlugins(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = initContext.essentialPlugins)
+    selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = initContext.essentialPlugins)
     pluginSetBuilder.checkPluginCycles(globalErrors)
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
