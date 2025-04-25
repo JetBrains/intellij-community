@@ -1073,18 +1073,6 @@ object PluginManagerCore {
   //</editor-fold>
 }
 
-@Synchronized
-@ApiStatus.Internal
-fun tryReadPluginIdsFromFile(path: Path, log: Logger): Set<PluginId> {
-  try {
-    return PluginIdsFile.read(path)
-  }
-  catch (e: IOException) {
-    log.warn("Unable to read plugin id list from: $path", e)
-    return emptySet()
-  }
-}
-
 @ApiStatus.Internal
 fun getPluginDistDirByClass(aClass: Class<*>): Path? {
   val pluginDir = (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.pluginPath

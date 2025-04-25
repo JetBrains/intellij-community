@@ -40,7 +40,7 @@ class ExpiredPluginsState : PluginEnabler {
         synchronized(ExpiredPluginsState::class.java) {
           var result = expiredPluginIds_
           if (result == null) {
-            result = LinkedHashSet(tryReadPluginIdsFromFile(defaultFilePath, logger))
+            result = LinkedHashSet(PluginIdsFile.readSafe(defaultFilePath, logger))
             expiredPluginIds_ = result
           }
           return result

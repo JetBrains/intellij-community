@@ -62,7 +62,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       val requiredPlugins = getRequiredPlugins()
       var updateFile = false
       try {
-        val pluginIdsFromFile = tryReadPluginIdsFromFile(path, logger)
+        val pluginIdsFromFile = PluginIdsFile.readSafe(path, logger)
         val suppressedPluginIds = splitByComma("idea.suppressed.plugins.id")
         val suppressedPluginsSet = getSuppressedPluginsSet()
 
