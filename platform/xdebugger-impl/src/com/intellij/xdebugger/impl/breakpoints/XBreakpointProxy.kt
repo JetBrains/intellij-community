@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.editor.markup.GutterDraggableObject
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
@@ -80,6 +81,8 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun updateIcon()
 
   fun dispose()
+
+  fun createGutterIconRenderer(): GutterIconRenderer?
 
   fun createBreakpointDraggableObject(): GutterDraggableObject?
 
@@ -211,6 +214,10 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun dispose() {
       breakpoint.dispose()
+    }
+
+    override fun createGutterIconRenderer(): GutterIconRenderer? {
+      return breakpoint.createGutterIconRenderer()
     }
 
     override fun equals(other: Any?): Boolean {

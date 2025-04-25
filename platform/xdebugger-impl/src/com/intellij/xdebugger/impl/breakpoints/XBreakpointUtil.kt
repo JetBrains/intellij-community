@@ -13,6 +13,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerManager
@@ -72,8 +74,20 @@ object XBreakpointUtil {
   fun breakpointTypes(): StreamEx<XBreakpointType<*, *>> =
     StreamEx.of(XBreakpointType.EXTENSION_POINT_NAME.extensionList)
 
+  @ApiStatus.Obsolete
   @JvmStatic
   fun findSelectedBreakpoint(project: Project, editor: Editor): Pair<GutterIconRenderer?, XBreakpoint<*>?> {
+    val pair = findSelectedBreakpointProxy(project, editor)
+    val (renderer, breakpoint) = pair
+    if (breakpoint is XBreakpointProxy.Monolith) {
+      return Pair.create(renderer, breakpoint.breakpoint)
+    }
+    return Pair.create(null, null)
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun findSelectedBreakpointProxy(project: Project, editor: Editor): Pair<GutterIconRenderer?, XBreakpointProxy?> {
     var offset = editor.caretModel.offset
     val editorDocument = editor.document
 
@@ -83,20 +97,20 @@ object XBreakpointUtil {
     }
 
     val breakpoint = findBreakpoint(project, editorDocument, offset)
-    if (breakpoint != null && breakpoint is XLineBreakpointProxy.Monolith) {
-      return Pair.create(getBreakpointGutterIconRenderer(breakpoint.breakpoint), breakpoint.breakpoint)
+    if (breakpoint != null) {
+      return Pair.create(breakpoint.createGutterIconRenderer(), breakpoint)
     }
 
-    val session = XDebuggerManager.getInstance(project).currentSession as XDebugSessionImpl?
+    val session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project)
     if (session != null) {
-      val breakpoint = session.activeNonLineBreakpoint
+      val breakpoint = session.getActiveNonLineBreakpoint()
       if (breakpoint != null) {
-        val position = session.currentPosition
+        val position = session.getCurrentPosition()
         if (position != null) {
           if (position.file == FileDocumentManager.getInstance().getFile(editorDocument) &&
               editorDocument.getLineNumber(offset) == position.line
           ) {
-            return Pair.create((breakpoint as XBreakpointBase<*, *, *>).createGutterIconRenderer(), breakpoint)
+            return Pair.create(breakpoint.createGutterIconRenderer(), breakpoint)
           }
         }
       }

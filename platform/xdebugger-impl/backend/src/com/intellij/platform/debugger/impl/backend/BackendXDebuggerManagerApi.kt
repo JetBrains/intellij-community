@@ -15,6 +15,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
@@ -27,6 +28,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
@@ -64,6 +66,10 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     else {
       null
     }
+    val activeBreakpointFlow = currentSession.activeNonLineBreakpointFlow.map {
+      if (it !is XBreakpointBase<*, *, *>) return@map null
+      it.breakpointId
+    }.toRpc()
     return XDebugSessionDto(
       currentSession.id,
       XDebuggerEditorsProviderDto(fileTypeId, editorsProvider),
@@ -76,6 +82,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       createProcessHandlerDto(currentSession.coroutineScope, currentSession.debugProcess.processHandler),
       debugProcess.smartStepIntoHandler?.let { XSmartStepIntoHandlerDto(it.popupTitle) },
       currentSession.debugProcess.isLibraryFrameFilterSupported,
+      activeBreakpointFlow,
     )
   }
 

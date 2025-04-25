@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.markup.GutterDraggableObject
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
@@ -254,6 +255,11 @@ internal open class FrontendXBreakpointProxy(
 
   override fun updateIcon() {
     // TODO IJPL-185111 does nothing since we calculate icon for each getIcon request
+  }
+
+  override fun createGutterIconRenderer(): GutterIconRenderer? {
+    // TODO IJPL-185111 implement create gutter icon renderer
+    return null
   }
 
   private fun XBreakpointCustomPresentationDto.toPresentation(): CustomizedBreakpointPresentation {

@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
-import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,7 +24,6 @@ interface XLineBreakpointProxy : XBreakpointProxy {
   fun setHighlighter(rangeMarker: RangeMarker)
   fun getHighlightRange(): TextRange?
   fun getHighlighter(): RangeHighlighter?
-  fun createGutterIconRenderer(): GutterIconRenderer?
 
   @RequiresBackgroundThread
   fun doUpdateUI(callOnUpdate: () -> Unit = {})
@@ -73,10 +71,6 @@ interface XLineBreakpointProxy : XBreakpointProxy {
 
     override fun getHighlighter(): RangeHighlighter? {
       return breakpoint.highlighter
-    }
-
-    override fun createGutterIconRenderer(): GutterIconRenderer? {
-      return breakpoint.createGutterIconRenderer()
     }
 
     override fun doUpdateUI(callOnUpdate: () -> Unit) {

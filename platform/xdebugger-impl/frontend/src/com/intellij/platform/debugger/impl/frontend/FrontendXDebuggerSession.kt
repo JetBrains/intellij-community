@@ -80,6 +80,16 @@ class FrontendXDebuggerSession private constructor(
   private val suspendContext = MutableStateFlow<FrontendXSuspendContext?>(null)
   private val currentExecutionStack = MutableStateFlow<FrontendXExecutionStack?>(null)
   private val currentStackFrame = MutableStateFlow<FrontendXStackFrame?>(null)
+  private val activeNonLineBreakpoint: StateFlow<XBreakpointProxy?> = channelFlow {
+    sessionDto.activeNonLineBreakpointIdFlow.toFlow().collectLatest { breakpointId ->
+      if (breakpointId == null) {
+        send(null)
+        return@collectLatest
+      }
+      val breakpoint = FrontendXDebuggerManager.getInstance(project).breakpointsManager.getBreakpointById(breakpointId)
+      send(breakpoint)
+    }
+  }.stateIn(cs, SharingStarted.Eagerly, null)
 
   // TODO Actually session could have a global evaluator, see
   //  com.intellij.xdebugger.XDebugProcess.getEvaluator overrides
@@ -369,6 +379,10 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun getDropFrameHandler(): XDropFrameHandler? = dropFrameHandler
+
+  override fun getActiveNonLineBreakpoint(): XBreakpointProxy? {
+    return activeNonLineBreakpoint.value
+  }
 
   companion object {
     private val LOG = thisLogger()

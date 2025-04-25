@@ -795,6 +795,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   val activeNonLineBreakpoint: XBreakpoint<*>? get() = myActiveNonLineBreakpointFlow.value
+  val activeNonLineBreakpointFlow: StateFlow<XBreakpoint<*>?> get() = myActiveNonLineBreakpointFlow
 
   fun checkActiveNonLineBreakpointOnRemoval(removedBreakpoint: XBreakpoint<*>) {
     val (breakpoint, _) = myActiveNonLineBreakpointAndPositionFlow.value ?: return

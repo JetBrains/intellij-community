@@ -76,6 +76,10 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     }
   }
 
+  fun getBreakpointById(breakpointId: XBreakpointId): XBreakpointProxy? {
+    return breakpoints[breakpointId]
+  }
+
   override fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState) {
     _breakpointsDialogSettings = settings
   }

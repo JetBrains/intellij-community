@@ -5,9 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -29,7 +27,7 @@ public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHa
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return false;
-    final Pair<GutterIconRenderer, XBreakpoint<?>> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
+    var pair = XBreakpointUtil.findSelectedBreakpointProxy(project, editor);
     return pair.first != null;
   }
 }

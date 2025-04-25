@@ -24,7 +24,9 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.asProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
@@ -90,6 +92,7 @@ interface XDebugSessionProxy {
   fun muteBreakpoints(value: Boolean)
   fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean
   fun getDropFrameHandler(): XDropFrameHandler?
+  fun getActiveNonLineBreakpoint(): XBreakpointProxy?
 
   companion object {
     @JvmField
@@ -250,6 +253,12 @@ interface XDebugSessionProxy {
 
     override fun getDropFrameHandler(): XDropFrameHandler? {
       return session.debugProcess.dropFrameHandler
+    }
+
+    override fun getActiveNonLineBreakpoint(): XBreakpointProxy? {
+      val breakpoint = (session as XDebugSessionImpl).activeNonLineBreakpoint ?: return null
+      if (breakpoint !is XBreakpointBase<*, *, *>) return null
+      return breakpoint.asProxy()
     }
   }
 }

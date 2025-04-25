@@ -13,9 +13,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewBreakpointsAction extends DumbAwareAction {
@@ -27,19 +27,19 @@ public class ViewBreakpointsAction extends DumbAwareAction {
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
-    XBreakpoint<?> initialBreakpoint;
+    XBreakpointId initialBreakpointId = null;
     if (editor != null) {
-      initialBreakpoint = XBreakpointUtil.findSelectedBreakpoint(project, editor).second;
-    }
-    else {
-      initialBreakpoint = null;
+      var breakpointProxy = XBreakpointUtil.findSelectedBreakpointProxy(project, editor).second;
+      if (breakpointProxy != null) {
+        initialBreakpointId = breakpointProxy.getId();
+      }
     }
 
-    BreakpointsDialogFactory.getInstance(project).showDialog(initialBreakpoint);
+    BreakpointsDialogFactory.getInstance(project).showDialog(initialBreakpointId);
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event){
+  public void update(@NotNull AnActionEvent event) {
     event.getPresentation().setEnabled(event.getProject() != null);
   }
 
