@@ -739,7 +739,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
    * Quick fix to add @LocalPath annotation.
    */
   private class AddLocalPathAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = "Add @LocalPath annotation"
+    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.localpath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
