@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
@@ -380,8 +381,9 @@ class DumbServiceImplTest {
 
   @Test
   fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() = runBlocking {
+    val serviceScope = childScope("DumbServiceImpl")
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, serviceScope)
 
     val queuedTaskInvoked = AtomicBoolean(false)
     val dumbTaskFinished = CountDownLatch(1)
@@ -413,6 +415,7 @@ class DumbServiceImplTest {
     dumbTaskFinished.awaitOrThrow(5, "DumbModeTask didn't dispose in 5 seconds")
 
     assertFalse(queuedTaskInvoked.get())
+    serviceScope.cancel()
   }
 
   @Test
