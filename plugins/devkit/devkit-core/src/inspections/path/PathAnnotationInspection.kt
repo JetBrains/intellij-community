@@ -484,13 +484,8 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       }
 
       // Check if the expression is passed to a Path constructor or factory method
-      if (isPassedToMultiRoutingMethod(expression, nonAnnotatedTargets)) {
+      if (isPassedToMultiRoutingMethod(expression)) {
         return PathAnnotationInfo.MultiRouting
-      }
-
-      // Check if the expression is passed to a method that expects a native path
-      if (isPassedToNativePathMethod(expression, nonAnnotatedTargets)) {
-        return PathAnnotationInfo.Native
       }
 
       return PathAnnotationInfo.Unspecified
@@ -535,10 +530,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       return false
     }
 
-    private fun isPassedToMultiRoutingMethod(
-      expression: UExpression,
-      nonAnnotatedTargets: MutableSet<PsiModifierListOwner>,
-    ): Boolean {
+    private fun isPassedToMultiRoutingMethod(expression: UExpression): Boolean {
       // Check if the expression is passed to a Path constructor or factory method
       val parent = expression.uastParent
       if (parent is UCallExpression) {
@@ -547,32 +539,6 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           return true
         }
       }
-      return false
-    }
-
-    private fun isPassedToPathResolveMethod(
-      expression: UExpression,
-    ): Boolean {
-      // Check if the expression is passed to Path.resolve()
-      val parent = expression.uastParent
-      if (parent is UCallExpression) {
-        val method = parent.resolve() ?: return false
-        if (isPathResolveMethod(method)) {
-          return true
-        }
-      }
-      return false
-    }
-
-    private fun isPassedToNativePathMethod(
-      expression: UExpression,
-      nonAnnotatedTargets: MutableSet<PsiModifierListOwner>,
-    ): Boolean {
-      // Check if the expression is passed to a method that expects a native path
-      // This would be specific to your codebase, but could include methods like:
-      // - Docker container path methods
-      // - WSL path methods
-      // For now, we'll just return false as a placeholder
       return false
     }
 
@@ -753,26 +719,6 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     }
   }
 
-  /**
-   * Quick fix to add @LocalPath annotation.
-   */
-  private class AddLocalPathAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.localpath.annotation")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val element = descriptor.psiElement
-      if (element is PsiModifierListOwner) {
-        val annotationOwner = element.modifierList
-        if (annotationOwner != null) {
-          AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
-            LocalPath::class.java.name,
-            emptyArray(),
-            annotationOwner
-          )
-        }
-      }
-    }
-  }
 }
 
 private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
