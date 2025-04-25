@@ -46,6 +46,12 @@ import java.util.concurrent.Flow;
  *   var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
  *   var content = response.body();
  * </pre>
+ * <p>
+ * Notable differences with {@link HttpRequests}:
+ * <ul>
+ *   <li>No default read timeout. Clients should use {@link HttpClient#sendAsync} instead.</li>
+ *   <li>No transparent GZIP handling. Clients should decode raw bytes with {@link java.util.zip.GZIPInputStream}.</li>
+ * </ul>
  *
  * @since 2025.2
  */
