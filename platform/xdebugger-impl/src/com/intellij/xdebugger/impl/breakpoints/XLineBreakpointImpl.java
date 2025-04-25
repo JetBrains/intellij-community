@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -43,15 +42,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myType = type;
   }
 
-  // TODO IJPL-185111
+  // TODO IJPL-185111 use rpc backend -> frontend flow updates
   public void updateUI() {
-    myVisualRepresentation.updateUI();
-  }
-
-  // TODO IJPL-185111
-  @RequiresBackgroundThread
-  void doUpdateUI(@NotNull Runnable callOnUpdate) {
-    myVisualRepresentation.doUpdateUI(callOnUpdate);
+    getBreakpointManager().getLineBreakpointManager().updateUI(getBreakpointId());
   }
 
   public @Nullable VirtualFile getFile() {
