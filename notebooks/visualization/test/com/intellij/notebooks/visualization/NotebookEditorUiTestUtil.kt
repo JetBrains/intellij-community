@@ -53,16 +53,6 @@ data class ExtractedInfo(val text: String, val carets: List<CaretWithSelection>,
   }
 }
 
-fun extractTextAndCaretOffset(text: String): Pair<String, Int?> {
-  val caretOffset = text.indexOf(caretToken)
-  if (caretOffset != -1) {
-    return Pair(text.substring(0, caretOffset) + text.substring(caretOffset + caretToken.length), caretOffset)
-  }
-  else {
-    return Pair(text, null)
-  }
-}
-
 fun extractCaretsAndFoldings(text: String): ExtractedInfo {
   val tagTokens = listOf(caretToken, primaryCaretToken, selectionBegin, selectionEnd, foldBegin, foldEnd)
   val (textWithoutTags, tags) = extractCarets(text, findAllTags(text, tagTokens))
