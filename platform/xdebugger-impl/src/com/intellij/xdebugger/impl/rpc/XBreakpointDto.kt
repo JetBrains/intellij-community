@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -149,7 +150,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       isConditionEnabled = isConditionEnabled,
       conditionExpressionInt = conditionExpressionInt?.toRpc(),
       generalDescription = XBreakpointUtil.getGeneralDescription(breakpoint),
-      tooltipDescription = description,
+      tooltipDescription = readAction { description },
       isLogExpressionEnabled = isLogExpressionEnabled,
       logExpression = logExpression,
       logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
