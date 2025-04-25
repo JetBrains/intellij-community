@@ -36,7 +36,9 @@ class Git(private val dir: Path) {
   }
 
   fun currentCommitShortHash(): String {
-    val lines = execute("git", "rev-parse", "--short=13", "HEAD")
+    val repoDirectory = dir.toAbsolutePath().toString()
+
+    val lines = execute("git", "-c", "safe.directory=${repoDirectory}", "rev-parse", "--short=13", "HEAD")
     if (lines.size != 1) {
       throw IllegalStateException("Single line output is expected but got '$lines'")
     }
