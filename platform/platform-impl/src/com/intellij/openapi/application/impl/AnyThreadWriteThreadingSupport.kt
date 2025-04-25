@@ -536,7 +536,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @ApiStatus.Internal
   override fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener) {
     if (myWriteIntentActionListener != null)
-      error("WriteActionListener already registered")
+      error("WriteIntentReadActionListener already registered")
     myWriteIntentActionListener = listener
   }
 
@@ -556,21 +556,21 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @ApiStatus.Internal
   override fun setLockAcquisitionListener(listener: LockAcquisitionListener) {
     if (myLockAcquisitionListener != null)
-      error("WriteActionListener already registered")
+      error("LockAcquisitionListener already registered")
     myLockAcquisitionListener = listener
   }
 
   @ApiStatus.Internal
   override fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
     if (myWriteLockReacquisitionListener != null)
-      error("SuspendingWriteActionListener already registered")
+      error("WriteLockReacquisitionListener already registered")
     myWriteLockReacquisitionListener = listener
   }
 
   @ApiStatus.Internal
   override fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener) {
     if (myWriteLockReacquisitionListener != listener)
-      error("SuspendingWriteActionListener is not registered")
+      error("WriteLockReacquisitionListener is not registered")
     myWriteLockReacquisitionListener = null
   }
 
@@ -591,7 +591,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @ApiStatus.Internal
   override fun removeLockAcquisitionListener(listener: LockAcquisitionListener) {
     if (myLockAcquisitionListener != listener)
-      error("WriteActionListener is not registered")
+      error("LockAcquisitionListener is not registered")
     myLockAcquisitionListener = null
   }
 
