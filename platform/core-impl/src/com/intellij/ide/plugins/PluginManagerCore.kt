@@ -465,32 +465,32 @@ object PluginManagerCore {
     errors: MutableMap<PluginId, PluginNonLoadReason>,
     essentialPlugins: Set<PluginId>
   ) {
-    val selectedIds = System.getProperty("idea.load.plugins.id")
+    val idsToLoad = System.getProperty("idea.load.plugins.id")
     val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
 
-    val explicitlyEnabled = if (selectedIds == null) null else {
-      val rootPluginsToEnable: HashSet<PluginId> = selectedIds.split(',')
+    val pluginsToLoad = if (idsToLoad == null) null else {
+      val rootPluginsToLoad: HashSet<PluginId> = idsToLoad.split(',')
         .filter { it.isNotEmpty() }
         .mapTo(HashSet(), PluginId::getId)
-      rootPluginsToEnable.addAll(essentialPlugins)
-      val pluginsToEnable = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToEnable.size)
-      for (id in rootPluginsToEnable) {
+      rootPluginsToLoad.addAll(essentialPlugins)
+      val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
+      for (id in rootPluginsToLoad) {
         val descriptor = idMap[id] ?: continue
-        pluginsToEnable.add(descriptor)
+        pluginsToLoad.add(descriptor)
         processAllNonOptionalDependencies(descriptor, idMap) { dependency ->
-          pluginsToEnable.add(dependency)
+          pluginsToLoad.add(dependency)
           FileVisitResult.CONTINUE
         }
       }
-      pluginsToEnable
+      pluginsToLoad
     }
 
     for (descriptor in descriptors) {
       if (descriptor.pluginId == CORE_ID) {
         continue
       }
-      if (explicitlyEnabled != null) {
-        if (!explicitlyEnabled.contains(descriptor)) {
+      if (pluginsToLoad != null) {
+        if (!pluginsToLoad.contains(descriptor)) {
           descriptor.isMarkedForLoading = false
           logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property")
         }
@@ -501,7 +501,7 @@ object PluginManagerCore {
       }
     }
 
-    if (explicitlyEnabled == null && shouldLoadPlugins) {
+    if (pluginsToLoad == null && shouldLoadPlugins) {
       for (essentialId in essentialPlugins) {
         val essentialPlugin = idMap[essentialId] ?: continue
         for (incompatibleId in essentialPlugin.incompatiblePlugins) {
