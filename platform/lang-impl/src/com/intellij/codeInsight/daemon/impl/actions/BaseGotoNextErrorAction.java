@@ -57,7 +57,7 @@ abstract class BaseGotoNextErrorAction extends BaseCodeInsightAction implements 
   @Internal
   @Override
   public @NotNull ActionRemoteBehavior getBehavior() {
-    if (Registry.is("ide.popup.async.enabled", false)) {
+    if (Registry.is("ide.popup.async.enabled", true)) {
       return ActionRemoteBehavior.FrontendOnly;
     }
     return ActionRemoteBehavior.BackendOnly;
