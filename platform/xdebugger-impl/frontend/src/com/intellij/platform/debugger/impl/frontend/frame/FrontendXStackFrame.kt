@@ -17,6 +17,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class FrontendXStackFrame(
   val id: XStackFrameId,
@@ -27,7 +28,7 @@ internal class FrontendXStackFrame(
   private val equalityObject: XStackFrameEqualityObject?,
   private val evaluatorDto: XDebuggerEvaluatorDto,
   private val captionInfo: XStackFrameCaptionInfo,
-  var canDrop: Boolean,
+  private val canDrop: Boolean,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
   private val evaluator by lazy {
     createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
@@ -45,6 +46,8 @@ internal class FrontendXStackFrame(
     get() = customBackgroundInfo != null
   val customBackgroundColor: java.awt.Color?
     get() = customBackgroundInfo?.backgroundColor?.color()
+
+  val canDropFlow = MutableStateFlow(if (canDrop) CanDropState.CAN_DROP else CanDropState.UNSURE)
 
   override fun getSourcePosition(): XSourcePosition? {
     return sourcePosition?.sourcePosition()
@@ -93,5 +96,18 @@ internal class FrontendXStackFrame(
 
   override fun hashCode(): Int {
     return id.hashCode()
+  }
+
+  /**
+  canDrop can depend on other frames in the stack,
+  and thus it can change after other stacks are loaded.
+  Hypothesis: canDrop can only change once and only from false to true,
+  ergo,
+  - if an RPC request returns true, then it's final -- CAN_DROP; no more recomputations
+  - if an RPC request returns false, we can't say if it's final or not -- UNSURE; should request more if necessary
+  - COMPUTING means that we haven't received a response yet; don't do more requests
+   */
+  internal enum class CanDropState(val canDrop: Boolean = false) {
+    UNSURE, COMPUTING, CAN_DROP(true)
   }
 }

@@ -35,15 +35,17 @@ internal class FrontendDropFrameHandler(private val sessionId: XDebugSessionId,
       return false
     }
 
-    val result = canDrop
-    // canDrop can depend on other frames in the stack,
-    // and thus it can change after other stacks are loaded;
-    // the hypothesis is that it can only change once and only from false to true
-    if (!result) {
+    if (canDropFlow.compareAndSet(FrontendXStackFrame.CanDropState.UNSURE, FrontendXStackFrame.CanDropState.COMPUTING)) {
       frontendSessionScope.launch {
-        canDrop = XDebugSessionApi.getInstance().canDrop(sessionId, id)
+        val newState = if (XDebugSessionApi.getInstance().canDrop(sessionId, id)) {
+          FrontendXStackFrame.CanDropState.CAN_DROP
+        }
+        else {
+          FrontendXStackFrame.CanDropState.UNSURE
+        }
+        canDropFlow.compareAndSet(FrontendXStackFrame.CanDropState.COMPUTING, newState)
       }
     }
-    return result
+    return canDropFlow.value.canDrop
   }
 }
