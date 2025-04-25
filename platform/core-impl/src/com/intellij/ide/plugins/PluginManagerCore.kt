@@ -49,7 +49,6 @@ import java.util.function.Supplier
 import javax.swing.JOptionPane
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
-import kotlin.streams.asSequence
 
 /**
  * See [Plugin Model](https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model) documentation.
@@ -764,7 +763,7 @@ object PluginManagerCore {
   private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> {
     val path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
     try {
-      val ids = readPluginIdsFromFile(path)
+      val ids = PluginIdsFile.read(path)
       if (!ids.isEmpty()) {
         Files.delete(path)
       }
@@ -1078,28 +1077,13 @@ object PluginManagerCore {
 @ApiStatus.Internal
 fun tryReadPluginIdsFromFile(path: Path, log: Logger): Set<PluginId> {
   try {
-    return readPluginIdsFromFile(path)
+    return PluginIdsFile.read(path)
   }
   catch (e: IOException) {
     log.warn("Unable to read plugin id list from: $path", e)
     return emptySet()
   }
 }
-
-@Synchronized
-private fun readPluginIdsFromFile(path: Path): Set<PluginId> =
-  try {
-    Files.lines(path).use { lines ->
-      lines.asSequence()
-        .map(String::trim)
-        .filter { line -> !line.isEmpty() }
-        .map { idString -> PluginId.getId(idString) }
-        .toSet()
-    }
-  }
-  catch (_: NoSuchFileException) {
-    emptySet()
-  }
 
 @ApiStatus.Internal
 fun getPluginDistDirByClass(aClass: Class<*>): Path? {
