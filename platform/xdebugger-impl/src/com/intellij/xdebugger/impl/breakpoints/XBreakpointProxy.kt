@@ -30,6 +30,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun getUserDescription(): @NlsSafe String?
   fun setUserDescription(description: String?)
   fun getGroup(): String?
+  fun setGroup(group: String?)
   fun getIcon(): Icon
   fun isEnabled(): Boolean
   fun setEnabled(enabled: Boolean)
@@ -110,6 +111,10 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun getGroup(): String? {
       return breakpoint.group
+    }
+
+    override fun setGroup(group: String?) {
+      breakpoint.group = group
     }
 
     override fun getIcon(): Icon = breakpoint.getIcon()

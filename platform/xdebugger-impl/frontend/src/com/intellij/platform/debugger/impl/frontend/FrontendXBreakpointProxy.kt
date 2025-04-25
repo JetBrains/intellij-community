@@ -97,6 +97,10 @@ internal open class FrontendXBreakpointProxy(
 
   override fun getGroup(): String? = _state.value.group
 
+  override fun setGroup(group: String?) {
+    // TODO IJPL-185322
+  }
+
   override fun getIcon(): Icon {
     // TODO: do we need to cache icon like it is done in XBreakpointBase
     return calculateIcon(this)

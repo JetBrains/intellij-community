@@ -42,8 +42,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
   override fun getDescriptor(node: AbstractTreeNode<*>): OpenFileDescriptor? {
     val item = node.equalityObject as? BreakpointItem ?: return null
-    val breakpoint = (item.breakpoint as? XBreakpointProxy.Monolith)?.breakpoint ?: return null
-    return breakpoint.sourcePosition?.let { OpenFileDescriptor(project, it.file, it.line, 0) }
+    val breakpoint = item.breakpoint ?: return null
+    return breakpoint.getSourcePosition()?.let { OpenFileDescriptor(project, it.file, it.line, 0) }
   }
 
   override fun getEditActionText(): String = ActionsBundle.actionText("EditBreakpoint")
