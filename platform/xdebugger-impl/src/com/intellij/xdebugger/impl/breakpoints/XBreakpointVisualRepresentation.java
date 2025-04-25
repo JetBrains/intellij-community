@@ -37,21 +37,27 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.util.concurrent.ExecutorService;
 
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+
 @ApiStatus.Internal
 public class XBreakpointVisualRepresentation {
   private static final Logger LOG = Logger.getInstance(XBreakpointVisualRepresentation.class);
-  private final XLineBreakpointImpl<?> myBreakpoint;
+  private final XLineBreakpointProxy myBreakpoint;
   static final ExecutorService redrawInlaysExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
   private final Project myProject;
 
   XBreakpointVisualRepresentation(XLineBreakpointImpl<?> xBreakpoint) {
-    myBreakpoint = xBreakpoint;
+    myBreakpoint = asProxy(xBreakpoint);
     myProject = xBreakpoint.getProject();
   }
 
   void updateUI() {
-    myBreakpoint.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(myBreakpoint);
+    // TODO IJPL-185322 support updateUI in visualPresentation
+    if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+      XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
+      monolithBreakpoint.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(monolithBreakpoint);
+    }
   }
 
   @RequiresBackgroundThread
@@ -88,6 +94,7 @@ public class XBreakpointVisualRepresentation {
         }
       }
 
+      // TODO IJPL-185322 support XBreakpointTypeWithDocumentDelegation
       if (myBreakpoint.getType() instanceof XBreakpointTypeWithDocumentDelegation) {
         document = ((XBreakpointTypeWithDocumentDelegation)myBreakpoint.getType()).getDocumentForHighlighting(document);
       }
@@ -217,25 +224,29 @@ public class XBreakpointVisualRepresentation {
         if (canMoveTo(line, file)) {
           XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
           XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
-          if (isCopyAction(actionId)) {
-            breakpointManager.copyLineBreakpoint(myBreakpoint, file.getUrl(), line);
-          }
-          else {
-            myBreakpoint.setFileUrl(file.getUrl());
-            myBreakpoint.setLine(line);
-            XDebugSessionImpl session = debuggerManager.getCurrentSession();
-            if (session != null) {
-              session.checkActiveNonLineBreakpointOnRemoval(myBreakpoint);
+          // TODO IJPL-185322 support gutter DnD
+          if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+            XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
+            if (isCopyAction(actionId)) {
+              breakpointManager.copyLineBreakpoint(monolithBreakpoint, file.getUrl(), line);
             }
+            else {
+              myBreakpoint.setFileUrl(file.getUrl());
+              myBreakpoint.setLine(line);
+              XDebugSessionImpl session = debuggerManager.getCurrentSession();
+              if (session != null) {
+                session.checkActiveNonLineBreakpointOnRemoval(monolithBreakpoint);
+              }
+            }
+            return true;
           }
-          return true;
         }
         return false;
       }
 
       @Override
       public void remove() {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(XBreakpointProxyKt.asProxy(myBreakpoint));
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
       }
 
       @Override
@@ -255,8 +266,13 @@ public class XBreakpointVisualRepresentation {
 
   private boolean canMoveTo(int line, VirtualFile file) {
     if (file != null && myBreakpoint.getType().canPutAt(file, line, myProject)) {
-      XLineBreakpoint<?> existing = myBreakpoint.getBreakpointManager().findBreakpointAtLine(myBreakpoint.getType(), file, line);
-      return existing == null || existing == myBreakpoint;
+      // TODO IJPL-185322 support canMoveTo for DnD
+      if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+        XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
+        XLineBreakpoint<?> existing =
+          monolithBreakpoint.getBreakpointManager().findBreakpointAtLine(monolithBreakpoint.getType(), file, line);
+        return existing == null || existing == monolithBreakpoint;
+      }
     }
     return false;
   }
