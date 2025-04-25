@@ -269,6 +269,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/external-system-api:externalSystem",
     "@lib//:http-client",
+    "@lib//:commons-lang3",
   ],
   exports = [
     "//python/openapi:community",

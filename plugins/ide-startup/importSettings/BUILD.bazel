@@ -41,6 +41,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/progress",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/plugins/parser/impl:plugins-parser-impl",
   ],
   runtime_deps = [":ide-startup-importSettings_resources"]
 )
@@ -86,6 +87,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/progress",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/plugins/parser/impl:plugins-parser-impl",
   ],
   runtime_deps = [":ide-startup-importSettings_resources"]
 )

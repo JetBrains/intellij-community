@@ -36,6 +36,7 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:kotlinx-serialization-core",
     "//plugins/markdown/core:markdown",
+    "//platform/util",
   ],
   runtime_deps = [":visualization_resources"]
 )
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:kotlinx-serialization-core",
     "//plugins/markdown/core:markdown",
+    "//platform/util",
   ],
   runtime_deps = [":visualization_resources"]
 )

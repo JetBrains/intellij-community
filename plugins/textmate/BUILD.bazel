@@ -30,6 +30,7 @@ jvm_library(
     "//fleet/fastutil",
     "@lib//:fastutil-min",
     "//plugins/textmate/joni",
+    "//platform/util/xmlDom",
   ],
   runtime_deps = [":textmate_resources"]
 )
@@ -65,6 +66,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//plugins/textmate/joni",
     "//plugins/textmate/joni:joni_test_lib",
+    "//platform/util/xmlDom",
   ],
   runtime_deps = [":textmate_resources"]
 )

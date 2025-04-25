@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "debugger-impl-frontend_resources",
@@ -33,5 +33,43 @@ jvm_library(
     "//platform/execution-impl/frontend:execution-impl-frontend",
   ],
   runtime_deps = [":debugger-impl-frontend_resources"]
+)
+
+jvm_library(
+  name = "debugger-impl-frontend_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":debugger-impl-frontend"],
+  deps = [
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/kernel/shared:kernel",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/xdebugger-api:debugger",
+    "//platform/lang-impl",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
+    "//platform/project/shared:project",
+    "//platform/platform-frontend:frontend",
+    "//platform/execution-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl/frontend:execution-impl-frontend",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+  ],
+  runtime_deps = [":debugger-impl-frontend_resources"]
+)
+
+jvm_test(
+  name = "debugger-impl-frontend_test",
+  runtime_deps = [":debugger-impl-frontend_test_lib"]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` end

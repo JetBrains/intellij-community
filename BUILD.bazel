@@ -179,7 +179,7 @@ java_library(
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//plugins/stream-debugger:java-debugger-streams",
     "@lib//:jgoodies-common",
-    "//plugins/editorconfig/plugin:plugin-main",
+    "//plugins/editorconfig:editorconfig-plugin-main",
     "//plugins/changeReminder:vcs-changeReminder",
     "//plugins/sh",
     "//plugins/terminal/sh",

@@ -1,14 +1,20 @@
 ### auto-generated section `build intellij.textmate.core` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"]
+)
 
 jvm_library(
   name = "core",
   module_name = "intellij.textmate.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcMultiplatform/**/*.kt", "srcMultiplatform/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "@lib//:jetbrains-annotations",
-    "//platform/util/xmlDom",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlin-stdlib",
@@ -22,11 +28,11 @@ jvm_library(
 jvm_library(
   name = "core_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "testsMultiplatform/**/*.kt", "testsMultiplatform/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   associates = [":core"],
   deps = [
     "@lib//:jetbrains-annotations",
-    "//platform/util/xmlDom",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlin-stdlib",
@@ -37,6 +43,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/util",
     "@lib//:junit5",
+    "//platform/util/xmlDom",
   ]
 )
 

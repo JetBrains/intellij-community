@@ -3,15 +3,15 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
 jvm_resources(
-  name = "plugin_resources",
+  name = "editorconfig-plugin_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 java_library(
-  name = "plugin",
+  name = "editorconfig-plugin",
   visibility = ["//visibility:public"],
-  runtime_deps = [":plugin_resources"]
+  runtime_deps = [":editorconfig-plugin_resources"]
 )
 ### auto-generated section `build intellij.editorconfig.plugin` end
 
@@ -19,10 +19,10 @@ java_library(
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "plugin-main",
+  name = "editorconfig-plugin-main",
   visibility = ["//visibility:public"],
   runtime_deps = [
-    "//plugins/editorconfig/plugin",
+    "//plugins/editorconfig:editorconfig-plugin",
     "//plugins/editorconfig/common",
     "//plugins/editorconfig/frontend",
     "//plugins/editorconfig/backend",
