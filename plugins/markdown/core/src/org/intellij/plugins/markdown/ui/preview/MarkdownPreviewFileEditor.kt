@@ -6,16 +6,21 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -79,7 +84,9 @@ class MarkdownPreviewFileEditor(
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
+
     messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener)
+
     messageBusConnection.subscribe(
       MarkdownExtensionsSettings.ChangeListener.TOPIC,
       MarkdownExtensionsSettings.ChangeListener { fromSettingsDialog: Boolean ->
@@ -88,6 +95,32 @@ class MarkdownPreviewFileEditor(
             val editor = mainEditor.firstOrNull() ?: return@launch
             val offset = editor.caretModel.offset
             panel?.reloadWithOffset(offset)
+          }
+        }
+      })
+
+    messageBusConnection.subscribe(
+      MarkdownJCEFHtmlPanel.PreviewClickListener.TOPIC,
+      object : MarkdownJCEFHtmlPanel.PreviewClickListener {
+        override fun receivedPosition(charOffset: Int, lineOffset: Int, file: VirtualFile) {
+          if (file == this@MarkdownPreviewFileEditor.file) {
+            val fileEditorManager = FileEditorManager.getInstance(project)
+            val fileEditors = fileEditorManager.getEditors(file)
+
+            for (fileEditor in fileEditors) {
+              if (fileEditor is TextEditor && fileEditor.editor.contentComponent.isShowing) {
+                val editor = fileEditor.editor
+                val document = editor.document
+                val line = document.getLineNumber(charOffset) + lineOffset
+
+                ApplicationManager.getApplication().invokeLater {
+                  editor.caretModel.moveToLogicalPosition(LogicalPosition(line, 0))
+                  editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+                }
+
+                return@receivedPosition
+              }
+            }
           }
         }
       })

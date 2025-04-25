@@ -55,7 +55,7 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
       |  let html = '';
       |
       |  if (language === 'json5')
-      |    language = 'jsonc';
+      |    language = 'javascript';
       |
       |  if (language) {
       |    try {

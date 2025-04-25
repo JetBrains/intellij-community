@@ -44,7 +44,8 @@ private fun parseContent(project: Project?, language: Language, text: String, no
   }
 
   if (settings.useAlternativeHighlighting && altHighlighterAvailable()) {
-    val lang = if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase()
+    val lang = (if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase())
+        .replace(Regex("^lang(uage)="), "")
     val html = parseToHighlightedHtml(lang, text, node)?.replace(Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL), "\n")
 
     if (html.isNullOrEmpty() && language == Language.ANY) {

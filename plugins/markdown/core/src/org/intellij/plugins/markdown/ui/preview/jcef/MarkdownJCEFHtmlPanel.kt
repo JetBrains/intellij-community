@@ -22,11 +22,14 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.application
+import com.intellij.util.messages.Topic
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.handler.CefResourceRequestHandler
 import org.cef.handler.CefResourceRequestHandlerAdapter
@@ -151,6 +154,24 @@ class MarkdownJCEFHtmlPanel(
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
+    jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
+      // Get feedback from preview when content is double-clicked so we can scroll the editor
+      // to a matching position.
+      override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
+        if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && virtualFile != null) {
+          val match = Regex("""^(\d+),(\d+)""").find(message)
+
+          if (match != null) {
+            val publisher = project?.messageBus?.syncPublisher(PreviewClickListener.TOPIC) ?: return false
+            publisher.receivedPosition(match.groupValues[1].toInt(), match.groupValues[2].toInt(), virtualFile)
+            return true
+          }
+       }
+
+        return false
+      }
+    }, cefBrowser)
+
     browserPipe.subscribe(SET_SCROLL_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
         data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
@@ -176,6 +197,31 @@ class MarkdownJCEFHtmlPanel(
     coroutineScope.launch {
       val projectRoot = projectRoot.await()
       val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
+
+      // Detect double clicks on elements in the Markdown preview, report matching source position.
+      // language=JavaScript
+      val code = """
+      |(function() {
+      |  document.addEventListener('dblclick', function(evt) {
+      |    const element = document.elementFromPoint(evt.clientX, evt.clientY);
+      |    const pos = element?.getAttribute('${HtmlGenerator.SRC_ATTRIBUTE_NAME}')
+      |
+      |    if (pos) {
+      |      const rect = element.getBoundingClientRect();
+      |      const offset = (/^\d+/.exec(pos) || [])[0];
+      |      const lineHeight = parseInt(document.defaultView.getComputedStyle(element, null).getPropertyValue('line-height'));
+      |
+      |      if (offset != null) {
+      |        console.info(offset + ',' + Math.floor((event.clientY - rect.top) / lineHeight));
+      |        evt.stopPropagation();
+      |        evt.preventDefault();
+      |      }
+      |    }
+      |  });
+      |})();
+      """.trimMargin()
+
+      executeJavaScript(code)
 
       loadIndexContent()
       updateHandler.requests.collectLatest { request ->
@@ -437,6 +483,17 @@ class MarkdownJCEFHtmlPanel(
     override fun onOpenURLFromTab(browser: CefBrowser, frame: CefFrame, target_url: String, user_gesture: Boolean): Boolean {
       logger.warn("Canceling navigation for url: $target_url (user_gesture=$user_gesture)")
       return true
+    }
+  }
+
+  interface PreviewClickListener {
+    fun receivedPosition(charOffset: Int, lineOffset: Int, file: VirtualFile) {
+    }
+
+    companion object {
+      @Topic.ProjectLevel
+      @JvmField
+      val TOPIC = Topic("MarkdownPreviewClicked", PreviewClickListener::class.java, Topic.BroadcastDirection.NONE)
     }
   }
 
