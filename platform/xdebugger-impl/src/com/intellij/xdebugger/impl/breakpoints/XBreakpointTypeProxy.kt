@@ -36,6 +36,7 @@ interface XBreakpointTypeProxy {
   fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
+  fun isAddBreakpointButtonVisible(): Boolean
 
   open class Monolith @Deprecated("Use type.asProxy() instead") internal constructor(
     val project: Project,
@@ -90,6 +91,10 @@ interface XBreakpointTypeProxy {
 
     override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
+    }
+
+    override fun isAddBreakpointButtonVisible(): Boolean {
+      return breakpointType.isAddBreakpointButtonVisible
     }
   }
 }

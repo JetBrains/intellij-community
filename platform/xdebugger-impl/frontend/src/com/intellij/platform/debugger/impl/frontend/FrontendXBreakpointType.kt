@@ -103,6 +103,10 @@ private open class FrontendXBreakpointType(
     return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
   }
 
+  override fun isAddBreakpointButtonVisible(): Boolean {
+    return false // TODO IJPL-185322
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is FrontendXBreakpointType) return false
