@@ -124,7 +124,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   protected void doDispose() {
     myVisualRepresentation.removeHighlighter();
-    myVisualRepresentation.redrawInlineInlays();
+    myVisualRepresentation.redrawInlineInlays(getFile(), getLine());
   }
 
   public void updatePosition() {

@@ -184,7 +184,7 @@ public class XBreakpointVisualRepresentation {
     }
   }
 
-  void redrawInlineInlays() {
+  private void redrawInlineInlays() {
     redrawInlineInlays(myBreakpoint.getFile(), myBreakpoint.getLine());
   }
 
