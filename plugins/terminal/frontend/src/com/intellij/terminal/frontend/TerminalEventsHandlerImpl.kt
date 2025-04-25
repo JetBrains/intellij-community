@@ -12,6 +12,7 @@ import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -91,6 +92,9 @@ internal open class TerminalEventsHandlerImpl(
         terminalInput.sendBytes(code)
         if (isCodeThatScrolls(keyCode)) {
           scrollingModel?.scrollToCursor(force = true)
+        }
+        if (keyCode == KeyEvent.VK_ENTER) {
+          ++TerminalUsageLocalStorage.getInstance().state.enterKeyPressedTimes
         }
         return true
       }
