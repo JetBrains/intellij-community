@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.execution.impl.ConsoleViewUtil
@@ -38,7 +38,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.util.DocumentUtil
 import com.intellij.util.SlowOperations
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EDT
@@ -49,16 +48,13 @@ import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
-import java.util.concurrent.ConcurrentHashMap
 
 @Internal
 class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope) {
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointImpl<*>>()
-  private val breakpointPresentation = ConcurrentHashMap<XBreakpointId, XBreakpointVisualRepresentation>()
   private val breakpointUpdateQueue: MergingUpdateQueue
 
   fun updateBreakpointsUI() {
@@ -74,16 +70,10 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       updateBreakpointNow(breakpoint)
     }
     myBreakpoints.putValue(breakpoint.fileUrl, breakpoint)
-    breakpointPresentation[breakpoint.breakpointId] = XBreakpointVisualRepresentation(breakpoint)
   }
 
   fun unregisterBreakpoint(breakpoint: XLineBreakpointImpl<*>) {
     myBreakpoints.remove(breakpoint.fileUrl, breakpoint)
-    breakpointPresentation.remove(breakpoint.breakpointId)
-  }
-
-  fun updateUI(breakpointId: XBreakpointId) {
-    breakpointPresentation[breakpointId]?.updateUI()
   }
 
   fun getDocumentBreakpoints(document: Document): Collection<XLineBreakpointImpl<*>> {
@@ -159,7 +149,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   private fun queueBreakpointUpdate(breakpoint: XLineBreakpointImpl<*>, callOnUpdate: Runnable? = null) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
-        breakpointPresentation[breakpoint.breakpointId]?.doUpdateUI(callOnUpdate ?: EmptyRunnable.INSTANCE)
+        breakpoint.doUpdateUI(callOnUpdate ?: EmptyRunnable.INSTANCE)
       }
     })
   }
@@ -167,9 +157,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   fun queueAllBreakpointsUpdate() {
     breakpointUpdateQueue.queue(object : Update("all breakpoints") {
       override fun run() {
-        myBreakpoints.values().forEach {
-          breakpointPresentation[it.breakpointId]?.doUpdateUI(EmptyRunnable.INSTANCE)
-        }
+        myBreakpoints.values().forEach { it.doUpdateUI(EmptyRunnable.INSTANCE) }
       }
     })
     // skip waiting
