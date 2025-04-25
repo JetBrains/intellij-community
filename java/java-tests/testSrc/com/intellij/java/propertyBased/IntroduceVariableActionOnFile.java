@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.refactoring.InplaceIntroduceVariableTest;
@@ -48,10 +48,14 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
     List<PsiExpression> expressions = PsiTreeUtil.collectParents(element, PsiExpression.class, true, e -> false);
     expressions = ContainerUtil.filter(expressions, ex -> {
       TextRange exRange = ex.getTextRange();
-      return CodeInsightUtil.findExpressionInRange(getFile(), exRange.getStartOffset(), exRange.getEndOffset()) == ex;
+      return CodeInsightFrontbackUtil.findExpressionInRange(getFile(), exRange.getStartOffset(), exRange.getEndOffset()) == ex;
     });
     if (expressions.isEmpty()) return;
     PsiExpression expression = env.generateValue(Generator.sampledFrom(expressions), null);
+    if (!textBlockCanBeExtracted(expression)) {
+      env.logMessage("Skipping introduceVariable: cannot extract from token → " + expression.getText());
+      return;
+    }
     TextRange range = expression.getTextRange();
     editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     if (env.generateValue(Generator.booleans(), null)) {
@@ -67,6 +71,31 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
          Disposer.dispose(disposable);
       }
     }
+  }
+
+  /**
+   * Checks whether it is possible to introduce a variable from the given expression.
+   * e.g.
+   * <pre><code>
+   * class Bar {
+   *   void foo() {
+   *     """<select>
+   *     text
+   *   }
+   * }</select>
+   * </code></pre>
+   *
+   * @param expr the PSI expression to test
+   * @return {@code true} if it’s safe to perform an Introduce Variable refactoring, {@code false} otherwise
+   */
+  private static boolean textBlockCanBeExtracted(@NotNull PsiExpression expr) {
+    if (expr instanceof PsiLiteralExpression literal && literal.isTextBlock()) {
+      String text = literal.getText();
+      if (text.startsWith("\"\"\"") && !text.endsWith("\"\"\"")) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static void introduceVariableInline(Environment env, Project project, Editor editor, PsiExpression expression) {
