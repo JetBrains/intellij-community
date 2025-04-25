@@ -612,7 +612,7 @@ object PluginManagerCore {
    */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
-    val aliens = readThirdPartyPluginIdsOnce().mapNotNull { idMap[it] }
+    val aliens = consumeThirdPartyPluginIdsFile().mapNotNull { idMap[it] }
     if (!aliens.isEmpty()) {
       checkThirdPartyPluginsPrivacyConsent(aliens)
     }
@@ -736,7 +736,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmStatic
   fun giveConsentToSpecificThirdPartyPlugins(acceptedPlugins: Set<PluginId>) {
-    val notAcceptedThirdPartyPluginIds = readThirdPartyPluginIdsOnce() - acceptedPlugins
+    val notAcceptedThirdPartyPluginIds = consumeThirdPartyPluginIdsFile() - acceptedPlugins
     if (notAcceptedThirdPartyPluginIds.isNotEmpty()) {
       writeThirdPartyPluginsIds(notAcceptedThirdPartyPluginIds)
     }
@@ -761,7 +761,7 @@ object PluginManagerCore {
     }
   }
 
-  private fun readThirdPartyPluginIdsOnce(): Set<PluginId> {
+  private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> {
     val path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
     try {
       val ids = readPluginIdsFromFile(path)
