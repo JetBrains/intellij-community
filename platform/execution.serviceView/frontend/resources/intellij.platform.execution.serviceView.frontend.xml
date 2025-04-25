@@ -3,10 +3,4 @@
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.execution.serviceView"/>
   </dependencies>
-
-  <extensionPoints>
-    <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
-  </extensionPoints>
-  <extensions defaultExtensionNs="com.intellij">
-  </extensions>
 </idea-plugin>
