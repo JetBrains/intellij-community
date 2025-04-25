@@ -125,16 +125,17 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
 
 internal sealed class TerminalFontSize {
   companion object {
+    private val validRange: ClosedFloatingPointRange<Float>
+      get() = EditorFontsConstants.getMinEditorFontSize().toFloat()..EditorFontsConstants.getMaxEditorFontSize().toFloat()
+
     fun ofFloat(value: Float): TerminalFontSize =
-      TerminalFontSizeImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = FONT_SIZE_PRECISION))
+      TerminalFontSizeImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = FONT_SIZE_PRECISION).coerceIn(validRange))
 
     fun parse(value: String): TerminalFontSize = TerminalFontSizeImpl(TerminalSettingsFloatValueImpl.parse(
       value = value,
-      minValue = EditorFontsConstants.getMinEditorFontSize().toFloat(),
-      maxValue = EditorFontsConstants.getMaxEditorFontSize().toFloat(),
       defaultValue = EditorFontsConstants.getDefaultEditorFontSize().toFloat(),
       digits = FONT_SIZE_PRECISION,
-    ))
+    ).coerceIn(validRange))
   }
 
   abstract val floatValue: Float
@@ -154,16 +155,17 @@ internal sealed class TerminalFontSize {
 
 internal sealed class TerminalLineSpacing {
   companion object {
+    private val validRange: ClosedFloatingPointRange<Float>
+      get() = EditorFontsConstants.getMinEditorLineSpacing()..EditorFontsConstants.getMaxEditorLineSpacing()
+
     fun ofFloat(value: Float): TerminalLineSpacing =
-      TerminalLineSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = SPACING_PRECISION))
+      TerminalLineSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = SPACING_PRECISION).coerceIn(validRange))
 
     fun parse(value: String): TerminalLineSpacing = TerminalLineSpacingImpl(TerminalSettingsFloatValueImpl.parse(
       value = value,
-      minValue = EditorFontsConstants.getMinEditorLineSpacing(),
-      maxValue = EditorFontsConstants.getMaxEditorLineSpacing(),
       defaultValue = 1.0f,
       digits = SPACING_PRECISION,
-    ))
+    ).coerceIn(validRange))
   }
 
   abstract val floatValue: Float
@@ -177,18 +179,19 @@ internal sealed class TerminalLineSpacing {
 
 internal sealed class TerminalColumnSpacing {
   companion object {
+    // there are no default column spacing values in the API,
+    // but these will do just fine
+    private val validRange: ClosedFloatingPointRange<Float>
+      get() = EditorFontsConstants.getMinEditorLineSpacing()..EditorFontsConstants.getMaxEditorLineSpacing()
+
     fun ofFloat(value: Float): TerminalColumnSpacing =
-      TerminalColumnSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = SPACING_PRECISION))
+      TerminalColumnSpacingImpl(TerminalSettingsFloatValueImpl.ofFloat(value, digits = SPACING_PRECISION).coerceIn(validRange))
 
     fun parse(value: String): TerminalColumnSpacing = TerminalColumnSpacingImpl(TerminalSettingsFloatValueImpl.parse(
       value = value,
-      // there are no default column spacing values in the API,
-      // but these will do just fine
-      minValue = EditorFontsConstants.getMinEditorLineSpacing(),
-      maxValue = EditorFontsConstants.getMaxEditorLineSpacing(),
       defaultValue = 1.0f,
       digits = SPACING_PRECISION,
-    ))
+    ).coerceIn(validRange))
   }
 
   abstract val floatValue: Float
@@ -211,9 +214,9 @@ private data class TerminalSettingsFloatValueImpl(
     fun ofFloat(value: Float, digits: Int): TerminalSettingsFloatValueImpl =
       TerminalSettingsFloatValueImpl(rawIntValue = (value * multiplier(digits)).roundToInt(), digits = digits)
 
-    fun parse(value: String, minValue: Float, maxValue: Float, defaultValue: Float, digits: Int): TerminalSettingsFloatValueImpl =
+    fun parse(value: String, defaultValue: Float, digits: Int): TerminalSettingsFloatValueImpl =
       try {
-        ofFloat(value.toFloat().coerceIn(minValue..maxValue), digits)
+        ofFloat(value.toFloat(), digits)
       }
       catch (_: Exception) {
         ofFloat(defaultValue, digits)
@@ -223,6 +226,9 @@ private data class TerminalSettingsFloatValueImpl(
   }
 
   private val multiplier: Float = multiplier(digits)
+
+  fun coerceIn(range: ClosedFloatingPointRange<Float>): TerminalSettingsFloatValueImpl =
+    ofFloat(toFloat().coerceIn(range), digits)
 
   fun toFloat(): Float = rawIntValue.toFloat() / multiplier
 
