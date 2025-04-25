@@ -6,6 +6,7 @@ import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,21 +18,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.Colors
-import com.intellij.ui.Gradient
-import com.intellij.ui.GroupHeaderSeparator
-import com.intellij.ui.IconManager
-import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.JBColor
-import com.intellij.ui.JBGradientPaint
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
+import com.intellij.ui.*
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -41,8 +35,8 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
-import java.awt.GradientPaint
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyBoundsListener
@@ -64,6 +58,9 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
 }
 
 class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
+
+  private val lefIconsKey = Key<List<Icon>>("leftIcons")
+
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
     val step = createStep(createActionGroup(event), event.dataContext, widget)
@@ -89,6 +86,17 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     }
   }
 
+  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
+    return object : ToolbarComboButton(model) {
+      override fun updateFromPresentation(presentation: Presentation) {
+        text = presentation.text
+        toolTipText = presentation.description
+        leftIcons = presentation.getClientProperty(lefIconsKey) ?: emptyList()
+        rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
+      }
+    }
+  }
+
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     super.updateCustomComponent(component, presentation)
 
@@ -103,18 +111,35 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.setText(projectName, false)
     e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
-    val customizer = ProjectWindowCustomizerService.getInstance()
-    if (project != null && customizer.isAvailable()) {
-      val updatesManager = UpdatesInfoProviderManager.getInstance()
-      val icon = customizer.getProjectIcon(project)
-        .let { if (updatesManager.updateAvailable) it.withBadge() else it }
-      e.presentation.icon = icon
+    val icons = buildList {
+      getUpdateInfoIcon()?.let { add(it) }
+
+      val customizer = ProjectWindowCustomizerService.getInstance()
+      if (project != null && customizer.isAvailable()) {
+        add(customizer.getProjectIcon(project))
+      }
     }
+    e.presentation.putClientProperty(lefIconsKey, icons)
   }
 
-  private fun Icon.withBadge(): Icon {
-    val badgePaint = JBColor(0xEC26F0, 0xEC26F0)
-    return IconManager.getInstance().withIconBadge(this, badgePaint)
+  private fun getUpdateInfoIcon(): Icon? {
+    val updatesManager = UpdatesInfoProviderManager.getInstance()
+
+    if (updatesManager.updateInProcess) {
+      return AnimatedIcon.Default.INSTANCE
+    } else if (updatesManager.availableUpdate != null) {
+
+      val icon = TextIcon("Update", JBColor.foreground(), Color(0x40EB26F0, true), Color(0xF48633), 0, true).apply {
+        font = JBFont.regular().asBold()
+        insets = JBUI.insets(4, 10, 4, 10)
+        round = 20
+        //background = GradientPaint(0.toFloat(), 0.toFloat(), Color(0x40F48633), iconWidth.toFloat(), 0.toFloat(), Color(0x40EB26F0))
+        //borderColor = GradientPaint(0.toFloat(), 0.toFloat(), Color(0xF48633), iconWidth.toFloat(), 0.toFloat(), Color(0xEB26F0))
+      }
+      return icon
+    }
+
+    return null
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {

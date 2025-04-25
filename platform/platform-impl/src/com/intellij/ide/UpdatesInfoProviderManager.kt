@@ -11,18 +11,22 @@ class UpdatesInfoProviderManager {
     @JvmStatic
     fun getInstance(): UpdatesInfoProviderManager = service<UpdatesInfoProviderManager>()
 
-    private val EP = ExtensionPointName.create<UpdatesInfoProvider>("com.intellij.updatesInfoProvider")
+    private val EP = ExtensionPointName.create<ExternalUpdateProvider>("com.intellij.updatesInfoProvider")
   }
 
-  val updateInfo: IdeUpdateInfo?
-    get() = EP.extensionList.firstNotNullOfOrNull { it.updateInfo }
+  val availableUpdate: IdeUpdateInfo?
+    get() = EP.extensionList.firstNotNullOfOrNull { (it.updatesState as? ExternalUpdateState.UpdateAvailable)?.info }
 
-  val updateAvailable: Boolean
-    get() = EP.extensionList.any { it.updateAvailable }
+  val updateInProcess: Boolean
+    get() = EP.extensionList.any { it.updatesState is ExternalUpdateState.Preparing }
 
   fun runUpdate() {
     EP.extensionList
-      .firstOrNull { it.updateAvailable }
-      ?.let { it.runUpdate(it.updateInfo!!) }
+      .firstOrNull { it.updatesState is ExternalUpdateState.UpdateAvailable }
+      ?.let {
+        (it.updatesState as? ExternalUpdateState.UpdateAvailable)?.info?.let { info ->
+          it.runUpdate(info)
+        }
+      }
   }
 }

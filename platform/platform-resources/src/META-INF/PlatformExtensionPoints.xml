@@ -601,7 +601,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="updatesInfoProvider"
-                    interface="com.intellij.ide.UpdatesInfoProvider"
+                    interface="com.intellij.ide.ExternalUpdateProvider"
                     dynamic="true"/>
 
     <extensionPoint name="applicationSettings"
