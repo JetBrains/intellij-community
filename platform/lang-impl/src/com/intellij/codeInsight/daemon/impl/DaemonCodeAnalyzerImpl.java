@@ -1017,7 +1017,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     daemonCancelEventCount.incrementAndGet();
   }
 
-  // must be called with `this` lock
   private static void cancelIndicator(@NotNull DaemonProgressIndicator indicator,
                                       boolean toRestartAlarm,
                                       @Nullable Throwable cause,
@@ -1422,7 +1421,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor,
                                                   @NotNull VirtualFile virtualFile,
                                                   int @NotNull [] passesToIgnore,
-                                                  @NotNull Map<Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
+                                                  @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
 
