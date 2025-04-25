@@ -3148,6 +3148,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/DoWhile.kt");
             }
 
+            @TestMetadata("DontPreferNothingType.kt")
+            public void testDontPreferNothingType() throws Exception {
+                runTest("../testData/basic/common/DontPreferNothingType.kt");
+            }
+
             @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
             public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
                 runTest("../testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");

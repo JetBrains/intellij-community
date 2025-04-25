@@ -3148,6 +3148,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/DoWhile.kt");
             }
 
+            @TestMetadata("DontPreferNothingType.kt")
+            public void testDontPreferNothingType() throws Exception {
+                runTest("../../completion/testData/basic/common/DontPreferNothingType.kt");
+            }
+
             @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
             public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
                 runTest("../../completion/testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");

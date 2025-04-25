@@ -3148,6 +3148,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/DoWhile.kt");
             }
 
+            @TestMetadata("DontPreferNothingType.kt")
+            public void testDontPreferNothingType() throws Exception {
+                runTest("../testData/basic/common/DontPreferNothingType.kt");
+            }
+
             @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
             public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
                 runTest("../testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");

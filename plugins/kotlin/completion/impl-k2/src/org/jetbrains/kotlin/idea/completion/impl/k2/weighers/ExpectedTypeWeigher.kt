@@ -85,6 +85,9 @@ internal object ExpectedTypeWeigher {
         companion object {
             context(KaSession)
             fun matches(actualType: KaType, expectedType: KaType): MatchesExpectedType = when {
+                // We exclude the Nothing type because it would match everything, but we should not give it priority.
+                // The only exception where we should prefer is for the `null` constant, which will be of type `Nothing?`
+                actualType.isNothingType && !actualType.isMarkedNullable -> NOT_MATCHES
                 actualType isPossiblySubTypeOf expectedType -> MATCHES
                 actualType.withNullability(KaTypeNullability.NON_NULLABLE) isPossiblySubTypeOf expectedType -> MATCHES_WITHOUT_NULLABILITY
                 else -> NOT_MATCHES
