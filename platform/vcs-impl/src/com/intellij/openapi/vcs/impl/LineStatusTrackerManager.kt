@@ -36,7 +36,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -481,9 +480,10 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   private fun releaseTracker(document: Document, wasUnbound: Boolean = false) {
-    if (project.isDisposed) return
     val data = trackers.remove(document) ?: return
-    BackgroundTaskUtil.syncPublisher(project, TOPIC).onTrackerRemoved(data.tracker)
+    if (!project.isDisposed) {
+      project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
+    }
     unregisterTrackerInCLM(data, wasUnbound)
     data.tracker.release()
 
