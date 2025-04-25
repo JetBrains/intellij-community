@@ -48,10 +48,6 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
                                           // show this option as well to avoid strange behavior when nothing is selected in the popup.
                                           TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.NEW_TERMINAL)
     e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
-
-    if (engine == TerminalEngine.REWORKED) {
-      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.Beta)
-    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
