@@ -9,11 +9,8 @@
   <xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
 
   <xs:simpleType name="pubIdChars">
-    <!-- A string of the characters defined as pubIdChar in production 13
-         of the Second Edition of the XML 1.0 Recommendation. Does not include
-         the whitespace characters because they're normalized by XML parsing. -->
     <xs:restriction base="xs:string">
-      <xs:pattern value="[a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_%]*"/>
+      <xs:pattern value="[a-zA-Z0-9\-'\(\)+,./:=?;!*#@$_% ]*"/>
     </xs:restriction>
   </xs:simpleType>
 
