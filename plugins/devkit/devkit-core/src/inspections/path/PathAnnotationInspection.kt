@@ -701,8 +701,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
-      if (element is PsiModifierListOwner) {
-        val annotationOwner = element.modifierList
+
+      // Try to find the variable reference inside the element
+      val targetElement = findVariableToAnnotate(element)
+
+      if (targetElement is PsiModifierListOwner) {
+        val annotationOwner = targetElement.modifierList
         if (annotationOwner != null) {
           AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             MultiRoutingFileSystemPath::class.java.name,
@@ -711,6 +715,61 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           )
         }
       }
+    }
+
+    private fun findVariableToAnnotate(element: PsiElement): PsiElement? {
+      // If the element is already a variable, return it
+      if (element is PsiModifierListOwner) {
+        return element
+      }
+
+      // If the element is a method call, try to find the variable reference inside it
+      if (element is com.intellij.psi.PsiMethodCallExpression) {
+        val argumentList = element.argumentList
+        if (argumentList.expressionCount > 0) {
+          val firstArg = argumentList.expressions[0]
+          if (firstArg is com.intellij.psi.PsiReferenceExpression) {
+            val resolved = firstArg.resolve()
+            if (resolved is PsiModifierListOwner) {
+              return resolved
+            }
+          }
+        }
+      }
+
+      // If the element is a reference expression, resolve it to find the variable declaration
+      if (element is com.intellij.psi.PsiReferenceExpression) {
+        val resolved = element.resolve()
+        if (resolved is PsiModifierListOwner) {
+          return resolved
+        }
+      }
+
+      // Try to find a reference expression inside the element
+      val references = element.references
+      for (reference in references) {
+        val resolved = reference.resolve()
+        if (resolved is PsiModifierListOwner) {
+          return resolved
+        }
+      }
+
+      // Try to find a reference expression in the parent of the element
+      val parent = element.parent
+      if (parent is com.intellij.psi.PsiMethodCallExpression) {
+        val argumentList = parent.argumentList
+        if (argumentList.expressionCount > 0) {
+          val firstArg = argumentList.expressions[0]
+          if (firstArg is com.intellij.psi.PsiReferenceExpression) {
+            val resolved = firstArg.resolve()
+            if (resolved is PsiModifierListOwner) {
+              return resolved
+            }
+          }
+        }
+      }
+
+      return element
     }
   }
 
@@ -722,8 +781,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
-      if (element is PsiModifierListOwner) {
-        val annotationOwner = element.modifierList
+
+      // Try to find the variable reference inside the element
+      val targetElement = findVariableToAnnotate(element)
+
+      if (targetElement is PsiModifierListOwner) {
+        val annotationOwner = targetElement.modifierList
         if (annotationOwner != null) {
           AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             NativePath::class.java.name,
@@ -732,6 +795,61 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           )
         }
       }
+    }
+
+    private fun findVariableToAnnotate(element: PsiElement): PsiElement? {
+      // If the element is already a variable, return it
+      if (element is PsiModifierListOwner) {
+        return element
+      }
+
+      // If the element is a method call, try to find the variable reference inside it
+      if (element is com.intellij.psi.PsiMethodCallExpression) {
+        val argumentList = element.argumentList
+        if (argumentList.expressionCount > 0) {
+          val firstArg = argumentList.expressions[0]
+          if (firstArg is com.intellij.psi.PsiReferenceExpression) {
+            val resolved = firstArg.resolve()
+            if (resolved is PsiModifierListOwner) {
+              return resolved
+            }
+          }
+        }
+      }
+
+      // If the element is a reference expression, resolve it to find the variable declaration
+      if (element is com.intellij.psi.PsiReferenceExpression) {
+        val resolved = element.resolve()
+        if (resolved is PsiModifierListOwner) {
+          return resolved
+        }
+      }
+
+      // Try to find a reference expression inside the element
+      val references = element.references
+      for (reference in references) {
+        val resolved = reference.resolve()
+        if (resolved is PsiModifierListOwner) {
+          return resolved
+        }
+      }
+
+      // Try to find a reference expression in the parent of the element
+      val parent = element.parent
+      if (parent is com.intellij.psi.PsiMethodCallExpression) {
+        val argumentList = parent.argumentList
+        if (argumentList.expressionCount > 0) {
+          val firstArg = argumentList.expressions[0]
+          if (firstArg is com.intellij.psi.PsiReferenceExpression) {
+            val resolved = firstArg.resolve()
+            if (resolved is PsiModifierListOwner) {
+              return resolved
+            }
+          }
+        }
+      }
+
+      return element
     }
   }
 
