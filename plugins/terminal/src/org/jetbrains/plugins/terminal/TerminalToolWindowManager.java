@@ -310,9 +310,19 @@ public final class TerminalToolWindowManager implements Disposable {
                                                    @Nullable @Nls String tabName,
                                                    boolean requestFocus,
                                                    boolean deferSessionStartUntilUiShown) {
+    return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull TerminalWidget createNewSession(@Nullable String workingDirectory,
+                                                  @Nullable @Nls String tabName,
+                                                  @Nullable List<String> shellCommand,
+                                                  boolean requestFocus,
+                                                  boolean deferSessionStartUntilUiShown) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
+    tabState.myShellCommand = shellCommand;
     return createNewSession(myTerminalRunner, tabState, null, null, requestFocus, deferSessionStartUntilUiShown);
   }
 
