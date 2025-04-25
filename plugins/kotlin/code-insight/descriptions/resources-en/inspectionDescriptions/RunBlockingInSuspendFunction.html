@@ -1,13 +1,12 @@
 <html>
 <body>
 Reports <code>runBlocking</code> calls inside <code>suspend</code> functions.
-<p>Using <code>runBlocking</code> within a <code>suspend</code> function negates the suspension mechanism, blocking the calling thread, and
-    undermines the core purpose of asynchronous programming.
-<p>The quick-fix automatically replaces the <code>runBlocking</code> with one of the following options, depending on the context:</p>
+<p>Using <code>runBlocking</code> within a <code>suspend</code> function blocks the calling thread and defeats the purpose of asynchronous programming.</p>
+<p>The quick-fix replaces the <code>runBlocking</code> call with one of the following alternatives, depending on the context:</p>
 <ul>
     <li>A <code>run</code> call.</li>
-    <li>A <code>withContext</code> call for cases where a specific <code>CoroutineContext</code> is provided.</li>
-    <li>Inline wrapped code.</li>
+    <li>A <code>withContext</code> call when a specific <code>CoroutineContext</code> is used.</li>
+    <li>Directly inlined code without the <code>runBlocking</code> wrapper.</li>
 </ul>
 <p>Example:</p>
 <pre><code>
@@ -20,9 +19,7 @@ suspend fun something() {
 <p>After the quick-fix is applied:</p>
 <pre><code>
 suspend fun something() {
-  runBlocking {
-    code() // Runs asynchronously
-  }
+  code() // Runs asynchronously
 }
 </code></pre>
 <!-- tooltip end -->
