@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JButton
 import javax.swing.JCheckBox
+import javax.swing.JEditorPane
 
 @ApiStatus.Internal
 class FileStatusColorsConfigurable : BoundSearchableConfigurable(
@@ -38,10 +39,11 @@ class FileStatusColorsConfigurable : BoundSearchableConfigurable(
     lateinit var useColorCheckBox: JCheckBox
     lateinit var colorPanel: ColorPanel
     lateinit var resetColorButton: JButton
+    lateinit var overriddenByThemeLabel: JEditorPane
     val colorSettingsVisible = ValueComponentPredicate(true)
 
     fun updateColorPanel() {
-      val descriptor = tableModel.getDescriptorAt(table.selectedRow)
+      val descriptor = table.selectedDescriptor
       if (descriptor == null) {
         colorSettingsVisible.set(false)
       }
@@ -50,6 +52,7 @@ class FileStatusColorsConfigurable : BoundSearchableConfigurable(
         useColorCheckBox.setSelected(descriptor.color != null)
         colorPanel.setSelectedColor(descriptor.color)
         resetColorButton.setEnabled(!descriptor.isDefault)
+        overriddenByThemeLabel.isVisible = descriptor.uiThemeColor != null
       }
     }
     table.selectionModel.addListSelectionListener { updateColorPanel() }
@@ -79,7 +82,7 @@ class FileStatusColorsConfigurable : BoundSearchableConfigurable(
               .applyToComponent {
                 addActionListener { event ->
                   val useColor = useColorCheckBox.isSelected
-                  val descriptor = tableModel.getDescriptorAt(table.selectedRow) ?: return@addActionListener
+                  val descriptor = table.selectedDescriptor ?: return@addActionListener
                   val defaultColor = descriptor.defaultColor
                   val newColor = if (useColor) defaultColor ?: UIUtil.getLabelForeground() else null
                   tableModel.setColorFor(descriptor, newColor)
@@ -89,7 +92,7 @@ class FileStatusColorsConfigurable : BoundSearchableConfigurable(
             colorPanel = cell(ColorPanel())
               .applyToComponent {
                 addActionListener { event ->
-                  val descriptor = tableModel.getDescriptorAt(table.selectedRow) ?: return@addActionListener
+                  val descriptor = table.selectedDescriptor ?: return@addActionListener
                   tableModel.setColorFor(descriptor, colorPanel.selectedColor)
                 }
               }
@@ -97,9 +100,13 @@ class FileStatusColorsConfigurable : BoundSearchableConfigurable(
           }
           row {
             resetColorButton = button(ApplicationBundle.message("title.file.status.color.restore.default")) {
-              val descriptor = tableModel.getDescriptorAt(table.selectedRow) ?: return@button
+              val descriptor = table.selectedDescriptor ?: return@button
               tableModel.resetToDefault(descriptor)
             }
+              .component
+          }
+          row {
+            overriddenByThemeLabel = comment(ApplicationBundle.message("label.file.status.color.overridden.by.theme"))
               .component
           }
         }

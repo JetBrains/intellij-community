@@ -9,10 +9,12 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -26,7 +28,7 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
   private final List<FileStatusColorDescriptor> myDescriptors;
 
   private static final ColumnInfo[] COLUMNS_INFO = {
-    new ColumnInfo(Boolean.class, descriptor -> descriptor.isDefault()),
+    new ColumnInfo(FileStatusColorDescriptor.class, descriptor -> descriptor),
     new ColumnInfo(String.class, descriptor -> descriptor.getStatus().getText())
   };
 
@@ -43,8 +45,9 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
     List<FileStatusColorDescriptor> descriptors = new ArrayList<>();
     for (FileStatus fileStatus : fileStatuses) {
       Color color = scheme.getColor(fileStatus.getColorKey());
+      Color uiThemeColor = UIManager.getColor(FileStatusFactory.getFilestatusUiThemePrefix() + fileStatus.getId());
       Color originalColor = baseScheme != null ? baseScheme.getColor(fileStatus.getColorKey()) : null;
-      descriptors.add(new FileStatusColorDescriptor(fileStatus, color, originalColor));
+      descriptors.add(new FileStatusColorDescriptor(fileStatus, color, originalColor, uiThemeColor));
     }
     descriptors.sort(Comparator.comparing(d -> d.getStatus().getText()));
     return descriptors;
@@ -141,12 +144,5 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
       return myDescriptors.get(index);
     }
     return null;
-  }
-
-  public boolean containsCustomSettings() {
-    for (FileStatusColorDescriptor descriptor : myDescriptors) {
-      if (!descriptor.isDefault()) return true;
-    }
-    return false;
   }
 }
