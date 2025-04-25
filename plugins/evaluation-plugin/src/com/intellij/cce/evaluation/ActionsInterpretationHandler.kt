@@ -102,7 +102,9 @@ class ActionsInterpretationHandler(
           }
           handler.onErrorOccurred(e, 0)
         }
-        if (handler.isCancelled() || handler.isLimitExceeded()) break
+      }
+      if (handler.isCancelled() || handler.isLimitExceeded()) {
+        break
       }
     }
     logsSaver.save(config.actions?.language, config.interpret.trainTestSplit)
