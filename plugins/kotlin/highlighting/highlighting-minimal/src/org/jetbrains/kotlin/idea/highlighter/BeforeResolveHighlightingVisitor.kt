@@ -32,6 +32,7 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
                     else -> KotlinHighlightInfoTypeSemanticNames.KEYWORD
                 }
             }
+            elementType == KtTokens.ALL_KEYWORD -> KotlinHighlightInfoTypeSemanticNames.KEYWORD // workaround can be removed after KT-77099
             elementType == KtTokens.SAFE_ACCESS -> KotlinHighlightInfoTypeSemanticNames.SAFE_ACCESS
             elementType == KtTokens.EXCLEXCL -> KotlinHighlightInfoTypeSemanticNames.EXCLEXCL
             else -> return
