@@ -38,7 +38,7 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   @Override
   public FontPreferences getFontPreferences() {
-    return TerminalFontOptions.getInstance().getFontPreferences();
+    return TerminalFontSettingsService.getInstance().getFontPreferences();
   }
 
   @Override
@@ -47,17 +47,17 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
   }
 
   private static @NotNull String getFontFamily() {
-    return TerminalFontOptions.getInstance().getSettings().getFontFamily();
+    return TerminalFontSettingsService.getInstance().getSettings().getFontFamily();
   }
 
   @Override
   public float getLineSpacing() {
-    return TerminalFontOptions.getInstance().getSettings().getLineSpacing().getFloatValue();
+    return TerminalFontSettingsService.getInstance().getSettings().getLineSpacing().getFloatValue();
   }
 
   @Override
   public float getColumnSpacing() {
-    return TerminalFontOptions.getInstance().getSettings().getColumnSpacing().getFloatValue();
+    return TerminalFontSettingsService.getInstance().getSettings().getColumnSpacing().getFloatValue();
   }
 
   @Override

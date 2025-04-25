@@ -23,8 +23,8 @@ class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposable {
       resetFontSize() // presentation mode, Zoom IDE...
     })
 
-    TerminalFontOptions.getInstance().addListener(object : TerminalFontOptionsListener {
-      override fun fontOptionsChanged() {
+    TerminalFontSettingsService.getInstance().addListener(object : TerminalFontSettingsListener {
+      override fun fontSettingsChanged() {
         resetFontSize()
       }
     }, disposable = this)
@@ -54,7 +54,7 @@ class TerminalFontSizeProviderImpl : TerminalFontSizeProvider, Disposable {
   }
 
   internal fun getDefaultScaledFontSize(): TerminalFontSize {
-    return TerminalFontOptions.getInstance().getSettings().fontSize.scale()
+    return TerminalFontSettingsService.getInstance().getSettings().fontSize.scale()
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalFontSizeProvider.Listener) {

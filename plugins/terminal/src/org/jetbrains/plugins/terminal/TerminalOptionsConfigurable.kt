@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
-import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.client.ClientKind
@@ -137,7 +136,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
 
       group(message("settings.terminal.font.settings")) {
-        var fontSettings = TerminalFontOptions.getInstance().getSettings()
+        var fontSettings = TerminalFontSettingsService.getInstance().getSettings()
         row(message("settings.font.name")) {
           cell(fontComboBox())
             .bind(
@@ -175,7 +174,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
 
         onApply {
-          TerminalFontOptions.getInstance().setSettings(fontSettings)
+          TerminalFontSettingsService.getInstance().setSettings(fontSettings)
         }
       }
 
