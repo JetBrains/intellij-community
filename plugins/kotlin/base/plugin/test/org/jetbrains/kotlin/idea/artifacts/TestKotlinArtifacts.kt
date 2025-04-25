@@ -51,7 +51,6 @@ object TestKotlinArtifacts {
             )
     }
 
-    @JvmStatic val androidExtensionsRuntime: File by lazy { getJar("android-extensions-compiler-plugin-for-ide") }
     @JvmStatic val kotlinAnnotationsJvm: File by lazy { getJar("kotlin-annotations-jvm") }
     @JvmStatic val kotlinCompiler: File by lazy { getJar("kotlin-compiler") }
     @JvmStatic val kotlinDaemon: File by lazy { getJar("kotlin-daemon") }

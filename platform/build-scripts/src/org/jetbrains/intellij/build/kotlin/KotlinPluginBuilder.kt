@@ -250,7 +250,6 @@ object KotlinPluginBuilder {
   )
 
   private val COMPILER_PLUGINS = java.util.List.of(
-    "kotlinc.android-extensions-compiler-plugin",
     "kotlinc.allopen-compiler-plugin",
     "kotlinc.noarg-compiler-plugin",
     "kotlinc.sam-with-receiver-compiler-plugin",

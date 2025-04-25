@@ -194,7 +194,6 @@
     <orderEntry type="library" exported="" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.assignment-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-gradle-statistics" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.android-extensions-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
