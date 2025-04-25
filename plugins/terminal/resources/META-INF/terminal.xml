@@ -145,6 +145,11 @@
                     interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
   </extensionPoints>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.terminal.TerminalNewUserTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
   <projectListeners>
     <listener class="org.jetbrains.plugins.terminal.block.prompt.TerminalLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
