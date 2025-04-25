@@ -50,6 +50,8 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
@@ -70,6 +72,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
@@ -223,23 +226,48 @@ public final class DebuggerUIUtil {
     return builder;
   }
 
+  @ApiStatus.Obsolete
   public static void showXBreakpointEditorBalloon(final Project project,
                                                   final @Nullable Point point,
                                                   final JComponent component,
                                                   final boolean showAllOptions,
                                                   final @NotNull XBreakpoint breakpoint) {
+    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
+      showXBreakpointEditorBalloon(project, point, component, showAllOptions, asProxy(breakpointBase));
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  final @Nullable Point point,
+                                                  final JComponent component,
+                                                  final boolean showAllOptions,
+                                                  final @NotNull XBreakpointProxy breakpoint) {
     showXBreakpointEditorBalloon(project, point, component, showAllOptions, showAllOptions, breakpoint);
   }
 
+  @ApiStatus.Obsolete
   public static void showXBreakpointEditorBalloon(final Project project,
                                                   final @Nullable Point point,
                                                   final JComponent component,
                                                   final boolean showActionOptions,
                                                   final boolean showAllOptions,
                                                   final @NotNull XBreakpoint breakpoint) {
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    if (breakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase) {
+      showXBreakpointEditorBalloon(project, point, component, showActionOptions, showAllOptions, asProxy(breakpointBase));
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  final @Nullable Point point,
+                                                  final JComponent component,
+                                                  final boolean showActionOptions,
+                                                  final boolean showAllOptions,
+                                                  final @NotNull XBreakpointProxy breakpoint) {
+    XBreakpointManagerProxy managerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
     final XLightBreakpointPropertiesPanel propertiesPanel =
-      new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
+      new XLightBreakpointPropertiesPanel(project, managerProxy, breakpoint,
                                           showActionOptions, showAllOptions, true);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
@@ -269,7 +297,7 @@ public final class DebuggerUIUtil {
     Runnable showMoreOptions = () -> {
       propertiesPanel.saveProperties();
       propertiesPanel.dispose();
-      BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
+      BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint.getId());
     };
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();

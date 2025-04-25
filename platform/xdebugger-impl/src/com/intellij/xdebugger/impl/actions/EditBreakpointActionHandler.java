@@ -24,7 +24,7 @@ import java.awt.*;
 @ApiStatus.Internal
 public abstract class EditBreakpointActionHandler extends DebuggerActionHandler {
 
-  protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpoint<?> breakpoint);
+  protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpointProxy breakpoint);
 
   @Override
   public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
@@ -54,10 +54,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
       point = new Point(gutterComponent.getWidth(),
                         editor.visualPositionToXY(editor.getCaretModel().getVisualPosition()).y + editor.getLineHeight() / 2);
     }
-    // TODO IJPL-185322
-    if (breakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint) {
-      doShowPopup(project, gutterComponent, point, monolithBreakpoint.getBreakpoint());
-    }
+    doShowPopup(project, gutterComponent, point, breakpoint);
   }
 
   public void editBreakpoint(@NotNull Project project,
@@ -65,8 +62,6 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
                              @NotNull Point whereToShow,
                              @NotNull BreakpointItem breakpoint) {
     XBreakpointProxy breakpointProxy = breakpoint.getBreakpoint();
-    if (breakpointProxy instanceof XBreakpointProxy.Monolith) {
-      doShowPopup(project, parent, whereToShow, ((XBreakpointProxy.Monolith)breakpointProxy).getBreakpoint());
-    }
+    doShowPopup(project, parent, whereToShow, breakpointProxy);
   }
 }

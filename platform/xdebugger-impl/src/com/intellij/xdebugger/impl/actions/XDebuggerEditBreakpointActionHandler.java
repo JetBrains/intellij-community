@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +18,7 @@ import java.awt.*;
 @ApiStatus.Internal
 public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
-  protected void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpoint<?> breakpoint) {
+  protected void doShowPopup(Project project, JComponent component, Point whereToShow, XBreakpointProxy breakpoint) {
     DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, component, false, breakpoint);
   }
 
