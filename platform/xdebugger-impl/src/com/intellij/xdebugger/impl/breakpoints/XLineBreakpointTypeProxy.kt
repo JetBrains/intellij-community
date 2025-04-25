@@ -4,8 +4,10 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 interface XLineBreakpointTypeProxy : XBreakpointTypeProxy {
   val temporaryIcon: Icon?
 
