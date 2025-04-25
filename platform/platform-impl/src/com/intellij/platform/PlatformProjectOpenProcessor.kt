@@ -277,7 +277,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    suspend fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module {
+    suspend fun runDirectoryProjectConfigurators(baseDir: Path, project: Project, newProject: Boolean): Module? {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
       val moduleRef = Ref<Module>()
@@ -322,11 +322,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
-      val module = moduleRef.get()
-      if (module == null) {
-        LOG.error("No extension configured a module for $baseDir; extensions = ${EP_NAME.extensionList}")
-      }
-      return module
+      return moduleRef.get()
     }
 
     @JvmStatic

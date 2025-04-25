@@ -13,7 +13,10 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.*
-import com.intellij.ide.impl.*
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectNewWindowDoNotAskOption
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
@@ -64,7 +67,6 @@ import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
@@ -948,7 +950,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         project = project,
         newProject = options.isProjectCreatedWithWizard,
       )
-      options.preparedToOpen?.invoke(module)
+      if (module != null) {
+        options.preparedToOpen?.invoke(module)
+      }
       return module
     }
     return null
