@@ -146,7 +146,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       @VisibleForTesting
       internal val queryName: String,
       @VisibleForTesting
-      internal val variablesObject: Any,
+      internal val variablesObject: Map<String, Any?>,
     ) : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
       @get:VisibleForTesting
       internal abstract val clazz: Class<*>
@@ -174,7 +174,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       class Parsed<out T>(
         url: String,
         requestFilePath: String,
-        variablesObject: Any,
+        variablesObject: Map<String, Any?>,
         override val clazz: Class<out T>,
       ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResultWithCost(response: GithubApiResponse): Pair<T, GHGQLRateLimit?> {
@@ -186,7 +186,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       abstract class Traversed<out T>(
         url: String,
         requestFilePath: String,
-        variablesObject: Any,
+        variablesObject: Map<String, Any?>,
         @VisibleForTesting
         internal val pathFromData: Array<out String>
       ) : GQLQuery<T>(url, requestFilePath, variablesObject)
@@ -194,7 +194,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       class TraversedParsed<out T : Any>(
         url: String,
         requestFilePath: String,
-        variablesObject: Any,
+        variablesObject: Map<String, Any?>,
         override val clazz: Class<out T>,
         vararg pathFromData: String,
       ) : Traversed<T>(url, requestFilePath, variablesObject, pathFromData) {
@@ -207,7 +207,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       class OptionalTraversedParsed<T>(
         url: String,
         requestFilePath: String,
-        variablesObject: Any,
+        variablesObject: Map<String, Any?>,
         override val clazz: Class<out T>,
         vararg pathFromData: String,
       ) : Traversed<T?>(url, requestFilePath, variablesObject, pathFromData) {
@@ -219,7 +219,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       class OptionalTraversedParsedList<T>(
         url: String,
         requestFilePath: String,
-        variablesObject: Any,
+        variablesObject: Map<String, Any?>,
         override val clazz: Class<out T>,
         vararg pathFromData: String,
       ) : Traversed<List<T>?>(url, requestFilePath, variablesObject, pathFromData) {

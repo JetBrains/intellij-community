@@ -267,7 +267,7 @@ object GHGQLRequests {
     fun markReadyForReview(repository: GHRepositoryCoordinates, pullRequestId: String): GQLQuery<Any?> =
       GQLQuery.Parsed(
         repository.serverPath.toGraphQLUrl(), GHGQLQueries.markPullRequestReadyForReview,
-        mutableMapOf<String, Any>("pullRequestId" to pullRequestId),
+        mapOf<String, Any>("pullRequestId" to pullRequestId),
         Any::class.java
       ).apply {
         acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
