@@ -42,7 +42,7 @@
      -->
     <registryKey key="terminal.new.ui" defaultValue="false"
                  description="No-op, use Terminal Engine option in Terminal settings instead"/>
-    <registryKey key="terminal.new.ui.reworked" defaultValue="true"
+    <registryKey key="terminal.new.ui.reworked" defaultValue="false"
                  description="No-op, use Terminal Engine option in Terminal settings instead"/>
 
     <registryKey key="terminal.new.ui.option.visible" defaultValue="false"
