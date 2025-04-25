@@ -24,12 +24,13 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
     if (state) {
-      TerminalOptionsProvider.instance.terminalEngine = engine
+      TerminalOptionsProvider.instance.switchTerminalEngine(engine, project)
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(application)
 
-      TerminalToolWindowManager.getInstance(e.project!!).createNewSession()
+      TerminalToolWindowManager.getInstance(project).createNewSession()
     }
   }
 
