@@ -136,7 +136,7 @@ final class PluginUpdateDialog extends DialogWrapper {
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
     for (PluginDownloader plugin : downloaders) {
-      myGroup.descriptors.add(plugin.getDescriptor());
+      myGroup.addDescriptor(plugin.getDescriptor());
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);

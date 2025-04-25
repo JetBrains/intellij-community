@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -24,10 +25,10 @@ public class PluginsGroup {
   public JLabel titleLabel;
   public LinkLabel<Object> rightAction;
   public List<JComponent> rightActions;
-  public final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
   public UIPluginGroup ui;
   public Runnable clearCallback;
   public PluginsGroupType type;
+  private final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
 
   public PluginsGroup(@NotNull @Nls String title, @NotNull PluginsGroupType type) {
     myTitlePrefix = title;
@@ -95,6 +96,30 @@ public class PluginsGroup {
     descriptors.add(descriptor);
     sortByName();
     return descriptors.indexOf(descriptor);
+  }
+
+  public void addDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
+    descriptors.add(descriptor);
+  }
+
+  public void addDescriptors(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+    this.descriptors.addAll(descriptors);
+  }
+
+  public void addDescriptors(int index, @NotNull Collection<IdeaPluginDescriptor> descriptors) {
+    this.descriptors.addAll(index, descriptors);
+  }
+
+  public void removeDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
+    descriptors.remove(descriptor);
+  }
+
+  public @NotNull List<IdeaPluginDescriptor> getDescriptors() {
+    return descriptors;
+  }
+
+  public void removeDuplicates(){
+    ContainerUtil.removeDuplicates(descriptors);
   }
 
   public void sortByName() {

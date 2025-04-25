@@ -186,4 +186,20 @@ class PluginUiModelAdapter(
     }
 
   override fun getDescriptor(): IdeaPluginDescriptor = pluginDescriptor
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PluginUiModelAdapter
+
+    if (pluginDescriptor != other.pluginDescriptor) return false
+    if (source != other.source) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return pluginDescriptor.hashCode()
+  }
 }

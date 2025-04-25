@@ -604,7 +604,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     if (info.install && myInstalling != null) {
       if (myInstalling.ui == null) {
-        myInstalling.descriptors.add(descriptor);
+        myInstalling.addDescriptor(descriptor);
         myInstalledPanel.addGroup(myInstalling, 0);
       }
       else {
@@ -838,7 +838,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myTags = null;
 
     if (myDownloaded.ui == null) {
-      myDownloaded.descriptors.add(descriptor);
+      myDownloaded.addDescriptor(descriptor);
       myDownloaded.titleWithEnabled(this);
 
       myInstalledPanel.addGroup(myDownloaded, myInstalling == null || myInstalling.ui == null ? 0 : 1);

@@ -100,33 +100,33 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void addGroup(@NotNull PluginsGroup group, int groupIndex) {
-    addGroup(group, group.descriptors, groupIndex);
+    addGroup(group, group.getDescriptors(), groupIndex);
   }
 
   public void addLazyGroup(@NotNull PluginsGroup group, @NotNull JScrollBar scrollBar, int gapSize, @NotNull Runnable uiCallback) {
-    if (group.descriptors.size() <= gapSize) {
+    if (group.getDescriptors().size() <= gapSize) {
       addGroup(group);
     }
     else {
-      addGroup(group, group.descriptors.subList(0, gapSize), -1);
+      addGroup(group, group.getDescriptors().subList(0, gapSize), -1);
       AdjustmentListener listener = new AdjustmentListener() {
         @Override
         public void adjustmentValueChanged(AdjustmentEvent e) {
           if ((scrollBar.getValue() + scrollBar.getVisibleAmount()) >= scrollBar.getMaximum()) {
             int fromIndex = group.ui.plugins.size();
-            int toIndex = Math.min(fromIndex + gapSize, group.descriptors.size());
+            int toIndex = Math.min(fromIndex + gapSize, group.getDescriptors().size());
             ListPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
             int uiIndex = getComponentIndex(lastComponent);
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
             try {
               PluginLogo.startBatchMode();
-              addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
+              addToGroup(group, group.getDescriptors().subList(fromIndex, toIndex), uiIndex, eventIndex);
             }
             finally {
               PluginLogo.endBatchMode();
             }
 
-            if (group.descriptors.size() == group.ui.plugins.size()) {
+            if (group.getDescriptors().size() == group.ui.plugins.size()) {
               scrollBar.removeAdjustmentListener(this);
               group.clearCallback = null;
             }
@@ -310,7 +310,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     if (component.getSelection() == EventHandler.SelectionType.SELECTION) {
       myEventHandler.updateSelection();
     }
-    group.descriptors.remove(descriptor);
+    group.removeDescriptor(descriptor);
   }
 
   private int getComponentIndex(@NotNull Component component) {

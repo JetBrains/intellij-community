@@ -530,7 +530,7 @@ public final class PluginManagerConfigurable
                          "/repository:\"" + host + "\"",
                          allDescriptors,
                          group -> {
-                           PluginsGroup.sortByName(group.descriptors);
+                           PluginsGroup.sortByName(group.getDescriptors());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
                          });
               }
@@ -841,16 +841,16 @@ public final class PluginManagerConfigurable
                     getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
                   if (groupDescriptor != null) {
                     if (parser.searchQuery == null) {
-                      result.descriptors.addAll(groupDescriptor.getPlugins());
+                      result.addDescriptors(groupDescriptor.getPlugins());
                     }
                     else {
                       for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
                         if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
-                          result.descriptors.add(pluginDescriptor);
+                          result.addDescriptor(pluginDescriptor);
                         }
                       }
                     }
-                    ContainerUtil.removeDuplicates(result.descriptors);
+                    ContainerUtil.removeDuplicates(result.getDescriptors());
                     result.sortByName();
                     return;
                   }
@@ -861,7 +861,7 @@ public final class PluginManagerConfigurable
 
 
                 if (parser.suggested && project != null) {
-                  result.descriptors.addAll(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
+                  result.addDescriptors(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
                 }
                 else if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
@@ -870,17 +870,17 @@ public final class PluginManagerConfigurable
                       continue;
                     }
                     if (parser.searchQuery == null) {
-                      result.descriptors.addAll(descriptors);
+                      result.addDescriptors(descriptors);
                     }
                     else {
                       for (PluginNode descriptor : descriptors) {
                         if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                          result.descriptors.add(descriptor);
+                          result.addDescriptor(descriptor);
                         }
                       }
                     }
                   }
-                  ContainerUtil.removeDuplicates(result.descriptors);
+                  ContainerUtil.removeDuplicates(result.getDescriptors());
                   result.sortByName();
                 }
                 else {
@@ -891,23 +891,23 @@ public final class PluginManagerConfigurable
                   Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
                                                                                                  customPlugins,
                                                                                                  false);
-                  result.descriptors.addAll(0, plugins);
+                  result.addDescriptors(0, new ArrayList<>(plugins));
 
                   if (parser.searchQuery != null) {
-                    List<PluginNode> descriptors = ContainerUtil.filter(customPlugins,
+                    List<IdeaPluginDescriptor> descriptors = ContainerUtil.filter(customPlugins,
                                                                         descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
                                                                                                                     parser.searchQuery));
-                    result.descriptors.addAll(0, descriptors);
+                    result.addDescriptors(0, descriptors);
                   }
 
-                  ContainerUtil.removeDuplicates(result.descriptors);
+                  result.removeDuplicates();
 
                   final var localRanker = MarketplaceLocalRanker.getInstanceIfEnabled();
                   if (localRanker != null) {
-                    pluginToScore = localRanker.rankPlugins(parser, result.descriptors);
+                    pluginToScore = localRanker.rankPlugins(parser, result.getDescriptors());
                   }
 
-                  if (!result.descriptors.isEmpty()) {
+                  if (!result.getDescriptors().isEmpty()) {
                     String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
                     for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
@@ -935,7 +935,7 @@ public final class PluginManagerConfigurable
                 }
 
                 PluginManagerUsageCollector.INSTANCE.performMarketplaceSearch(
-                  ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, pluginToScore);
+                  ProjectUtil.getActiveProject(), parser, result.getDescriptors(), searchIndex, pluginToScore);
               }
               catch (IOException e) {
                 LOG.info(e);
@@ -1011,22 +1011,22 @@ public final class PluginManagerConfigurable
           PluginLogo.startBatchMode();
 
           PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-          installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
-          if (!installing.descriptors.isEmpty()) {
+          installing.addDescriptors(MyPluginModel.getInstallingPlugins());
+          if (!installing.getDescriptors().isEmpty()) {
             installing.sortByName();
             installing.titleWithCount();
             myInstalledPanel.addGroup(installing);
           }
 
           PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
-          downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
+          downloaded.addDescriptors(InstalledPluginsState.getInstance().getInstalledPlugins());
 
           Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = PluginManager
             .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
             .collect(Collectors.partitioningBy(PluginDescriptor::isBundled));
 
           List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
-          downloaded.descriptors.addAll(nonBundledPlugins);
+          downloaded.addDescriptors(nonBundledPlugins);
 
           LinkListener<Object> updateAllListener = new LinkListener<>() {
             @Override
@@ -1048,7 +1048,7 @@ public final class PluginManagerConfigurable
           downloaded.addRightAction(myUpdateAll);
           downloaded.addRightAction(myUpdateCounter);
 
-          if (!downloaded.descriptors.isEmpty()) {
+          if (!downloaded.getDescriptors().isEmpty()) {
             downloaded.sortByName();
 
             long enabledNonBundledCount = nonBundledPlugins.stream()
@@ -1293,11 +1293,11 @@ public final class PluginManagerConfigurable
               }
             }
 
-            result.descriptors.addAll(descriptors);
+            result.addDescriptors(descriptors);
             PluginManagerUsageCollector.performInstalledTabSearch(
-              ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, null);
+              ProjectUtil.getActiveProject(), parser, result.getDescriptors(), searchIndex, null);
 
-            if (!result.descriptors.isEmpty()) {
+            if (!result.getDescriptors().isEmpty()) {
               if (parser.invalid) {
                 myPluginModelFacade.getModel().setInvalidFixCallback(() -> {
                   PluginsGroup group = myInstalledSearchPanel.getGroup();
@@ -1308,7 +1308,7 @@ public final class PluginManagerConfigurable
 
                   PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
 
-                  for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.descriptors)) {
+                  for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.getDescriptors())) {
                     if (!myPluginModelFacade.getModel().hasErrors(descriptor)) {
                       resultPanel.removeFromGroup(group, descriptor);
                     }
@@ -1317,7 +1317,7 @@ public final class PluginManagerConfigurable
                   group.titleWithCount();
                   myInstalledSearchPanel.fullRepaint();
 
-                  if (group.descriptors.isEmpty()) {
+                  if (group.getDescriptors().isEmpty()) {
                     myPluginModelFacade.getModel().setInvalidFixCallback(null);
                     myInstalledSearchPanel.removeGroup();
                   }
@@ -1361,7 +1361,7 @@ public final class PluginManagerConfigurable
         group.titleWithCount();
         myInstalledSearchPanel.fullRepaint();
 
-        if (group.descriptors.isEmpty()) {
+        if (group.getDescriptors().isEmpty()) {
           myInstalledSearchPanel.removeGroup();
         }
       }
@@ -1396,7 +1396,7 @@ public final class PluginManagerConfigurable
                                    @NotNull List<? extends IdeaPluginDescriptor> descriptors) {
       super(category, PluginsGroupType.INSTALLED);
 
-      this.descriptors.addAll(descriptors);
+      this.addDescriptors(descriptors);
       sortByName();
 
       rightAction = new LinkLabelButton<>("",
@@ -1419,7 +1419,7 @@ public final class PluginManagerConfigurable
     }
 
     private void setEnabledState() {
-      setState(myPluginModelFacade.getModel(), descriptors, myIsEnable);
+      setState(myPluginModelFacade.getModel(), getDescriptors(), myIsEnable);
     }
 
     /** Returns true, if in descriptors list not only Ultimate plugins while we are on Core license.
@@ -1487,12 +1487,12 @@ public final class PluginManagerConfigurable
         for (UIPluginGroup group : myInstalledPanel.getGroups()) {
           ListPluginComponent component = group.findComponent(descriptor);
           if (component != null && component.getPluginDescriptor().isBundled()) {
-            myBundledUpdateGroup.descriptors.add(component.getPluginDescriptor());
+            myBundledUpdateGroup.addDescriptor(component.getPluginDescriptor());
             break;
           }
         }
       }
-      if (!myBundledUpdateGroup.descriptors.isEmpty()) {
+      if (!myBundledUpdateGroup.getDescriptors().isEmpty()) {
         myInstalledPanel.addGroup(myBundledUpdateGroup, 0);
         myBundledUpdateGroup.ui.excluded = true;
 
@@ -1543,7 +1543,7 @@ public final class PluginManagerConfigurable
         }
       }
 
-      if (myBundledUpdateGroup.descriptors.isEmpty()) {
+      if (myBundledUpdateGroup.getDescriptors().isEmpty()) {
         myInstalledPanel.removeGroup(myBundledUpdateGroup);
       }
       else {
@@ -1887,7 +1887,7 @@ public final class PluginManagerConfigurable
 
     int i = 0;
     for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
-      group.descriptors.add(iterator.next());
+      group.addDescriptor(iterator.next());
     }
 
     if (showAllPredicate.test(group)) {
@@ -1898,7 +1898,7 @@ public final class PluginManagerConfigurable
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
-    if (!group.descriptors.isEmpty()) {
+    if (!group.getDescriptors().isEmpty()) {
       groups.add(group);
     }
     LOG.info("Marketplace tab: '" + name + "' group load finished");
