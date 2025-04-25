@@ -9,7 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;
@@ -22,7 +25,6 @@ import java.util.Objects;
  * area when the file may not necessarily belong to the project roots and is backed by weak references to ensure
  * memory efficiency.
  */
-@ApiStatus.Experimental
 final class FileWeakScope extends GlobalSearchScope implements VirtualFileEnumeration {
   private final WeakReference<VirtualFile> myVirtualFile; // files can be out of project roots
   private final @Nullable @Nls String myDisplayName;
