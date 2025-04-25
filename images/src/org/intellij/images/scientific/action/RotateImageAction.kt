@@ -23,6 +23,11 @@ class RotateImageAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+  override fun update(e: AnActionEvent) {
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     var currentAngle = imageFile.getUserData(ROTATION_ANGLE_KEY) ?: 0
