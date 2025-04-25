@@ -30,7 +30,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   implements XLineBreakpoint<P> {
 
   // TODO IJPL-185322 move to some external manager
-  private final XBreakpointVisualRepresentation myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this));
+  private final XBreakpointVisualRepresentation myVisualRepresentation;
 
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
@@ -40,6 +40,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
+    myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this));
   }
 
   // TODO IJPL-185322 migrate to backend -> frontend rpc flow notification
