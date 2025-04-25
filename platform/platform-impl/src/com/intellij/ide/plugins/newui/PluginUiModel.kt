@@ -21,8 +21,6 @@ import java.util.*
 interface PluginUiModel {
   val pluginId: PluginId
   @get:NlsSafe
-  val name: String
-  @get:NlsSafe
   val version: String?
   val isBundled: Boolean
   val isDeleted: Boolean
@@ -37,10 +35,8 @@ interface PluginUiModel {
   val allowBundledUpdate: Boolean
 
   val source: PluginSource
-  val tags: List<String>
   val dependencies: List<PluginDependencyModel>
   val dependencyNames: Collection<String>?
-  val suggestedCommercialIde: String?
   val suggestedFeatures: Collection<String>
 
   @get:NlsSafe
@@ -88,6 +84,11 @@ interface PluginUiModel {
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
+  
+  @get:NlsSafe
+  var name: String
+  var tags: List<String>
+  var suggestedCommercialIde: String?
 
   /**
    * Java compatibility method. Going to be removed after refactoring is done.

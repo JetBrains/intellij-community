@@ -19,7 +19,6 @@ class PluginUiModelAdapter(
   val pluginDescriptor: IdeaPluginDescriptor,
 ) : PluginUiModel {
   override val pluginId: PluginId = pluginDescriptor.pluginId
-  override val name: String = pluginDescriptor.name
   override val version: String?
     get() = pluginDescriptor.version
   override val isBundled: Boolean
@@ -48,14 +47,10 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.allowBundledUpdate()
 
   override val source: PluginSource = PluginSource.LOCAL
-  override val tags: List<String>
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.tags else emptyList()
   override val dependencies: List<PluginDependencyModel>
     get() = pluginDescriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) }
   override val dependencyNames: Collection<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
-  override val suggestedCommercialIde: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedCommercialIde else null
   override val suggestedFeatures: Collection<String>
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedFeatures else emptyList()
 
@@ -182,6 +177,30 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.setCustomTrialPeriodMap(value)
+      }
+    }
+
+  override var name: String
+    get() = pluginDescriptor.name
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.name = value
+      }
+    }
+
+  override var tags: List<String>
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.tags else emptyList()
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.tags = value
+      }
+    }
+
+  override var suggestedCommercialIde: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedCommercialIde else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.suggestedCommercialIde = value
       }
     }
 
