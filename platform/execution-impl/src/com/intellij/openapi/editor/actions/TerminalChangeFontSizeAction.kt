@@ -70,6 +70,7 @@ private class ClassicTerminalChangeFontHandler(private val widget: JBTerminalWid
 
 private class ReworkedTerminalChangeFontHandler(private val provider: TerminalFontSizeProvider) : TerminalChangeFontHandler {
   override fun changeSize(step: Float) {
+    // no range check here because the provider implementation takes care of it
     provider.setFontSize(provider.getFontSize() + step)
   }
 
