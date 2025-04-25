@@ -113,6 +113,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
 import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
@@ -511,15 +512,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public static boolean isPositionFiltered(@Nullable Location location) {
-    List<ClassFilter> activeFilters = getActiveFilters();
-    if (!activeFilters.isEmpty()) {
-      ReferenceType referenceType = location != null ? location.declaringType() : null;
-      if (referenceType != null) {
-        String currentClassName = referenceType.name();
-        return currentClassName != null && DebuggerUtilsEx.isFiltered(currentClassName, activeFilters);
-      }
+    ReferenceType referenceType = location != null ? location.declaringType() : null;
+    if (referenceType == null) {
+      return false;
     }
-    return false;
+    return isClassFiltered(referenceType.name());
   }
 
   public static boolean isClassFiltered(@Nullable String name) {
@@ -529,14 +526,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return DebuggerUtilsEx.isFiltered(name, getActiveFilters());
   }
 
-  private static @NotNull List<ClassFilter> getActiveFilters() {
+  private static @NotNull Stream<ClassFilter> getActiveFilters() {
     DebuggerSettings settings = DebuggerSettings.getInstance();
     StreamEx<ClassFilter> stream = StreamEx.of(DebuggerClassFilterProvider.EP_NAME.getExtensionList())
       .flatCollection(DebuggerClassFilterProvider::getFilters);
     if (settings.TRACING_FILTERS_ENABLED) {
       stream = stream.prepend(settings.getSteppingFilters());
     }
-    return stream.filter(ClassFilter::isEnabled).toList();
+    return stream.filter(ClassFilter::isEnabled);
   }
 
   public static boolean shouldHideStackFramesUsingSteppingFilters() {

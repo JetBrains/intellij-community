@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerUtilsEx
@@ -82,6 +82,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
@@ -192,16 +193,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
-  public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
-    return isFiltered(qName, Arrays.asList(classFilters));
-  }
-
-  public static boolean isFiltered(@NotNull String qName, List<? extends ClassFilter> classFilters) {
+  public static boolean isFiltered(@NotNull String qName, Stream<? extends ClassFilter> classFilters) {
     if (qName.indexOf('[') != -1) {
       return false; //is array
     }
 
-    return ContainerUtil.exists(classFilters, filter -> isFiltered(filter, qName));
+    return classFilters.anyMatch(filter -> isFiltered(filter, qName));
   }
 
   public static int getEnabledNumber(ClassFilter[] classFilters) {

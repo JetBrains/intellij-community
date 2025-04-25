@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
@@ -41,6 +41,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
+  private boolean myIsFiltered;
   private ObjectReference myThisObject;
   private SourcePosition mySourcePosition;
 
@@ -72,6 +73,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
+      myIsFiltered = DebugProcessImpl.isPositionFiltered(myLocation);
     }
     catch (InternalException | EvaluateException e) {
       LOG.info(e);
@@ -79,6 +81,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myMethodOccurrence = tracker.getMethodOccurrence(0, null);
       myIsSynthetic = false;
       myIsInLibraryContent = false;
+      myIsFiltered = false;
     }
   }
 
@@ -243,7 +246,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public boolean shouldHide() {
     return isSynthetic() || isInLibraryContent() ||
-           (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(getLocation()));
+           (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && myIsFiltered);
   }
 
   public @Nullable Location getLocation() {

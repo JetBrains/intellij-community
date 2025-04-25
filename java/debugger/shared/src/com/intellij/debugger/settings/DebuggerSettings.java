@@ -115,7 +115,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   // transient - custom serialization
   @Transient
   public ClassFilter[] getSteppingFilters() {
-    return ClassFilter.deepCopyOf(mySteppingFilters);
+    return mySteppingFilters;
   }
 
   public static DebuggerSettings getInstance() {
