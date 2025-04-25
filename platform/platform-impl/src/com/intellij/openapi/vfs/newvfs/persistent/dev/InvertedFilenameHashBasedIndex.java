@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.platform.util.io.storages.intmultimaps.Int2IntMultimap;
@@ -28,14 +28,14 @@ public final class InvertedFilenameHashBasedIndex {
     this(1 << 14);
   }
 
-  public InvertedFilenameHashBasedIndex(final int initialCapacity) {
+  public InvertedFilenameHashBasedIndex(int initialCapacity) {
     nameHashToFileId = new Int2IntMultimap(initialCapacity, 0.4f);
   }
 
-  public boolean likelyFilesWithNames(final @NotNull Set<String> names,
-                                      final @NotNull IntPredicate fileIdProcessor) {
-    for (final String name : names) {
-      final int hash = hashCodeOf(name);
+  public boolean likelyFilesWithNames(@NotNull Set<String> names,
+                                      @NotNull IntPredicate fileIdProcessor) {
+    for (String name : names) {
+      int hash = hashCodeOf(name);
       if (!nameHashToFileId.lookup(hash, fileIdProcessor)) {
         return false;
       }
@@ -43,27 +43,27 @@ public final class InvertedFilenameHashBasedIndex {
     return true;
   }
 
-  public void updateFileName(final int fileId,
-                             final @NotNull String oldName,
-                             final @NotNull String newName) {
+  public void updateFileName(int fileId,
+                             @NotNull String oldName,
+                             @NotNull String newName) {
     removeFileName(fileId, oldName);
     addFileName(fileId, newName);
   }
 
-  public void removeFileName(final int fileId,
-                             final @NotNull String oldName) {
-    final int oldHash = hashCodeOf(oldName);
+  public void removeFileName(int fileId,
+                             @NotNull String oldName) {
+    int oldHash = hashCodeOf(oldName);
     nameHashToFileId.remove(oldHash, fileId);
   }
 
-  public void addFileName(final int fileId,
-                          final @NotNull String newName) {
-    final int newHash = hashCodeOf(newName);
+  public void addFileName(int fileId,
+                          @NotNull String newName) {
+    int newHash = hashCodeOf(newName);
     nameHashToFileId.put(newHash, fileId);
   }
 
-  private static int hashCodeOf(final @NotNull String oldName) {
-    final int hash = oldName.hashCode();
+  private static int hashCodeOf(@NotNull String oldName) {
+    int hash = oldName.hashCode();
     if (hash == Int2IntMultimap.NO_VALUE) {
       //Int2IntMultimap doesn't allow 0 keys/values, hence replace 0 hash with just any value!=0. Hash doesn't
       // identify name uniquely anyway, hence this replacement just adds another hash collision -- basically,
