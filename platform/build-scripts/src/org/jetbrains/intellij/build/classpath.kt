@@ -21,6 +21,7 @@ import java.io.DataOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeToOrSelf
 
 internal fun excludedLibJars(context: BuildContext): Set<String> {
   return java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR) +
@@ -161,7 +162,7 @@ private fun writeEntry(out: DataOutputStream, files: Collection<Path>, pluginDir
   out.write(pluginDescriptorContent)
 
   for (file in files) {
-    out.writeUTF(pluginDir.relativize(file).invariantSeparatorsPathString)
+    out.writeUTF(file.relativeToOrSelf(pluginDir).invariantSeparatorsPathString)
   }
 }
 
