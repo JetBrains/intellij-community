@@ -196,7 +196,7 @@
     <group id="Terminal.PromptToolbar"/>
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
-            class="org.jetbrains.plugins.terminal.block.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
+            class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

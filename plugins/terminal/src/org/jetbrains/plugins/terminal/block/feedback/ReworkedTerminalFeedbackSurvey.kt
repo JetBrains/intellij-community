@@ -15,53 +15,46 @@ import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage
-import org.jetbrains.plugins.terminal.fus.TerminalFeedbackEvent
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.AFTER_USAGE
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.ON_DISABLING
-import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 
-/** Used to indicate that we are trying to show the feedback notification after block terminal is disabled */
-private val BLOCK_TERMINAL_DISABLING: Key<Boolean> = Key.create("BlockTerminalDisabling")
+/** Used to indicate that we are trying to show the feedback notification after the reworked terminal is disabled */
+private val REWORKED_TERMINAL_DISABLING: Key<Boolean> = Key.create("ReworkedTerminalDisabling")
 
 @ApiStatus.Internal
-fun showBlockTerminalFeedbackNotification(project: Project) {
-  // BLOCK_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
+fun showReworkedTerminalFeedbackNotification(project: Project) {
+  // REWORKED_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
   // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
-  project.putUserData(BLOCK_TERMINAL_DISABLING, true)
+  project.putUserData(REWORKED_TERMINAL_DISABLING, true)
   OnDemandFeedbackResolver.getInstance()
-    .showFeedbackNotification(BlockTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
+    .showFeedbackNotification(ReworkedTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
       if (!isNotificationShown) {
-        // If the notification was not shown, the BLOCK_TERMINAL_DISABLING would not be used, so we can just clear it.
-        project.putUserData(BLOCK_TERMINAL_DISABLING, null)
+        // If the notification was not shown, the REWORKED_TERMINAL_DISABLING would not be used, so we can just clear it.
+        project.putUserData(REWORKED_TERMINAL_DISABLING, null)
       }
   }
 }
 
 internal fun getFeedbackMoment(project: Project): TerminalFeedbackMoment {
-  return if (project.getUserData(BLOCK_TERMINAL_DISABLING) == true) ON_DISABLING else AFTER_USAGE
+  return if (project.getUserData(REWORKED_TERMINAL_DISABLING) == true) ON_DISABLING else AFTER_USAGE
 }
 
-internal class BlockTerminalFeedbackSurvey : FeedbackSurvey() {
-  override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(BlockTerminalSurveyConfig())
+internal class ReworkedTerminalFeedbackSurvey : FeedbackSurvey() {
+  override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(ReworkedTerminalSurveyConfig())
 }
 
-internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
-  override val surveyId: String = "new_terminal"
+internal class ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
+  override val surveyId: String = "reworked_terminal"
 
   override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
-    if (!forTest) {
-      TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.DIALOG_SHOWN, getFeedbackMoment(project))
-    }
-    return BlockTerminalFeedbackDialog(project, forTest)
+    return ReworkedTerminalFeedbackDialog(project, forTest)
   }
 
-  override fun updateStateAfterDialogClosedOk(project: Project) {
-    TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.FEEDBACK_SENT, getFeedbackMoment(project))
-  }
+  override fun updateStateAfterDialogClosedOk(project: Project) { }
 
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 2, 1)
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 7, 15)
 
   override val requireIdeEAP: Boolean = false
 
@@ -69,9 +62,12 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
+    // Show notification if the user has executed enough commands or if the reworked terminal is being disabled.
     return !usageStorage.state.feedbackNotificationShown &&
-           // show notification if user executed enough commands or if block terminal is being disabled
-           (usageStorage.executedCommandsNumber >= 15 || usageStorage.executedCommandsNumber > 0 && getFeedbackMoment(project) == ON_DISABLING)
+           (
+             usageStorage.state.enterKeyPressedTimes >= 15 ||
+             usageStorage.state.enterKeyPressedTimes > 0 && getFeedbackMoment(project) == ON_DISABLING
+           )
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
@@ -82,6 +78,5 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override fun updateStateAfterNotificationShowed(project: Project) {
     TerminalUsageLocalStorage.getInstance().state.feedbackNotificationShown = true
-    TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.NOTIFICATION_SHOWN, getFeedbackMoment(project))
   }
 }
