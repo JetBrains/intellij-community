@@ -459,62 +459,6 @@ object PluginManagerCore {
       return result
     }
 
-  private fun selectPluginsForLoading(
-    descriptors: Collection<IdeaPluginDescriptorImpl>,
-    idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-    errors: MutableMap<PluginId, PluginNonLoadReason>,
-    essentialPlugins: Set<PluginId>
-  ) {
-    val idsToLoad = System.getProperty("idea.load.plugins.id")
-    val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
-
-    val pluginsToLoad = if (idsToLoad == null) null else {
-      val rootPluginsToLoad: HashSet<PluginId> = idsToLoad.split(',')
-        .filter { it.isNotEmpty() }
-        .mapTo(HashSet(), PluginId::getId)
-      rootPluginsToLoad.addAll(essentialPlugins)
-      val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
-      for (id in rootPluginsToLoad) {
-        val descriptor = idMap[id] ?: continue
-        pluginsToLoad.add(descriptor)
-        processAllNonOptionalDependencies(descriptor, idMap) { dependency ->
-          pluginsToLoad.add(dependency)
-          FileVisitResult.CONTINUE
-        }
-      }
-      pluginsToLoad
-    }
-
-    for (descriptor in descriptors) {
-      if (descriptor.pluginId == CORE_ID) {
-        continue
-      }
-      if (pluginsToLoad != null) {
-        if (!pluginsToLoad.contains(descriptor)) {
-          descriptor.isMarkedForLoading = false
-          logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property and won't be loaded")
-        }
-      }
-      else if (!shouldLoadPlugins) {
-        descriptor.isMarkedForLoading = false
-        errors[descriptor.getPluginId()] = PluginLoadingIsDisabledCompletely(descriptor)
-      }
-    }
-
-    if (pluginsToLoad == null && shouldLoadPlugins) {
-      for (essentialId in essentialPlugins) {
-        val essentialPlugin = idMap[essentialId] ?: continue
-        for (incompatibleId in essentialPlugin.incompatiblePlugins) {
-          val incompatiblePlugin = idMap[incompatibleId] ?: continue
-          if (incompatiblePlugin.isMarkedForLoading) {
-            incompatiblePlugin.isMarkedForLoading = false
-            logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}' and won't be loaded")
-          }
-        }
-      }
-    }
-  }
-
   @JvmStatic
   fun isCompatible(descriptor: IdeaPluginDescriptor): Boolean =
     isCompatible(descriptor, buildNumber = null)
@@ -576,31 +520,6 @@ object PluginManagerCore {
       return PluginMalformedSinceUntilConstraints(descriptor)
     }
     return null
-  }
-
-  private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: Set<PluginId>) {
-    val corePlugin = idMap[CORE_ID]
-    if (corePlugin != null) {
-      val disabledModulesOfCorePlugin =
-        corePlugin.content.modules
-          .filter { it.loadingRule.required && !it.requireDescriptor().isMarkedForLoading }
-      if (disabledModulesOfCorePlugin.isNotEmpty()) {
-        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.name })
-      }
-    }
-    var missing: MutableList<String>? = null
-    for (id in essentialPlugins) {
-      val descriptor = idMap[id]
-      if (descriptor == null || !descriptor.isMarkedForLoading) {
-        if (missing == null) {
-          missing = ArrayList()
-        }
-        missing.add(id.idString)
-      }
-    }
-    if (missing != null) {
-      throw EssentialPluginMissingException(missing)
-    }
   }
 
   @ApiStatus.Internal
@@ -690,7 +609,7 @@ object PluginManagerCore {
   /**
    * processes postponed consent check from the previous run (e.g., when the previous run was headless)
    * see usages of [writeThirdPartyPluginsIds]
-    */
+   */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
     val aliens = readThirdPartyPluginIdsOnce().mapNotNull { idMap[it] }
@@ -698,6 +617,87 @@ object PluginManagerCore {
       checkThirdPartyPluginsPrivacyConsent(aliens)
     }
     activity?.end()
+  }
+
+  private fun selectPluginsForLoading(
+    descriptors: Collection<IdeaPluginDescriptorImpl>,
+    idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+    errors: MutableMap<PluginId, PluginNonLoadReason>,
+    essentialPlugins: Set<PluginId>
+  ) {
+    val idsToLoad = System.getProperty("idea.load.plugins.id")
+    val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
+
+    val pluginsToLoad = if (idsToLoad == null) null else {
+      val rootPluginsToLoad: HashSet<PluginId> = idsToLoad.split(',')
+        .filter { it.isNotEmpty() }
+        .mapTo(HashSet(), PluginId::getId)
+      rootPluginsToLoad.addAll(essentialPlugins)
+      val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
+      for (id in rootPluginsToLoad) {
+        val descriptor = idMap[id] ?: continue
+        pluginsToLoad.add(descriptor)
+        processAllNonOptionalDependencies(descriptor, idMap) { dependency ->
+          pluginsToLoad.add(dependency)
+          FileVisitResult.CONTINUE
+        }
+      }
+      pluginsToLoad
+    }
+
+    for (descriptor in descriptors) {
+      if (descriptor.pluginId == CORE_ID) {
+        continue
+      }
+      if (pluginsToLoad != null) {
+        if (!pluginsToLoad.contains(descriptor)) {
+          descriptor.isMarkedForLoading = false
+          logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property and won't be loaded")
+        }
+      }
+      else if (!shouldLoadPlugins) {
+        descriptor.isMarkedForLoading = false
+        errors[descriptor.getPluginId()] = PluginLoadingIsDisabledCompletely(descriptor)
+      }
+    }
+
+    if (pluginsToLoad == null && shouldLoadPlugins) {
+      for (essentialId in essentialPlugins) {
+        val essentialPlugin = idMap[essentialId] ?: continue
+        for (incompatibleId in essentialPlugin.incompatiblePlugins) {
+          val incompatiblePlugin = idMap[incompatibleId] ?: continue
+          if (incompatiblePlugin.isMarkedForLoading) {
+            incompatiblePlugin.isMarkedForLoading = false
+            logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}' and won't be loaded")
+          }
+        }
+      }
+    }
+  }
+
+  private fun checkEssentialPluginsAreAvailable(idMap: Map<PluginId, IdeaPluginDescriptorImpl>, essentialPlugins: Set<PluginId>) {
+    val corePlugin = idMap[CORE_ID]
+    if (corePlugin != null) {
+      val disabledModulesOfCorePlugin =
+        corePlugin.content.modules
+          .filter { it.loadingRule.required && !it.requireDescriptor().isMarkedForLoading }
+      if (disabledModulesOfCorePlugin.isNotEmpty()) {
+        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.name })
+      }
+    }
+    var missing: MutableList<String>? = null
+    for (id in essentialPlugins) {
+      val descriptor = idMap[id]
+      if (descriptor == null || !descriptor.isMarkedForLoading) {
+        if (missing == null) {
+          missing = ArrayList()
+        }
+        missing.add(id.idString)
+      }
+    }
+    if (missing != null) {
+      throw EssentialPluginMissingException(missing)
+    }
   }
 
   private fun checkThirdPartyPluginsPrivacyConsent(aliens: List<IdeaPluginDescriptorImpl>) {
