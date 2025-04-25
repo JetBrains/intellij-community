@@ -67,6 +67,7 @@ data class XStackFrameDto(
   val initialPresentation: XStackFramePresentation,
   val captionInfo: XStackFrameCaptionInfo = XStackFrameCaptionInfo.noInfo,
   val customBackgroundInfo: XStackFrameCustomBackgroundInfo? = null,
+  val canDrop: Boolean,
 )
 
 @ApiStatus.Internal

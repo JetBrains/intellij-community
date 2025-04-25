@@ -744,14 +744,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   }
 
   private static @Nullable XDropFrameHandler findDropFrameHandler(XDebuggerFramesList list) {
-    var session = DataManager.getInstance().getDataContext(list).getData(XDebugSession.DATA_KEY);
+    var session = DataManager.getInstance().getDataContext(list).getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY);
     if (session == null) {
       return null;
     }
-    return session.getDebugProcess().getDropFrameHandler();
+    return session.getDropFrameHandler();
   }
 
-  private static class ResetFrameAction extends DumbAwareAction {
+  private static class ResetFrameAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       var inputEvent = e.getInputEvent();

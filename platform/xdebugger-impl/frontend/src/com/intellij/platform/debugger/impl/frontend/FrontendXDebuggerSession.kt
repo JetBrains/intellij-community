@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
@@ -30,6 +31,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -150,6 +152,8 @@ class FrontendXDebuggerSession private constructor(
 
   override val currentSuspendContextCoroutineScope: CoroutineScope?
     get() = suspendContext.value?.lifetimeScope
+
+  private val dropFrameHandler = FrontendDropFrameHandler(id, scope)
 
   init {
     DebuggerInlayListener.getInstance(project).startListening()
@@ -363,6 +367,8 @@ class FrontendXDebuggerSession private constructor(
     // TODO: support dependent manager
     return false
   }
+
+  override fun getDropFrameHandler(): XDropFrameHandler? = dropFrameHandler
 
   companion object {
     private val LOG = thisLogger()

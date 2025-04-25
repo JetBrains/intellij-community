@@ -27,6 +27,7 @@ internal class FrontendXStackFrame(
   private val equalityObject: XStackFrameEqualityObject?,
   private val evaluatorDto: XDebuggerEvaluatorDto,
   private val captionInfo: XStackFrameCaptionInfo,
+  var canDrop: Boolean,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
   private val evaluator by lazy {
     createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)

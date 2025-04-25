@@ -77,6 +77,9 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun muteBreakpoints(sessionId: XDebugSessionId, muted: Boolean)
 
+  suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean
+  suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {
