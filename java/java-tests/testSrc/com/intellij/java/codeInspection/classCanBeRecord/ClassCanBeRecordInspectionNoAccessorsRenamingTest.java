@@ -8,7 +8,7 @@ import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.C
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassCanBeRecordInspectionAccessorsRenamingTest extends LightQuickFixParameterizedTestCase {
+public class ClassCanBeRecordInspectionNoAccessorsRenamingTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
@@ -17,7 +17,7 @@ public class ClassCanBeRecordInspectionAccessorsRenamingTest extends LightQuickF
 
   @Override
   protected String getBasePath() {
-    return "/inspection/classCanBeRecord/accessorsRenaming";
+    return "/inspection/classCanBeRecord/noAccessorsRenaming";
   }
 
   @Override

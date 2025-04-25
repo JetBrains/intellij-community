@@ -88,7 +88,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
     RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
     if (recordCandidate == null) return null;
 
-    return new ConvertToRecordProcessor(recordCandidate);
+    return new ConvertToRecordProcessor(recordCandidate, mySuggestAccessorsRenaming);
   }
 
   /**
@@ -137,7 +137,7 @@ public final class ConvertToRecordFix implements LocalQuickFix {
   }
 
   /**
-   * Encapsulates necessary information about the converting class e.g its existing fields, accessors...
+   * Encapsulates necessary information about the class being converted: its fields, accessors, etc.
    * It helps to validate whether a class will be a well-formed record and supports performing a refactoring.
    */
   static class RecordCandidate {
@@ -207,7 +207,8 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       if (myFieldsToAccessorCandidates.size() == 0) return false;
       for (var entry : myFieldsToAccessorCandidates.entrySet()) {
         PsiField field = entry.getKey();
-        if (!field.hasModifierProperty(FINAL) || field.hasInitializer()) return false;
+        if (!field.hasModifierProperty(FINAL)) return false;
+        if (field.hasInitializer()) return false;
         if (JavaPsiRecordUtil.ILLEGAL_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
         if (entry.getValue().size() > 1) return false;
         FieldAccessorCandidate firstAccessor = ContainerUtil.getFirstItem(entry.getValue());

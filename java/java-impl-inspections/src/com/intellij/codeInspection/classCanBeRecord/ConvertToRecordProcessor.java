@@ -5,6 +5,7 @@ import com.intellij.codeInspection.RedundantRecordConstructorInspection;
 import com.intellij.codeInspection.RedundantRecordConstructorInspection.ConstructorSimplifier;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAccessorCandidate;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
+import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,6 +20,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordConstructorCandidate;
 
@@ -59,12 +62,14 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     .parameterCount(0);
 
   private final RecordCandidate myRecordCandidate;
+  private final boolean mySuggestAccessorsRenaming;
 
   private final Map<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
-  ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate) {
+  ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean suggestAccessorsRenaming) {
     super(recordCandidate.getProject());
     myRecordCandidate = recordCandidate;
+    mySuggestAccessorsRenaming = suggestAccessorsRenaming;
   }
 
   @Override
@@ -293,14 +298,14 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         }
         recordBuilder.addPsiElement(nextElement);
       }
-      else if (nextElement instanceof PsiMethod) {
-        if (canonicalCtorCandidate != null && nextElement == canonicalCtorCandidate.getConstructorMethod()) {
+      else if (nextElement instanceof PsiMethod psiMethod) {
+        if (canonicalCtorCandidate != null && psiMethod == canonicalCtorCandidate.getConstructorMethod()) {
           recordBuilder.addCanonicalCtor(canonicalCtorCandidate.getConstructorMethod());
         }
         else {
-          FieldAccessorCandidate fieldAccessorCandidate = getFieldAccessorCandidate(fieldToAccessorCandidateMap, (PsiMethod)nextElement);
+          FieldAccessorCandidate fieldAccessorCandidate = getFieldAccessorCandidate(fieldToAccessorCandidateMap, psiMethod);
           if (fieldAccessorCandidate == null) {
-            recordBuilder.addPsiElement(nextElement);
+            recordBuilder.addPsiElement(psiMethod);
           }
           else {
             recordBuilder.addFieldAccessor(fieldAccessorCandidate);
@@ -312,16 +317,34 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
       nextElement = nextElement.getNextSibling();
     }
+
+    Set<PsiMethod> syntheticGetters = Arrays.stream(psiClass.getMethods())
+      .filter(method -> method instanceof SyntheticElement)
+      .filter(method -> ContainerUtil.exists(fieldToAccessorCandidateMap.keySet(),
+                                             field -> field.getName().equals(PropertyUtilBase.getPropertyNameByGetter(method))))
+      .collect(Collectors.toSet());
+
     useAccessorsWhenNecessary(usages);
-    CallMatcher redundantObjectMethods = findRedundantObjectMethods();
+    CallMatcher redundantObjectMethods = findRedundantObjectMethods(myRecordCandidate);
     PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
     tryToCompactCanonicalCtor(result);
     removeRedundantObjectMethods(result, redundantObjectMethods);
-    generateJavaDocForDocumentedFields(result);
+    addImplicitLombokGetters(result, syntheticGetters.toArray(PsiMethod.EMPTY_ARRAY));
+    removeRedundantLombokAnnotations(result);
+    generateJavaDocForDocumentedFields(result, myRecordCandidate.getFieldsToAccessorCandidates().keySet());
     CodeStyleManager.getInstance(myProject).reformat(JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(result));
   }
 
-  private void useAccessorsWhenNecessary(UsageInfo @NotNull [] usages) {
+  private void addImplicitLombokGetters(@NotNull PsiClass record, @NotNull PsiMethod @NotNull [] implicitGetters) {
+    if (!mySuggestAccessorsRenaming) {
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+      for (PsiMethod getter : implicitGetters) {
+        record.add(elementFactory.createMethodFromText(getter.getText(), record));
+      }
+    }
+  }
+
+  private void useAccessorsWhenNecessary(@NotNull UsageInfo @NotNull [] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof FieldUsageInfo fieldUsageInfo) {
         PsiField field = fieldUsageInfo.myField;
@@ -354,12 +377,15 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private CallMatcher findRedundantObjectMethods() {
-    PsiMethod equalsMethod = myRecordCandidate.getEqualsMethod();
-    PsiMethod hashCodeMethod = myRecordCandidate.getHashCodeMethod();
+  /**
+   * Finds methods within {@code recordCandidate} that are redundant implementations of {@link Object#equals} and {@link Object#hashCode}.
+   */
+  private static CallMatcher findRedundantObjectMethods(@NotNull RecordCandidate recordCandidate) {
+    PsiMethod equalsMethod = recordCandidate.getEqualsMethod();
+    PsiMethod hashCodeMethod = recordCandidate.getHashCodeMethod();
     if (equalsMethod == null && hashCodeMethod == null) return CallMatcher.none();
     List<CallMatcher> result = new SmartList<>();
-    Set<PsiField> fields = myRecordCandidate.getFieldsToAccessorCandidates().keySet();
+    Set<PsiField> fields = recordCandidate.getFieldsToAccessorCandidates().keySet();
     if (EqualsChecker.isStandardEqualsMethod(equalsMethod, fields)) {
       result.add(OBJECT_EQUALS);
     }
@@ -468,6 +494,8 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   private static void tryToCompactCanonicalCtor(@NotNull PsiClass record) {
+    if (!record.isRecord()) throw new IllegalArgumentException("Not a record: " + record);
+
     PsiMethod canonicalCtor = ArrayUtil.getFirstElement(record.getConstructors());
     if (canonicalCtor != null) {
       PsiCodeBlock ctorBody = canonicalCtor.getBody();
@@ -489,9 +517,45 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       .forEach(PsiMethod::delete);
   }
 
-  private void generateJavaDocForDocumentedFields(@NotNull PsiClass record) {
+  /**
+   * This could be also implemented as a {@link com.intellij.refactoring.RefactoringHelper}.
+   * {@link BaseRefactoringProcessor} automatically calls refactoring helpers after refactoring is done.
+   * <p>
+   * The problem with it is that refactoring helpers don't trivially work in preview, so we would make the bug IDEA-369873 only worse.
+   */
+  private static void removeRedundantLombokAnnotations(@NotNull PsiClass record) {
+    if (!record.isRecord()) throw new IllegalArgumentException("Not a record: " + record);
+    if (!JavaLibraryUtil.hasLibraryJar(record.getProject(), "org.projectlombok:lombok")) return;
+
+    // Remove annotations from the class
+    for (final PsiAnnotation annotation : record.getAnnotations()) {
+      final String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName == null) continue;
+      if (Set.of(
+        "lombok.ToString",
+        "lombok.Getter",
+        "lombok.EqualsAndHashCode",
+        "lombok.RequiredArgsConstructor",
+        "lombok.Data",
+        "lombok.Value").contains(qualifiedName)) {
+        annotation.delete();
+      }
+    }
+
+    // Remove annotations from instance fields
+    for (final PsiField field : record.getFields()) {
+      for (final PsiAnnotation annotation : field.getAnnotations()) {
+        final String qualifiedName = annotation.getQualifiedName();
+        if (qualifiedName != null && qualifiedName.equals("lombok.Getter")) {
+          annotation.delete();
+        }
+      }
+    }
+  }
+
+  private static void generateJavaDocForDocumentedFields(@NotNull PsiClass record, @NotNull Set<@NotNull PsiField> fields) {
     Map<String, String> comments = new LinkedHashMap<>();
-    for (PsiField field : myRecordCandidate.getFieldsToAccessorCandidates().keySet()) {
+    for (PsiField field : fields) {
       StringBuilder fieldComment = new StringBuilder();
       for (PsiComment comment : ObjectUtils.notNull(PsiTreeUtil.getChildrenOfType(field, PsiComment.class), new PsiComment[0])) {
         if (comment instanceof PsiDocComment) {
@@ -509,7 +573,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
     }
     if (comments.isEmpty()) return;
-    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(myProject).getParserFacade();
+    PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(record.getProject()).getParserFacade();
     PsiDocComment recordDoc = record.getDocComment();
     if (recordDoc == null) {
       PsiDocComment emptyDoc = parserFacade.createDocCommentFromText("/** */");
