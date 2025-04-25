@@ -117,7 +117,7 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
-    if (!InjectionUtils.isInjectLanguageActionEnabled(host)) return false;
+    if (!InjectionUtils.isInjectLanguageActionEnabled(file)) return false;
     List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
