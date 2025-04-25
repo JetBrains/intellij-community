@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
+import com.intellij.codeInsight.completion.CompletionResultSet
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -22,8 +23,29 @@ internal object Completions {
     fun complete(
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
-        sink: LookupElementSink,
+        resultSet: CompletionResultSet,
+        before: KaSession.() -> Boolean = { true },
+        after: KaSession.() -> Boolean = { true },
     ): Unit = analyze(parameters.completionFile) {
+        try {
+            if (!before()) return@analyze
+
+            complete(
+                parameters = parameters,
+                positionContext = positionContext,
+                sink = LookupElementSink(resultSet, parameters),
+            )
+        } finally {
+            after()
+        }
+    }
+
+    context(KaSession)
+    private fun complete(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext,
+        sink: LookupElementSink,
+    ) {
         val weighingContext = when (positionContext) {
             is KotlinNameReferencePositionContext -> WeighingContext.create(parameters, positionContext)
             else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)

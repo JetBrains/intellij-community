@@ -9,7 +9,6 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -74,13 +73,12 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (AFTER_NUMBER_LITERAL.accepts(position)) return
         val positionContext = KotlinPositionContextDetector.detect(position)
 
-        val resultSet = result.withRelevanceSorter(parameters, positionContext)
-            .withPrefixMatcher(parameters)
-
         Completions.complete(
             parameters = parameters,
             positionContext = positionContext,
-            sink = LookupElementSink(resultSet, parameters),
+            resultSet = result
+                .withRelevanceSorter(parameters, positionContext)
+                .withPrefixMatcher(parameters),
         )
     }
 
