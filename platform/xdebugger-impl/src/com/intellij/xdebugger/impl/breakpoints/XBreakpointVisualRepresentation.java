@@ -37,7 +37,7 @@ import java.awt.dnd.DragSource;
 import java.io.Serializable;
 import java.util.concurrent.ExecutorService;
 
-class XBreakpointVisualRepresentation implements Serializable {
+class XBreakpointVisualRepresentation {
   private static final Logger LOG = Logger.getInstance(XBreakpointVisualRepresentation.class);
   private final XLineBreakpointImpl<?> myBreakpoint;
   static final ExecutorService redrawInlaysExecutor =
