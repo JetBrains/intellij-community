@@ -628,7 +628,7 @@ object PluginManagerCore {
     val idsToLoad = System.getProperty("idea.load.plugins.id")
     val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
 
-    val pluginsToLoad = if (idsToLoad == null) null else {
+    if (idsToLoad != null) {
       val rootPluginsToLoad: HashSet<PluginId> = idsToLoad.split(',')
         .filter { it.isNotEmpty() }
         .mapTo(HashSet(), PluginId::getId)
@@ -642,10 +642,7 @@ object PluginManagerCore {
           FileVisitResult.CONTINUE
         }
       }
-      pluginsToLoad
-    }
 
-    if (pluginsToLoad != null) {
       for (descriptor in descriptors) {
         if (descriptor.pluginId == CORE_ID) {
           continue
@@ -655,7 +652,8 @@ object PluginManagerCore {
           logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property and won't be loaded")
         }
       }
-    } else if (!shouldLoadPlugins) {
+    }
+    else if (!shouldLoadPlugins) {
       for (descriptor in descriptors) {
         if (descriptor.pluginId == CORE_ID) {
           continue
