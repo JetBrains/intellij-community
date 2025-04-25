@@ -556,7 +556,7 @@ object PluginManagerCore {
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
 
     val pluginSetBuilder = PluginSetBuilder(loadingResult.enabledPluginsById.values)
-    selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, essentialPlugins = initContext.essentialPlugins)
+    selectPluginsForLoading(descriptors = pluginSetBuilder.unsortedPlugins, idMap = idMap, errors = pluginErrorsById, initContext = initContext)
     pluginSetBuilder.checkPluginCycles(globalErrors)
     val pluginsToDisable = HashMap<PluginId, String>()
     val pluginsToEnable = HashMap<PluginId, String>()
@@ -623,7 +623,7 @@ object PluginManagerCore {
     descriptors: Collection<IdeaPluginDescriptorImpl>,
     idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
     errors: MutableMap<PluginId, PluginNonLoadReason>,
-    essentialPlugins: Set<PluginId>
+    initContext: PluginInitializationContext,
   ) {
     val idsToLoad = System.getProperty("idea.load.plugins.id")
     val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
@@ -632,7 +632,7 @@ object PluginManagerCore {
       val rootPluginsToLoad: HashSet<PluginId> = idsToLoad.split(',')
         .filter { it.isNotEmpty() }
         .mapTo(HashSet(), PluginId::getId)
-      rootPluginsToLoad.addAll(essentialPlugins)
+      rootPluginsToLoad.addAll(initContext.essentialPlugins)
       val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
       for (id in rootPluginsToLoad) {
         val descriptor = idMap[id] ?: continue
@@ -663,7 +663,7 @@ object PluginManagerCore {
       }
     }
     else {
-      for (essentialId in essentialPlugins) {
+      for (essentialId in initContext.essentialPlugins) {
         val essentialPlugin = idMap[essentialId] ?: continue
         for (incompatibleId in essentialPlugin.incompatiblePlugins) {
           val incompatiblePlugin = idMap[incompatibleId] ?: continue
