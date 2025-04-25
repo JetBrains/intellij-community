@@ -23,12 +23,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Objects;
 
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+
 @ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
 
   // TODO IJPL-185322 move to some external manager
-  private final XBreakpointVisualRepresentation myVisualRepresentation = new XBreakpointVisualRepresentation(this);
+  private final XBreakpointVisualRepresentation myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this));
 
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;

@@ -50,8 +50,8 @@ public class XBreakpointVisualRepresentation {
 
   private @Nullable RangeMarker myRangeMarker;
 
-  XBreakpointVisualRepresentation(XLineBreakpointImpl<?> xBreakpoint) {
-    myBreakpoint = asProxy(xBreakpoint);
+  XBreakpointVisualRepresentation(XLineBreakpointProxy xBreakpoint) {
+    myBreakpoint = xBreakpoint;
     myProject = xBreakpoint.getProject();
   }
 
