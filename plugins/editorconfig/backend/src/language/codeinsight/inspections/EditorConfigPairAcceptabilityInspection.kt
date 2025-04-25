@@ -8,12 +8,15 @@ import com.intellij.editorconfig.common.syntax.psi.EditorConfigOptionValuePair
 import com.intellij.editorconfig.common.syntax.psi.EditorConfigVisitor
 import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOptionQuickFix
 import org.editorconfig.language.schema.descriptors.getDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.EditorConfigStringDescriptor
 
 class EditorConfigPairAcceptabilityInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): EditorConfigVisitor = object : EditorConfigVisitor() {
     override fun visitOptionValuePair(pair: EditorConfigOptionValuePair) {
       if (pair.getDescriptor(false) != null) return
-      pair.describableParent?.getDescriptor(false) ?: return
+      val descriptor = pair.describableParent?.getDescriptor(false) ?: return
+      if (descriptor is EditorConfigOptionDescriptor && descriptor.value is EditorConfigStringDescriptor) return
       val message = EditorConfigBundle["inspection.value.pair.acceptability.message"]
       holder.registerProblem(pair, message, EditorConfigRemoveOptionQuickFix())
     }
