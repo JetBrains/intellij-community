@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.TextChunk
@@ -78,7 +79,7 @@ internal fun usagePresentation(
   return UsagePresentation(
     text = text,
     backgroundColor = VfsPresentationUtil.getFileBackgroundColor(project, usage.file),
-    fileString = getFilePath(project, scope, usage),
+    fileString = usage.file?.let { getPresentableFilePath(project, scope, it) } ?: "",
   )
 }
 
@@ -89,8 +90,8 @@ internal class UsageInfo2UsageAdapterPresentationProvider : UsagePresentationPro
   }
 }
 
-private fun getFilePath(project: Project, scope: GlobalSearchScope, usage: UsageInfo2UsageAdapter): @NlsSafe String {
-  val file = usage.file ?: return ""
+@ApiStatus.Internal
+fun getPresentableFilePath(project: Project, scope: GlobalSearchScope, file: VirtualFile): @NlsSafe String {
   return if (ScratchUtil.isScratch(file)) {
     ScratchUtil.getRelativePath(project, file)
   }

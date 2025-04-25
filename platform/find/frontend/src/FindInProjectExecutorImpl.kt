@@ -8,17 +8,17 @@ import com.intellij.find.impl.FindKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.platform.find.*
+import com.intellij.platform.find.FindInProjectModel
+import com.intellij.platform.find.FindRemoteApi
+import com.intellij.platform.find.SearchScopeProvider
+import com.intellij.platform.find.UsageInfoModel
 import com.intellij.platform.project.projectId
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
 open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindInProjectExecutor() {
@@ -67,11 +67,14 @@ private fun getModel(project: Project, findModel: FindModel): FindInProjectModel
                             isMultiline = findModel.isMultiline,
                             isPreserveCase = findModel.isPreserveCase,
                             isProjectScope = findModel.isProjectScope,
+                            isCustomScope = findModel.isCustomScope,
                             isMultipleFiles = findModel.isMultipleFiles,
                             isReplaceState = findModel.isReplaceState,
                             isPromptOnReplace = findModel.isPromptOnReplace,
                             fileFilter = findModel.fileFilter,
                             moduleName = findModel.moduleName,
+                            directoryName = findModel.directoryName,
+                            isWithSubdirectories = findModel.isWithSubdirectories,
                             searchContext = findModel.searchContext.name,
                             scopeId = findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }, //TODO rework
                             )

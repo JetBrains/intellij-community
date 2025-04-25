@@ -4,10 +4,7 @@ package com.intellij.platform.find
 import com.intellij.find.impl.UsagePresentation
 import com.intellij.find.impl.UsagePresentationProvider
 import com.intellij.ide.ui.colors.color
-import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.usages.UsageInfoAdapter
 
@@ -16,6 +13,6 @@ class UsageInfoModelPresentationProvider: UsagePresentationProvider {
     if (usageInfo !is UsageInfoModel) return null
     val model = usageInfo.model
     return UsagePresentation(model.presentation.map { it.toTextChunk() }.toTypedArray(),
-                             model.fileId.virtualFile()?.let { VfsPresentationUtil.getFileBackgroundColor(project, it) }, model.path)
+                             model.backgroundColor?.color(), model.presentablePath)
   }
 }

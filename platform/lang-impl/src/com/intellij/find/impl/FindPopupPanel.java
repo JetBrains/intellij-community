@@ -1156,7 +1156,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         GlobalSearchScope scope = ReadAction.nonBlocking(
-          () -> GlobalSearchScopeUtil.toGlobalSearchScope(FindInProjectUtil.getScopeFromModel(project, myHelper.myPreviousModel), project)
+          () -> FindInProjectUtil.getGlobalSearchScope(project, myHelper.myPreviousModel)
         ).wrapProgress(indicator).executeSynchronously();
 
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
@@ -1172,7 +1172,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           int resCount = resultsCount.get();
           if (usageCount == null) {
             resCount = resultsCount.incrementAndGet();
-          } else if (resultsCount.get() < usageCount){
+          } else if (resCount < usageCount){
             resultsCount.set(usageCount);
             resCount = usageCount;
           }

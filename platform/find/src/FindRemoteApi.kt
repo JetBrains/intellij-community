@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.find
 
+import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
@@ -40,11 +42,14 @@ data class FindInProjectModel (
   val isMultiline: Boolean,
   val isPreserveCase: Boolean,
   val isProjectScope: Boolean,
+  val isCustomScope: Boolean,
   val isMultipleFiles: Boolean,
   val isReplaceState: Boolean,
   val isPromptOnReplace: Boolean,
   val fileFilter: String?,
   val moduleName: String?,
+  val directoryName: String?,
+  val isWithSubdirectories: Boolean,
   val searchContext: String,
   val scopeId: Int?,
 )
@@ -57,8 +62,10 @@ data class FindInProjectResult(
   val length: Int,
   val fileId: VirtualFileId,
   val path: String,
+  @param:NlsSafe val presentablePath: String,
   val usagesCount: Int,
   val fileCount: Int,
+  val backgroundColor: ColorId?
 )
 
 @Serializable

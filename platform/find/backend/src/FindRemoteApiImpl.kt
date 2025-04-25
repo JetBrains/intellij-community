@@ -4,8 +4,11 @@ package com.intellij.platform.find.backend
 import com.intellij.find.FindModel
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.impl.FindInProjectUtil
+import com.intellij.find.impl.getPresentableFilePath
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInProjectModel
 import com.intellij.platform.find.FindInProjectResult
 import com.intellij.platform.find.FindRemoteApi
@@ -38,7 +41,11 @@ class FindRemoteApiImpl: FindRemoteApi {
         isProjectScope = model.isProjectScope
         fileFilter = model.fileFilter
         moduleName = model.moduleName
+        directoryName = model.directoryName
+        isWithSubdirectories = model.isWithSubdirectories
         searchContext = FindModel.SearchContext.valueOf(model.searchContext)
+        isCustomScope = model.isCustomScope
+        //customScope = model.customScopeId.getScope
         isReplaceState = model.isReplaceState
       }
       val project = model.projectId.findProject()
@@ -52,6 +59,7 @@ class FindRemoteApiImpl: FindRemoteApi {
       coroutineScope {
         var previousItem: UsageInfo2UsageAdapter? = null
         val files = mutableSetOf<String>()
+        val scope = FindInProjectUtil.getGlobalSearchScope(project, findModel)
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, emptySet()) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
@@ -75,15 +83,20 @@ class FindRemoteApiImpl: FindRemoteApi {
             val attributes = createSimpleTextAttributes(it)
             RdTextChunk(it.text, attributes)
           }
+          val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
+          val presentablePath = getPresentableFilePath(project, scope, virtualFile) //scope isn't really used in this function
+
           previousResult = FindInProjectResult(
-            textChunks,
-            adapter.line + 1,
-            adapter.navigationOffset,
-            adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
-            virtualFile.rpcId(),
-            virtualFile.path,
-            usagesCountRes,
-            files.size
+            presentation = textChunks,
+            line = adapter.line + 1,
+            offset = adapter.navigationOffset,
+            length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+            fileId = virtualFile.rpcId(),
+            path = virtualFile.path,
+            presentablePath = presentablePath,
+            usagesCount = usagesCountRes,
+            fileCount = files.size,
+            backgroundColor = bgColor
           )
           usagesCountRes < maxUsages
         }
