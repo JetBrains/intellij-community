@@ -14,6 +14,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,8 @@ import java.util.function.Predicate;
 
 import static com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor.getPsiShortNamesCache;
 
-final class DefaultFieldNavigationContributor implements ChooseByNameContributorEx, PossiblyDumbAware {
+@ApiStatus.Internal
+public final class DefaultFieldNavigationContributor implements ChooseByNameContributorEx, PossiblyDumbAware {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
