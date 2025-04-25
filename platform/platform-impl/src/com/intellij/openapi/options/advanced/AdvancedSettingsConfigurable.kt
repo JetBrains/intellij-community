@@ -345,13 +345,19 @@ private data class AdvancedSettingControl(
 
 @ApiStatus.Internal
 fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
-  val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
-  val text = searchText?.takeIf { it.isNotBlank() }?.let {
-    @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
-    "<html>$highlightedText"
-  } ?: baseText
+  val text = getMatchText(baseText, searchText)
   when (component) {
     is JLabel -> component.text = text
     is AbstractButton -> component.text = text
   }
+}
+
+@ApiStatus.Internal
+@NlsSafe
+fun getMatchText(@NlsSafe baseText: String, @NlsSafe searchText: String?): String {
+  val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
+  return searchText?.takeIf { it.isNotBlank() }?.let {
+    @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
+    "<html>$highlightedText"
+  } ?: baseText
 }
