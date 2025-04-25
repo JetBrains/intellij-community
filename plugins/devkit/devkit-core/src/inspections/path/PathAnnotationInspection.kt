@@ -14,6 +14,7 @@ import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -699,11 +700,20 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       if (targetElement != null) {
         val annotationOwner = targetElement.modifierList
         if (annotationOwner != null) {
-          AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
+          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             MultiRoutingFileSystemPath::class.java.name,
             emptyArray(),
             annotationOwner
           )
+
+          // Shorten class references to add imports
+          if (annotation != null) {
+            // Get the containing file and shorten all class references in it
+            val containingFile = annotation.containingFile
+            if (containingFile != null) {
+              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
+            }
+          }
         }
       }
     }
@@ -724,11 +734,20 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       if (targetElement != null) {
         val annotationOwner = targetElement.modifierList
         if (annotationOwner != null) {
-          AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
+          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             NativePath::class.java.name,
             emptyArray(),
             annotationOwner
           )
+
+          // Shorten class references to add imports
+          if (annotation != null) {
+            // Get the containing file and shorten all class references in it
+            val containingFile = annotation.containingFile
+            if (containingFile != null) {
+              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
+            }
+          }
         }
       }
     }
