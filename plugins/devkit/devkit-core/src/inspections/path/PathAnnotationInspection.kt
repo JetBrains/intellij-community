@@ -458,10 +458,10 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       // Check if the expression is passed to a method that expects a specific path annotation
       val parent = expression.uastParent
       if (parent is UCallExpression) {
-        val method = parent.resolve() ?: return PathAnnotationInfo.Unspecified(null)
+        val method = parent.resolve() ?: return PathAnnotationInfo.Unspecified
         val index = parent.valueArguments.indexOf(expression)
         if (index >= 0) {
-          val parameter = getParameterForArgument(method, index) ?: return PathAnnotationInfo.Unspecified(null)
+          val parameter = getParameterForArgument(method, index) ?: return PathAnnotationInfo.Unspecified
           val info = PathAnnotationInfo.forModifierListOwner(parameter)
           if (info !is PathAnnotationInfo.Unspecified) {
             return info
@@ -484,15 +484,15 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
       // Check if the expression is passed to a Path constructor or factory method
       if (isPassedToMultiRoutingMethod(expression, nonAnnotatedTargets)) {
-        return PathAnnotationInfo.MultiRouting()
+        return PathAnnotationInfo.MultiRouting
       }
 
       // Check if the expression is passed to a method that expects a native path
       if (isPassedToNativePathMethod(expression, nonAnnotatedTargets)) {
-        return PathAnnotationInfo.Native()
+        return PathAnnotationInfo.Native
       }
 
-      return PathAnnotationInfo.Unspecified(null)
+      return PathAnnotationInfo.Unspecified
     }
 
     private fun isPathConstructorOrFactory(method: PsiElement): Boolean {
@@ -597,43 +597,34 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   /**
    * Contains information about path annotation status.
    */
-  sealed class PathAnnotationInfo {
+  private sealed class PathAnnotationInfo {
     abstract fun getPathAnnotationStatus(): ThreeState
 
-    class MultiRouting(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
+    object MultiRouting : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
-
-      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
-    class Native(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
+    object Native : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
-
-      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
-    class LocalPathInfo(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
+    object LocalPathInfo : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
-
-      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
-    class FilenameInfo(private val annotationCandidate: PsiModifierListOwner? = null) : PathAnnotationInfo() {
+    object FilenameInfo : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
-
-      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
-    class Unspecified(private val annotationCandidate: PsiModifierListOwner?) : PathAnnotationInfo() {
+    object Unspecified : PathAnnotationInfo() {
       override fun getPathAnnotationStatus(): ThreeState = ThreeState.UNSURE
-      fun getAnnotationCandidate(): PsiModifierListOwner? = annotationCandidate
     }
 
     companion object {
       /**
        * Checks if the given string is a valid filename (no forward or backward slashes).
        */
-      internal fun isValidFilename(str: String): Boolean {
+      fun isValidFilename(str: String): Boolean {
         return !str.contains('/') && !str.contains('\\')
       }
 
@@ -661,7 +652,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
                   .constantEvaluationHelper.computeConstantExpression(initializer)
                 if (constantValue is String && isValidFilename(constantValue)) {
-                  return FilenameInfo(null)
+                  return FilenameInfo
                 }
               }
             }
@@ -671,24 +662,24 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         // We don't check if the expression is a string literal or constant that denotes a filename here
         // because we want to handle that in the visitCallExpression method
 
-        return Unspecified(null)
+        return Unspecified
       }
 
       fun forModifierListOwner(owner: PsiModifierListOwner): PathAnnotationInfo {
         // Check if the owner has a path annotation
         if (AnnotationUtil.isAnnotated(owner, MultiRoutingFileSystemPath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return MultiRouting(owner)
+          return MultiRouting
         }
         if (AnnotationUtil.isAnnotated(owner, NativePath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return Native(owner)
+          return Native
         }
         if (AnnotationUtil.isAnnotated(owner, LocalPath::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return LocalPathInfo(owner)
+          return LocalPathInfo
         }
         if (AnnotationUtil.isAnnotated(owner, Filename::class.java.name, AnnotationUtil.CHECK_TYPE)) {
-          return FilenameInfo(owner)
+          return FilenameInfo
         }
-        return Unspecified(owner)
+        return Unspecified
       }
     }
   }
