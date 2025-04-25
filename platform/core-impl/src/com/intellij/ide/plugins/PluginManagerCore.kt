@@ -469,23 +469,20 @@ object PluginManagerCore {
     val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
 
     val explicitlyEnabled = if (selectedIds == null) null else {
-      val set = HashSet<PluginId>()
-      for (it in selectedIds.split(',')) {
-        if (it.isNotEmpty()) {
-          set.add(PluginId.getId(it))
-        }
-      }
-      set.addAll(essentialPlugins)
-      val selectedPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>(set.size)
-      for (id in set) {
+      val rootPluginsToEnable: HashSet<PluginId> = selectedIds.split(',')
+        .filter { it.isNotEmpty() }
+        .mapTo(HashSet(), PluginId::getId)
+      rootPluginsToEnable.addAll(essentialPlugins)
+      val pluginsToEnable = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToEnable.size)
+      for (id in rootPluginsToEnable) {
         val descriptor = idMap[id] ?: continue
-        selectedPlugins.add(descriptor)
+        pluginsToEnable.add(descriptor)
         processAllNonOptionalDependencies(descriptor, idMap) { dependency ->
-          selectedPlugins.add(dependency)
+          pluginsToEnable.add(dependency)
           FileVisitResult.CONTINUE
         }
       }
-      selectedPlugins
+      pluginsToEnable
     }
 
     for (descriptor in descriptors) {
