@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.toml.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.toml.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/indexing-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//plugins/toml/core",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.toml.backend` end

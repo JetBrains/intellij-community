@@ -8800,8 +8800,8 @@ java_import(
 
 kt_jvm_import(
   name = "studio-platform",
-  jar = "@studio-platform-2025_1_1-alpha03-246_http//file",
-  srcjar = "@studio-platform-2025_1_1-alpha03-246-sources_http//file",
+  jar = "@studio-platform-2025_1_1-alpha03-256_http//file",
+  srcjar = "@studio-platform-2025_1_1-alpha03-256-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8814,8 +8814,8 @@ java_library(
 
 kt_jvm_import(
   name = "studio-test-platform",
-  jar = "@studio-test-platform-2025_1_1-alpha03-246_http//file",
-  srcjar = "@studio-test-platform-2025_1_1-alpha03-246-sources_http//file",
+  jar = "@studio-test-platform-2025_1_1-alpha03-256_http//file",
+  srcjar = "@studio-test-platform-2025_1_1-alpha03-256-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

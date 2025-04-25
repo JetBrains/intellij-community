@@ -20,7 +20,10 @@ jvm_library(
   deps = [
     "//plugins/toml",
     "//plugins/toml/core",
+    "//plugins/toml/backend",
+    "//plugins/toml/frontend",
     "//plugins/toml/json",
+    "//plugins/toml/grazie",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",

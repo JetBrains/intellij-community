@@ -13,12 +13,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/gen/**/*.kt", "src/gen/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/indexing-impl",
-    "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/code-style-impl:codeStyle-impl",
-    "//platform/analysis-impl",
     "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [":core_resources"]
