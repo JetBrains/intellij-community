@@ -173,6 +173,14 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     }
   }
 
+  public void doUpdateUI(Runnable callOnUpdate) {
+    myVisualRepresentation.doUpdateUI(callOnUpdate);
+  }
+
+  public @NotNull GutterDraggableObject createBreakpointDraggableObject() {
+    return myVisualRepresentation.createBreakpointDraggableObject();
+  }
+
   @Override
   public boolean isTemporary() {
     return myState.isTemporary();

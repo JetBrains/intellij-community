@@ -37,10 +37,8 @@ interface XLineBreakpointProxy : XBreakpointProxy {
 
     override val type: XLineBreakpointTypeProxy = lineBreakpoint.type.asProxy(breakpoint.project)
 
-    private val visualRepresentation: XBreakpointVisualRepresentation = XBreakpointVisualRepresentation(lineBreakpoint)
-
     override fun createBreakpointDraggableObject(): GutterDraggableObject {
-      return visualRepresentation.createBreakpointDraggableObject()
+      return breakpoint.createBreakpointDraggableObject()
     }
 
     override fun getFile(): VirtualFile? = breakpoint.file
@@ -74,7 +72,7 @@ interface XLineBreakpointProxy : XBreakpointProxy {
     }
 
     override fun doUpdateUI(callOnUpdate: () -> Unit) {
-      visualRepresentation.doUpdateUI(callOnUpdate)
+      breakpoint.doUpdateUI(callOnUpdate)
     }
 
     override fun isTemporary(): Boolean = breakpoint.isTemporary
