@@ -119,7 +119,7 @@ class EditorNotebook(val editor: EditorImpl) : Disposable {
     }
     for (i in range) {
       val cell = _cells[i]
-      if (cell.visible.get()) {
+      if (cell.isUnfolded.get()) {
         return cell
       }
     }

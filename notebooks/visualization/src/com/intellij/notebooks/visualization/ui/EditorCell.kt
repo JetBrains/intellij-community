@@ -7,55 +7,52 @@ import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
-import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor
+import com.intellij.notebooks.visualization.ui.cell.frame.EditorCellFrameManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.util.*
-import java.awt.Dimension
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
-private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellExtension>>("CELL_EXTENSION_CONTAINER_KEY")
 
 class EditorCell(
   val notebook: EditorNotebook,
   var intervalPointer: NotebookIntervalPointer,
   val editor: EditorImpl,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
+  val isUnfolded: AtomicBooleanProperty = AtomicBooleanProperty(true)
+  val isSelected: AtomicBooleanProperty = AtomicBooleanProperty(false)
+  val isUnderDiff: AtomicBooleanProperty = AtomicBooleanProperty(false)
+  val isHovered: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
-  val source: AtomicProperty<String> = AtomicProperty(getSource())
+  //Enable NotebookVisibleCellsBatchUpdater if this field is required
+  //val isInViewportRectangle: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
-  val type: CellType = interval.type
-
-  val interval: Interval get() = intervalPointer.get() ?: error("Invalid interval")
-  val intervalOrNull: Interval? get() = intervalPointer.get()
-
-  val view: EditorCellView?
-    get() = NotebookCellInlayManager.get(editor)!!.views[this]
-
-  var visible: AtomicBooleanProperty = AtomicBooleanProperty(true)
-
-  val selected: AtomicBooleanProperty = AtomicBooleanProperty(false)
-
+  val source: AtomicProperty<String> = AtomicProperty(interval.getContentText(editor))
   val gutterAction: AtomicProperty<AnAction?> = AtomicProperty(null)
-
   val executionStatus: AtomicProperty<ExecutionStatus> = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
-  val outputs: EditorCellOutputs = EditorCellOutputs(editor, this)
-
-  private fun getSource(): String {
-    val document = editor.document
-    if (interval.lines.first + 1 >= document.lineCount) return ""
-    val startOffset = document.getLineStartOffset(interval.lines.first + 1)
-    val endOffset = document.getLineEndOffset(interval.lines.last)
-    if (startOffset >= endOffset) return ""  // possible for empty cells
-    return document.getText(TextRange(startOffset, endOffset))
+  val cellFrameManager: EditorCellFrameManager? = EditorCellFrameManager.create(this)?.also {
+    Disposer.register(this, it)
   }
+
+  val outputs: EditorCellOutputs = EditorCellOutputs(this)
+
+  val interval: Interval
+    get() = intervalPointer.get() ?: error("Invalid interval")
+  val intervalOrNull: Interval?
+    get() = intervalPointer.get()
+  val type: CellType
+    get() = interval.type
+  val view: EditorCellView?
+    get() = NotebookCellInlayManager.get(editor)?.views[this]
+
 
   override fun dispose() {
     cleanupExtensions()
@@ -78,15 +75,11 @@ class EditorCell(
   }
 
   fun updateInput() {
-    source.set(getSource())
+    source.set(interval.getContentText(editor))
   }
 
   fun onViewportChange() {
     view?.onViewportChanges()
-  }
-
-  fun setGutterAction(action: AnAction?) {
-    gutterAction.set(action)
   }
 
   inline fun <reified T : NotebookCellInlayController> getController(): T? {
@@ -160,43 +153,8 @@ class EditorCell(
     val startTime: ZonedDateTime? = null,
     val endTime: ZonedDateTime? = null,
   )
-}
 
-class EditorCellOutputs(private val editor: EditorEx, private val cell: EditorCell) {
-
-  val scrollingEnabled: AtomicBooleanProperty = AtomicBooleanProperty(true)
-
-  val outputs: AtomicProperty<List<EditorCellOutput>> = AtomicProperty(getOutputs())
-
-  fun updateOutputs() {
-    val outputDataKeys = getOutputs()
-    updateOutputs(outputDataKeys)
+  companion object {
+    private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellExtension>>("CELL_EXTENSION_CONTAINER_KEY")
   }
-
-  private fun updateOutputs(newOutputs: List<EditorCellOutput>) = runInEdt {
-    outputs.set(newOutputs)
-  }
-
-  private fun getOutputs(): List<EditorCellOutput> =
-    NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
-      .mapNotNull { it.extract(editor as EditorImpl, cell.interval) }
-      .firstOrNull()
-      ?.takeIf { it.isNotEmpty() }
-      ?.map { EditorCellOutput(it) }
-    ?: emptyList()
-
 }
-
-class EditorCellOutput(dataKey: NotebookOutputDataKey) {
-
-  val dataKey: AtomicProperty<NotebookOutputDataKey> = AtomicProperty(dataKey)
-
-  val size: AtomicProperty<EditorCellOutputSize> = AtomicProperty(EditorCellOutputSize())
-}
-
-data class EditorCellOutputSize(
-  val size: Dimension? = null,
-  val collapsed: Boolean = false,
-  val maximized: Boolean = false,
-  val resized: Boolean = false,
-)

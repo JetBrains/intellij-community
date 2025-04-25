@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization
 
+import com.intellij.notebooks.visualization.controllers.NotebookCellController
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.EditorCellView
 import com.intellij.notebooks.visualization.ui.EditorCellViewComponent
@@ -8,10 +9,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import java.awt.Color
-import java.awt.Graphics
-import java.awt.Rectangle
 
-interface NotebookCellInlayController {
+interface NotebookCellInlayController : NotebookCellController {
   interface Factory {
     /**
      * There must be at most one controller (and one inlay) of some factory attached to some cell.
@@ -86,16 +85,7 @@ interface NotebookCellInlayController {
   val factory: Factory
     get() = error("It is not used keep with AIA compatibility")
 
-  fun onViewportChange(): Unit = Unit
-
-  /**
-   * The method may traverse iterator without returning to the initial position, the iterator is disposable.
-   */
-  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) {}
-
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
 
   fun updateFrameVisibility(isVisible: Boolean, interval: NotebookCellLines.Interval, color: Color) {}
-
-  fun forceChangePanelColor(color: Color? = null) {}
 }

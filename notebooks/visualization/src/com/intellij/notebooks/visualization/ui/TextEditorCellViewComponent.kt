@@ -2,12 +2,13 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.notebooks.ui.afterDistinctChange
+import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import com.intellij.notebooks.ui.editor.actions.command.mode.setMode
-import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.runInEdt
+import com.intellij.notebooks.visualization.ui.providers.scroll.NotebookEditorScrollEndDetector
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.EditorEx
@@ -20,24 +21,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asDisposable
+import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.launch
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
-class TextEditorCellViewComponent(
-  private val editor: EditorEx,
-  private val cell: EditorCell,
-) : EditorCellViewComponent(), InputComponent {
+class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellViewComponent(), InputComponent {
+  private val editor: EditorEx
+    get() = cell.editor
 
   private var highlighter: RangeHighlighter? = null
-
-  private val interval: NotebookCellLines.Interval
-    get() = cell.intervalPointer.get() ?: error("Invalid interval")
-
-  // todo: must be removed once we have a robust way to avoid getting interval for an invalid/deleted cell
-  private val safeInterval: NotebookCellLines.Interval?
-    get() = cell.intervalPointer.get()
 
   // [MouseListener] is used instead of [EditorMouseListener] because the listener needs to be fired after caret positions were updated.
   private val mouseListener = object : MouseAdapter() {
@@ -50,22 +47,43 @@ class TextEditorCellViewComponent(
 
   private val presentationToInlay = mutableMapOf<InlayPresentation, Inlay<*>>()
 
-  private val gutterIconStickToFirstVisibleLine = Registry.`is`("jupyter.run.cell.button.sticks.first.visible.line")
+  private val gutterIconStickToFirstVisibleLine
+    get() = Registry.`is`("jupyter.run.cell.button.sticks.first.visible.line")
+
+  private val coroutineScope = NotebookVisualizationCoroutine.Utils.edtScope.childScope("TextEditorCellViewComponent").also {
+    Disposer.register(this, it.asDisposable())
+  }
 
   init {
     editor.contentComponent.addMouseListener(mouseListener)
-    cell.gutterAction.afterChange(this) { action ->
-      updateGutterIcons(action)
+    Disposer.register(this) {
+      editor.contentComponent.removeMouseListener(mouseListener)
     }
-    updateGutterIcons(cell.gutterAction.get())
+
+    cell.gutterAction.bind(this) {
+      updateGutterIcons()
+    }
+
+    cell.isUnfolded.afterDistinctChange(this) { isUnfolded ->
+      updateGutterIcons()
+    }
+
+    coroutineScope.launch {
+      val detector = NotebookEditorScrollEndDetector.get(cell.editor)
+      detector?.debouncedScrollFlow?.collect {
+        updateGutterIcons()
+      }
+    }.cancelOnDispose(this)
   }
 
-  private fun updateGutterIcons(gutterAction: AnAction?) = runInEdt {
+  private fun updateGutterIcons() {
     disposeExistingHighlighter()
-    if (gutterAction == null) return@runInEdt
+    if (!cell.isUnfolded.get())
+      return
 
+    val gutterAction = cell.gutterAction.get() ?: return
+    val interval = cell.intervalOrNull ?: return
     val markupModel = editor.markupModel
-    val interval = safeInterval ?: return@runInEdt
     val startOffset = editor.document.getLineStartOffset(interval.computeFirstLineForHighlighter(editor, gutterIconStickToFirstVisibleLine))
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
     val highlighter = markupModel.addRangeHighlighter(
@@ -82,16 +100,17 @@ class TextEditorCellViewComponent(
 
   override fun dispose(): Unit = editor.updateManager.update { ctx ->
     disposeExistingHighlighter()
-    editor.contentComponent.removeMouseListener(mouseListener)
   }
 
   private fun disposeExistingHighlighter() {
-    highlighter?.dispose()
-    highlighter = null
+    val highlighter = highlighter ?: return
+    this.highlighter = null
+    editor.markupModel.removeHighlighter(highlighter)
+    highlighter.dispose()
   }
 
   override fun calculateBounds(): Rectangle {
-    val interval = interval
+    val interval = cell.interval
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val startLocation = editor.offsetToXY(startOffset)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
@@ -103,7 +122,7 @@ class TextEditorCellViewComponent(
   }
 
   override fun updateFolding(ctx: UpdateContext, folded: Boolean) {
-    val interval = interval
+    val interval = cell.interval
     val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
     val foldingModel = editor.foldingModel
@@ -167,7 +186,7 @@ class TextEditorCellViewComponent(
   }
 
   private fun isInlaysBroken(): Boolean {
-    val offset = editor.document.getLineEndOffset(interval.lines.last)
+    val offset = editor.document.getLineEndOffset(cell.interval.lines.last)
     for (inlay in presentationToInlay.values) {
       if (!inlay.isValid || inlay.offset != offset) {
         return true
@@ -175,5 +194,4 @@ class TextEditorCellViewComponent(
     }
     return false
   }
-
 }

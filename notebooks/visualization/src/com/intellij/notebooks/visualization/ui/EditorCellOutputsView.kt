@@ -3,9 +3,8 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.SwingClientProperty
-import com.intellij.notebooks.visualization.context.NotebookDataContext
+import com.intellij.notebooks.visualization.context.EditorCellDataContext
 import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_OUTPUT_DATA_KEY
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactoryGetter
@@ -14,6 +13,7 @@ import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import com.intellij.notebooks.visualization.settings.NotebookSettings
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -72,9 +72,7 @@ class EditorCellOutputsView(
   }
 
   private val surroundingComponent = SurroundingComponent.create(editor, innerComponent)
-  private val outerComponent = UiDataProvider.wrapComponent(surroundingComponent) { sink ->
-    sink[NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL] = cell.interval
-  }
+  private val outerComponent = EditorCellDataContext.createContextProvider(cell, surroundingComponent)
 
   internal var inlay: Inlay<*>? = null
     private set(value) {
@@ -109,7 +107,6 @@ class EditorCellOutputsView(
 
   fun update(): Unit = runInEdt {
     updateView(cell.outputs.outputs.get())
-    onViewportChange()
   }
 
   fun updateView(newDataKeys: List<EditorCellOutput>): Unit = runInEdt {
@@ -265,7 +262,6 @@ class EditorCellOutputsView(
     document.getLineEndOffset(lines.last)
 
   private fun addIntoInnerComponent(output: EditorCellOutput, newComponent: NotebookOutputComponentFactory.CreatedComponent<*>, pos: Int = -1) {
-    lateinit var outputComponent: EditorCellOutputView
     val collapsingComponent = object : CollapsingComponent(
       editor,
       newComponent.component,
@@ -277,7 +273,7 @@ class EditorCellOutputsView(
       }
     }
 
-    outputComponent = EditorCellOutputView(editor, output, collapsingComponent, newComponent.disposable)
+    val outputComponent = EditorCellOutputView(editor, output, collapsingComponent, newComponent.disposable)
 
     innerComponent.add(
       collapsingComponent,
@@ -316,6 +312,8 @@ class EditorCellOutputsView(
       }
     }
   }
-}
 
-private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")
+  companion object {
+    private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")
+  }
+}

@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.InlaysChangedListener
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor

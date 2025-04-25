@@ -16,7 +16,7 @@ import java.awt.event.InputEvent
  */
 class NotebookAWTMouseDispatcher(private val target: Component) : Disposable, AWTEventListener {
 
-  val eventDispatcher = EventDispatcher.create(AWTEventListener::class.java)
+  val eventDispatcher: EventDispatcher<AWTEventListener> = EventDispatcher.create(AWTEventListener::class.java)
 
   init {
     Toolkit.getDefaultToolkit().addAWTEventListener(this,

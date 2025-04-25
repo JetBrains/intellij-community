@@ -36,7 +36,7 @@ class NotebookPositionKeeper(val editor: EditorImpl) : Disposable.Default {
     }, this)
     editor.scrollingModel.addVisibleAreaListener(
       {
-        if (it.oldRectangle.y == it.newRectangle.y)
+        if (it.oldRectangle?.y == it.newRectangle.y)
           return@addVisibleAreaListener
         if (!internalScroll.get()) {
           forgetToKeepCell()

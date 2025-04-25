@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Disposer
 import java.awt.Rectangle
 import java.util.*
 
-abstract class EditorCellViewComponent : Disposable {
+abstract class EditorCellViewComponent : Disposable.Default {
   protected var parent: EditorCellViewComponent? = null
 
   private val _children = mutableListOf<EditorCellViewComponent>()
@@ -29,8 +29,6 @@ abstract class EditorCellViewComponent : Disposable {
     _children.remove(child)
     child.parent = null
   }
-
-  override fun dispose() = Unit
 
   fun onViewportChange() {
     _children.forEach { it.onViewportChange() }
