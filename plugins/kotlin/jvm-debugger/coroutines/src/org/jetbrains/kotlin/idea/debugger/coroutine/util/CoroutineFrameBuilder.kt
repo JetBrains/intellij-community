@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.xdebugger.frame.XNamedValue
-import com.sun.jdi.ObjectReference
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -127,7 +126,7 @@ class CoroutineFrameBuilder {
 
         // Fast check to get the whole coroutine information only for the first suspend frame
         internal fun isFirstSuspendFrame(frame: StackFrameProxyImpl): Pair<Boolean, Boolean> {
-            if (extractContinuation(frame, frame.getSuspendExitMode()) == null) {
+            if (extractContinuation(frame) == null) {
                 return Pair(false, false)
             }
 
@@ -141,7 +140,7 @@ class CoroutineFrameBuilder {
             val mode = frame.getSuspendExitMode()
             if (!mode.isCoroutineFound()) return null
 
-            val continuation = extractContinuation(frame, mode) ?: return null
+            val continuation = extractContinuation(frame) ?: return null
             if (!threadAndContextSupportsEvaluation(suspendContext, frame)) return null
             val (theFollowingFrames, _) = theFollowingFrames(frame)
             val context = DefaultExecutionContext(suspendContext, frame)
@@ -153,12 +152,6 @@ class CoroutineFrameBuilder {
                 coroutineStacksInfo.topFrameVariables
             )
         }
-
-        private fun getLVTContinuation(frame: StackFrameProxyImpl?) =
-            frame?.continuationVariableValue()
-
-        private fun getThisContinuation(frame: StackFrameProxyImpl?): ObjectReference? =
-            frame?.thisVariableValue()
 
         private fun theFollowingFrames(frame: StackFrameProxyImpl): Pair<List<StackFrameProxyImpl>, Boolean> {
             val frames = frame.threadProxy().frames()
@@ -181,15 +174,6 @@ class CoroutineFrameBuilder {
             return Pair(emptyList(), true)
         }
 
-        //TODO: there is a difference with org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor.extractContinuation
-        private fun extractContinuation(frame: StackFrameProxyImpl, mode: SuspendExitMode): ObjectReference? {
-            return when (mode) {
-                SuspendExitMode.SUSPEND_LAMBDA -> getThisContinuation(frame)
-                SuspendExitMode.SUSPEND_METHOD_PARAMETER -> getLVTContinuation(frame)
-                else -> null
-            }
-        }
-
         private fun isFirstSuspendFrame(frameIndex: Int, frames: List<StackFrameProxyImpl>): Boolean {
             var index = frameIndex
             while (index > 0) {
@@ -197,7 +181,7 @@ class CoroutineFrameBuilder {
                 if (frame.getSuspendExitMode() == SuspendExitMode.NONE) { // found first non-suspend frame
                     return true
                 }
-                if (extractContinuation(frame, frame.getSuspendExitMode()) != null) { // skip only if the suspend frame is with continuation
+                if (extractContinuation(frame) != null) { // skip only if the suspend frame is with continuation
                     return false
                 }
             }

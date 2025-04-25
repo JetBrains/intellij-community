@@ -109,7 +109,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         defaultExecutionContext: DefaultExecutionContext
     ): CoroutineFilter? {
         // if continuation cannot be extracted, fall to CoroutineIdFilter
-        val currentContinuation = extractContinuation(frameProxy) ?: return null
+        val currentContinuation = extractContinuationOrCompletion(frameProxy) ?: return null
         // First try to get a ContinuationFilter from helper
         getContinuationFilterFromHelper(currentContinuation, defaultExecutionContext)?.let { return it }
         // If helper class failed
@@ -189,7 +189,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
     override fun callerLocation(suspendContext: SuspendContextImpl): Location? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
-        val continuationObject = extractContinuation(frameProxy) ?: return null
+        val continuationObject = extractContinuationOrCompletion(frameProxy) ?: return null
         val executionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val callerFrame = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "getCallerFrame", listOf(continuationObject))?: return null
@@ -199,6 +199,11 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =
         activeExecutionStack?.threadProxy?.frame(0) ?: this.frameProxy
+
+    // If the final call within a function body is a suspend call, and it's the only suspend call,
+    // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
+    private fun extractContinuationOrCompletion(frameProxy: StackFrameProxyImpl): ObjectReference? =
+        extractContinuation(frameProxy) ?: frameProxy.completionVariableValue()
 
     /**
      * The coroutine filter which defines a coroutine by the set of ids of coroutines running on the current thread.

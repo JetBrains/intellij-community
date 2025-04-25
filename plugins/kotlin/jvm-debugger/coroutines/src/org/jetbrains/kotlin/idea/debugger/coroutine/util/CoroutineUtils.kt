@@ -63,9 +63,7 @@ internal fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReferen
             }
             prevStackFrame.thisObject()
         }
-        // If the final call within a function body is a suspend call, and it's the only suspend call,
-        // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
-        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue() ?: frameProxy.completionVariableValue()
+        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue()
         else -> null
     }
 }
