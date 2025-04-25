@@ -84,6 +84,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   fun dispose()
 
   fun createGutterIconRenderer(): GutterIconRenderer?
+  fun getGutterIconRenderer(): GutterIconRenderer?
 
   fun createBreakpointDraggableObject(): GutterDraggableObject?
 
@@ -223,6 +224,11 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun createGutterIconRenderer(): GutterIconRenderer? {
       return breakpoint.createGutterIconRenderer()
+    }
+
+    override fun getGutterIconRenderer(): GutterIconRenderer? {
+      val lineBreakpoint = breakpoint as? XLineBreakpointImpl<*> ?: return null
+      return lineBreakpoint.highlighter?.getGutterIconRenderer()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -21,7 +21,6 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.*
-import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
@@ -98,7 +97,7 @@ object XBreakpointUtil {
 
     val breakpoint = findBreakpoint(project, editorDocument, offset)
     if (breakpoint != null) {
-      return Pair.create(breakpoint.createGutterIconRenderer(), breakpoint)
+      return Pair.create(breakpoint.getGutterIconRenderer(), breakpoint)
     }
 
     val session = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project)
@@ -117,17 +116,6 @@ object XBreakpointUtil {
     }
 
     return Pair.create(null, null)
-  }
-
-  @ApiStatus.Internal
-  fun getBreakpointGutterIconRenderer(breakpoint: XBreakpoint<*>): GutterIconRenderer? {
-    if (breakpoint is XLineBreakpointImpl<*>) {
-      val highlighter = breakpoint.highlighter
-      if (highlighter != null) {
-        return highlighter.getGutterIconRenderer()
-      }
-    }
-    return null
   }
 
   private fun findBreakpoint(project: Project, document: Document, offset: Int): XLineBreakpointProxy? {

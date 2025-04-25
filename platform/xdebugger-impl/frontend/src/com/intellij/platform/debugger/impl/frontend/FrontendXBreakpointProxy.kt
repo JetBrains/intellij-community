@@ -266,6 +266,11 @@ internal open class FrontendXBreakpointProxy(
     return null
   }
 
+  override fun getGutterIconRenderer(): GutterIconRenderer? {
+    // TODO IJPL-185322
+    return null
+  }
+
   private fun XBreakpointCustomPresentationDto.toPresentation(): CustomizedBreakpointPresentation {
     val presentation = this
     return CustomizedBreakpointPresentation().apply {
