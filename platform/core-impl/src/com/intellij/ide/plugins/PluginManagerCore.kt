@@ -625,14 +625,8 @@ object PluginManagerCore {
     errors: MutableMap<PluginId, PluginNonLoadReason>,
     initContext: PluginInitializationContext,
   ) {
-    val idsToLoad = System.getProperty("idea.load.plugins.id")
-    val shouldLoadPlugins = System.getProperty("idea.load.plugins", "true").toBoolean()
-
-    if (idsToLoad != null) {
-      val rootPluginsToLoad: HashSet<PluginId> = idsToLoad.split(',')
-        .filter { it.isNotEmpty() }
-        .mapTo(HashSet(), PluginId::getId)
-      rootPluginsToLoad.addAll(initContext.essentialPlugins)
+    if (initContext.explicitPluginSubsetToLoad != null) {
+      val rootPluginsToLoad: Set<PluginId> = initContext.explicitPluginSubsetToLoad!!.toHashSet() + initContext.essentialPlugins
       val pluginsToLoad = LinkedHashSet<IdeaPluginDescriptorImpl>(rootPluginsToLoad.size)
       for (id in rootPluginsToLoad) {
         val descriptor = idMap[id] ?: continue
@@ -653,7 +647,7 @@ object PluginManagerCore {
         }
       }
     }
-    else if (!shouldLoadPlugins) {
+    else if (initContext.disablePluginLoadingCompletely) {
       for (descriptor in descriptors) {
         if (descriptor.pluginId == CORE_ID) {
           continue

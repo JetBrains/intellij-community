@@ -24,6 +24,18 @@ interface PluginInitializationContext {
 
   val checkEssentialPlugins: Boolean
 
+  /**
+   * If not null, plugins that are not listed here or in essential plugins (and their required dependencies) will be excluded from loading.
+   *
+   * Note: currently, takes precedence over [disablePluginLoadingCompletely], but it should not be relied upon.
+   */
+  val explicitPluginSubsetToLoad: Set<PluginId>?
+
+  /**
+   * If true, only the CORE plugin will be loaded
+   */
+  val disablePluginLoadingCompletely: Boolean
+
   @ApiStatus.Internal
   companion object {
     fun build(
@@ -33,7 +45,9 @@ interface PluginInitializationContext {
       brokenPluginVersions: Map<PluginId, Set<String?>>,
       getProductBuildNumber: () -> BuildNumber,
       requirePlatformAliasDependencyForLegacyPlugins: Boolean,
-      checkEssentialPlugins: Boolean
+      checkEssentialPlugins: Boolean,
+      explicitPluginSubsetToLoad: Set<PluginId>?,
+      disablePluginLoadingCompletely: Boolean,
     ): PluginInitializationContext =
       object : PluginInitializationContext {
         override val productBuildNumber: BuildNumber get() = getProductBuildNumber()
@@ -43,6 +57,8 @@ interface PluginInitializationContext {
         override fun isPluginBroken(id: PluginId, version: String?): Boolean = brokenPluginVersions[id]?.contains(version) == true
         override val requirePlatformAliasDependencyForLegacyPlugins: Boolean = requirePlatformAliasDependencyForLegacyPlugins
         override val checkEssentialPlugins: Boolean = checkEssentialPlugins
+        override val explicitPluginSubsetToLoad: Set<PluginId>? = explicitPluginSubsetToLoad
+        override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
       }
   }
 }

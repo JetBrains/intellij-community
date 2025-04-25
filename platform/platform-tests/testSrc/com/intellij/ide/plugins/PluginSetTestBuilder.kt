@@ -48,6 +48,8 @@ class PluginSetTestBuilder(private val path: Path) {
       getProductBuildNumber = { buildNumber },
       requirePlatformAliasDependencyForLegacyPlugins = false,
       checkEssentialPlugins = false,
+      explicitPluginSubsetToLoad = null,
+      disablePluginLoadingCompletely = false,
     )
   }
 

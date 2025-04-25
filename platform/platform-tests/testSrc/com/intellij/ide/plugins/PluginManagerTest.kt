@@ -239,6 +239,8 @@ class PluginManagerTest {
           getProductBuildNumber = { BuildNumber.fromString("2042.42")!! },
           requirePlatformAliasDependencyForLegacyPlugins = false,
           checkEssentialPlugins = false,
+          explicitPluginSubsetToLoad = null,
+          disablePluginLoadingCompletely = false,
         )
       )
       Assert.assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId))
@@ -320,6 +322,8 @@ class PluginManagerTest {
         getProductBuildNumber = { buildNumber },
         requirePlatformAliasDependencyForLegacyPlugins = false,
         checkEssentialPlugins = false,
+        explicitPluginSubsetToLoad = null,
+        disablePluginLoadingCompletely = false,
       )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)

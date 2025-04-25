@@ -38,4 +38,15 @@ class ProductPluginInitContext(
 
   override val checkEssentialPlugins: Boolean
     get() = !PluginManagerCore.isUnitTestMode
+
+  override val explicitPluginSubsetToLoad: Set<PluginId>? by lazy {
+    System.getProperty("idea.load.plugins.id")
+      ?.splitToSequence(',')
+      ?.filter { it.isNotEmpty() }
+      ?.map(PluginId::getId)
+      ?.toHashSet()
+  }
+
+  override val disablePluginLoadingCompletely: Boolean
+    get() = !System.getProperty("idea.load.plugins", "true").toBoolean()
 }
