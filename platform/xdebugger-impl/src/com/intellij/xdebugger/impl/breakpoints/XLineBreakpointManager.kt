@@ -140,6 +140,14 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     }
   }
 
+  fun queueBreakpointUpdateCallback(breakpoint: XLineBreakpointImpl<*>?, callback: Runnable) {
+    breakpointUpdateQueue.queue(object : Update(breakpoint) {
+      override fun run() {
+        callback.run()
+      }
+    })
+  }
+
   // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)
   private fun updateBreakpointNow(breakpoint: XLineBreakpointImpl<*>) {
     queueBreakpointUpdate(breakpoint)

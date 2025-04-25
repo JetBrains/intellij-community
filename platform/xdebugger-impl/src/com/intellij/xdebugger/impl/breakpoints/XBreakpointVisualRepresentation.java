@@ -37,8 +37,7 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.util.concurrent.ExecutorService;
-
-import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class XBreakpointVisualRepresentation {
@@ -47,12 +46,17 @@ public class XBreakpointVisualRepresentation {
   static final ExecutorService redrawInlaysExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
   private final Project myProject;
+  private final Consumer<Runnable> myQueueBreakpointUpdateCallback;
 
   private @Nullable RangeMarker myRangeMarker;
 
-  XBreakpointVisualRepresentation(XLineBreakpointProxy xBreakpoint) {
+  XBreakpointVisualRepresentation(
+    XLineBreakpointProxy xBreakpoint,
+    Consumer<Runnable> queueBreakpointUpdateCallback
+  ) {
     myBreakpoint = xBreakpoint;
     myProject = xBreakpoint.getProject();
+    myQueueBreakpointUpdateCallback = queueBreakpointUpdateCallback;
   }
 
   public @Nullable RangeMarker getRangeMarker() {
@@ -64,11 +68,10 @@ public class XBreakpointVisualRepresentation {
   }
 
   void updateUI() {
-    // TODO IJPL-185322 support updateUI in visualPresentation
-    if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
-      XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
-      monolithBreakpoint.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate(monolithBreakpoint);
-    }
+    myQueueBreakpointUpdateCallback.accept(() -> {
+      doUpdateUI(() -> {
+      });
+    });
   }
 
   @RequiresBackgroundThread
