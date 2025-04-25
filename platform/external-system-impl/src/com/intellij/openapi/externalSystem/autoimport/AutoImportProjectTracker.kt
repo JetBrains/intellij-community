@@ -23,7 +23,7 @@ import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.*
-import com.intellij.openapi.observable.util.set
+import com.intellij.openapi.observable.util.setObservableProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
@@ -431,7 +431,7 @@ class AutoImportProjectTracker(
      */
     @TestOnly
     fun enableAutoReloadInTests(parentDisposable: Disposable) {
-      enableAutoReloadProperty.set(true, parentDisposable)
+      setObservableProperty(enableAutoReloadProperty, true, parentDisposable)
     }
 
     /**
@@ -440,7 +440,7 @@ class AutoImportProjectTracker(
      */
     @TestOnly
     fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
-      asyncChangesProcessingProperty.set(true, parentDisposable)
+      setObservableProperty(asyncChangesProcessingProperty, true, parentDisposable)
     }
 
     /**
