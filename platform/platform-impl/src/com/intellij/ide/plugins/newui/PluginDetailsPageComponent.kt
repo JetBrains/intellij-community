@@ -422,7 +422,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createButtons() {
     val nameAndButtons = nameAndButtons!!
-    nameAndButtons.addButtonComponent(RestartButton(pluginModel.getModel()).also { restartButton = it })
+    nameAndButtons.addButtonComponent(RestartButton(pluginModel).also { restartButton = it })
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {

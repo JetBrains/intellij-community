@@ -247,7 +247,7 @@ public final class ListPluginComponent extends JPanel {
     PluginId pluginId = myPlugin.getPluginId();
     if (myMarketplace) {
       if (InstalledPluginsState.getInstance().wasInstalled(pluginId)) {
-        myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
+        myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       }
       else {
         IdeaPluginDescriptor installedDescriptorForMarketplace = PluginManagerCore.findPlugin(pluginId);
@@ -273,7 +273,7 @@ public final class ListPluginComponent extends JPanel {
             myAfterUpdate = true;
           }
           else {
-            myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
+            myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
             myPluginModel.addUninstalled(myInstalledDescriptorForMarketplace);
           }
@@ -297,7 +297,7 @@ public final class ListPluginComponent extends JPanel {
           myAfterUpdate = true;
         }
         else {
-          myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
+          myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
           myPluginModel.addUninstalled(myPlugin);
         }
@@ -305,7 +305,7 @@ public final class ListPluginComponent extends JPanel {
       else {
         InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
         if (pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdatedWithRestart(pluginId)) {
-          myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()));
+          myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
           createEnableDisableButton(this::getPluginModel);
@@ -811,7 +811,7 @@ public final class ListPluginComponent extends JPanel {
       myEnableDisableButton = null;
     }
     if (myIsAvailable && showRestart && myRestartButton == null) {
-      myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel.getModel()), 0);
+      myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel), 0);
     }
     if (myAlignButton != null) {
       myAlignButton.setVisible(true);
