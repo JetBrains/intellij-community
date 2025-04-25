@@ -77,28 +77,28 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     addIfNotDefault(
       metrics,
       NON_DEFAULT_FONT_NAME,
-      TerminalFontOptions.getInstance().getSettings().fontFamily,
+      TerminalFontSettingsService.getInstance().getSettings().fontFamily,
       FontPreferences.DEFAULT_FONT_NAME,
     )
 
     addIfNotDefault(
       metrics,
       NON_DEFAULT_FONT_SIZE,
-      TerminalFontOptions.getInstance().getSettings().fontSize,
+      TerminalFontSettingsService.getInstance().getSettings().fontSize,
       DEFAULT_TERMINAL_FONT_SIZE,
     ) { it.floatValue }
 
     addIfNotDefault(
       metrics,
       NON_DEFAULT_LINE_SPACING,
-      TerminalFontOptions.getInstance().getSettings().lineSpacing,
+      TerminalFontSettingsService.getInstance().getSettings().lineSpacing,
       DEFAULT_TERMINAL_LINE_SPACING,
     ) { it.floatValue }
 
     addIfNotDefault(
       metrics,
       NON_DEFAULT_COLUMN_SPACING,
-      TerminalFontOptions.getInstance().getSettings().columnSpacing,
+      TerminalFontSettingsService.getInstance().getSettings().columnSpacing,
       DEFAULT_TERMINAL_COLUMN_SPACING,
     ) { it.floatValue }
 

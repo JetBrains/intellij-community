@@ -20,22 +20,22 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @State(
-  name = TerminalFontOptions.COMPONENT_NAME,
+  name = TerminalFontSettingsService.COMPONENT_NAME,
   storages = [Storage("terminal-font.xml")],
 )
 @ApiStatus.Internal
-class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() {
+class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() {
   companion object {
-    @JvmStatic fun getInstance(): TerminalFontOptions = service<TerminalFontOptions>()
+    @JvmStatic fun getInstance(): TerminalFontSettingsService = service<TerminalFontSettingsService>()
 
     internal const val COMPONENT_NAME: String = "TerminalFontOptions"
   }
 
-  private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
+  private val listeners = CopyOnWriteArrayList<TerminalFontSettingsListener>()
 
   private var columnSpacing: TerminalColumnSpacing = DEFAULT_TERMINAL_COLUMN_SPACING
 
-  fun addListener(listener: TerminalFontOptionsListener, disposable: Disposable) {
+  fun addListener(listener: TerminalFontSettingsListener, disposable: Disposable) {
     listeners.add(listener)
     Disposer.register(disposable) {
       listeners.remove(listener)
@@ -75,12 +75,12 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     }
   }
 
-  override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
-    PersistentTerminalFontPreferences(fontPreferences).also {
+  override fun createFontState(fontPreferences: FontPreferences): TerminalFontSettingsState =
+    TerminalFontSettingsState(fontPreferences).also {
       it.COLUMN_SPACING = columnSpacing.floatValue
     }
 
-  override fun loadState(state: PersistentTerminalFontPreferences) {
+  override fun loadState(state: TerminalFontSettingsState) {
     columnSpacing = TerminalColumnSpacing.ofFloat(state.COLUMN_SPACING)
     super.loadState(state)
 
@@ -91,7 +91,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
 
   override fun noStateLoaded() {
     // the state is mostly inherited from the console settings
-    val defaultState = PersistentTerminalFontPreferences(AppConsoleFontOptions.getInstance().fontPreferences)
+    val defaultState = TerminalFontSettingsState(AppConsoleFontOptions.getInstance().fontPreferences)
     // except the line spacing: it is only inherited if it's different from the default, otherwise we use our own default
     val userSetConsoleLineSpacing = TerminalLineSpacing.ofFloat(defaultState.LINE_SPACING)
     val defaultConsoleLineSpacing = TerminalLineSpacing.ofFloat(FontPreferences.DEFAULT_LINE_SPACING)
@@ -103,7 +103,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
 
   private fun fireListeners() {
     for (listener in listeners) {
-      listener.fontOptionsChanged()
+      listener.fontSettingsChanged()
     }
   }
 }
@@ -227,11 +227,11 @@ private data class TerminalSettingsFloatValueImpl(
 }
 
 @ApiStatus.Internal
-interface TerminalFontOptionsListener {
-  fun fontOptionsChanged()
+interface TerminalFontSettingsListener {
+  fun fontSettingsChanged()
 }
 
-// All this weirdness with similar nondescript names like TerminalFontOptions and TerminalFontSettings
+// All this weirdness with similar nondescript names like TerminalFontSettings(Service(State))
 // comes from the way the AppFontOptions API is designed.
 // We need an implementation of FontPreferences to use in update() and createFontState(),
 // but its API is not very extendable and is not very easy to use in the settings GUI.
@@ -244,6 +244,11 @@ interface TerminalFontOptionsListener {
 
 // To reduce possible confusion, the name TerminalFontSettings was chosen here to make it different
 // from FontPreferences and AppFontOptions and PersistentFontPreferences.
+// The rest was named to somehow indicate the fact that all this stuff is related to TerminalFontSettings.
+// Therefore, our AppFontOptions thing became TerminalFontSettingsService,
+// as it's exactly what it is: a service for maintaining the font settings,
+// and its PersistentFontPreferences are named TerminalFontSettingsState,
+// as, again, it's exactly what it is.
 
 internal data class TerminalFontSettings(
   val fontFamily: String,
@@ -253,7 +258,7 @@ internal data class TerminalFontSettings(
 )
 
 @ApiStatus.Internal
-class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
+class TerminalFontSettingsState: AppEditorFontOptions.PersistentFontPreferences {
   @Suppress("unused") // for serialization
   constructor(): super() {
     LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING.floatValue // to ensure that values different from OUR default are saved
