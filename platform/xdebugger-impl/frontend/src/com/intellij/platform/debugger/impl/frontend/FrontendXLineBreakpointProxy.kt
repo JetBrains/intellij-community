@@ -43,11 +43,6 @@ internal class FrontendXLineBreakpointProxy(
     return null
   }
 
-  override fun getRangeMarker(): RangeMarker? {
-    // TODO IJPL-185322
-    return null
-  }
-
   override fun getLine(): Int {
     // TODO IJPL-185322 pass through line breakpoint info
     return 0
@@ -61,17 +56,8 @@ internal class FrontendXLineBreakpointProxy(
     // TODO IJPL-185322 implement set line
   }
 
-  override fun setHighlighter(rangeMarker: RangeMarker) {
-    // TODO IJPL-185322 implement set highlighter
-  }
-
   override fun getHighlightRange(): TextRange? {
     // TODO IJPL-185322 implement highlight range
-    return null
-  }
-
-  override fun getHighlighter(): RangeHighlighter? {
-    // TODO IJPL-185322 implement range highlighter
     return null
   }
 

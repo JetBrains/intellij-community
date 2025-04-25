@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -31,8 +30,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   // TODO IJPL-185322 move to some external manager
   private final XBreakpointVisualRepresentation myVisualRepresentation = new XBreakpointVisualRepresentation(this);
 
-  // TODO IJPL-185322 Should we install range highlighter in BE?
-  private @Nullable RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
 
@@ -95,11 +92,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   public @Nullable RangeHighlighter getHighlighter() {
-    return myHighlighter instanceof RangeHighlighter ? (RangeHighlighter)myHighlighter : null;
-  }
-
-  @Nullable RangeMarker getRangeMarker() {
-    return myHighlighter;
+    return myVisualRepresentation.getHighlighter();
   }
 
   @Override
@@ -128,9 +121,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   public void updatePosition() {
-    if (myHighlighter != null && myHighlighter.isValid()) {
+    RangeMarker highlighter = myVisualRepresentation.getRangeMarker();
+    if (highlighter != null && highlighter.isValid()) {
       mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
+      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), false);
     }
   }
 
@@ -197,9 +191,5 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   public String toString() {
     return "XLineBreakpointImpl(" + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
-  }
-
-  void setHighlighter(@Nullable RangeMarker o) {
-    myHighlighter = o;
   }
 }

@@ -17,13 +17,10 @@ interface XLineBreakpointProxy : XBreakpointProxy {
   fun setTemporary(isTemporary: Boolean)
 
   fun getFile(): VirtualFile?
-  fun getRangeMarker(): RangeMarker?
   fun getLine(): Int
   fun setFileUrl(url: String)
   fun setLine(line: Int)
-  fun setHighlighter(rangeMarker: RangeMarker)
   fun getHighlightRange(): TextRange?
-  fun getHighlighter(): RangeHighlighter?
 
   @RequiresBackgroundThread
   fun doUpdateUI(callOnUpdate: () -> Unit = {})
@@ -43,10 +40,6 @@ interface XLineBreakpointProxy : XBreakpointProxy {
 
     override fun getFile(): VirtualFile? = breakpoint.file
 
-    override fun getRangeMarker(): RangeMarker? {
-      return breakpoint.rangeMarker
-    }
-
     override fun getLine(): Int {
       return breakpoint.line
     }
@@ -59,16 +52,8 @@ interface XLineBreakpointProxy : XBreakpointProxy {
       breakpoint.line = line
     }
 
-    override fun setHighlighter(rangeMarker: RangeMarker) {
-      breakpoint.setHighlighter(rangeMarker)
-    }
-
     override fun getHighlightRange(): TextRange? {
       return breakpoint.highlightRange
-    }
-
-    override fun getHighlighter(): RangeHighlighter? {
-      return breakpoint.highlighter
     }
 
     override fun doUpdateUI(callOnUpdate: () -> Unit) {

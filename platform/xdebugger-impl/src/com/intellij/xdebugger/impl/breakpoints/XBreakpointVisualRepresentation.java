@@ -8,6 +8,7 @@ import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -47,9 +48,19 @@ public class XBreakpointVisualRepresentation {
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
   private final Project myProject;
 
+  private @Nullable RangeMarker myRangeMarker;
+
   XBreakpointVisualRepresentation(XLineBreakpointImpl<?> xBreakpoint) {
     myBreakpoint = asProxy(xBreakpoint);
     myProject = xBreakpoint.getProject();
+  }
+
+  public @Nullable RangeMarker getRangeMarker() {
+    return myRangeMarker;
+  }
+
+  public @Nullable RangeHighlighter getHighlighter() {
+    return myRangeMarker instanceof RangeHighlighter ? (RangeHighlighter)myRangeMarker : null;
   }
 
   void updateUI() {
@@ -80,9 +91,8 @@ public class XBreakpointVisualRepresentation {
         // currently LazyRangeMarkerFactory creates document for non binary files
         if (file.getFileType().isBinary()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (myBreakpoint.getRangeMarker() == null) {
-              myBreakpoint.setHighlighter(LazyRangeMarkerFactory.getInstance(myProject)
-                                            .createRangeMarker(file, myBreakpoint.getLine(), 0, true));
+            if (myRangeMarker == null) {
+              myRangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true);
               callOnUpdate.run();
             }
           }, myProject.getDisposed());
@@ -105,9 +115,9 @@ public class XBreakpointVisualRepresentation {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myBreakpoint.isDisposed()) return;
 
-        if (myBreakpoint.getRangeMarker() != null && !(myBreakpoint.getRangeMarker() instanceof RangeHighlighter)) {
+        if (myRangeMarker != null && !(myRangeMarker instanceof RangeHighlighter)) {
           removeHighlighter();
-          assert myBreakpoint.getHighlighter() == null;
+          assert getHighlighter() == null;
         }
 
         TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
@@ -117,7 +127,7 @@ public class XBreakpointVisualRepresentation {
           attributes.setBackgroundColor(null);
         }
 
-        RangeHighlighter highlighter = (RangeHighlighter)myBreakpoint.getHighlighter();
+        RangeHighlighter highlighter = getHighlighter();
         if (highlighter != null &&
             (!highlighter.isValid()
              || range != null && !highlighter.getTextRange().equals(range)
@@ -160,7 +170,7 @@ public class XBreakpointVisualRepresentation {
           highlighter.setGutterIconRenderer(myBreakpoint.createGutterIconRenderer());
           highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
           highlighter.setEditorFilter(XBreakpointVisualRepresentation::isHighlighterAvailableIn);
-          myBreakpoint.setHighlighter(highlighter);
+          myRangeMarker = highlighter;
 
           redrawInlineInlays();
         }
@@ -180,14 +190,14 @@ public class XBreakpointVisualRepresentation {
   }
 
   void removeHighlighter() {
-    if (myBreakpoint.getHighlighter() != null) {
+    if (getHighlighter() != null) {
       try {
-        myBreakpoint.getHighlighter().dispose();
+        getHighlighter().dispose();
       }
       catch (Exception e) {
         LOG.error(e);
       }
-      myBreakpoint.setHighlighter(null);
+      myRangeMarker = null;
     }
   }
 
