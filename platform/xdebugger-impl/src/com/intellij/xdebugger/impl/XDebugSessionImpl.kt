@@ -25,11 +25,15 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
@@ -77,7 +81,6 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.JLabel
@@ -121,7 +124,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var mySessionTab: XDebugSessionTab? = null
   private var myRunContentDescriptor: RunContentDescriptor? = null
   val sessionData: XDebugSessionData
-  private val myActiveNonLineBreakpoint = AtomicReference<Pair<XBreakpoint<*>?, XSourcePosition?>?>()
+  private val myActiveNonLineBreakpointAndPositionFlow = MutableStateFlow<Pair<XBreakpoint<*>, XSourcePosition?>?>(null)
   private val myPausedFlow = createMutableStateFlow<XDebugSessionPausedInfo?>(null)
   private val myDispatcher = EventDispatcher.create<XDebugSessionListener>(XDebugSessionListener::class.java)
   private val myProject: Project = debuggerManager.project
@@ -161,6 +164,15 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private var breakpointsInitialized = false
   private var myUserRequestStart: Long = 0
   private var myUserRequestAction: String? = null
+
+  private val myActiveNonLineBreakpointFlow = myActiveNonLineBreakpointAndPositionFlow
+    .combine(myTopStackFrame) { breakpointAndPosition, _ ->
+      val (breakpoint, breakpointPosition) = breakpointAndPosition ?: return@combine null
+      if (breakpointPosition == null) return@combine breakpoint
+      val position = topFramePosition ?: return@combine null
+      val samePosition = breakpointPosition.getFile() == position.getFile() && breakpointPosition.getLine() == position.getLine()
+      breakpoint.takeIf { !samePosition }
+    }.stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
   init {
     var contentToReuse = contentToReuse
@@ -782,32 +794,18 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
   }
 
-  val activeNonLineBreakpoint: XBreakpoint<*>?
-    get() {
-      val pair = myActiveNonLineBreakpoint.get()
-      if (pair != null) {
-        val breakpointPosition = pair.getSecond()
-        val position = topFramePosition
-        if (breakpointPosition == null ||
-            (position != null &&
-             !(breakpointPosition.getFile() == position.getFile() && breakpointPosition.getLine() == position.getLine()))
-        ) {
-          return pair.getFirst()
-        }
-      }
-      return null
-    }
+  val activeNonLineBreakpoint: XBreakpoint<*>? get() = myActiveNonLineBreakpointFlow.value
 
   fun checkActiveNonLineBreakpointOnRemoval(removedBreakpoint: XBreakpoint<*>) {
-    val pair = myActiveNonLineBreakpoint.get()
-    if (pair != null && pair.getFirst() === removedBreakpoint) {
+    val (breakpoint, _) = myActiveNonLineBreakpointAndPositionFlow.value ?: return
+    if (breakpoint === removedBreakpoint) {
       clearActiveNonLineBreakpoint()
       updateExecutionPointGutterIconRenderer()
     }
   }
 
   private fun clearActiveNonLineBreakpoint() {
-    myActiveNonLineBreakpoint.set(null)
+    myActiveNonLineBreakpointAndPositionFlow.value = null
   }
 
   fun updateExecutionPointGutterIconRenderer() {
@@ -915,10 +913,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
     if (breakpoint !is XLineBreakpoint<*> || breakpoint.getType().canBeHitInOtherPlaces()) {
       // precompute source position for faster access later
-      myActiveNonLineBreakpoint.set(Pair.create<XBreakpoint<*>?, XSourcePosition?>(breakpoint, breakpoint.getSourcePosition()))
+      myActiveNonLineBreakpointAndPositionFlow.value = breakpoint to breakpoint.getSourcePosition()
     }
     else {
-      myActiveNonLineBreakpoint.set(null)
+      myActiveNonLineBreakpointAndPositionFlow.value = null
     }
 
     // set this session active on breakpoint, update execution position will be called inside positionReached

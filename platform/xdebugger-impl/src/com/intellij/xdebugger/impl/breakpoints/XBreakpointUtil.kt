@@ -106,7 +106,7 @@ object XBreakpointUtil {
   }
 
   @ApiStatus.Internal
-  fun getBreakpointGutterIconRenderer(breakpoint: Any): GutterIconRenderer? {
+  fun getBreakpointGutterIconRenderer(breakpoint: XBreakpoint<*>): GutterIconRenderer? {
     if (breakpoint is XLineBreakpointImpl<*>) {
       val highlighter = breakpoint.highlighter
       if (highlighter != null) {
