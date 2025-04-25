@@ -87,7 +87,7 @@ internal class MixedModeProcessTransitionStateMachine(
     coroutineScope.launch {
       eventFlow.collect { event ->
         withContext(mainDispatcher) {
-          setInternal(event)
+          logger.runAndLogException { setInternal(event) }
         }
       }
     }
