@@ -645,23 +645,26 @@ object PluginManagerCore {
       pluginsToLoad
     }
 
-    for (descriptor in descriptors) {
-      if (descriptor.pluginId == CORE_ID) {
-        continue
-      }
-      if (pluginsToLoad != null) {
+    if (pluginsToLoad != null) {
+      for (descriptor in descriptors) {
+        if (descriptor.pluginId == CORE_ID) {
+          continue
+        }
         if (!pluginsToLoad.contains(descriptor)) {
           descriptor.isMarkedForLoading = false
           logger.info("Plugin '" + descriptor.getName() + "' is not in 'idea.load.plugins.id' system property and won't be loaded")
         }
       }
-      else if (!shouldLoadPlugins) {
+    } else if (!shouldLoadPlugins) {
+      for (descriptor in descriptors) {
+        if (descriptor.pluginId == CORE_ID) {
+          continue
+        }
         descriptor.isMarkedForLoading = false
         errors[descriptor.getPluginId()] = PluginLoadingIsDisabledCompletely(descriptor)
       }
     }
-
-    if (pluginsToLoad == null && shouldLoadPlugins) {
+    else {
       for (essentialId in essentialPlugins) {
         val essentialPlugin = idMap[essentialId] ?: continue
         for (incompatibleId in essentialPlugin.incompatiblePlugins) {
