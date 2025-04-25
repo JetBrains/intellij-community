@@ -72,9 +72,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           val renderer = listCellRenderer<TerminalEngine?> {
             text(value?.presentableName ?: "")
-            if (value == TerminalEngine.REWORKED) {
-              icon(AllIcons.General.Beta)
-            }
           }
 
           terminalEngineComboBox = comboBox(values, renderer)
