@@ -44,7 +44,7 @@ private class FrontendXLineBreakpointType(
   override val priority: Int = lineTypeInfo.priority
 
   override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
-    // TODO IJPL-185111 implement it through cached breakpoint editor map
+    // TODO IJPL-185322 implement it through cached breakpoint editor map
     return true
   }
 }

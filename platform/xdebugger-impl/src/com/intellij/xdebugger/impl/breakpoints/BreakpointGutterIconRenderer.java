@@ -65,7 +65,7 @@ final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRende
   @Override
   public @Nullable ActionGroup getPopupMenuActions() {
     XDebugSessionProxy currentSessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(myBreakpoint.getProject());
-    // TODO IJPL-185111
+    // TODO IJPL-185322
     if (myBreakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint
         && currentSessionProxy instanceof XDebugSessionProxy.Monolith sessionProxy) {
       return new DefaultActionGroup(monolithBreakpoint.getBreakpoint().getAdditionalPopupMenuActions(sessionProxy.getSession()));

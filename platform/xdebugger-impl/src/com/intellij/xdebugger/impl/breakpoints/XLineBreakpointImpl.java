@@ -28,10 +28,10 @@ import java.util.Objects;
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
   implements XLineBreakpoint<P> {
 
-  // TODO IJPL-185111 move to some external manager
+  // TODO IJPL-185322 move to some external manager
   private final XBreakpointVisualRepresentation myVisualRepresentation = new XBreakpointVisualRepresentation(this);
 
-  // TODO IJPL-185111 Should we install range highlighter in BE?
+  // TODO IJPL-185322 Should we install range highlighter in BE?
   private @Nullable RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
@@ -43,7 +43,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myType = type;
   }
 
-  // TODO IJPL-185111 migrate to backend -> frontend rpc flow notification
+  // TODO IJPL-185322 migrate to backend -> frontend rpc flow notification
   public void updateUI() {
     myVisualRepresentation.updateUI();
   }

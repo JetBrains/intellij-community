@@ -603,7 +603,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     if (!(breakpoint instanceof XBreakpointProxy.Monolith monolith)) {
-      // TODO IJPL-185111
+      // TODO IJPL-185322
       return false;
     }
     ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())

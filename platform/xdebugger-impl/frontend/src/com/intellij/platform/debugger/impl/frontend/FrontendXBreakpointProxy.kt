@@ -254,11 +254,11 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun updateIcon() {
-    // TODO IJPL-185111 does nothing since we calculate icon for each getIcon request
+    // TODO IJPL-185322 does nothing since we calculate icon for each getIcon request
   }
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {
-    // TODO IJPL-185111 implement create gutter icon renderer
+    // TODO IJPL-185322 implement create gutter icon renderer
     return null
   }
 

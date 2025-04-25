@@ -54,7 +54,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
       point = new Point(gutterComponent.getWidth(),
                         editor.visualPositionToXY(editor.getCaretModel().getVisualPosition()).y + editor.getLineHeight() / 2);
     }
-    // TODO IJPL-185111
+    // TODO IJPL-185322
     if (breakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint) {
       doShowPopup(project, gutterComponent, point, monolithBreakpoint.getBreakpoint());
     }
