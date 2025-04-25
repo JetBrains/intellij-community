@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayDeque
 
 internal interface StorageRegistrar {
@@ -147,6 +148,7 @@ internal class StorageClassesRegistrar(
     kryo.register(Hashtable::class.java)
     kryo.register(WeakHashMap::class.java)
     kryo.register(IdentityHashMap::class.java)
+    kryo.register(ConcurrentHashMap::class.java)
 
     kryo.register(SmartList::class.java).instantiator = ObjectInstantiator { SmartList<Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }

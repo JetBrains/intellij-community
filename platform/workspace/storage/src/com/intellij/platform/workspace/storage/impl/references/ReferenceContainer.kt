@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.impl.references
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentHashMap
 
 internal abstract class ReferenceContainer<T>(protected open val collection: Map<ConnectionId, T>) {
   abstract operator fun get(connectionId: ConnectionId): T?
@@ -64,7 +65,13 @@ internal abstract class MutableReferenceContainer<T>(override var collection: Mu
 
   private fun startWrite() {
     if (!freezed) return
-    collection = collection.mapValuesTo(HashMap(collection.size)) { copyValue(it.value) }
+    // IJPL-148735: yes, we indeed use ConcurrentHashMap in thread-unsafe object.
+    // For example, invoking toImmutable makes the object thread-safe (with the same reference to thread-unsafe collection inside)
+    // and then invoking toMutableContainer leaks this collection (not a copy) to the outer world,
+    // and anyone can mutate immutable object now. So this collection is indeed used in multithreaded environment
+    // with at most one writer (if clients are implemented correctly) and many readers.
+    // We should make sure that code that attempts to mutate immutable objects does not compile in the first place.
+    collection = collection.mapValuesTo(ConcurrentHashMap(collection.size)) { copyValue(it.value) }
     freezed = false
   }
 

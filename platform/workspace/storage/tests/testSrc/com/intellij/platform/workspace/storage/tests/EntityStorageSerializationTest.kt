@@ -410,6 +410,7 @@ private val expectedKryoRegistration = """
   java.util.Hashtable
   java.util.WeakHashMap
   java.util.IdentityHashMap
+  java.util.concurrent.ConcurrentHashMap
   com.intellij.util.SmartList
   java.util.LinkedHashMap
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap
