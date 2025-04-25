@@ -199,7 +199,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
-      for (int inputId : myInvalidated.toIntArray()) {
+      for (int inputId : set.toIntArray()) {
         DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom
       }
     }
