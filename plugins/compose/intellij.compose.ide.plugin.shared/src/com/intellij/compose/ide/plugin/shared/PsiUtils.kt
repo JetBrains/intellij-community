@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.shared
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.impl.ProjectFileIndexFacade
@@ -57,7 +58,13 @@ fun isComposeEnabledForElementModule(element: PsiElement): Boolean {
 }
 
 internal fun PsiElement.isComposableFunction(): Boolean =
-  (this as? KtNamedFunction)?.getAnnotationWithCaching(COMPOSABLE_FUNCTION_KEY) { it.isComposableAnnotation() } != null
+  this is KtNamedFunction && this.hasComposableAnnotation()
+
+internal fun KtAnnotated.hasComposableAnnotation(): Boolean =
+  this.getAnnotationWithCaching(COMPOSABLE_FUNCTION_KEY) { it.isComposableAnnotation() } != null
+
+internal val PsiElement.module: Module?
+  get() = ModuleUtilCore.findModuleForPsiElement(this)
 
 private val COMPOSABLE_FUNCTION_KEY: Key<CachedValue<KtAnnotationEntry?>> =
   Key.create("com.intellij.compose.ide.plugin.shared.isComposableFunction")
