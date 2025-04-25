@@ -42,6 +42,14 @@ fun isPlatformDependencySupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.0")
 }
 
+/**
+ * Gradle: Deprecate loading test framework implementation dependencies from the distribution #24189
+ * [https://github.com/gradle/gradle/pull/24189]
+ */
+fun isExplicitTestFrameworkRuntimeDeclarationRequired(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.2")
+}
+
 fun isGroovyApacheSupported(groovyVersion: String): Boolean {
   val majorVersion = groovyVersion.split(".").firstOrNull()?.let(Integer::valueOf) ?: 0
   return majorVersion >= 4

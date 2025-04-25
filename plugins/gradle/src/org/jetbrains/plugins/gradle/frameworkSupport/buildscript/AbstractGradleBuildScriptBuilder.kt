@@ -187,6 +187,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
       true -> {
         addTestImplementationDependency(call("platform", "org.junit:junit-bom:$junit5Version"))
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter")
+        if (isExplicitTestFrameworkRuntimeDeclarationRequired(gradleVersion)) {
+          addTestRuntimeOnlyDependency("org.junit.platform:junit-platform-launcher")
+        }
       }
       else -> {
         addTestImplementationDependency("org.junit.jupiter:junit-jupiter-api:$junit5Version")

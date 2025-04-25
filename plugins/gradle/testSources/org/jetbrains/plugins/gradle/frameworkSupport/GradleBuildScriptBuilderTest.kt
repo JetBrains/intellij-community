@@ -274,6 +274,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         dependencies {
             testImplementation platform('org.junit:junit-bom:$junit5')
             testImplementation 'org.junit.jupiter:junit-jupiter'
+            testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
         }
         
         test {
@@ -287,6 +288,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         dependencies {
             testImplementation(platform("org.junit:junit-bom:$junit5"))
             testImplementation("org.junit.jupiter:junit-jupiter")
+            testRuntimeOnly("org.junit.platform:junit-platform-launcher")
         }
         
         tasks.test {
