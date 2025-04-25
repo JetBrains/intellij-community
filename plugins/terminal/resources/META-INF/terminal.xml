@@ -16,7 +16,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalLocalOptions"
                         serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontOptions"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider"
                     serviceImplementation="org.jetbrains.plugins.terminal.block.reworked.TerminalNoPortForwardingUiProvider"/>
@@ -24,7 +24,7 @@
     <rdct.remoteSettingProvider implementation="org.jetbrains.plugins.terminal.TerminalRemoteSettingsInfoProvider"/>
     <applicationSettings service="org.jetbrains.plugins.terminal.block.BlockTerminalOptions"/>
     <applicationSettings service="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
-    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalFontOptions"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector"/>

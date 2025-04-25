@@ -9,7 +9,7 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 internal class TerminalRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> = mapOf(
     TerminalOptionsProvider.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
-    TerminalFontOptions.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
+    TerminalFontSettingsService.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
     BlockTerminalOptions.COMPONENT_NAME to RemoteSettingInfo(InitialFromFrontend),
   )
 }

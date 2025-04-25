@@ -36,8 +36,8 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.terminal.TerminalFontOptions
-import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
+import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
+import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
@@ -382,14 +382,14 @@ internal class ReworkedTerminalView(
     result.putUserData(ChangeEditorFontSizeStrategy.KEY, ChangeTerminalFontSizeStrategy)
     result.putUserData(TerminalFontSizeProvider.KEY, TerminalFontSizeProviderImpl.getInstance())
 
-    val fontSettingsListener = object : TerminalFontOptionsListener {
-      override fun fontOptionsChanged() {
+    val fontSettingsListener = object : TerminalFontSettingsListener {
+      override fun fontSettingsChanged() {
         result.applyFontSettings(settings)
         result.reinitSettings()
         result.resizeIfShowing()
       }
     }
-    TerminalFontOptions.getInstance().addListener(fontSettingsListener, parentDisposable)
+    TerminalFontSettingsService.getInstance().addListener(fontSettingsListener, parentDisposable)
 
     TerminalFontSizeProviderImpl.getInstance().addListener(parentDisposable, object : TerminalFontSizeProvider.Listener {
       override fun fontChanged() {
