@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import javax.swing.Icon
 
 internal class XBreakpointTypeGroup(private val breakpointType: XBreakpointTypeProxy) : XBreakpointGroup() {
@@ -19,8 +20,8 @@ internal class XBreakpointTypeGroup(private val breakpointType: XBreakpointTypeP
       return 0
     }
     if (o is XBreakpointTypeGroup) {
-      if (o.breakpointType.isLineBreakpoint) {
-        if (breakpointType.isLineBreakpoint) {
+      if (o.breakpointType is XLineBreakpointTypeProxy) {
+        if (breakpointType is XLineBreakpointTypeProxy) {
           val res = (o.breakpointType.priority ?: 0) -
                     (breakpointType.priority ?: 0)
           if (res != 0) {
@@ -32,7 +33,7 @@ internal class XBreakpointTypeGroup(private val breakpointType: XBreakpointTypeP
           return 1
         }
       }
-      else if (breakpointType.isLineBreakpoint) {
+      else if (breakpointType is XLineBreakpointTypeProxy) {
         return -1
       }
       return breakpointType.index.compareTo(o.breakpointType.index)

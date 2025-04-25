@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -26,11 +25,8 @@ interface XBreakpointTypeProxy {
   val mutedDisabledIcon: Icon
   val pendingIcon: Icon?
   val inactiveDependentIcon: Icon
-  val temporaryIcon: Icon?
-  val isLineBreakpoint: Boolean
 
   val isSuspendThreadSupported: Boolean
-  val priority: Int?
 
   val defaultSuspendPolicy: SuspendPolicy
 
@@ -40,16 +36,16 @@ interface XBreakpointTypeProxy {
   fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-  fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean
 
-  class Monolith(
+  open class Monolith @Deprecated("Use type.asProxy() instead") internal constructor(
     val project: Project,
-    val breakpointType: XBreakpointType<*, *>,
+    initBreakpointType: XBreakpointType<*, *>,
   ) : XBreakpointTypeProxy {
-    private val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(breakpointType)
+    open val breakpointType: XBreakpointType<*, *> = initBreakpointType
+    private val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(initBreakpointType)
 
-    override val id: String
-      get() = breakpointType.id
+    override val id: String = initBreakpointType.id
+
     override val index: Int
       get() = breakpointTypes().indexOf(breakpointType).orElse(-1).toInt()
     override val title: String
@@ -68,20 +64,8 @@ interface XBreakpointTypeProxy {
       get() = breakpointType.pendingIcon
     override val inactiveDependentIcon: Icon
       get() = breakpointType.inactiveDependentIcon
-    override val temporaryIcon: Icon?
-      get() = (breakpointType as? XLineBreakpointType<*>)?.temporaryIcon
-    override val isLineBreakpoint: Boolean
-      get() = breakpointType is XLineBreakpointType<*>
     override val isSuspendThreadSupported: Boolean
       get() = breakpointType.isSuspendThreadSupported
-
-    override val priority: Int?
-      get() = if (breakpointType is XLineBreakpointType<*>) {
-        breakpointType.priority
-      }
-      else {
-        null
-      }
 
     override val defaultSuspendPolicy: SuspendPolicy
       get() = defaultState.suspendPolicy
@@ -107,9 +91,20 @@ interface XBreakpointTypeProxy {
     override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
       return breakpointType.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>
     }
-
-    override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
-      return (breakpointType as? XLineBreakpointType<*>)?.canPutAt(file, line, project) == true
-    }
   }
 }
+
+
+@Suppress("DEPRECATION")
+@ApiStatus.Internal
+fun <T : XBreakpointType<*, *>> T.asProxy(project: Project): XBreakpointTypeProxy {
+  return if (this is XLineBreakpointType<*>) {
+    this.asProxy(project)
+  }
+  else {
+    XBreakpointTypeProxy.Monolith(project, this)
+  }
+}
+
+@ApiStatus.Internal
+fun <T : XLineBreakpointType<*>> T.asProxy(project: Project): XLineBreakpointTypeProxy = XLineBreakpointTypeProxy.Monolith(project, this)

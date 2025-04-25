@@ -38,7 +38,7 @@ private class FrontendXBreakpointTypesManagerService(
 ) : FrontendXBreakpointTypesManager {
   private val initialized = CompletableDeferred<Unit>()
 
-  private val types = ConcurrentHashMap<XBreakpointTypeId, FrontendXBreakpointType>()
+  private val types = ConcurrentHashMap<XBreakpointTypeId, XBreakpointTypeProxy>()
 
   init {
     cs.launch {
@@ -58,7 +58,7 @@ private class FrontendXBreakpointTypesManagerService(
 
   private fun handleBreakpointTypesFromBackend(breakpointTypes: List<XBreakpointTypeDto>) {
     for (dto in breakpointTypes) {
-      types.putIfAbsent(dto.id, FrontendXBreakpointType(project, dto))
+      types.putIfAbsent(dto.id, createFrontendXBreakpointType(project, dto))
     }
     val typesToRemove = types.keys - breakpointTypes.map { it.id }.toSet()
     for (typeToRemove in typesToRemove) {
@@ -67,7 +67,7 @@ private class FrontendXBreakpointTypesManagerService(
   }
 
 
-  override fun getTypeById(id: XBreakpointTypeId): FrontendXBreakpointType? {
+  override fun getTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy? {
     return types[id]
   }
 }

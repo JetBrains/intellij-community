@@ -80,12 +80,14 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun dispose()
 
-  open class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(open val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
-    override val id: XBreakpointId = breakpoint.breakpointId
+  open class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(breakpointBase: XBreakpointBase<*, *, *>) : XBreakpointProxy {
+    open val breakpoint: XBreakpointBase<*, *, *> = breakpointBase
 
-    override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.project, breakpoint.getType())
+    override val id: XBreakpointId = breakpointBase.breakpointId
 
-    override val project: Project = breakpoint.project
+    override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpointBase.project, breakpointBase.getType())
+
+    override val project: Project = breakpointBase.project
 
     override fun getDisplayText(): String = XBreakpointUtil.getShortText(breakpoint)
     override fun getShortText(): @NlsSafe String = XBreakpointUtil.getShortText(breakpoint)

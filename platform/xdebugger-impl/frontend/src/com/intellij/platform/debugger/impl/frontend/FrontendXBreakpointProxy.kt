@@ -16,6 +16,7 @@ import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase.calculateIcon
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -33,7 +34,7 @@ internal fun createXBreakpointProxy(
   type: XBreakpointTypeProxy,
   onBreakpointChange: () -> Unit,
 ): XBreakpointProxy {
-  return if (type.isLineBreakpoint) {
+  return if (type is XLineBreakpointTypeProxy) {
     FrontendXLineBreakpointProxy(project, parentCs, dto, type, onBreakpointChange)
   }
   else {

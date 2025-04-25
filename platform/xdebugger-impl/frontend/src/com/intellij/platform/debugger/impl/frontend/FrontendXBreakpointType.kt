@@ -12,14 +12,45 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
+import com.intellij.xdebugger.impl.rpc.XLineBreakpointTypeInfo
 import com.intellij.xdebugger.impl.rpc.standardPanel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.Icon
 
-internal class FrontendXBreakpointType(
+internal fun createFrontendXBreakpointType(
+  project: Project,
+  dto: XBreakpointTypeDto,
+): XBreakpointTypeProxy {
+  val lineTypeInfo = dto.lineTypeInfo
+  return if (lineTypeInfo != null) {
+    FrontendXLineBreakpointType(project, dto, lineTypeInfo)
+  }
+  else {
+    FrontendXBreakpointType(project, dto)
+  }
+}
+
+private class FrontendXLineBreakpointType(
+  project: Project,
+  dto: XBreakpointTypeDto,
+  lineTypeInfo: XLineBreakpointTypeInfo,
+) : FrontendXBreakpointType(project, dto), XLineBreakpointTypeProxy {
+  override val temporaryIcon: Icon? = dto.icons.temporaryIcon?.icon()
+
+  override val priority: Int = lineTypeInfo.priority
+
+  override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
+    // TODO IJPL-185111 implement it through cached breakpoint editor map
+    return true
+  }
+}
+
+
+private open class FrontendXBreakpointType(
   private val project: Project,
   private val dto: XBreakpointTypeDto,
 ) : XBreakpointTypeProxy {
@@ -34,11 +65,7 @@ internal class FrontendXBreakpointType(
   override val mutedDisabledIcon: Icon = dto.icons.mutedDisabledIcon.icon()
   override val pendingIcon: Icon? = dto.icons.pendingIcon?.icon()
   override val inactiveDependentIcon: Icon = dto.icons.inactiveDependentIcon.icon()
-  override val temporaryIcon: Icon? = dto.icons.temporaryIcon?.icon()
-
-  override val isLineBreakpoint: Boolean = dto.lineTypeInfo != null
   override val isSuspendThreadSupported: Boolean = dto.suspendThreadSupported
-  override val priority: Int? = dto.lineTypeInfo?.priority
 
   // TODO: should we support changes from the backend (so we need to subscribe on them)
   private var _defaultSuspendPolicy = dto.defaultSuspendPolicy
@@ -74,11 +101,6 @@ internal class FrontendXBreakpointType(
 
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
-  }
-
-  override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
-    // TODO IJPL-185111 implement it through cached breakpoint editor map
-    return true
   }
 }
 

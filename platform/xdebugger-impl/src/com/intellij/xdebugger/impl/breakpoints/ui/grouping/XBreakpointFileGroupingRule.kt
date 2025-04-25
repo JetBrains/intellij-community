@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import javax.swing.Icon
 
 internal class XBreakpointFileGroupingRule<B : Any>
@@ -15,7 +16,7 @@ internal class XBreakpointFileGroupingRule<B : Any>
 
   override fun getGroup(breakpoint: B): XBreakpointFileGroup? {
     val proxy = breakpoint.asBreakpointProxyOrNull() ?: return null
-    if (!proxy.type.isLineBreakpoint) {
+    if (proxy.type !is XLineBreakpointTypeProxy) {
       return null
     }
     val position = proxy.getSourcePosition()

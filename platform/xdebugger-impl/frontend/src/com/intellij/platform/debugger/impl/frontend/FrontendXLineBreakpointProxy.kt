@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import kotlinx.coroutines.CoroutineScope
@@ -20,9 +20,10 @@ internal class FrontendXLineBreakpointProxy(
   project: Project,
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
-  type: XBreakpointTypeProxy,
+  override val type: XLineBreakpointTypeProxy,
   onBreakpointChange: () -> Unit,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
+
   override fun isTemporary(): Boolean {
     return _state.value.isTemporary
   }

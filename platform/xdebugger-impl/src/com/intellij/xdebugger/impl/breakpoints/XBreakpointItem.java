@@ -137,7 +137,7 @@ public class XBreakpointItem extends BreakpointItem {
     TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    boolean isLineBreakpoint = myBreakpointProxy.getType().isLineBreakpoint();
+    boolean isLineBreakpoint = myBreakpointProxy.getType() instanceof XLineBreakpointTypeProxy;
     DetailView.PreviewEditorState state =
       DetailView.PreviewEditorState.create(virtualFile, line, isLineBreakpoint ? null : attributes);
 

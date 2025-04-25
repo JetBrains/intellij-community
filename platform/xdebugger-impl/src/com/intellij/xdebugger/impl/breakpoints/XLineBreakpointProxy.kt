@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface XLineBreakpointProxy : XBreakpointProxy {
+  override val type: XLineBreakpointTypeProxy
+
   fun isTemporary(): Boolean
   fun setTemporary(isTemporary: Boolean)
 
@@ -25,7 +27,13 @@ interface XLineBreakpointProxy : XBreakpointProxy {
 
 
   @Suppress("DEPRECATION")
-  class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(override val breakpoint: XLineBreakpointImpl<*>) : XBreakpointProxy.Monolith(breakpoint), XLineBreakpointProxy {
+  class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(
+    lineBreakpoint: XLineBreakpointImpl<*>,
+  ) : XBreakpointProxy.Monolith(lineBreakpoint), XLineBreakpointProxy {
+    override val breakpoint: XLineBreakpointImpl<*> = lineBreakpoint
+
+    override val type: XLineBreakpointTypeProxy = lineBreakpoint.type.asProxy(breakpoint.project)
+
     override fun getFile(): VirtualFile? = breakpoint.file
 
     override fun getRangeMarker(): RangeMarker? {
