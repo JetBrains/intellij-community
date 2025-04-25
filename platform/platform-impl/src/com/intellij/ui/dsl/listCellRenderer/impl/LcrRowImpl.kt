@@ -373,9 +373,9 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
 
     val topOffset = when (cell) {
       is LcrIconImpl -> 0
-      is LcrSwitchImpl -> 0
 
       // Add 1 pixel above, which gives better vertical alignment in case odd row height
+      is LcrSwitchImpl,
       is LcrSimpleColoredTextImpl -> 1
     }
 
