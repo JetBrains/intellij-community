@@ -14,7 +14,7 @@ interface XDependentBreakpointManagerProxy {
     override fun getMasterBreakpoint(breakpoint: XBreakpointProxy): XBreakpointProxy? {
       val monolith = breakpoint as? XBreakpointProxy.Monolith ?: return null
       val master = dependentManager.getMasterBreakpoint(monolith.breakpoint) ?: return null
-      return XBreakpointProxy.Monolith(master as XBreakpointBase<*, *, *>)
+      return (master as XBreakpointBase<*, *, *>).asProxy()
     }
 
     override fun isLeaveEnabled(breakpoint: XBreakpointProxy): Boolean {

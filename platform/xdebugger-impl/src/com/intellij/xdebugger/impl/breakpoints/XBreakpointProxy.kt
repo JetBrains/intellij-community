@@ -80,7 +80,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun dispose()
 
-  open class Monolith(open val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
+  open class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(open val breakpoint: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     override val id: XBreakpointId = breakpoint.breakpointId
 
     override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpoint.project, breakpoint.getType())
@@ -243,8 +243,16 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   }
 }
 
+@Suppress("DEPRECATION")
 @ApiStatus.Internal
-fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy = XBreakpointProxy.Monolith(this)
+fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
+  return if (this is XLineBreakpointImpl<*>) {
+    this.asProxy()
+  }
+  else {
+    XBreakpointProxy.Monolith(this)
+  }
+}
 
 @ApiStatus.Internal
-fun <T : XLineBreakpointImpl<*>> T.asLineBreakpointProxy(): XLineBreakpointProxy = XLineBreakpointProxy.Monolith(this)
+fun <T : XLineBreakpointImpl<*>> T.asProxy(): XLineBreakpointProxy = XLineBreakpointProxy.Monolith(this)

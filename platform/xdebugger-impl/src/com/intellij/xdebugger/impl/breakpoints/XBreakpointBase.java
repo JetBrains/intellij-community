@@ -49,6 +49,7 @@ import java.util.Objects;
 
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableSharedFlow;
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
 import static com.intellij.xdebugger.impl.rpc.models.XBreakpointValueIdKt.storeGlobally;
 import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
@@ -482,7 +483,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   protected void updateIcon() {
-    myIcon = calculateIcon(new XBreakpointProxy.Monolith(this));
+    myIcon = calculateIcon(asProxy(this));
   }
 
   @ApiStatus.Internal
@@ -600,7 +601,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   // TODO IJPL-185111
   public @NotNull GutterIconRenderer createGutterIconRenderer() {
-    return new BreakpointGutterIconRenderer(XBreakpointProxyKt.asProxy(this));
+    return new BreakpointGutterIconRenderer(asProxy(this));
   }
 
   public void clearIcon() {

@@ -23,7 +23,9 @@ interface XLineBreakpointProxy : XBreakpointProxy {
   fun getHighlighter(): RangeHighlighter?
   fun createGutterIconRenderer(): GutterIconRenderer?
 
-  class Monolith(override val breakpoint: XLineBreakpointImpl<*>) : XBreakpointProxy.Monolith(breakpoint), XLineBreakpointProxy {
+
+  @Suppress("DEPRECATION")
+  class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(override val breakpoint: XLineBreakpointImpl<*>) : XBreakpointProxy.Monolith(breakpoint), XLineBreakpointProxy {
     override fun getFile(): VirtualFile? = breakpoint.file
 
     override fun getRangeMarker(): RangeMarker? {

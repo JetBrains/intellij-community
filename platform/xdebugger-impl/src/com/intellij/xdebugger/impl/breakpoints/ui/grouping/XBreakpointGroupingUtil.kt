@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.xdebugger.impl.breakpoints.asProxy
 
 internal fun Any.asBreakpointProxyOrNull(): XBreakpointProxy? {
   val breakpoint = this
@@ -10,7 +11,7 @@ internal fun Any.asBreakpointProxyOrNull(): XBreakpointProxy? {
     return breakpoint
   }
   if (breakpoint is XBreakpointBase<*, *, *>) {
-    return XBreakpointProxy.Monolith(breakpoint)
+    return breakpoint.asProxy()
   }
   return null
 }

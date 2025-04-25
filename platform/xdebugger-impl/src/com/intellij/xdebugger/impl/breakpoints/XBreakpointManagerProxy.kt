@@ -71,7 +71,7 @@ interface XBreakpointManagerProxy {
       if (lastRemovedBreakpoint !is XBreakpointBase<*, *, *>) {
         return null
       }
-      return XBreakpointProxy.Monolith(lastRemovedBreakpoint)
+      return lastRemovedBreakpoint.asProxy()
     }
 
     override fun removeBreakpoint(breakpoint: XBreakpointProxy) {

@@ -40,6 +40,8 @@ import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+
 @ApiStatus.Internal
 public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Delegate {
   public static final String CONDITION_HISTORY_ID = "breakpointCondition";
@@ -120,7 +122,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
                                          boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
     this(project, new XBreakpointManagerProxy.Monolith((XBreakpointManagerImpl)breakpointManager),
-         new XBreakpointProxy.Monolith(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
+         asProxy(breakpoint), showActionOptions, showAllOptions, isEditorBalloon);
   }
 
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManagerProxy breakpointManager, XBreakpointProxy breakpoint,
