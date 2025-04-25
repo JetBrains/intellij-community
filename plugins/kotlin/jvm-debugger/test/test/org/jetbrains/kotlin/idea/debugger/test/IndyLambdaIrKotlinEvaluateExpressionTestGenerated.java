@@ -1483,6 +1483,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                 KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
+            @TestMetadata("capturedTypeParam.kt")
+            public void testCapturedTypeParam() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/capturedTypeParam.kt");
+            }
+
             @TestMetadata("crossfileInlining.kt")
             public void testCrossfileInlining() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/crossfileInlining.kt");
