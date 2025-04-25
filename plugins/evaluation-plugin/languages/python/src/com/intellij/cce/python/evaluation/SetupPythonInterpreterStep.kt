@@ -130,6 +130,9 @@ private class SetupPythonInterpreterStep(
           for (module in ModuleManager.getInstance(project).modules) {
             PyProjectSdkConfiguration.setReadyToUseSdk(project, module, sdk)
           }
+          if (ProjectRootManager.getInstance(project).projectSdk == null) {
+            ProjectRootManager.getInstance(project).projectSdk = sdk
+          }
         }
         println("Python interpreter \"${sdk.name}\" (${sdk.homePath}) will be used as a project SDK")
         resultSdk = sdk
