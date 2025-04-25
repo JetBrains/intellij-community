@@ -26,7 +26,7 @@ public class OnOffButton extends JToggleButton {
   /**
    * Internal padding
    */
-  private Insets myIpad = JBUI.insets(3);
+  private @NotNull Insets myIpad = JBUI.insets(3);
 
   public OnOffButton() {
     setBorder(null);
@@ -105,8 +105,8 @@ public class OnOffButton extends JToggleButton {
       FontMetrics fm = c.getFontMetrics(c.getFont());
       int w = fm.stringWidth(text);
       int h = fm.getHeight();
+      w += (int)(1.25 * h) + ipad.left + ipad.right;
       h += ipad.top + ipad.bottom;
-      w += 1.25 * h;
       return new Dimension(w, h);
     }
 
