@@ -13,7 +13,8 @@ internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
 
   override fun getComponent(): Component {
     val panel = JPanel(VerticalFlowLayout(FlowLayout.LEFT))
-    panel.add(createTestCaseItem("Resize test", "Measures the time to redraw the component after resize", "Start Performance Test", ::runSimpleResizeTest))
+    panel.add(createTestCaseItem("Resize test", "Measures the time to redraw the component after resize", "Start Test", ::runSimpleResizeTest))
+    panel.add(createTestCaseItem("Manual scrolling test", "Manual scrolling with drawing diagram", "Start Test", ::runScrollingTest))
 
     val scrollPane = JBScrollPane(panel)
     scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -51,7 +52,8 @@ internal class PerformanceTest : JBCefTestAppFrame.TestCase() {
     return section
   }
 
-internal class RepaintListener(component: Component, val onRepaint: () -> Unit) : JPanel() {
+class RepaintListener(component: Component, var onRepaint: () -> Unit) : JPanel() {
+  constructor(component: Component) : this(component, {})
     init {
       layout = BorderLayout()
       add(component)

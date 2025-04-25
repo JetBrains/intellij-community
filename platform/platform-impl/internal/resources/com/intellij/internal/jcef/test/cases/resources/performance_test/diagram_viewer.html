@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Tracking Diagram with Plotly.js</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #scrollChart {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #resetZoom {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: rgba(0, 123, 255, 0.8);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      z-index: 10;
+    }
+
+    #resetZoom:hover {
+      background-color: rgba(0, 123, 255, 1);
+    }
+  </style>
+</head>
+<body>
+
+<button id="resetZoom">Reset Zoom</button>
+<div id="scrollChart"></div>
+
+<script>
+  const MAX_POINTS = 10000;
+  let timeCounter = 0;
+  let scrollingRequestedData = [];
+  let scrollingPerformedData = [];
+
+  Plotly.newPlot('scrollChart', [
+    {
+      x: [],
+      y: [],
+      mode: 'lines',
+      name: 'Scrolling Amount Requested',
+      line: { color: 'rgba(255, 99, 132, 1)' },
+    },
+    {
+      x: [],
+      y: [],
+      mode: 'lines',
+      name: 'Scrolling Amount Performed',
+      line: { color: 'rgba(54, 162, 235, 1)' },
+    },
+  ], {
+    title: 'Scroll Tracking Diagram',
+    xaxis: { title: 'Time' },
+    yaxis: { title: 'Scrolling Amount'},
+    showlegend: true,
+    dragmode: 'pan',
+  });
+
+  function addPoint(time, requested, performed) {
+    scrollingRequestedData.push({ x: time, y: requested });
+    scrollingPerformedData.push({ x: time, y: performed });
+
+    const requestedX = scrollingRequestedData.map(point => point.x);
+    const requestedY = scrollingRequestedData.map(point => point.y);
+
+    const performedX = scrollingPerformedData.map(point => point.x);
+    const performedY = scrollingPerformedData.map(point => point.y);
+
+    Plotly.update('scrollChart', {
+      x: [requestedX, performedX],
+      y: [requestedY, performedY],
+    });
+  }
+
+  document.getElementById('resetZoom').addEventListener('click', () => {
+    Plotly.relayout('scrollChart', {
+      'xaxis.autorange': true,
+      'yaxis.autorange': true,
+    });
+  });
+</script>
+
+</body>
+</html>
