@@ -60,7 +60,7 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="publicId" type="er:publicIdentifier"
-                       use="required"/>
+                      use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
         <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
@@ -72,9 +72,9 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="systemId" type="xs:string"
-                       use="required"/>
+                      use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -84,9 +84,9 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="name" type="xs:anyURI"
-                       use="required"/>
+                      use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -96,10 +96,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="systemIdStartString"
-                       type="xs:string"
-                       use="required"/>
+                      type="xs:string"
+                      use="required"/>
         <xs:attribute name="rewritePrefix" type="xs:string" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -109,10 +109,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="uriStartString"
-                       type="xs:string"
-                       use="required"/>
+                      type="xs:string"
+                      use="required"/>
         <xs:attribute name="rewritePrefix" type="xs:string" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -122,10 +122,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="systemIdSuffix"
-                       type="xs:string"
-                       use="required"/>
+                      type="xs:string"
+                      use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -135,10 +135,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="uriSuffix"
-                       type="xs:string"
-                       use="required"/>
+                      type="xs:string"
+                      use="required"/>
         <xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -148,10 +148,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="publicIdStartString"
-                       type="er:partialPublicIdentifier"
-                       use="required"/>
+                      type="er:partialPublicIdentifier"
+                      use="required"/>
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -161,10 +161,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="systemIdStartString"
-                       type="xs:string"
-                       use="required"/>
+                      type="xs:string"
+                      use="required"/>
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -174,10 +174,10 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="uriStartString"
-                       type="xs:string"
-                       use="required"/>
+                      type="xs:string"
+                      use="required"/>
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
@@ -187,7 +187,7 @@
     <xs:complexContent>
       <xs:restriction base="xs:anyType">
         <xs:attribute name="catalog" type="xs:anyURI" use="required"/>
-	<xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="id" type="xs:ID"/>
         <xs:anyAttribute namespace="##other" processContents="lax"/>
       </xs:restriction>
     </xs:complexContent>
