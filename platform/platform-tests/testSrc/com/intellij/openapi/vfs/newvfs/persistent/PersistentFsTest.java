@@ -1065,13 +1065,19 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     //save content: for smaller files this should trigger file content caching, but not for huge files
     hugeContent[10] = 'A';//introduce a change
-    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
-      try (var out = vFile.getOutputStream(this)) {
-        out.write(hugeContent);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+          try (var out = vFile.getOutputStream(this)) {
+            out.write(hugeContent);
+          }
+          return null;
+        });
       }
-      return null;
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     });
-
     assertNull("Content must NOT be cached in VFS during saving",
                FSRecords.getInstance().readContent(id));
   }

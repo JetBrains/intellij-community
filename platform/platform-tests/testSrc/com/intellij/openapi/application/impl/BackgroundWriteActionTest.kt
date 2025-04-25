@@ -588,7 +588,7 @@ class BackgroundWriteActionTest {
 
   @Test
   fun `prompt cancellation of pending wa does not break subsequent ra`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
-    val future = Job()
+    val future = Job(coroutineContext.job)
     launch {
       readAction {
         future.asCompletableFuture().join()
@@ -596,7 +596,7 @@ class BackgroundWriteActionTest {
     }
     val pendingWa = launch {
       Thread.sleep(50)
-      application.runWriteAction {
+      backgroundWriteAction {
         Assertions.fail<Nothing>("Should not start")
       }
     }

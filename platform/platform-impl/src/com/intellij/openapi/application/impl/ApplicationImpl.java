@@ -72,6 +72,7 @@ import java.util.function.Supplier;
 import static com.intellij.codeWithMe.ClientId.decorateCallable;
 import static com.intellij.codeWithMe.ClientId.decorateRunnable;
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
+import static com.intellij.openapi.application.CoroutinesKt.isBackgroundWriteAction;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
 import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;
@@ -1000,18 +1001,31 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     });
   }
 
+  private static void checkWriteActionAllowedOnCurrentThread() {
+    if (EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    if (!isBackgroundWriteAction(ThreadContext.currentThreadContext())) {
+      throw new IllegalStateException(
+        "Background write action is not permitted on this thread. Consider using `backgroundWriteAction`, or switch to EDT");
+    }
+  }
+
   @Override
   public void runWriteAction(@NotNull Runnable action) {
+    checkWriteActionAllowedOnCurrentThread();
     getThreadingSupport().runWriteAction(action.getClass(), runnableUnitFunction(action));
   }
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
+    checkWriteActionAllowedOnCurrentThread();
     return getThreadingSupport().runWriteAction(computation.getClass(), computation::compute);
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+    checkWriteActionAllowedOnCurrentThread();
     return getThreadingSupport().runWriteAction(computation.getClass(), rethrowCheckedExceptions(computation));
   }
 

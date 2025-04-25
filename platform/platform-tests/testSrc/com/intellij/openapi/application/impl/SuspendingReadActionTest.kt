@@ -499,7 +499,7 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   @Test
   fun `pending write action is cancellable`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
-    val job = Job()
+    val job = Job(coroutineContext.job)
     launch {
       readAction {
         job.asCompletableFuture().get()
@@ -507,7 +507,7 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     }
     delay(100)
     val writeHandle = launch {
-      application.runWriteAction {
+      backgroundWriteAction {
       }
     }
     delay(100)

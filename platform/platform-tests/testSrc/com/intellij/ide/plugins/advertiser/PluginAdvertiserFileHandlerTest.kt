@@ -2,8 +2,10 @@
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.features.AnsiHighlighterDetector
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -18,7 +20,7 @@ class PluginAdvertiserFileHandlerTest {
   private val sourceRoot = module.sourceRootFixture()
 
   @Test
-  fun testAnsiHandlerTxt() {
+  fun testAnsiHandlerTxt(): Unit = timeoutRunBlocking {
     val file = makeAnsiFile("test.txt")
     val detector = AnsiHighlighterDetector()
     assertThat(detector.isSupported(file))
@@ -27,7 +29,7 @@ class PluginAdvertiserFileHandlerTest {
   }
 
   @Test
-  fun testAnsiHandlerLog() {
+  fun testAnsiHandlerLog(): Unit = timeoutRunBlocking {
     val file = makeAnsiFile("test.log")
     val detector = AnsiHighlighterDetector()
     assertThat(detector.isSupported(file))
@@ -36,7 +38,7 @@ class PluginAdvertiserFileHandlerTest {
   }
 
   @Test
-  fun testAnsiHandlerNoExtension() {
+  fun testAnsiHandlerNoExtension(): Unit = timeoutRunBlocking {
     val file = makeAnsiFile("test")
     val detector = AnsiHighlighterDetector()
     assertThat(detector.isSupported(file))
@@ -44,9 +46,9 @@ class PluginAdvertiserFileHandlerTest {
       .isFalse
   }
 
-  private fun makeAnsiFile(name: String): VirtualFile {
+  private suspend fun makeAnsiFile(name: String): VirtualFile {
     val logBytes = byteArrayOf(27, 91, 51, 49, 109, 72, 101, 108, 108, 111)
-    return ApplicationManager.getApplication().runWriteAction<VirtualFile> {
+    return backgroundWriteAction {
       val file = sourceRoot.get().createFile(name).virtualFile
       file.getOutputStream(file).use {
         it.write(logBytes)
