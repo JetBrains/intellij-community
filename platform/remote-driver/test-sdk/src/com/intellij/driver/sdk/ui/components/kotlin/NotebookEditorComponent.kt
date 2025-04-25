@@ -21,9 +21,12 @@ import kotlin.time.Duration.Companion.seconds
  */
 private const val topLevelEditorSearchPattern = "//div[@class='EditorComponentImpl' and not(@accessiblename='Editor')]"
 
-fun Finder.notebookEditor(@Language("xpath") xpath: String? = null, action: NotebookEditorUiComponent.() -> Unit) {
-  return x(xpath ?: "//div[@class='EditorCompositePanel']",
-           NotebookEditorUiComponent::class.java).action()
+fun Finder.notebookEditor(@Language("xpath") xpath: String? = null): NotebookEditorUiComponent =
+  x(xpath ?: "//div[@class='EditorCompositePanel']",
+    NotebookEditorUiComponent::class.java)
+
+fun Finder.notebookEditor(action: NotebookEditorUiComponent.() -> Unit) {
+  return notebookEditor().action()
 }
 
 

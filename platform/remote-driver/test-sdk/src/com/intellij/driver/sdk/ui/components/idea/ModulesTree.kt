@@ -22,11 +22,16 @@ class ModulesTree(private val tree: JTreeUiComponent) {
   }
 
   fun selectModule(moduleName: String, fullMatch: Boolean = true) {
-    val segments = moduleName.split(".",).filter { it.isNotEmpty() }.toTypedArray()
-    tree.clickPath(
-      *segments,
-      fullMatch = fullMatch
-    )
+    moduleName.split(".",).filter { it.isNotEmpty() }.toTypedArray()
+      .takeIf { it.isNotEmpty() }
+      ?.run {
+        tree.waitOneText(this.first())
+        tree.clickPath(
+          *this,
+          fullMatch = fullMatch
+        )
+      }
+
   }
 
   fun forEachModule(action: () -> Unit) {
