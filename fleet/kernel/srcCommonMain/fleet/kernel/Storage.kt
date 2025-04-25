@@ -43,7 +43,7 @@ suspend fun <T> withStorage(
         if (snapshot != DurableSnapshotWithPartitions.Empty) {
           Storage.logger.info { "applying non-empty snapshot $storageKey" }
           val isFailFast = currentCoroutineContext().shouldFailFast
-          hackyNonBlockingChange {
+          change {
             span("apply snapshot") {
               DbContext.threadBound.ensureMutable {
                 applyDurableSnapshotWithPartitions(snapshotWithPartitions = snapshot, isFailFast = isFailFast)
