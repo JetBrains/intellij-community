@@ -1,6 +1,5 @@
 package com.jetbrains.python.inspections
 
-import com.google.common.collect.Sets
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -9,16 +8,12 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.Version
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.Processor
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
@@ -36,7 +31,6 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
-import java.util.*
 
 
 class PyUnusedImportsInspection : PyInspection() {
@@ -50,16 +44,13 @@ class PyUnusedImportsInspection : PyInspection() {
   }
 
   override fun inspectionFinished(session: LocalInspectionToolSession, holder: ProblemsHolder) {
-    val visitor = session.getUserData(KEY)
-    checkNotNull(visitor)
-    ReadAction.run<RuntimeException?>(
-      ThrowableRunnable {
-        if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
-          visitor.highlightUnusedImports()
-        }
-        visitor.highlightImportsInsideGuards()
+    val visitor = session.getUserData(KEY)!!
+    ReadAction.run<RuntimeException> {
+      if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
+        visitor.highlightUnusedImports()
       }
-    )
+      visitor.highlightImportsInsideGuards()
+    }
     session.putUserData(KEY, null)
   }
 
@@ -79,7 +70,7 @@ class PyUnusedImportsInspection : PyInspection() {
 
     override fun visitPyImportElement(node: PyImportElement) {
       super.visitPyImportElement(node)
-      val fromImport = PsiTreeUtil.getParentOfType<PyFromImportStatement?>(node, PyFromImportStatement::class.java)
+      val fromImport = node.parentOfType<PyFromImportStatement>()
       if (fromImport == null || !fromImport.isFromFuture()) {
         myAllImports.add(node)
       }
@@ -129,7 +120,7 @@ class PyUnusedImportsInspection : PyInspection() {
             target = resolveResult.getElement()
           }
           if (resolveResult is ImportedResolveResult) {
-            val definer = resolveResult.getDefiner()
+            val definer = resolveResult.definer
             if (definer != null) {
               myUsedImports.add(definer)
             }
@@ -169,17 +160,15 @@ class PyUnusedImportsInspection : PyInspection() {
     }
 
     private fun processReferenceInImportGuard(node: PyElement, guard: PyExceptPart) {
-      val importElement = PsiTreeUtil.getParentOfType<PyImportElement?>(node, PyImportElement::class.java)
-      if (importElement != null) {
-        val visibleName = importElement.getVisibleName()
-        val owner = ScopeUtil.getScopeOwner(importElement)
-        if (visibleName != null && owner != null) {
-          val allWrites: MutableCollection<PsiElement?> = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE)
-          val hasWriteInsideGuard = ContainerUtil.exists<PsiElement?>(allWrites, Condition { e: PsiElement? -> PsiTreeUtil.isAncestor(guard, e!!, false) })
-          if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
-            myImportsInsideGuard.add(importElement)
-          }
-        }
+      val importElement = node.parentOfType<PyImportElement>()
+      if (importElement == null) return
+      val visibleName = importElement.getVisibleName()
+      val owner = ScopeUtil.getScopeOwner(importElement)
+      if (visibleName == null || owner == null) return
+      val allWrites: List<PsiElement> = ScopeUtil.getElementsOfAccessType(visibleName, owner, ReadWriteInstruction.ACCESS.WRITE)
+      val hasWriteInsideGuard = allWrites.any { guard.isAncestor(it) }
+      if (!hasWriteInsideGuard && !shouldSkipMissingWriteInsideGuard(guard, visibleName)) {
+        myImportsInsideGuard.add(importElement)
       }
     }
 
@@ -199,40 +188,25 @@ class PyUnusedImportsInspection : PyInspection() {
       val instructions = flow.getInstructions()
       val start = ControlFlowUtil.findInstructionNumberByElement(instructions, guard.exceptClass)
       if (start <= 0) return false
-      val canEscapeGuard = Ref.create<Boolean>(false)
+      var canEscapeGuard = false
       // TODO can we replace that with return ControlFlowUtil.process?
-      ControlFlowUtil.process(instructions, start, Processor { instruction: Instruction ->
+      ControlFlowUtil.process(instructions, start) { instruction: Instruction ->
         val e = instruction.getElement()
-        if (e != null && !PsiTreeUtil.isAncestor(guard, e, true)) {
-          canEscapeGuard.set(true)
-          return@Processor false
+        if (e != null && !guard.isAncestor(e, true)) {
+          canEscapeGuard = true
+          return@process false
         }
-        return@Processor true
-      })
-      return !canEscapeGuard.get()
-    }
-
-    fun getImportsInsideGuard(): MutableCollection<PyImportedNameDefiner> {
-      return Collections.unmodifiableCollection(myImportsInsideGuard)
-    }
-
-    private fun getImportErrorGuard(node: PyElement?): PyExceptPart? {
-      val importStatement = PsiTreeUtil.getParentOfType(node, PyImportStatementBase::class.java)
-      if (importStatement != null) {
-        val tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart::class.java)
-        if (tryPart != null) {
-          val tryExceptStatement = PsiTreeUtil.getParentOfType(tryPart, PyTryExceptStatement::class.java)
-          if (tryExceptStatement != null) {
-            for (exceptPart in tryExceptStatement.getExceptParts()) {
-              val expr = exceptPart.getExceptClass()
-              if (expr != null && "ImportError" == expr.getName()) {
-                return exceptPart
-              }
-            }
-          }
-        }
+        return@process true
       }
-      return null
+      return !canEscapeGuard
+    }
+
+    private fun getImportErrorGuard(node: PyElement): PyExceptPart? {
+      return node.parentOfType<PyImportStatementBase>()
+        ?.parentOfType<PyTryPart>()
+        ?.parentOfType<PyTryExceptStatement>()
+        ?.exceptParts
+        ?.firstOrNull { "ImportError" == it.exceptClass?.getName() }
     }
 
     private fun processInjection(node: PsiLanguageInjectionHost?) {
@@ -258,7 +232,7 @@ class PyUnusedImportsInspection : PyInspection() {
       val resolveResults = reference.multiResolve(false)
       for (resolveResult in resolveResults) {
         if (resolveResult is ImportedResolveResult) {
-          val definer = resolveResult.getDefiner()
+          val definer = resolveResult.definer
           if (definer != null) {
             myUsedImports.add(definer)
           }
@@ -267,10 +241,9 @@ class PyUnusedImportsInspection : PyInspection() {
     }
 
     fun highlightUnusedImports() {
-      val extensions: List<PyInspectionExtension?> = PyInspectionExtension.EP_NAME.extensionList
       val unused: List<PsiElement> = collectUnusedImportElements()
       for (element in unused) {
-        if (ContainerUtil.exists<PyInspectionExtension?>(extensions, Condition { extension: PyInspectionExtension? -> extension!!.ignoreUnused(element, myTypeEvalContext) })) {
+        if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignoreUnused(element, myTypeEvalContext) }) {
           continue
         }
         if (!evaluateVersionsForElement(element).contains(myVersion)) {
@@ -284,19 +257,14 @@ class PyUnusedImportsInspection : PyInspection() {
     }
 
     fun highlightImportsInsideGuards() {
-      val usedImportsInsideImportGuards: HashSet<PyImportedNameDefiner?> = Sets.newHashSet(getImportsInsideGuard())
-      usedImportsInsideImportGuards.retainAll(myUsedImports)
-
-      for (definer in usedImportsInsideImportGuards) {
-        val importElement = PyUtil.`as`<PyImportElement?>(definer, PyImportElement::class.java)
-        if (importElement == null) {
+      for (definer in myImportsInsideGuard.intersect(myUsedImports)) {
+        if (definer !is PyImportElement) {
           continue
         }
-        val asElement = importElement.getAsNameElement()
-        val toHighlight: PyElement? = if (asElement != null) asElement else importElement.getImportReferenceExpression()
+        val asElement = definer.asNameElement
+        val toHighlight: PyElement? = asElement ?: definer.importReferenceExpression
         registerProblem(toHighlight,
-                        PyPsiBundle.message("INSP.try.except.import.error",
-                                            importElement.getVisibleName()),
+                        PyPsiBundle.message("INSP.try.except.import.error", definer.getVisibleName()),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
       }
     }
@@ -310,7 +278,7 @@ class PyUnusedImportsInspection : PyInspection() {
       if (first.getContainingFile() is PyExpressionCodeFragment || PythonRuntimeService.getInstance().isInPydevConsole(first)) {
         return emptyList()
       }
-      val result: MutableList<PsiElement> = ArrayList<PsiElement>()
+      val result: MutableList<PsiElement> = ArrayList()
 
       val unusedImports: MutableSet<PyImportedNameDefiner> = HashSet(myAllImports)
       unusedImports.removeAll(myUsedImports)
@@ -318,25 +286,25 @@ class PyUnusedImportsInspection : PyInspection() {
       unusedImports.removeAll(myUnresolvedImports)
 
       // Remove those unsed, that are reported to be skipped by extension points
-      val unusedImportToSkip: MutableSet<PyImportedNameDefiner?> = HashSet<PyImportedNameDefiner?>()
+      val unusedImportToSkip: MutableSet<PyImportedNameDefiner?> = HashSet()
       for (unusedImport in unusedImports) {
-        if (ContainerUtil.exists<PyInspectionExtension>(PyInspectionExtension.EP_NAME.extensionList, Condition { o: PyInspectionExtension? -> o!!.ignoreUnusedImports(unusedImport) })) {
+        if (PyInspectionExtension.EP_NAME.extensionList.any { it.ignoreUnusedImports(unusedImport) }) {
           unusedImportToSkip.add(unusedImport)
         }
       }
 
       unusedImports.removeAll(unusedImportToSkip)
 
-      val usedImportNames: MutableSet<String?> = HashSet<String?>()
+      val usedImportNames: MutableSet<String?> = HashSet()
       for (usedImport in myUsedImports) {
         for (e in usedImport.iterateNames()) {
           usedImportNames.add(e.getName())
         }
       }
 
-      val unusedStatements: MutableSet<PyImportStatementBase?> = HashSet<PyImportStatementBase?>()
+      val unusedStatements: MutableSet<PyImportStatementBase?> = HashSet()
       var packageQName: QualifiedName? = null
-      var dunderAll: MutableList<String?>? = null
+      var dunderAll: List<String>? = null
 
       // TODO: Use strategies instead of pack of "continue"
       iterUnused@ for (unusedImport in unusedImports) {
@@ -349,22 +317,19 @@ class PyUnusedImportsInspection : PyInspection() {
             packageQName = QualifiedNameFinder.findShortestImportableQName(file)
           }
         }
-        val importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase::class.java)
-        if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(unusedImport)) {
-          val inspection: PyInspection = checkNotNull(myInspection)
-          if (inspection.isSuppressedFor(importStatement)) {
+        val importStatement = unusedImport.parentOfType<PyImportStatementBase>()
+        if (importStatement != null && importStatement !in unusedStatements && unusedImport !in myUsedImports) {
+          if (myInspection.isSuppressedFor(importStatement)) {
             continue
           }
           // don't remove as unused imports in try/except statements
-          if (PsiTreeUtil.getParentOfType<PyTryExceptStatement?>(importStatement, PyTryExceptStatement::class.java) != null) {
+          if (importStatement.parentOfType<PyTryExceptStatement>() != null) {
             continue
           }
           // Don't report conditional imports as unused
-          if (PsiTreeUtil.getParentOfType<PyIfStatement?>(unusedImport, PyIfStatement::class.java) != null) {
-            for (e in unusedImport.iterateNames()) {
-              if (usedImportNames.contains(e.getName())) {
-                continue@iterUnused
-              }
+          if (unusedImport.parentOfType<PyIfStatement>() != null) {
+            if (unusedImport.iterateNames().any { it.name in usedImportNames }) {
+              continue
             }
           }
           val importedElement: PsiFileSystemItem?
@@ -382,7 +347,7 @@ class PyUnusedImportsInspection : PyInspection() {
               }
               continue
             }
-            if (dunderAll != null && dunderAll.contains(unusedImport.getVisibleName())) {
+            if (dunderAll != null && unusedImport.getVisibleName() in dunderAll) {
               continue
             }
             importedElement = element.getContainingFile()
@@ -412,14 +377,8 @@ class PyUnusedImportsInspection : PyInspection() {
       return result
     }
 
-    private fun areAllImportsUnused(importStatement: PyImportStatementBase, unusedImports: MutableSet<PyImportedNameDefiner>): Boolean {
-      val elements = importStatement.getImportElements()
-      for (element in elements) {
-        if (!unusedImports.contains(element)) {
-          return false
-        }
-      }
-      return true
+    private fun areAllImportsUnused(importStatement: PyImportStatementBase, unusedImports: Set<PyImportedNameDefiner>): Boolean {
+      return importStatement.getImportElements().all { it in unusedImports }
     }
 
     fun optimizeImports() {
