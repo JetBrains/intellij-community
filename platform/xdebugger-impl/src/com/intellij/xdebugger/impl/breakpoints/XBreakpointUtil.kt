@@ -83,8 +83,8 @@ object XBreakpointUtil {
     }
 
     val breakpoint = findBreakpoint(project, editorDocument, offset)
-    if (breakpoint != null) {
-      return Pair.create(getBreakpointGutterIconRenderer(breakpoint), breakpoint)
+    if (breakpoint != null && breakpoint is XLineBreakpointProxy.Monolith) {
+      return Pair.create(getBreakpointGutterIconRenderer(breakpoint.breakpoint), breakpoint.breakpoint)
     }
 
     val session = XDebuggerManager.getInstance(project).currentSession as XDebugSessionImpl?
@@ -116,13 +116,10 @@ object XBreakpointUtil {
     return null
   }
 
-  private fun findBreakpoint(project: Project, document: Document, offset: Int): XBreakpoint<*>? {
+  private fun findBreakpoint(project: Project, document: Document, offset: Int): XLineBreakpointProxy? {
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val line = document.getLineNumber(offset)
-    val file = FileDocumentManager.getInstance().getFile(document)
-    if (file == null) {
-      return null
-    }
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return null
     for (type in breakpointManager.getLineBreakpointTypes()) {
       val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
       if (breakpoint != null) {

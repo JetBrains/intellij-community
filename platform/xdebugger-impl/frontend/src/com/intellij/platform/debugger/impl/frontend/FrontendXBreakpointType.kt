@@ -102,6 +102,21 @@ private open class FrontendXBreakpointType(
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
     return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is FrontendXBreakpointType) return false
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
+
+
 }
 
 @Service(Service.Level.PROJECT)
