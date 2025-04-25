@@ -18,6 +18,11 @@ val EelFileSystemApi.pathSeparator: String
   }
 
 @ApiStatus.Internal
+fun EelDescriptor.getPath(string: String): EelPath {
+  return EelPath.parse(string, this)
+}
+
+@ApiStatus.Internal
 fun EelFileSystemApi.getPath(string: String): EelPath {
   return EelPath.parse(string, descriptor)
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.isWindows
@@ -85,14 +84,6 @@ object EelPathUtils {
     }
   }
 
-  private fun EelPlatform.asPathManagerOs(): PathManager.OS =
-    when (this) {
-      is EelPlatform.Windows -> PathManager.OS.WINDOWS
-      is EelPlatform.Darwin -> PathManager.OS.MACOS
-      is EelPlatform.Linux -> PathManager.OS.LINUX
-      is EelPlatform.FreeBSD -> PathManager.OS.GENERIC_UNIX
-    }
-
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
   fun getSystemFolder(project: Project): Path {
@@ -110,25 +101,25 @@ object EelPathUtils {
   fun getSystemFolder(eel: EelApi): Path {
     val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
     val userHomeFolder = eel.userInfo.home.asNioPath().toString()
-    return PathManager.getDefaultSystemPathFor(eel.platform.asPathManagerOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking())
+    return PathManager.getDefaultSystemPathFor(eel.platform.toPathManagerOs(), userHomeFolder, selector, eel.exec.fetchLoginShellEnvVariablesBlocking())
   }
 
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
-  fun createTemporaryDirectory(project: Project?, prefix: String = ""): Path {
+  fun createTemporaryDirectory(project: Project?, prefix: String = "", suffix: String = ""): Path {
     if (project == null || isProjectLocal(project)) {
       return Files.createTempDirectory(prefix)
     }
     val projectFilePath = project.projectFilePath ?: return Files.createTempDirectory(prefix)
     return runBlockingMaybeCancellable {
       val eel = Path.of(projectFilePath).getEelDescriptor().toEelApi()
-      createTemporaryDirectory(eel, prefix)
+      createTemporaryDirectory(eel, prefix, suffix)
     }
   }
 
   @JvmStatic
-  suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = ""): Path {
-    val file = eelApi.fs.createTemporaryDirectory().prefix(prefix).getOrThrowFileSystemException()
+  suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = "", suffix: String = ""): Path {
+    val file = eelApi.fs.createTemporaryDirectory().prefix(prefix).suffix(suffix).getOrThrowFileSystemException()
     return file.asNioPath()
   }
 

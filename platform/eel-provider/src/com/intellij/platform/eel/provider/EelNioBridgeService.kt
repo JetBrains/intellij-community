@@ -57,6 +57,15 @@ fun EelPath.asNioPath(project: Project?): @MultiRoutingFileSystemPath Path {
          ?: throw IllegalArgumentException("Could not convert $this to NIO path, descriptor is $descriptor")
 }
 
+private val EelDescriptor.rootsInternal: List<Path>?
+  get() = EelProvider.EP_NAME.extensionList
+    .firstNotNullOfOrNull { eelProvider -> eelProvider.getCustomRoots(this) }
+    ?.takeIf { it.isNotEmpty() }
+    ?.map(Path::of)
+
+@get:ApiStatus.Internal
+val EelDescriptor.roots: List<Path> get() = rootsInternal ?: error("No roots for $this")
+
 /** See docs for [asNioPath] */
 @Deprecated("It never returns null anymore")
 @ApiStatus.Internal
@@ -70,10 +79,7 @@ fun EelPath.asNioPathOrNull(project: Project?): @MultiRoutingFileSystemPath Path
   if (descriptor === LocalEelDescriptor) {
     return Path.of(toString())
   }
-  val eelRoots = EelProvider.EP_NAME.extensionList
-    .firstNotNullOfOrNull { eelProvider -> eelProvider.getCustomRoots(descriptor) }
-    ?.takeIf { it.isNotEmpty() }
-    ?.map(Path::of)
+  val eelRoots = descriptor.rootsInternal
 
   // Comparing strings because `Path.of("\\wsl.localhost\distro\").equals(Path.of("\\wsl$\distro\")) == true`
   // If the project works with `wsl$` paths, this function must return `wsl$` paths, and the same for `wsl.localhost`.
@@ -84,7 +90,7 @@ fun EelPath.asNioPathOrNull(project: Project?): @MultiRoutingFileSystemPath Path
     " path=$this" +
     " project=$project" +
     " descriptor=$descriptor" +
-    " eelRoots=${eelRoots?.joinToString(prefix = "[", postfix = "]", separator = ", ") { path -> "$path (${path.javaClass.name})"}}" +
+    " eelRoots=${eelRoots?.joinToString(prefix = "[", postfix = "]", separator = ", ") { path -> "$path (${path.javaClass.name})" }}" +
     " projectBasePathNio=$projectBasePathNio"
   }
 
