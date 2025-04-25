@@ -60,7 +60,7 @@ private fun isTrafficLightExists(editor: Editor): Boolean {
 
 private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
 
-internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "waitForFinishedCodeAnalysis"
     val LOG = logger<WaitForFinishedCodeAnalysis>()
