@@ -87,13 +87,18 @@ internal class PluginDependenciesTest {
   @Test
   fun `v2 plugin dependency brings only the implicit main module in classloader parents`() {
     `foo plugin-dependency bar`()
-    `bar with optional module`()
+    PluginBuilder.empty().id("bar")
+      .module("bar.optional", PluginBuilder.empty().packagePrefix("bar.optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .module("bar.required", PluginBuilder.empty().packagePrefix("bar.required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("bar.embedded", PluginBuilder.empty().packagePrefix("bar.embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(pluginDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+    val (opt, req, _) = pluginSet.getEnabledModules("bar.optional", "bar.required", "bar.embedded")
     assertThat(foo)
       .hasDirectParentClassloaders(bar)
-      .doesNotHaveDirectParentClassloaders(pluginSet.getEnabledModule("bar.module"))
+      .doesNotHaveTransitiveParentClassloaders(opt, req)
   }
 
   @Test
