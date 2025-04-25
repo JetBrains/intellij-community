@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -429,8 +429,8 @@ public final class IndexDataGetter {
       return computable.compute();
     }
     catch (IOException | UncheckedIOException | StorageException | CorruptedDataException e) {
-      myIndexStorageBackend.markCorrupted();
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+      myIndexStorageBackend.markCorrupted();
     }
     catch (RuntimeException e) {
       processRuntimeException(e);
@@ -442,8 +442,8 @@ public final class IndexDataGetter {
     if (e instanceof ProcessCanceledException) throw e;
 
     if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myIndexStorageBackend.markCorrupted();
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
+      myIndexStorageBackend.markCorrupted();
     }
     else {
       LOG.error("Unknown exception in Vcs Log index processing", e);
