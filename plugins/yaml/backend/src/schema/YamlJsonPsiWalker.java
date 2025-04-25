@@ -424,9 +424,13 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       YAMLSequenceItem sequenceItem = generator.createArrayItem(itemValue);
 
       PsiElement addedItem = array.addBefore(sequenceItem, array.getLastChild()); // we insert before closing bracket ']'
+      if (!(addedItem.getPrevSibling() instanceof PsiWhiteSpace)) {
+        array.addBefore(generator.createSpace(), addedItem);
+      }
       if (array.getItems().size() > 1) {
         array.addAfter(generator.createComma(), PsiTreeUtil.skipWhitespacesAndCommentsBackward(addedItem));
       }
+      array.addAfter(generator.createSpace(), addedItem);
       return addedItem;
     }
 
