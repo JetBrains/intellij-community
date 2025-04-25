@@ -187,30 +187,6 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }
 
-    private fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
-        val suspendExitMode = frameProxy.location().getSuspendExitMode()
-        return when (suspendExitMode) {
-            SuspendExitMode.SUSPEND_LAMBDA -> {
-                frameProxy.thisVariableValue()?.let { return it }
-                // Extract the previous stack frame at BaseContinuationImpl#resumeWith where invokeSuspend is invoked
-                // and extract `this` reference to the current SuspendLambda there.
-                // This is a WA for this problem: IDEA-349851, KT-67136.
-                val prevStackFrame = frameProxy.threadProxy().frames().getOrNull(frameProxy.frameIndex + 1)
-                if (prevStackFrame == null) {
-                    thisLogger().error("[coroutine filtering]: Could not extract the previous stack frame for the frame ${frameProxy.stackFrame}:\n" +
-                                               "thread = ${frameProxy.threadProxy().name()} \n" +
-                                               "frames = ${frameProxy.threadProxy().frames()}")
-                    return null
-                }
-                prevStackFrame.thisObject()
-            }
-            // If the final call within a function body is a suspend call, and it's the only suspend call,
-            // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
-            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue() ?: frameProxy.completionVariableValue()
-            else -> null
-        }
-    }
-
     override fun callerLocation(suspendContext: SuspendContextImpl): Location? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
         val continuationObject = extractContinuation(frameProxy) ?: return null

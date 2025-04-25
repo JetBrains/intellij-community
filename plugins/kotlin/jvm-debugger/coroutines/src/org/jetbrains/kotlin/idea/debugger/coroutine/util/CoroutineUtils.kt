@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
@@ -45,6 +46,30 @@ fun Location.getSuspendExitMode(): SuspendExitMode {
     else if ((method.isInvokeSuspend() || method.isInvoke()) && safeCoroutineExitPointLineNumber())
         return SuspendExitMode.SUSPEND_METHOD
     return SuspendExitMode.NONE
+}
+
+internal fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
+    val suspendExitMode = frameProxy.location().getSuspendExitMode()
+    return when (suspendExitMode) {
+        SuspendExitMode.SUSPEND_LAMBDA -> {
+            frameProxy.thisVariableValue()?.let { return it }
+            // Extract the previous stack frame at BaseContinuationImpl#resumeWith where invokeSuspend is invoked
+            // and extract `this` reference to the current SuspendLambda there.
+            // This is a WA for this problem: IDEA-349851, KT-67136.
+            val prevStackFrame = frameProxy.threadProxy().frames().getOrNull(frameProxy.frameIndex + 1)
+            if (prevStackFrame == null) {
+                logger.thisLogger().error("[coroutine filtering]: Could not extract the previous stack frame for the frame ${frameProxy.stackFrame}:\n" +
+                                           "thread = ${frameProxy.threadProxy().name()} \n" +
+                                           "frames = ${frameProxy.threadProxy().frames()}")
+                return null
+            }
+            prevStackFrame.thisObject()
+        }
+        // If the final call within a function body is a suspend call, and it's the only suspend call,
+        // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
+        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue() ?: frameProxy.completionVariableValue()
+        else -> null
+    }
 }
 
 fun Location.safeCoroutineExitPointLineNumber() =
