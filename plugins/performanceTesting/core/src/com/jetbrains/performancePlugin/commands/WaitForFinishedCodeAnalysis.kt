@@ -120,7 +120,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
       else {
         //Printing additional information to get information why highlighting was stuck
-        printStatistic()
+        //TODO Temporary disable printStatistic(). AT-2276
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }},\n" +
                  "files ${filesYetToStartHighlighting.keys.joinToString(separator = ",\n") { it.name }}")
       }
