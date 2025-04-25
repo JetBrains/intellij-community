@@ -1,9 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import java.util.function.Supplier
 
 @Service(Service.Level.APP)
 class UpdatesInfoProviderManager {
@@ -21,12 +27,29 @@ class UpdatesInfoProviderManager {
     get() = EP.extensionList.any { it.updatesState is ExternalUpdateState.Preparing }
 
   fun runUpdate() {
-    EP.extensionList
-      .firstOrNull { it.updatesState is ExternalUpdateState.UpdateAvailable }
-      ?.let {
-        (it.updatesState as? ExternalUpdateState.UpdateAvailable)?.info?.let { info ->
-          it.runUpdate(info)
-        }
-      }
+    EP.extensionList.firstOrNull { it.updatesState is ExternalUpdateState.UpdateAvailable }?.runUpdate()
+  }
+
+  fun createUpdateAction(): AnAction? {
+    if (availableUpdate == null) return null
+    return RunUpdateAction(this)
+  }
+}
+
+private class RunUpdateAction(
+  private val manager: UpdatesInfoProviderManager,
+): AnAction(
+  Supplier { ActionsBundle.message("action.UpdateIDEWithStation.text", manager.availableUpdate?.fullName) },
+  AllIcons.Ide.Notification.IdeUpdate,
+) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun actionPerformed(e: AnActionEvent) {
+    manager.runUpdate()
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = manager.availableUpdate != null
   }
 }

@@ -168,6 +168,11 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
     val result = DefaultActionGroup()
 
+    UpdatesInfoProviderManager.getInstance().createUpdateAction()?.let {
+      result.add(it)
+      result.addSeparator()
+    }
+
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     result.addAll(group.getChildren(initEvent).asList())
     val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
