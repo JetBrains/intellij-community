@@ -121,6 +121,7 @@ class DiskQueryRelayTest {
         while (started.get() < MANY_REQUESTS) {
           delay(100)
         }
+        delay(100)
 
 
         nonCancellableComputation.terminateFor(arg)
