@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.ide.IdeCoreBundle
@@ -30,12 +30,10 @@ import java.util.zip.GZIPOutputStream
 @TestFixtures
 @Timeout(value = 5, unit = TimeUnit.SECONDS)
 class HttpRequestsTest {
-
   private val serverFixture: TestFixture<HttpServer> = localhostHttpServer()
   private val server: HttpServer get() = serverFixture.get()
 
-  @Test
-  fun redirectLimit() {
+  @Test fun redirectLimit() {
     val requested = AtomicInteger()
     // infinite redirect
     server.createContext("/") { ex ->
@@ -50,8 +48,7 @@ class HttpRequestsTest {
     assertThat(requested.get()).isEqualTo(2)
   }
 
-  @Test
-  fun redirectWithSimplifiedLocation() {
+  @Test fun redirectWithSimplifiedLocation() {
     val requested1 = AtomicInteger()
     val requested2 = AtomicInteger()
     server.createContext("/") { ex ->
@@ -70,15 +67,13 @@ class HttpRequestsTest {
     assertThat(requested2.get()).isEqualTo(1)
   }
 
-  @Test
-  fun redirectLimitPositive() {
+  @Test fun redirectLimitPositive() {
     assertThatExceptionOfType(IllegalArgumentException::class.java)
       .isThrownBy { HttpRequests.request("").redirectLimit(0).readString(null) }
       .withMessage("Redirect limit should be positive")
   }
 
-  @Test
-  fun readTimeout() {
+  @Test fun readTimeout() {
     server.createContext("/") { ex ->
       TimeoutUtil.sleep(1000)
       ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0)
@@ -89,8 +84,7 @@ class HttpRequestsTest {
   }
 
   @Suppress("NonAsciiCharacters")
-  @Test
-  fun readContent() {
+  @Test fun readContent() {
     server.createContext("/") { ex ->
       ex.responseHeaders.add("Content-Type", "text/plain; charset=koi8-r; boundary=something")
       ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0)
@@ -101,8 +95,7 @@ class HttpRequestsTest {
   }
 
   @Suppress("NonAsciiCharacters")
-  @Test
-  fun gzippedContent() {
+  @Test fun gzippedContent() {
     server.createContext("/") { ex ->
       ex.responseHeaders.add("Content-Type", "text/plain; charset=koi8-r")
       ex.responseHeaders.add("Content-Encoding", "gzip")
@@ -116,8 +109,7 @@ class HttpRequestsTest {
     assertThat(HttpRequests.request(server.url).gzip(false).readBytes(null)).startsWith(0x1f, 0x8b) // GZIP magic
   }
 
-  @Test
-  fun tuning() {
+  @Test fun tuning() {
     server.createContext("/") { ex ->
       ex.sendResponseHeaders(if ("HEAD" == ex.requestMethod) HttpURLConnection.HTTP_NO_CONTENT else HttpURLConnection.HTTP_NOT_IMPLEMENTED, -1)
       ex.close()
@@ -127,14 +119,14 @@ class HttpRequestsTest {
   }
 
   @Test
+  @Suppress("DEPRECATION")
   fun putNotAllowed(): Unit = rethrowLoggedErrorsIn {
     assertThatExceptionOfType(AssertionError::class.java)
       .isThrownBy { HttpRequests.request(server.url).tuner { (it as HttpURLConnection).requestMethod = "PUT" }.tryConnect() }
       .withMessageContaining("'PUT' not supported")
   }
 
-  @Test
-  fun post() {
+  @Test fun post() {
     val receivedData = Ref.create<String>()
     server.createContext("/") { ex ->
       receivedData.set(StreamUtil.readText(InputStreamReader(ex.requestBody, StandardCharsets.UTF_8)))
@@ -145,8 +137,7 @@ class HttpRequestsTest {
     assertThat(receivedData.get()).isEqualTo("hello")
   }
 
-  @Test
-  fun postNotFound() {
+  @Test fun postNotFound() {
     server.createContext("/") { ex ->
       ex.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1)
       ex.close()
@@ -157,8 +148,7 @@ class HttpRequestsTest {
       .`is`(statusCode(HttpURLConnection.HTTP_NOT_FOUND))
   }
 
-  @Test
-  fun postNotFoundWithResponse() {
+  @Test fun postNotFoundWithResponse() {
     val serverErrorText = "use another url"
     server.createContext("/") { ex ->
       val bytes = serverErrorText.toByteArray(StandardCharsets.UTF_8)
@@ -171,8 +161,7 @@ class HttpRequestsTest {
       .withMessage(serverErrorText)
   }
 
-  @Test
-  fun notModified() {
+  @Test fun notModified() {
     server.createContext("/") { ex ->
       ex.sendResponseHeaders(HttpURLConnection.HTTP_NOT_MODIFIED, -1)
       ex.close()
@@ -180,8 +169,7 @@ class HttpRequestsTest {
     assertThat(HttpRequests.request(server.url).readBytes(null)).isEmpty()
   }
 
-  @Test
-  fun permissionDenied() {
+  @Test fun permissionDenied() {
     server.createContext("/") { ex ->
       ex.sendResponseHeaders(HttpURLConnection.HTTP_UNAUTHORIZED, -1)
       ex.close()
@@ -192,14 +180,14 @@ class HttpRequestsTest {
   }
 
   @Test
+  @Suppress("DEPRECATION")
   fun invalidHeader(): Unit = rethrowLoggedErrorsIn {
     assertThatExceptionOfType(AssertionError::class.java)
       .isThrownBy { HttpRequests.request(server.url).tuner { it.setRequestProperty("X-Custom", "c-str\u0000") }.readString(null) }
       .withMessageContaining("value contains NUL bytes")
   }
 
-  @Test
-  fun emptyResponseError() {
+  @Test fun emptyResponseError() {
     server.createContext("/emptyNotFound") { exchange ->
       val bytes = "1".toByteArray(StandardCharsets.UTF_8)
       exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, bytes.size.toLong())
@@ -211,8 +199,7 @@ class HttpRequestsTest {
       .`is`(statusCode(HttpURLConnection.HTTP_NOT_FOUND))
   }
 
-  @Test
-  fun customErrorMessage() {
+  @Test fun customErrorMessage() {
     val message = UUID.randomUUID().toString()
     server.createContext("/") { ex ->
       ex.responseHeaders.add("error-message", message)
