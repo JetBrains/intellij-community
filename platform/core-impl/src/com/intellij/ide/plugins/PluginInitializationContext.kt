@@ -22,6 +22,7 @@ interface PluginInitializationContext {
    */
   val requirePlatformAliasDependencyForLegacyPlugins: Boolean
 
+  // TODO: check if this can be dropped (by merging with essentialPlugins somehow)
   val checkEssentialPlugins: Boolean
 
   /**
