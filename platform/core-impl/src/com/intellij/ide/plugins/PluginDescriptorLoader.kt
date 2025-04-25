@@ -549,7 +549,8 @@ private suspend fun loadAndInitDescriptors(
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
   loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
 
-  if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1) {
+  if (isUnitTestMode && loadingResult.enabledPluginsById.size <= 1 &&
+      java.lang.Boolean.getBoolean("idea.load.bundled.plugins.in.test.revert")) { // TODO: drop this branch if nobody complains
     // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
     loadingResult.initAndAddAll(
       descriptors = toSequence(coroutineScope {
