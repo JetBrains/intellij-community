@@ -1,7 +1,8 @@
-package com.intellij.notebooks.visualization.inlay
+package com.intellij.notebooks.visualization.ui.providers.bounds
 
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.NotebookCellLinesEvent
+import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.*
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.flow.MutableSharedFlow
 import java.beans.PropertyChangeListener
 import javax.swing.SwingUtilities
 
@@ -33,6 +35,8 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
   private var isShouldBeRecalculated = false
 
   private val dispatcher = EventDispatcher.create(JupyterBoundsChangeListener::class.java)
+
+  val eventFlow: MutableSharedFlow<Unit> = MutableSharedFlow()
 
   init {
     editor.addPropertyChangeListener(PropertyChangeListener { _ ->
@@ -125,8 +129,12 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
   }
 
   private fun notifyBoundsChanged() {
-    if (!editor.isDisposed) {
-      dispatcher.multicaster.boundsChanged()
+    if (editor.isDisposed)
+      return
+    dispatcher.multicaster.boundsChanged()
+
+    NotebookVisualizationCoroutine.Utils.launchBackground {
+      eventFlow.emit(Unit)
     }
   }
 

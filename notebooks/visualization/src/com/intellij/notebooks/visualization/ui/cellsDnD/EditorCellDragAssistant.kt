@@ -9,16 +9,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Nls
+import java.awt.KeyEventDispatcher
+import java.awt.KeyboardFocusManager
 import java.awt.Point
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import kotlin.text.lines
-import java.awt.KeyboardFocusManager
-import java.awt.KeyEventDispatcher
-import java.awt.event.KeyEvent
 
 class EditorCellDragAssistant(
   private val editor: EditorImpl,
@@ -181,10 +180,10 @@ class EditorCellDragAssistant(
     wasFolded = false
   }
 
-  private fun deleteDropIndicator() = when(currentlyHighlightedCell) {
+  private fun deleteDropIndicator() = when (currentlyHighlightedCell) {
     is CellDropTarget.TargetCell -> deleteDropIndicatorForTargetCell((currentlyHighlightedCell as CellDropTarget.TargetCell).cell)
     CellDropTarget.BelowLastCell -> removeHighlightAfterLastCell()
-    else -> { }
+    else -> {}
   }
 
   private fun updateDropIndicator(targetCell: CellDropTarget) {
@@ -194,7 +193,7 @@ class EditorCellDragAssistant(
     when (targetCell) {
       is CellDropTarget.TargetCell -> targetCell.cell.view?.addDropHighlightIfApplicable()
       CellDropTarget.BelowLastCell -> addHighlightAfterLastCell()
-      else -> { }
+      else -> {}
     }
   }
 
@@ -204,7 +203,8 @@ class EditorCellDragAssistant(
 
   private fun deleteDropIndicatorForTargetCell(cell: EditorCell) = try {
     cell.view?.removeDropHighlightIfPresent()
-  } catch (e: NullPointerException) {
+  }
+  catch (e: NullPointerException) {
     // cell.view? uses !! to get inlay manager, it may be already disposed - so nothing to delete here anyway
     thisLogger().warn("Error removing drop highlight, NotebookCellInlayManager is already disposed", e)
   }
@@ -230,7 +230,7 @@ class EditorCellDragAssistant(
 
   @Nls
   private fun getPlaceholderText(): String {
-    @NlsSafe val firstNotEmptyString = cellInput.cell.source.get ().lines().firstOrNull { it.trim().isNotEmpty() }
+    @NlsSafe val firstNotEmptyString = cellInput.cell.source.get().lines().firstOrNull { it.trim().isNotEmpty() }
     return StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", MAX_PREVIEW_TEXT_LENGTH, 0)
   }
 

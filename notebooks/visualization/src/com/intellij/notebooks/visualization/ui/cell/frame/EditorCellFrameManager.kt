@@ -1,120 +1,172 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui.cell.frame
 
+import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookMarkdownCellLeftBorderRenderer
-import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.ui.EditorCellView
-import com.intellij.notebooks.visualization.ui.EditorLayerController
+import com.intellij.notebooks.visualization.NotebookCellLines.CellType
+import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
+import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.getLayerController
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.JBColor
+import com.intellij.util.asDisposable
+import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Color
 import java.awt.geom.Line2D
+import java.time.Duration
+import kotlin.time.toKotlinDuration
 
-class EditorCellFrameManager(
-  private val editor: EditorImpl,
-  private val view: EditorCellView,
-  private val cellType: NotebookCellLines.CellType,
-) : Disposable {  // PY-74106
+@OptIn(FlowPreview::class)
+class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable {  // PY-74106
+  private val editor
+    get() = editorCell.editor
+  private val cellType
+    get() = editorCell.interval.type
+  private val view
+    get() = editorCell.view
+
   private var leftBorderHighlighter: RangeHighlighter? = null
   private var rightBorderLine: Line2D? = null
-  private var currentColor: Color = editor.notebookAppearance.cellFrameHoveredColor.get()
 
-  private var isSelected = false
-  private var isHovered = false
+  private val isSelected
+    get() = editorCell.isSelected.get()
+  private val isHovered
+    get() = editorCell.isHovered.get()
 
   val state: AtomicProperty<CellFrameState> = AtomicProperty(CellFrameState())
 
-  init {
-    if (cellType == NotebookCellLines.CellType.CODE) redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
+  private val scope = NotebookVisualizationCoroutine.Utils.scope.childScope("Cell frame manager for ${editorCell.interval}").also {
+    Disposer.register(this, it.asDisposable())
+  }.also {
+    Disposer.register(editorCell, it.asDisposable())
   }
 
-  fun redrawBorders(): Unit = redrawBorders(currentColor)
+  init {
+    editorCell.isSelected.afterDistinctChange(this) {
+      updateCellFrameShow()
+    }
+    editorCell.isHovered.afterDistinctChange(this) {
+      updateCellFrameShow()
+    }
 
-  fun updateCellFrameShow(selected: Boolean, hovered: Boolean) {
-    isSelected = selected
-    isHovered = hovered
+    editorCell.isUnfolded.afterDistinctChange(this) {
+      updateCellFrameShow()
+    }
 
-    when (cellType) {
-      NotebookCellLines.CellType.MARKDOWN -> updateCellFrameShowMarkdown()
-      NotebookCellLines.CellType.CODE -> updateCellFrameShowCode()
-      else -> {}
+    updateCellFrameShow()
+
+    scope.launch {
+      JupyterBoundsChangeHandler.get(editor).eventFlow.debounce(Duration.ofMillis(200).toKotlinDuration()).collect {
+        withContext(Dispatchers.EDT) {
+          drawRightBorder()
+        }
+      }
+    }.cancelOnDispose(this)
+  }
+
+  override fun dispose() {
+    clearFrame()
+  }
+
+  fun calculateLineFrameVerticalLine(): Line2D? {
+    val inlays = view?.input?.getBlockElementsInRange() ?: return null
+    val upperInlayBounds = inlays.firstOrNull {
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && it.properties.isShownAbove
+    }?.bounds ?: return null
+
+    val lowerInlayBounds = inlays.lastOrNull {
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && !it.properties.isShownAbove
+    }?.bounds ?: return null
+
+    val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
+    val lineStartY = (upperInlayBounds.y + upperInlayBounds.height).toDouble()
+    val lineEndY = (lowerInlayBounds.y).toDouble()
+
+    val line2DDouble = Line2D.Double(lineX, lineStartY, lineX, lineEndY)
+    return line2DDouble
+  }
+
+  private fun updateCellFrameShow() {
+    if (cellType == CellType.MARKDOWN) {
+      updateCellFrameShowMarkdown()
+    }
+    else {
+      updateCellFrameShowCode()
     }
   }
 
   private fun updateCellFrameShowMarkdown() {
-    if (view.isUnderDiff) {
+    if (editorCell.isUnderDiff.get()) {
       // under diff, it is necessary to make the selected cell more visible with blue frame for md cells
       updateCellFrameShowCode()
       return
     }
 
     when {
-      isSelected -> redrawBorders(editor.notebookAppearance.cellFrameSelectedColor.get())
-      isHovered -> redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
+      isSelected -> drawFrame(editor.notebookAppearance.cellFrameSelectedColor.get())
+      isHovered -> drawFrame(editor.notebookAppearance.cellFrameHoveredColor.get())
       else -> clearFrame()
     }
   }
 
   private fun updateCellFrameShowCode() {
-    when (isSelected) {
-      true -> redrawBorders(editor.notebookAppearance.cellFrameSelectedColor.get())
-      else -> redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
-    }
+    if (isSelected)
+      drawFrame(editor.notebookAppearance.cellFrameSelectedColor.get())
+    else
+      clearFrame()
   }
 
-  private fun redrawBorders(color: Color) {
-    currentColor = color
-
-    val layerController = editor.getLayerController()
-    state.set(CellFrameState(true, currentColor))
-    view.updateFrameVisibility(true, currentColor)
-
-    redrawLeftBorder()
-    redrawRightBorder(layerController)
+  private fun drawFrame(color: Color) {
+    state.set(CellFrameState(true, color))
+    view?.updateFrameVisibility(true, color)
+    drawLeftBorder()
+    drawRightBorder()
   }
 
-  private fun redrawLeftBorder() {
+  private fun drawLeftBorder() {
     removeLeftBorder()
 
-    val startOffset = editor.document.getLineStartOffset(view.cell.interval.lines.first)
-    val endOffset = editor.document.getLineEndOffset(view.cell.interval.lines.last)
+    val startOffset = editor.document.getLineStartOffset(editorCell.interval.lines.first)
+    val endOffset = editor.document.getLineEndOffset(editorCell.interval.lines.last)
     addLeftBorderHighlighter(startOffset, endOffset)
   }
 
-  private fun redrawRightBorder(layerController: EditorLayerController?) {
-    layerController ?: return
-    removeRightBorder(layerController)
+  private fun drawRightBorder() {
+    removeRightBorder()
 
-    val inlays = view.input.getBlockElementsInRange()
-    val upperInlayBounds = inlays.firstOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && it.properties.isShownAbove
-    }?.bounds ?: return
-
-    val lowerInlayBounds = inlays.lastOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && !it.properties.isShownAbove
-    }?.bounds ?: return
-
-    val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
-    val lineStartY = (upperInlayBounds.y + upperInlayBounds.height).toDouble()
-    val lineEndY = (lowerInlayBounds.y).toDouble()
-
-    rightBorderLine = Line2D.Double(lineX, lineStartY, lineX, lineEndY).also {
-      layerController.addOverlayLine(it, currentColor)
-    }
+    val frameState = state.get()
+    if (!frameState.isVisible)
+      return
+    val color = frameState.color
+    val line2DDouble = calculateLineFrameVerticalLine() ?: return
+    val layerController = editor.getLayerController() ?: return
+    layerController.addOverlayLine(line2DDouble, color)
+    rightBorderLine = line2DDouble
   }
 
+
   private fun clearFrame() {
-    state.set(CellFrameState(false, currentColor))
-    view.updateFrameVisibility(false, currentColor)
+    state.set(CellFrameState(false))
+    view?.updateFrameVisibility(false, JBColor.background())
     removeLeftBorder()
-    removeRightBorder(editor.getLayerController())
+    removeRightBorder()
+    val visibleArea = editor.scrollingModel.visibleArea
+    editor.contentComponent.repaint(visibleArea)
   }
 
   private fun addLeftBorderHighlighter(startOffset: Int, endOffset: Int) {
@@ -127,28 +179,34 @@ class EditorCellFrameManager(
         HighlighterTargetArea.LINES_IN_RANGE,
         false
       ) { o: RangeHighlighterEx ->
-        o.lineMarkerRenderer = NotebookMarkdownCellLeftBorderRenderer(o, color = currentColor)
-        { view.input.component.calculateBounds().let { it.y to it.height } }
+        o.lineMarkerRenderer = NotebookCellLeftBorderRenderer(this)
       }
     }
   }
 
-  private fun removeRightBorder(layerController: EditorLayerController?) {
-    rightBorderLine?.let {
-      layerController?.removeOverlayLine(it)
-      rightBorderLine = null
-    }
+  private fun removeRightBorder() {
+    val line = rightBorderLine ?: return
+    val layerController = editor.getLayerController() ?: return
+    layerController.removeOverlayLine(line)
+    rightBorderLine = null
   }
 
   private fun removeLeftBorder() {
-    leftBorderHighlighter?.let {
-      editor.markupModel.removeHighlighter(it)
-      leftBorderHighlighter = null
-    }
+    val highlighter = leftBorderHighlighter ?: return
+    editor.markupModel.removeHighlighter(highlighter)
+    highlighter.dispose()
+    leftBorderHighlighter = null
   }
 
-  override fun dispose() {
-    removeLeftBorder()
-    removeRightBorder(editor.getLayerController())
+  companion object {
+    fun create(editorCell: EditorCell): EditorCellFrameManager? =
+      if (editorCell.interval.type == CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border") ||
+          Registry.`is`("jupyter.code.cells.border")) {
+        EditorCellFrameManager(editorCell)
+      }
+      else {
+        null
+      }
+
   }
 }

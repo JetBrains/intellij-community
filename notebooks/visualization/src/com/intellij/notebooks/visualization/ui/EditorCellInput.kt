@@ -1,33 +1,26 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
-import com.intellij.notebooks.visualization.ui.jupyterToolbars.EditorCellActionsToolbarManager
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
 class EditorCellInput(
-  private val editor: EditorImpl,
   componentFactory: NotebookCellInlayController.InputFactory,
   val cell: EditorCell,
 ) : EditorCellViewComponent() {
-
+  private val editor = cell.editor
   val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
-  val runCellButton: EditorCellRunGutterButton? =
-    if (shouldShowRunButton()) EditorCellRunGutterButton(editor, cell)
-    else null
 
   val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
 
-  private val dragAssistant = when(Registry.`is`("jupyter.editor.dnd.cells")) {
+  private val dragAssistant = when (Registry.`is`("jupyter.editor.dnd.cells")) {
     true -> EditorCellDragAssistant(editor, this, ::fold, ::unfold).also { Disposer.register(this, it) }
     false -> null
   }
@@ -37,18 +30,8 @@ class EditorCellInput(
       Disposer.register(this, it)
     }
 
-  val cellActionsToolbar: EditorCellActionsToolbarManager? =
-    if (Registry.`is`("jupyter.per.cell.management.actions.toolbar") && editor.isOrdinaryNotebookEditor()) EditorCellActionsToolbarManager(editor, cell)
-    else null
-
   var folded: Boolean = false
     private set
-
-  private fun shouldShowRunButton(): Boolean {
-    return editor.isOrdinaryNotebookEditor() &&
-           editor.notebookAppearance.shouldShowRunButtonInGutter() &&
-           cell.type == NotebookCellLines.CellType.CODE
-  }
 
   private fun getFoldingBounds(): Pair<Int, Int> {
     //For disposed
@@ -80,16 +63,6 @@ class EditorCellInput(
   private fun unfold() = editor.updateManager.update { ctx ->
     folded = false
     (component as? InputComponent)?.updateFolding(ctx, false)
-  }
-
-  override fun dispose() {
-    super.dispose()
-    Disposer.dispose(folding)
-    cellActionsToolbar?.let { Disposer.dispose(it) }
-  }
-
-  fun update() {
-    updateInput()
   }
 
   fun getBlockElementsInRange(): List<Inlay<*>> {

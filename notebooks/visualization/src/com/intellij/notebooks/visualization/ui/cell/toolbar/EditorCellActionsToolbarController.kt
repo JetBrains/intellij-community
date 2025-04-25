@@ -1,64 +1,107 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.notebooks.visualization.ui.jupyterToolbars
+package com.intellij.notebooks.visualization.ui.cell.toolbar
 
+import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
+import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
+import com.intellij.notebooks.visualization.ui.DataProviderComponent
 import com.intellij.notebooks.visualization.ui.EditorCell
-import com.intellij.openapi.Disposable
+import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterCellActionsToolbar
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.intellij.util.asDisposable
+import com.intellij.util.cancelOnDispose
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.debounce
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
+import java.time.Duration
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.time.toKotlinDuration
 
-class EditorCellActionsToolbarManager(
-  private val editor: EditorEx,
+@OptIn(FlowPreview::class)
+internal class EditorCellActionsToolbarController(
   private val cell: EditorCell,
-) : Disposable {
+) : SelfManagedCellController {
+  private val editor = cell.editor
   private var toolbar: JupyterCellActionsToolbar? = null
   private var showToolbarJob: Job? = null
-  private val coroutineScope = NotebookVisualizationCoroutine.Utils.scope.childScope("EditorCellActionsToolbarManager")
+  private val coroutineScope = NotebookVisualizationCoroutine.Utils.scope.childScope("EditorCellActionsToolbarManager").also {
+    Disposer.register(this, it.asDisposable())
+  }
 
-  fun showToolbar(targetComponent: JComponent) {
-    if (toolbar != null) return
+  private val targetComponent: JComponent?
+    get() = (cell.view?.selfManagedControllers?.firstOrNull { it is DataProviderComponent } as? DataProviderComponent)?.retrieveDataProvider()
+
+  init {
+    coroutineScope.launch {
+      JupyterBoundsChangeHandler.get(editor).eventFlow.debounce(Duration.ofMillis(200).toKotlinDuration()).collect {
+        val targetComponent = toolbar?.targetComponent ?: return@collect
+        withContext(Dispatchers.EDT) {
+          updateToolbarPosition(targetComponent)
+        }
+      }
+    }.cancelOnDispose(this)
+
+    cell.isSelected.afterDistinctChange(this) {
+      updateToolbarVisibility()
+    }
+    cell.isHovered.afterDistinctChange(this) {
+      updateToolbarVisibility()
+    }
+    cell.isUnderDiff.afterDistinctChange(this) {
+      updateToolbarVisibility()
+    }
+    updateToolbarVisibility()
+  }
+
+  override fun selfUpdate() {
+    val component = targetComponent ?: return
+    updateToolbarPosition(component)
+  }
+
+  private fun updateToolbarVisibility() {
+    val shouldBeVisible = cell.isUnderDiff.get().not() && (cell.isSelected.get() || cell.isHovered.get())
+    if (shouldBeVisible)
+      showToolbar()
+    else
+      hideToolbar()
+  }
+
+  fun showToolbar() {
+    if (toolbar != null)
+      return
+    val component = targetComponent ?: return
     val actionGroup = getActionGroup(cell.interval.type) ?: return
 
-    toolbar = JupyterCellActionsToolbar(actionGroup, targetComponent)
+    toolbar = JupyterCellActionsToolbar(actionGroup, component)
     showToolbarJob?.cancel()
 
     showToolbarJob = coroutineScope.launch {
       delay(SHOW_TOOLBAR_DELAY_MS)
       withContext(Dispatchers.Main) {
         editor.contentComponent.add(toolbar, 0)
-        updateToolbarPosition(targetComponent)
+        updateToolbarPosition(component)
         refreshUI()
       }
     }
   }
 
-
-  fun updateToolbarPosition() {
-    updateToolbarPosition(toolbar?.targetComponent ?: return)
-  }
-
   private fun updateToolbarPosition(targetComponent: JComponent) {
-    toolbar?.let { tb ->
-      tb.validate()
-      tb.bounds = calculateToolbarBounds(targetComponent, tb)
-    }
+    val toolbar = toolbar ?: return
+
+    toolbar.validate()
+    toolbar.bounds = calculateToolbarBounds(targetComponent, toolbar)
   }
 
   fun hideToolbar() {
@@ -96,7 +139,7 @@ class EditorCellActionsToolbarManager(
     NotebookCellLines.CellType.RAW -> null
   }
 
-  private fun hideDropdownIcon(actionGroupId: String) = (ActionManager.getInstance().getAction(actionGroupId) as ActionGroup)
+  private fun hideDropdownIcon(actionGroupId: String) = ActionManager.getInstance().getAction(actionGroupId)
     .templatePresentation
     .putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 

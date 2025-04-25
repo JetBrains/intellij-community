@@ -25,6 +25,10 @@
                     interface="com.intellij.notebooks.visualization.NotebookCellInlayController$Factory"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelfManagedController"
+                    interface="com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.inputFactory"
                     interface="com.intellij.notebooks.visualization.NotebookCellInlayController$InputFactory"
                     dynamic="true"/>
@@ -83,6 +87,16 @@
                  restartRequired="false"/>
 
     <textEditorCustomizer implementation="com.intellij.notebooks.visualization.ui.NotebookFloatingToolbarCustomizer"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
+    <notebookCellSelfManagedController
+      implementation="com.intellij.notebooks.visualization.ui.cell.background.CodeCellBackgroundControllerFactory"/>
+    <notebookCellSelfManagedController
+      implementation="com.intellij.notebooks.visualization.ui.cell.toolbar.CellToolbarControllerFactory"/>
+    <notebookCellSelfManagedController
+      implementation="com.intellij.notebooks.visualization.ui.cell.runCell.EditorCellRunGutterControllerFactory"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
