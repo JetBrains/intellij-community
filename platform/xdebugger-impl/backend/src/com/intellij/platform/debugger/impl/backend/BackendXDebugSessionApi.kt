@@ -282,7 +282,7 @@ internal suspend fun XDebugSessionImpl.suspendData(): SuspendData? {
   val suspendContext = suspendContext ?: return null
   val suspendScope = currentSuspendCoroutineScope ?: return null
   val suspendContextId = coroutineScope {
-    suspendContext.storeGlobally(suspendScope, this@suspendData)
+    suspendContext.getOrStoreGlobally(suspendScope, this@suspendData)
   }
   val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
   val executionStackDto = suspendContext.activeExecutionStack?.let {

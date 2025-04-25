@@ -208,10 +208,15 @@ class FrontendXDebuggerSession private constructor(
 
   private fun SuspendData.applyToCurrents() {
     val (suspendContextDto, executionStackDto, stackFrameDto) = this
-    val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
-                                                    FrontendXStackFramesStorage())
-    val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
-    suspendContext.getAndUpdate { currentSuspendContext }?.cancel()
+    val oldSuspendContext = suspendContext.value
+    if (oldSuspendContext == null || suspendContextDto.id != oldSuspendContext.id) {
+      val suspendContextLifetimeScope = cs.childScope("${cs.coroutineContext[CoroutineName]} (context ${suspendContextDto.id})",
+                                                      FrontendXStackFramesStorage())
+      val currentSuspendContext = FrontendXSuspendContext(suspendContextDto, project, suspendContextLifetimeScope)
+      suspendContext.getAndUpdate { currentSuspendContext }?.cancel()
+    }
+    val suspendContextLifetimeScope = suspendContext.value?.lifetimeScope ?: return
+
     executionStackDto?.let {
       currentExecutionStack.value = FrontendXExecutionStack(executionStackDto, project, suspendContextLifetimeScope).also {
         suspendContext.value?.activeExecutionStack = it

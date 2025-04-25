@@ -18,7 +18,7 @@ internal class FrontendXSuspendContext(
   private val project: Project,
   internal val lifetimeScope: CoroutineScope,
 ) : XSuspendContext() {
-  private val id = suspendContextDto.id
+  val id = suspendContextDto.id
 
   val isStepping: Boolean
     get() = suspendContextDto.isStepping

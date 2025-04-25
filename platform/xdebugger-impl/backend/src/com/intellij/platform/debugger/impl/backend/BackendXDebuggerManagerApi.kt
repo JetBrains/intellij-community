@@ -19,7 +19,6 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
-import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
@@ -88,7 +87,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
         val data = async {
           val suspendContextId = coroutineScope {
-            suspendContext.storeGlobally(suspendScope, currentSession)
+            suspendContext.getOrStoreGlobally(suspendScope, currentSession)
           }
           val suspendContextDto = XSuspendContextDto(suspendContextId, suspendContext is XSteppingSuspendContext)
           val executionStackDto = suspendContext.activeExecutionStack?.let {
