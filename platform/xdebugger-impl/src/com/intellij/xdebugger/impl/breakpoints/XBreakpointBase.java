@@ -367,11 +367,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     return "XBreakpointBase(type=" + myType + ")";
   }
 
-  // TODO
-  protected @Nullable GutterDraggableObject createBreakpointDraggableObject() {
-    return null;
-  }
-
   protected List<? extends AnAction> getAdditionalPopupMenuActions(XDebugSession session) {
     return getType().getAdditionalPopupMenuActions((Self)this, session);
   }

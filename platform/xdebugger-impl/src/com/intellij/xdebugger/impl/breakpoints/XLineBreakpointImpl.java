@@ -133,12 +133,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myVisualRepresentation.redrawInlineInlays();
   }
 
-  // TODO IJPL-185111
-  @Override
-  protected GutterDraggableObject createBreakpointDraggableObject() {
-    return myVisualRepresentation.createBreakpointDraggableObject();
-  }
-
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside

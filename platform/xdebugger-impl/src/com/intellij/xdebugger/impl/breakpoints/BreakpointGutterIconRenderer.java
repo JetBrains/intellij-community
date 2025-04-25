@@ -80,11 +80,7 @@ final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRende
 
   @Override
   public GutterDraggableObject getDraggableObject() {
-    // TODO IJPL-185111
-    if (myBreakpoint instanceof XBreakpointProxy.Monolith monolithBreakpoint) {
-      return monolithBreakpoint.getBreakpoint().createBreakpointDraggableObject();
-    }
-    return null;
+    return myBreakpoint.createBreakpointDraggableObject();
   }
 
   XBreakpointProxy getBreakpoint() {

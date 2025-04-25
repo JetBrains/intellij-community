@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
@@ -33,6 +34,12 @@ interface XLineBreakpointProxy : XBreakpointProxy {
     override val breakpoint: XLineBreakpointImpl<*> = lineBreakpoint
 
     override val type: XLineBreakpointTypeProxy = lineBreakpoint.type.asProxy(breakpoint.project)
+
+    private val visualRepresentation: XBreakpointVisualRepresentation = XBreakpointVisualRepresentation(lineBreakpoint)
+
+    override fun createBreakpointDraggableObject(): GutterDraggableObject {
+      return visualRepresentation.createBreakpointDraggableObject()
+    }
 
     override fun getFile(): VirtualFile? = breakpoint.file
 

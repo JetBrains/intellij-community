@@ -28,16 +28,17 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
-import java.io.Serializable;
 import java.util.concurrent.ExecutorService;
 
-class XBreakpointVisualRepresentation {
+@ApiStatus.Internal
+public class XBreakpointVisualRepresentation {
   private static final Logger LOG = Logger.getInstance(XBreakpointVisualRepresentation.class);
   private final XLineBreakpointImpl<?> myBreakpoint;
   static final ExecutorService redrawInlaysExecutor =
@@ -209,7 +210,7 @@ class XBreakpointVisualRepresentation {
       });
   }
 
-  protected GutterDraggableObject createBreakpointDraggableObject() {
+  protected @NotNull GutterDraggableObject createBreakpointDraggableObject() {
     return new GutterDraggableObject() {
       @Override
       public boolean copy(int line, VirtualFile file, int actionId) {

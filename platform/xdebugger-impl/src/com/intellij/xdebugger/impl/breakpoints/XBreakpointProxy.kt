@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
@@ -80,6 +81,8 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun dispose()
 
+  fun createBreakpointDraggableObject(): GutterDraggableObject?
+
   open class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(breakpointBase: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     open val breakpoint: XBreakpointBase<*, *, *> = breakpointBase
 
@@ -88,6 +91,10 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpointBase.project, breakpointBase.getType())
 
     override val project: Project = breakpointBase.project
+
+    override fun createBreakpointDraggableObject(): GutterDraggableObject? {
+      return null
+    }
 
     override fun getDisplayText(): String = XBreakpointUtil.getShortText(breakpoint)
     override fun getShortText(): @NlsSafe String = XBreakpointUtil.getShortText(breakpoint)
