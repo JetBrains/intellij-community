@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -47,6 +48,9 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     @ApiStatus.Internal
     var terminalEngine: TerminalEngine = TerminalEngine.CLASSIC
 
+    @ApiStatus.Internal
+    var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
+
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
@@ -80,13 +84,25 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
+  /**
+   * We use different default values for the terminal engine in monolith and RemDev mode.
+   * So, the getter returns the state depending on that.
+   * But the setter applies the provided value to both monolith and RemDev modes.
+   * So, when a user changes the default in any mode, it will be applied everywhere.
+   */
   @get:ApiStatus.Internal
   @set:ApiStatus.Internal
   var terminalEngine: TerminalEngine
-    get() = state.terminalEngine
+    get() {
+      return if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
+        state.terminalEngineInRemDev
+      }
+      else state.terminalEngine
+    }
     set(value) {
-      if (state.terminalEngine != value) {
+      if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
         state.terminalEngine = value
+        state.terminalEngineInRemDev = value
         fireSettingsChanged()
       }
     }
