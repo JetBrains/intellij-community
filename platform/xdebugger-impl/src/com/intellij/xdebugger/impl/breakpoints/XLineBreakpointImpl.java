@@ -43,15 +43,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     myType = type;
   }
 
-  // TODO IJPL-185111
+  // TODO IJPL-185111 migrate to backend -> frontend rpc flow notification
   public void updateUI() {
     myVisualRepresentation.updateUI();
-  }
-
-  // TODO IJPL-185111
-  @RequiresBackgroundThread
-  void doUpdateUI(@NotNull Runnable callOnUpdate) {
-    myVisualRepresentation.doUpdateUI(callOnUpdate);
   }
 
   public @Nullable VirtualFile getFile() {

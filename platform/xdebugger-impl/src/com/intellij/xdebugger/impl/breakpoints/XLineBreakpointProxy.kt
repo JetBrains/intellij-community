@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,6 +26,9 @@ interface XLineBreakpointProxy : XBreakpointProxy {
   fun getHighlightRange(): TextRange?
   fun getHighlighter(): RangeHighlighter?
   fun createGutterIconRenderer(): GutterIconRenderer?
+
+  @RequiresBackgroundThread
+  fun doUpdateUI(callOnUpdate: () -> Unit = {})
 
 
   @Suppress("DEPRECATION")
@@ -73,6 +77,10 @@ interface XLineBreakpointProxy : XBreakpointProxy {
 
     override fun createGutterIconRenderer(): GutterIconRenderer? {
       return breakpoint.createGutterIconRenderer()
+    }
+
+    override fun doUpdateUI(callOnUpdate: () -> Unit) {
+      visualRepresentation.doUpdateUI(callOnUpdate)
     }
 
     override fun isTemporary(): Boolean = breakpoint.isTemporary

@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
@@ -80,7 +81,16 @@ internal class FrontendXLineBreakpointProxy(
     return null
   }
 
+  override fun doUpdateUI(callOnUpdate: () -> Unit) {
+    // TODO IJPL-185111 implement do update UI through XBreakpointVisualRepresentation
+  }
+
   private fun updateLineBreakpointState(update: (XLineBreakpointInfo) -> XLineBreakpointInfo) {
     _state.update { it.copy(lineBreakpointInfo = update(it.lineBreakpointInfo!!)) }
+  }
+
+  override fun createBreakpointDraggableObject(): GutterDraggableObject? {
+    // TODO IJPL-185111 implement createBreakpointDraggableObject
+    return null
   }
 }

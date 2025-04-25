@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
@@ -266,6 +267,10 @@ internal open class FrontendXBreakpointProxy(
 
   override fun dispose() {
     cs.cancel()
+  }
+
+  override fun createBreakpointDraggableObject(): GutterDraggableObject? {
+    return null
   }
 
   override fun compareTo(other: XBreakpointProxy): Int {
