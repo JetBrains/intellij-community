@@ -748,32 +748,20 @@ object PluginManagerCore {
     return result
   }
 
+  private val thirdPartyPluginsFilePath: Path get() = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
+
   @ApiStatus.Internal
   @JvmStatic
   fun writeThirdPartyPluginsIds(pluginIds: Collection<PluginId>) {
-    val path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
     try {
-      writePluginIdsToFile(path, pluginIds.asSequence(), openOptions = arrayOf(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
+      writePluginIdsToFile(thirdPartyPluginsFilePath, pluginIds.asSequence(), openOptions = arrayOf(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
     }
     catch (e: IOException) {
-      logger.error(path.toString(), e)
+      logger.error(thirdPartyPluginsFilePath.toString(), e)
     }
   }
 
-  private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> {
-    val path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
-    try {
-      val ids = PluginIdsFile.read(path)
-      if (!ids.isEmpty()) {
-        Files.delete(path)
-      }
-      return ids
-    }
-    catch (e: IOException) {
-      logger.error(path.toString(), e)
-      return emptySet()
-    }
-  }
+  private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginIdsFile.consumeSafe(thirdPartyPluginsFilePath, logger)
 
   @ApiStatus.Internal
   fun tryWritePluginIdsToFile(path: Path, pluginIds: Set<PluginId>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean =

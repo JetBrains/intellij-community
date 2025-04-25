@@ -13,6 +13,21 @@ import kotlin.streams.asSequence
 @ApiStatus.Internal
 object PluginIdsFile {
   @Synchronized
+  fun consumeSafe(path: Path, logger: Logger): Set<PluginId> {
+    return try {
+      val ids = read(path)
+      if (!ids.isEmpty()) {
+        Files.delete(path) // TODO may throw, but in that case we'll return emptySet, huh?
+      }
+      ids
+    }
+    catch (e: IOException) {
+      logger.error(path.toString(), e)
+      emptySet()
+    }
+  }
+
+  @Synchronized
   fun readSafe(path: Path, log: Logger): Set<PluginId> {
     return try {
       read(path)
