@@ -30,7 +30,7 @@ class PluginUiModelAdapter(
   override val isIncompatibleWithCurrentOs: Boolean
     get() {
       if ("com.jetbrains.kmm" != pluginId.idString || SystemInfoRt.isMac) return true
-      return getUnfulfilledOsRequirement(pluginDescriptor) == null
+      return getUnfulfilledOsRequirement(pluginDescriptor) != null
     }
   override val canBeEnabled: Boolean
     get() = PluginManagementPolicy.getInstance().canEnablePlugin(pluginDescriptor)
@@ -56,6 +56,8 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
   override val suggestedCommercialIde: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedCommercialIde else null
+  override val suggestedFeatures: Collection<String>
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedFeatures else emptyList()
 
   override val vendor: String?
     get() = pluginDescriptor.vendor
@@ -79,6 +81,8 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
   override val externalPluginIdForScreenShots: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginIdForScreenShots else null
+  override val date: Long
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.date else Long.MAX_VALUE
 
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null

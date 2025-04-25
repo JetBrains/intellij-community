@@ -673,8 +673,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
-      if (panel.isShowingPlugin(descriptor)) {
-        panel.setPlugin(installedDescriptor);
+      if (panel.isShowingPlugin(descriptor.getPluginId())) {
+        panel.setPlugin(installedDescriptor != null ? new PluginUiModelAdapter(installedDescriptor) : null);
         panel.hideProgress(success, restartRequired);
       }
     }

@@ -249,14 +249,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       this.plugin = PluginUiModelAdapter(pluginDescriptor)
     }
   }
-  
+
   fun setPlugin(model: PluginUiModel?) {
     this.plugin = model
   }
 
-  fun isShowingPlugin(pluginDescriptor: IdeaPluginDescriptor): Boolean = plugin?.pluginId == pluginDescriptor.pluginId
-  
-  fun isShowingPlugin(model: PluginUiModel): Boolean = plugin?.pluginId == model.pluginId
+  fun isShowingPlugin(pluginId: PluginId): Boolean = plugin?.pluginId == pluginId
 
   override fun create(key: Int): JComponent {
     if (key == 0) {
@@ -765,10 +763,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   fun showPluginImpl(pluginUiModel: PluginUiModel, updateDescriptor: PluginUiModel?) {
     plugin = pluginUiModel
-    val policy = PluginManagementPolicy.getInstance()
-    this.updateDescriptor = if (updateDescriptor != null && policy.canEnablePlugin(updateDescriptor.getDescriptor())) updateDescriptor else null
+    this.updateDescriptor = if (updateDescriptor != null && updateDescriptor.canBeEnabled) updateDescriptor else null
     isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
-    isPluginAvailable = isPluginCompatible && policy.canEnablePlugin(updateDescriptor?.getDescriptor())
+    isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
       installedDescriptorForMarketplace = pluginModel.findPlugin(plugin!!)
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton else updateButton)!!)
@@ -857,10 +854,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     tagPanel!!.setTags(plugin.calculateTags())
 
-    val descriptor = plugin.getDescriptor()
     if (isMarketplace) {
       showMarketplaceData(plugin)
-      updateMarketplaceTabsVisible(show = descriptor is PluginNode && !descriptor.isConverted)
+      updateMarketplaceTabsVisible(show = plugin.isFromMarketplace && !plugin.isConverted)
     }
     else {
       val node = installedPluginMarketplaceNode
@@ -896,7 +892,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val homepage = getPluginHomepage(plugin.pluginId)
 
-    if (plugin.isBundled && !descriptor.allowBundledUpdate() || !isPluginFromMarketplace || homepage == null) {
+    if (plugin.isBundled && !plugin.allowBundledUpdate || !isPluginFromMarketplace || homepage == null) {
       homePage!!.hide()
     }
     else {
@@ -907,15 +903,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     if (date != null) {
-      val date = if (descriptorForActions is PluginNode) descriptorForActions.presentableDate else null
+      val date = if (descriptorForActions.isFromMarketplace) descriptorForActions.presentableDate() else null
       this.date!!.text = IdeBundle.message("plugins.configurable.release.date.0", date)
       this.date!!.isVisible = date != null
     }
 
     if (suggestedFeatures != null) {
       var feature: String? = null
-      if (isMarketplace && descriptor is PluginNode) {
-        feature = descriptor.suggestedFeatures.firstOrNull()
+      if (isMarketplace && plugin.isFromMarketplace) {
+        feature = plugin.suggestedFeatures.firstOrNull()
       }
       suggestedFeatures!!.setSuggestedText(feature)
     }
@@ -955,7 +951,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                                       }
                                                     }, ModalityState.any())
 
-    if (MyPluginModel.isInstallingOrUpdate(plugin.getDescriptor())) {
+    if (pluginModel.isPluginInstallingOrUpdating(plugin)) {
       showProgress()
     }
     else {
@@ -969,7 +965,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     var size: String? = null
     var requiredPluginNames: Collection<String> = emptyList()
 
-    if (model?.getDescriptor() is PluginNode) {
+    if (model?.isFromMarketplace == true) {
       rating = model.presentableRating()
       downloads = model.presentableDownloads()
       size = model.presentableSize()
@@ -1189,8 +1185,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         myEnableDisableButton!!.isVisible = false
       }
       else {
-        val state = getDeletedState(
-          installedDescriptorForMarketplace!!.getDescriptor())
+        val state = getDeletedState(installedDescriptorForMarketplace!!)
         val uninstalled = state[0]
         val uninstalledWithoutRestart = state[1]
 
@@ -1220,7 +1215,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     else {
       installButton!!.isVisible = false
 
-      val state = getDeletedState(plugin!!.getDescriptor())
+      val state = getDeletedState(plugin!!)
       val uninstalled = state[0]
       val uninstalledWithoutRestart = state[1]
 
@@ -1425,11 +1420,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun getDescription(): @Nls String? {
     return installedPluginMarketplaceNode?.description?.takeIf { it.isNotBlank() }
-           ?: plugin?.getDescriptor()?.description?.takeIf { it.isNotBlank() }
+           ?: plugin?.description?.takeIf { it.isNotBlank() }
   }
 
   private fun getChangeNotes(): @NlsSafe String? {
-    return plugin?.getDescriptor()?.changeNotes?.takeIf { it.isNotBlank() }
+    return plugin?.changeNotes?.takeIf { it.isNotBlank() }
            ?: installedPluginMarketplaceNode?.changeNotes?.takeIf { it.isNotBlank() }
   }
 
@@ -1494,9 +1489,9 @@ private fun updateUrlComponent(panel: LinkPanel?, messageKey: String, url: Strin
   }
 }
 
-private fun getDeletedState(descriptor: IdeaPluginDescriptor): BooleanArray {
-  val pluginId = descriptor.pluginId
-  var uninstalled = NewUiUtil.isDeleted(descriptor)
+private fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray {
+  val pluginId = pluginUiModel.pluginId
+  var uninstalled = pluginUiModel.isDeleted
   val uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)
   if (!uninstalled) {
     val pluginsState = InstalledPluginsState.getInstance()
