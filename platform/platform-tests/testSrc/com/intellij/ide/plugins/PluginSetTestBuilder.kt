@@ -40,7 +40,7 @@ class PluginSetTestBuilder(private val path: Path) {
   fun buildInitContext(): PluginInitializationContext {
     // copy just in case
     val buildNumber = productBuildNumber
-    return PluginInitializationContext.build(
+    return PluginInitializationContext.buildForTest(
       essentialPlugins = emptySet(),
       disabledPlugins = disabledPluginIds.toSet(),
       expiredPlugins = expiredPluginIds.toSet(),

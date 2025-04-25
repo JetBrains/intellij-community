@@ -153,7 +153,7 @@ internal class ClassLoaderConfiguratorTest {
 internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val buildNumber = BuildNumber.fromString("2042.0")!!
   val result = PluginLoadingResult()
-  val initContext = PluginInitializationContext.build(
+  val initContext = PluginInitializationContext.buildForTest(
     essentialPlugins = emptySet(),
     disabledPlugins = emptySet(),
     expiredPlugins = emptySet(),

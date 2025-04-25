@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 interface PluginInitializationContext {
@@ -39,7 +40,8 @@ interface PluginInitializationContext {
 
   @ApiStatus.Internal
   companion object {
-    fun build(
+    @TestOnly
+    fun buildForTest(
       essentialPlugins: Set<PluginId>,
       disabledPlugins: Set<PluginId>,
       expiredPlugins: Set<PluginId>,
