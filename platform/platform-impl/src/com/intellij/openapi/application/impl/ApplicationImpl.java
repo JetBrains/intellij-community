@@ -373,6 +373,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void dispose() {
     getThreadingSupport().removeReadActionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteActionListener(myLockDispatcherListener);
+    getThreadingSupport().removeWriteIntentReadActionListener(myLockDispatcherListener);
     getThreadingSupport().removeLockAcquisitionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteLockReacquisitionListener(myLockDispatcherListener);
     getThreadingSupport().removeLegacyIndicatorProvider(myLegacyIndicatorProvider);

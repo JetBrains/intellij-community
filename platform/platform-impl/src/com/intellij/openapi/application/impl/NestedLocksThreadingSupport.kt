@@ -802,6 +802,12 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     myWriteIntentActionListener = listener
   }
 
+  override fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener) {
+    if (myWriteIntentActionListener != listener)
+      error("WriteIntentReadActionListener is not registered")
+    myWriteIntentActionListener = null
+  }
+
   @ApiStatus.Internal
   override fun removeWriteActionListener(listener: WriteActionListener) {
     if (myWriteActionListener != listener)

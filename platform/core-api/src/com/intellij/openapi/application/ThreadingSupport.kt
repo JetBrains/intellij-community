@@ -113,6 +113,15 @@ interface ThreadingSupport {
   fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
 
   /**
+   * Removes a [WriteIntentReadActionListener].
+   *
+   * It is an error to remove the listener which was not set early.
+   *
+   * @param listener the listener to remove
+   */
+  fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+
+  /**
    * Removes a [WriteActionListener].
    *
    * It is error to remove listener which was not set early.
