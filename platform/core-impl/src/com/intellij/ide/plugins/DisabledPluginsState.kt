@@ -166,7 +166,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     @TestOnly
     @Throws(IOException::class)
     fun saveDisabledPluginsAndInvalidate(configPath: Path, pluginIds: List<String> = emptyList()) {
-      PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds)
+      PluginIdsFile.write(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds.toSet())
       invalidate()
     }
 

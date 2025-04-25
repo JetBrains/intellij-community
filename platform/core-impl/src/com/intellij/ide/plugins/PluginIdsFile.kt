@@ -3,15 +3,26 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
+import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.util.*
 import kotlin.streams.asSequence
 
 @ApiStatus.Internal
 object PluginIdsFile {
+  @Synchronized
+  @Throws(IOException::class)
+  fun write(path: Path, pluginIds: Set<String>, openOptions: Array<OpenOption>? = null) {
+    NioFiles.createDirectories(path.parent)
+    // TODO: TreeSet demands comparable, probably we can drop Comparable on PluginId if we drop this usage
+    Files.write(path, TreeSet(pluginIds), *(openOptions ?: emptyArray()))
+  }
+
   @Synchronized
   fun consumeSafe(path: Path, logger: Logger): Set<PluginId> {
     return try {

@@ -777,15 +777,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @Throws(IOException::class)
   fun writePluginIdsToFile(path: Path, pluginIds: Sequence<PluginId>, openOptions: Array<OpenOption>? = null) {
-    writePluginIdsToFile(path, pluginIds.map { it.idString }.toList(), openOptions)
-  }
-
-  @VisibleForTesting
-  @Synchronized
-  @Throws(IOException::class)
-  fun writePluginIdsToFile(path: Path, pluginIds: Collection<String>, openOptions: Array<OpenOption>? = null) {
-    NioFiles.createDirectories(path.parent)
-    Files.write(path, TreeSet(pluginIds), *(openOptions ?: emptyArray()))
+    PluginIdsFile.write(path, pluginIds.map { it.idString }.toSet(), openOptions)
   }
 
   @VisibleForTesting
