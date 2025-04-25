@@ -1,29 +1,29 @@
 
 import sys
 
-backends = {'tk': 'TkAgg',
-            'gtk': 'GTKAgg',
-            'wx': 'WXAgg',
-            'qt': 'Qt4Agg', # qt3 not supported
-            'qt4': 'Qt4Agg',
-            'qt5': 'Qt5Agg',
-            'qt6': 'Qt6Agg',
-            'osx': 'MacOSX'}
+backends = {'tk': 'tkagg',
+            'gtk': 'gtkagg',
+            'wx': 'wxagg',
+            'qt': 'qt4agg', # qt3 not supported
+            'qt4': 'qt4agg',
+            'qt5': 'qt5agg',
+            'qt6': 'qt6agg',
+            'osx': 'macosx'}
 
 # We also need a reverse backends2guis mapping that will properly choose which
 # GUI support to activate based on the desired matplotlib backend.  For the
 # most part it's just a reverse of the above dict, but we also need to add a
 # few others that map to the same GUI manually:
 backend2gui = dict(zip(backends.values(), backends.keys()))
-backend2gui['Qt4Agg'] = 'qt4'
-backend2gui['Qt5Agg'] = 'qt5'
-backend2gui['Qt6Agg'] = 'qt6'
+backend2gui['qt4agg'] = 'qt4'
+backend2gui['qt5agg'] = 'qt5'
+backend2gui['qt6agg'] = 'qt6'
 # In the reverse mapping, there are a few extra valid matplotlib backends that
 # map to the same GUI support
-backend2gui['GTK'] = backend2gui['GTKCairo'] = 'gtk'
-backend2gui['WX'] = 'wx'
-backend2gui['CocoaAgg'] = 'osx'
-backend2gui['QtAgg'] = 'qt'
+backend2gui['gtk'] = backend2gui['gtkcairo'] = 'gtk'
+backend2gui['wx'] = 'wx'
+backend2gui['cocoaagg'] = 'osx'
+backend2gui['qtagg'] = 'qt'
 
 def do_enable_gui(guiname):
     from _pydev_bundle.pydev_versioncheck import versionok_for_gui
@@ -47,6 +47,9 @@ def find_gui_and_backend():
     matplotlib = sys.modules['matplotlib']
     # WARNING: this assumes matplotlib 1.1 or newer!!
     backend = matplotlib.rcParams['backend']
+    if backend:
+        backend = backend.lower()
+
     # In this case, we need to find what the appropriate gui selection call
     # should be for IPython, so we can activate inputhook accordingly
     gui = backend2gui.get(backend, None)
@@ -65,20 +68,19 @@ def is_interactive_backend(backend):
     if installed_version >= required_version:
         interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.INTERACTIVE)
         non_interactive_bk = matplotlib.backends.backend_registry.list_builtin(matplotlib.backends.BackendFilter.NON_INTERACTIVE)
-        if backend in interactive_bk:
-            return True
-        elif backend in non_interactive_bk:
-            return False
-        else:
-            return matplotlib.is_interactive()
     else:
         from matplotlib.rcsetup import interactive_bk, non_interactive_bk  # @UnresolvedImport
-        if backend in interactive_bk:
-            return True
-        elif backend in non_interactive_bk:
-            return False
-        else:
-            return matplotlib.is_interactive()
+
+        # Convert mixed-case back-end names (TkAgg, ...) to lowercase
+        interactive_bk = [bk.lower() for bk in interactive_bk]
+        non_interactive_bk = [bk.lower() for bk in non_interactive_bk]
+
+    if backend in interactive_bk:
+        return True
+    elif backend in non_interactive_bk:
+        return False
+
+    return matplotlib.is_interactive()
 
 
 def patch_use(enable_gui_function):
