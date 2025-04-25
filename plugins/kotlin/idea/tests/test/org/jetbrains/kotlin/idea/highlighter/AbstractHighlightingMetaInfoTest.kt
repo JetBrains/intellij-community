@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
 import org.jetbrains.kotlin.idea.test.kmp.KMPTest
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import java.io.File
@@ -36,7 +37,11 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
             }
         }
 
-        runInEdtAndWait { checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project) }
+        runInEdtAndWait {
+            withCustomCompilerOptionsIfNotSetUpManually(psiFile.text) {
+                checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)
+            }
+        }
     }
 
     protected fun File.getExpectedHighlightingFile(suffix: String = highlightingFileNameSuffix(this)): File {
@@ -44,4 +49,16 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
     }
 
     protected open fun highlightingFileNameSuffix(ktFilePath: File): String = HIGHLIGHTING_EXTENSION
+
+    protected open val isManualCompilerOptionsSetup: Boolean = false
+
+    private fun withCustomCompilerOptionsIfNotSetUpManually(fileText: String, block: () -> Unit) {
+        if (!isManualCompilerOptionsSetup) {
+            withCustomCompilerOptions(fileText, project, module) {
+                block()
+            }
+        } else {
+            block()
+        }
+    }
 }

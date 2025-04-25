@@ -318,6 +318,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
         }
 
+        @TestMetadata("AnnotationsUseSiteTargetAll.kt")
+        public void testAnnotationsUseSiteTargetAll() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/AnnotationsUseSiteTargetAll.kt");
+        }
+
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");

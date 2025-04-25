@@ -318,6 +318,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
         }
 
+        @TestMetadata("AnnotationsUseSiteTargetAll.kt")
+        public void testAnnotationsUseSiteTargetAll() throws Exception {
+            runTest("testData/highlighterMetaInfo/AnnotationsUseSiteTargetAll.kt");
+        }
+
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("testData/highlighterMetaInfo/AutoCreatedItParameter.kt");

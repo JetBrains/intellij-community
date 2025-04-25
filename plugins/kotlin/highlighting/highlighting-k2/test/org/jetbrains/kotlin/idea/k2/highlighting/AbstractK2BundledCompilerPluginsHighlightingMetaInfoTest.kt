@@ -63,6 +63,9 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
         )
     }
 
+    override val isManualCompilerOptionsSetup: Boolean
+        get() = true
+
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val file = files.first() as KtFile
 
