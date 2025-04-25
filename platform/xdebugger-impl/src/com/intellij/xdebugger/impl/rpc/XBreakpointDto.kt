@@ -59,10 +59,16 @@ data class XBreakpointDtoState(
   val isLogExpressionEnabled: Boolean,
   val logExpression: String?,
   val logExpressionObjectInt: XExpressionDto?,
-  val isTemporary: Boolean,
   val timestamp: Long,
   val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
   val customPresentation: XBreakpointCustomPresentationDto?,
+  val lineBreakpointInfo: XLineBreakpointInfo?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointInfo(
+  val isTemporary: Boolean,
 )
 
 @ApiStatus.Internal
@@ -154,10 +160,14 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       isLogExpressionEnabled = isLogExpressionEnabled,
       logExpression = logExpression,
       logExpressionObjectInt = logExpressionObjectInt?.toRpc(),
-      isTemporary = (breakpoint as? XLineBreakpoint<*>)?.isTemporary ?: false,
       timestamp = timeStamp,
       currentSessionCustomPresentation = (XDebuggerManager.getInstance(project).currentSession as? XDebugSessionImpl)?.getBreakpointPresentation(breakpoint)?.toRpc(),
-      customPresentation = breakpoint.customizedPresentation?.toRpc()
+      customPresentation = breakpoint.customizedPresentation?.toRpc(),
+      lineBreakpointInfo = (breakpoint as? XLineBreakpoint<*>)?.getInfo()
     )
   }
+}
+
+private fun XLineBreakpoint<*>.getInfo(): XLineBreakpointInfo {
+  return XLineBreakpointInfo(isTemporary)
 }

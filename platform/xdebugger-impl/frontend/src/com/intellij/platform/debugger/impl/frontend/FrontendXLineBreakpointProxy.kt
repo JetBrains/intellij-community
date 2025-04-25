@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
+import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,11 +26,11 @@ internal class FrontendXLineBreakpointProxy(
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
 
   override fun isTemporary(): Boolean {
-    return _state.value.isTemporary
+    return _state.value.lineBreakpointInfo!!.isTemporary
   }
 
   override fun setTemporary(isTemporary: Boolean) {
-    _state.update { it.copy(isTemporary = isTemporary) }
+    updateLineBreakpointState { it.copy(isTemporary = isTemporary) }
     onBreakpointChange()
     project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
       XBreakpointApi.getInstance().setTemporary(id, isTemporary)
@@ -77,5 +78,9 @@ internal class FrontendXLineBreakpointProxy(
   override fun createGutterIconRenderer(): GutterIconRenderer? {
     // TODO IJPL-185111 implement create gutter icon renderer
     return null
+  }
+
+  private fun updateLineBreakpointState(update: (XLineBreakpointInfo) -> XLineBreakpointInfo) {
+    _state.update { it.copy(lineBreakpointInfo = update(it.lineBreakpointInfo!!)) }
   }
 }
