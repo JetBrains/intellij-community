@@ -49,7 +49,7 @@ elements:
               different. For example, if `com.example` is set for the main plugin descriptor, `com.example` cannot be used for any
               module dependency.
             internalNote: &plugin_model_v2_internal_note |
-              This item is part of the [_Plugin Model v2_](https://youtrack.jetbrains.com/articles/IJPL-A-1037){internal},
+              This item is part of the [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal},
               which is not recommended to be used in third-party plugins in the current state.
         - attribute:
             name: dependent-on-core
