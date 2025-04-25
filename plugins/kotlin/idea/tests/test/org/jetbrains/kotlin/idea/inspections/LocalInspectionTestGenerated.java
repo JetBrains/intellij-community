@@ -10990,6 +10990,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantObjectTypeCheck/isClassWhenEntry.kt");
         }
 
+        @TestMetadata("isDataObject.kt")
+        public void testIsDataObject() throws Exception {
+            runTest("testData/inspectionsLocal/redundantObjectTypeCheck/isDataObject.kt");
+        }
+
+        @TestMetadata("isNotDataObject.kt")
+        public void testIsNotDataObject() throws Exception {
+            runTest("testData/inspectionsLocal/redundantObjectTypeCheck/isNotDataObject.kt");
+        }
+
         @TestMetadata("isNotObject.kt")
         public void testIsNotObject() throws Exception {
             runTest("testData/inspectionsLocal/redundantObjectTypeCheck/isNotObject.kt");

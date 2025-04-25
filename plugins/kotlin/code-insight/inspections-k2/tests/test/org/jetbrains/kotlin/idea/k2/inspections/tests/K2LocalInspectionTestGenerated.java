@@ -15201,6 +15201,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isClassWhenEntry.kt");
         }
 
+        @TestMetadata("isDataObject.kt")
+        public void testIsDataObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isDataObject.kt");
+        }
+
+        @TestMetadata("isNotDataObject.kt")
+        public void testIsNotDataObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isNotDataObject.kt");
+        }
+
         @TestMetadata("isNotObject.kt")
         public void testIsNotObject() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantObjectTypeCheck/isNotObject.kt");
