@@ -1,6 +1,6 @@
 package com.intellij.driver.sdk.ui.components.common.toolwindows
 
-import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -8,8 +8,6 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.tree
-import com.intellij.driver.sdk.ui.rdTarget
-import com.intellij.driver.sdk.wait
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import kotlin.time.Duration.Companion.seconds
@@ -35,15 +33,17 @@ class StructureToolWindowUi(data: ComponentData) : UiComponent(data) {
   }
   fun waitExpandedAndGetStructureTree(message: String? =  null, expandPath: List<String>? = null, waitForText: ((UiText) -> Boolean)? = null): JTreeUiComponent {
     val structureTree = structureTree.waitFound(10.seconds)
-    expandPath?.toTypedArray()?.let {
-      structureTree.expandPath(*it)
+    step("Expand path: $expandPath") {
+      expandPath?.toTypedArray()?.let {
+        structureTree.expandPath(*it, fullMatch = false)
+      }
     }
     waitForText?.let { structureTree.waitAnyTexts(message = message, timeout = 10.seconds, predicate = it) }
     return structureTree
   }
 
   private val structureTree
-    get() = tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
+    get() = tree()
 
   private val header
     get() = x(".//div[@class='BaseLabel' and @accessiblename='Structure']")
