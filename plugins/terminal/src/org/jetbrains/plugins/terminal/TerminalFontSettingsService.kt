@@ -218,12 +218,23 @@ private data class TerminalSettingsFloatValueImpl(
 
   private val multiplier: Float = multiplier(digits)
 
+  private val actualDigits: Int
+    get() {
+      var actualDigits = digits
+      var value = rawIntValue
+      while (actualDigits > 1 && value % 10 == 0) {
+        --actualDigits
+        value /= 10
+      }
+      return actualDigits
+    }
+
   fun coerceIn(range: ClosedFloatingPointRange<Float>): TerminalSettingsFloatValueImpl =
     ofFloat(toFloat().coerceIn(range), digits)
 
   fun toFloat(): Float = rawIntValue.toFloat() / multiplier
 
-  fun toFormattedString(): String = String.format(Locale.ROOT, "%.${digits}f", toFloat())
+  fun toFormattedString(): String = String.format(Locale.ROOT, "%.${actualDigits}f", toFloat())
 }
 
 @ApiStatus.Internal
