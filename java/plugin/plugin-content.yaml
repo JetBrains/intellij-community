@@ -78,6 +78,8 @@
   - name: intellij.java.performancePlugin
   - name: intellij.java.terminal
   - name: intellij.java.debugger.impl.backend
+  - name: intellij.debugger.collections.visualizer.jvm
+  - name: intellij.jvm.dfa.analysis.ui
 - name: lib/javac2.jar
   modules:
   - name: intellij.java.compiler.antTasks
@@ -157,6 +159,13 @@
 - name: lib/modules/intellij.jvm.analysis.impl.jar
   contentModules:
   - name: intellij.jvm.analysis.impl
+- name: lib/modules/intellij.profiler.ultimate.jar
+  contentModules:
+  - name: intellij.profiler.ultimate
+    libraries:
+      jmc-flightrecorder:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jmc-flightrecorder/8/jmc-flightrecorder-8.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jmc-common/8/jmc-common-8.jar
 - name: lib/netty-codec-protobuf.jar
   library: netty-codec-protobuf
   files:

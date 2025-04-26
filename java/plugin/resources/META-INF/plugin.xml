@@ -2,8 +2,9 @@
   <id>com.intellij.java</id>
   <name>Java</name>
   <description><![CDATA[
-  Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
-]]></description>
+    Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
+  ]]></description>
+
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
@@ -48,6 +49,10 @@
     <module name="intellij.java.syntax" loading="embedded"/>
     <module name="intellij.java.psi.impl" loading="embedded"/>
     <module name="intellij.java.psi" loading="embedded"/>
+
+    <module name="intellij.debugger.collections.visualizer.jvm"/>
+    <module name="intellij.profiler.ultimate"/>
+    <module name="intellij.jvm.dfa.analysis.ui"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
