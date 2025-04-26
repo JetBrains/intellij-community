@@ -15,7 +15,7 @@ def create_image(matplotlib_figure):
             bytes_data = bytes_buffer.getvalue()
             image_id = str(uuid.uuid4())
             IMAGE_DATA_STORAGE[image_id] = bytes_data
-            return "{}".format(image_id)
+            return "{};{}".format(image_id, len(bytes_data))
         finally:
             bytes_buffer.close()
     except Exception as e:
