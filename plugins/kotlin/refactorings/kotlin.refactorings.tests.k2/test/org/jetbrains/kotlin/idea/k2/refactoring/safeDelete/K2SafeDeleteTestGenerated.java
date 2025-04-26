@@ -1026,6 +1026,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunction.kt");
         }
 
+        @TestMetadata("unusedContextParametersInFunctionMultipleParameters.kt")
+        public void testUnusedContextParametersInFunctionMultipleParameters() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters.kt");
+        }
+
+        @TestMetadata("unusedContextParametersInFunctionMultipleParameters1.kt")
+        public void testUnusedContextParametersInFunctionMultipleParameters1() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInFunctionMultipleParameters1.kt");
+        }
+
         @TestMetadata("unusedContextParametersInProperty.kt")
         public void testUnusedContextParametersInProperty() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/unusedContextParametersInProperty.kt");
@@ -1039,6 +1049,16 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("usedContextParametersInFunction1.kt")
         public void testUsedContextParametersInFunction1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction1.kt");
+        }
+
+        @TestMetadata("usedContextParametersInFunction2.kt")
+        public void testUsedContextParametersInFunction2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunction2.kt");
+        }
+
+        @TestMetadata("usedContextParametersInFunctionInvoke.kt")
+        public void testUsedContextParametersInFunctionInvoke() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/usedContextParametersInFunctionInvoke.kt");
         }
 
         @TestMetadata("usedContextParametersInNestedFunction.kt")

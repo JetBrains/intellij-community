@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -126,10 +128,11 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         element: KtParameter,
         decl: KtDeclaration?
     ) {
-        decl?.forEachDescendantOfType<KtSimpleNameExpression> { expression ->
+        decl?.forEachDescendantOfType<KtExpression> { expression ->
             analyze(expression) {
                 val functionCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return@forEachDescendantOfType
-                if (functionCall.partiallyAppliedSymbol.contextArguments.any { (it as? KaImplicitReceiverValue)?.symbol == element.symbol }) {
+                if (expression is KtCallExpression && (functionCall as? KaSimpleFunctionCall)?.isImplicitInvoke != true) return@forEachDescendantOfType
+                if (functionCall.partiallyAppliedSymbol.contextArguments.any { (((it as? KaSmartCastedReceiverValue)?.original ?: it) as? KaImplicitReceiverValue)?.symbol == element.symbol }) {
                     result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(expression, element, false))
                 }
             }

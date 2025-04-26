@@ -146,7 +146,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
                                   file = firSpecific;
                               }
                           }
-                          assertTrue("After file is expected to present", file.exists());
+                          assertTrue("After file is expected to be present", file.exists());
                           String actualText = editors[j].getDocument().getText();
                           String expectedText = FileUtil.loadFile(file);
                           if (!StringUtil.equals(expectedText, actualText)) {
@@ -156,7 +156,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
                           }
                       }
                   } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-                      List<String> messages = new ArrayList<String>(e.getMessages());
+                      List<String> messages = new ArrayList<>(e.getMessages());
                       Collections.sort(messages);
 
                       File messageFile = new File(path + ".messages");
