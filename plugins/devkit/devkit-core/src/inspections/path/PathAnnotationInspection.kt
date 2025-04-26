@@ -54,6 +54,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       // Check if the method is a Path constructor or factory method
       if (isPathConstructorOrFactory(target)) {
         val arguments = node.valueArguments
+
+        // Special case for Path.of(System.getProperty("user.home"))
+        if (arguments.size == 1 && isSystemGetPropertyUserHome(arguments[0])) {
+          // If it's Path.of(System.getProperty("user.home")), don't register any problems
+          return true
+        }
+
         for (i in 0 until arguments.size) {
           val arg = arguments[i]
 
@@ -81,6 +88,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                 }
               }
             }
+          }
+
+          // Check if the argument is a call to System.getProperty("user.home")
+          if (isSystemGetPropertyUserHome(arg)) {
+            // If it's System.getProperty("user.home"), don't register any problems
+            continue
           }
 
           val argInfo = PathAnnotationInfo.forExpression(arg)
@@ -546,6 +559,22 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       }
 
       fun forExpression(expression: UExpression): PathAnnotationInfo {
+        // Check if the expression is a call to Path.toString()
+        if (expression is UCallExpression) {
+          val method = expression.resolve()
+          if (method is com.intellij.psi.PsiMethod) {
+            val containingClass = method.containingClass
+            if (containingClass != null && containingClass.qualifiedName == "java.nio.file.Path" && method.name == "toString") {
+              return MultiRouting
+            }
+          }
+        }
+
+        // Check if the argument is a call to System.getProperty("user.home")
+        if (isSystemGetPropertyUserHome(expression)) {
+          return LocalPathInfo
+        }
+
         // Check if the expression has a path annotation
         val sourcePsi = expression.sourcePsi
         if (sourcePsi != null && sourcePsi is PsiModifierListOwner) {
@@ -565,6 +594,43 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             if (resolved is com.intellij.psi.PsiVariable) {
               val initializer = resolved.initializer
               if (initializer != null) {
+                // Check if the initializer is a call to Path.toString()
+                if (initializer is com.intellij.psi.PsiMethodCallExpression) {
+                  val methodExpression = initializer.methodExpression
+                  val qualifierExpression = methodExpression.qualifierExpression
+                  val methodName = methodExpression.referenceName
+
+                  if (methodName == "toString" && qualifierExpression != null) {
+                    val qualifierType = qualifierExpression.type
+                    if (qualifierType != null && qualifierType.canonicalText == "java.nio.file.Path") {
+                      return MultiRouting
+                    }
+                  }
+                }
+
+                // Check if the initializer is a call to System.getProperty("user.home")
+                if (initializer is com.intellij.psi.PsiMethodCallExpression) {
+                  val methodExpression = initializer.methodExpression
+                  val qualifierExpression = methodExpression.qualifierExpression
+                  val methodName = methodExpression.referenceName
+
+                  if (methodName == "getProperty" && qualifierExpression != null) {
+                    val qualifierText = qualifierExpression.text
+                    if (qualifierText == "System") {
+                      val args = initializer.argumentList.expressions
+                      if (args.size >= 1) {
+                        val arg = args[0]
+                        if (arg is com.intellij.psi.PsiLiteralExpression) {
+                          val value = arg.value
+                          if (value is String && value.equals("user.home", ignoreCase = true)) {
+                            return LocalPathInfo
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+
                 // Try to evaluate the initializer as a string constant
                 val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
                   .constantEvaluationHelper.computeConstantExpression(initializer)
@@ -724,4 +790,35 @@ private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
   }
 
   return null
+}
+
+/**
+ * Checks if the expression is a call to System.getProperty("user.home").
+ */
+private fun isSystemGetPropertyUserHome(expression: UExpression): Boolean {
+  val callExpression = expression.getUCallExpression(searchLimit = 1) ?: return false
+
+  val method = callExpression.resolve()
+  if (method is com.intellij.psi.PsiMethod) {
+    val containingClass = method.containingClass
+    if (containingClass != null && containingClass.qualifiedName == "java.lang.System" && method.name == "getProperty") {
+      val arguments = callExpression.valueArguments
+      val arg = arguments.firstOrNull() // it is expected to be the first and the only argument of `System.getProperty()` method call
+      if (arg != null) {
+        if (arg is UInjectionHost) {
+          val stringValue = arg.evaluateToString()
+          if (stringValue != null && stringValue.equals("user.home", ignoreCase = true)) {
+            return true
+          }
+        }
+        else if (arg is ULiteralExpression) {
+          val value = arg.value
+          if (value is String && value.equals("user.home", ignoreCase = true)) {
+            return true
+          }
+        }
+      }
+    }
+  }
+  return false
 }
