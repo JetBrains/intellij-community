@@ -31,6 +31,7 @@ private const val RUN_ALL_INSPECTIONS = false
 
 private val inspections
   get() = arrayOf(
+    PyAbstractClassInspection(),
     PyArgumentListInspection(),
     PyAssertTypeInspection(),
     PyClassVarInspection(),

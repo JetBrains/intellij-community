@@ -16,5 +16,15 @@
     <postStartupActivity
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService$ComposeResourcesWatcherActivity"/>
     <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataService"/>
+    <usageTypeProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageTypeProvider" order="first"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.compose.ide.plugin.resources.ComposeResourcesManager$ComposeResourcesProjectDataImportListener"
+              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesProjectResolver"/>
   </extensions>
 </idea-plugin>

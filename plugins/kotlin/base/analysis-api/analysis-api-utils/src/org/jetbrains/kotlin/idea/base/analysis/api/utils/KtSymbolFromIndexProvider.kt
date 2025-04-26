@@ -412,6 +412,11 @@ private fun findAllNamesForTypes(
 
         is KaIntersectionType -> findAllNamesForTypes(project, type.conjuncts, scope, builtinTypes)
 
+        is KaCapturedType -> type.projection
+            .type
+            ?.let { findAllNamesForType(it) }
+            ?: emptySet()
+
         is KaTypeParameterType -> {
             // when no explicit upper bounds, we consider `Any` to be an upper bound
             val upperBounds = type.symbol

@@ -71,8 +71,12 @@ then
 fi
 
 if [ -n "${JEDITERM_SOURCE-}" ]
-then
-  source "$JEDITERM_SOURCE" ${JEDITERM_SOURCE_ARGS-}
+then # JEDITERM_SOURCE_ARGS might be either list of args or one arg depending on JEDITERM_SOURCE_SINGLE_ARG
+  if [ -n "${JEDITERM_SOURCE_SINGLE_ARG}" ]; then
+      source "$JEDITERM_SOURCE" "${JEDITERM_SOURCE_ARGS}"
+  else
+      source "$JEDITERM_SOURCE" ${JEDITERM_SOURCE_ARGS-}
+  fi
   unset JEDITERM_SOURCE
   unset JEDITERM_SOURCE_ARGS
 fi

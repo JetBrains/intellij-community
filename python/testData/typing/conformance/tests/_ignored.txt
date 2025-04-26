@@ -15,7 +15,6 @@ callables_subtyping.py
 classes_classvar.py
 classes_override.py
 constructors_call_init.py
-constructors_call_metaclass.py
 constructors_call_new.py
 constructors_call_type.py
 constructors_callable.py
@@ -26,10 +25,8 @@ dataclasses_slots.py
 dataclasses_transform_field.py
 dataclasses_transform_meta.py
 dataclasses_usage.py
-directives_no_type_check.py
 directives_type_checking.py
 directives_version_platform.py
-exceptions_context_managers.py
 generics_base_class.py
 generics_defaults.py
 generics_defaults_referential.py
@@ -63,7 +60,6 @@ protocols_class_objects.py
 protocols_definition.py
 protocols_explicit.py
 protocols_generic.py
-protocols_merging.py
 protocols_modules.py
 protocols_recursive.py
 protocols_runtime_checkable.py

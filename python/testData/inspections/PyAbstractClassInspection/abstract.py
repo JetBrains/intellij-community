@@ -1,9 +1,7 @@
 import abc
 
 
-class A(object):
-    __metaclass__ = abc.ABCMeta
-
+class A(metaclass=abc.ABCMeta):
     @abc.abstractproperty
     def foo(self):
         pass

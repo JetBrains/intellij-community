@@ -30,13 +30,15 @@ class JCheckboxTreeFixture(private val robot: Robot, private val component: JTre
   }
 
   private fun TreePath.toStringList(): List<String> {
-    val nodes = path.map { textCellReader.valueAt(component, it) ?: "" }.toMutableList()
+    return computeOnEdt {
+      val nodes = path.map { textCellReader.valueAt(component, it) ?: "" }.toMutableList()
 
-    if (!component.isRootVisible) {
-      nodes.removeAt(0)
+      if (!component.isRootVisible) {
+        nodes.removeAt(0)
+      }
+
+      return@computeOnEdt nodes
     }
-
-    return nodes
   }
 
   fun collectCheckboxes(): TreePathToRowListWithCheckboxStateList {

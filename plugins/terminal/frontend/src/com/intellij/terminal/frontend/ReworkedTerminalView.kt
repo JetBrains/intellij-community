@@ -270,6 +270,8 @@ internal class ReworkedTerminalView(
       }
     ).install(parentDisposable)
 
+    CopyOnSelectionHandler.install(editor, settings)
+
     (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
   }
 
@@ -289,7 +291,6 @@ internal class ReworkedTerminalView(
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
-    CopyOnSelectionHandler(settings).install(editor)
 
     Disposer.register(parentDisposable) {
       EditorFactory.getInstance().releaseEditor(editor)

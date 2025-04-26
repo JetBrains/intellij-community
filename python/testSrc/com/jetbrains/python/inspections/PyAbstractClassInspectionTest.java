@@ -76,6 +76,26 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-12132
+  public void testInstantiateAbstractClass() {
+    doTest();
+  }
+
+  // PY-12132
+  public void testInstantiateAbstractClass2() {
+    doTest();
+  }
+
+  // PY-12132
+  public void testInstantiateAbstractClass3() {
+    doTest();
+  }
+
+  // PY-12132
+  public void testAbstractMethodInNonAbstractClass() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

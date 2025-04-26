@@ -1351,6 +1351,22 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("id: int, name: str, year: int, new: bool", new String[]{"id: int, "});
   }
 
+  // PY-78250
+  public void testInitializingGenericDataclassWithDefaultType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      final Map<String, PsiElement> marks = loadTest(1);
+      feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: T", new String[]{"x: T"});
+    });
+  }
+
+  // PY-78250
+  public void testInitializingGenericDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      final Map<String, PsiElement> marks = loadTest(1);
+      feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: T", new String[]{"x: T"});
+    });
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());

@@ -3492,6 +3492,97 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTest("object", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def call(cls, p) -> object: ...
+      
+          __call__ = call
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
+    doTest("MyClass", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__(cls, p: int): ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p: int) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
+    doTest("MyClass", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__[T](cls: type[T], *args, **kwargs) -> T: ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTest("int", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__[T](cls, x: T) -> T: ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, x) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
+    doTest("Base", """
+      from typing import Any, Self
+
+
+      class Meta(type):
+          def __call__(self, *args: Any, **kwds: Any) -> 'Derived': ...
+
+
+      class Base(metaclass=Meta):
+          def __new__(cls, *args: Any, **kwds: Any) -> Self: ...
+
+
+      class Derived(Base):
+          ...
+
+
+      expr = Base()
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

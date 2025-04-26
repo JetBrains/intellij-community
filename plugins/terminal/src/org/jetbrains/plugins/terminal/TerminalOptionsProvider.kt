@@ -1,17 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.ide.util.RunOnceUtil
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import com.intellij.util.application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
-import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION")
@@ -20,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
        storages = [Storage(value = "terminal.xml")])
-class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
+class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
   override fun getState(): State = state
@@ -28,25 +32,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   override fun loadState(newState: State) {
     state = newState
 
-    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.cursorShape.migration") {
-      val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
-      state.cursorShape = previousCursorShape
-    }
-
-    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.terminalEngine.migration") {
-      // The initial state of the terminal engine value should be composed out of registry values
-      // used previously to determine what terminal to use.
-      val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
-      val isNewTerminalValue = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
-
-      // Order of conditions is important!
-      // New Terminal registry prevails, even if reworked registry is enabled.
-      state.terminalEngine = when {
-        isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
-        isReworkedValue -> TerminalEngine.REWORKED
-        else -> TerminalEngine.CLASSIC
-      }
-    }
+    performSettingsMigrationOnce()
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -65,6 +51,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
+    var myCopyOnSelection: Boolean = false
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
@@ -77,9 +64,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
     @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
     var myShellPath: String? = null
-
-    @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
-    var myCopyOnSelection: Boolean = SystemInfo.isLinux
   }
 
   private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
@@ -154,13 +138,15 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
-  @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
+  /**
+   * Enables emulation of Linux-like system selection clipboard behavior on Windows and macOS.
+   * Makes no sense on Linux, because system selection clipboard is enabled by default there.
+   */
   var copyOnSelection: Boolean
-    get() = TerminalOsSpecificOptions.getInstance().copyOnSelection
+    get() = state.myCopyOnSelection
     set(value) {
-      val options = TerminalOsSpecificOptions.getInstance()
-      if (options.copyOnSelection != value) {
-        options.copyOnSelection = value
+      if (state.myCopyOnSelection != value) {
+        state.myCopyOnSelection = value
         fireSettingsChanged()
       }
     }
@@ -230,10 +216,56 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
+  private fun performSettingsMigrationOnce() {
+    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.migration.2025.1.1") {
+      // If the settings update is happened in IDE backend, let's skip it.
+      // Because we should receive the values from the frontend and use it.
+      // Otherwise, there can be a race when updating is performed both on backend and frontend simultaneously.
+      if (AppMode.isRemoteDevHost()) return@runOnceForApp
+
+      try {
+        migrateCursorShape()
+        migrateTerminalEngine()
+      }
+      finally {
+        // Trigger sending the updated values to the backend
+        coroutineScope.launch {
+          saveSettingsForRemoteDevelopment(application)
+        }
+      }
+    }
+  }
+
+  private fun migrateCursorShape() {
+    val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
+    state.cursorShape = previousCursorShape
+
+    LOG.info("Initialized TerminalOptionsProvider.cursorShape value to ${state.cursorShape}")
+  }
+
+  private fun migrateTerminalEngine() {
+    // The initial state of the terminal engine value should be composed out of registry values
+    // used previously to determine what terminal to use.
+    val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
+    val isNewTerminalValue = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+
+    // Order of conditions is important!
+    // New Terminal registry prevails, even if reworked registry is enabled.
+    state.terminalEngine = when {
+      isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
+      isReworkedValue -> TerminalEngine.REWORKED
+      else -> TerminalEngine.CLASSIC
+    }
+
+    LOG.info("Initialized TerminalOptionsProvider.terminalEngine value to ${state.terminalEngine}")
+  }
+
   companion object {
     val instance: TerminalOptionsProvider
       @JvmStatic
       get() = service()
+
+    private val LOG = logger<TerminalOptionsProvider>()
 
     internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
   }
