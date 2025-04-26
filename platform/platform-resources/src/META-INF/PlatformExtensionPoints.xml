@@ -58,7 +58,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="fileTypeFactory"
-                    interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
+                    interface="com.intellij.openapi.fileTypes.FileTypeFactory" dynamic="false"/>
 
     <extensionPoint name="trailingSpacesOptionsProvider"
                     interface="com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider" dynamic="true"/>
