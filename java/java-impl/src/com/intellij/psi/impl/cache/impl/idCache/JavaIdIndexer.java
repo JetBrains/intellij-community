@@ -142,7 +142,7 @@ public final class JavaIdIndexer implements IdIndexer, FileTypeIndexingHint {
 
       if (JvmIdentifierUtil.collectJvmIdentifiers(str, (sequence, startIncl, endExcl) -> {
         startInclList.add(startIncl);
-        endExclList.add(startIncl);
+        endExclList.add(endExcl);
       })) {
         for (int i = 0; i < startInclList.size(); i++) {
           consumer.addOccurrence(str, startInclList.getInt(i), endExclList.getInt(i), UsageSearchContext.IN_CODE);
@@ -155,7 +155,7 @@ public final class JavaIdIndexer implements IdIndexer, FileTypeIndexingHint {
       parser.parse();
     }
     catch (IOException | ConstantPoolParser.ClassFormatException e) {
-      LOG.warn("Exception while handling file " + inputData.getFileName(), e);
+      LOG.warn("Exception while handling file " + inputData.getFile().getPath(), e);
       return null;
     }
     return consumer.getResult();
