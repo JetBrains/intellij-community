@@ -10,6 +10,9 @@
     <renamePsiElementProcessor id="ComposeResources"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesRenameProcessor"
                                order="first, before KotlinProperty"/>
+    <renamePsiElementProcessor id="ComposeResourcesFile"
+                               implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesFileRenameProcessor"
+                               order="first"/>
     <renamePsiElementProcessor id="ComposeResourcesXml"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesXmlRenameProcessor"
                                order="first, before ResourceReference"/>
