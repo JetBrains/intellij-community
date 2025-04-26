@@ -1,5 +1,5 @@
 version: 1.0
-linter: jetbrains/qodana-jvm:2025.1-eap
+linter: jetbrains/qodana-jvm:2025.1
 disableSanityInspections: true
 properties:
   shared.index.git.hashes: false
