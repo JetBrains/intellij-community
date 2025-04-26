@@ -541,20 +541,21 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       }
 
       fun forExpression(expression: UExpression): PathAnnotationInfo {
-        // Check if the expression is a call to Path.toString()
-        if (expression is UCallExpression) {
-          val method = expression.resolve()
+        val callExpression = expression.getUCallExpression(searchLimit = 1)
+        if (callExpression != null) {
+          // Check if the expression is a call to Path.toString()
+          val method = callExpression.resolve()
           if (method is com.intellij.psi.PsiMethod) {
             val containingClass = method.containingClass
             if (containingClass != null && containingClass.qualifiedName == "java.nio.file.Path" && method.name == "toString") {
               return MultiRouting
             }
           }
-        }
 
-        // Check if the argument is a call to System.getProperty("user.home")
-        if (isSystemGetPropertyUserHome(expression)) {
-          return LocalPathInfo
+          // Check if the argument is a call to System.getProperty("user.home")
+          if (isSystemGetPropertyUserHome(expression)) {
+            return LocalPathInfo
+          }
         }
 
         // Check if the expression has a path annotation

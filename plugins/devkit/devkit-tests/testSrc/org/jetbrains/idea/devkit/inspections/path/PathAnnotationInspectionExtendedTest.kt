@@ -18,9 +18,10 @@ class PathAnnotationInspectionExtendedTest : PathAnnotationInspectionTestBase() 
    */
   fun testPathToString() {
     doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+
       import java.nio.file.Path;
       import java.nio.file.Paths;
-      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 
       class PathToStringTest {
           void testMethod() {
@@ -38,6 +39,12 @@ class PathAnnotationInspectionExtendedTest : PathAnnotationInspectionTestBase() 
               @MultiRoutingFileSystemPath String basePath = "/base/path";
               Path basePathObj = Path.of(basePath);
               Path resolvedPath = basePathObj.resolve(pathString);
+
+              // Test with the inlined `Path.toString()` calls - this should not produce a warning
+              Path inlinedNewPath = Paths.get(path.toString());
+              Path inlinedNewPathOf = Path.of(newPath.toString());
+              Path inlinedResolvedPath = Paths.get(basePathObj.toString(), "child");
+              Path inlinedResolvedPathOf = Path.of(resolvedPath.toString(), "thatChild");
           }
       }      
       """.trimIndent())
