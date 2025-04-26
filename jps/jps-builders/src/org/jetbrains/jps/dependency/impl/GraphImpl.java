@@ -8,6 +8,7 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,9 @@ public abstract class GraphImpl implements Graph {
       addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
 
       // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
-      Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new);
-      myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new), srcExternalizer);
-      mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement());
+      Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new, NodeSource[]::new);
+      myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new, JvmNodeReferenceID[]::new), srcExternalizer);
+      mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement(Node<?, ?>[]::new));
     }
     catch (RuntimeException e) {
       closeIgnoreErrors();
@@ -92,6 +93,12 @@ public abstract class GraphImpl implements Graph {
   public void close() throws IOException {
     if (myContainerFactory instanceof Closeable)  {
       ((Closeable)myContainerFactory).close();
+    }
+  }
+  
+  public void flush() throws IOException {
+    if (myContainerFactory instanceof Flushable)  {
+      ((Flushable)myContainerFactory).flush();
     }
   }
 

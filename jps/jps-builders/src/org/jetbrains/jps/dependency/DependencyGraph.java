@@ -4,12 +4,13 @@ package org.jetbrains.jps.dependency;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.io.Flushable;
 import java.util.List;
 
 /**
  * A representation of the main dependency storage
  */
-public interface DependencyGraph extends Graph, Closeable {
+public interface DependencyGraph extends Graph, Closeable, Flushable {
 
   Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly);
 

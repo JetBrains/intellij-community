@@ -463,6 +463,16 @@ public final class BuildDataManager {
         mappings.flush(memoryCachesOnly);
       }
     }
+
+    GraphConfiguration graphConfig = getDependencyGraph();
+    if (graphConfig != null) {
+      try {
+        graphConfig.getGraph().flush();
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
   }
 
   public void close() throws IOException {
@@ -814,6 +824,17 @@ public final class BuildDataManager {
         lock.writeLock().lock();
         try {
           delegate.close();
+        }
+        finally {
+          lock.writeLock().unlock();
+        }
+      }
+
+      @Override
+      public void flush() throws IOException {
+        lock.writeLock().lock();
+        try {
+          delegate.flush();
         }
         finally {
           lock.writeLock().unlock();

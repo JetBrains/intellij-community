@@ -65,6 +65,11 @@ public final class LoggingDependencyGraph extends LoggingGraph implements Depend
   }
 
   @Override
+  public void flush() throws IOException {
+    getDelegate().flush();
+  }
+
+  @Override
   public void close() throws IOException {
     try {
       getDelegate().close();

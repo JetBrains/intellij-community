@@ -1940,6 +1940,7 @@ org.jetbrains.jps.dependency.Delta
 - a:isSourceOnly():Z
 org.jetbrains.jps.dependency.DependencyGraph
 - java.io.Closeable
+- java.io.Flushable
 - org.jetbrains.jps.dependency.Graph
 - a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
 - differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
@@ -1981,8 +1982,9 @@ org.jetbrains.jps.dependency.ExternalizableGraphElement
 org.jetbrains.jps.dependency.Externalizer
 - org.jetbrains.jps.dependency.DataReader
 - org.jetbrains.jps.dependency.DataWriter
-- s:forAnyGraphElement():org.jetbrains.jps.dependency.Externalizer
-- s:forGraphElement(org.jetbrains.jps.dependency.DataReader):org.jetbrains.jps.dependency.Externalizer
+- a:createStorage(I):java.lang.Object[]
+- s:forAnyGraphElement(java.util.function.Function):org.jetbrains.jps.dependency.Externalizer
+- s:forGraphElement(org.jetbrains.jps.dependency.DataReader,java.util.function.Function):org.jetbrains.jps.dependency.Externalizer
 org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
 - org.jetbrains.jps.dependency.ExternalizableGraphElement
 - a:getFactorData():org.jetbrains.jps.dependency.ExternalizableGraphElement

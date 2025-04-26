@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   protected BackDependencyIndexImpl(@NotNull String name, @NotNull MapletFactory cFactory) {
     myName = name;
     // important: if multiple implementations of ReferenceID are available, change to createMultitypeExternalizer
-    Externalizer<ReferenceID> ext = Externalizer.forGraphElement(JvmNodeReferenceID::new);
+    Externalizer<ReferenceID> ext = Externalizer.forGraphElement(JvmNodeReferenceID::new, JvmNodeReferenceID[]::new);
     myMap = cFactory.createSetMultiMaplet(name, ext, ext);
   }
 
