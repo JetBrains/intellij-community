@@ -11,7 +11,7 @@
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" dynamic="true"/>
 
     <!-- only bundled plugin can define initProjectActivity -->
-    <extensionPoint name="initProjectActivity" interface="com.intellij.openapi.startup.InitProjectActivity"/>
+    <extensionPoint name="initProjectActivity" interface="com.intellij.openapi.startup.InitProjectActivity" dynamic="false"/>
     <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.ProjectActivity" dynamic="true"/>
     <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.ProjectActivity" dynamic="true"/>
     <extensionPoint name="requiredForSmartModeStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode" dynamic="true"/>
@@ -31,7 +31,7 @@
     </extensionPoint>
     <extensionPoint name="writingAccessProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.WritingAccessProvider" dynamic="true"/>
     <extensionPoint name="fileVisibilityProvider" area="IDEA_PROJECT" interface="com.intellij.openapi.vfs.FileVisibilityProvider" dynamic="true"/>
-    <extensionPoint name="virtualFilePreCloseCheck" interface="com.intellij.openapi.vfs.VirtualFilePreCloseCheck"/>
+    <extensionPoint name="virtualFilePreCloseCheck" interface="com.intellij.openapi.vfs.VirtualFilePreCloseCheck" dynamic="true"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage" dynamic="true"/>
     <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
@@ -46,7 +46,7 @@
     <extensionPoint name="filetype.decompiler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.BinaryFileDecompiler"/>
     </extensionPoint>
-    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
+    <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider" dynamic="true"/>
     <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
     </extensionPoint>
@@ -56,7 +56,7 @@
     <extensionPoint dynamic="true" name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
     </extensionPoint>
-    <!--We need to define extension point for Eel Provider here because it is used in GeneralCommandLine.
+    <!--We need to define an extension point for Eel Provider here because it is used in GeneralCommandLine.
         If something unfortunate happens to GeneralCommandLine, we would need to remove this definition -->
     <extensionPoint name="eelProvider" interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
     <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
