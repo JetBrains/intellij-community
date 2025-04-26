@@ -17,73 +17,13 @@ import java.net.URL
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-internal class CodeFenceLanguageParsingSupport : ProjectActivity {
+class CodeFenceLanguageParsingSupport : ProjectActivity {
   override suspend fun execute(project: Project) {
-    var latestJS: String? = null
-    var fallbackJS: String? = null
-    val scriptLatch = CountDownLatch(2)
-
-    Thread {
-      try {
-        latestJS = URL("https://unpkg.com/@highlightjs/cdn-assets/highlight.min.js").readText()
-      }
-      catch (_: Exception) {}
-      scriptLatch.countDown()
-    }.start()
-
-    Thread {
-      try {
-        fallbackJS = this.javaClass.getResourceAsStream("highlighter.js")?.bufferedReader().use { it?.readText() }
-      }
-      catch (_: Exception) {}
-      scriptLatch.countDown()
-    }.start()
-
-    scriptLatch.await(5, TimeUnit.SECONDS)
-
-    val highlightJS = latestJS ?: fallbackJS
-
-    if (highlightJS == null) {
-      available = false
-      return
-    }
-
-    @Suppress("JSUnresolvedReference")
-    @Language("JavaScript")
-    val jsExtra = """
-      |function markdownHighlighter(language, content) {
-      |  let html = '';
-      |
-      |  if (language === 'json5')
-      |    language = 'javascript';
-      |
-      |  if (language) {
-      |    try {
-      |      html = hljs.highlight(content, { language }).value;
-      |    }
-      |    catch {}
-      |  }
-      |
-      |  if (!html) {
-      |    try {
-      |      html = hljs.highlightAuto(content).value;
-      |    }
-      |    catch {}
-      |  }
-      |
-      |  console.info('highlighter:' + html);
-      |}
-      """.trimMargin()
-
-    browser.createImmediately()
-    browser.waitForPageLoad("about:blank")
-    browser.executeJavaScript(highlightJS)
-    browser.executeJavaScript(jsExtra)
-    startupCompleted = true
-    startupLatch?.countDown()
+    codeFenceParsingStartUp()
   }
 
   companion object {
+    @Volatile private var started = false
     @Volatile private var startupCompleted = false
     @Volatile private var available = true
     @Volatile private var startupLatch: CountDownLatch? = CountDownLatch(1)
@@ -111,6 +51,76 @@ internal class CodeFenceLanguageParsingSupport : ProjectActivity {
           }
         }, cefBrowser)
       }
+    }
+
+    internal suspend fun codeFenceParsingStartUp() {
+      if (started)
+        return
+
+      started = true
+
+      var latestJS: String? = null
+      var fallbackJS: String? = null
+      val scriptLatch = CountDownLatch(2)
+
+      Thread {
+        try {
+          latestJS = URL("https://unpkg.com/@highlightjs/cdn-assets/highlight.min.js").readText()
+        }
+        catch (_: Exception) {}
+        scriptLatch.countDown()
+      }.start()
+
+      Thread {
+        try {
+          fallbackJS = this.javaClass.getResourceAsStream("highlighter.js")?.bufferedReader().use { it?.readText() }
+        }
+        catch (_: Exception) {}
+        scriptLatch.countDown()
+      }.start()
+
+      scriptLatch.await(5, TimeUnit.SECONDS)
+
+      val highlightJS = latestJS ?: fallbackJS
+
+      if (highlightJS == null) {
+        available = false
+        return
+      }
+
+      @Suppress("JSUnresolvedReference")
+      @Language("JavaScript")
+      val jsExtra = """
+        |function markdownHighlighter(language, content) {
+        |  let html = '';
+        |
+        |  if (language === 'json5')
+        |    language = 'javascript';
+        |
+        |  if (language) {
+        |    try {
+        |      html = hljs.highlight(content, { language }).value;
+        |    }
+        |    catch {}
+        |  }
+        |
+        |  if (!html) {
+        |    try {
+        |      html = hljs.highlightAuto(content).value;
+        |    }
+        |    catch {}
+        |  }
+        |
+        |  console.info('highlighter:' + html);
+        |}
+        """.trimMargin()
+
+      browser.createImmediately()
+      browser.waitForPageLoad("about:blank")
+      browser.executeJavaScript(highlightJS)
+      browser.executeJavaScript(jsExtra)
+      startupCompleted = true
+      startupLatch?.countDown()
     }
 
     private val entities = mapOf("amp" to "&", "gt" to ">", "lt" to "<", "quot" to "\"")

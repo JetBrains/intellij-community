@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.codeFenceParsingStartUp
 import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -80,7 +81,10 @@ class MarkdownPreviewFileEditor(
   init {
     document.addDocumentListener(ReparseContentDocumentListener(), this)
 
-    coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
+    coroutineScope.launch(Dispatchers.EDT) {
+      codeFenceParsingStartUp()
+      attachHtmlPanel()
+    }
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
@@ -112,13 +116,15 @@ class MarkdownPreviewFileEditor(
                 val editor = fileEditor.editor
                 val document = editor.document
                 val line = document.getLineNumber(charOffset) + lineOffset
+                val column = if (lineOffset == 0) charOffset - document.getLineStartOffset(line) else 0
 
                 ApplicationManager.getApplication().invokeLater {
-                  editor.caretModel.moveToLogicalPosition(LogicalPosition(line, 0))
+                  editor.caretModel.moveToLogicalPosition(LogicalPosition(line, column))
                   editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+                  editor.contentComponent.requestFocusInWindow()
                 }
 
-                return@receivedPosition
+                return
               }
             }
           }
