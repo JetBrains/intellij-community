@@ -50,7 +50,7 @@ private val LOG = logger<PsiVFSListener>()
 class PsiVFSListener internal constructor(private val project: Project) {
   private val myProjectRootManager: ProjectRootManager = ProjectRootManager.getInstance(project)
   private val manager = PsiManager.getInstance(project) as PsiManagerImpl
-  private val fileManager = manager.fileManager as FileManagerImpl
+  private val fileManager = manager.fileManager as FileManagerEx
   private var reportedUnloadedPsiChange = false
 
   private fun getCachedDirectory(parent: VirtualFile?): PsiDirectory? {
@@ -607,7 +607,7 @@ internal class PsiVFSModuleRootListener(private val listenerProject: Project) : 
   override fun rootsChanged(event: ModuleRootEvent) {
     LOG.trace { "rootsChanged call" }
     val psiManager = PsiManager.getInstance(listenerProject) as PsiManagerImpl
-    val fileManager = psiManager.fileManager as FileManagerImpl
+    val fileManager = psiManager.fileManager as FileManagerEx
     fileManager.dispatchPendingEvents()
 
     if (event.isCausedByFileTypesChange) {
@@ -635,7 +635,7 @@ internal class PsiVFSModuleRootListener(private val listenerProject: Project) : 
 }
 
 private class MyFileDocumentManagerListener(private val project: Project) : FileDocumentManagerListener {
-  private val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+  private val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx
 
   override fun fileWithNoDocumentChanged(file: VirtualFile) {
     val viewProvider = fileManager.findCachedViewProvider(file)
@@ -701,25 +701,25 @@ private class PsiVfsInitProjectActivity : InitProjectActivity {
     @Suppress("UsagesOfObsoleteApi")
     serviceAsync<LanguageSubstitutors>().point?.addChangeListener((project as ComponentManagerEx).getCoroutineScope()) {
       if (!project.isDisposed) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(true)
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(true)
       }
     }
 
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, PsiVfsAdditionalLibraryRootListener(project))
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun fileTypesChanged(e: FileTypeEvent) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(e.removedFileType != null)
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(e.removedFileType != null)
       }
     })
     connection.subscribe(FileDocumentManagerListener.TOPIC, MyFileDocumentManagerListener(project))
 
     connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(true)
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(true)
       }
 
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl).processFileTypesChanged(true)
+        (PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx).processFileTypesChanged(true)
       }
     })
 
@@ -729,7 +729,7 @@ private class PsiVfsInitProjectActivity : InitProjectActivity {
 
 private class PsiVfsAdditionalLibraryRootListener(project: Project) : AdditionalLibraryRootsListener {
   private val psiManager = PsiManager.getInstance(project) as PsiManagerImpl
-  private val fileManager = psiManager.fileManager as FileManagerImpl
+  private val fileManager = psiManager.fileManager as FileManagerEx
 
   override fun libraryRootsChanged(
     presentableLibraryName: @Nls String?,

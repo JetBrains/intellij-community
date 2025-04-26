@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -231,7 +232,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     if (!myPossiblyInvalidated) return true;
 
     // synchronized by read-write action
-    if (((FileManagerImpl)myManager.getFileManager()).evaluateValidity(this)) {
+    if (((FileManagerEx)myManager.getFileManager()).evaluateValidity(this)) {
       myPossiblyInvalidated = false;
       PsiInvalidElementAccessException.setInvalidationTrace(this, null);
       return true;

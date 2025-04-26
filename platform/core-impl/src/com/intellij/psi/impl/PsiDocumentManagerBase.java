@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -158,7 +159,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    */
   @ApiStatus.Internal
   public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
-    FileManagerImpl manager = ((FileManagerImpl)getFileManager());
+    FileManagerEx manager = ((FileManagerEx)getFileManager());
     return manager.getRawCachedFile(virtualFile, context);
   }
 
@@ -512,7 +513,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
     }
     if (virtualFile != null) {
-      ((FileManagerImpl)getFileManager()).forceReload(virtualFile);
+      ((FileManagerEx)getFileManager()).forceReload(virtualFile);
     }
   }
 
@@ -1098,7 +1099,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
       else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
-          ((FileManagerImpl)fileManager).firePropertyChangedForUnloadedPsi());
+          ((FileManagerEx)fileManager).firePropertyChangedForUnloadedPsi());
       }
     }
 

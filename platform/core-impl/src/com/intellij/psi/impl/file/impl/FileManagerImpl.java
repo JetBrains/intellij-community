@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
-public final class FileManagerImpl implements FileManager {
+public final class FileManagerImpl implements FileManagerEx {
   private static final Key<Boolean> IN_COMA = Key.create("IN_COMA");
   private static final Logger LOG = Logger.getInstance(FileManagerImpl.class);
   private final Key<FileViewProvider> myPsiHardRefKey = Key.create("HARD_REFERENCE_TO_PSI"); //non-static!
@@ -90,6 +90,7 @@ public final class FileManagerImpl implements FileManager {
                       : new MultiverseTemporaryProviderStorage();
   }
 
+  @Override
   public void processQueue() {
     myVFileToViewProviderMap.processQueue();
   }
@@ -122,6 +123,7 @@ public final class FileManagerImpl implements FileManager {
    * @return updated context of viewProvider, or `null` if viewProvider is missing in the cache.
    */
   @ApiStatus.Internal
+  @Override
   public @Nullable CodeInsightContext trySetContext(@NotNull FileViewProvider viewProvider, @NotNull CodeInsightContext context) {
     VirtualFile vFile = viewProvider.getVirtualFile();
     if (vFile instanceof LightVirtualFile) {
@@ -136,6 +138,7 @@ public final class FileManagerImpl implements FileManager {
     ((AbstractFileViewProvider)viewProvider).getCachedPsiFiles().forEach(PsiFile::clearCaches);
   }
 
+  @Override
   public void forceReload(@NotNull VirtualFile vFile) {
     LanguageSubstitutors.cancelReparsing(vFile);
     List<FileViewProvider> viewProviders = findCachedViewProviders(vFile);
@@ -168,6 +171,7 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
+  @Override
   public void firePropertyChangedForUnloadedPsi() {
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
     event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
@@ -176,6 +180,7 @@ public final class FileManagerImpl implements FileManager {
     myManager.propertyChanged(event);
   }
 
+  @Override
   public void dispose() {
     clearViewProviders();
   }
@@ -283,6 +288,7 @@ public final class FileManagerImpl implements FileManager {
    * It tries to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
+  @Override
   public @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = getRawCachedViewProvider(vFile, context);
     return viewProvider == null ? null :
@@ -407,6 +413,7 @@ public final class FileManagerImpl implements FileManager {
   private boolean myProcessingFileTypesChange;
 
   @ApiStatus.Internal
+  @Override
   public void processFileTypesChanged(boolean clearViewProviders) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
@@ -433,6 +440,7 @@ public final class FileManagerImpl implements FileManager {
 
   @RequiresWriteLock
   @ApiStatus.Internal
+  @Override
   public void possiblyInvalidatePhysicalPsi() {
     removeInvalidDirs();
     myVFileToViewProviderMap.forEach((__, ___, viewProvider) -> {
@@ -441,6 +449,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @ApiStatus.Internal
+  @Override
   public void dispatchPendingEvents() {
     Project project = myManager.getProject();
     if (project.isDisposed()) {
@@ -577,11 +586,13 @@ public final class FileManagerImpl implements FileManager {
     return Registry.is("ide.hide.excluded.files") ? fileIndexFacade.isExcludedFile(vFile) : fileIndexFacade.isUnderIgnored(vFile);
   }
 
+  @Override
   public PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
     return getVFileToPsiDirMap().get(vFile);
   }
 
   @ApiStatus.Internal
+  @Override
   public void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
     DebugUtil.performPsiModification("removeFilesAndDirsRecursively", () -> {
       VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
@@ -617,9 +628,9 @@ public final class FileManagerImpl implements FileManager {
     clearPsiCaches(viewProvider);
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public PsiFile getCachedPsiFileInner(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+  @Override
+  public @Nullable PsiFile getCachedPsiFileInner(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = findCachedViewProvider(file, context);
     return viewProvider == null ? null : ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
   }
@@ -643,6 +654,7 @@ public final class FileManagerImpl implements FileManager {
 
   @RequiresWriteLock
   @ApiStatus.Internal
+  @Override
   public void removeInvalidFilesAndDirs(boolean useFind) {
     removeInvalidDirs();
 
@@ -729,6 +741,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @ApiStatus.Internal
+  @Override
   public void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
     if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
       forceReload(vFile);
@@ -745,6 +758,7 @@ public final class FileManagerImpl implements FileManager {
    * @return if the file is still valid
    */
   @RequiresReadLock(generateAssertion = false)
+  @Override
   public boolean evaluateValidity(@NotNull PsiFile file) {
     AbstractFileViewProvider viewProvider = (AbstractFileViewProvider)file.getViewProvider();
     return evaluateValidity(viewProvider) && viewProvider.getCachedPsiFiles().contains(file);
@@ -823,6 +837,7 @@ public final class FileManagerImpl implements FileManager {
    * Do not use, since this is an extremely fragile and low-level API that can return surprising results. Use {@link #getCachedPsiFile(VirtualFile)} instead.
    */
   @RequiresReadLock
+  @Override
   public PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     if (!vFile.isValid()) {
       throw new InvalidVirtualFileAccessException(vFile);
@@ -841,6 +856,7 @@ public final class FileManagerImpl implements FileManager {
   }
 
   // todo IJPL-339 investigate this method usages!!!
+  @Override
   public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
     myVFileToViewProviderMap.forEachKey(file -> {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);

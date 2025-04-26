@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.file.impl.FileManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
@@ -187,7 +188,7 @@ class CodeInsightContextManagerImpl(
     fileViewProvider: FileViewProvider,
     preferredContext: CodeInsightContext,
   ): CodeInsightContext {
-    val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as? FileManagerImpl
+    val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as? FileManagerEx
     if (fileManager != null) {
       val result = fileManager.trySetContext(fileViewProvider, preferredContext)
       if (result != null) {
