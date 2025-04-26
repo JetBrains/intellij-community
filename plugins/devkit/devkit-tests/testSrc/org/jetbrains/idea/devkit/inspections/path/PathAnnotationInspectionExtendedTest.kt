@@ -67,14 +67,18 @@ class PathAnnotationInspectionExtendedTest : PathAnnotationInspectionTestBase() 
 
               // Test with different case
               String userHomeUpperCase = System.getProperty("USER.HOME");
-              Path homePathUpperCase = Path.of(userHomeUpperCase);
+              Path homePathUpperCase = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">userHomeUpperCase</warning>);
 
               // Test with inlined call - this should not produce a warning
               Path homePathInlinedCall = Path.of(System.getProperty("user.home"));
 
-              // Test with a different property - should produce a warning because it's not "user.home"
-              String tempDir = System.getProperty("java.io.tmpdir");
-              Path tempPath = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">tempDir</warning>);
+              Path tempPath = Path.of(System.getProperty("java.io.tmpdir"));
+              Path javaHomePath = Path.of(System.getProperty("java.home"));
+              Path userDirPath = Path.of(System.getProperty("user.dir"));
+
+              // Test with a different property - should produce a warning
+              String javaVersion = System.getProperty("java.version");
+              Path questionablePath = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">javaVersion</warning>);
           }
       }      
       """.trimIndent())

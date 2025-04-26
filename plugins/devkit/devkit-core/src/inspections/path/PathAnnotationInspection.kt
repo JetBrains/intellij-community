@@ -56,7 +56,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val arguments = node.valueArguments
 
         // Special case for Path.of(System.getProperty("user.home"))
-        if (arguments.size == 1 && isSystemGetPropertyUserHome(arguments[0])) {
+        if (arguments.size == 1 && isSystemGetPropertyAbsolutePathResult(arguments[0])) {
           // If it's Path.of(System.getProperty("user.home")), don't register any problems
           return true
         }
@@ -91,7 +91,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           }
 
           // Check if the argument is a call to System.getProperty("user.home")
-          if (isSystemGetPropertyUserHome(arg)) {
+          if (isSystemGetPropertyAbsolutePathResult(arg)) {
             // If it's System.getProperty("user.home"), don't register any problems
             continue
           }
@@ -544,7 +544,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           }
 
           // Check if the argument is a call to System.getProperty("user.home")
-          if (isSystemGetPropertyUserHome(expression)) {
+          if (isSystemGetPropertyAbsolutePathResult(expression)) {
             return LocalPathInfo
           }
         }
@@ -596,7 +596,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                         val arg = args[0]
                         if (arg is com.intellij.psi.PsiLiteralExpression) {
                           val value = arg.value
-                          if (value is String && value.equals("user.home", ignoreCase = true)) {
+                          if (value is String && isSystemPropertyAbsolutePathValue(value)) {
                             return LocalPathInfo
                           }
                         }
@@ -769,9 +769,8 @@ private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
 /**
  * Checks if the expression is a call to System.getProperty("user.home").
  */
-private fun isSystemGetPropertyUserHome(expression: UExpression): Boolean {
+private fun isSystemGetPropertyAbsolutePathResult(expression: UExpression): Boolean {
   val callExpression = expression.getUCallExpression(searchLimit = 1) ?: return false
-
   val method = callExpression.resolve()
   if (method is com.intellij.psi.PsiMethod) {
     val containingClass = method.containingClass
@@ -781,13 +780,13 @@ private fun isSystemGetPropertyUserHome(expression: UExpression): Boolean {
       if (arg != null) {
         if (arg is UInjectionHost) {
           val stringValue = arg.evaluateToString()
-          if (stringValue != null && stringValue.equals("user.home", ignoreCase = true)) {
+          if (stringValue != null && isSystemPropertyAbsolutePathValue(stringValue)) {
             return true
           }
         }
         else if (arg is ULiteralExpression) {
           val value = arg.value
-          if (value is String && value.equals("user.home", ignoreCase = true)) {
+          if (value is String && isSystemPropertyAbsolutePathValue(value)) {
             return true
           }
         }
@@ -796,3 +795,6 @@ private fun isSystemGetPropertyUserHome(expression: UExpression): Boolean {
   }
   return false
 }
+
+private fun isSystemPropertyAbsolutePathValue(propertyName: String): Boolean =
+  setOf("java.home", "user.home", "user.dir", "java.io.tmpdir").contains(propertyName)
