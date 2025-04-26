@@ -209,7 +209,12 @@ class MarkdownJCEFHtmlPanel(
       |    if (pos) {
       |      const rect = element.getBoundingClientRect();
       |      const offset = (/^\d+/.exec(pos) || [])[0];
-      |      const lineHeight = parseInt(document.defaultView.getComputedStyle(element, null).getPropertyValue('line-height'));
+      |      const computedStyle = window.getComputedStyle(element);
+      |      const fontSize = parseFloat(computedStyle.getPropertyValue('font-size'));
+      |      let lineHeight = parseFloat(computedStyle.getPropertyValue('line-height')) * fontSize;
+      |
+      |      if (isNaN(lineHeight) || lineHeight === 0)
+      |        lineHeight = fontSize * 1.2;
       |
       |      if (offset != null) {
       |        console.info(offset + ',' + Math.floor((event.clientY - rect.top) / lineHeight));
