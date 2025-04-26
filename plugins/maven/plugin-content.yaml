@@ -94,6 +94,9 @@
 - name: lib/maven40-server.jar
   modules:
   - name: intellij.maven.server.m40
+- name: lib/modules/intellij.maven.profiler.jar
+  contentModules:
+  - name: intellij.maven.profiler
 - name: lib/plexus-archiver.jar
   library: plexus-archiver
   module: intellij.maven

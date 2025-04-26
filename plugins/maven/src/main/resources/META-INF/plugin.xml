@@ -71,6 +71,10 @@
   <depends optional="true" config-file="errorProne-compiler-support.xml">Error-prone plugin</depends>
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
+  <content>
+    <module name="intellij.maven.profiler"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
 
@@ -640,7 +644,6 @@
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
   </extensions>
 
-
   <actions>
     <action id="Maven.SyncIncrementally" class="org.jetbrains.idea.maven.project.actions.IncrementalSyncAction"
             icon="AllIcons.Actions.Refresh">
@@ -941,6 +944,7 @@
   <projectListeners>
     <listener class="org.jetbrains.idea.maven.project.MavenDependencyUpdater" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
   </projectListeners>
+
   <applicationListeners>
     <listener class="org.jetbrains.idea.maven.project.MavenImportListenerBridge"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"
