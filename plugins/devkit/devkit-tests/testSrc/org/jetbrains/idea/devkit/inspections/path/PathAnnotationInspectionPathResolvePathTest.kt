@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 
 class PathAnnotationInspectionPathResolvePathTest : PathAnnotationInspectionTestBase() {
@@ -15,10 +16,10 @@ class PathAnnotationInspectionPathResolvePathTest : PathAnnotationInspectionTest
       public class PathResolvePath {
           public void testMethod() {
               // Create a base path
-              Path base = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/base/path")</warning>;
+              Path base = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/base/path"</warning>);
 
               // Create another path
-              Path otherPath = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/other/path")</warning>;
+              Path otherPath = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/other/path"</warning>);
 
               // Test Path.resolve(Path) - this should not be highlighted
               Path resolvedPath = base.resolve(otherPath);
@@ -28,7 +29,7 @@ class PathAnnotationInspectionPathResolvePathTest : PathAnnotationInspectionTest
           }
 
           private Path getPath() {
-              return <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/some/path")</warning>;
+              return Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/some/path"</warning>);
           }
       }      
       """.trimIndent())

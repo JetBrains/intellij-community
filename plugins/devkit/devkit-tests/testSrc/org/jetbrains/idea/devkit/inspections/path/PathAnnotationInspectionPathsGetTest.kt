@@ -43,15 +43,15 @@ class PathAnnotationInspectionPathsGetTest : PathAnnotationInspectionTestBase() 
           public void testMethod() {
               // First argument is NOT correctly annotated - this should be highlighted
               String nonAnnotatedPath = "/base/path";
-              Path path1 = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Paths.get(nonAnnotatedPath, "file.txt")</warning>;
+              Path path1 = Paths.get(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">nonAnnotatedPath</warning>, "file.txt");
               
               // Even if other arguments are correctly annotated, it should still be highlighted
               @Filename String filename = "file.txt";
               @MultiRoutingFileSystemPath String subdir = "subdir";
-              Path path2 = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Paths.get(nonAnnotatedPath, filename, subdir)</warning>;
+              Path path2 = Paths.get(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">nonAnnotatedPath</warning>, filename, subdir);
               
               // Direct string literal as first argument should also be highlighted
-              Path path3 = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Paths.get("/another/path", "file.txt")</warning>;
+              Path path3 = Paths.get(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/another/path"</warning>, "file.txt");
           }
       }      
       """.trimIndent())

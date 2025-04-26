@@ -226,7 +226,7 @@ abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTes
           public void testMethod() {
               // Test @LocalPath in Path.of()
               @LocalPath String localPath = "/local/path";
-              Path path1 = <warning descr="${message("inspections.message.nativepath.should.not.be.used.directly.constructing.path")}">Path.of(localPath)</warning>; // Warning, @LocalPath should not be used directly in Path.of()
+              Path path1 = Path.of(localPath); // @LocalPath can be used directly in Path.of()
 
               // Test @LocalPath in Path.resolve()
               @MultiRoutingFileSystemPath String basePath = "/base/path";

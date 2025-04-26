@@ -26,6 +26,11 @@ class PathAnnotationInspectionPathOfTest : PathAnnotationInspectionTestBase() {
               final String validFilename1 = "file.txt";
               final String validFilename2 = "another.txt";
               Path path4 = Path.of(basePath, validFilename1, validFilename2);
+
+              Path path10 = Path.of("hello", "world");
+              
+              final String validDirectoryName = "hello";
+              Path path11 = Path.of(validDirectoryName, "world");
           }
       }      
       """.trimIndent())
@@ -41,15 +46,15 @@ class PathAnnotationInspectionPathOfTest : PathAnnotationInspectionTestBase() {
           public void testMethod() {
               // First argument is NOT correctly annotated - this should be highlighted
               String nonAnnotatedPath = "/base/path";
-              Path path1 = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath, "file.txt")</warning>;
+              Path path1 = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">nonAnnotatedPath</warning>, "file.txt");
               
               // Even if other arguments are correctly annotated, it should still be highlighted
               @Filename String filename = "file.txt";
               @MultiRoutingFileSystemPath String subdir = "subdir";
-              Path path2 = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath, filename, subdir)</warning>;
+              Path path2 = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">nonAnnotatedPath</warning>, filename, subdir);
               
               // Direct string literal as first argument should also be highlighted
-              Path path3 = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of("/another/path", "file.txt")</warning>;
+              Path path3 = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/another/path"</warning>, "file.txt");
           }
       }      
       """.trimIndent())

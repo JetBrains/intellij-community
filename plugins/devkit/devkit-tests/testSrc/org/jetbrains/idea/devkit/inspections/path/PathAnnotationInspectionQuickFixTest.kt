@@ -58,7 +58,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
           public void testMethod() {
               String nonAnnotatedPath = "/usr/local/bin";
               // This should be highlighted as a normal warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath)</warning>;
+              Path path = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">nonAnnotatedPath</warning>);
           }
       }      
       """.trimIndent())
@@ -78,7 +78,7 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
           public void testMethod() {
               String nonAnnotatedPath = "/usr/local/bin";
               // This should be highlighted as a normal warning because non-annotated strings should be annotated with @MultiRoutingFileSystemPath
-              Path path = <warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.constructor.or.factory.method")}">Path.of(nonAnnotatedPath)</warning>;
+              Path path = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">nonAnnotatedPath</warning>);
           }
       }      
       """

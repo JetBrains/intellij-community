@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 
 class PathAnnotationInspectionOtherPathMethodsTest : PathAnnotationInspectionTestBase() {
@@ -15,8 +17,8 @@ class PathAnnotationInspectionOtherPathMethodsTest : PathAnnotationInspectionTes
       public class OtherPathMethods {
           public void testMethod() {
               // Create paths
-              Path base = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/base/path")</warning>;
-              Path other = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/other/path")</warning>;
+              Path base = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/base/path"</warning>);
+              Path other = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/other/path"</warning>);
 
               // Test Path.relativize(Path) - this should not be highlighted
               Path relativized = base.relativize(other);
@@ -46,7 +48,7 @@ class PathAnnotationInspectionOtherPathMethodsTest : PathAnnotationInspectionTes
       public class MixedPathMethods {
           public void testMethod() {
               // Create paths
-              Path base = <warning descr="String without path annotation is used in Path constructor or factory method">Path.of("/base/path")</warning>;
+              Path base = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/base/path"</warning>);
 
               // Test Path.resolveSibling(String) - this should be highlighted if not annotated
               Path resolvedSibling1 = base.resolveSibling(<weak_warning descr="String without path annotation is used in Path.resolve() method">"other/path"</weak_warning>);
