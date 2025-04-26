@@ -18,6 +18,12 @@ internal const val VALUES_DIRNAME: String = "values"
 
 internal const val ANDROID_RESOURCE_REFERENCE = "org.jetbrains.android.dom.converters.AndroidResourceReference"
 
+private val VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES = setOf("drawable", "font", "values")
+
+internal val String.isValidInnerComposeResourcesDirName: Boolean
+  get() =
+    VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES.any { this.startsWith(it, ignoreCase = true) }
+
 
 /** Retrieves the module name for the Compose resources task of the given module. */
 internal fun Module.getModuleNameForComposeResourcesTask(): String? =
