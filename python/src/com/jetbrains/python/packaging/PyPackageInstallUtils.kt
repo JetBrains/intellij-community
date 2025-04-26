@@ -113,21 +113,26 @@ object PyPackageInstallUtils {
     versionSpec: String? = null,
     options: List<String> = emptyList(),
   ): Result<List<PythonPackage>> {
-    val pythonPackageManager = runCatching {
-      PythonPackageManager.forSdk(project, sdk)
-    }.getOrElse {
-      return Result.failure(it)
-    }
+    return try {
+      val pythonPackageManager = runCatching {
+        PythonPackageManager.forSdk(project, sdk)
+      }.getOrElse {
+        return Result.failure(it)
+      }
 
-    val spec = withContext(Dispatchers.IO) {
-      pythonPackageManager.repositoryManager.createSpecification(packageName, versionSpec)
-    } ?: return Result.failure(Exception("Package $packageName not found in any repository"))
+      val spec = withContext(Dispatchers.IO) {
+        pythonPackageManager.repositoryManager.createSpecification(packageName, versionSpec)
+      } ?: return Result.failure(Exception("Package $packageName not found in any repository"))
 
-    return if (withBackgroundProgress) {
-      pythonPackageManager.installPackage(spec, options, withBackgroundProgress = true)
+      return if (withBackgroundProgress) {
+        pythonPackageManager.installPackage(spec, options, withBackgroundProgress = true)
+      }
+      else {
+        pythonPackageManager.installPackage(spec, options, withBackgroundProgress)
+      }
     }
-    else {
-      pythonPackageManager.installPackage(spec, options, withBackgroundProgress)
+    catch (t: Throwable) {
+      Result.failure(t)
     }
   }
 
