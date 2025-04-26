@@ -97,34 +97,25 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           }
 
           val argInfo = PathAnnotationInfo.forExpression(arg)
-          if (argInfo !is PathAnnotationInfo.MultiRouting && argInfo !is PathAnnotationInfo.FilenameInfo && argInfo !is PathAnnotationInfo.LocalPathInfo) {
-            // Report error: elements of 'more' parameter should be annotated with either @MultiRoutingFileSystemPath or @Filename
-            when (argInfo) {
-              is PathAnnotationInfo.Native -> {
-                if (i == 0)
-                  holder.registerProblem(
-                    arg.sourcePsi ?: sourcePsi,
-                    DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
-                    AddMultiRoutingAnnotationFix()
-                  )
-              }
-              is PathAnnotationInfo.Unspecified -> {
+          when (argInfo) {
+            is PathAnnotationInfo.MultiRouting, PathAnnotationInfo.FilenameInfo, PathAnnotationInfo.LocalPathInfo -> Unit
+            is PathAnnotationInfo.Native -> {
+              if (i == 0)
                 holder.registerProblem(
                   arg.sourcePsi ?: sourcePsi,
-                  if (i == 0)
-                    DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
-                  else
-                    DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
+                  DevKitBundle.message("inspections.message.nativepath.should.not.be.used.directly.constructing.path"),
                   AddMultiRoutingAnnotationFix()
                 )
-              }
-              else -> {
-                // This should not happen, but we need to handle all cases
-                holder.registerProblem(
-                  arg.sourcePsi ?: sourcePsi,
-                  DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")
-                )
-              }
+            }
+            is PathAnnotationInfo.Unspecified -> {
+              holder.registerProblem(
+                arg.sourcePsi ?: sourcePsi,
+                if (i == 0)
+                  DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+                else
+                  DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename"),
+                AddMultiRoutingAnnotationFix()
+              )
             }
           }
         }
@@ -171,38 +162,29 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           }
 
           val argInfo = PathAnnotationInfo.forExpression(arg)
-          if (argInfo !is PathAnnotationInfo.MultiRouting && argInfo !is PathAnnotationInfo.FilenameInfo) {
-            // Report warning: argument of Path.resolve() should be annotated with either @MultiRoutingFileSystemPath or @Filename
-            when (argInfo) {
-              is PathAnnotationInfo.Native -> {
-                holder.registerProblem(
-                  arg.sourcePsi ?: sourcePsi,
-                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
-                  AddMultiRoutingAnnotationFix()
-                )
-              }
-              is PathAnnotationInfo.LocalPathInfo -> {
-                holder.registerProblem(
-                  arg.sourcePsi ?: sourcePsi,
-                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
-                  AddMultiRoutingAnnotationFix()
-                )
-              }
-              is PathAnnotationInfo.Unspecified -> {
-                holder.registerProblem(
-                  arg.sourcePsi ?: sourcePsi,
-                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
-                  com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
-                  AddMultiRoutingAnnotationFix()
-                )
-              }
-              else -> {
-                // This should not happen, but we need to handle all cases
-                holder.registerProblem(
-                  arg.sourcePsi ?: sourcePsi,
-                  DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")
-                )
-              }
+          when (argInfo) {
+            is PathAnnotationInfo.MultiRouting, PathAnnotationInfo.FilenameInfo -> Unit
+            is PathAnnotationInfo.Native -> {
+              holder.registerProblem(
+                arg.sourcePsi ?: sourcePsi,
+                DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
+                AddMultiRoutingAnnotationFix()
+              )
+            }
+            is PathAnnotationInfo.LocalPathInfo -> {
+              holder.registerProblem(
+                arg.sourcePsi ?: sourcePsi,
+                DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
+                AddMultiRoutingAnnotationFix()
+              )
+            }
+            is PathAnnotationInfo.Unspecified -> {
+              holder.registerProblem(
+                arg.sourcePsi ?: sourcePsi,
+                DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method"),
+                com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING,
+                AddMultiRoutingAnnotationFix()
+              )
             }
           }
         }
