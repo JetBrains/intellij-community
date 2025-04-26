@@ -39,6 +39,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -563,7 +564,7 @@ public class Invoker implements InvokerMBean {
   }
 
   private Object transformArg(@NotNull RemoteCall call, Object arg) {
-    if (arg != null && arg.getClass().isArray() && Array.getLength(arg) > 0 && ContainerUtil.and((Object[])arg, item -> item instanceof Ref)) {
+    if (arg != null && arg.getClass().isArray() && Array.getLength(arg) > 0 && arrayAll(arg, item -> item instanceof Ref)) {
       var componentType = getReference(call.getSessionId(), ((Ref)Array.get(arg, 0)).id()).getClass();
       var result = Array.newInstance(componentType, Array.getLength(arg));
       for (int i = 0; i < Array.getLength(arg); i++) {
@@ -661,6 +662,13 @@ public class Invoker implements InvokerMBean {
 
   private String genId() {
     return rdTarget.name() + "_" + REF_SEQUENCE.getAndIncrement();
+  }
+
+  private static boolean arrayAll(Object array, Predicate<Object> predicate) {
+    for (int i = 0; i < Array.getLength(array); i++) {
+      if (!predicate.test(Array.get(array, i))) return false;
+    }
+    return true;
   }
 
   interface Session {
