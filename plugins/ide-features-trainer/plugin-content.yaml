@@ -15,6 +15,7 @@
   contentModules:
   - name: intellij.vcs.git.featuresTrainer
   - name: intellij.featuresTrainer.onboarding
+  - name: intellij.kotlin.onboarding-promoter
 - name: lib/git-learning-project.jar
   library: git-learning-project
   files:

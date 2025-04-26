@@ -5,9 +5,9 @@
 
   <description><![CDATA[
     <p>
-      Learn basic shortcuts and essential features interactively - right inside the IDE.
+      Learn basic shortcuts and essential features interactively — right inside the IDE.
       No need to read long manuals or look for screencasts.
-      Just install this plugin, and open with the <b>Help | IDE Features Trainer</b> menu item.
+      Install the plugin, and open with the <b>Help | IDE Features Trainer</b> menu item.
     </p>
     <p/>
     <p>Found a bug or have a feature to suggest? Welcome to the tracker: <a href="https://youtrack.jetbrains.com/newIssue?project=IFT&description=**Description%3A**%20_Write%20description%20here_%0A%0A**Plugin%20version%3A**%20_Write%20plugin%20version%20here_">https://youtrack.jetbrains.com/issues/IFT</a></p>
@@ -22,6 +22,7 @@
   <content>
     <module name="intellij.vcs.git.featuresTrainer"/>
     <module name="intellij.featuresTrainer.onboarding"/>
+    <module name="intellij.kotlin.onboarding-promoter"/>
   </content>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
@@ -80,6 +81,7 @@
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
+    <!--suppress PluginXmlCapitalization -->
     <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"
         bundle="messages.LearnBundle" key="notification.group.feature.trainer"/>
   </extensions>
@@ -205,6 +207,7 @@
                  key="feature.suggester.force.show.suggestions"/>
     <registryKey defaultValue="false" description="Should suggesters be enabled in settings by default or not"
                  key="feature.suggester.enable.suggesters" restartRequired="true"/>
+    <!--suppress PluginXmlCapitalization -->
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
         bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
 
