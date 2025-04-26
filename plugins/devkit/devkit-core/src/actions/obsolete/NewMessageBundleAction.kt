@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
+import org.jetbrains.idea.devkit.actions.templates.generateDefaultBundleName
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -107,14 +107,6 @@ internal class NewMessageBundleAction : CreateElementActionBase() {
   override fun getActionName(directory: PsiDirectory, newName: String): String {
     return DevKitBundle.message("action.DevKit.NewMessageBundle.action.name.create.new.message.bundle", newName)
   }
-}
-
-fun generateDefaultBundleName(module: Module): String {
-  val nameWithoutPrefix = module.name.removePrefix("intellij.").removeSuffix(".impl")
-  val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")
-  val commonPrefix = commonGroupNames.find { nameWithoutPrefix.startsWith("$it.") }
-  val shortenedName = if (commonPrefix != null) nameWithoutPrefix.removePrefix("$commonPrefix.") else nameWithoutPrefix
-  return shortenedName.split(".").joinToString("") { StringUtil.capitalize(it) } + "Bundle"
 }
 
 internal fun getOrCreateBundleResourcesRoot(module: Module): PsiDirectory? {

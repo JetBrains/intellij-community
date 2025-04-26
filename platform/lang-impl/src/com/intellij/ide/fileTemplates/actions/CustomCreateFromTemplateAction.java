@@ -41,10 +41,10 @@ public abstract class CustomCreateFromTemplateAction extends CreateFileFromTempl
       .setTitle(UIBundle.message("create.new.file.from.template.dialog.title", myTemplateName))
       .addKind(myTemplateName, FileTemplateUtil.getIcon(template), template.getName());
 
-    customizeBuilder(builder);
+    customizeBuilder(builder, directory);
   }
 
-  protected void customizeBuilder(@NotNull CreateFileFromTemplateDialog.Builder builder) { }
+  protected void customizeBuilder(@NotNull CreateFileFromTemplateDialog.Builder builder, @NotNull PsiDirectory directory) { }
 
   @SuppressWarnings("HardCodedStringLiteral")
   @Override

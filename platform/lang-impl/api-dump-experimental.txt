@@ -620,7 +620,7 @@ com.intellij.ide.actions.searcheverywhere.SearchListener
 - com.intellij.ide.actions.CreateFileFromTemplateAction
 - p:<init>(java.lang.String):V
 - p:buildDialog(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory,com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder):V
-- p:customizeBuilder(com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder):V
+- p:customizeBuilder(com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder,com.intellij.psi.PsiDirectory):V
 - p:getActionName(com.intellij.psi.PsiDirectory,java.lang.String,java.lang.String):java.lang.String
 - p:getLiveTemplateDefaults(com.intellij.openapi.actionSystem.DataContext,com.intellij.psi.PsiFile):java.util.Map
 - p:postProcess(com.intellij.psi.PsiFile,com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.util.Map):V
