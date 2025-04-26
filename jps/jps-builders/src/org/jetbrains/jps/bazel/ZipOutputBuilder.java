@@ -1,9 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public interface ZipOutputBuilder {
+public interface ZipOutputBuilder extends Closeable {
 
   Iterable<String> getEntryNames();
 
@@ -14,6 +15,11 @@ public interface ZipOutputBuilder {
   void putEntry(String entryName, byte[] content);
 
   void deleteEntry(String entryName);
+
+  @Override
+  default void close() throws IOException {
+    close(true);
+  }
 
   void close(boolean saveChanges) throws IOException;
 }

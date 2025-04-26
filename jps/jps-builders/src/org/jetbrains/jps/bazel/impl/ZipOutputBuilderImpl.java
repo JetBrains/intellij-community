@@ -7,6 +7,7 @@ import org.jetbrains.jps.bazel.ZipOutputBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -18,8 +19,6 @@ import java.util.zip.ZipOutputStream;
 import static org.jetbrains.jps.javac.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
-  private static final byte[] EMPTY_BYTES = new byte[0];
-  
   private final Map<String, EntryData> myEntries = new TreeMap<>();
   private final Map<String, ZipEntry> myDirectoryEntries = new HashMap<>();
   private final ZipFile myZipFile;
@@ -59,7 +58,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     }
     catch (IOException e) {
       // todo: diagnostics
-      return EMPTY_BYTES;
+      return EntryData.NO_DATA_BYTES;
     }
   }
 
@@ -98,7 +97,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           zos.putNextEntry(zipEntry);
           if (!zipEntry.isDirectory()) {
             // either new content or the one loaded from the previous file
-            zos.write(data.getContent());
+            data.transferTo(zos);
           }
           it.remove();
         }
@@ -126,10 +125,12 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
 
   private interface EntryData {
+    byte[] NO_DATA_BYTES = new byte[0];
+    
     EntryData DIR_DATA = new EntryData() {
       @Override
       public byte[] getContent() {
-        return EMPTY_BYTES;
+        return NO_DATA_BYTES;
       }
 
       @Override
@@ -142,6 +143,13 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
     ZipEntry getZipEntry();
 
+    default void transferTo(OutputStream os) throws IOException {
+      byte[] data = getContent();
+      if (data != NO_DATA_BYTES) {
+        os.write(data);
+      }
+    }
+    
     static EntryData create(String entryName, byte[] content) {
       return new EntryData() {
         private ZipEntry entry;
@@ -162,7 +170,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         return new EntryData() {
           @Override
           public byte[] getContent() {
-            return EMPTY_BYTES;
+            return NO_DATA_BYTES;
           }
 
           @Override
@@ -181,6 +189,12 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
             }
           }
           return loaded;
+        }
+
+        @Override
+        public void transferTo(OutputStream os) throws IOException {
+          // todo: here can be an optimized implementation to directly copy existing deflated content avoiding inflate/deflate procedures
+          EntryData.super.transferTo(os);
         }
 
         @Override
