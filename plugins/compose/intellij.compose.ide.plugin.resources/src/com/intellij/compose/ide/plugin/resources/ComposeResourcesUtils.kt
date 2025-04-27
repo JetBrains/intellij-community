@@ -24,6 +24,10 @@ internal val String.isValidInnerComposeResourcesDirName: Boolean
   get() =
     VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES.any { this.startsWith(it, ignoreCase = true) }
 
+internal fun String.isValidInnerComposeResourcesDirNameFor(dirNames: Set<String>): Boolean =
+  (dirNames intersect VALID_INNER_COMPOSE_RESOURCES_DIR_NAMES).any { this.startsWith(it, ignoreCase = true) }
+
+internal val String.withoutExtension: String get() = substringBeforeLast(".")
 
 /** Retrieves the module name for the Compose resources task of the given module. */
 internal fun Module.getModuleNameForComposeResourcesTask(): String? =
