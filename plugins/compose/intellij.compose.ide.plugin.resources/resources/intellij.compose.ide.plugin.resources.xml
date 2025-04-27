@@ -21,6 +21,12 @@
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService$ComposeResourcesWatcherActivity"/>
     <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataService"/>
     <usageTypeProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageTypeProvider" order="first"/>
+    <!-- find usages -->
+    <findUsagesHandlerFactory
+      implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesFileFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory
+      implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesXmlFindUsagesHandlerFactory"/>
+    <usageTargetProvider implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesUsagesTargetProvider"/>
   </extensions>
 
   <projectListeners>
