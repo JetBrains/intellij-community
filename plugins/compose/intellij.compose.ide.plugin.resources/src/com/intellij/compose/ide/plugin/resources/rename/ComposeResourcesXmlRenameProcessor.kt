@@ -4,7 +4,6 @@ package com.intellij.compose.ide.plugin.resources.rename
 import com.intellij.compose.ide.plugin.resources.*
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.ide.TitledHandler
-import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.PsiElementRenameHandler
@@ -24,9 +22,7 @@ import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.rename.RenameXmlAttributeProcessor
 import com.intellij.ui.EditorTextField
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.isPublic
 import kotlin.reflect.KProperty
 
 /**
@@ -52,10 +48,10 @@ internal class ComposeResourcesXmlRenameProcessor : RenameXmlAttributeProcessor(
 }
 
 /** Custom [RenameHandler] for Compose resources string values rename in XML files. */
-internal class ComposeResourcesXmlRenameHandler : RenameHandler, TitledHandler {
+internal class ComposeResourcesXmlRenameHandler : RenameHandler, TitledHandler, ComposeResourcesXmlBase {
   override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
     val file = CommonDataKeys.PSI_FILE.getData(dataContext) ?: return false
-    return file.language == XMLLanguage.INSTANCE && file.parent?.name?.isValidInnerComposeResourcesDirName == true
+    return isComposeResourcesElement(file)
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
@@ -66,11 +62,7 @@ internal class ComposeResourcesXmlRenameHandler : RenameHandler, TitledHandler {
       file.findElementAt(offset)
     } ?: return
 
-    val projectScope = GlobalSearchScope.projectScope(project)
-    val elementName = element.text ?: return
-    val declaration = KotlinPropertyShortNameIndex[elementName, project, projectScope].firstOrNull { !it.isPublic } ?: return
-    val property = declaration as? KtProperty ?: return
-
+    val property = getKotlinPropertyFromComposeResource(element) ?: return
     val newName = NEW_NAME_COMPOSE_RESOURCE.getData(dataContext)
     ResourceRenameDialog(project, property, null, editor, newName).show(dataContext)
   }
