@@ -282,7 +282,31 @@ class MarkdownJCEFHtmlPanel(
   }
 
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
-    updateHandler.setContent(html, initialScrollOffset, document)
+    val updatedHtml = StringBuilder()
+    var highestIndex = 0
+
+    // Some images don't get properly annotated with a source range. Add those source ranges now.
+    Regex("""<img\s+(?!class)[^>]+?>""", RegexOption.DOT_MATCHES_ALL).findAll(html).forEach {
+      val before = html.substring(highestIndex, it.range.first)
+      var img = it.value
+
+      if (!img.contains(md_src_pos)) {
+        val after = html.substring(it.range.last)
+        val previousSrcIndex = Regex("""$md_src_pos="\d+\.\.(\d+)"""").findAll(before).lastOrNull()?.groupValues?.get(1)?.toIntOrNull()
+        val nextSrcIndex = Regex("""$md_src_pos="(\d+)\.\.\d+"""").find(after)?.groupValues?.get(1)?.toIntOrNull()
+
+        if (previousSrcIndex != null && nextSrcIndex != null) {
+          img = "<img md-src-pos=\"$previousSrcIndex..$nextSrcIndex\"" + img.substring(4)
+        }
+      }
+
+      updatedHtml.append(before)
+      updatedHtml.append(img)
+      highestIndex = it.range.last + 1
+    }
+
+    updatedHtml.append(html.substring(highestIndex))
+    updateHandler.setContent(updatedHtml.toString(), initialScrollOffset, document)
   }
 
   @ApiStatus.Internal
@@ -506,6 +530,7 @@ class MarkdownJCEFHtmlPanel(
     private val logger = logger<MarkdownJCEFHtmlPanel>()
 
     private const val SET_SCROLL_EVENT = "setScroll"
+    private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 
     private val baseScripts = listOf(
       "incremental-dom.min.js",
