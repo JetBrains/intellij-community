@@ -17,6 +17,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "DevKitIcons",
         packageName = "org.jetbrains.idea.devkit",
       )
+      "intellij.diagram.impl" -> IntellijIconClassGeneratorModuleConfig(
+        className = "UmlIcons",
+        packageName = "com.intellij.uml"
+      )
       "intellij.platform.ide.ui.inspector" -> IntellijIconClassGeneratorModuleConfig(
         // inspection icons are loaded by com.intellij.internal.inspector.components.HierarchyTree.Icons
         excludePackages = listOf("com.intellij.internal.inspector.icons"),

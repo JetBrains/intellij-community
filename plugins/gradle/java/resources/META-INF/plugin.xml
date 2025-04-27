@@ -1,11 +1,12 @@
-<idea-plugin implementation-detail="true">
-  <name>Gradle-Java</name>
-  <!-- "org.jetbrains.plugins.gradle" id has been reused to avoid dependant plugins breakage-->
+<idea-plugin allow-bundled-update="true">
+  <name>Gradle for Java</name>
+  <!-- "org.jetbrains.plugins.gradle" id has been reused to avoid dependent plugins breakage-->
   <id>org.jetbrains.plugins.gradle</id>
-  <description>
-    Plugin provides Java Gradle projects support
-  </description>
   <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+  <description>
+    Provides Java Gradle projects import, run configuration and profiler integrations.
+  </description>
 
   <depends>com.intellij.java</depends>
   <depends>com.intellij.gradle</depends>
@@ -19,6 +20,10 @@
   <depends optional="true" config-file="gradle-properties-integration.xml">com.intellij.properties</depends>
   <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
   <depends optional="true" config-file="gradle-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
+
+  <content>
+    <module name="intellij.gradle.profiler"/>
+  </content>
 
   <resource-bundle>messages.GradleInspectionBundle</resource-bundle>
 
@@ -41,7 +46,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-
     <taskManager implementation="org.jetbrains.plugins.gradle.service.task.JavaGradleTaskManagerExtension"/>
 
     <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor"/>

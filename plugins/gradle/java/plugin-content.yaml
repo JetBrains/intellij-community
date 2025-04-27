@@ -7,3 +7,6 @@
     libraries:
       ant:
       - name: $MAVEN_REPOSITORY$/org/apache/ant/ant/1/ant-1.jar
+- name: lib/modules/intellij.gradle.profiler.jar
+  contentModules:
+  - name: intellij.gradle.profiler
