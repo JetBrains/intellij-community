@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -20,6 +22,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION
@@ -132,10 +135,29 @@ fun KtNamedFunction.getKMPDesktopGradleConfigurationName(runTask: KotlinJvmRunTa
 
 fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSourceDirectoryName() ?: name
 
+@RequiresReadLock
 fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
 
+@RequiresReadLock
 internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
 
 private fun Module.getSourceDirectoryName(): String? = name.split(".").getOrNull(1)
+
+fun configureKmpJvmRunConfiguration(
+    configuration: GradleRunConfiguration,
+    function: KtNamedFunction,
+    runTask: KotlinJvmRunTaskData,
+    module: Module
+) {
+    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPDesktopGradleConfigurationName(runTask) }
+    configuration.isDebugAllEnabled = false
+    configuration.isDebugServerProcess = false
+
+    configuration.settings.apply {
+        externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+        taskNames = listOf(runTask.taskName)
+        scriptParameters = ReadAction.compute<String, Throwable> { kmpJvmGradleTaskParameters(function) }
+    }
+}
 
 private const val quietParameter: String = "--quiet"

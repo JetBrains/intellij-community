@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
@@ -68,15 +67,7 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
 
-        configuration.name = function.getKMPDesktopGradleConfigurationName(runTask)
-        configuration.isDebugAllEnabled = false
-        configuration.isDebugServerProcess = false
-
-        configuration.settings.apply {
-            externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
-            taskNames = listOf(runTask.taskName)
-            scriptParameters = kmpJvmGradleTaskParameters(function)
-        }
+        configureKmpJvmRunConfiguration(configuration, function, runTask, module)
 
         return true
     }
