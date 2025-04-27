@@ -166,4 +166,21 @@ fun configureKmpJvmRunConfigurationFromMainFunction(
     }
 }
 
+fun configureKmpJvmRunConfiguration(
+    configuration: GradleRunConfiguration,
+    function: KtNamedFunction,
+    runTask: KotlinJvmRunTaskData,
+    module: Module
+) {
+    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPDesktopGradleConfigurationName(runTask) }
+    configuration.isDebugAllEnabled = false
+    configuration.isDebugServerProcess = false
+
+    configuration.settings.apply {
+        externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+        taskNames = listOf(runTask.taskName)
+        scriptParameters = ReadAction.compute<String, Throwable> { kmpJvmGradleTaskParameters(function) }
+    }
+}
+
 private const val quietParameter: String = "--quiet"
