@@ -18,6 +18,12 @@ import org.junit.jupiter.api.extension.ExtendWith
  *   }
  * }
  * ```
+ *
+ * Warning: You need to provide a special vm option, most likely
+ * ```
+ * -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+ * ```
+ * Run a test, and failure will report an option name
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)

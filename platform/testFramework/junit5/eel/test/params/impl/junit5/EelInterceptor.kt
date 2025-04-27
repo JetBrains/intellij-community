@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.impl.providers.LocalEelTestProvider
@@ -28,6 +29,7 @@ import java.lang.reflect.Method
 internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback {
   private companion object {
     const val REMOTE_EEL_EXECUTED = "REMOTE_EEL_EXECUTED"
+    const val PROVIDER_PROP_NAME = "java.nio.file.spi.DefaultFileSystemProvider"
 
     val ExtensionContext.atLeastOneRemoteEelRequired: Boolean
       get() =
@@ -37,6 +39,11 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback {
   }
 
   override fun beforeAll(context: ExtensionContext) {
+    //    -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+    val name = MultiRoutingFileSystemProvider::class.qualifiedName!!
+    assert(System.getProperty(PROVIDER_PROP_NAME) == name) {
+      "Please add `-D$PROVIDER_PROP_NAME=$name` as VMOption as eel needs custom nio provider"
+    }
     if (context.atLeastOneRemoteEelRequired) {
       assert(getEelTestProviders().any { it !is LocalEelTestProvider }) {
         """
