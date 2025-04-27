@@ -19,6 +19,8 @@
     <codeInsight.completion.command.provider language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToDeclarationCommandCompletionProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToSuperMethodCommandCompletionProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToImplementationCommandCompletionProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinFormatCodeCompletionCommandProvider"/>

@@ -230,6 +230,39 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun testGoToSuperMethod() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """
+            open class TestSuper {
+                open fun foo() {}
+            
+                class Child : TestSuper() {
+                    override fun foo.<caret>() {
+                        super.foo()
+                        println()
+                    }
+                }
+            }""".trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        selectItem(elements.first { element -> element.lookupString.contains("Go to super", ignoreCase = true) })
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+        myFixture.checkResult(
+            """
+            open class TestSuper {
+                open fun <caret>foo() {}
+            
+                class Child : TestSuper() {
+                    override fun foo() {
+                        super.foo()
+                        println()
+                    }
+                }
+            }""".trimIndent()
+        )
+    }
+
     fun testIntroduceParameter() {
         Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(

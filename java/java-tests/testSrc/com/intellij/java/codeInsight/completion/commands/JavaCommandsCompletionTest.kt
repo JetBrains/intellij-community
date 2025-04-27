@@ -387,6 +387,41 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
   }
 
+  fun testCommandsGoToSuper() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        public class TestSuper {
+        
+            public void foo() {}
+            
+            public static class Child extends TestSuper {
+                @Override
+                public void foo().<caret> {
+                    super.foo();
+                    System.out.println();
+                }
+            }
+        }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Go to super", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+        public class TestSuper {
+        
+            public void <caret>foo() {}
+            
+            public static class Child extends TestSuper {
+                @Override
+                public void foo() {
+                    super.foo();
+                    System.out.println();
+                }
+            }
+        }
+      """.trimIndent())
+  }
+
   fun testRedCode() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     runBlocking {

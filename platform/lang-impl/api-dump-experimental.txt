@@ -233,6 +233,13 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractGoToSuperMethodCompletionCommandProvider
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- a:canGoToSuperMethod(com.intellij.psi.PsiElement,I):Z
+- p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
+- p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractInlineMethodCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V
