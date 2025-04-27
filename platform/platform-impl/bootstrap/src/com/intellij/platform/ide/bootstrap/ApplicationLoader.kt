@@ -319,7 +319,7 @@ private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob:
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
     if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
-      // ActionManager can use UISettings (KeymapManager doesn't use it, but just to be sure)
+      // ActionManager can use UISettings (KeymapManager doesn't use it but just to be sure)
       initLafJob.join()
     }
 
@@ -464,9 +464,15 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
-  val result = point.asSequence().toList()
+  val dynamicPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.dynamicApplicationInitializedListener")
+
+  val extensions = mutableListOf<ApplicationInitializedListener>()
+  extensions.addAll(point.extensionList)
+  extensions.addAll(dynamicPoint.extensionList)
+
   point.reset()
-  return result
+  dynamicPoint.reset()
+  return extensions
 }
 
 private fun CoroutineScope.runPostAppInitTasks() {
