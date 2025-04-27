@@ -13,5 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.bookmarks.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView.frontend" scope="RUNTIME" />
   </component>
 </module>

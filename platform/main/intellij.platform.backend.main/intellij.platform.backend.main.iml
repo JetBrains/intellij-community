@@ -17,5 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.editor.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl.backend" />
+    <orderEntry type="module" module-name="intellij.platform.execution.serviceView.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
   </component>
 </module>
