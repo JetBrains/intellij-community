@@ -117,14 +117,14 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
 
               // Test with @MultiRoutingFileSystemPath values
               @MultiRoutingFileSystemPath String multiRoutingPath = "/path/to/file";
-              processLocalPath(multiRoutingPath); // Should be warned (currently not implemented)
+              processLocalPath(<warning descr="A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @LocalPath">multiRoutingPath</warning>); // Should be warned
 
               // Test with @NativePath values
               @NativePath String nativePath = "/native/path";
-              processLocalPath(nativePath); // Should be warned (currently not implemented)
+              processLocalPath(<warning descr="A string annotated with @NativePath is passed to a method parameter annotated with @LocalPath">nativePath</warning>); // Should be warned
 
               // Test with string literals
-              processLocalPath("/unannotated/path"); // Should be warned (currently not implemented)
+              processLocalPath(<warning descr="String without path annotation used in method parameter annotated with @LocalPath">"/unannotated/path"</warning>); // Should be warned
               processLocalPath("file.txt"); // Should be accepted as it's a valid filename
           }
 
@@ -153,18 +153,18 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
 
               // Test with @MultiRoutingFileSystemPath values
               @MultiRoutingFileSystemPath String multiRoutingPath = "/path/to/file";
-              processFilename(multiRoutingPath); // Should be warned (currently not implemented)
+              processFilename(<warning descr="A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @Filename">multiRoutingPath</warning>); // Should be warned
 
               // Test with @LocalPath values
               @LocalPath String localPath = "/local/path";
-              processFilename(localPath); // Should be warned (currently not implemented)
+              processFilename(<warning descr="A string annotated with @LocalPath is passed to a method parameter annotated with @Filename">localPath</warning>); // Should be warned
 
               // Test with @NativePath values
               @NativePath String nativePath = "/native/path";
-              processFilename(nativePath); // Should be warned (currently not implemented)
+              processFilename(<warning descr="A string annotated with @NativePath is passed to a method parameter annotated with @Filename">nativePath</warning>); // Should be warned
 
               // Test with string literals
-              processFilename("/unannotated/path"); // Should be warned (currently not implemented)
+              processFilename(<warning descr="String without path annotation used in method parameter annotated with @Filename">"/unannotated/path"</warning>); // Should be warned
               processFilename("file.txt"); // Should be accepted as it's a valid filename
           }
 

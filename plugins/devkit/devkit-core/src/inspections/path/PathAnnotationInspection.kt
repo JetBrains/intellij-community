@@ -37,7 +37,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     return com.intellij.uast.UastHintedVisitorAdapter.create(
       holder.file.language,
       PathAnnotationVisitor(holder),
-      arrayOf(UCallExpression::class.java, UInjectionHost::class.java)
+      arrayOf(UCallExpression::class.java, UInjectionHost::class.java, UReturnExpression::class.java)
     )
   }
 
@@ -311,19 +311,230 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val expectedInfo = PathAnnotationInfo.forModifierListOwner(parameter)
         val actualInfo = PathAnnotationInfo.forExpression(arg)
 
-        if (expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Native) {
-          // Report error: @NativePath string passed to method expecting @MultiRoutingFileSystemPath
+        // Check if the argument is a string literal that denotes a valid filename
+        if (arg is UInjectionHost) {
+          val stringValue = arg.evaluateToString()
+          if (stringValue != null && PathAnnotationInfo.isValidFilename(stringValue)) {
+            // If it's a valid filename, don't register any problems
+            continue
+          }
+        }
+
+        // Check if the argument is a reference to a variable with a string constant initializer that denotes a valid filename
+        if (arg is UReferenceExpression) {
+          val resolved = arg.resolve()
+          if (resolved is com.intellij.psi.PsiVariable) {
+            val initializer = resolved.initializer
+            if (initializer != null) {
+              // Try to evaluate the initializer as a string constant
+              val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
+                .constantEvaluationHelper.computeConstantExpression(initializer)
+              if (constantValue is String && PathAnnotationInfo.isValidFilename(constantValue)) {
+                // If it's a valid filename, don't register any problems
+                continue
+              }
+            }
+          }
+        }
+
+        when {
+          // Methods expecting @MultiRoutingFileSystemPath should not accept @NativePath values
+          expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Native -> {
+            // Report error: @NativePath string passed to method expecting @MultiRoutingFileSystemPath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              DevKitBundle.message("inspections.message.nativepath.passed.to.multiroutingfilesystempath.method.parameter"),
+              AddMultiRoutingAnnotationFix()
+            )
+          }
+          // Methods expecting @NativePath should not accept @MultiRoutingFileSystemPath values
+          expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.MultiRouting -> {
+            // Report error: @MultiRoutingFileSystemPath string passed to method expecting @NativePath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              DevKitBundle.message("inspections.message.multiroutingfilesystempath.passed.to.nativepath.method.parameter"),
+              AddNativePathAnnotationFix()
+            )
+          }
+          // Methods expecting @NativePath should not accept @LocalPath values
+          expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.LocalPathInfo -> {
+            // Report error: @LocalPath string passed to method expecting @NativePath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
+              AddNativePathAnnotationFix()
+            )
+          }
+          // Methods expecting @LocalPath should not accept @MultiRoutingFileSystemPath values
+          expectedInfo is PathAnnotationInfo.LocalPathInfo && actualInfo is PathAnnotationInfo.MultiRouting -> {
+            // Report error: @MultiRoutingFileSystemPath string passed to method expecting @LocalPath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @LocalPath",
+              AddLocalPathAnnotationFix()
+            )
+          }
+          // Methods expecting @LocalPath should not accept @NativePath values
+          expectedInfo is PathAnnotationInfo.LocalPathInfo && actualInfo is PathAnnotationInfo.Native -> {
+            // Report error: @NativePath string passed to method expecting @LocalPath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "A string annotated with @NativePath is passed to a method parameter annotated with @LocalPath",
+              AddLocalPathAnnotationFix()
+            )
+          }
+          // Methods expecting @Filename should not accept @MultiRoutingFileSystemPath values
+          expectedInfo is PathAnnotationInfo.FilenameInfo && actualInfo is PathAnnotationInfo.MultiRouting -> {
+            // Report error: @MultiRoutingFileSystemPath string passed to method expecting @Filename
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @Filename",
+              AddFilenameAnnotationFix()
+            )
+          }
+          // Methods expecting @Filename should not accept @LocalPath values
+          expectedInfo is PathAnnotationInfo.FilenameInfo && actualInfo is PathAnnotationInfo.LocalPathInfo -> {
+            // Report error: @LocalPath string passed to method expecting @Filename
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "A string annotated with @LocalPath is passed to a method parameter annotated with @Filename",
+              AddFilenameAnnotationFix()
+            )
+          }
+          // Methods expecting @Filename should not accept @NativePath values
+          expectedInfo is PathAnnotationInfo.FilenameInfo && actualInfo is PathAnnotationInfo.Native -> {
+            // Report error: @NativePath string passed to method expecting @Filename
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "A string annotated with @NativePath is passed to a method parameter annotated with @Filename",
+              AddFilenameAnnotationFix()
+            )
+          }
+          // Methods expecting @MultiRoutingFileSystemPath should not accept unannotated values
+          expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Unspecified -> {
+            // Report error: Unannotated string passed to method expecting @MultiRoutingFileSystemPath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath"),
+              AddMultiRoutingAnnotationFix()
+            )
+          }
+          // Methods expecting @NativePath should not accept unannotated values
+          expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.Unspecified -> {
+            // Report error: Unannotated string passed to method expecting @NativePath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
+              AddNativePathAnnotationFix()
+            )
+          }
+          // Methods expecting @LocalPath should not accept unannotated values
+          expectedInfo is PathAnnotationInfo.LocalPathInfo && actualInfo is PathAnnotationInfo.Unspecified -> {
+            // Report error: Unannotated string passed to method expecting @LocalPath
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "String without path annotation used in method parameter annotated with @LocalPath",
+              AddLocalPathAnnotationFix()
+            )
+          }
+          // Methods expecting @Filename should not accept unannotated values
+          expectedInfo is PathAnnotationInfo.FilenameInfo && actualInfo is PathAnnotationInfo.Unspecified -> {
+            // Report error: Unannotated string passed to method expecting @Filename
+            holder.registerProblem(
+              arg.sourcePsi ?: sourcePsi,
+              "String without path annotation used in method parameter annotated with @Filename",
+              AddFilenameAnnotationFix()
+            )
+          }
+        }
+      }
+
+      return true
+    }
+
+    override fun visitReturnExpression(node: UReturnExpression): Boolean {
+      val sourcePsi = node.sourcePsi ?: return true
+      val returnValue = node.returnExpression ?: return true
+
+      // Skip if the return value is a string literal that denotes a valid filename
+      if (returnValue is UInjectionHost) {
+        val stringValue = returnValue.evaluateToString()
+        if (stringValue != null && PathAnnotationInfo.isValidFilename(stringValue)) {
+          // If it's a valid filename, don't register any problems
+          return true
+        }
+      }
+
+      // Skip if the return value is a reference to a variable with a string constant initializer that denotes a valid filename
+      if (returnValue is UReferenceExpression) {
+        val resolved = returnValue.resolve()
+        if (resolved is com.intellij.psi.PsiVariable) {
+          val initializer = resolved.initializer
+          if (initializer != null) {
+            // Try to evaluate the initializer as a string constant
+            val constantValue = com.intellij.psi.JavaPsiFacade.getInstance(resolved.project)
+              .constantEvaluationHelper.computeConstantExpression(initializer)
+            if (constantValue is String && PathAnnotationInfo.isValidFilename(constantValue)) {
+              // If it's a valid filename, don't register any problems
+              return true
+            }
+          }
+        }
+      }
+
+      // Get the containing method
+      val containingMethod = node.getContainingUMethod() ?: return true
+      val methodPsi = containingMethod.javaPsi ?: return true
+
+      // Check if the method has a return type with a path annotation
+      val expectedInfo = PathAnnotationInfo.forModifierListOwner(methodPsi)
+      if (expectedInfo is PathAnnotationInfo.Unspecified) {
+        // If the method doesn't have a path annotation, don't register any problems
+        return true
+      }
+
+      // Check if the return value has a path annotation
+      val actualInfo = PathAnnotationInfo.forExpression(returnValue)
+
+      // Check if the return value matches the expected path annotation type
+      when {
+        // Methods returning @MultiRoutingFileSystemPath should not return @NativePath values
+        expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Native -> {
           holder.registerProblem(
-            arg.sourcePsi ?: sourcePsi,
+            returnValue.sourcePsi ?: sourcePsi,
             DevKitBundle.message("inspections.message.nativepath.passed.to.multiroutingfilesystempath.method.parameter"),
             AddMultiRoutingAnnotationFix()
           )
         }
-        else if (expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.MultiRouting) {
-          // Report error: @MultiRoutingFileSystemPath string passed to method expecting @NativePath
+        // Methods returning @NativePath should not return @MultiRoutingFileSystemPath values
+        expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.MultiRouting -> {
           holder.registerProblem(
-            arg.sourcePsi ?: sourcePsi,
+            returnValue.sourcePsi ?: sourcePsi,
             DevKitBundle.message("inspections.message.multiroutingfilesystempath.passed.to.nativepath.method.parameter"),
+            AddNativePathAnnotationFix()
+          )
+        }
+        // Methods returning @NativePath should not return @LocalPath values
+        expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.LocalPathInfo -> {
+          holder.registerProblem(
+            returnValue.sourcePsi ?: sourcePsi,
+            DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
+            AddNativePathAnnotationFix()
+          )
+        }
+        // Methods returning @MultiRoutingFileSystemPath should not return unannotated values
+        expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Unspecified -> {
+          holder.registerProblem(
+            returnValue.sourcePsi ?: sourcePsi,
+            DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath"),
+            AddMultiRoutingAnnotationFix()
+          )
+        }
+        // Methods returning @NativePath should not return unannotated values
+        expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.Unspecified -> {
+          holder.registerProblem(
+            returnValue.sourcePsi ?: sourcePsi,
+            DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
             AddNativePathAnnotationFix()
           )
         }
@@ -692,6 +903,74 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         if (annotationOwner != null) {
           val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
             NativePath::class.java.name,
+            emptyArray(),
+            annotationOwner
+          )
+
+          // Shorten class references to add imports
+          if (annotation != null) {
+            // Get the containing file and shorten all class references in it
+            val containingFile = annotation.containingFile
+            if (containingFile != null) {
+              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Quick fix to add @LocalPath annotation.
+   */
+  private class AddLocalPathAnnotationFix() : LocalQuickFix {
+    override fun getFamilyName(): String = "Add @LocalPath annotation"
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val element = descriptor.psiElement
+
+      // Try to find the variable reference inside the element
+      val targetElement = findVariableToAnnotate(element)
+
+      if (targetElement != null) {
+        val annotationOwner = targetElement.modifierList
+        if (annotationOwner != null) {
+          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
+            LocalPath::class.java.name,
+            emptyArray(),
+            annotationOwner
+          )
+
+          // Shorten class references to add imports
+          if (annotation != null) {
+            // Get the containing file and shorten all class references in it
+            val containingFile = annotation.containingFile
+            if (containingFile != null) {
+              JavaCodeStyleManager.getInstance(project).shortenClassReferences(containingFile)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Quick fix to add @Filename annotation.
+   */
+  private class AddFilenameAnnotationFix() : LocalQuickFix {
+    override fun getFamilyName(): String = "Add @Filename annotation"
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val element = descriptor.psiElement
+
+      // Try to find the variable reference inside the element
+      val targetElement = findVariableToAnnotate(element)
+
+      if (targetElement != null) {
+        val annotationOwner = targetElement.modifierList
+        if (annotationOwner != null) {
+          val annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(
+            Filename::class.java.name,
             emptyArray(),
             annotationOwner
           )
