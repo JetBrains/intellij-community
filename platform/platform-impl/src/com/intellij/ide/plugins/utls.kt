@@ -76,12 +76,12 @@ fun getUiInspectorContextFor(selectedPlugin: PluginUiModel): List<PropertyBean> 
   return result
 }
 
-fun getTags(plugin: IdeaPluginDescriptor): List<String> {
+fun IdeaPluginDescriptor.getTags(): List<String> {
   var tags: MutableList<String>? = null
-  val productCode = plugin.getProductCode()
+  val productCode = getProductCode()
 
-  if (plugin is PluginNode) {
-    tags = plugin.tags
+  if (this is PluginNode) {
+    tags = this.tags
 
     if (productCode != null) {
       if (LicensePanel.isEA2Product(productCode)) {
@@ -95,7 +95,7 @@ fun getTags(plugin: IdeaPluginDescriptor): List<String> {
       }
     }
   }
-  else if (productCode != null && !plugin.isBundled && !LicensePanel.isEA2Product(productCode)) {
+  else if (productCode != null && !this.isBundled && !LicensePanel.isEA2Product(productCode)) {
     val instance = LicensingFacade.getInstance()
     if (instance != null) {
       val stamp = instance.getConfirmationStamp(productCode)
@@ -103,7 +103,7 @@ fun getTags(plugin: IdeaPluginDescriptor): List<String> {
         return listOf(if (stamp.startsWith("eval:")) Tags.Trial.name else Tags.Purchased.name)
       }
     }
-    return if (plugin.isLicenseOptional()) listOf(Tags.Freemium.name) else listOf(Tags.Paid.name)
+    return if (isLicenseOptional()) listOf(Tags.Freemium.name) else listOf(Tags.Paid.name)
   }
   if (ContainerUtil.isEmpty(tags)) {
     return mutableListOf()

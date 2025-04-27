@@ -172,7 +172,7 @@ fun PluginUiModel.presentableSize(): String? {
 
 @ApiStatus.Internal
 fun PluginUiModel.calculateTags(): List<String> {
-  return getTags(this.getDescriptor())
+  return this.getDescriptor().getTags()
 }
 
 @NlsSafe
