@@ -97,20 +97,6 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
     val index = XBreakpointType.EXTENSION_POINT_NAME.extensionList.indexOf(this)
     val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(this)
-    val customPanels = XBreakpointTypeCustomPanels(
-      customPropertiesPanelProvider = {
-        this.createCustomPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-      },
-      customConditionsPanelProvider = {
-        this.createCustomConditionsPanel() as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-      },
-      customRightPropertiesPanelProvider = {
-        this.createCustomRightPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-      },
-      customTopPropertiesPanelProvider = {
-        this.createCustomTopPropertiesPanel(project) as? XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
-      }
-    )
     val icons = XBreakpointTypeIcons(
       enabledIcon = enabledIcon.rpcId(),
       disabledIcon = disabledIcon.rpcId(),
@@ -125,7 +111,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     return XBreakpointTypeDto(
       XBreakpointTypeId(id), index, title, isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
       standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
-      customPanels, icons
+      icons
     )
   }
 

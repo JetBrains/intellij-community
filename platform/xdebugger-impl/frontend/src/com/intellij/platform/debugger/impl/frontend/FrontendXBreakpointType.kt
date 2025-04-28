@@ -88,19 +88,19 @@ private open class FrontendXBreakpointType(
   }
 
   override fun createCustomPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return dto.customPanels.customPropertiesPanelProvider?.invoke()
+    return null
   }
 
   override fun createCustomConditionsPanel(): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return dto.customPanels.customConditionsPanelProvider?.invoke()
+    return null
   }
 
   override fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return dto.customPanels.customRightPropertiesPanelProvider?.invoke()
+    return null
   }
 
   override fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>? {
-    return dto.customPanels.customTopPropertiesPanelProvider?.invoke()
+    return null
   }
 
   override fun isAddBreakpointButtonVisible(): Boolean {

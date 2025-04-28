@@ -96,17 +96,6 @@ data class XBreakpointTypeIcons(
   val temporaryIcon: IconId?,
 )
 
-
-// TODO: LUXify it for remote dev?
-@ApiStatus.Internal
-@Serializable
-data class XBreakpointTypeCustomPanels(
-  @Transient val customPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
-  @Transient val customConditionsPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
-  @Transient val customRightPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
-  @Transient val customTopPropertiesPanelProvider: (() -> XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?)? = null,
-)
-
 @ApiStatus.Internal
 @Serializable
 enum class XBreakpointTypeSerializableStandardPanels {
