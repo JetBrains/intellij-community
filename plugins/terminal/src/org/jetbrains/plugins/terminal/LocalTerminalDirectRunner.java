@@ -15,7 +15,6 @@ import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
@@ -102,10 +101,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     else {
       TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
-    }
-
-    if (isBlockTerminal) {
-      TerminalUsageLocalStorage.getInstance().recordBlockTerminalUsed();
     }
 
     Path workingDirPath = null;
