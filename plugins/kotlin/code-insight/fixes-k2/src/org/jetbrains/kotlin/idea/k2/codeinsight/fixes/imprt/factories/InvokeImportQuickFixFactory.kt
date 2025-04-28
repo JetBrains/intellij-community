@@ -40,15 +40,23 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
 
             is KaFirDiagnostic.UnresolvedReference,
             is KaFirDiagnostic.NoneApplicable -> {
-                val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
+                /*
+                For these diagnostics, we copy the receiver expression of the `invoke` call
+                and analyze it "in the air" to get the correct type of the receiver expression.
 
-                // we have no way to know the type of the receiver from the diagnostic,
-                // so we have to use in-the-air analysis of the receiver in isolation
+                We have to do this because Analysis API fails to return the correct `expressionType`
+                on the original PSI elements in these cases - instead it just returns `null`.
+
+                Only by stripping the implicit `invoke` operator call and analyzing the expression without it,
+                we can get the correct type of the receiver expression.
+                */
+
+                val invokeCallReceiverCopy = qualifiedInvokeCall.copyQualifiedCalleeExpression() ?: return null
                 invokeCallReceiverCopy.expressionType
             }
 
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> {
-                // for this diagnostic, AA can provide the receiver type just fine
+                // for this diagnostic, Analysis API can provide the receiver type just fine
                 invokeCallReceiver.expressionType
             }
 
@@ -87,6 +95,8 @@ private fun KtExpression.getCallExpressionForCallee(): KtCallExpression? {
  * returns a copy [KtExpression] representing only the callee expression with a possible qualifier.
  *
  * See [qualifiedCalleeExpressionTextRangeInThis] for example.
+ *
+ * N.B. The returned PSI expression is created using [org.jetbrains.kotlin.psi.KtExpressionCodeFragment].
  */
 private fun KtExpression.copyQualifiedCalleeExpression(): KtExpression? {
     val possiblyQualifiedCall = this
