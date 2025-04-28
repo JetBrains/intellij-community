@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import java.util.Objects;
  * memory efficiency.
  */
 final class FileWeakScope extends GlobalSearchScope implements VirtualFileEnumeration {
-  private final WeakReference<VirtualFile> myVirtualFile; // files can be out of project roots
+  private final @NotNull WeakReference<VirtualFile> myVirtualFile; // files can be out of project roots
   private final @Nullable @Nls String myDisplayName;
   private final @Nullable Module myModule;
   private final int myHashcode;
@@ -97,7 +98,12 @@ final class FileWeakScope extends GlobalSearchScope implements VirtualFileEnumer
     FileWeakScope files = (FileWeakScope)o;
     VirtualFile currentVirtualFile = myVirtualFile.get();
     if (currentVirtualFile == null) return false;
-    return Objects.equals(currentVirtualFile, files.myVirtualFile.get()) &&
+    VirtualFile otherVirtualFile = files.myVirtualFile.get();
+    if (currentVirtualFile instanceof LightVirtualFile &&
+        !(otherVirtualFile instanceof LightVirtualFile)) {
+      return false;
+    }
+    return Objects.equals(currentVirtualFile, otherVirtualFile) &&
            Objects.equals(myDisplayName, files.myDisplayName) &&
            Objects.equals(myModule, files.myModule);
   }
