@@ -12,7 +12,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
   companion object {
     private fun internalRead(root: XmlElement): Plist {
       if (root.children.isEmpty()) {
-        return Plist.EMPTY_PLIST
+        return Plist.Companion.EMPTY_PLIST
       }
 
       if ("plist" != root.name) {
@@ -20,7 +20,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
       }
 
       val dictElement = root.getChild("dict")
-      return if (dictElement != null) readDict(dictElement).plist else Plist.EMPTY_PLIST
+      return if (dictElement != null) readDict(dictElement).plist else Plist.Companion.EMPTY_PLIST
     }
 
     private fun readDict(dictElement: XmlElement): PListValue {
@@ -42,7 +42,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
         }
       }
 
-      return PListValue.value(Plist(map), PlistValueType.DICT)
+      return PListValue.Companion.value(Plist(map), PlistValueType.DICT)
     }
 
     private fun readValue(key: String, valueElement: XmlElement): PListValue? {
@@ -60,7 +60,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
     }
 
     private fun readArray(key: String, element: XmlElement): PListValue {
-      return PListValue.value(element.children.mapNotNull { readValue(key, it) }, PlistValueType.ARRAY)
+      return PListValue.Companion.value(element.children.mapNotNull { readValue(key, it) }, PlistValueType.ARRAY)
     }
 
     private fun readBasicValue(type: String, valueElement: XmlElement): PListValue? {
@@ -68,19 +68,19 @@ class XmlPlistReaderForTests : PlistReaderCore {
 
       return when {
         "string" == type && content != null -> {
-          PListValue.value(content, PlistValueType.STRING)
+          PListValue.Companion.value(content, PlistValueType.STRING)
         }
         "true" == type -> {
-          PListValue.value(true, PlistValueType.BOOLEAN)
+          PListValue.Companion.value(true, PlistValueType.BOOLEAN)
         }
         "false" == type -> {
-          PListValue.value(false, PlistValueType.BOOLEAN)
+          PListValue.Companion.value(false, PlistValueType.BOOLEAN)
         }
         "integer" == type && content != null -> {
-          PListValue.value(content.toInt(), PlistValueType.INTEGER)
+          PListValue.Companion.value(content.toInt(), PlistValueType.INTEGER)
         }
         "real" == type && content != null -> {
-          PListValue.value(content.toDouble(), PlistValueType.REAL)
+          PListValue.Companion.value(content.toDouble(), PlistValueType.REAL)
         }
         else -> null
       }
