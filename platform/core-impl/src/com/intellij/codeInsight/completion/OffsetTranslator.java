@@ -25,7 +25,7 @@ public class OffsetTranslator implements Disposable {
   private final Document myCopyDocument;
   private final List<DocumentEvent> myTranslation = new ArrayList<>();
 
-  public OffsetTranslator(Document originalDocument, PsiFile originalFile, Document copyDocument, int start, int end, String replacement) {
+  public OffsetTranslator(@NotNull Document originalDocument, @NotNull PsiFile originalFile, @NotNull Document copyDocument, int start, int end, @NotNull String replacement) {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
