@@ -30,6 +30,10 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//xml/xml-parser:parser",
     "//platform/usageView",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )
@@ -65,6 +69,11 @@ jvm_library(
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//xml/xml-parser:parser",
     "//platform/usageView",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
   ],
   runtime_deps = [":ide-plugin-resources_resources"]
 )
