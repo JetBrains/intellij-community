@@ -9,9 +9,9 @@ class KotlinSSParenthesesTest : KotlinStructuralSearchTest() {
         fun postIncrement(a: Int): Int {
             var b = a
             ++b
-            ++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">(b)</warning>
-            <warning descr="SSR">++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">((b))</warning></warning>
-            ++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.2.">(((b)))</warning>
+            ++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.3.">(b)</warning>
+            <warning descr="SSR">++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.3.">((b))</warning></warning>
+            ++<warning descr="[WRAPPED_LHS_IN_ASSIGNMENT_WARNING] Wrapping the left-hand side of assignments in parentheses, labels or annotations is not allowed. This will become an error in language version 2.3.">(((b)))</warning>
             return b
         }
     """.trimIndent()) }
