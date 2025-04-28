@@ -4,23 +4,22 @@
 package org.jetbrains.bazel.jvm.worker
 
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
 import org.jetbrains.jps.service.SharedThreadPool
-import java.util.concurrent.*
+import java.util.concurrent.Callable
+import java.util.concurrent.Executor
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 internal object BazelSharedThreadPool : SharedThreadPool() {
-  private val executor = Dispatchers.Default.asExecutor()
-
   // JPS uses MAX_BUILDER_THREADS as maxThreads - doesn't make sense for standalone, use coroutine dispatcher pool
-  override fun createBoundedExecutor(name: String, maxThreads: Int) = this
+  override fun createBoundedExecutor(name: String, maxThreads: Int) = throw UnsupportedOperationException()
 
   override fun createCustomPriorityQueueBoundedExecutor(name: String, maxThreads: Int, comparator: Comparator<in Runnable>): Executor {
     throw UnsupportedOperationException()
   }
 
   override fun execute(command: Runnable) {
-    executor.execute(command)
+    throw UnsupportedOperationException()
   }
 
   override fun shutdown() {
@@ -40,21 +39,16 @@ internal object BazelSharedThreadPool : SharedThreadPool() {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  override fun <T> submit(task: Callable<T>): Future<T> = CompletableFuture.supplyAsync({ task.call() }, executor)
+  override fun <T> submit(task: Callable<T>): Future<T> = throw UnsupportedOperationException()
 
   override fun <T> submit(task: Runnable, result: T): Future<T> {
-    return CompletableFuture.supplyAsync({
-      task.run()
-      result
-    }, executor)
+    throw UnsupportedOperationException()
   }
 
-  override fun submit(task: Runnable): Future<*> = CompletableFuture.runAsync(task, executor)
+  override fun submit(task: Runnable): Future<*> = throw UnsupportedOperationException()
 
   override fun <T> invokeAll(tasks: Collection<Callable<T>>): List<Future<T>> {
-    return tasks.map { task ->
-      CompletableFuture.supplyAsync({ task.call() }, executor)
-    }
+    throw UnsupportedOperationException()
   }
 
   override fun <T> invokeAll(tasks: Collection<Callable<T>>, timeout: Long, unit: TimeUnit): List<Future<T>> {
