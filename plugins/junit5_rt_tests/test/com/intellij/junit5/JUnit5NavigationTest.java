@@ -13,6 +13,7 @@ import org.junit.platform.launcher.TestIdentifier;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 import static java.util.Collections.singletonList;
 
@@ -23,7 +24,8 @@ class JUnit5NavigationTest {
   void methodNavigation() throws Exception {
     UniqueId uniqueId = UniqueId.parse("[class:JUnit5NavigationTest]/[method:methodNavigation]");
     TestMethodTestDescriptor methodTestDescriptor =
-      new TestMethodTestDescriptor(uniqueId, JUnit5NavigationTest.class, JUnit5NavigationTest.class.getDeclaredMethod("methodNavigation"), JUnit5TestRunnerBuilder.createJupiterConfiguration());
+      new TestMethodTestDescriptor(uniqueId, JUnit5NavigationTest.class, JUnit5NavigationTest.class.getDeclaredMethod("methodNavigation"),
+                                   () -> List.of(), JUnit5TestRunnerBuilder.createJupiterConfiguration());
     TestIdentifier testIdentifier = TestIdentifier.from(methodTestDescriptor);
     Assertions.assertEquals(JUnit5NavigationTest.class.getName(), JUnit5TestExecutionListener.getClassName(testIdentifier));
     Assertions.assertEquals("methodNavigation", JUnit5TestExecutionListener.getMethodName(testIdentifier));

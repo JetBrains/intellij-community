@@ -7,6 +7,7 @@ import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor;
 import org.junit.platform.engine.*;
+import org.junit.platform.engine.reporting.OutputDirectoryProvider;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.AbstractTestDescriptor;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
@@ -17,7 +18,9 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -47,6 +50,18 @@ public class JUnit5TestRunnerBuilder {
 
     @Override
     public Set<String> keySet() {
+      return null;
+    }
+  };
+
+  private static final OutputDirectoryProvider EMPTY_OUTPUT_DIRECTORY_PROVIDER = new OutputDirectoryProvider() {
+    @Override
+    public Path getRootDirectory() {
+      return null;
+    }
+
+    @Override
+    public Path createOutputDirectory(TestDescriptor testDescriptor) {
       return null;
     }
   };
@@ -85,8 +100,17 @@ public class JUnit5TestRunnerBuilder {
     };
   }
 
-  public static DefaultJupiterConfiguration createJupiterConfiguration() {
-    return new DefaultJupiterConfiguration(EMPTY_PARAMETER);
+  public TestDescriptorContext withTestMethod(Class<?> testClass, String methodName) throws NoSuchMethodException {
+    UniqueId classId = myEngineId.append("class", "testClass");
+    ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(classId, testClass, myJupiterConfiguration);
+    myEngineDescriptor.addChild(classTestDescriptor);
+
+    Method method = testClass.getDeclaredMethod(methodName);
+    UniqueId methodId = classId.append("method", "testMethod");
+    TestDescriptor testDescriptor = new TestMethodTestDescriptor(methodId, testClass, method, () -> List.of(), myJupiterConfiguration);
+    classTestDescriptor.addChild(testDescriptor);
+
+    return new TestDescriptorContext(testDescriptor, classTestDescriptor);
   }
 
   public JUnit5TestRunnerBuilder withRootName(String rootName) {
@@ -150,19 +174,6 @@ public class JUnit5TestRunnerBuilder {
     return new TestDescriptorContext(testDescriptor, classTestDescriptor);
   }
 
-  public TestDescriptorContext withTestMethod(Class<?> testClass, String methodName) throws NoSuchMethodException {
-    UniqueId classId = myEngineId.append("class", "testClass");
-    ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(classId, testClass, myJupiterConfiguration);
-    myEngineDescriptor.addChild(classTestDescriptor);
-
-    Method method = testClass.getDeclaredMethod(methodName);
-    UniqueId methodId = classId.append("method", "testMethod");
-    TestDescriptor testDescriptor = new TestMethodTestDescriptor(methodId, testClass, method, myJupiterConfiguration);
-    classTestDescriptor.addChild(testDescriptor);
-
-    return new TestDescriptorContext(testDescriptor, classTestDescriptor);
-  }
-
   public TestDescriptorContext withTestFactory(Class<?> testClass, String methodName) throws NoSuchMethodException {
     UniqueId classId = myEngineId.append("class", "testClass");
     ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(classId, testClass, myJupiterConfiguration);
@@ -170,15 +181,19 @@ public class JUnit5TestRunnerBuilder {
 
     Method method = testClass.getDeclaredMethod(methodName);
     UniqueId methodId = classId.append("method", "testMethod");
-    TestDescriptor testDescriptor = new TestFactoryTestDescriptor(methodId, testClass, method, myJupiterConfiguration);
+    TestDescriptor testDescriptor = new TestFactoryTestDescriptor(methodId, testClass, method, () -> List.of(), myJupiterConfiguration);
     classTestDescriptor.addChild(testDescriptor);
 
     return new TestDescriptorContext(testDescriptor, classTestDescriptor);
   }
 
   public JUnit5TestRunnerBuilder buildTestPlan() {
-    myTestPlan = TestPlan.from(Collections.singleton(myEngineDescriptor), EMPTY_PARAMETER);
+    myTestPlan = TestPlan.from(Collections.singleton(myEngineDescriptor), EMPTY_PARAMETER, EMPTY_OUTPUT_DIRECTORY_PROVIDER);
     return this;
+  }
+
+  public static DefaultJupiterConfiguration createJupiterConfiguration() {
+    return new DefaultJupiterConfiguration(EMPTY_PARAMETER, EMPTY_OUTPUT_DIRECTORY_PROVIDER);
   }
 
   /**
