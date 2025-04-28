@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
-import com.intellij.platform.recentFiles.frontend.model.RecentFilesCoroutineScopeProvider
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
+import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

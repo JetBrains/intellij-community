@@ -10,16 +10,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.frontend.SeItemDataFrontendProvider
-import com.intellij.platform.searchEverywhere.frontend.SeItemDataLocalProvider
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvider
+import com.intellij.platform.searchEverywhere.frontend.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
@@ -27,11 +29,13 @@ class SeTabDelegate private constructor(val project: Project,
                                         private val logLabel: String,
                                         private val providers: Map<SeProviderId, SeItemDataProvider>): Disposable {
   private val providersAndLimits = providers.values.associate { it.id to Int.MAX_VALUE }
+  val providersIdToName: Map<SeProviderId, @Nls String> = providers.mapValues { it.value.displayName }
 
-  fun getItems(params: SeParams): Flow<SeResultEvent> {
+  fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
     val accumulator = SeResultsAccumulator(providersAndLimits)
+    val filteredProviders = disabledProviders?.let { providers.filterKeys { it !in disabledProviders } } ?: providers
 
-    return providers.values.asFlow().flatMapMerge { provider ->
+    return filteredProviders.values.asFlow().flatMapMerge { provider ->
       provider.getItems(params).mapNotNull {
         SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.presentation.text}" }
         accumulator.add(it)
@@ -41,6 +45,10 @@ class SeTabDelegate private constructor(val project: Project,
 
   suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
     return providers.values.mapNotNull { it.getSearchScopesInfo() }
+  }
+
+  suspend fun getTypeVisibilityStates(): List<SeTypeVisibilityStatePresentation> {
+    return providers.values.flatMap { it.getTypeVisibilityStates() ?: emptyList() }
   }
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
@@ -79,16 +87,19 @@ class SeTabDelegate private constructor(val project: Project,
             null
           }
         }.toList().associate { provider ->
-          SeProviderId(provider.id) to SeItemDataLocalProvider(provider, sessionRef)
+          SeProviderId(provider.id) to SeLocalItemDataProvider(provider, sessionRef)
         }
 
       val remoteProviderIds =
         if (hasWildcard) SeRemoteApi.getInstance().getAvailableProviderIds()
         else allProviderIds - localProviders.keys.toSet()
 
-      val frontendProviders = remoteProviderIds.associateWith { providerId ->
-        SeItemDataFrontendProvider(project.projectId(), providerId, sessionRef, dataContextId)
-      }
+      val remoteProviderIdToName =
+        SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
+
+      val frontendProviders = remoteProviderIdToName.map { (providerId, name) ->
+        SeFrontendItemDataProvider(project.projectId(), providerId, name, sessionRef, dataContextId)
+      }.associateBy { it.id }
 
       val providers = frontendProviders + localProviders
       val delegate = SeTabDelegate(project, logLabel, providers)

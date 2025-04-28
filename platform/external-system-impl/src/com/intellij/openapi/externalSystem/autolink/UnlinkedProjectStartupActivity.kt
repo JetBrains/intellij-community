@@ -96,7 +96,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         extension.linkAndLoadProjectAsync(project, externalProjectPath)
         if (LOG.isDebugEnabled) {
           val projectId = extension.createProjectId(externalProjectPath)
-          LOG.debug(projectId.debugName + ": project is auto-linked")
+          LOG.debug("$projectId: project is auto-linked")
         }
         return
       }

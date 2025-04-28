@@ -273,6 +273,7 @@ internal class JdkDownloadDialog(
           val itemArch = CpuArch.fromString(it.item.item.arch)
           when {
             itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
+            it.item.item.isPreview -> warning(ProjectBundle.message("dialog.jdk.preview.validation"))
             else -> null
           }
         }

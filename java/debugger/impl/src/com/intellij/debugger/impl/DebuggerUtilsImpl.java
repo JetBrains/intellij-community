@@ -357,21 +357,33 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       catch (ObjectCollectedException oce) {
         if (--retries < 0) {
-          LOG.error("Retries exhausted, apply suspend-all evaluation");
-          if (evaluationContext.getSuspendContext() instanceof SuspendContextImpl suspendContextImpl) {
-            VirtualMachineProxyImpl virtualMachineProxy = suspendContextImpl.getVirtualMachineProxy();
-            virtualMachineProxy.suspend();
-            try {
-              return processor.apply(valueComputable.compute());
-            } finally {
-              virtualMachineProxy.resume();
-            }
-          }
-          else {
-            throw oce;
-          }
+          return suspendAllAndEvaluate(valueComputable, processor, evaluationContext);
         }
       }
+      catch (EvaluateException e) {
+        if (e.getCause() instanceof ObjectCollectedException) {
+          if (--retries < 0) {
+            return suspendAllAndEvaluate(valueComputable, processor, evaluationContext);
+          }
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+  }
+
+  private static <R, T> R suspendAllAndEvaluate(@NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
+                                                @NotNull Function<? super T, ? extends R> processor,
+                                                @NotNull EvaluationContext evaluationContext) throws EvaluateException {
+    LOG.error("Retries exhausted, applying suspend-all evaluation");
+    VirtualMachineProxyImpl virtualMachineProxy = ((EvaluationContextImpl)evaluationContext).getSuspendContext().getVirtualMachineProxy();
+    virtualMachineProxy.suspend();
+    try {
+      return processor.apply(valueComputable.compute());
+    }
+    finally {
+      virtualMachineProxy.resume();
     }
   }
 

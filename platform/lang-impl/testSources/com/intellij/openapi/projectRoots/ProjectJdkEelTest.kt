@@ -92,7 +92,9 @@ class ProjectJdkEelTest {
         Assertions.assertTrue { eelModel.sdks.size == 1 }
 
         eelModel.removeSdk(eelModel.sdks[0])
-        eelModel.apply()
+        withContext(Dispatchers.EDT) {
+          eelModel.apply()
+        }
 
         Assertions.assertTrue { localModel.sdks.size == 1 }
         Assertions.assertTrue { eelModel.sdks.size == 0 }

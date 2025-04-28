@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -79,8 +80,8 @@ internal class DarculaComboBoxRenderer : JLabel(), ListCellRenderer<Any>, Experi
   }
 
   private fun getItemBorder(): Border {
-    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
-    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets()
+    val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.unscaled.toInt()
+    val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets().let { (it as? JBInsets)?.unscaled ?: it }
 
     return JBUI.Borders.empty(2, innerInsets.left + leftRightInset, 2, innerInsets.right + leftRightInset)
   }

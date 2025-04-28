@@ -10,11 +10,14 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 
 
 @Internal
 class SeActionsAdaptedProvider(val project: Project, private val legacyContributor: ActionSearchEverywhereContributor): SeItemsProvider {
   override val id: String get() = ID
+  override val displayName: @Nls String
+    get() = legacyContributor.fullGroupName
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery

@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Providers
 import com.intellij.platform.searchEverywhere.backend.impl.SeBackendItemDataProvidersHolderEntity.Companion.Session
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.DurableRef
@@ -26,16 +27,18 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
 
-  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
-                       providerId: SeProviderId,
-                       params: SeParams,
-                       dataContextId: DataContextId?,
-                       requestedCountChannel: ReceiveChannel<Int>
+  suspend fun getItems(
+    sessionRef: DurableRef<SeSessionEntity>,
+    providerId: SeProviderId,
+    params: SeParams,
+    dataContextId: DataContextId?,
+    requestedCountChannel: ReceiveChannel<Int>,
   ): Flow<SeItemData> {
     val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return emptyFlow()
 
@@ -60,18 +63,21 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     }
   }
 
-  suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
-                       providerId: SeProviderId,
-                       params: SeParams,
-                       dataContextId: DataContextId?
+  suspend fun getItems(
+    sessionRef: DurableRef<SeSessionEntity>,
+    providerId: SeProviderId,
+    params: SeParams,
+    dataContextId: DataContextId?,
   ): Flow<SeItemData> {
     val provider = getProviders(sessionRef, dataContextId)[providerId]
 
     return provider?.getItems(params) ?: emptyFlow()
   }
 
-  private suspend fun getProviders(sessionRef: DurableRef<SeSessionEntity>,
-                                   dataContextId: DataContextId?): Map<SeProviderId, SeItemDataProvider> {
+  private suspend fun getProviders(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId?,
+  ): Map<SeProviderId, SeItemDataProvider> {
 
     val session = sessionRef.derefOrNull() ?: return emptyMap()
     var existingHolderEntities = entities(Session, session)
@@ -94,7 +100,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         provider
       }.toList().associate { provider ->
         val id = SeProviderId(provider.id)
-        id to SeItemDataBackendProvider(id, provider, sessionRef)
+        id to SeBackendItemDataProvider(id, provider, sessionRef)
       }
 
       existingHolderEntities = change {
@@ -132,11 +138,31 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     return provider.itemSelected(itemData, modifiers, searchText)
   }
 
-  suspend fun getSearchScopesInfoForProvider(sessionRef: DurableRef<SeSessionEntity>,
-                                             dataContextId: DataContextId,
-                                             providerId: SeProviderId): SeSearchScopesInfo? {
-    val provider = getProviders(sessionRef, dataContextId)[providerId] ?: return null
-    return provider.getSearchScopesInfo()
+  suspend fun getSearchScopesInfoForProvider(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): SeSearchScopesInfo? {
+    val provider = getProviders(sessionRef, dataContextId)[providerId]
+    return provider?.getSearchScopesInfo()
+  }
+
+  suspend fun getTypeVisibilityStatesForProvider(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): List<SeTypeVisibilityStatePresentation>? {
+    val provider = getProviders(sessionRef, dataContextId)[providerId]
+    return provider?.getTypeVisibilityStates()
+  }
+
+  suspend fun getDisplayNameForProvider(
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+  ): Map<SeProviderId, @Nls String> {
+    val allProviders = getProviders(sessionRef, dataContextId)
+    return allProviders.filter { providerIds.contains(it.key) }.mapValues { it.value.displayName}
   }
 
   companion object {

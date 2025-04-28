@@ -11,7 +11,6 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -24,7 +23,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeOpenedProjectsIfFail
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
-import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.function.Consumer
@@ -110,13 +108,5 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
 
   suspend fun waitForModuleCreation(createModule: () -> Module): Module {
     return waitForImportWithinTimeout { withContext(Dispatchers.EDT) { writeIntentReadAction { createModule() } } }
-  }
-
-  fun setSystemProperty(key: String, value: String?, parentDisposable: Disposable) {
-    val oldValue = System.getProperty(key)
-    SystemProperties.setProperty(key, value)
-    parentDisposable.whenDisposed {
-      SystemProperties.setProperty(key, oldValue)
-    }
   }
 }

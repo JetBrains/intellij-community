@@ -109,7 +109,7 @@ public class ExpressionParsing extends Parsing {
     if (atToken(PyTokenTypes.FSTRING_START)) {
       final String prefixThenQuotes = builder.getTokenText();
       assert prefixThenQuotes != null;
-      final String openingQuotes = prefixThenQuotes.replaceFirst("^[UuBbCcRrFf]*", "");
+      final String openingQuotes = prefixThenQuotes.replaceFirst("^[UuBbCcRrFfTt]*", "");
       final SyntaxTreeBuilder.Marker marker = builder.mark();
       nextToken();
       while (true) {

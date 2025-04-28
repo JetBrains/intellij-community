@@ -21,6 +21,8 @@ class SeFilesTabFactory : SeTabFactory {
                                         dataContext,
                                         true)
 
-    return SeFilesTab(delegate, delegate.getSearchScopesInfos().firstOrNull())
+    return SeFilesTab(delegate,
+                      delegate.getSearchScopesInfos().firstOrNull(),
+                      delegate.getTypeVisibilityStates())
   }
 }

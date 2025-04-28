@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.Disposable
@@ -21,16 +21,14 @@ abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : Floating
     @Suppress("DEPRECATION")
     register(component, parentDisposable)
   }
+}
 
-  companion object {
-    private fun resolveActionGroup(actionGroupId: String): ActionGroup {
-      val actionManager = ActionManager.getInstance()
-      val action = actionManager.getAction(actionGroupId)
-      if (action is ActionGroup) return action
-      logger<FloatingToolbarProvider>().warn("Cannot initialize action group using (${action::class.java})")
-      val defaultActionGroup = DefaultActionGroup()
-      actionManager.registerAction(actionGroupId, defaultActionGroup)
-      return defaultActionGroup
-    }
-  }
+private fun resolveActionGroup(actionGroupId: String): ActionGroup {
+  val actionManager = ActionManager.getInstance()
+  val action = actionManager.getAction(actionGroupId)
+  if (action is ActionGroup) return action
+  logger<FloatingToolbarProvider>().warn("Cannot initialize action group using (${action::class.java})")
+  val defaultActionGroup = DefaultActionGroup()
+  actionManager.registerAction(actionGroupId, defaultActionGroup)
+  return defaultActionGroup
 }

@@ -546,7 +546,7 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
 
   val item = JdkListDownloader.getInstance()
     .downloadModelForJdkInstaller(null, predicate)
-    .filter { it.matchesVendor("openjdk") }
+    .filter { it.isDefaultItem }
     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
     .maxByOrNull { it.jdkMajorVersion }
 

@@ -95,8 +95,11 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
         var wordFragments: List<Fragment> = listOf()
         if (fragment.endLine2 - fragment.startLine2 == 1 && fragment.endLine1 - fragment.startLine1 == 1 || oldText.contains(newText)) {
           val comparisonManager = ComparisonManager.getInstance()
-          val words = comparisonManager.compareWords(oldText, newText, ComparisonPolicy.IGNORE_WHITESPACES,
+          var words = comparisonManager.compareWords(oldText, newText, ComparisonPolicy.IGNORE_WHITESPACES,
                                                      DumbProgressIndicator.INSTANCE)
+          if (words.isEmpty() && policy == ComparisonPolicy.TRIM_WHITESPACES) {
+            words = comparisonManager.compareWords(oldText, newText, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
+          }
           if (words.all { word -> word.startOffset2 == word.endOffset2 }) {
             // only deleted
             return@mapNotNull DiffInfo(fileType, oldText, shift, fragment.endLine1 - fragment.startLine1,

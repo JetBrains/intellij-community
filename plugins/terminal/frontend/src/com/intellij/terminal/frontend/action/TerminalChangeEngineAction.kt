@@ -1,11 +1,9 @@
 package com.intellij.terminal.frontend.action
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.application
@@ -13,6 +11,7 @@ import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
@@ -26,9 +25,10 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
     if (state) {
-      TerminalOptionsProvider.instance.switchTerminalEngine(engine, project)
+      val project = e.project ?: return
+      askForFeedbackIfReworkedTerminalDisabled(project, TerminalOptionsProvider.instance.terminalEngine, engine)
+      TerminalOptionsProvider.instance.terminalEngine = engine
       // Call save manually, because otherwise this change will be synced to backend only at some time later.
       saveSettingsForRemoteDevelopment(application)
 

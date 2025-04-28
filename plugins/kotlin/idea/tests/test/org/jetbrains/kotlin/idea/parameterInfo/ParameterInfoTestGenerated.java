@@ -536,6 +536,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
         }
 
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiver.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiver.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiverWithOverloads() throws Exception {
+            runTest("testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt");
+        }
+
         @TestMetadata("UpdateOnTyping.kt")
         public void testUpdateOnTyping() throws Exception {
             runTest("testData/parameterInfo/functionCall/UpdateOnTyping.kt");

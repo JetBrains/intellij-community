@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -9,6 +10,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.breakpointTypes
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.Icon
@@ -37,6 +40,7 @@ interface XBreakpointTypeProxy {
   fun createCustomRightPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun createCustomTopPropertiesPanel(project: Project): XBreakpointCustomPropertiesPanel<XBreakpoint<*>>?
   fun isAddBreakpointButtonVisible(): Boolean
+  suspend fun addBreakpoint(project: Project): XBreakpointProxy?
 
   open class Monolith @Deprecated("Use type.asProxy() instead") internal constructor(
     val project: Project,
@@ -96,6 +100,13 @@ interface XBreakpointTypeProxy {
 
     override fun isAddBreakpointButtonVisible(): Boolean {
       return breakpointType.isAddBreakpointButtonVisible
+    }
+
+    override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
+      val breakpoint = withContext(Dispatchers.EDT) {
+        breakpointType.addBreakpoint(project, null)
+      }
+      return (breakpoint as? XBreakpointBase<*, *, *>)?.asProxy()
     }
   }
 }

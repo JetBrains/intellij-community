@@ -7,6 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 
 internal class ChangedIdeHistoryFileHistoryOrderListener(private val project: Project) : IdeDocumentHistoryImpl.RecentFileHistoryOrderListener {
   override fun recentFileUpdated(file: VirtualFile) {
-    BackendRecentFilesModel.getInstance(project).applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED_AND_PUT_ON_TOP, listOf(file))
+    BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(file), FileChangeKind.UPDATED_AND_PUT_ON_TOP, project)
   }
 }

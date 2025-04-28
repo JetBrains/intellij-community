@@ -45,7 +45,7 @@ class ProjectSettingsTracker(
   private val parentDisposable: Disposable
 ) {
 
-  private val projectStatus = ProjectStatus(debugName = "Settings ${projectAware.projectId.debugName}")
+  private val projectStatus = ProjectStatus(debugName = "Settings ${projectAware.projectId}")
 
   private val settingsFilesStatus = AtomicReference(SettingsFilesStatus())
 

@@ -176,7 +176,7 @@ class ReadWritePropagationTest {
     readTaskReady.waitFor()
     val wa = launch(Dispatchers.Default) {
       assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
-      ApplicationManager.getApplication().runWriteAction {
+      backgroundWriteAction {
         assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed)
       }
     }

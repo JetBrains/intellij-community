@@ -26,7 +26,6 @@ import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 import org.jetbrains.jps.dependency.storage.StringEnumerator
 import org.jetbrains.jps.incremental.RebuildRequestedException
-import org.jetbrains.jps.incremental.storage.tryOpenMvStore
 import java.io.Closeable
 import java.io.IOException
 import java.lang.AutoCloseable

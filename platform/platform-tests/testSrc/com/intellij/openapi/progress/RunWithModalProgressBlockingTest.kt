@@ -231,7 +231,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         runWithModalProgressBlocking {
-          ApplicationManager.getApplication().runWriteAction {
+          backgroundWriteAction {
           }
         }
       }
@@ -295,7 +295,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 10) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 assertEquals(1, writeActionCounter.get())
@@ -319,7 +319,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 5) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 Thread.sleep(100)
@@ -376,7 +376,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 5) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 Thread.sleep(100)
@@ -408,7 +408,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         repeat(Runtime.getRuntime().availableProcessors() * 5) {
           launch(Dispatchers.Default) {
-            ApplicationManager.getApplication().runWriteAction {
+            backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
                 Thread.sleep(100)

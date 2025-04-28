@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.recentFiles.shared.RecentFileKind
+import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.launch
 

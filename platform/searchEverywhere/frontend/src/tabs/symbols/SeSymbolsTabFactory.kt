@@ -21,6 +21,8 @@ class SeSymbolsTabFactory : SeTabFactory {
                                         dataContext,
                                         true)
 
-    return SeSymbolsTab(delegate, delegate.getSearchScopesInfos().firstOrNull())
+    return SeSymbolsTab(delegate,
+                        delegate.getSearchScopesInfos().firstOrNull(),
+                        delegate.getTypeVisibilityStates())
   }
 }

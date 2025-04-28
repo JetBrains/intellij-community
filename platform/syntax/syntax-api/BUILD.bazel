@@ -16,7 +16,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "//platform/syntax/syntax-i18n:i18n",
     "//platform/util/multiplatform",
     ":multiplatformSupport_provided",
   ]
@@ -31,8 +30,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "//platform/syntax/syntax-i18n:i18n",
-    "//platform/syntax/syntax-i18n:i18n_test_lib",
     "//platform/util/multiplatform",
     "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport",
     "@lib//:junit5",

@@ -806,13 +806,3 @@ private fun getTypeClass(t: Type): Class<*> {
 }
 
 private fun <T> toSet(set: MutableScatterSet<T>): Set<T> = if (set.isEmpty()) emptySet() else set.asSet()
-
-//@Suppress("RemoveRedundantQualifierName")
-//private fun <T> toSet(set: MutableOrderedScatterSet<T>): Set<T> {
-//  val size = set.size
-//  return when (size) {
-//    0 -> emptySet()
-//    1 -> java.util.Set.of(set.first())
-//    else -> set.asSet()
-//  }
-//}

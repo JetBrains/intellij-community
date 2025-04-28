@@ -12,5 +12,15 @@ sealed class SeFilterState {
   @Serializable
   data object Empty : SeFilterState()
   @Serializable
-  data class Data(val map: Map<String, String>) : SeFilterState()
+  data class Data(val map: Map<String, SeFilterValue>) : SeFilterState()
+}
+
+@Experimental
+@ApiStatus.Internal
+@Serializable
+sealed class SeFilterValue {
+  @Serializable
+  data class One(val value: String) : SeFilterValue()
+  @Serializable
+  data class Many(val values: List<String>) : SeFilterValue()
 }

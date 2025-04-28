@@ -31,14 +31,14 @@ private class FilesSwitcherBackendApi : FileSwitcherApi {
     return true
   }
 
-  private suspend fun getBackendRecentFilesModel(projectId: ProjectId): BackendRecentFilesModel? {
+  private suspend fun getBackendRecentFilesModel(projectId: ProjectId): BackendRecentFileEventsModel? {
     val project = projectId.findProjectOrNull()
     if (project == null) {
       LOG.debug("Switcher unable to resolve project from projectId, recent files request will be ignored for projectId: $projectId")
       return null
     }
     LOG.debug("Switcher found recent files holder for projectId: $projectId")
-    return BackendRecentFilesModel.getInstanceAsync(project)
+    return BackendRecentFileEventsModel.getInstanceAsync(project)
   }
 }
 

@@ -211,6 +211,8 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun scheduleProjectReload() = projectTracker.scheduleProjectRefresh()
 
+  protected fun scheduleChangeProcessing() = projectTracker.scheduleChangeProcessing()
+
   protected fun markDirty(projectId: ExternalSystemProjectId) = projectTracker.markDirty(projectId)
 
   @Suppress("SameParameterValue")

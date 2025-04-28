@@ -1084,6 +1084,77 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
+
+  public void testImportOnlyClassWithMember() {
+    myFixture.addClass("""
+      package mypackages.package1;
+      
+      public class MyClass {
+        public static void myMethod1() {
+        }
+      }""");
+    myFixture.addClass("""
+      package mypackages.package3;
+      
+      public class MyClass {
+        public static void myMethod2() {
+        }
+      }""");
+    myFixture.configureByText("MyOtherClass.java",
+                              """
+                                package mypackages.package2;
+                                
+                                public class MyOtherClass {
+                                          public static void myCallerMethod() {
+                                                    MyClass<caret>.myMethod2();
+                                          }
+                                }""");
+    importClass();
+    myFixture.checkResult(
+      """
+        package mypackages.package2;
+        
+        import mypackages.package3.MyClass;
+        
+        public class MyOtherClass {
+                  public static void myCallerMethod() {
+                            MyClass.myMethod2();
+                  }
+        }""");
+  }
+
+
+  public void testImportClassWithoutMemberIfNothingLeft() {
+    myFixture.addClass("""
+      package mypackages.package1;
+      
+      public class MyClass {
+        public static void myMethod1() {
+        }
+      }""");
+    myFixture.configureByText("MyOtherClass.java",
+                              """
+                                package mypackages.package2;
+                                
+                                public class MyOtherClass {
+                                          public static void myCallerMethod() {
+                                                    MyClass<caret>.myMethod2();
+                                          }
+                                }""");
+    importClass();
+    myFixture.checkResult(
+      """
+        package mypackages.package2;
+        
+        import mypackages.package1.MyClass;
+        
+        public class MyOtherClass {
+                  public static void myCallerMethod() {
+                            MyClass.myMethod2();
+                  }
+        }""");
+  }
+
   public void testNotImportFromImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, ()->{
       myFixture.addClass("""

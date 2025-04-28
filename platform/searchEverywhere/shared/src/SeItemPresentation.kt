@@ -36,9 +36,14 @@ sealed interface SeActionItemPresentation : SeItemPresentation {
   @Serializable
   data class Common(
     val text: @Nls String,
-    val switcherState: Boolean? = null,
     val location: @Nls String? = null,
-  )
+    private var _switcherState: Boolean? = null,
+  ) {
+    val switcherState: Boolean? get() = _switcherState
+    fun toggleStateIfSwitcher() {
+      _switcherState = _switcherState?.not()
+    }
+  }
 }
 
 @ApiStatus.Internal
@@ -125,7 +130,7 @@ class SeTextSearchItemPresentation(
   override val text: @NlsSafe String,
   val textChunks: List<SerializableTextChunk>,
   private val backgroundColorId: ColorId?,
-  val fileString: @NlsSafe String
+  val fileString: @NlsSafe String,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
 

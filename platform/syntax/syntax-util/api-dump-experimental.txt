@@ -89,9 +89,30 @@
 - setDebugMode(Z):V
 - setTokenTypeRemapper(com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper):V
 - setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V
+*f:com.intellij.platform.syntax.util.runtime.Modifiers
+- *sf:Companion:com.intellij.platform.syntax.util.runtime.Modifiers$Companion
+- sf:and-thSIBIw(I,I):I
+- bsf:box-impl(I):com.intellij.platform.syntax.util.runtime.Modifiers
+- equals(java.lang.Object):Z
+- s:equals-impl(I,java.lang.Object):Z
+- sf:equals-impl0(I,I):Z
+- hashCode():I
+- s:hashCode-impl(I):I
+- sf:or-thSIBIw(I,I):I
+- s:toString-impl(I):java.lang.String
+- bf:unbox-impl():I
+*f:com.intellij.platform.syntax.util.runtime.Modifiers$Companion
+- f:get_AND_-4l0SqHU():I
+- f:get_COLLAPSE_-4l0SqHU():I
+- f:get_LEFT_-4l0SqHU():I
+- f:get_LEFT_INNER_-4l0SqHU():I
+- f:get_NONE_-4l0SqHU():I
+- f:get_NOT_-4l0SqHU():I
+- f:get_UPPER_-4l0SqHU():I
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
-- <init>(I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,Z,java.util.Collection):V
-- f:getBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I,Z,java.util.Collection,com.intellij.platform.syntax.Logger,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):V
+- f:getParserUserState():com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState
+- f:getSyntaxBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - f:init(kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[]):V
 - bs:init$default(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,kotlin.jvm.functions.Function2,com.intellij.platform.syntax.SyntaxElementTypeSet[],I,java.lang.Object):V
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$BracePair
@@ -118,42 +139,30 @@
 - f:getLastVariantAt():I
 - f:getLeftMarker():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
 - f:getLevel():I
-- f:getModifiers():I
+- f:getModifiers-4l0SqHU():I
 - f:getName():java.lang.String
 - f:getOffset():I
 - f:getParentFrame():com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Frame
 - f:getPosition():I
 - f:getVariantCount():I
-- f:init(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ErrorState,I,I,com.intellij.platform.syntax.SyntaxElementType,java.lang.String):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Frame
+- f:init-dWfhntA(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ErrorState,I,I,com.intellij.platform.syntax.SyntaxElementType,java.lang.String):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Frame
+- f:resetErrorReportedAt():V
 - f:setElementType(com.intellij.platform.syntax.SyntaxElementType):V
-- f:setErrorReportedAt(I):V
-- f:setLastVariantAt(I):V
-- f:setLeftMarker(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker):V
-- f:setLevel(I):V
-- f:setModifiers(I):V
-- f:setName(java.lang.String):V
-- f:setOffset(I):V
-- f:setParentFrame(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Frame):V
-- f:setPosition(I):V
-- f:setVariantCount(I):V
+- f:setModifiers-yW7z4XQ(I):V
 *:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Hook
 - a:run(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,java.lang.Object):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+*:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser
+- a:parse(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
+*:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState
 *f:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntimeKt
 - *sf:DUMMY_BLOCK:com.intellij.platform.syntax.SyntaxElementType
 - *sf:LEFT_BINDER:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Hook
 - *sf:RIGHT_BINDER:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Hook
-- *sf:TOKEN_ADVANCER:kotlin.jvm.functions.Function2
-- *sf:TRUE_CONDITION:kotlin.jvm.functions.Function2
+- *sf:TOKEN_ADVANCER:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser
+- *sf:TRUE_CONDITION:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser
 - *sf:WS_BINDERS:com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Hook
-- *sf:_AND_:I
-- *sf:_COLLAPSE_:I
-- *sf:_LEFT_:I
-- *sf:_LEFT_INNER_:I
-- *sf:_NONE_:I
-- *sf:_NOT_:I
-- *sf:_UPPER_:I
 - *sf:addVariant(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String):V
-- sf:advanceToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
+- *sf:advanceToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
 - *sf:consumeToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
 - *sf:consumeToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String):Z
 - *sf:consumeToken(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String,Z):Z
@@ -171,12 +180,12 @@
 - *sf:current_position_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime):I
 - *sf:empty_element_parsed_guard_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String,I):Z
 - *sf:enter_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
-- *sf:enter_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,I):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
-- *sf:enter_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,I,com.intellij.platform.syntax.SyntaxElementType,java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
-- *sf:enter_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,I,java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- *sf:enter_section_-1XsqMUE(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,I,com.intellij.platform.syntax.SyntaxElementType,java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- *sf:enter_section_-KZ0ahqk(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,I,java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- *sf:enter_section_-OUVbDvk(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,I):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
 - *sf:eof(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I):Z
-- *sf:exit_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,com.intellij.platform.syntax.SyntaxElementType,Z,Z,kotlin.jvm.functions.Function2):V
-- *sf:exit_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,Z,Z,kotlin.jvm.functions.Function2):V
+- *sf:exit_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,com.intellij.platform.syntax.SyntaxElementType,Z,Z,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser):V
+- *sf:exit_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,Z,Z,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser):V
 - *sf:exit_section_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,com.intellij.platform.syntax.SyntaxElementType,Z):V
 - *sf:invalid_left_marker_guard_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,java.lang.String):Z
 - *sf:isWhitespaceOrComment(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
@@ -192,14 +201,15 @@
 - *sf:nextTokenIsSlow(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,java.lang.String,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:nextTokenIsSmart(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType):Z
 - *sf:nextTokenIsSmart(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.SyntaxElementType[]):Z
-- *sf:parseAsTree(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ErrorState,I,com.intellij.platform.syntax.SyntaxElementType,Z,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):Z
+- *sf:parseAsTree(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ErrorState,I,com.intellij.platform.syntax.SyntaxElementType,Z,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser):Z
 - *sf:parseTokens(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:parseTokens(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,Z,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - *sf:parseTokensSmart(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
+- *sf:parseWithProtectedLastPos(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Parser):Z
 - *sf:recursion_guard_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,I,java.lang.String):Z
 - *sf:register_hook_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Hook,java.lang.Object):V
-- *sf:register_hook_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$Hook,java.lang.Object[]):V
 - *sf:report_error_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ErrorState,Z):V
 - *sf:report_error_(com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime,Z):Z
 *:com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory
-- a:buildParserUtils(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+- a:buildParserRuntime(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
+- bs:buildParserRuntime$default(com.intellij.platform.syntax.util.runtime.SyntaxParserRuntimeFactory,com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime$ParserUserState,I,java.lang.Object):com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime

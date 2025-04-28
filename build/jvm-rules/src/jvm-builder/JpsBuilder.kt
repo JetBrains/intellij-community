@@ -16,19 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
-import org.jetbrains.bazel.jvm.worker.impl.JpsTargetBuilder
-import org.jetbrains.bazel.jvm.worker.impl.createJpsProjectDescriptor
-import org.jetbrains.bazel.jvm.worker.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.kotlin.IncrementalKotlinBuilder
-import org.jetbrains.bazel.jvm.worker.state.DependencyStateStorage
-import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
-import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
-import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
-import org.jetbrains.bazel.jvm.worker.state.createInitialSourceMap
-import org.jetbrains.bazel.jvm.worker.state.createNewDependencyList
-import org.jetbrains.bazel.jvm.worker.state.saveBuildState
-import org.jetbrains.bazel.jvm.worker.storage.StorageInitializer
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.span
@@ -45,6 +33,18 @@ import org.jetbrains.bazel.jvm.worker.core.createPathRelativizer
 import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
 import org.jetbrains.bazel.jvm.worker.core.output.createOutputSink
 import org.jetbrains.bazel.jvm.worker.core.output.writeJarAndAbi
+import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
+import org.jetbrains.bazel.jvm.worker.impl.JpsTargetBuilder
+import org.jetbrains.bazel.jvm.worker.impl.createJpsProjectDescriptor
+import org.jetbrains.bazel.jvm.worker.java.BazelJavaBuilder
+import org.jetbrains.bazel.jvm.worker.state.DependencyStateStorage
+import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
+import org.jetbrains.bazel.jvm.worker.state.createInitialSourceMap
+import org.jetbrains.bazel.jvm.worker.state.createNewDependencyList
+import org.jetbrains.bazel.jvm.worker.state.saveBuildState
+import org.jetbrains.bazel.jvm.worker.storage.StorageInitializer
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.incremental.storage.BuildDataManager
@@ -526,7 +526,7 @@ private fun CoroutineScope.postBuild(
   }
 
   launch(CoroutineName("report build state")) {
-    buildDataManager.reportUnhandledRelativizerPaths()
+    buildDataManager.relativizer.reportUnhandledPaths()
     if (context.projectDescriptor.fsState.hasUnprocessedChanges(context, moduleTarget)) {
       parentSpan.addEvent("Some files were changed during the build. Additional compilation may be required.")
     }

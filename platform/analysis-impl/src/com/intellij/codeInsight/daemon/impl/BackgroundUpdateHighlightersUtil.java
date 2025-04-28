@@ -52,7 +52,7 @@ public final class BackgroundUpdateHighlightersUtil {
                                              @NotNull Document document,
                                              int startOffset,
                                              int endOffset,
-                                             @NotNull Collection<? extends HighlightInfo> highlights,
+                                             @NotNull Collection<? extends @NotNull HighlightInfo> highlights,
                                              int group) {
     HighlightingSession session = HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -64,7 +64,7 @@ public final class BackgroundUpdateHighlightersUtil {
    * Sets highlights inside restrictedRange (it's the range we're updating), but outside priorityRange.
    * This method is usually called after {@link #setHighlightersInRange} where we set highlights inside priorityRange.
    */
-  static void setHighlightersOutsideRange(@NotNull List<? extends HighlightInfo> infos,
+  static void setHighlightersOutsideRange(@NotNull List<? extends @NotNull HighlightInfo> infos,
                                           @NotNull TextRange restrictedRange,
                                           @NotNull TextRange priorityRange,
                                           int group,
@@ -146,7 +146,7 @@ public final class BackgroundUpdateHighlightersUtil {
   @RequiresBackgroundThread
   @RequiresReadLock
   public static void setHighlightersInRange(@NotNull TextRange range,
-                                            @NotNull List<? extends HighlightInfo> infos,
+                                            @NotNull List<? extends @NotNull HighlightInfo> infos,
                                             @NotNull MarkupModelEx markup,
                                             int group,
                                             @NotNull HighlightingSession session) {

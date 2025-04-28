@@ -156,6 +156,12 @@ class IntentionPreviewDiffResultTest : LightPlatformCodeInsightFixture4TestCase(
     assertEquals("""1 : String s = "#-\-#'Scare#-\-#' quotes";""", diffs)
   }
 
+  @Test
+  fun testAddSpaceInTheMiddle() {
+    val diffs = createDiffs("class Test{}", "class Test {}")
+    assertEquals("0 : class Test#+ +#{}", diffs)
+  }
+  
   /**
    * Returns a textual representation of diffs from created and modified text, how they will look
    * in the intention preview window. Each diff chunk is separated via a horizontal dashed line.

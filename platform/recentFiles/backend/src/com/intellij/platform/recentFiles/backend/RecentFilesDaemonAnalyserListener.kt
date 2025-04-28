@@ -13,6 +13,6 @@ internal class RecentFilesDaemonAnalyserListener(private val project: Project) :
 
     val highlightedFiles = fileEditors.map { it.file }
     thisLogger().debug("Updating recent files model with new highlighting info for: ${highlightedFiles.joinToString { it.name }}")
-    BackendRecentFilesModel.getInstance(project).applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, highlightedFiles)
+    BackendRecentFileEventsController.applyRelevantEventsToModel(highlightedFiles, FileChangeKind.UPDATED, project)
   }
 }

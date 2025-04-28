@@ -23,6 +23,9 @@
 
   <content>
     <module name="intellij.gradle.profiler"/>
+    <module name="intellij.gradle.java.maven"/>
+    <module name="intellij.gradle.analysis"/>
+    <module name="intellij.gradle.dependencyUpdater"/>
   </content>
 
   <resource-bundle>messages.GradleInspectionBundle</resource-bundle>

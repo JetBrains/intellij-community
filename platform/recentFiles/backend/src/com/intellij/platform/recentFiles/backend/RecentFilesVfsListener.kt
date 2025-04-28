@@ -22,11 +22,9 @@ internal class RecentFilesVfsListener : AsyncFileListener {
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         for (project in ProjectManager.getInstance().openProjects) {
-          val recentFilesModel = BackendRecentFilesModel.getInstance(project)
-
           val projectFilesToRemove = filterProjectFiles(removedFiles, project)
           if (projectFilesToRemove.isNotEmpty()) {
-            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.REMOVED, projectFilesToRemove)
+            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRemove, FileChangeKind.REMOVED, project)
           }
 
           val projectFilesToMove = filterProjectFiles(movedFiles, project)
@@ -35,7 +33,7 @@ internal class RecentFilesVfsListener : AsyncFileListener {
 
           val projectFilesToUpdate = (projectFilesToMove + projectFilesToRename + projectFilesWithChangedContents).distinct()
           if (projectFilesToUpdate.isNotEmpty()) {
-            recentFilesModel.applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, projectFilesToUpdate)
+            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.UPDATED, project)
           }
         }
       }

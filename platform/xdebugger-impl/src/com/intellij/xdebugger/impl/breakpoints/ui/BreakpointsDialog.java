@@ -314,9 +314,16 @@ public class BreakpointsDialog extends DialogWrapper {
 
     List<AddXBreakpointAction> breakpointTypeActions = getBreakpointManager().getAllBreakpointTypes().stream()
       .filter(XBreakpointTypeProxy::isAddBreakpointButtonVisible)
-      // TODO IJPL-160384
-      .map(proxy -> ((XBreakpointTypeProxy.Monolith)proxy).getBreakpointType())
-      .map(AddXBreakpointAction::new)
+      .map(type -> new AddXBreakpointAction(
+        myProject, type,
+        () -> {
+          saveCurrentItem();
+          return Unit.INSTANCE;
+        },
+        (breakpointId) -> {
+          selectBreakpoint(breakpointId, true);
+          return Unit.INSTANCE;
+        }))
       .toList();
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
@@ -430,25 +437,6 @@ public class BreakpointsDialog extends DialogWrapper {
     ItemWrapper item = myDetailController.getSelectedItem();
     if (item instanceof BreakpointItem) {
       ((BreakpointItem)item).saveState();
-    }
-  }
-
-  private class AddXBreakpointAction extends AnAction implements DumbAware {
-    private final XBreakpointType<?, ?> myType;
-
-    AddXBreakpointAction(XBreakpointType<?, ?> type) {
-      myType = type;
-      getTemplatePresentation().setIcon(type.getEnabledIcon());
-      getTemplatePresentation().setText(type.getTitle());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      saveCurrentItem();
-      XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
-      if (breakpoint instanceof XBreakpointBase<?, ?, ?>) {
-        selectBreakpoint(((XBreakpointBase<?, ?, ?>)breakpoint).getBreakpointId(), true);
-      }
     }
   }
 

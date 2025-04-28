@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -56,8 +56,9 @@ interface ExternalSystemProjectNotificationAware {
     val TOPIC: Topic<Listener> = Topic.create("ExternalSystemProjectNotificationAware", Listener::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): ExternalSystemProjectNotificationAware =
-      project.getService(ExternalSystemProjectNotificationAware::class.java)
+    fun getInstance(project: Project): ExternalSystemProjectNotificationAware {
+      return project.getService(ExternalSystemProjectNotificationAware::class.java)
+    }
 
     fun isNotificationVisible(project: Project): Boolean {
       return getInstance(project).getSystemIds().isNotEmpty()
@@ -71,7 +72,10 @@ interface ExternalSystemProjectNotificationAware {
      * Function for simple subscription onto notification change events
      * @see ExternalSystemProjectNotificationAware.Listener.onNotificationChanged
      */
-    fun whenNotificationChanged(project: Project, listener: () -> Unit): Unit = whenNotificationChanged(project, null, listener)
+    fun whenNotificationChanged(project: Project, listener: () -> Unit) {
+      whenNotificationChanged(project, null, listener)
+    }
+
     fun whenNotificationChanged(project: Project, parentDisposable: Disposable?, listener: () -> Unit) {
       val aProject = project
       val messageBus = ApplicationManager.getApplication().messageBus

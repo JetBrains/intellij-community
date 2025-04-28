@@ -20,6 +20,7 @@ class SeAllTabFactory : SeTabFactory {
                                         listOf(SeProviderId(SeProviderId.WILDCARD_ID)),
                                         dataContext,
                                         false)
+
     return SeAllTab(delegate)
   }
 }

@@ -16,9 +16,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -112,6 +114,16 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
+        String prefix = PyStringLiteralCoreUtil.getPrefix(firstNode.getText());
+        if (PyStringLiteralUtil.isTemplatePrefix(prefix)) {
+          if (languageLevel.isOlderThan(LanguageLevel.PYTHON314)) {
+            return PyBuiltinCache.getInstance(this).getStrType();
+          }
+          PyClassType templateClassType = getTemplateClassType();
+          if (templateClassType != null) {
+            return templateClassType;
+          }
+        }
         // f-strings can't have "b" prefix, so they are always unicode
         return builtinCache.getUnicodeType(languageLevel);
       }
@@ -132,6 +144,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       }
     }
     return builtinCache.getStrType();
+  }
+
+  private @Nullable PyClassType getTemplateClassType() {
+    PyPsiFacade facade = PyPsiFacade.getInstance(getProject());
+    PyClass templateClass = facade.createClassByQName(PyNames.TEMPLATELIB_TEMPLATE, getContainingFile());
+    if (templateClass != null) {
+      return facade.createClassType(templateClass, false);
+    }
+    return null;
   }
 
   @Override

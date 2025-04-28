@@ -3,6 +3,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.assertErrorLogged
@@ -282,11 +283,10 @@ class RunBlockingCancellableTest : CancellationTest() {
     }
   }
 
-  @Suppress("ForbiddenInSuspectContextMethod")
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
   fun `runBlockingCancellable in inner explicit ra of wa`(): Unit = timeoutRunBlocking {
-    application.runWriteAction {
+    backgroundWriteAction {
       ReadAction.run<Throwable> {
         // checks that there are no assertions
         runBlockingCancellable {

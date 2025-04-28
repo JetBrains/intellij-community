@@ -11,9 +11,12 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointTypeInfo
 import com.intellij.xdebugger.impl.rpc.standardPanel
@@ -104,7 +107,12 @@ private open class FrontendXBreakpointType(
   }
 
   override fun isAddBreakpointButtonVisible(): Boolean {
-    return false // TODO IJPL-185322
+    return dto.isAddBreakpointButtonVisible
+  }
+
+  override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
+    val breakpointDto = XBreakpointTypeApi.getInstance().addBreakpointThroughLux(project.projectId(), dto.id).await() ?: return null
+    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).addBreakpoint(breakpointDto)
   }
 
   override fun equals(other: Any?): Boolean {

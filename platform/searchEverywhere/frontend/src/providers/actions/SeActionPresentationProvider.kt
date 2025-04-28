@@ -41,7 +41,7 @@ object SeActionPresentationProvider {
       val toggle = anAction is ToggleAction
       if (toggle) {
         presentation = presentation.run {
-          copy(commonData = commonData.copy(switcherState = Toggleable.isSelected(actionPresentation)))
+          copy(commonData = commonData.copy(_switcherState = Toggleable.isSelected(actionPresentation)))
         }
       }
 
@@ -92,7 +92,7 @@ object SeActionPresentationProvider {
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
-          copy(commonData = commonData.copy(switcherState = it))
+          copy(commonData = commonData.copy(_switcherState = it))
         }
       }
 

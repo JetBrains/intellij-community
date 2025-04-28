@@ -19,6 +19,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
@@ -641,7 +642,7 @@ class ConfigImportHelperPluginUpdateModeTest(val updateIncompatibleOnly: Boolean
   @Test
   fun `update plugins mode`() {
     // com.intellij.openapi.application.ConfigImportHelper.UPDATE_INCOMPATIBLE_PLUGINS_PROPERTY
-    setSystemPropertyForTest("idea.config.import.update.incompatible.plugins.only", updateIncompatibleOnly.toString(), testRootDisposable)
+    setSystemProperty("idea.config.import.update.incompatible.plugins.only", updateIncompatibleOnly.toString(), testRootDisposable)
 
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
@@ -720,13 +721,4 @@ private fun createTestServer(disposable: Disposable): HttpServer {
   server.start()
   disposable.whenDisposed { server.stop(0) }
   return server
-}
-
-private fun setSystemPropertyForTest(key: String, value: String, disposable: Disposable) {
-  val old = System.getProperty(key)
-  System.setProperty(key, value)
-  disposable.whenDisposed {
-    if (old != null) System.setProperty(key, old)
-    else System.clearProperty(key)
-  }
 }

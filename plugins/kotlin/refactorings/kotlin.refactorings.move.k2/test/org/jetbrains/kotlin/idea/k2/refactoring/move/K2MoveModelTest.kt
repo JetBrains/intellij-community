@@ -650,4 +650,64 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             K2MoveModel.create(arrayOf(openFunction), null)
         }
     }
+
+    fun `test moving companion object should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            class Foo {
+                companion object<caret> { }
+            }
+        """.trimIndent()) as KtFile
+        val element = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(element), null)
+        }
+    }
+
+    fun `test moving override property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open val v = 1
+            }
+            
+            open class Derived : Base() {
+                override val v<caret> = super.v
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test moving open property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open val v<caret> = 1
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test moving abstract property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                abstract val v<caret> : Int
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test moving abstract interface property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            interface IFace {
+                val v<caret> : Int
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
 }

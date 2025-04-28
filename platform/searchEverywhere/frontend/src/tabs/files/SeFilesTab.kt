@@ -11,11 +11,14 @@ import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeFilesTab(private val delegate: SeTabDelegate, private val scopeInfo: SeSearchScopesInfo?): SeTab {
+class SeFilesTab(private val delegate: SeTabDelegate,
+                 private val scopeInfo: SeSearchScopesInfo?,
+                 private val typeVisibilityStates: List<SeTypeVisibilityStatePresentation>?): SeTab {
   override val name: String get() = IdeBundle.message("search.everywhere.group.name.files")
   override val shortName: String get() = name
   override val id: String get() = "FileSearchEverywhereContributor"
@@ -23,7 +26,7 @@ class SeFilesTab(private val delegate: SeTabDelegate, private val scopeInfo: SeS
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): SeFilterEditor? = scopeInfo?.let { SeTargetsFilterEditor(scopeInfo) }
+  override fun getFilterEditor(): SeFilterEditor? = SeTargetsFilterEditor(scopeInfo, typeVisibilityStates)
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)

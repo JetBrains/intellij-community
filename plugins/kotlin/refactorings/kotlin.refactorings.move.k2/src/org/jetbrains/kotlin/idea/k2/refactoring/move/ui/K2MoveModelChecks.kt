@@ -16,10 +16,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens.ABSTRACT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
@@ -29,7 +31,8 @@ internal val k2MoveModelChecks: List<K2MoveModelCheck> = listOf(
     NoEnumEntriesCheck,
     MultiFileMoveTargetIsDirectoryCheck,
     MultiFileMoveNoDeclarationsCheck,
-    FunctionModalityCheck,
+    CallableModalityCheck,
+    CompanionObjectCheck,
 )
 
 internal sealed class K2MoveModelCheck(
@@ -86,17 +89,22 @@ private object MultiFileMoveNoDeclarationsCheck : K2MoveModelCheck("text.move.de
     }
 }
 
-private object FunctionModalityCheck : K2MoveModelCheck("text.move.declaration.no.support.for.open.override.function") {
+private object CallableModalityCheck : K2MoveModelCheck("text.move.declaration.no.support.incorrect.modality") {
     override fun isMoveAllowed(
         elementsToMove: List<PsiElement>,
         targetContainer: PsiElement?
     ): Boolean = elementsToMove.none {
-        it is KtNamedFunction && it.hasForbiddenModalityOrOverride()
+        (it is KtNamedFunction || it is KtProperty) && it.hasForbiddenModalityOrOverride()
     }
 
-    private fun KtNamedFunction.hasForbiddenModalityOrOverride(): Boolean =
+    private fun KtCallableDeclaration.hasForbiddenModalityOrOverride(): Boolean =
         hasModifier(OVERRIDE_KEYWORD) || hasModifier(OPEN_KEYWORD) || hasModifier(ABSTRACT_KEYWORD)
                 || containingClass()?.isInterface() == true // abstract without body or open with body
+}
+
+private object CompanionObjectCheck : K2MoveModelCheck("text.move.declaration.no.support.for.companion.objects") {
+    override fun isMoveAllowed(elementsToMove: List<PsiElement>, targetContainer: PsiElement?): Boolean =
+        elementsToMove.none { it is KtObjectDeclaration && it.isCompanion() }
 }
 
 private val MOVE_DECLARATIONS: String

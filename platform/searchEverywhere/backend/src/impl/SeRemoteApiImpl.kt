@@ -6,10 +6,12 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 class SeRemoteApiImpl: SeRemoteApi {
@@ -42,5 +44,21 @@ class SeRemoteApiImpl: SeRemoteApi {
                                                       dataContextId: DataContextId,
                                                       providerId: SeProviderId): SeSearchScopesInfo? {
     return SeBackendService.getInstance(projectId.findProject()).getSearchScopesInfoForProvider(sessionRef, dataContextId, providerId)
+  }
+
+  override suspend fun getTypeVisibilityStatesForProvider(projectId: ProjectId,
+                                                          sessionRef: DurableRef<SeSessionEntity>,
+                                                          dataContextId: DataContextId,
+                                                          providerId: SeProviderId): List<SeTypeVisibilityStatePresentation>? {
+    return SeBackendService.getInstance(projectId.findProject()).getTypeVisibilityStatesForProvider(sessionRef, dataContextId, providerId)
+  }
+
+  override suspend fun getDisplayNameForProviders(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>
+  ): Map<SeProviderId, @Nls String> {
+    return SeBackendService.getInstance(projectId.findProject()).getDisplayNameForProvider(sessionRef, dataContextId, providerIds)
   }
 }

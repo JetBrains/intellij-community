@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer.impl
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -19,6 +20,7 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.minimumHeight
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -90,6 +92,16 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
+  override fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)?) {
+    val initParams = LcrSwitchInitParams()
+    initParams.accessibleName = if (isOn) IdeBundle.message("ui.button.on") else IdeBundle.message("ui.button.off")
+    if (init != null) {
+      initParams.init()
+    }
+
+    add(LcrSwitchImpl(initParams, true, gap, isOn))
+  }
+
   override fun separator(init: LcrSeparator.() -> Unit) {
     if (separator != null) {
       throw UiDslException("Separator is defined already")
@@ -159,6 +171,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
           val font = cell.initParams.font
           if (font == null) 0 else component.getFontMetrics(font).height
         }
+        is LcrSwitchImpl -> component.minimumHeight
       }
       minHeight = max(minHeight, cellMinHeight)
     }
@@ -362,6 +375,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
       is LcrIconImpl -> 0
 
       // Add 1 pixel above, which gives better vertical alignment in case odd row height
+      is LcrSwitchImpl,
       is LcrSimpleColoredTextImpl -> 1
     }
 

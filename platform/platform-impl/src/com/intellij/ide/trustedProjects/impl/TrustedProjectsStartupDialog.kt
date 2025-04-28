@@ -13,7 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.observable.util.setKotlinProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ExitActionType
@@ -33,7 +33,6 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.plus
 import com.intellij.ui.util.width
-import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -58,7 +57,6 @@ import javax.swing.text.View
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.math.ceil
-import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.Internal
 class TrustedProjectStartupDialog private constructor(
@@ -324,15 +322,6 @@ class TrustedProjectStartupDialog private constructor(
     fun setDialogChoiceInTests(openChoice: OpenUntrustedProjectChoice, disposable: Disposable) {
       val choice = DialogChoice(openChoice, false, null, emptyList())
       setKotlinProperty(::ourDialogChoice, choice, disposable)
-    }
-
-    @TestOnly
-    private fun <V> setKotlinProperty(property: KMutableProperty0<V>, value: V, disposable: Disposable) {
-      val previousValue = property.get()
-      property.set(value)
-      disposable.whenDisposed {
-        property.set(previousValue)
-      }
     }
 
     suspend fun showAndGet(

@@ -33,6 +33,7 @@ import com.intellij.util.execution.ParametersListUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
@@ -75,8 +76,13 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           terminalEngineComboBox = comboBox(values, renderer)
             .label(message("settings.terminal.engine"))
             .bindItem(
-              getter = { TerminalOptionsProvider.instance.terminalEngine },
-              setter = { TerminalOptionsProvider.instance.switchTerminalEngine(it!!, project) },
+              getter = { optionsProvider.terminalEngine },
+              setter = {
+                val oldEngine = optionsProvider.terminalEngine
+                val newEngine = it!!
+                optionsProvider.terminalEngine = newEngine
+                askForFeedbackIfReworkedTerminalDisabled(project, oldEngine, newEngine)
+              }
             )
             .component
         }

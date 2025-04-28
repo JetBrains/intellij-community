@@ -1,0 +1,25 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.idea.reposearch"/>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <plugin id="org.intellij.groovy"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
+    <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>
+  </extensions>
+
+  <actions>
+    <action id="Gradle.AddGradleDslDependencyAction" class="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions.AddGradleDslDependencyAction">
+      <add-to-group group-id="Gradle.GenerateGroup" anchor="after" relative-to-action="AddGradleDslPluginAction"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleProjectStartupActivity"/>
+    <externalSystemTaskNotificationListener
+        implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenProjectImportNotificationListener"/>
+    <completion.contributor language="Groovy" order="first"
+                            implementationClass="org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion.MavenDependenciesGradleCompletionContributor"/>
+  </extensions>
+</idea-plugin>

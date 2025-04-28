@@ -19,7 +19,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
 import org.jetbrains.intellij.build.BuildContext
@@ -438,12 +437,6 @@ class BuildContextImpl internal constructor(
 
   override val pluginAutoPublishList: PluginAutoPublishList by lazy {
     PluginAutoPublishList(this)
-  }
-
-  override val distributionState: DistributionBuilderState by lazy {
-    runBlocking(Dispatchers.Default) {
-      createDistributionState(this@BuildContextImpl)
-    }
   }
 }
 

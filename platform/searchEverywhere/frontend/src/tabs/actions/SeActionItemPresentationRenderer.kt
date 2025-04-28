@@ -19,7 +19,6 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.OnOffButton
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.render.IconCompOptionalCompPanel
@@ -137,8 +136,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
 
     if (switcherState != null) {
-      //TODO: addOnOffButton(panel, switcherState)
-      text("<button: $switcherState>") {
+      switch(isOn = switcherState) {
         align = LcrInitParams.Align.RIGHT
       }
     }
@@ -235,9 +233,9 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
   private fun calcFreeSpace(list: JList<*>, font: Font, shortcutText: String?): Int {
     var freeSpace = (list.width
                      - (list.insets.right + list.insets.left))
-                     //- panel.calculateNonResizeableWidth()
-                     //- (insets.right + insets.left)
-                     //- (ipad.right + ipad.left))
+    //- panel.calculateNonResizeableWidth()
+    //- (insets.right + insets.left)
+    //- (ipad.right + ipad.left))
 
     if (StringUtil.isNotEmpty(shortcutText)) {
       val fm = list.getFontMetrics(font.deriveFont(Font.BOLD))
@@ -245,13 +243,6 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
     }
 
     return freeSpace
-  }
-
-  private fun addOnOffButton(panel: IconCompOptionalCompPanel<SimpleColoredComponent>, selected: Boolean) {
-    val button = OnOffButton()
-    button.isSelected = selected
-    panel.right = button
-    panel.border = TOGGLE_BUTTON_BORDER
   }
 
   private fun getName(text: @NlsActions.ActionText String?, groupName: @NlsActions.ActionText String?, toggle: Boolean): @NlsActions.ActionText String {

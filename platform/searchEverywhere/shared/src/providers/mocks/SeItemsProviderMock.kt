@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeItemsProviderMock(
   val resultPrefix: String = "item",
   override val id: String = "SearchEverywhereItemsProviderMock_$resultPrefix",
+  override val displayName: String,
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,

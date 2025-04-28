@@ -86,7 +86,7 @@ class DocumentCommitThread internal constructor(coroutineScope: CoroutineScope) 
     )
     ReadAction
       .nonBlocking(Callable { commitUnderProgress(task = task, synchronously = false, documentManager = documentManager) })
-      .expireWhen { isDisposed || project.isDisposed() || !documentManager.isInUncommittedSet(document) || !task.isStillValid }
+      .expireWhen { isDisposed || project.isDisposed() || !documentManager.isInUncommittedSet(document) || !task.isStillValid() }
       .coalesceBy(task)
       .finishOnUiThread(modality) { it() }
       .submit {
@@ -226,22 +226,21 @@ private class CommitTask(
 
   override fun toString(): @NonNls String {
     val reasonInfo = " task reason: " + StringUtil.first(reason.toString(), 180, true) +
-                     (if (isStillValid) "" else "; changed: old seq=$modificationSequence, new seq=${(document as DocumentEx).modificationSequence}")
+                     (if (isStillValid()) "" else "; changed: old seq=$modificationSequence, new seq=${(document as DocumentEx).modificationSequence}")
     val contextInfo = " modality: $myCreationModality"
     return System.identityHashCode(this).toString() + "; " + contextInfo + reasonInfo
   }
 
-  override fun equals(o: Any?): Boolean {
-    if (this === o) return true
-    if (o !is CommitTask) return false
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is CommitTask) return false
 
-    return document == o.document && project == o.project
+    return document == other.document && project == other.project
   }
 
   override fun hashCode(): Int = 31 * document.hashCode() + project.hashCode()
 
-  val isStillValid: Boolean
-    get() = (document as DocumentEx).modificationSequence == modificationSequence
+  fun isStillValid(): Boolean = (document as DocumentEx).modificationSequence == modificationSequence
 }
 
 private fun handleCommitWithoutPsi(
@@ -249,7 +248,7 @@ private fun handleCommitWithoutPsi(
   documentManager: PsiDocumentManagerBase,
 ): BooleanRunnable {
   return BooleanRunnable {
-    if (task.isStillValid && documentManager.getCachedViewProviders(task.document).isEmpty()) {
+    if (task.isStillValid() && documentManager.getCachedViewProviders(task.document).isEmpty()) {
       documentManager.handleCommitWithoutPsi(task.document)
       true
     }
@@ -307,7 +306,7 @@ private fun doCommit(
   return BooleanRunnable {
     val viewProvider = file.getViewProvider()
     //todo IJPL-339 figure out correct check here
-    if (!task.isStillValid || viewProvider !in documentManager.getCachedViewProviders(document)) {
+    if (!task.isStillValid() || viewProvider !in documentManager.getCachedViewProviders(document)) {
       // optimistic locking failed
       return@BooleanRunnable false
     }

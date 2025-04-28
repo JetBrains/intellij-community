@@ -5,6 +5,7 @@ import com.intellij.ide.rpc.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -12,10 +13,11 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Rpc
-interface SeRemoteApi: RemoteApi<Unit> {
+interface SeRemoteApi : RemoteApi<Unit> {
   // In the case of sending search results via RPC,
   // we can't limit the flow buffer on the backend side
   // and somehow suspend generating new search results while the UI has enough of them to present.
@@ -26,25 +28,45 @@ interface SeRemoteApi: RemoteApi<Unit> {
   // 2. BE subscribes to this channel.
   // 3. FE sends "give me next 50" requests through this channel
   // 4. BE sends the next batch of items
-  suspend fun getItems(projectId: ProjectId,
-                       sessionRef: DurableRef<SeSessionEntity>,
-                       providerId: SeProviderId,
-                       params: SeParams,
-                       dataContextId: DataContextId?,
-                       requestedCountChannel: ReceiveChannel<Int>): Flow<SeItemData>
+  suspend fun getItems(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    providerId: SeProviderId,
+    params: SeParams,
+    dataContextId: DataContextId?,
+    requestedCountChannel: ReceiveChannel<Int>,
+  ): Flow<SeItemData>
 
-  suspend fun itemSelected(projectId: ProjectId,
-                           sessionRef: DurableRef<SeSessionEntity>,
-                           itemData: SeItemData,
-                           modifiers: Int,
-                           searchText: String): Boolean
+  suspend fun itemSelected(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    itemData: SeItemData,
+    modifiers: Int,
+    searchText: String,
+  ): Boolean
 
   suspend fun getAvailableProviderIds(): List<SeProviderId>
 
-  suspend fun getSearchScopesInfoForProvider(projectId: ProjectId,
-                                             sessionRef: DurableRef<SeSessionEntity>,
-                                             dataContextId: DataContextId,
-                                             providerId: SeProviderId): SeSearchScopesInfo?
+  suspend fun getSearchScopesInfoForProvider(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): SeSearchScopesInfo?
+
+  suspend fun getTypeVisibilityStatesForProvider(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerId: SeProviderId,
+  ): List<SeTypeVisibilityStatePresentation>?
+
+  suspend fun getDisplayNameForProviders(
+    projectId: ProjectId,
+    sessionRef: DurableRef<SeSessionEntity>,
+    dataContextId: DataContextId,
+    providerIds: List<SeProviderId>,
+  ): Map<SeProviderId, @Nls String>
 
   companion object {
     @JvmStatic

@@ -876,6 +876,8 @@
 
   <extensions defaultExtensionNs="Git4Idea">
     <gitRawAnnotationProvider implementation="git4idea.annotate.GitAnnotationProvider$DefaultGitAnnotationProvider"/>
+
+    <gitRepoIconProvider implementation="git4idea.ui.ColorManagerRepoIconProvider"/>
   </extensions>
 
   <extensionPoints>

@@ -91,7 +91,12 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val receiverTypes = collectReceiverTypesForElement(callElement, explicitReceiver)
 
     val candidateReceiverType = signature.receiverType
-    if (candidateReceiverType != null && receiverTypes.none { it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
+    if (candidateReceiverType != null && receiverTypes.none {
+            it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) ||
+                    it.nullability != KaTypeNullability.NON_NULLABLE && it.withNullability(KaTypeNullability.NON_NULLABLE)
+                        .isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy)
+        }
+    ) return false
 
     // Filter out candidates not visible from call site
     if (!visibilityChecker.isVisible(candidateSymbol)) return false
