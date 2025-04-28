@@ -16,12 +16,10 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load(
     "@rules_kotlin//kotlin/internal:defs.bzl",
-    _JAVA_RUNTIME_TOOLCHAIN_TYPE = "JAVA_RUNTIME_TOOLCHAIN_TYPE",
     _JAVA_TOOLCHAIN_TYPE = "JAVA_TOOLCHAIN_TYPE",
     _KtCompilerPluginInfo = "KtCompilerPluginInfo",
     _KtJvmInfo = "KtJvmInfo",
     _KtPluginConfiguration = "KtPluginConfiguration",
-    _TOOLCHAIN_TYPE = "TOOLCHAIN_TYPE",
 )
 load("@rules_kotlin//kotlin/internal:opts.bzl", "JavacOptions")
 load("//:rules/common-attrs.bzl", "add_dicts")
@@ -33,11 +31,6 @@ def find_java_toolchain(ctx, target):
     if _JAVA_TOOLCHAIN_TYPE in ctx.toolchains:
         return ctx.toolchains[_JAVA_TOOLCHAIN_TYPE].java
     return target[java_common.JavaToolchainInfo]
-
-def find_java_runtime_toolchain(ctx, target):
-    if _JAVA_RUNTIME_TOOLCHAIN_TYPE in ctx.toolchains:
-        return ctx.toolchains[_JAVA_RUNTIME_TOOLCHAIN_TYPE].java_runtime
-    return target[java_common.JavaRuntimeInfo]
 
 def _java_info(target):
     return target[JavaInfo] if JavaInfo in target else None
@@ -57,14 +50,6 @@ def _partitioned_srcs(srcs):
         java = java_srcs,
         all_srcs = kt_srcs + java_srcs,
         src_jars = [],
-    )
-
-def _compiler_toolchains(ctx):
-    """Creates a struct of the relevant compilation toolchains"""
-    return struct(
-        kt = ctx.toolchains[_TOOLCHAIN_TYPE],
-        java = find_java_toolchain(ctx, ctx.attr._java_toolchain),
-        java_runtime = find_java_runtime_toolchain(ctx, ctx.attr._host_javabase),
     )
 
 def _compute_transitive_jars(dep_infos, prune_transitive_deps):
@@ -172,8 +157,6 @@ def _new_plugins_from(targets):
 
 def _new_plugin_from(plugin_id_to_configuration, plugins_for_phase):
     classpath = {}
-
-    # data = []
     options = {}
     for p in plugins_for_phase:
         if p.id in plugin_id_to_configuration:
@@ -187,7 +170,6 @@ def _new_plugin_from(plugin_id_to_configuration, plugins_for_phase):
 
     return struct(
         classpath = classpath,
-        # data = depset(transitive = data),
         options = options,
     )
 
@@ -201,7 +183,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
         A struct containing the providers JavaInfo (`java`) and `kt` (KtJvmInfo). This struct is not intended to be
         used as a legacy provider -- rather the caller should transform the result.
     """
-    toolchains = _compiler_toolchains(ctx)
     srcs = _partitioned_srcs(ctx.files.srcs)
     associates = get_associates(ctx)
     compile_deps = _jvm_deps(
@@ -224,7 +205,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
         ctx = ctx,
         output_jar = output_jar,
         rule_kind = rule_kind,
-        toolchains = toolchains,
         srcs = srcs,
         associates = associates,
         compile_deps = compile_deps,
@@ -237,7 +217,7 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
         output_source_jar = ctx.outputs.srcjar,
         sources = srcs.kt + srcs.java,
         source_jars = srcs.src_jars,
-        java_toolchain = toolchains.java,
+        java_toolchain = find_java_toolchain(ctx, ctx.attr._java_toolchain),
     )
 
     java_info = JavaInfo(
@@ -278,7 +258,6 @@ def _run_jvm_builder(
         ctx,
         output_jar,
         rule_kind,
-        toolchains,
         srcs,
         associates,
         compile_deps,

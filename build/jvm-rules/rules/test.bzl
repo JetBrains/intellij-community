@@ -163,6 +163,11 @@ Setup a simple kotlin_test.
         "_lcov_merger": attr.label(
             default = Label("@bazel_tools//tools/test/CoverageOutputGenerator/java/com/google/devtools/coverageoutputgenerator:Main"),
         ),
+        "_java_stub_template": attr.label(
+            cfg = "exec",
+            default = Label("@bazel_tools//tools/java:java_stub_template.txt"),
+            allow_single_file = True,
+        ),
     }),
     executable = True,
     outputs = common_outputs,
