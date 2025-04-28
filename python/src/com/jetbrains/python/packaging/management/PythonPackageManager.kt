@@ -82,7 +82,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   fun packageExists(pkg: PythonPackage): Boolean = installedPackages.any { it.name.equals(pkg.name, ignoreCase = true) }
 
-  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit>
+  abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit>
   protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit>
   protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
   protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>

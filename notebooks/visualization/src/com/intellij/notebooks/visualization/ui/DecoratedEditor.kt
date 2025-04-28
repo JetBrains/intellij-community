@@ -39,7 +39,7 @@ class DecoratedEditor private constructor(
     private set
 
   override val editorPositionKeeper: NotebookPositionKeeper = NotebookPositionKeeper(editorImpl).also {
-    Disposer.register(this, it)
+    Disposer.register(editorImpl.disposable, it)
   }
 
   private val selectionModel = EditorCellSelectionModel(manager)
