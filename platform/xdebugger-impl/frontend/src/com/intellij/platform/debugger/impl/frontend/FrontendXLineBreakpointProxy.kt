@@ -89,6 +89,12 @@ internal class FrontendXLineBreakpointProxy(
     return lineBreakpointInfo.highlightingRange?.let { TextRange(it.startOffset, it.endOffset) }
   }
 
+  override fun dispose() {
+    super.dispose()
+    visualRepresentation.removeHighlighter()
+    visualRepresentation.redrawInlineInlays(getFile(), getLine())
+  }
+
   override fun doUpdateUI(callOnUpdate: () -> Unit) {
     if (useFeLineBreakpointProxy()) {
       visualRepresentation.doUpdateUI(callOnUpdate)
