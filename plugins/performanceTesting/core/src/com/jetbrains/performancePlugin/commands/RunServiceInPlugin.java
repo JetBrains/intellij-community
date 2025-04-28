@@ -36,7 +36,7 @@ public class RunServiceInPlugin extends RunClassInPlugin {
     List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).getContent().modules;
     if (!modules.isEmpty()) {
       for (PluginContentDescriptor.ModuleItem module : modules) {
-        if (myClazzName.contains(module.name)) {
+        if (myClazzName.contains(module.getName())) {
           loader = module.requireDescriptor().getClassLoader();
         }
       }
