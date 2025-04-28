@@ -110,6 +110,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/AfterTryInAssignment.kt");
     }
 
+    @TestMetadata("AllowValInWhen.kt")
+    public void testAllowValInWhen() throws Exception {
+        runTest("../testData/keywords/AllowValInWhen.kt");
+    }
+
     @TestMetadata("BeforeClass.kt")
     public void testBeforeClass() throws Exception {
         runTest("../testData/keywords/BeforeClass.kt");
@@ -433,6 +438,21 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("NoFinalInParameterList.kt")
     public void testNoFinalInParameterList() throws Exception {
         runTest("../testData/keywords/NoFinalInParameterList.kt");
+    }
+
+    @TestMetadata("NoValInBinaryExpression.kt")
+    public void testNoValInBinaryExpression() throws Exception {
+        runTest("../testData/keywords/NoValInBinaryExpression.kt");
+    }
+
+    @TestMetadata("NoValInParenthesizedExpression.kt")
+    public void testNoValInParenthesizedExpression() throws Exception {
+        runTest("../testData/keywords/NoValInParenthesizedExpression.kt");
+    }
+
+    @TestMetadata("NoValInUnaryExpression.kt")
+    public void testNoValInUnaryExpression() throws Exception {
+        runTest("../testData/keywords/NoValInUnaryExpression.kt");
     }
 
     @TestMetadata("NoValVarInFunctionParameters.kt")

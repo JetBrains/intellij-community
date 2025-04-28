@@ -519,8 +519,12 @@ class KeywordCompletion() {
             return secondaryConstructor.getContainingClassOrObject() is KtObjectDeclaration
         }
 
+        fun isValOrVar(keywordTokenType: KtKeywordToken) = keywordTokenType == VAL_KEYWORD || keywordTokenType == VAR_KEYWORD
+
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
+            val parent = elementAt.parent
+            val parentParent = parent?.parent
 
             val languageVersionSettings = ModuleUtilCore.findModuleForPsiElement(position)?.languageVersionSettings
                 ?: LanguageVersionSettingsImpl.DEFAULT
@@ -533,16 +537,23 @@ class KeywordCompletion() {
 
                 !isModifierSupportedAtLanguageLevel(elementAt, keywordTokenType, languageVersionSettings) -> return false
 
-                (keywordTokenType == VAL_KEYWORD || keywordTokenType == VAR_KEYWORD) &&
-                        elementAt.parent is KtParameter &&
+                isValOrVar(keywordTokenType) &&
+                        parent is KtParameter &&
                         elementAt.parentOfTypes(KtNamedFunction::class, KtSecondaryConstructor::class) != null -> return false
+
+                isValOrVar(keywordTokenType) &&
+                        (parentParent is KtBinaryExpression ||
+                                parentParent is KtUnaryExpression ||
+                                parentParent is KtParenthesizedExpression) -> return false
+
+                keywordTokenType == VAR_KEYWORD && parentParent is KtWhenExpression -> return false
 
                 keywordTokenType == CONSTRUCTOR_KEYWORD && elementAt.isSecondaryConstructorInObjectDeclaration() -> return false
 
                 keywordTokenType !is KtModifierKeywordToken -> return true
 
                 else -> {
-                    val container = (elementAt.parent as? KtModifierList)?.parent ?: return true
+                    val container = (parent as? KtModifierList)?.parent ?: return true
                     val possibleTargets = when (container) {
                         is KtParameter -> {
                             if (container.ownerFunction is KtPrimaryConstructor)
@@ -619,6 +630,7 @@ class KeywordCompletion() {
                                     it !is PsiWhiteSpace && !it.isSemicolon() && it !is KtImportList && it !is KtPackageDirective
                                 }
                             }
+
                             else -> false
                         }
                     }
@@ -668,6 +680,7 @@ class KeywordCompletion() {
 
                 LanguageFeature.ExplicitBackingFields
             }
+
             CONTEXT_KEYWORD -> {
                 // Because there are two feature flags for this keyword, we need to check them separately
                 if (languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
@@ -675,6 +688,7 @@ class KeywordCompletion() {
                 }
                 LanguageFeature.ContextReceivers
             }
+
             else -> return true
         }
         return languageVersionSettings.supportsFeature(feature)
