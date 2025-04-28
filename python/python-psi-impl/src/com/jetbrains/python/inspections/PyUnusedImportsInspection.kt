@@ -251,7 +251,7 @@ class PyUnusedImportsInspection : PyInspection() {
         }
         if (element.getTextLength() > 0) {
           val fix = OptimizeImportsQuickFix()
-          registerProblem(element, PyPsiBundle.message("INSP.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, fix)
+          registerProblem(element, PyPsiBundle.message("INSP.unused.imports.unused.import.statement"), ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, fix)
         }
       }
     }
@@ -264,7 +264,7 @@ class PyUnusedImportsInspection : PyInspection() {
         val asElement = definer.asNameElement
         val toHighlight: PyElement? = asElement ?: definer.importReferenceExpression
         registerProblem(toHighlight,
-                        PyPsiBundle.message("INSP.try.except.import.error", definer.getVisibleName()),
+                        PyPsiBundle.message("INSP.unused.imports.try.except.import.error", definer.getVisibleName()),
                         ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
       }
     }
