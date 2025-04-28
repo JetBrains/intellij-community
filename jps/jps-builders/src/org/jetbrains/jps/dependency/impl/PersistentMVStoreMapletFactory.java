@@ -22,6 +22,8 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -39,12 +41,12 @@ final class PersistentMVStoreMapletFactory implements MapletFactory, Closeable, 
   private final int myCacheSize;
   private final MVStore myStore;
 
-  PersistentMVStoreMapletFactory(String filePath, int maxBuilderThreads) {
+  PersistentMVStoreMapletFactory(String filePath, int maxBuilderThreads) throws IOException {
+    Files.createDirectories(Path.of(filePath).getParent());
     // todo: need transaction store for transactions?
     myStore = new MVStore.Builder()
       .fileName(filePath)
       .autoCommitDisabled() // all read-write operations are expected to be initiated via Graph APIs, otherwise deadlocks are possible because of incorrect lock acquisition sequence
-      .autoCompactFillRate(70)
       .cacheSize(8)
       .compress()
       .cacheConcurrency(getConcurrencyLevel(maxBuilderThreads))
