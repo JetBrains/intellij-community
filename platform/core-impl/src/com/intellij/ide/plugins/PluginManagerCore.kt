@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
@@ -761,7 +760,7 @@ object PluginManagerCore {
     }
   }
 
-  private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginIdsFile.consumeSafe(thirdPartyPluginsFilePath, logger)
+  private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginStringSetFile.consumeIdsSafe(thirdPartyPluginsFilePath, logger)
 
   @ApiStatus.Internal
   fun tryWritePluginIdsToFile(path: Path, pluginIds: Set<PluginId>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean =
@@ -777,7 +776,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @Throws(IOException::class)
   fun writePluginIdsToFile(path: Path, pluginIds: Sequence<PluginId>, openOptions: Array<OpenOption>? = null) {
-    PluginIdsFile.write(path, pluginIds.map { it.idString }.toSet(), openOptions)
+    PluginStringSetFile.write(path, pluginIds.map { it.idString }.toSet(), openOptions)
   }
 
   @VisibleForTesting

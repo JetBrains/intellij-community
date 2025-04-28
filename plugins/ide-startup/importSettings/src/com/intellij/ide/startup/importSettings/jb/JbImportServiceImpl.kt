@@ -96,7 +96,7 @@ internal data class JbProductInfo(
     descriptors2ProcessCnt.set(descriptorDeferreds.size)
     logger.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
     val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
-    val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginIdsFile.readSafe(disabledPluginsFile, logger) else setOf()
+    val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginStringSetFile.readIdsSafe(disabledPluginsFile, logger) else setOf()
     for (def in descriptorDeferreds) {
       def.invokeOnCompletion {
         val descr = def.getCompleted()

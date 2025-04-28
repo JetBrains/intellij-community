@@ -13,18 +13,24 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.streams.asSequence
 
+/**
+ * DO NOT USE outside the plugins subsystem code, API can be changed arbitrarily without a notice.
+ *
+ * Persists a set of trimmed, non-empty strings to a file on disk.
+ */
 @ApiStatus.Internal
-object PluginIdsFile {
+object PluginStringSetFile {
   @Synchronized
   @Throws(IOException::class)
-  fun write(path: Path, pluginIds: Set<String>, openOptions: Array<OpenOption>? = null) {
+  fun write(path: Path, strings: Set<String>, openOptions: Array<OpenOption>? = null) {
     NioFiles.createDirectories(path.parent)
     // TODO: TreeSet demands comparable, probably we can drop Comparable on PluginId if we drop this usage
-    Files.write(path, TreeSet(pluginIds), *(openOptions ?: emptyArray()))
+    //  wait, it's String, not PluginId
+    Files.write(path, TreeSet(strings), *(openOptions ?: emptyArray()))
   }
 
   @Synchronized
-  fun consumeSafe(path: Path, logger: Logger): Set<PluginId> {
+  fun consumeSafe(path: Path, logger: Logger): Set<String> {
     return try {
       val ids = read(path)
       if (!ids.isEmpty()) {
@@ -39,25 +45,30 @@ object PluginIdsFile {
   }
 
   @Synchronized
-  fun readSafe(path: Path, log: Logger): Set<PluginId> {
+  fun consumeIdsSafe(path: Path, logger: Logger): Set<PluginId> = consumeSafe(path, logger).mapTo(LinkedHashSet(), PluginId::getId)
+
+  @Synchronized
+  fun readSafe(path: Path, log: Logger): Set<String> {
     return try {
       read(path)
     }
     catch (e: IOException) {
-      log.warn("Unable to read plugin id list from: $path", e)
+      log.warn("Unable to read plugin string set from: $path", e)
       emptySet()
     }
   }
 
   @Synchronized
+  fun readIdsSafe(path: Path, log: Logger): Set<PluginId> = readSafe(path, log).mapTo(LinkedHashSet(), PluginId::getId)
+
+  @Synchronized
   @Throws(IOException::class)
-  fun read(path: Path): Set<PluginId> {
+  fun read(path: Path): Set<String> {
     return try {
       Files.lines(path).use { lines ->
         lines.asSequence()
           .map(String::trim)
           .filter { line -> !line.isEmpty() }
-          .map { idString -> PluginId.getId(idString) }
           .toSet()
       }
     }
