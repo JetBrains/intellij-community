@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
@@ -29,7 +30,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val items = mutableListOf<Any>()
     items.add(defaultItem ?: "")
 
-    val highestLanguageLevel = AcceptedLanguageLevelsSettings.getHighest()
+    val highestLanguageLevel = JavaRelease.getHighest()
     val highestWithPreview = highestLanguageLevel.getPreviewLevel() ?: highestLanguageLevel
 
     fun MutableList<Any>.filterAndAdd(levels: Collection<LanguageLevel>) = levels.filter(levelFilter).also { addAll(it) }

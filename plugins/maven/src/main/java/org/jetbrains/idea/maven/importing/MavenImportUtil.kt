@@ -28,6 +28,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.VersionComparatorUtil
@@ -143,7 +144,7 @@ object MavenImportUtil {
         getTargetLanguageLevel(it),
         getTestTargetLanguageLevel(it)
       )
-    }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: AcceptedLanguageLevelsSettings.getHighest()
+    }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: JavaRelease.getHighest()
     return maxLevel
   }
 
@@ -279,7 +280,7 @@ object MavenImportUtil {
       if (highestAcceptedLevel.isLessThan(level)) {
         MavenProjectsManager.getInstance(project).getSyncConsole().addBuildIssue(NonAcceptedJavaLevelIssue(level), MessageEvent.Kind.WARNING)
       }
-      level = if (highestAcceptedLevel.isAtLeast(level)) AcceptedLanguageLevelsSettings.getHighest() else highestAcceptedLevel
+      level = if (highestAcceptedLevel.isAtLeast(level)) JavaRelease.getHighest() else highestAcceptedLevel
     }
     return level
   }

@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityD
 import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ObjectUtils;
@@ -80,7 +80,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
    */
   @Deprecated(forRemoval = true) // used externally
   public @NotNull JavaSdkVersion getJdkVersion() {
-    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(AcceptedLanguageLevelsSettings.getHighest()));
+    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(JavaRelease.getHighest()));
   }
 
   /**
@@ -147,7 +147,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   }
 
   public @NotNull LanguageLevel getLanguageLevel() {
-    return ObjectUtils.notNull(languageLevel, AcceptedLanguageLevelsSettings.getHighest());
+    return ObjectUtils.notNull(languageLevel, JavaRelease.getHighest());
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel level) {

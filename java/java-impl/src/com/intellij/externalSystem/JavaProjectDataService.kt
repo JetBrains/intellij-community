@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 
 
@@ -70,7 +71,7 @@ internal object JavaProjectDataServiceUtil {
       if (highestAcceptedLevel.isLessThan(level)) {
         AcceptedLanguageLevelsSettings.showNotificationToAccept(project, level)
       }
-      return if (highestAcceptedLevel.isAtLeast(level)) AcceptedLanguageLevelsSettings.getHighest() else highestAcceptedLevel
+      return if (highestAcceptedLevel.isAtLeast(level)) JavaRelease.getHighest() else highestAcceptedLevel
     }
     return level
   }

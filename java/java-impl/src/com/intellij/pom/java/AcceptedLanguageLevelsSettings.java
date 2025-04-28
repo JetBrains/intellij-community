@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.LegalNoticeDialog;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -149,7 +148,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     //allow custom features to appear in EAP
     if (ApplicationManager.getApplication().isEAP()) return true;
     // language levels up to HIGHEST are officially supported
-    return getHighest().compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
+    return JavaRelease.getHighest().compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
   private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
@@ -173,24 +172,13 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
-  /**
-   * Returns the highest known stable language level of the Java programming language at the current moment in time.
-   * This language level might be adjusted in the cloud registry, meaning the return value could change without a change in the distribution.
-   * The reference the highest language level supported by the analyzer, please use {@link LanguageLevel#HIGHEST}.
-   */
-  public static @NotNull LanguageLevel getHighest() {
-    LanguageLevel languageLevel = LanguageLevel.forFeature(Registry.intValue("java.highest.language.level"));
-    if (languageLevel == null) throw new IllegalStateException("Highest language level could not be found");
-    return languageLevel;
-  }
-
 
   /**
    * @return the highest stable language level for Java, or a preview language level if the user has accepted the legal notice or is using
    * an EAP version.
    */
   public static @NotNull LanguageLevel getHighestAcceptedLevel() {
-    LanguageLevel highest = getHighest();
+    LanguageLevel highest = JavaRelease.getHighest();
     for (LanguageLevel level : LanguageLevel.values()) {
       if (isLanguageLevelAccepted(level)) {
         highest = level;
@@ -263,7 +251,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   private static @NotNull LanguageLevel adjustLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (isLanguageLevelAccepted(languageLevel)) return languageLevel;
     LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
-    return highestAcceptedLevel.isAtLeast(languageLevel) ? getHighest() : highestAcceptedLevel;
+    return highestAcceptedLevel.isAtLeast(languageLevel) ? JavaRelease.getHighest() : highestAcceptedLevel;
   }
 
   @TestOnly

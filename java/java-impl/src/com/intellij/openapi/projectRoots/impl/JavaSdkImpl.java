@@ -37,7 +37,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
-import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,7 +122,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
-    if (release > AcceptedLanguageLevelsSettings.getHighest().feature()) {
+    if (release > JavaRelease.getHighest().feature()) {
       return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
     }
     if (release >= 11) return "https://docs.oracle.com/en/java/javase/" + release + "/docs/api/";
