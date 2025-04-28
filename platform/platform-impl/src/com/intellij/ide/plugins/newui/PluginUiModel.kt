@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
@@ -84,13 +85,14 @@ interface PluginUiModel {
 
   @get:NlsSafe
   var name: String
-  var tags: List<String>
+  var tags: List<String>?
   var suggestedCommercialIde: String?
   
   @get:NlsSafe
   var downloads: String?
   @get:NlsSafe
   var rating: String?
+  var installSource: FUSEventSource?
 
   /**
    * Java compatibility method. Going to be removed after refactoring is done.

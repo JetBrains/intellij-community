@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
+import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.application.ModalityState
 import org.jetbrains.annotations.ApiStatus

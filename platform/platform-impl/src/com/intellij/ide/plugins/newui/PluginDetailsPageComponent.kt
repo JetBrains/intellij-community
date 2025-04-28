@@ -1100,7 +1100,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val ideProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
 
         val trialPeriod = descriptor.getTrialPeriodByProductCode(ideProductCode)
-        val isFreemium = descriptor.tags.contains(Tags.Freemium.name)
+        val tags = descriptor.tags ?: emptyList()
+        val isFreemium = tags.contains(Tags.Freemium.name)
         requiresCommercialIde = descriptor.suggestedCommercialIde != null
 
         getPaidPluginLicenseText(isFreemium, trialPeriod)

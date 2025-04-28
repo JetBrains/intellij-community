@@ -480,9 +480,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
         private static @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicator indicator) {
           if (descriptor instanceof PluginNode pluginNode) {
-            return pluginNode.detailsLoaded() ?
-                   pluginNode :
-                   MarketplaceRequests.getInstance().loadPluginDetails(pluginNode, indicator);
+            if(pluginNode.detailsLoaded()) {
+              return pluginNode;
+            } else {
+              PluginUiModel model = MarketplaceRequests.getInstance().loadPluginDetails(new PluginUiModelAdapter(pluginNode), indicator);
+              if (model != null) {
+                return (PluginNode)model.getDescriptor();
+              }
+              return null;
+            }
           }
           else {
             PluginNode pluginNode = new PluginNode(descriptor.getPluginId(),

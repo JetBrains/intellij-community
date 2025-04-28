@@ -475,7 +475,7 @@ public final class PluginManagerConfigurable
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
                 getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
               if (internalPluginsGroupDescriptor != null) {
-                List<IdeaPluginDescriptor> customPlugins = internalPluginsGroupDescriptor.getPlugins();
+                List<PluginUiModel> customPlugins = ContainerUtil.map(internalPluginsGroupDescriptor.getPlugins(), it -> new PluginUiModelAdapter(it));
                 addGroup(
                   groups,
                   internalPluginsGroupDescriptor.getName(),
@@ -528,7 +528,7 @@ public final class PluginManagerConfigurable
                          groupName,
                          PluginsGroupType.CUSTOM_REPOSITORY,
                          "/repository:\"" + host + "\"",
-                         allDescriptors,
+                         ContainerUtil.map(allDescriptors, it -> new PluginUiModelAdapter(it)),
                          group -> {
                            PluginsGroup.sortByName(group.getDescriptors());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
@@ -1382,8 +1382,9 @@ public final class PluginManagerConfigurable
 
       FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
     }
+    List<PluginUiModel> models = ContainerUtil.map(plugins, it -> new PluginUiModelAdapter(it));
 
-    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", models, group -> false);
   }
 
 
@@ -1881,13 +1882,13 @@ public final class PluginManagerConfigurable
                         @NotNull @Nls String name,
                         @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
-                        @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
+                        @NotNull List<PluginUiModel> customPlugins,
                         @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
     PluginsGroup group = new PluginsGroup(name, type);
 
     int i = 0;
-    for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
-      group.addDescriptor(iterator.next());
+    for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
+      group.addDescriptor(iterator.next().getDescriptor());
     }
 
     if (showAllPredicate.test(group)) {
@@ -1910,9 +1911,9 @@ public final class PluginManagerConfigurable
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery) throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
-    List<PluginNode> pluginNodes = myMarketplaceRequests.searchPlugins(query, ITEMS_PER_GROUP * 2);
+    List<PluginUiModel> pluginUiModels = myMarketplaceRequests.executePluginSearch(query, ITEMS_PER_GROUP * 2);
 
-    for (PluginNode plugin : pluginNodes) {
+    for (PluginUiModel plugin : pluginUiModels) {
       plugin.setInstallSource(FUSEventSource.PLUGINS_STAFF_PICKS_GROUP);
       FUSEventSource.PLUGINS_STAFF_PICKS_GROUP.logPluginSuggested(plugin.getPluginId());
     }
@@ -1921,8 +1922,8 @@ public final class PluginManagerConfigurable
              name,
              type,
              showAllQuery,
-             pluginNodes,
-             __ -> pluginNodes.size() >= ITEMS_PER_GROUP);
+             pluginUiModels,
+             __ -> pluginUiModels.size() >= ITEMS_PER_GROUP);
   }
 
   @Override

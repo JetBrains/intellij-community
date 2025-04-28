@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus
 
@@ -187,7 +188,7 @@ class PluginUiModelAdapter(
       }
     }
 
-  override var tags: List<String>
+  override var tags: List<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.tags else emptyList()
     set(value) {
       if (pluginDescriptor is PluginNode) {
@@ -195,6 +196,13 @@ class PluginUiModelAdapter(
       }
     }
 
+  override var installSource: FUSEventSource?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.installSource else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.installSource = value
+      }
+    }
   override var suggestedCommercialIde: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedCommercialIde else null
     set(value) {

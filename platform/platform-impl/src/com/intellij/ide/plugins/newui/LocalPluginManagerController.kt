@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
@@ -102,9 +103,7 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
   }
 
   override fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-    val pluginNode = model.getPluginDescriptor() as? PluginNode ?: return null
-    val pluginDetails = marketplaceRequests.loadPluginDetails(pluginNode)
-    return pluginDetails?.let { PluginUiModelAdapter(it) }
+    return marketplaceRequests.loadPluginDetails(model)
   }
 
   override fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
@@ -156,7 +155,7 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
   }
 
   override fun getLastCompatiblePluginUpdate(model: PluginUiModel): PluginUiModel? {
-    return marketplaceRequests.getLastCompatiblePluginUpdate(model.pluginId)?.let { PluginUiModelAdapter(it) }
+    return marketplaceRequests.getLastCompatiblePluginUpdateModel(model.pluginId)
   }
 
   override fun loadPluginMetadata(pluginId: String): IntellijPluginMetadata? {

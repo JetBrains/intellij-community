@@ -6,6 +6,8 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -69,10 +71,10 @@ public final class InstallAndEnableTask extends Task.Modal {
               node.setExternalUpdateId(update.getExternalUpdateId());
               node.setDescription(null);
 
-              PluginNode pluginNode = marketplace.loadPluginDetails(node);
+              PluginUiModel pluginNode = marketplace.loadPluginDetails(new PluginUiModelAdapter(node));
               if (pluginNode != null) {
-                PluginDetailsPageComponent.loadAllPluginDetails(marketplace, node, pluginNode);
-                descriptors.set(index, pluginNode);
+                PluginDetailsPageComponent.loadAllPluginDetails(marketplace, node, (PluginNode)pluginNode.getDescriptor());
+                descriptors.set(index, pluginNode.getDescriptor());
               }
             }
           }

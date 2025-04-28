@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
@@ -75,6 +76,10 @@ internal data class IntellijUpdateMetadata(
 
     return pluginNode
   }
+
+  fun toUiModel(): PluginUiModel {
+    return PluginUiModelAdapter(toPluginNode())
+  }
 }
 
 @ApiStatus.Internal
@@ -107,6 +112,10 @@ class MarketplaceSearchPluginData(
     if (cdate != null) pluginNode.date = cdate
     if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
+  }
+
+  fun toPluginUiModel(): PluginUiModel {
+    return PluginUiModelAdapter(toPluginNode())
   }
 }
 
