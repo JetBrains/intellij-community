@@ -105,7 +105,7 @@ private open class FrontendXBreakpointType(
   }
 
   override fun isAddBreakpointButtonVisible(): Boolean {
-    return false // TODO IJPL-184116
+    return dto.isAddBreakpointButtonVisible
   }
 
   override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {

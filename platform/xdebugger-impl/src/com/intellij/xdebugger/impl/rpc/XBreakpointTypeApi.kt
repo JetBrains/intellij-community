@@ -47,6 +47,7 @@ data class XBreakpointTypeDto(
   val lineTypeInfo: XLineBreakpointTypeInfo?,
   val defaultSuspendPolicy: SuspendPolicy,
   val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
+  val isAddBreakpointButtonVisible: Boolean,
   val icons: XBreakpointTypeIcons,
 )
 

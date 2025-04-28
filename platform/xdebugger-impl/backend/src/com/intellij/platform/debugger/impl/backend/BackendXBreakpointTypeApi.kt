@@ -16,10 +16,8 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.rpc.*
@@ -111,6 +109,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     return XBreakpointTypeDto(
       XBreakpointTypeId(id), index, title, isSuspendThreadSupported, lineTypeInfo, defaultState.suspendPolicy,
       standardPanels = visibleStandardPanels.mapTo(mutableSetOf()) { it.toDto() },
+      isAddBreakpointButtonVisible,
       icons
     )
   }
