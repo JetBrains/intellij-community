@@ -48,7 +48,6 @@ import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.*;
@@ -62,7 +61,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
@@ -198,8 +196,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    CoroutineScope globalScope = GitDisposable.getInstance(myProject).getCoroutineScope();
-    CoroutineScope activeScope = childScope(globalScope, "GitVcs", EmptyCoroutineContext.INSTANCE, true);
+    CoroutineScope activeScope = GitDisposable.getInstance(myProject).childScope("GitVcs");
 
     // workaround the race between 'activate' and 'deactivate'
     CoroutineScope oldScope = myActiveScope.getAndSet(activeScope);

@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcs.git.shared.rpc.GitWidgetApi
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import git4idea.GitDisposable
@@ -26,7 +25,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
   override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
     val project = projectId.findProject()
     val file = selectedFile?.virtualFile()
-    val scope = GitDisposable.getInstance(project).coroutineScope.childScope("Git widget update scope")
+    val scope = GitDisposable.getInstance(project).childScope("Git widget update scope")
 
     return flowWithMessageBus(project, scope) { connection ->
       fun trySendNewState() {

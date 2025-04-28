@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
@@ -135,8 +134,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = treeStep.repositories
     }
 
-    GitDisposable.getInstance(project).coroutineScope
-      .childScope("Git Branches Tree Popup")
+    GitDisposable.getInstance(project).childScope("Git Branches Tree Popup")
       .cancelledWith(this).launch {
         searchPatternStateFlow.drop(1).debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collectLatest { pattern ->
           withContext(Dispatchers.EDT) {

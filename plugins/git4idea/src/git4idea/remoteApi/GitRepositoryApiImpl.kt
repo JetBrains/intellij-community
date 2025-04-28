@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
@@ -41,7 +40,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
     val project = projectId.findProject()
-    val scope = GitDisposable.getInstance(project).coroutineScope.childScope("Git repository synchronizer in ${project}")
+    val scope = GitDisposable.getInstance(project).childScope("Git repository synchronizer in ${project}")
 
     return flowWithMessageBus(project, scope) { connection ->
       val synchronizer = Synchronizer(project, this@flowWithMessageBus)

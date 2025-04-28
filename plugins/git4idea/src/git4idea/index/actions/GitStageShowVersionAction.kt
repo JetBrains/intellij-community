@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.OpenSourceUtil
 import git4idea.GitDisposable
 import git4idea.i18n.GitBundle
@@ -50,7 +49,7 @@ abstract class GitStageShowVersionAction(private val showStaged: Boolean) : Dumb
     val caret = e.getData(CommonDataKeys.CARET)
 
     if (showStaged) {
-      GitDisposable.getInstance(project).coroutineScope.childScope("Show staged file").async {
+      GitDisposable.getInstance(project).childScope("Show staged file").async {
         val filePath = sourceFile.filePath()
         withBackgroundProgress(project, GitBundle.message("stage.vfs.read.process", filePath.name), true) {
           val targetFile = GitIndexFileSystemRefresher.getInstance(project).createFile(root, filePath) ?: return@withBackgroundProgress

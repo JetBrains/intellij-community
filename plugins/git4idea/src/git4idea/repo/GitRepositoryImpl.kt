@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.project.projectId
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import git4idea.GitDisposable
 import git4idea.GitLocalBranch
@@ -60,7 +59,7 @@ class GitRepositoryImpl private constructor(
   @Volatile
   private var recentCheckoutBranches = emptyList<GitLocalBranch>()
 
-  private val coroutineScope = GitDisposable.getInstance(project).coroutineScope.childScope("GitRepositoryImpl")
+  private val coroutineScope = GitDisposable.getInstance(project).childScope("GitRepositoryImpl")
 
   /**
    * @see [git4idea.repo.GitRepositoryImpl.createInstance]

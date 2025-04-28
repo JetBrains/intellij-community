@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.tag
 
 import com.intellij.dvcs.DvcsUtil
@@ -8,7 +8,6 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitDisposable
 import git4idea.GitTag
 import git4idea.GitVcs.getInstance
@@ -42,7 +41,7 @@ internal class GitPushTagAction : GitSingleTagAction(GitBundle.messagePointer("a
     val remote = e.getData(GitBranchActionsDataKeys.REMOTE) ?: return
     val repository = e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY) ?: return
 
-    GitDisposable.getInstance(project).coroutineScope.childScope("Git push tags").launch {
+    GitDisposable.getInstance(project).childScope("Git push tags").launch {
       withBackgroundProgress(project, DvcsBundle.message("push.process.pushing"), cancellable = true) {
         val pushSupport = getPushSupport(getInstance(project)) as GitPushSupport
         val pushSpec = preparePushSpec(reference, remote)
