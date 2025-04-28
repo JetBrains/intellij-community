@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.io.delete
-import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
@@ -46,20 +45,6 @@ abstract class CodeExecutionManager {
       collectedInfo[it] = 0
     }
   }
-
-  protected fun constructScriptFiles(basePath: String, setupCommands: List<String>) {
-    // Create and increase a setup script with commands for test environment initialization
-    val setupFile = File("$basePath/setup_tests.sh")
-    var content = javaClass.getResourceAsStream("/scriptFiles/setup_tests.sh")!!.bufferedReader().readText()
-      .replace("\$SETUP_COMMANDS", setupCommands.joinToString("\n"))
-    setupFile.writeText(content)
-
-    // Create a run script for test execution
-    val runFile = File("$basePath/run_tests.sh")
-    content = javaClass.getResourceAsStream("/scriptFiles/run_tests.sh")!!.bufferedReader().readText()
-    runFile.writeText(content)
-  }
-
 
   fun compileAndExecute(project: Project, code: String, target: String, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     // Clear collectedInfo

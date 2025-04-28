@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 open class PythonCodeExecutionManager() : CodeExecutionManager() {
   override val language = Language.PYTHON
@@ -50,6 +51,19 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.toString()), sdk)
 
     if (executionLog.exitCode != 0) throw IllegalStateException("Setup was not successful")
+  }
+
+  protected fun constructScriptFiles(basePath: String, setupCommands: List<String>) {
+    // Create a setup script with provided commands for test environment initialization
+    val setupFile = Path.of("$basePath/setup_tests.sh")
+    var content = javaClass.getResourceAsStream("/scriptFiles/setup_tests.sh")!!.bufferedReader().readText()
+      .replace("\$SETUP_COMMANDS", setupCommands.joinToString("\n"))
+    setupFile.writeText(content)
+
+    // Create a run script for test execution
+    val runFile = Path.of("$basePath/run_tests.sh")
+    content = javaClass.getResourceAsStream("/scriptFiles/run_tests.sh")!!.bufferedReader().readText()
+    runFile.writeText(content)
   }
 
   private fun extractCodeDirectory(code: String): String? {
