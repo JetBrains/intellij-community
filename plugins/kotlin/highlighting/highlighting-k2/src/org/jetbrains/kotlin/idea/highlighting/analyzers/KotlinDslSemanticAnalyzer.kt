@@ -51,7 +51,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
 
             // in context of implicit receiver
             val dispatchReceiver = functionCall.partiallyAppliedSymbol.dispatchReceiver
-            val dispatchReceiverType = dispatchReceiver?.takeIf { it is KaImplicitReceiverValue }?.type as? KaClassType
+            val dispatchReceiverType = (dispatchReceiver as? KaImplicitReceiverValue)?.type as? KaClassType
             dispatchReceiverType?.symbol?.let(::firstDslAnnotationOrNull)?.let { return@with it }
 
             // in case of ext function
