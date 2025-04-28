@@ -1,14 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.jcef.test.cases
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.TestUtils
-import java.awt.BorderLayout
+import org.intellij.lang.annotations.Language
 import java.awt.Color
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.JFrame
-import javax.swing.JLabel
 
 internal fun runSimpleResizeTest() {
+  @Language("html")
   val htmlContent = """
         <!DOCTYPE html>
         <html lang="en">
@@ -44,7 +48,10 @@ internal fun runSimpleResizeTest() {
   frame.setSize(600, 600)
   frame.setLocationRelativeTo(null)
 
-  val jcefBrowser = JBCefBrowser()
+  val toDispose:  MutableList<Disposable> = mutableListOf()
+
+  val jcefBrowser = JBCefBrowser().apply { toDispose.add(this) }
+
   val BLUE_COLOR = Color(0, 0, 255, 255)
 
   val STEPS = 50
@@ -54,7 +61,7 @@ internal fun runSimpleResizeTest() {
   var timeStart: Long? = null
   var count = 0
   var step = RESIZE_STEP
-  var durations = mutableListOf<Long>()
+  val durations = mutableListOf<Long>()
 
   frame.contentPane.add(PerformanceTest.RepaintListener(jcefBrowser.component, {
     val cefComponent = jcefBrowser.browserComponent!!
@@ -73,13 +80,63 @@ internal fun runSimpleResizeTest() {
       if (count == STEPS) {
         frame.contentPane.removeAll()
 
-        val baskets = getBaskets(durations)
-        val histogram = durationsToHistogram(durations, baskets)
+        val mean = durations.average()
 
-        frame.contentPane.add(JLabel(
-          "<html><pre>Average resize time: ${totalTime / count} ms" + "\n\nHistogram:\n" + histogramToString(histogram,
-                                                                                                             baskets) + "</pre></html>"),
-                              BorderLayout.CENTER)
+        val chart = PlotlyChart().apply { toDispose.add(this) }
+        chart.newPlot(
+          """
+            [
+                {
+                    x: ${durations.joinToString(separator = ", ", prefix = "[", postfix = "]")},
+                    type: 'histogram',
+                    marker: {color: 'rgba(100, 200, 255, 0.7)'}
+                }
+            ]
+          """.trimIndent(),
+          layout = """
+            {
+                title: 'Resize test',
+                xaxis: {
+                    title: 'Resize time, ms'
+                },
+                yaxis: {
+                    title: 'Count'
+                },
+                shapes: [
+                 {
+                   type: 'line',
+                   x0: $mean,
+                   x1: $mean,
+                   y0: 0,
+                   y1: 1,
+                   xref: 'x',
+                   yref: 'paper',
+                   line: {
+                     color: 'red',
+                     width: 2,
+                     dash: 'dash'
+                   }
+                 }
+                ],
+                annotations: [
+                  {
+                    x: ${mean},
+                    y: 1,
+                    xref: 'x',
+                    yref: 'paper',
+                    text: `Mean: ${mean}`,
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowcolor: "red",
+                    ax: 0,
+                    ay: -30
+                  }
+                ]
+            }
+          """.trimIndent()
+        )
+
+        frame.add(chart.getComponent())
 
         frame.revalidate()
         frame.repaint()
@@ -97,43 +154,11 @@ internal fun runSimpleResizeTest() {
   jcefBrowser.loadHTML(htmlContent)
 
   frame.isVisible = true
-}
-
-internal fun getBaskets(durations: List<Long>): List<Pair<Long, Long>> {
-  val baskets = mutableListOf<Pair<Long, Long>>()
-  var min = durations.minOrNull() ?: 0
-  val max = durations.maxOrNull() ?: 0
-  val step = (max - min) / 10
-  while (min < max) {
-    baskets.add(Pair(min, min + step))
-    min += step
-  }
-  return baskets
-}
-
-internal fun durationsToHistogram(durations: List<Long>, baskets: List<Pair<Long, Long>>): IntArray {
-  val histogram = IntArray(baskets.size)
-  for (duration in durations) {
-    for ((basketIndex, basket) in baskets.withIndex()) {
-      if (duration >= basket.first && duration < basket.second) {
-        histogram[basketIndex]++
-        break
+  frame.addWindowListener(object : WindowAdapter() {
+    override fun windowClosed(e: WindowEvent?) {
+      for (disposable in toDispose) {
+        Disposer.dispose(disposable)
       }
     }
-  }
-
-  return histogram
-}
-
-internal fun histogramToString(histogram: IntArray, baskets: List<Pair<Long, Long>>): String {
-  val totalCount = histogram.sum()
-  val sb = StringBuilder()
-
-  for ((basketIndex, basket) in baskets.withIndex()) {
-    val percent = (histogram[basketIndex] * 100.0) / totalCount
-    sb.append("${basket.first} - ${basket.second} ms: $percent %\n")
-    sb.appendLine()
-  }
-
-  return sb.toString()
+  })
 }
