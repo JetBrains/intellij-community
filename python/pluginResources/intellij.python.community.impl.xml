@@ -216,7 +216,7 @@
                      level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection"/>
     <localInspection language="Python" shortName="PyUnusedImportsInspection"
-                     suppressId="PyUnusedImports"
+                     suppressId="PyUnusedImports" alternativeId="PyUnresolvedReferences"
                      bundle="messages.PyPsiBundle" key="INSP.NAME.unused.imports" groupKey="INSP.GROUP.python" enabledByDefault="true"
                      level="WARNING" runForWholeFile="true"
                      implementationClass="com.jetbrains.python.inspections.PyUnusedImportsInspection"/>

@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.NonNls
 
 
 class PyUnusedImportsInspection : PyInspection() {
@@ -388,6 +389,10 @@ class PyUnusedImportsInspection : PyInspection() {
         element.delete()
       }
     }
+  }
+
+  override fun getAlternativeID(): @NonNls String? {
+    return "PyUnresolvedReferences"
   }
 
   companion object {
