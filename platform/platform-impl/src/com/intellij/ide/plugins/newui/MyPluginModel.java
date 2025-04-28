@@ -614,7 +614,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         myInstalledPanel.addGroup(myInstalling, 0);
       }
       else {
-        myInstalledPanel.addToGroup(myInstalling, descriptor);
+        myInstalledPanel.addToGroup(myInstalling, new PluginUiModelAdapter(descriptor));
       }
 
       myInstalling.titleWithCount();
@@ -863,7 +863,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         return;
       }
 
-      myInstalledPanel.addToGroup(myDownloaded, descriptor);
+      myInstalledPanel.addToGroup(myDownloaded, new PluginUiModelAdapter(descriptor));
       myDownloaded.titleWithEnabled(new PluginModelFacade(this));
       myInstalledPanel.doLayout();
     }

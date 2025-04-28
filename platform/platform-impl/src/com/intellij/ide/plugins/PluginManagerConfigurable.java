@@ -1533,8 +1533,8 @@ public final class PluginManagerConfigurable
             continue;
           }
           ListPluginComponent component = group.findComponent(update);
-          if (component != null && component.getPluginDescriptor().isBundled()) {
-            myInstalledPanel.addToGroup(myBundledUpdateGroup, component.getPluginDescriptor());
+          if (component != null && component.getPluginModel().isBundled()) {
+            myInstalledPanel.addToGroup(myBundledUpdateGroup, component.getPluginModel());
             break;
           }
         }

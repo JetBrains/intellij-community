@@ -261,8 +261,8 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     }
   }
 
-  public void addToGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = group.addWithIndex(descriptor);
+  public void addToGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel model) {
+    int index = group.addWithIndex(model);
     ListPluginComponent anchor = null;
     int uiIndex = -1;
 
@@ -279,7 +279,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = createListComponent(new PluginUiModelAdapter(descriptor), group);
+    ListPluginComponent pluginComponent = createListComponent(model, group);
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);
