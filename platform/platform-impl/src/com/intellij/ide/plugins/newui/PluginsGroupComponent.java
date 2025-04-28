@@ -73,7 +73,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     });
   }
 
-  protected abstract @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group);
+  protected abstract @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model, @NotNull PluginsGroup group);
 
   public final @NotNull List<UIPluginGroup> getGroups() {
     return Collections.unmodifiableList(myGroups);
@@ -100,15 +100,15 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void addGroup(@NotNull PluginsGroup group, int groupIndex) {
-    addGroup(group, group.getDescriptors(), groupIndex);
+    addGroup(group, group.getModels(), groupIndex);
   }
 
   public void addLazyGroup(@NotNull PluginsGroup group, @NotNull JScrollBar scrollBar, int gapSize, @NotNull Runnable uiCallback) {
-    if (group.getDescriptors().size() <= gapSize) {
+    if (group.getModels().size() <= gapSize) {
       addGroup(group);
     }
     else {
-      addGroup(group, group.getDescriptors().subList(0, gapSize), -1);
+      addGroup(group, group.getModels().subList(0, gapSize), -1);
       AdjustmentListener listener = new AdjustmentListener() {
         @Override
         public void adjustmentValueChanged(AdjustmentEvent e) {
@@ -120,7 +120,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
             try {
               PluginLogo.startBatchMode();
-              addToGroup(group, group.getDescriptors().subList(fromIndex, toIndex), uiIndex, eventIndex);
+              addToGroup(group, group.getModels().subList(fromIndex, toIndex), uiIndex, eventIndex);
             }
             finally {
               PluginLogo.endBatchMode();
@@ -145,7 +145,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   private static final Color SECTION_HEADER_BACKGROUND =
     JBColor.namedColor("Plugins.SectionHeader.background", new JBColor(0xF7F7F7, 0x3C3F41));
 
-  private void addGroup(@NotNull PluginsGroup group, @NotNull List<? extends IdeaPluginDescriptor> descriptors, int groupIndex) {
+  private void addGroup(@NotNull PluginsGroup group, @NotNull List<PluginUiModel> models, int groupIndex) {
     UIPluginGroup uiGroup = new UIPluginGroup();
     group.ui = uiGroup;
     myGroups.add(groupIndex == -1 ? myGroups.size() : groupIndex, uiGroup);
@@ -229,7 +229,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     uiGroup.panel = panel;
 
-    addToGroup(group, descriptors, index, eventIndex);
+    addToGroup(group, models, index, eventIndex);
   }
 
   private int getEventIndexForGroup(int groupIndex) {
@@ -243,11 +243,11 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   private void addToGroup(@NotNull PluginsGroup group,
-                          @NotNull List<? extends IdeaPluginDescriptor> descriptors,
+                          @NotNull List<PluginUiModel> models,
                           int index,
                           int eventIndex) {
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      ListPluginComponent pluginComponent = createListComponent(descriptor, group);
+    for (PluginUiModel pluginUiModel : models) {
+      ListPluginComponent pluginComponent = createListComponent(pluginUiModel, group);
       group.ui.plugins.add(pluginComponent);
       add(pluginComponent, index);
       myEventHandler.addCell(pluginComponent, eventIndex);
@@ -279,7 +279,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
       uiIndex = getComponentIndex(anchor);
     }
 
-    ListPluginComponent pluginComponent = createListComponent(descriptor, group);
+    ListPluginComponent pluginComponent = createListComponent(new PluginUiModelAdapter(descriptor), group);
     group.ui.plugins.add(index, pluginComponent);
     add(pluginComponent, uiIndex);
     myEventHandler.addCell(pluginComponent, anchor);

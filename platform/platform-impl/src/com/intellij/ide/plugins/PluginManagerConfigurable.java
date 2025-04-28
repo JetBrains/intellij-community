@@ -445,10 +445,9 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+          protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group) {
-            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
-            return new ListPluginComponent(myPluginModelFacade, uiModelAdapter, group, searchListener, true);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, true);
           }
         };
 
@@ -530,7 +529,7 @@ public final class PluginManagerConfigurable
                          "/repository:\"" + host + "\"",
                          ContainerUtil.map(allDescriptors, it -> new PluginUiModelAdapter(it)),
                          group -> {
-                           PluginsGroup.sortByName(group.getDescriptors());
+                           PluginsGroup.sortByName(group.getModels());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
                          });
               }
@@ -814,10 +813,9 @@ public final class PluginManagerConfigurable
 
         PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+          protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group) {
-            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
-            return new ListPluginComponent(myPluginModelFacade, uiModelAdapter, group, searchListener, true);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, true);
           }
         };
 
@@ -993,10 +991,9 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel = new PluginsGroupComponent(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+          protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group) {
-            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
-            return new ListPluginComponent(myPluginModelFacade, uiModelAdapter, group, searchListener, false);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, false);
           }
         };
 
@@ -1161,10 +1158,9 @@ public final class PluginManagerConfigurable
 
         PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+          protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group) {
-            PluginUiModelAdapter uiModelAdapter = new PluginUiModelAdapter(descriptor);
-            return new ListPluginComponent(myPluginModelFacade, uiModelAdapter, group, searchListener, false);
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, false);
           }
         };
 
