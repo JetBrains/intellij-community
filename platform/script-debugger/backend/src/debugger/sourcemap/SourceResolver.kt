@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.UriUtil
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
@@ -113,7 +114,7 @@ class SourceResolver(private val rawSources: List<String>,
 }
 
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
-  var path = url
+  var path = UriUtil.trimParameters(url)
   if (!FileUtil.isAbsolute(url) && url.isNotEmpty() && url[0] != '/') {
     val basePath = ScriptDebuggerUrls.toFilePath(baseUrl) ?: baseUrl.path
     if (baseUrlIsFile) {
