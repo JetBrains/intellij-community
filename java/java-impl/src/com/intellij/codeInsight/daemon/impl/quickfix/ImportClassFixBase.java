@@ -250,22 +250,34 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   private void filterByRequiredMemberName(@NotNull List<PsiClass> classList, boolean needsStatic) {
     String memberName = getRequiredMemberName(myReferenceElement);
-    if (memberName != null) {
-      classList.removeIf(psiClass -> {
-        PsiField field = psiClass.findFieldByName(memberName, true);
-        if (field != null && (!needsStatic || field.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(field, myReferenceElement)) {
-          return false;
-        }
-
-        PsiClass inner = psiClass.findInnerClassByName(memberName, true);
-        if (inner != null && isAccessible(inner, myReferenceElement)) return false;
-
-        for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
-          if ((!needsStatic || method.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(method, myReferenceElement)) return false;
-        }
-        return true;
-      });
+    if (memberName == null) {
+      return;
     }
+    List<PsiClass> toRemove = new ArrayList<>();
+    for (PsiClass aClass : classList) {
+      if (!hasMember(needsStatic, aClass, memberName)) {
+        toRemove.add(aClass);
+      }
+    }
+    //if all of them don't contain member, let's keep as is to create this member in the future
+    if (classList.size() != toRemove.size()) {
+      classList.removeAll(toRemove);
+    }
+  }
+
+  private boolean hasMember(boolean needsStatic, @NotNull PsiClass psiClass, @NotNull String memberName) {
+    PsiField field = psiClass.findFieldByName(memberName, true);
+    if (field != null && (!needsStatic || field.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(field, myReferenceElement)) {
+      return true;
+    }
+
+    PsiClass inner = psiClass.findInnerClassByName(memberName, true);
+    if (inner != null && isAccessible(inner, myReferenceElement)) return true;
+
+    for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
+      if ((!needsStatic || method.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(method, myReferenceElement)) return true;
+    }
+    return false;
   }
 
   private static void filterAlreadyImportedButUnresolved(@NotNull Collection<PsiClass> list, @NotNull PsiFile containingFile) {
