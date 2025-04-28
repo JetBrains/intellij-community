@@ -18,6 +18,8 @@ abstract class TestIdeaPluginDescriptorEx : IdeaPluginDescriptorEx {
     get() = throw AssertionError("unexpected call")
   override val packagePrefix: String?
     get() = throw AssertionError("unexpected call")
+  override val contentModules: List<ContentModule>
+    get() = throw AssertionError("unexpected call")
   override val actions: List<ActionElement>
     get() = throw AssertionError("unexpected call")
   override val appContainerDescriptor: ContainerDescriptor

@@ -119,9 +119,15 @@ class IdeaPluginDescriptorImpl private constructor(
   override val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
     .let(::addCorePluginAliases)
 
+  /**
+   * this is an implementation detail required during descriptor loading, use [contentModules] instead
+   */
   val content: PluginContentDescriptor =
     raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
     ?: PluginContentDescriptor.EMPTY
+
+  override val contentModules: List<ContentModule>
+    get() = content.modules
   override val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
   override val packagePrefix: String? = raw.`package`
 
