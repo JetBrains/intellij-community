@@ -9,6 +9,7 @@ import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -45,7 +46,7 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       val width = resultList.width
 
       @Suppress("HardCodedStringLiteral")
-      text(getContainerTextForLeftComponent(containerText, width - presentableTextWidth - 16 - locationTextWidth - 20, fontMetrics)) {
+      text(getContainerTextForLeftComponent(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), fontMetrics)) {
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
         if (selected) {
@@ -83,8 +84,15 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     val fullWidth = fm.stringWidth(adjustedText)
     if (fullWidth < maxWidth) return adjustedText
 
-    val separator = if (text.contains("/")) "/" else if (SystemInfo.isWindows && text.contains("\\")) "\\" else if (text.contains(".")) "." else if (text.contains("-")) "-" else " "
-    val parts = LinkedList<String?>(StringUtil.split(text, separator))
+    val separator = when {
+      text.contains("/") -> "/"
+      SystemInfo.isWindows && text.contains("\\") -> "\\"
+      text.contains(".") -> "."
+      text.contains("-") -> "-"
+      else -> " "
+    }
+
+    val parts = LinkedList(StringUtil.split(text, separator))
     var index: Int
     while (parts.size > 1) {
       index = parts.size / 2 - 1
