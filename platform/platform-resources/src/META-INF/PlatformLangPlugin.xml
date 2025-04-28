@@ -89,7 +89,6 @@
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
-    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
     <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>

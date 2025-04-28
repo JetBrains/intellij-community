@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
+    <highlightVisitor implementation="com.intellij.ide.todo.codeInsight.TodoHighlightVisitor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.ide.todo.TodoConfigurationCollector"/>
 
@@ -10,6 +11,7 @@
                              bundle="messages.IdeBundle"/>
 
     <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
     <projectService serviceImplementation="com.intellij.ide.todo.TodoView" client="all"/>
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
