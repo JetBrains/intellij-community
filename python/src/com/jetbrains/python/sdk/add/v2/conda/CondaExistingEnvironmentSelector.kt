@@ -15,27 +15,16 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.asPythonResult
-import com.jetbrains.python.sdk.add.v2.CondaEnvComboBoxListCellRenderer
-import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterCreationTargets
-import com.jetbrains.python.sdk.add.v2.UNKNOWN_EXECUTABLE
-import com.jetbrains.python.sdk.add.v2.createInstallCondaFix
-import com.jetbrains.python.sdk.add.v2.detectCondaEnvironmentsOrError
-import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
-import com.jetbrains.python.sdk.add.v2.executableSelector
-import com.jetbrains.python.sdk.add.v2.selectCondaEnvironment
-import com.jetbrains.python.sdk.add.v2.toStatisticsField
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -120,7 +109,7 @@ internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel
     //}
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> =
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> =
     model.selectCondaEnvironment(base = false).asPythonResult()
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

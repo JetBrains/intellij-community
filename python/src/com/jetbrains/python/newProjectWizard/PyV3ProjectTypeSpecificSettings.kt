@@ -4,8 +4,7 @@ package com.jetbrains.python.newProjectWizard
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.CheckReturnValue
 
 /**
@@ -26,5 +25,5 @@ fun interface PyV3ProjectTypeSpecificSettings {
    * Returns error if generation failed due to execution error
    */
   @CheckReturnValue
-  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Unit, PyError>
+  suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): PyResult<Unit>
 }

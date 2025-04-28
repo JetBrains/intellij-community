@@ -14,33 +14,32 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.POETRY
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Error
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.Invisible
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.withContext
-import java.nio.file.Path
-import kotlin.io.path.pathString
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.asPythonResult
-import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
-import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
-import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
@@ -108,7 +107,7 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
     PropertiesComponent.getInstance().poetryPath = savingPath
   }
 
-  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
     return setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages).asPythonResult()
   }
@@ -141,7 +140,7 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
 @Service(Service.Level.APP)
 @State(name = "PyPoetrySettings", storages = [Storage("pyPoetrySettings.xml")])
 private class PoetryConfigService : SerializablePersistentStateComponent<PoetryConfigService.PyPoetrySettingsState>(PyPoetrySettingsState()) {
-  class PyPoetrySettingsState: BaseState() {
+  class PyPoetrySettingsState : BaseState() {
     var isInProjectEnv = false
   }
 

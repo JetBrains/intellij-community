@@ -1,22 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject
 
-import com.jetbrains.python.Result.Companion.failure
-import com.jetbrains.python.Result.Companion.success
-import com.jetbrains.python.Result
-import org.apache.tuweni.toml.Toml
-import org.apache.tuweni.toml.TomlParseError
-import org.apache.tuweni.toml.TomlTable
-import java.io.InputStream
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.jetbrains.python.Result
+import com.jetbrains.python.Result.Companion.success
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.findAmongRoots
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.tuweni.toml.Toml
+import org.apache.tuweni.toml.TomlParseError
+import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.InputStream
 import java.nio.file.Path
 
 /**
@@ -112,7 +111,7 @@ data class PyProjectToml(
       val toml = Toml.parse(inputStream)
 
       if (toml.hasErrors()) {
-        return failure(toml.errors())
+        return Result.failure(toml.errors())
       }
 
       val projectTable = toml.safeGet<TomlTable>("project").getOrIssue(issues)

@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.hatch.*
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.resolvePythonBinary
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.persist
@@ -19,7 +19,7 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 @ApiStatus.Internal
-suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module: Module?): Result<Sdk, PyError> {
+suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path, module: Module?): PyResult<Sdk> {
   val existingPythonEnvironment = pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
                                   ?: return Result.failure(BasePythonExecutableNotFoundHatchError(null as String?))
   val pythonHomePath = pythonVirtualEnvironment?.pythonHomePath

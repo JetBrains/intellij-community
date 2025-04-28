@@ -10,11 +10,12 @@ import com.intellij.python.hatch.service.CliBasedHatchService
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.basePath
 import java.nio.file.Path
 
-sealed class HatchError(message: @NlsSafe String) : PyError.Message(message)
+sealed class HatchError(message: @NlsSafe String) : MessageError(message)
 
 class HatchExecutableNotFoundHatchError(path: Path?) : HatchError(
   PyHatchBundle.message("python.hatch.error.executable.is.not.found", path.toString())
@@ -79,25 +80,25 @@ data class ProjectStructure(
 interface HatchService {
   fun getWorkingDirectoryPath(): Path
 
-  suspend fun syncDependencies(envName: String): Result<String, PyError>
+  suspend fun syncDependencies(envName: String): PyResult<String>
 
-  suspend fun isHatchManagedProject(): Result<Boolean, PyError>
+  suspend fun isHatchManagedProject(): PyResult<Boolean>
 
-  suspend fun createNewProject(projectName: String): Result<ProjectStructure, PyError>
+  suspend fun createNewProject(projectName: String): PyResult<ProjectStructure>
 
   /**
    * param[basePythonBinaryPath] base python for environment, the one on the PATH should be used if null.
    * param[envName] environment name to create, 'default' should be used if null.
    */
-  suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary? = null, envName: String? = null): Result<PythonVirtualEnvironment.Existing, PyError>
+  suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary? = null, envName: String? = null): PyResult<PythonVirtualEnvironment.Existing>
 
-  suspend fun findVirtualEnvironments(): Result<List<HatchVirtualEnvironment>, PyError>
+  suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment>>
 }
 
 /**
  * Hatch Service for working directory (where hatch.toml / pyproject.toml is usually placed)
  */
-suspend fun Path.getHatchService(hatchExecutablePath: Path? = null): Result<HatchService, PyError> {
+suspend fun Path.getHatchService(hatchExecutablePath: Path? = null): PyResult<HatchService> {
   return CliBasedHatchService(hatchExecutablePath = hatchExecutablePath, workingDirectoryPath = this)
 }
 
@@ -105,7 +106,7 @@ suspend fun Path.getHatchService(hatchExecutablePath: Path? = null): Result<Hatc
  * Hatch Service for Module.
  * Working directory considered as the module base path.
  */
-suspend fun Module.getHatchService(hatchExecutablePath: Path? = null): Result<HatchService, PyError> {
+suspend fun Module.getHatchService(hatchExecutablePath: Path? = null): PyResult<HatchService> {
   val workingDirectoryPath = resolveHatchWorkingDirectory(this.project, this).getOr { return it }
   return workingDirectoryPath.getHatchService(hatchExecutablePath = hatchExecutablePath)
 }
@@ -115,7 +116,7 @@ suspend fun Module.getHatchService(hatchExecutablePath: Path? = null): Result<Ha
  */
 fun PythonHomePath.getHatchEnvVirtualProjectPath(): Path = this.parent.parent
 
-fun resolveHatchWorkingDirectory(project: Project, module: Module?): Result<Path, PyError> {
+fun resolveHatchWorkingDirectory(project: Project, module: Module?): PyResult<Path> {
   val pathString = module?.basePath ?: project.basePath
 
   return when (val path = pathString?.let { Path.of(it) }) {

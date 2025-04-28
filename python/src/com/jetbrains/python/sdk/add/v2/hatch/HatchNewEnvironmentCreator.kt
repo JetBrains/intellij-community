@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
@@ -58,7 +58,7 @@ internal class HatchNewEnvironmentCreator(
     HatchConfiguration.persistPathForTarget(hatchExecutablePath = savingPath)
   }
 
-  override suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> {
+  override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
     val hatchExecutablePath = executable.get().toPath().getOr { return it }
     val hatchService = module.getHatchService(hatchExecutablePath = hatchExecutablePath).getOr { return it }
 
@@ -76,7 +76,7 @@ internal class HatchNewEnvironmentCreator(
     return Result.success(Unit)
   }
 
-  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     val hatchEnv = hatchEnvironmentProperty.get()?.hatchEnvironment
                    ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 

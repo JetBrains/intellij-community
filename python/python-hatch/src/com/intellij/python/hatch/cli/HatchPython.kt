@@ -3,10 +3,10 @@ package com.intellij.python.hatch.cli
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.cli.HatchPython.PythonInstallResponse.AbortReason
+import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError.ExecException
+import com.jetbrains.python.errorProcessing.ExecError
 import java.nio.file.Path
 
 /**
@@ -24,7 +24,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    * @param parent Show the parent directory of the Python binary
    * @param dir The directory in which distributions reside
    */
-  suspend fun find(name: String, parent: Boolean? = null, dir: String? = null): Result<Path?, ExecException> {
+  suspend fun find(name: String, parent: Boolean? = null, dir: String? = null): Result<Path?, ExecError> {
     val options = listOf(parent to "--parent").makeOptions() + buildDirOption(dir)
 
     return executeAndHandleErrors("find", *options, name) { output ->
@@ -127,7 +127,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
     private: Boolean? = null,
     update: Boolean? = null,
     dir: String? = null,
-  ): Result<PythonInstallResponse, ExecException> {
+  ): Result<PythonInstallResponse, ExecError> {
     val options = listOf(update to "--update", private to "--private").makeOptions() + buildDirOption(dir)
     return executeAndHandleErrors("install", *options, *names) { output ->
       Result.success(parsePythonInstallCommandOutput(output))
@@ -142,7 +142,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    * @param names Distributions to remove, you may select `all` to install all compatible distributions
    * @param dir The directory in which distributions reside
    */
-  suspend fun remove(vararg names: String = ALL_NAMES, dir: String? = null): Result<PythonRemoveResponse, ExecException> {
+  suspend fun remove(vararg names: String = ALL_NAMES, dir: String? = null): Result<PythonRemoveResponse, ExecError> {
     return executeAndHandleErrors("remove", *buildDirOption(dir), *names) { processOutput ->
       val output = processOutput.stderr
       val notInstalledRegex = Regex("""^Distribution is not installed: (.*)$""", RegexOption.MULTILINE)
@@ -163,7 +163,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    * @param dir The directory in which distributions reside
    * @return Name to Version as a map
    */
-  suspend fun show(dir: String? = null): Result<ShowResponse, ExecException> {
+  suspend fun show(dir: String? = null): Result<ShowResponse, ExecError> {
     val nameToVersionRegex = """\|\s+([^|\s]+)\s+\|\s+([^|\s]+)\s+\|""".toRegex()
     fun parseNameToVersions(payload: String) = nameToVersionRegex.findAll(payload).associate {
       val (name, version) = it.destructured
@@ -198,7 +198,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    * @param names Distributions to update, you may select `all` to install all compatible distributions
    * @param dir The directory in which distributions reside
    */
-  suspend fun update(vararg names: String = ALL_NAMES, dir: String? = null): Result<PythonInstallResponse, ExecException> {
+  suspend fun update(vararg names: String = ALL_NAMES, dir: String? = null): Result<PythonInstallResponse, ExecError> {
     return executeAndHandleErrors("update", *buildDirOption(dir), *names) { output ->
       Result.success(parsePythonInstallCommandOutput(output))
     }

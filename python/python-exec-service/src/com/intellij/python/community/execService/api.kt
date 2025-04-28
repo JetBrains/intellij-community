@@ -8,7 +8,7 @@ import com.intellij.platform.eel.EelProcess
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError.ExecException
+import com.jetbrains.python.errorProcessing.ExecError
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -17,7 +17,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Error is an optional additionalMessage, that will be used instead of a default one for the [ExecException] in the [com.jetbrains.python.execution.PyExecutionFailure].
+ * Error is an optional additionalMessage, that will be used instead of a default one for the [ExecError] in the [com.jetbrains.python.execution.PyExecutionFailure].
  */
 typealias ProcessOutputTransformer<T> = (ProcessOutput) -> Result<T, @NlsSafe String?>
 
@@ -41,7 +41,7 @@ interface ExecService {
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
     eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>,
-  ): Result<T, ExecException>
+  ): Result<T, ExecError>
 
   /**
    * Execute [whatToExec] with [args] and get both stdout/stderr outputs if `errorCode != 0`, gets error otherwise.
@@ -57,14 +57,14 @@ interface ExecService {
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
     processOutputTransformer: ProcessOutputTransformer<T>,
-  ): Result<T, ExecException>
+  ): Result<T, ExecError>
 
   @CheckReturnValue
   suspend fun execGetStdout(
     whatToExec: WhatToExec,
     args: List<String> = emptyList(),
     options: ExecOptions = ExecOptions(),
-  ): Result<String, ExecException> = execute(
+  ): Result<String, ExecError> = execute(
     whatToExec = whatToExec,
     args = args,
     options = options,

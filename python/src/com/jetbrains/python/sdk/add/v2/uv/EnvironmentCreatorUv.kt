@@ -6,24 +6,24 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
+import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.venvReader.tryResolvePath
-import java.nio.file.Path
-import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.asPythonResult
-import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.*
-import com.jetbrains.python.sdk.add.v2.VenvExistenceValidationState
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
@@ -70,10 +70,10 @@ internal class EnvironmentCreatorUv(
     setUvExecutable(savingPath)
   }
 
-  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk> {
     val workingDir = module?.basePath?.let { tryResolvePath(it) } ?: project.basePath?.let { tryResolvePath(it) }
     if (workingDir == null) {
-      return kotlin.Result.failure<Sdk>(Exception("working dir is not specified for uv environment setup")).asPythonResult()
+      return Result.failure<Sdk>(Exception("working dir is not specified for uv environment setup")).asPythonResult()
     }
 
     val python = homePath?.let { Path.of(it) }

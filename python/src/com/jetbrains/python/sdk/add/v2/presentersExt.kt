@@ -12,8 +12,7 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.python.community.impl.venv.createVenv
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.failure
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.isConda
@@ -24,7 +23,7 @@ import java.nio.file.Path
 
 
 // todo should it be overriden for targets?
-suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path, moduleOrProject: ModuleOrProject?): com.jetbrains.python.Result<Sdk, PyError> {
+suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path, moduleOrProject: ModuleOrProject?): PyResult<Sdk> {
   val baseSdk = state.baseInterpreter.get()!!
 
 
@@ -84,7 +83,8 @@ suspend fun PythonAddInterpreterModel.selectCondaEnvironment(base: Boolean): Res
     getBaseCondaOrError()
   }
   else {
-    state.selectedCondaEnv.get()?.let { Result.success(it) } ?: failure(message("python.sdk.conda.no.env.selected.error"))
+    state.selectedCondaEnv.get()?.let { Result.success(it) }
+    ?: com.jetbrains.python.failure(message("python.sdk.conda.no.env.selected.error"))
   }
     .getOrElse { return Result.failure(it) }
     .envIdentity

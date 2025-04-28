@@ -9,7 +9,7 @@ import com.intellij.python.community.execService.HelperName
 import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -36,7 +36,7 @@ suspend fun createVenv(
   venvDir: Directory,
   inheritSitePackages: Boolean = false,
   envReader: VirtualEnvReader = VirtualEnvReader.Instance,
-): Result<PythonBinary, PyError> {
+): PyResult<PythonBinary> {
   val execService = ExecService()
   val args = buildList {
     if (inheritSitePackages) {

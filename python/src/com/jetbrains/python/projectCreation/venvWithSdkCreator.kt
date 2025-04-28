@@ -16,7 +16,8 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.*
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
@@ -44,7 +45,7 @@ suspend fun createVenvAndSdk(
   confirmInstallation: suspend () -> Boolean = { true },
   systemPythonService: SystemPythonService = SystemPythonService(),
   explicitProjectPath: VirtualFile? = null,
-): Result<Sdk, PyError> {
+): PyResult<Sdk> {
   val vfsProjectPath = withContext(Dispatchers.IO) {
     explicitProjectPath
     ?: (project.modules.firstOrNull()?.let { module -> ModuleRootManager.getInstance(module).contentRoots.firstOrNull() }
@@ -114,7 +115,7 @@ private suspend fun findExistingVenv(
 private suspend fun getSystemPython(
   confirmInstallation: suspend () -> Boolean,
   pythonService: SystemPythonService,
-): Result<PythonBinary, PyError.Message> {
+): Result<PythonBinary, MessageError> {
 
 
   // First, find the latest python according to strategy

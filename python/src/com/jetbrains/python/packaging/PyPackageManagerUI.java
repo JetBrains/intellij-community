@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -23,6 +23,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.errorProcessing.ExecError;
+import com.jetbrains.python.errorProcessing.PyError;
 import com.jetbrains.python.packaging.management.PythonPackagesInstaller;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.Nls;
@@ -184,7 +186,15 @@ public final class PyPackageManagerUI {
             ((InstallTask)this).myRequirements,
             req -> ContainerUtil.map(req.getInstallOptions(), option -> Pair.create(option, req.getName()))) : null;
         final List<String> packageManagerArguments = exceptions.stream()
-          .flatMap(e -> (e instanceof PyExecutionException) ? ((PyExecutionException)e).getArgs().stream() : null)
+          .flatMap(e -> {
+            if (e instanceof PyExecutionException pyExecutionException) {
+              PyError pyError = pyExecutionException.getPyError();
+              if (pyError instanceof ExecError execError) {
+                return Arrays.stream(execError.getExeAndArgs().getSecond());
+              }
+            }
+            return null;
+          })
           .toList();
         final String packageNames = requirements != null ? requirements.stream()
           .filter(req -> packageManagerArguments.contains(req.first))

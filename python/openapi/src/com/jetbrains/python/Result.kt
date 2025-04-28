@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,6 +6,9 @@ import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
 
 /**
+ * TL;TR: This class is kinda low-level. Use [com.jetbrains.python.errorProcessing.PyResult] in upper-level signatures,
+ * but use this class as low-level api (preferably internal) inside your modules.
+ *
  * Operation result to be used as `Maybe` instead of checked exceptions.
  * Unlike Kotlin `Result`, [ERR] could be anything (i.e [String]).
  *

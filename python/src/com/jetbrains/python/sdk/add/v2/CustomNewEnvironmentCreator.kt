@@ -19,7 +19,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
@@ -75,7 +75,7 @@ internal abstract class CustomNewEnvironmentCreator(
     }
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     savePathToExecutableToProperties(null)
 
     // todo think about better error handling
@@ -201,7 +201,7 @@ internal abstract class CustomNewEnvironmentCreator(
    */
   internal abstract fun savePathToExecutableToProperties(path: Path?)
 
-  protected abstract suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError>
+  protected abstract suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): PyResult<Sdk>
 
   internal abstract suspend fun detectExecutable()
 

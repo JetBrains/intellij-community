@@ -3,7 +3,6 @@ package com.jetbrains.python
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.getOr
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.exec

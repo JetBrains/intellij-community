@@ -15,7 +15,7 @@ import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.runtime.createHatchRuntime
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -30,7 +30,7 @@ internal class CliBasedHatchService private constructor(
   private val hatchRuntime: HatchRuntime,
 ) : HatchService {
   companion object {
-    suspend operator fun invoke(workingDirectoryPath: Path, hatchExecutablePath: Path?): Result<CliBasedHatchService, PyError> {
+    suspend operator fun invoke(workingDirectoryPath: Path, hatchExecutablePath: Path?): PyResult<CliBasedHatchService> {
       val hatchRuntime = createHatchRuntime(
         hatchExecutablePath = hatchExecutablePath,
         workingDirectoryPath = workingDirectoryPath,
@@ -51,13 +51,13 @@ internal class CliBasedHatchService private constructor(
 
   override fun getWorkingDirectoryPath(): Path = workingDirectoryPath
 
-  override suspend fun syncDependencies(envName: String): Result<String, PyError> {
+  override suspend fun syncDependencies(envName: String): PyResult<String> {
     return withContext(Dispatchers.IO) {
       hatchRuntime.hatchCli().run(envName, "python", "--version")
     }
   }
 
-  override suspend fun isHatchManagedProject(): Result<Boolean, PyError> {
+  override suspend fun isHatchManagedProject(): PyResult<Boolean> {
     val isHatchManaged = withContext(Dispatchers.IO) {
       when {
         workingDirectoryPath.resolve("hatch.toml").exists() -> true
@@ -72,7 +72,7 @@ internal class CliBasedHatchService private constructor(
   }
 
 
-  override suspend fun findVirtualEnvironments(): Result<List<HatchVirtualEnvironment>, PyError> {
+  override suspend fun findVirtualEnvironments(): PyResult<List<HatchVirtualEnvironment>> {
     val hatchEnv = hatchRuntime.hatchCli().env()
     val environments: HatchEnvironments = hatchEnv.show().getOr { return it }
     val virtualEnvironments = environments.getAvailableVirtualHatchEnvironments()
@@ -90,7 +90,7 @@ internal class CliBasedHatchService private constructor(
   }
 
 
-  override suspend fun createNewProject(projectName: String): Result<ProjectStructure, PyError> {
+  override suspend fun createNewProject(projectName: String): PyResult<ProjectStructure> {
     val eelApi = workingDirectoryPath.getEelDescriptor().upgrade()
     val tempDir = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOr { failure ->
       return Result.failure(FileSystemOperationHatchError(failure.error))
@@ -108,7 +108,7 @@ internal class CliBasedHatchService private constructor(
     ))
   }
 
-  override suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary?, envName: String?): Result<PythonVirtualEnvironment.Existing, PyError> {
+  override suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary?, envName: String?): PyResult<PythonVirtualEnvironment.Existing> {
     val pythonBasedRuntime = basePythonBinaryPath?.let { path ->
       hatchRuntime.withBasePythonBinaryPath(path).getOr { return it }
     } ?: hatchRuntime

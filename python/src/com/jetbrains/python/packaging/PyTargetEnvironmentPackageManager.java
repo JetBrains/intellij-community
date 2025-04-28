@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -45,7 +45,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
+/**
+ * @deprecated TODO: explain
+ */
+@Deprecated(forRemoval = true)
+public final class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
   private static final Logger LOG = Logger.getInstance(PyTargetEnvironmentPackageManager.class);
 
   @Override
@@ -113,7 +117,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
+      throw PyExecutionExceptionExtKt.copyWith(e, "pip", makeSafeToDisplayCommand(simplifiedArgs));
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -158,7 +162,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       getPythonProcessResult(pythonExecution, !canModify, true, targetEnvironmentRequest);
     }
     catch (PyExecutionException e) {
-      throw e.copyWith("pip", args);
+      throw PyExecutionExceptionExtKt.copyWith(e, "pip", args);
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
@@ -251,7 +255,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     int exitCode = processOutput.getExitCode();
     if (processOutput.isTimeout()) {
       // TODO [targets] Make cancellable right away?
-      throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args, processOutput);
+      throw PyExecutionException.createForTimeout(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args);
     }
     else if (exitCode != 0) {
       throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.non.zero.exit.code", exitCode), path, args, processOutput);
@@ -347,7 +351,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     catch (IOException e) {
       String exePath = localCommandLine.getExePath();
       List<String> args = localCommandLine.getCommandLineList(exePath);
-      throw new PyExecutionException(e.getMessage(), exePath, args);
+      throw new PyExecutionException(e, null, exePath, args);
     }
   }
 

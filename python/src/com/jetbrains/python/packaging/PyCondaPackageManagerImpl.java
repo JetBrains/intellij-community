@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -9,8 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.venvReader.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final Sdk sdk = getSdk();
 
     final String path = getCondaDirectory();
-    if (path == null) throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.empty.conda.name", sdk.getHomePath()), command, arguments);
+    if (path == null) throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.empty.conda.name", sdk.getHomePath()));
 
     final ArrayList<String> parameters = Lists.newArrayList(command, "-p", path);
     parameters.addAll(arguments);
@@ -123,8 +123,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       PyPackage pkg = parsePackaging(line,
                                      "=",
                                      false,
-                                     PySdkBundle.message("python.sdk.conda.dialog.invalid.conda.output.format"),
-                                     "conda");
+                                     PySdkBundle.message("python.sdk.conda.dialog.invalid.conda.output.format")
+      );
       if (pkg != null) {
         packages.add(pkg);
       }
@@ -135,14 +135,13 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static @NotNull String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
                                                  @NotNull String version) throws ExecutionException {
     if (condaExecutable == null) {
-      throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.find.conda"), "Conda", Collections.emptyList(),
-                                     new ProcessOutput());
+      throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.find.conda"));
     }
 
     final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 
     PyCondaRunKt.runConda(condaExecutable, parameters);
-    final Path binary =  VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
+    final Path binary = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary.toString() : binaryFallback;
   }

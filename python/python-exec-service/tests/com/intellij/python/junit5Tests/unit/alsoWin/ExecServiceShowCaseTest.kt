@@ -94,9 +94,8 @@ class ExecServiceShowCaseTest {
       is Result.Success -> fail("Execution of bad command should lead to an error")
       is Result.Failure -> {
         val err = output.error
-        val failure = err.execFailure
-        assertEquals(command.command, failure.command, "Wrong command reported")
-        assertEquals("foo", failure.args[0], "Wrong args reported")
+        assertEquals(command.command, err.command[0], "Wrong command reported")
+        assertEquals("foo", err.command[1], "Wrong args reported")
       }
     }
   }

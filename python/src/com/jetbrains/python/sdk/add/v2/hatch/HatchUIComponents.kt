@@ -23,7 +23,10 @@ import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.layout.ComponentPredicate
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.isFailure
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
@@ -35,7 +38,7 @@ import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.JList
 
-internal sealed class HatchUIError(message: String) : PyError.Message(message) {
+internal sealed class HatchUIError(message: String) : MessageError(message) {
   class ProjectIsNotSelected : HatchUIError(
     message("sdk.create.custom.hatch.error.project.is.not.selected")
   )
@@ -53,14 +56,14 @@ internal sealed class HatchUIError(message: String) : PyError.Message(message) {
             hatchExecutablePath)
   )
 
-  class HatchExecutionFailure(execException: ExecException) : HatchUIError(
+  class HatchExecutionFailure(execError: ExecError) : HatchUIError(
     message("sdk.create.custom.hatch.error.execution.failed",
-            execException.execFailure.command, execException.execFailure.args.joinToString(" ")
+            execError.command.joinToString(" ")
     )
   )
 }
 
-internal fun String.toPath(): Result<Path, PyError> {
+internal fun String.toPath(): PyResult<Path> {
   return when (val selectedPath = Path.of(this)) {
     null -> Result.failure(HatchUIError.HatchExecutablePathIsNotValid(this))
     else -> Result.success(selectedPath)
@@ -148,8 +151,8 @@ private fun Panel.addExecutableSelector(
   propertyGraph.dependsOn(hatchErrorMessage, hatchErrorProperty, deleteWhenChildModified = false) {
     when (val error = hatchErrorProperty.get()) {
       null -> ""
-      is PyError.Message -> error.message
-      is PyError.ExecException -> HatchUIError.HatchExecutionFailure(error).message
+      is MessageError -> error.message
+      is ExecError -> HatchUIError.HatchExecutionFailure(error).message
     }
   }
 
@@ -224,7 +227,7 @@ internal fun Panel.buildHatchFormFields(
 
 @Synchronized
 private fun ComboBox<HatchVirtualEnvironment>.syncWithEnvs(
-  environmentsResult: Result<List<HatchVirtualEnvironment>, PyError>,
+  environmentsResult: PyResult<List<HatchVirtualEnvironment>>,
   isFilterOnlyExisting: Boolean = false,
 ) {
   removeAllItems()

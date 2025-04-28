@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -15,7 +15,8 @@ import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.execution.FailureReason;
+import com.jetbrains.python.errorProcessing.ExecError;
+import com.jetbrains.python.errorProcessing.ExecErrorReason;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
@@ -35,6 +36,10 @@ import java.util.regex.Pattern;
 
 import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR;
 
+/**
+ * @deprecated TODO: explain
+ */
+@Deprecated(forRemoval = true)
 public abstract class PyPackageManagerImplBase extends PyPackageManager {
   protected static final String SETUPTOOLS_VERSION = "44.1.1";
   protected static final String PIP_VERSION = "24.3.1";
@@ -125,11 +130,14 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       return setuptoolsPackage != null ? setuptoolsPackage : PyPsiPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE);
     }
     catch (PyExecutionException e) {
-      var error = e.getFailureReason();
-      if (error instanceof FailureReason.ExecutionFailed executionFailed) {
-        int exitCode = executionFailed.getOutput().getExitCode();
-        if (exitCode == ERROR_NO_SETUPTOOLS) {
-          return null;
+      var pyError = e.getPyError();
+      if (pyError instanceof ExecError error) {
+        var errorReason = error.getErrorReason();
+        if (errorReason instanceof ExecErrorReason.UnexpectedProcessTermination unexpectedProcessTermination) {
+          int exitCode = unexpectedProcessTermination.getExitCode();
+          if (exitCode == ERROR_NO_SETUPTOOLS) {
+            return null;
+          }
         }
       }
       throw e;
@@ -283,8 +291,8 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       PyPackage pkg = parsePackaging(line,
                                      "\t",
                                      true,
-                                     PySdkBundle.message("python.sdk.packaging.invalid.output.format"),
-                                     PACKAGING_TOOL);
+                                     PySdkBundle.message("python.sdk.packaging.invalid.output.format")
+      );
 
       if (pkg != null) {
         packages.add(pkg);
@@ -296,11 +304,10 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   protected final @Nullable PyPackage parsePackaging(@NotNull @NonNls String line,
                                                      @NotNull @NonNls String separator,
                                                      boolean useLocation,
-                                                     @NotNull @Nls String errorMessage,
-                                                     @NotNull @NonNls String command) throws PyExecutionException {
+                                                     @NotNull @Nls String errorMessage) throws PyExecutionException {
     List<String> fields = StringUtil.split(line, separator);
     if (fields.size() < 3) {
-      throw new PyExecutionException(errorMessage, command, List.of());
+      throw new PyExecutionException(errorMessage);
     }
 
     final String name = fields.get(0);

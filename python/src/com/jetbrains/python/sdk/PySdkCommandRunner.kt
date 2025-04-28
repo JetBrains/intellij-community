@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
@@ -52,7 +52,12 @@ internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<Str
     )
   }
   catch (e: ExecutionException) {
-    return Result.failure(PyExecutionException(e.localizedMessage, commandLine.exePath, commandLine.parametersList.array.toList()))
+    return Result.failure(PyExecutionException(
+      startException = e.toIOException(),
+      additionalMessage = null,
+      command = commandLine.exePath,
+      args = commandLine.parametersList.list
+    ))
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
 import com.intellij.CommonBundle
@@ -32,7 +32,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyTargetEnvironmentPackageManager
@@ -67,7 +66,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     val data = askForEnvData(module, existingSdks, source)
     if (data == null) {
-      return failure("askForEnvData is null")
+      return com.jetbrains.python.failure("askForEnvData is null")
     }
 
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = data
@@ -181,7 +180,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     override fun createCenterPanel(): JComponent {
       return JPanel(BorderLayout()).apply {
-        val border = IdeBorderFactory.createEmptyBorder(Insets(4, 0, 6, 0))
+        val border = IdeBorderFactory.createEmptyBorder(JBUI.insets(4, 0, 6, 0))
         val message = PyCharmCommunityCustomizationBundle.message("sdk.create.venv.permission", requirementsTxtOrSetupPy.name)
 
         add(

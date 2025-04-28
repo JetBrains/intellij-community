@@ -25,7 +25,7 @@ import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -206,14 +206,14 @@ internal class PythonAddNewEnvironmentPanel(
     }.getOrThrow().first
   }
 
-  override suspend fun createPythonModuleStructure(module: Module): Result<Unit, PyError> {
+  override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
     return when (selectedMode.get()) {
       CUSTOM -> custom.currentSdkManager.createPythonModuleStructure(module)
       else -> Result.success(Unit)
     }
   }
 
-  override suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> {
+  override suspend fun getSdk(moduleOrProject: ModuleOrProject): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> {
     model.navigator.saveLastState()
     val sdk = when (selectedMode.get()) {
       PROJECT_VENV -> {

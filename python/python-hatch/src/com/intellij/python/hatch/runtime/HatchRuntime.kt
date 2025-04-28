@@ -12,7 +12,8 @@ import com.intellij.python.hatch.cli.HatchCli
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -57,15 +58,15 @@ class HatchRuntime(
    * Pure execution of [hatchBinary] with command line [arguments] and [execOptions] by [execService]
    * Doesn't make any validation of stdout/stderr content.
    */
-  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): Result<T, PyError.ExecException> {
+  internal suspend fun <T> execute(vararg arguments: String, processOutputTransformer: ProcessOutputTransformer<T>): Result<T, ExecError> {
     return execService.execute(hatchBinary, arguments.toList(), execOptions, processOutputTransformer)
   }
 
-  internal suspend fun <T> executeInteractive(vararg arguments: String, eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>): Result<T, PyError.ExecException> {
+  internal suspend fun <T> executeInteractive(vararg arguments: String, eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>): Result<T, ExecError> {
     return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, eelProcessInteractiveHandler)
   }
 
-  internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): Result<PythonVirtualEnvironment, PyError> {
+  internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {
     val pythonVersion = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
       execService.execGetStdout(Binary(pythonBinaryPath), listOf("--version")).getOr { return it }.trim()
     }

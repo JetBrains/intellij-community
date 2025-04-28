@@ -1,12 +1,9 @@
 package com.intellij.python.pyproject
 
-import com.intellij.python.pyproject.PyProjectIssue.InvalidContact
-import com.intellij.python.pyproject.PyProjectIssue.MissingName
-import com.intellij.python.pyproject.PyProjectIssue.MissingVersion
-import com.intellij.python.pyproject.PyProjectIssue.SafeGetError
+import com.intellij.python.pyproject.PyProjectIssue.*
 import com.intellij.python.pyproject.TomlTableSafeGetError.RequiredValueMissing
 import com.intellij.python.pyproject.TomlTableSafeGetError.UnexpectedType
-import com.jetbrains.python.Result.Failure
+import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.isFailure
 import org.apache.tuweni.toml.TomlArray
@@ -29,7 +26,7 @@ class PyProjectTomlTest {
 
     // THEN
     assert(result.isFailure)
-    assert((result as Failure).error.isNotEmpty())
+    assert((result as Result.Failure).error.isNotEmpty())
   }
 
   @Test

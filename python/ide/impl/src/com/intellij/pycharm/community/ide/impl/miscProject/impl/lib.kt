@@ -25,7 +25,8 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
@@ -53,7 +54,7 @@ fun createMiscProject(
   confirmInstallation: suspend () -> Boolean,
   projectPath: Path = miscProjectDefaultPath.value,
   systemPythonService: SystemPythonService = SystemPythonService(),
-): Result<Job, PyError> =
+): PyResult<Job> =
   runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
                                TaskCancellation.cancellable()) {
@@ -130,7 +131,7 @@ private suspend fun createProjectAndSdk(
   projectPath: Path,
   confirmInstallation: suspend () -> Boolean,
   systemPythonService: SystemPythonService,
-): Result<Pair<Project, Sdk>, PyError> {
+): PyResult<Pair<Project, Sdk>> {
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
   val project = openProject(projectPath)
   val sdk = createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath).getOr { return it }
@@ -155,7 +156,7 @@ private suspend fun openProject(projectPath: Path): Project {
 /**
  * Creating a project != creating a directory for it, but we need a directory to create a template file
  */
-private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, PyError.Message> = withContext(Dispatchers.IO) {
+private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, MessageError> = withContext(Dispatchers.IO) {
   try {
     projectPath.createDirectories()
   }

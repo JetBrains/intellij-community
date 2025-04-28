@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.showProcessExecutionErrorDialog
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +28,10 @@ object ShowingMessageErrorSync : ErrorSink {
       // Platform doesn't allow dialogs without a lock for now, fix later
       writeIntentReadAction {
         when (val e = error) {
-          is PyError.ExecException -> {
-            showProcessExecutionErrorDialog(null, e.execFailure)
+          is ExecError -> {
+            showProcessExecutionErrorDialog(null, e)
           }
-          is PyError.Message -> {
+          is MessageError -> {
             Messages.showErrorDialog(error.message, PyBundle.message("python.error"))
           }
         }

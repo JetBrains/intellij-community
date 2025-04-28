@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
 import com.intellij.CommonBundle
@@ -33,7 +33,7 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.pipenv.ui.PyAddPipEnvPanel
 import com.jetbrains.python.sdk.poetry.ui.createPoetryPanel
 import com.jetbrains.python.sdk.sdkSeemsValid
-import com.jetbrains.python.showProcessExecutionErrorDialog
+import com.jetbrains.python.showErrorDialog
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.CardLayout
 import java.awt.Component
@@ -44,12 +44,14 @@ import javax.swing.JPanel
 /**
  * The panel that is supposed to be used both for local and non-local target-based versions of "New Interpreter" dialog.
  */
-internal class PyAddTargetBasedSdkPanel(private val project: Project?,
-                               private val module: Module?,
-                               private val existingSdks: List<Sdk>,
-                               private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
-                               private val config: PythonLanguageRuntimeConfiguration,
-                               private val introspectable: LanguageRuntimeType.Introspectable?) : Disposable {
+internal class PyAddTargetBasedSdkPanel(
+  private val project: Project?,
+  private val module: Module?,
+  private val existingSdks: List<Sdk>,
+  private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
+  private val config: PythonLanguageRuntimeConfiguration,
+  private val introspectable: LanguageRuntimeType.Introspectable?,
+) : Disposable {
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
@@ -177,7 +179,7 @@ internal class PyAddTargetBasedSdkPanel(private val project: Project?,
         Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
       }
       else {
-        showProcessExecutionErrorDialog(project, cause)
+        showErrorDialog(project, cause.pyError)
       }
       return
     }

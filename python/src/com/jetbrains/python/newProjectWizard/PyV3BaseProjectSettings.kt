@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
   lateinit var sdkCreator: PySdkCreator
 
-  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> = coroutineScope {
+  suspend fun generateAndGetSdk(module: Module, baseDir: VirtualFile, supportsNotEmptyModuleStructure: Boolean = false): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> = coroutineScope {
     val project = module.project
     if (createGitRepository) {
       launch(CoroutineName("Generating git") + Dispatchers.IO) {
@@ -43,7 +43,7 @@ class PyV3BaseProjectSettings(var createGitRepository: Boolean = false) {
     return@coroutineScope Result.success(Pair(sdk, interpreterStatistics))
   }
 
-  private suspend fun getSdkAndInterpreter(module: Module): Result<Pair<Sdk, InterpreterStatisticsInfo>, PyError> =
+  private suspend fun getSdkAndInterpreter(module: Module): PyResult<Pair<Sdk, InterpreterStatisticsInfo>> =
     sdkCreator.getSdk(ModuleOrProject.ModuleAndProject(module))
 
 

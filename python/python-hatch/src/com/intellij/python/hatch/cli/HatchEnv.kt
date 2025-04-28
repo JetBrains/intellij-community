@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError.ExecException
+import com.jetbrains.python.errorProcessing.ExecError
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -127,7 +127,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return true if created, false if already exists
    */
-  suspend fun create(envName: String? = null): Result<CreateResult, ExecException> {
+  suspend fun create(envName: String? = null): Result<CreateResult, ExecError> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("create", *arguments) {
       val actualEnvName = envName ?: DEFAULT_ENV_NAME
@@ -145,7 +145,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    *
    * @return path to environment
    */
-  suspend fun find(envName: String? = null): Result<PythonHomePath?, ExecException> {
+  suspend fun find(envName: String? = null): Result<PythonHomePath?, ExecError> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("find", *arguments) {
       when (it.exitCode) {
@@ -178,9 +178,9 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * - [RemoveResult.NotExists] if the environment does not exist.
    * - [RemoveResult.NotDefinedInConfig] if the environment is not defined in the project configuration.
    * - [RemoveResult.CantRemoveActiveEnvironment] if the environment cannot be removed because it is currently active.
-   * - An error wrapped in [ExecException] in case of execution failure.
+   * - An error wrapped in [ExecError] in case of execution failure.
    */
-  suspend fun remove(envName: String? = null): Result<RemoveResult, ExecException> {
+  suspend fun remove(envName: String? = null): Result<RemoveResult, ExecError> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
     return executeAndHandleErrors("remove", *arguments) {
       val actualEnvName = envName ?: DEFAULT_ENV_NAME
@@ -200,9 +200,9 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
    * @return A [Result] containing:
    * - [HatchDetailedEnvironments] if operation is successful.
-   * - An error wrapped in [ExecException] if an execution failure occurs.
+   * - An error wrapped in [ExecError] if an execution failure occurs.
    */
-  suspend fun showWithDetails(vararg envs: String): Result<HatchDetailedEnvironments, ExecException> {
+  suspend fun showWithDetails(vararg envs: String): Result<HatchDetailedEnvironments, ExecError> {
     return executeAndHandleErrors("show", "--json", *envs) { processOutput ->
       val output = processOutput.takeIf { it.exitCode == 0 }?.stdout
                    ?: return@executeAndHandleErrors Result.failure(null)
@@ -227,9 +227,9 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
    * @param internal Optional parameter indicating whether to include internal environments. Defaults to false.
    * @return A [Result] containing:
    * - [HatchDetailedEnvironments] if operation is successful.
-   * - An error wrapped in [ExecException] if an execution failure occurs.
+   * - An error wrapped in [ExecError] if an execution failure occurs.
    */
-  suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecException> {
+  suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecError> {
     val options = listOf(internal to "--internal").makeOptions()
 
     return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->
