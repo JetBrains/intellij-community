@@ -12,6 +12,12 @@ object PluginUtils {
   fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
   @JvmStatic
+  fun Iterable<String>.parseAsPluginIdSet(): Set<PluginId> = asSequence()
+    .map { it.trim() }
+    .filter { it.isNotEmpty() }
+    .mapTo(LinkedHashSet(), PluginId::getId)
+
+  @JvmStatic
   fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
     val pluginIdMap = PluginManagerCore.buildPluginIdMap()
     return mapNotNull { pluginIdMap[it] }

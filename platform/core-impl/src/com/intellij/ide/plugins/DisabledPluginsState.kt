@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginUtils.joinedPluginIds
+import com.intellij.ide.plugins.PluginUtils.parseAsPluginIdSet
 import com.intellij.ide.plugins.PluginUtils.toPluginIdSet
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
@@ -176,7 +177,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
     private fun splitByComma(key: String): Set<PluginId> {
       val property = System.getProperty(key, "")
-      return if (property.isEmpty()) emptySet() else PluginManagerCore.toPluginIds(property.split(','))
+      return if (property.isEmpty()) emptySet() else property.split(',').parseAsPluginIdSet()
     }
   }
 

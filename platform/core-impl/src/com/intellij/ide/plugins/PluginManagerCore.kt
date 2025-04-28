@@ -759,15 +759,6 @@ object PluginManagerCore {
 
   private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginStringSetFile.consumeIdsSafe(thirdPartyPluginsFilePath, logger)
 
-  @VisibleForTesting
-  @JvmStatic
-  fun toPluginIds(pluginIdStrings: Collection<String>): Set<PluginId> =
-    pluginIdStrings.asSequence()
-      .map { it.trim() }
-      .filterNot { it.isEmpty() }
-      .map { PluginId.getId(it) }
-      .toSet()
-
   private fun askThirdPartyPluginsPrivacyConsent(descriptors: List<IdeaPluginDescriptorImpl>): Boolean {
     val title = CoreBundle.message("third.party.plugins.privacy.note.title")
     val pluginList = descriptors.joinToString(separator = "<br>") { "&nbsp;&nbsp;&nbsp;${getPluginNameAndVendor(it)}" }
