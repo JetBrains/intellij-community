@@ -19,13 +19,13 @@ internal class FrontendRecentFilesMutableState(project: Project): RecentFilesMut
     }
   }
 
-  override suspend fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId, project: Project): SwitcherVirtualFile? {
+  override suspend fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId): SwitcherVirtualFile? {
     val localFile = virtualFileId.virtualFile() ?: return null
     return convertVirtualFileToViewModel(localFile, project)
   }
 
-  override fun convertModelToVirtualFile(viewModel: SwitcherVirtualFile): VirtualFile? {
-    return viewModel.virtualFile
+  override fun convertModelToVirtualFile(model: SwitcherVirtualFile): VirtualFile? {
+    return model.virtualFile
   }
 
   fun chooseStateToReadFrom(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState<SwitcherVirtualFile>> {

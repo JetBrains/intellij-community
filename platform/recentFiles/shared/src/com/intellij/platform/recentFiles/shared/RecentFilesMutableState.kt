@@ -20,14 +20,14 @@ private val LOG by lazy { fileLogger() }
 class RecentFilesState<T>(val entries: List<T> = listOf())
 
 @ApiStatus.Internal
-abstract class RecentFilesMutableState<T>(private val project: Project) {
+abstract class RecentFilesMutableState<T>(protected val project: Project) {
   protected val recentlyOpenedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
   protected val recentlyEditedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
   protected val recentlyOpenedPinnedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
 
-  abstract fun convertDtoToModel(rpcDto: SwitcherRpcDto): T
-  abstract suspend fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId, project: Project): T?
-  abstract fun convertModelToVirtualFile(viewModel: T): VirtualFile?
+  abstract fun convertDtoToModel(rpcDto: SwitcherRpcDto): T?
+  abstract suspend fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId): T?
+  abstract fun convertModelToVirtualFile(model: T): VirtualFile?
 
   fun chooseStateToWriteTo(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState<T>> {
     return when (filesKind) {
@@ -41,7 +41,7 @@ abstract class RecentFilesMutableState<T>(private val project: Project) {
     val targetModel = chooseStateToWriteTo(targetFilesKind)
     when (change) {
       is RecentFilesEvent.ItemsAdded -> {
-        val toAdd = change.batch.map(::convertDtoToModel)
+        val toAdd = change.batch.mapNotNull(::convertDtoToModel)
         LOG.debug("Adding ${change.batch.size} items to $targetFilesKind frontend model")
         targetModel.update { oldList ->
           RecentFilesState(toAdd + (oldList.entries - toAdd.toSet()))
@@ -64,7 +64,7 @@ abstract class RecentFilesMutableState<T>(private val project: Project) {
       }
       is RecentFilesEvent.ItemsRemoved -> {
         LOG.debug("Removing ${change.batch.size} items from $targetFilesKind frontend model")
-        val toRemove = change.batch.mapNotNull { virtualFileId -> convertVirtualFileIdToModel(virtualFileId, project) }
+        val toRemove = change.batch.mapNotNull { virtualFileId -> convertVirtualFileIdToModel(virtualFileId) }
         targetModel.update { oldList ->
           RecentFilesState(oldList.entries - toRemove.toSet())
         }
