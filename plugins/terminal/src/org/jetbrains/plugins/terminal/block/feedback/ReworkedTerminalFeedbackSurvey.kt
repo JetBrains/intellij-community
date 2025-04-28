@@ -15,6 +15,7 @@ import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.AFTER_USAGE
@@ -24,15 +25,17 @@ import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.ON_DISABLING
 private val REWORKED_TERMINAL_DISABLING: Key<Boolean> = Key.create("ReworkedTerminalDisabling")
 
 @ApiStatus.Internal
-fun showReworkedTerminalFeedbackNotification(project: Project) {
-  // REWORKED_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
-  // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
-  project.putUserData(REWORKED_TERMINAL_DISABLING, true)
-  OnDemandFeedbackResolver.getInstance()
-    .showFeedbackNotification(ReworkedTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
-      if (!isNotificationShown) {
-        // If the notification was not shown, the REWORKED_TERMINAL_DISABLING would not be used, so we can just clear it.
-        project.putUserData(REWORKED_TERMINAL_DISABLING, null)
+fun askForFeedbackIfReworkedTerminalDisabled(project: Project, oldEngine: TerminalEngine, newEngine: TerminalEngine) {
+  if (oldEngine == TerminalEngine.REWORKED && newEngine != TerminalEngine.REWORKED) {
+    // REWORKED_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
+    // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
+    project.putUserData(REWORKED_TERMINAL_DISABLING, true)
+    OnDemandFeedbackResolver.getInstance()
+      .showFeedbackNotification(ReworkedTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
+        if (!isNotificationShown) {
+          // If the notification was not shown, the REWORKED_TERMINAL_DISABLING would not be used, so we can just clear it.
+          project.putUserData(REWORKED_TERMINAL_DISABLING, null)
+        }
       }
   }
 }
