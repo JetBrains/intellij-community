@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.*
@@ -81,6 +82,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     })
     val previousBreakpoint = breakpoints.put(breakpointDto.id, newBreakpoint)
     previousBreakpoint?.dispose()
+    breakpointsChanged.tryEmit(Unit)
     return newBreakpoint
   }
 
@@ -135,6 +137,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
     removeBreakpoints(setOf(breakpoint.id))
+    breakpointsChanged.tryEmit(Unit)
     cs.launch {
       XBreakpointApi.getInstance().removeBreakpoint(breakpoint.id)
     }
