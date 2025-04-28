@@ -111,7 +111,7 @@ internal object SuperClassNotInitializedFactories {
 
     private class ParameterInfo(
         val renderedName: String,
-        val parameterType: KaType,
+        val parameterType: String,
         val parameterGenerationInfo: ParameterGenerationInfo,
         val varargInfo: VarargInfo,
     ) {
@@ -216,7 +216,7 @@ internal object SuperClassNotInitializedFactories {
         val renderedTypesForName = parametersInfo.joinToString(separator = ", ", prefix = "(", postfix = ")") { parameterInfo ->
             // INVARIANT position to keep types without approximation — shown in the quick fix name to distinguish between constructors
             "vararg ".takeIf { parameterInfo.isVararg }.orEmpty() +
-                    parameterInfo.parameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                    parameterInfo.parameterType
         }
 
         return AddParametersFix(
@@ -249,7 +249,7 @@ internal object SuperClassNotInitializedFactories {
                 }
                 return ParameterInfo(
                     renderedName = renderedName,
-                    parameterType = superParameterType,
+                    parameterType = superParameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
                     parameterGenerationInfo = ParameterGenerationInfo.Reused,
                     varargInfo = varargInfo,
                 )
@@ -263,7 +263,7 @@ internal object SuperClassNotInitializedFactories {
             val parameterText = "$varargKeywordOrEmpty$renderedName: ${renderedType}$defaultValueText"
             return ParameterInfo(
                 renderedName = renderedName,
-                parameterType = superParameterType,
+                parameterType = superParameterType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),
                 parameterGenerationInfo = ParameterGenerationInfo.New(parameterText),
                 varargInfo = if (isVararg) VarargInfo.VarargWithSpread else VarargInfo.NotVararg,
             )
