@@ -117,7 +117,6 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
@@ -190,7 +189,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private final IdeaProjectTestFixture myProjectFixture;
   private final TempDirTestFixture myTempDirFixture;
-  private PsiManagerImpl myPsiManager;
+  private PsiManagerEx myPsiManager;
   private VirtualFile myFile;
 
   // Strong references to PSI files configured by the test (to avoid tree access assertions after PSI has been GC'ed)
@@ -1373,7 +1372,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(tempDir);
       HeavyPlatformTestCase.synchronizeTempDirVfs(tempDir);
 
-      myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
+      myPsiManager = PsiManagerEx.getInstanceEx(getProject());
       InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
 
       DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());

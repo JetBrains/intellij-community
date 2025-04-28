@@ -49,7 +49,7 @@ private val LOG = logger<PsiVFSListener>()
 @Internal
 class PsiVFSListener internal constructor(private val project: Project) {
   private val myProjectRootManager: ProjectRootManager = ProjectRootManager.getInstance(project)
-  private val manager = PsiManager.getInstance(project) as PsiManagerImpl
+  private val manager = PsiManagerEx.getInstanceEx(project)
   private val fileManager = manager.fileManager as FileManagerEx
   private var reportedUnloadedPsiChange = false
 
@@ -597,7 +597,7 @@ internal class PsiVFSModuleRootListener(private val listenerProject: Project) : 
         return@ExternalChangeAction
       }
 
-      val psiManager = PsiManager.getInstance(listenerProject) as PsiManagerImpl
+      val psiManager = PsiManagerEx.getInstanceEx(listenerProject)
       val treeEvent = PsiTreeChangeEventImpl(psiManager)
       treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
       psiManager.beforePropertyChange(treeEvent)
@@ -606,7 +606,7 @@ internal class PsiVFSModuleRootListener(private val listenerProject: Project) : 
 
   override fun rootsChanged(event: ModuleRootEvent) {
     LOG.trace { "rootsChanged call" }
-    val psiManager = PsiManager.getInstance(listenerProject) as PsiManagerImpl
+    val psiManager = PsiManagerEx.getInstanceEx(listenerProject)
     val fileManager = psiManager.fileManager as FileManagerEx
     fileManager.dispatchPendingEvents()
 
@@ -728,7 +728,7 @@ private class PsiVfsInitProjectActivity : InitProjectActivity {
 }
 
 private class PsiVfsAdditionalLibraryRootListener(project: Project) : AdditionalLibraryRootsListener {
-  private val psiManager = PsiManager.getInstance(project) as PsiManagerImpl
+  private val psiManager = PsiManagerEx.getInstanceEx(project)
   private val fileManager = psiManager.fileManager as FileManagerEx
 
   override fun libraryRootsChanged(

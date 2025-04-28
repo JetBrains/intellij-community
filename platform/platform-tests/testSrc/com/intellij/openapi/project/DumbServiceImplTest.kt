@@ -18,8 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
@@ -286,7 +285,7 @@ class DumbServiceImplTest {
     val child = vDir.children[0]
     assertEquals("JSP", child.fileType.name)
     assertFalse((child as VirtualFileImpl).isCharsetSet)
-    assertNull((project.service<PsiManager>() as PsiManagerImpl).fileManager.getCachedPsiFile(child))
+    assertNull(PsiManagerEx.getInstanceEx(project).fileManager.getCachedPsiFile(child))
 
     val started = AtomicBoolean()
     val finished = AtomicBoolean()

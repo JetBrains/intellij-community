@@ -4,6 +4,7 @@ package com.intellij.mock;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -14,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.ApiStatus;
@@ -147,6 +149,16 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
+  public void cleanupForNextTest() {
+    
+  }
+
+  @Override
+  public void dropResolveCacheRegularly(@NotNull ProgressIndicator indicator) {
+
+  }
+
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return false;
   }
@@ -180,6 +192,61 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
 
   @Override
   public void beforeChildReplacement(final @NotNull PsiTreeChangeEventImpl event) {
+  }
+
+  @Override
+  public void beforeChildrenChange(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void beforeChildMovement(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void beforePropertyChange(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void childAdded(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void childRemoved(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void childReplaced(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void childMoved(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void childrenChanged(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void propertyChanged(@NotNull PsiTreeChangeEventImpl event) {
+
+  }
+
+  @Override
+  public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
+
+  }
+
+  @Override
+  public void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
+
   }
 
   @Override

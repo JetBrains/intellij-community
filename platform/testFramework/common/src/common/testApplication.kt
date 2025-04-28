@@ -75,6 +75,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.util.PlatformUtils
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
@@ -325,7 +326,7 @@ fun Application.cleanupApplicationCaches() {
   if (projectManager != null && projectManager.isDefaultProjectInitialized) {
     val defaultProject = projectManager.defaultProject
     runInEdtAndWait {
-      (PsiManager.getInstance(defaultProject) as PsiManagerImpl).cleanupForNextTest()
+      PsiManagerEx.getInstanceEx(defaultProject).cleanupForNextTest()
     }
   }
   (serviceIfCreated<FileBasedIndex>() as? FileBasedIndexImpl)?.cleanupForNextTest()

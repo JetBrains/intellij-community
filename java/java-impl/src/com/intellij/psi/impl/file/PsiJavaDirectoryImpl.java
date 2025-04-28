@@ -27,14 +27,14 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
   private static final Logger LOG = Logger.getInstance(PsiJavaDirectoryImpl.class);
 
-  PsiJavaDirectoryImpl(@NotNull PsiManagerImpl manager, @NotNull VirtualFile file) {
+  PsiJavaDirectoryImpl(@NotNull PsiManagerEx manager, @NotNull VirtualFile file) {
     super(manager, file);
   }
 

@@ -42,6 +42,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.ui.LightweightHint;
@@ -374,7 +375,7 @@ public final class FindUsagesManager {
 
       LOG.assertTrue(indicator != null, "Must run under progress. see ProgressManager.run*");
 
-      ((PsiManagerImpl)PsiManager.getInstance(project)).dropResolveCacheRegularly(indicator);
+      (PsiManagerEx.getInstanceEx(project)).dropResolveCacheRegularly(indicator);
 
       if (scopeFile != null) {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);

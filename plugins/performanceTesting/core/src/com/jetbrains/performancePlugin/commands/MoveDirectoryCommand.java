@@ -32,7 +32,7 @@ public class MoveDirectoryCommand extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     Project project = context.getProject();
-    PsiManagerImpl myPsiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+    PsiManager myPsiManager = PsiManager.getInstance(project);
     String input = extractCommandArgument(PREFIX);
     String[] lineAndColumn = input.split(" ");
     final String sourcePath = lineAndColumn[0];

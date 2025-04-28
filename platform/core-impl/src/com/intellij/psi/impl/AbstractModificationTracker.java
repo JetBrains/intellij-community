@@ -28,16 +28,16 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 @ApiStatus.ScheduledForRemoval
 public abstract class AbstractModificationTracker implements PsiTreeChangePreprocessor {
-  private final PsiManagerImpl myPsiManager;
+  private final PsiManagerEx myPsiManager;
   private PsiModificationTrackerImpl myModificationTracker;
 
   protected abstract boolean isInsideCodeBlock(PsiElement element);
 
-  public AbstractModificationTracker(PsiManagerImpl psiManager) {
+  public AbstractModificationTracker(PsiManagerEx psiManager) {
     myPsiManager = psiManager;
   }
 
-  public PsiManagerImpl getPsiManager() {
+  public PsiManagerEx getPsiManager() {
     return myPsiManager;
   }
 

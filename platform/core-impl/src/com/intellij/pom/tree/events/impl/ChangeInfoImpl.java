@@ -5,7 +5,7 @@ package com.intellij.pom.tree.events.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,14 +97,14 @@ public class ChangeInfoImpl implements ChangeInfo {
   private static void childAdded(PsiTreeChangeEventImpl e, ASTNode child, ASTNode parent) {
     e.setParent(parent.getPsi());
     e.setChild(child.getPsi());
-    getPsiManagerImpl(e).childAdded(e);
+    getPsiManagerEx(e).childAdded(e);
   }
 
   private void childRemoved(PsiTreeChangeEventImpl e, ASTNode child, ASTNode parent) {
     e.setParent(parent.getPsi());
     e.setChild(child.getPsi());
     e.setOldLength(myOldLength);
-    getPsiManagerImpl(e).childRemoved(e);
+    getPsiManagerEx(e).childRemoved(e);
   }
 
   private void childReplaced(PsiTreeChangeEventImpl e, ASTNode oldChild, ASTNode newChild, ASTNode parent) {
@@ -113,16 +113,16 @@ public class ChangeInfoImpl implements ChangeInfo {
     e.setChild(newChild.getPsi());
     e.setNewChild(newChild.getPsi());
     e.setOldLength(myOldLength);
-    getPsiManagerImpl(e).childReplaced(e);
+    getPsiManagerEx(e).childReplaced(e);
   }
 
   static void childrenChanged(PsiTreeChangeEventImpl e, ASTNode parent, int oldLength) {
     e.setParent(parent.getPsi());
     e.setOldLength(oldLength);
-    getPsiManagerImpl(e).childrenChanged(e);
+    getPsiManagerEx(e).childrenChanged(e);
   }
 
-  private static PsiManagerImpl getPsiManagerImpl(PsiTreeChangeEventImpl e) {
-    return (PsiManagerImpl)e.getSource();
+  private static PsiManagerEx getPsiManagerEx(PsiTreeChangeEventImpl e) {
+    return (PsiManagerEx)e.getSource();
   }
 }

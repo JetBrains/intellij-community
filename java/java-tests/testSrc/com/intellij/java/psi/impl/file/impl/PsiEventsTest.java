@@ -15,6 +15,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
@@ -752,7 +753,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
           throw new NullPointerException();
         }
       };
-      ((PsiManagerImpl)getPsiManager()).addTreeChangePreprocessor(preprocessor);
+      ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor);
       try {
         WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -762,7 +763,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
         assertInstanceOf(e.getCause(), NullPointerException.class);
       }
       finally {
-        ((PsiManagerImpl)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
+        ((PsiManagerEx)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
       }
 
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));

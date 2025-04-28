@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,7 +52,7 @@ public final class PsiFileImplUtil {
 
   public static PsiFile setName(@NotNull PsiFile file, @NotNull String newName) throws IncorrectOperationException {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
-    PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
+    PsiManager manager = file.getManager();
 
     try{
       saveDocumentIfFileWillBecomeBinary(vFile, newName);
@@ -85,7 +86,7 @@ public final class PsiFileImplUtil {
       return;
     }
     
-    PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
+    PsiManager manager = file.getManager();
 
     VirtualFile vFile = file.getVirtualFile();
     try{

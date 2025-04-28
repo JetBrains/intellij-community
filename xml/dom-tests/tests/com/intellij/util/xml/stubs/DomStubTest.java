@@ -105,7 +105,7 @@ public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
     ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
     assertNotNull("Can't build stubs for " + path, tree);
 
-    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+    ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
 
     file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertNotNull(file);

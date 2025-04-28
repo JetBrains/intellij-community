@@ -52,6 +52,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.common.TestApplicationKt;
@@ -399,7 +400,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     if (project != null && !project.isDisposed()) {
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
+      PsiManagerEx.getInstanceEx(project).cleanupForNextTest();
     }
   }
 

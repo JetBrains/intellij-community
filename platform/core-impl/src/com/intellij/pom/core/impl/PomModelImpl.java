@@ -379,7 +379,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     getPsiManager().childrenChanged(event);
   }
 
-  private @NotNull PsiManagerImpl getPsiManager() {
-    return (PsiManagerImpl)PsiManager.getInstance(myProject);
+  private @NotNull PsiManagerEx getPsiManager() {
+    return PsiManagerEx.getInstanceEx(myProject);
   }
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.impl.source.tree.PsiErrorElementImpl
@@ -130,7 +131,7 @@ class CodeMetaInfoTestCase(
 
     fun checkFile(expectedFile: File, project: Project, editor: Editor) {
         myProject = project
-        myPsiManager = PsiManager.getInstance(myProject) as PsiManagerImpl
+        myPsiManager = PsiManagerEx.getInstanceEx(myProject)
         runInEdtAndWait {
             setActiveEditor(editor)
             check(expectedFile)
@@ -141,7 +142,7 @@ class CodeMetaInfoTestCase(
         file: VirtualFile, expectedFile: File, project: Project,
         postprocessActualTestData: (String, Editor) -> String = { s, _ -> s }) {
         myProject = project
-        myPsiManager = PsiManager.getInstance(myProject) as PsiManagerImpl
+        myPsiManager = PsiManagerEx.getInstanceEx(myProject)
         configureByExistingFile(file)
         check(expectedFile, postprocessActualTestData)
     }

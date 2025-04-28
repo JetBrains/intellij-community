@@ -119,8 +119,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   protected @NotNull PsiFile createFile(@NotNull VirtualFile file, @NotNull FileType fileType, @NotNull Language language) {
     if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
       return SingleRootFileViewProvider.isTooLargeForContentLoading(file) ?
-             new PsiLargeBinaryFileImpl((PsiManagerImpl)getManager(), this) :
-             new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
+             new PsiLargeBinaryFileImpl(getManager(), this) :
+             new PsiBinaryFileImpl(getManager(), this);
     }
     if (!SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
       PsiFile psiFile = createFile(language);
@@ -260,10 +260,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     beforeContentsSynchronized();
 
     for (PsiTreeChangeEventImpl event : genericEvents) {
-      ((PsiManagerImpl)getManager()).beforeChildrenChange(event);
+      getManager().beforeChildrenChange(event);
     }
     for (PsiTreeChangeEventImpl event : events) {
-      ((PsiManagerImpl)getManager()).beforeChildrenChange(event);
+      getManager().beforeChildrenChange(event);
     }
 
     for (PsiFile psiFile : psiFiles) {
@@ -275,10 +275,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     contentsSynchronized();
 
     for (PsiTreeChangeEventImpl event : events) {
-      ((PsiManagerImpl)getManager()).childrenChanged(event);
+      getManager().childrenChanged(event);
     }
     for (PsiTreeChangeEventImpl event : genericEvents) {
-      ((PsiManagerImpl)getManager()).childrenChanged(event);
+      getManager().childrenChanged(event);
     }
   }
 

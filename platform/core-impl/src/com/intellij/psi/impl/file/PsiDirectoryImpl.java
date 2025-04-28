@@ -28,6 +28,7 @@ import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
@@ -53,10 +54,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   private static final Key<Boolean> UPDATE_ADDED_FILE_KEY = Key.create("UPDATE_ADDED_FILE_KEY");
   private static final Logger LOG = Logger.getInstance(PsiDirectoryImpl.class);
 
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
   private final VirtualFile myFile;
 
-  public PsiDirectoryImpl(@NotNull PsiManagerImpl manager, @NotNull VirtualFile file) {
+  public PsiDirectoryImpl(@NotNull PsiManagerEx manager, @NotNull VirtualFile file) {
     myManager = manager;
     myFile = file;
   }

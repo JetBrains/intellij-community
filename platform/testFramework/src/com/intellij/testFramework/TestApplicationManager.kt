@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
 import com.intellij.testFramework.common.*
@@ -130,7 +131,7 @@ class TestApplicationManager private constructor() {
         { LightPlatformTestCase.clearUncommittedDocuments(project) },
         { app.runWriteIntentReadAction<Unit, Nothing?> { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() } },
         { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
-        { (project.serviceIfCreated<PsiManager>() as PsiManagerImpl?)?.cleanupForNextTest() },
+        { (project.serviceIfCreated<PsiManager>() as PsiManagerEx?)?.cleanupForNextTest() },
         { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() },
         { waitForProjectLeakingThreads(project) },
         { dropModuleRootCaches(project) },
