@@ -178,7 +178,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: JComponent?): ListPopupStep<Any> {
-    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
+    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, true,
                                                           null, widget, false, 0, false)
   }
 }
