@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 internal class BackendJavaDebuggerManagerApi : JavaDebuggerManagerApi {
   override suspend fun getJavaSession(sessionId: XDebugSessionId): JavaDebuggerSessionDto? {
     val xSession = sessionId.findValue() ?: return null
+    xSession.sessionInitializedDeferred().await()
     val process = xSession.debugProcess as? JavaDebugProcess ?: return null
     val debuggerSession = process.debuggerSession
 

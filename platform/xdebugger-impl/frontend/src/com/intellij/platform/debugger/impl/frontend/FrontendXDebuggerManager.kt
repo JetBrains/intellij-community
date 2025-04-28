@@ -62,11 +62,16 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
         }
       }
       eventFlow.toFlow().collect { event ->
+        // When the registry flag is not set, we would prefer to have XDebugSessionProxy.Monolith in a listener
+        // see com.intellij.xdebugger.impl.MonolithListenerAdapter
+        val shouldTriggerListener = XDebugSessionProxy.useFeProxy()
         when (event) {
           is XDebuggerManagerSessionEvent.ProcessStarted -> {
             synchronousExecutor.trySend {
               val session = createDebuggerSession(event.sessionDto)
-              project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStarted(session)
+              if (shouldTriggerListener) {
+                project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStarted(session)
+              }
             }
           }
           is XDebuggerManagerSessionEvent.ProcessStopped -> {
@@ -74,7 +79,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
               sessionsFlow.update { sessions ->
                 val sessionToRemove = sessions.firstOrNull { it.id == event.sessionId }
                 if (sessionToRemove != null) {
-                  project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStopped(sessionToRemove)
+                  if (shouldTriggerListener) {
+                    project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).sessionStopped(sessionToRemove)
+                  }
                   sessions - sessionToRemove
                 }
                 else {
@@ -88,7 +95,9 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
               val sessions = sessionsFlow.value
               val previousSession = sessions.firstOrNull { it.id == event.previousSession }
               val currentSession = sessions.firstOrNull { it.id == event.currentSession }
-              project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).activeSessionChanged(previousSession, currentSession)
+              if (shouldTriggerListener) {
+                project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).activeSessionChanged(previousSession, currentSession)
+              }
             }
           }
         }
