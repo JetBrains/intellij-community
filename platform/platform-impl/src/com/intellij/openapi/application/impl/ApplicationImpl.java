@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -107,6 +108,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
   private final ThreadLocal<Boolean> myImpatientReader = ThreadLocal.withInitial(() -> false);
+
+  private AtomicInteger backgroundWriteActionCounter = new AtomicInteger(0);
 
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
@@ -1014,19 +1017,52 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void runWriteAction(@NotNull Runnable action) {
     checkWriteActionAllowedOnCurrentThread();
-    getThreadingSupport().runWriteAction(action.getClass(), runnableUnitFunction(action));
+    incrementBackgroundWriteActionCounter();
+    try {
+      getThreadingSupport().runWriteAction(action.getClass(), runnableUnitFunction(action));
+    }
+    finally {
+      decrementBackgroundWriteActionCounter();
+    }
   }
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
     checkWriteActionAllowedOnCurrentThread();
-    return getThreadingSupport().runWriteAction(computation.getClass(), computation::compute);
+    incrementBackgroundWriteActionCounter();
+    try {
+      return getThreadingSupport().runWriteAction(computation.getClass(), computation::compute);
+    }
+    finally {
+      decrementBackgroundWriteActionCounter();
+    }
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     checkWriteActionAllowedOnCurrentThread();
-    return getThreadingSupport().runWriteAction(computation.getClass(), rethrowCheckedExceptions(computation));
+    incrementBackgroundWriteActionCounter();
+    try {
+      return getThreadingSupport().runWriteAction(computation.getClass(), rethrowCheckedExceptions(computation));
+    }
+    finally {
+      decrementBackgroundWriteActionCounter();
+    }
+  }
+
+  private void incrementBackgroundWriteActionCounter() {
+    if (EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    backgroundWriteActionCounter.incrementAndGet();
+  }
+
+
+  private void decrementBackgroundWriteActionCounter() {
+    if (EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    backgroundWriteActionCounter.decrementAndGet();
   }
 
   @Override
@@ -1123,6 +1159,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public boolean isWriteActionPending() {
     return getThreadingSupport().isWriteActionPending();
+  }
+
+  @Override
+  public boolean isBackgroundWriteActionRunningOrPending() {
+    return backgroundWriteActionCounter.get() > 0;
   }
 
   @Override

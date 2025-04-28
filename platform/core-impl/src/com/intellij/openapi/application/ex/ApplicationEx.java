@@ -41,6 +41,15 @@ public interface ApplicationEx extends Application {
    */
   boolean isWriteActionPending();
 
+  /**
+   * @return true if a background thread running or wants to run a write action.
+   * This is needed for low-level optimizations and assertions
+   */
+  @ApiStatus.Internal
+  default boolean isBackgroundWriteActionRunningOrPending() {
+    return false;
+  }
+
   void setSaveAllowed(boolean value);
 
   default void exit(int flags) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
@@ -68,4 +70,32 @@ class PlatformUtilitiesTest {
       }
     }
   }
+
+  @Test
+  fun `edt wa means that background wa is not pending`(): Unit = concurrencyTest {
+    launch {
+      edtWriteAction {
+        checkpoint(1)
+        checkpoint(4)
+      }
+    }
+    checkpoint(2)
+    assertThat(ApplicationManagerEx.getApplicationEx().isBackgroundWriteActionRunningOrPending).isFalse
+    checkpoint(3)
+  }
+
+  @Test
+  fun `bg wa means that background wa is not pending`(): Unit = concurrencyTest {
+    Assumptions.assumeTrue(useBackgroundWriteAction)
+    launch {
+      backgroundWriteAction {
+        checkpoint(1)
+        checkpoint(4)
+      }
+    }
+    checkpoint(2)
+    assertThat(ApplicationManagerEx.getApplicationEx().isBackgroundWriteActionRunningOrPending).isTrue
+    checkpoint(3)
+  }
+
 }
