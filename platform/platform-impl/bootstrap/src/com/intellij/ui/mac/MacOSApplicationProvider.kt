@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
 import com.intellij.diagnostic.LoadingState
@@ -116,7 +116,7 @@ private fun installAutoUpdateMenu() {
     fun callback(self: ID?, selector: String?) {
       SwingUtilities.invokeLater {
         val mouseEvent = MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false)
-        val actionManager = ActionManager.getInstance()
+        val actionManager = ApplicationManager.getApplication()?.getServiceIfCreated(ActionManager::class.java) ?: return@invokeLater
         actionManager.tryToExecute(actionManager.getAction("CheckForUpdate"), mouseEvent, null, null, false)
       }
     }
