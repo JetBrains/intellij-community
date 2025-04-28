@@ -9,8 +9,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
-import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
 import org.jetbrains.bazel.jvm.processRequests
+import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.Writer
@@ -35,7 +35,7 @@ fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
   System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
 }
 
-internal class JpsBuildWorker private constructor(
+internal class JvmBuildWorker private constructor(
   private val allocator: RootAllocator,
   coroutineScope: CoroutineScope,
 ) : WorkRequestExecutor<WorkRequestWithDigests> {
@@ -49,7 +49,7 @@ internal class JpsBuildWorker private constructor(
           startupArgs = startupArgs,
           executorFactory = { tracer, scope ->
             configureGlobalJps(tracer = tracer, scope = scope)
-            JpsBuildWorker(allocator, scope)
+            JvmBuildWorker(allocator, scope)
           },
           reader = WorkRequestWithDigestReader(System.`in`),
           serviceName = "jvm-builder",
