@@ -97,7 +97,7 @@ internal open class TerminalEventsHandlerImpl(
           scrollingModel?.scrollToCursor(force = true)
         }
         if (keyCode == KeyEvent.VK_ENTER) {
-          ++TerminalUsageLocalStorage.getInstance().state.enterKeyPressedTimes
+          TerminalUsageLocalStorage.getInstance().recordEnterKeyPressed()
         }
         return true
       }
