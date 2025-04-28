@@ -91,11 +91,11 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
   open class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(breakpointBase: XBreakpointBase<*, *, *>) : XBreakpointProxy {
     open val breakpoint: XBreakpointBase<*, *, *> = breakpointBase
 
-    override val id: XBreakpointId = breakpointBase.breakpointId
+    override val id: XBreakpointId get() = breakpoint.breakpointId
 
-    override val type: XBreakpointTypeProxy = XBreakpointTypeProxy.Monolith(breakpointBase.project, breakpointBase.getType())
+    override val type: XBreakpointTypeProxy get() = breakpoint.type.asProxy(breakpoint.project)
 
-    override val project: Project = breakpointBase.project
+    override val project: Project get() = breakpoint.project
 
     override fun createBreakpointDraggableObject(): GutterDraggableObject? {
       return null
@@ -120,7 +120,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun getIcon(): Icon = breakpoint.getIcon()
 
-    override fun isEnabled(): Boolean = breakpoint.isEnabled()
+    override fun isEnabled(): Boolean = breakpoint.isEnabled
 
     override fun setEnabled(enabled: Boolean) {
       breakpoint.isEnabled = enabled

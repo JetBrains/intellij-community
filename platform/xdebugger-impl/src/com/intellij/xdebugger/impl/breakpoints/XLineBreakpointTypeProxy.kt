@@ -25,7 +25,7 @@ interface XLineBreakpointTypeProxy : XBreakpointTypeProxy {
     override val temporaryIcon: Icon?
       get() = breakpointType.temporaryIcon
 
-    override val priority: Int = breakpointType.priority
+    override val priority: Int get() = breakpointType.priority
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
       return breakpointType.canPutAt(file, line, project)

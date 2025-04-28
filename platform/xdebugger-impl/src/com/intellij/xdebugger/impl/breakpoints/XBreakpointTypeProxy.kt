@@ -43,9 +43,10 @@ interface XBreakpointTypeProxy {
     initBreakpointType: XBreakpointType<*, *>,
   ) : XBreakpointTypeProxy {
     open val breakpointType: XBreakpointType<*, *> = initBreakpointType
-    private val defaultState = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(initBreakpointType)
+    private val defaultState: BreakpointState
+      get() = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).getBreakpointDefaults(breakpointType)
 
-    override val id: String = initBreakpointType.id
+    override val id: String get() = breakpointType.id
 
     override val index: Int
       get() = breakpointTypes().indexOf(breakpointType).orElse(-1).toInt()

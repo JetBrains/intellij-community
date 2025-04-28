@@ -32,7 +32,7 @@ interface XLineBreakpointProxy : XBreakpointProxy {
   ) : XBreakpointProxy.Monolith(lineBreakpoint), XLineBreakpointProxy {
     override val breakpoint: XLineBreakpointImpl<*> = lineBreakpoint
 
-    override val type: XLineBreakpointTypeProxy = lineBreakpoint.type.asProxy(breakpoint.project)
+    override val type: XLineBreakpointTypeProxy get() = breakpoint.type.asProxy(breakpoint.project)
 
     override fun createBreakpointDraggableObject(): GutterDraggableObject {
       return breakpoint.createBreakpointDraggableObject()
