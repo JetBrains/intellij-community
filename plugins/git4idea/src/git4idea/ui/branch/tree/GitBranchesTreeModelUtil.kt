@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
@@ -20,7 +20,6 @@ import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.config.GitVcsSettings
-import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.telemetry.GitTelemetrySpan
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
@@ -44,37 +43,6 @@ internal val GitRepository.tags: Map<GitTag, Hash>
     else this.tagHolder.getTags()
 
 internal val emptyBranchComparator = Comparator<GitReference> { _, _ -> 0 }
-
-internal fun getRefComparator(
-  repositories: List<GitRepository>,
-  favoriteBranches: Map<GitRepository, Set<String>>,
-  isPrefixGrouping: () -> Boolean
-): Comparator<GitReference> {
-  return compareBy<GitReference> {
-    it.isNotCurrentRef(repositories)
-  } then compareBy {
-    it.isNotFavorite(favoriteBranches, repositories)
-  } then compareBy {
-    !(isPrefixGrouping() && it.name.contains('/'))
-  } then compareBy(GitReference.REFS_NAMES_COMPARATOR) { it.name }
-}
-
-internal fun getSubTreeComparator(favoriteBranches: Map<GitRepository, Set<String>>,
-                                  repositories: List<GitRepository>): Comparator<Any> {
-  return compareBy<Any> {
-    it is GitBranch && it.isNotCurrentRef(repositories) && it.isNotFavorite(favoriteBranches, repositories)
-  } then compareBy {
-    it is GitBranchesTreeModel.BranchesPrefixGroup
-  }
-}
-
-private fun GitReference.isNotCurrentRef(repositories: List<GitRepository>) =
-  !repositories.any { repo -> GitRefUtil.getCurrentReference(repo) == this }
-
-private fun GitReference.isNotFavorite(favoriteBranches: Map<GitRepository, Set<String>>,
-                                       repositories: List<GitRepository>): Boolean {
-  return repositories.any { repo -> !(favoriteBranches[repo]?.contains(this.name) ?: false) }
-}
 
 internal fun buildBranchTreeNodes(branchType: GitRefType,
                                   branchesMap: Map<String, Any>,
@@ -285,16 +253,13 @@ internal open class LazyHolder<N>(nodes: List<N>,
   fun isEmpty() = initiallyEmpty || !needFilter() || match.isEmpty()
 }
 
-internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<GitRepository>,
-                                     unsortedRefs: Collection<T>,
-                                     favoriteRefs: Map<GitRepository, Set<String>>,
-                                     matcher: MinusculeMatcher?,
-                                     isPrefixGrouping: () -> Boolean,
-                                     exceptRefFilter: (T) -> Boolean = { false },
-                                     refComparatorGetter: () -> Comparator<GitReference> = {
-                                       getRefComparator(repositories, favoriteRefs, isPrefixGrouping)
-                                     }) {
-
+internal class LazyRefsSubtreeHolder<out T : GitReference>(
+  unsortedRefs: Collection<T>,
+  matcher: MinusculeMatcher?,
+  isPrefixGrouping: () -> Boolean,
+  exceptRefFilter: (T) -> Boolean = { false },
+  refComparatorGetter: () -> Comparator<GitReference>,
+) {
   private val initiallyEmpty = unsortedRefs.isEmpty()
 
   val sortedValues by lazy { unsortedRefs.sortedWith(refComparatorGetter()) }
@@ -343,7 +308,7 @@ internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<Git
 
   companion object {
     fun <T: GitReference> emptyHolder(): LazyRefsSubtreeHolder<T> {
-      return LazyRefsSubtreeHolder(emptyList(), emptyList(), emptyMap(), null, { false })
+      return LazyRefsSubtreeHolder(emptyList(), null, { false }, { false }, { emptyBranchComparator })
     }
   }
 }

@@ -1,16 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
-import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
@@ -23,10 +20,8 @@ internal open class GitBranchesTreeSingleRepoModel(
 
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)
-
-    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
     val recentCheckoutBranches = getRecentBranches()
-    recentCheckoutBranchesTree = LazyRefsSubtreeHolder(listOf(repository), recentCheckoutBranches, localFavorites, matcher,
+    recentCheckoutBranchesTree = LazyRefsSubtreeHolder(recentCheckoutBranches, matcher,
                                                        ::isPrefixGrouping,
                                                        refComparatorGetter = ::emptyBranchComparator)
   }
@@ -47,8 +42,7 @@ internal open class GitBranchesTreeSingleRepoModel(
       is BranchesPrefixGroup -> {
         branchesTreeCache
           .getOrPut(parent) {
-            getBranchTreeNodes(parent.type, parent.prefix).sortedWith(
-              getSubTreeComparator(project.service<GitBranchManager>().getFavoriteBranches(parent.type), listOf(repository)))
+            getBranchTreeNodes(parent.type, parent.prefix).sortedWith(getSubTreeComparator())
           }
       }
       else -> emptyList()
