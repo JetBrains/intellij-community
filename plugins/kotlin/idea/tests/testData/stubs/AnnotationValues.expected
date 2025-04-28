@@ -221,17 +221,25 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=Arrays]
         VALUE_ARGUMENT_LIST
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=3]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=1]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=2]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=3]
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=1]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=1L]
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=0]
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=1]
+              FLOAT_CONSTANT[kind=FLOAT_CONSTANT, value=2.2]
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=1]
+              CHARACTER_CONSTANT[kind=CHARACTER_CONSTANT, value='a']
           VALUE_ARGUMENT[isSpread=false]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=2]
+              BOOLEAN_CONSTANT[kind=BOOLEAN_CONSTANT, value=true]
+              BOOLEAN_CONSTANT[kind=BOOLEAN_CONSTANT, value=false]
   CLASS[classId=test/ClassLiteral, fqName=test.ClassLiteral, isClsStubCompiledToJvmDefaultImplementation=false, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=ClassLiteral, superNames=[]]
     MODIFIER_LIST[annotation]
     PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExplicitDelegationCall=false, isExtension=false, isTopLevel=false, name=ClassLiteral]
@@ -329,7 +337,10 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=ArraysSpread]
         VALUE_ARGUMENT_LIST
           VALUE_ARGUMENT[isSpread=true]
-            COLLECTION_LITERAL_EXPRESSION
+            COLLECTION_LITERAL_EXPRESSION[innerExpressionCount=3]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=1]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=2]
+              INTEGER_CONSTANT[kind=INTEGER_CONSTANT, value=3]
   CLASS[classId=test/WithComplexDotQualifiedAnnotation, fqName=test.WithComplexDotQualifiedAnnotation, isClsStubCompiledToJvmDefaultImplementation=false, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=WithComplexDotQualifiedAnnotation, superNames=[]]
     MODIFIER_LIST[]
       ANNOTATION_ENTRY[hasValueArguments=true, shortName=SomeAnno1]
