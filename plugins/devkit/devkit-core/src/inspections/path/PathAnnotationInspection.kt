@@ -513,6 +513,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
         val index = parent.valueArguments.indexOf(expression)
         if (index >= 0) {
           val parameter = getParameterForArgument(method, index) ?: return PathAnnotationInfo.Unspecified
+
+          // Check if the method effectively accepts a @LocalPath annotated string as a parameter
+          if (VirtualPathAnnotationRegistry.isMethodAcceptingLocalPath(method)) {
+            return PathAnnotationInfo.LocalPathInfo
+          }
+
           val info = PathAnnotationInfo.forModifierListOwner(parameter)
           if (info !is PathAnnotationInfo.Unspecified) {
             return info
@@ -675,6 +681,11 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           if (isSystemGetPropertyAbsolutePathResult(expression)) {
             return LocalPathInfo
           }
+
+          // Check if the argument is a call to a method that effectively returns a @LocalPath annotated string
+          if (isMethodReturningLocalPathResult(expression)) {
+            return LocalPathInfo
+          }
         }
 
         // Check if the expression has a path annotation
@@ -730,6 +741,12 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                         }
                       }
                     }
+                  }
+
+                  // Check if the initializer is a call to a method that effectively returns a @LocalPath annotated string
+                  val method = initializer.resolveMethod()
+                  if (method != null && VirtualPathAnnotationRegistry.isMethodReturningLocalPath(method)) {
+                    return LocalPathInfo
                   }
                 }
 
@@ -992,5 +1009,64 @@ private fun isSystemGetPropertyAbsolutePathResult(expression: UExpression): Bool
   return false
 }
 
+/**
+ * Checks if the expression is a call to a method that effectively returns a `@LocalPath` annotated string.
+ */
+private fun isMethodReturningLocalPathResult(expression: UExpression): Boolean {
+  val callExpression = expression.getUCallExpression(searchLimit = 1) ?: return false
+  val method = callExpression.resolve()
+  if (method is com.intellij.psi.PsiMethod) {
+    return VirtualPathAnnotationRegistry.isMethodReturningLocalPath(method)
+  }
+  return false
+}
+
 private fun isSystemPropertyAbsolutePathValue(propertyName: String): Boolean =
   setOf("java.home", "user.home", "user.dir", "java.io.tmpdir").contains(propertyName)
+
+/**
+ * Registry of methods that effectively return or accept `@LocalPath` annotated strings.
+ * This registry is used to virtually associate path annotations with methods without modifying the methods themselves.
+ */
+private object VirtualPathAnnotationRegistry {
+  /**
+   * Map of fully qualified method names to their effective path annotation type.
+   * The key is in the format "fully.qualified.ClassName.methodName".
+   */
+  private val methodsReturningLocalPath = setOf(
+    "com.intellij.openapi.application.PathManager.getHomePath",
+    "com.intellij.openapi.application.PathManager.getBinPath",
+    "com.intellij.openapi.application.PathManager.getConfigPath",
+    "com.intellij.openapi.application.PathManager.getSystemPath",
+    "com.intellij.util.SystemProperties.getUserHome",
+    "com.intellij.util.SystemProperties.getJavaHome"
+  )
+
+  /**
+   * Map of fully qualified method names to their effective path annotation type for parameters.
+   * The key is in the format "fully.qualified.ClassName.methodName".
+   */
+  private val methodsAcceptingLocalPath = setOf(
+    "com.intellij.openapi.application.PathManager.isUnderHomeDirectory"
+  )
+
+  /**
+   * Checks if the method effectively returns a `@LocalPath` annotated string.
+   */
+  fun isMethodReturningLocalPath(method: com.intellij.psi.PsiMethod): Boolean {
+    val containingClass = method.containingClass ?: return false
+    val qualifiedName = containingClass.qualifiedName ?: return false
+    val methodName = method.name
+    return methodsReturningLocalPath.contains("$qualifiedName.$methodName")
+  }
+
+  /**
+   * Checks if the method effectively accepts a `@LocalPath` annotated string as a parameter.
+   */
+  fun isMethodAcceptingLocalPath(method: com.intellij.psi.PsiMethod): Boolean {
+    val containingClass = method.containingClass ?: return false
+    val qualifiedName = containingClass.qualifiedName ?: return false
+    val methodName = method.name
+    return methodsAcceptingLocalPath.contains("$qualifiedName.$methodName")
+  }
+}
