@@ -94,7 +94,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
   override fun switch(isOn: Boolean, init: (LcrSwitchInitParams.() -> Unit)?) {
     val initParams = LcrSwitchInitParams()
-    initParams.accessibleName = if (isOn) IdeBundle.message("ui.button.on") else IdeBundle.message("ui.button.on")
+    initParams.accessibleName = if (isOn) IdeBundle.message("ui.button.on") else IdeBundle.message("ui.button.off")
     if (init != null) {
       initParams.init()
     }
