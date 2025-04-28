@@ -315,10 +315,12 @@ public final class DebuggerUIUtil {
       }
     });
 
+    // TODO IJPL-185322 Migrate this listener to proxy
     project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
-        if (removedBreakpoint.equals(breakpoint)) {
+        if (removedBreakpoint instanceof XBreakpointBase<?, ?, ?> breakpointBase &&
+            asProxy(breakpointBase).equals(breakpoint)) {
           balloon.hide();
         }
       }
