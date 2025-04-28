@@ -1,10 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution
 
+import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.maven.testFramework.MavenExecutionTestCase
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -14,6 +19,8 @@ import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import kotlin.io.path.exists
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 abstract class MavenExecutionTest : MavenExecutionTestCase() {
 
@@ -59,7 +66,7 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
   }
 
 
-  protected fun execute(params: MavenRunnerParameters): ExecutionInfo {
+  protected fun execute(params: MavenRunnerParameters, maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
     val sema = Semaphore()
     val stdout = StringBuilder()
     val stderr = StringBuilder()
@@ -70,34 +77,70 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
         project, params, mavenGeneralSettings,
         MavenRunnerSettings(),
         ProgramRunner.Callback { descriptor ->
-          descriptor.processHandler!!.addProcessListener(object : ProcessListener {
-            override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-              if (outputType !is ProcessOutputType) {
-                fail("output type is wrong")
-              }
-              else {
-                if (outputType.isStdout)
-                  stdout.append(event.text)
-                else if (outputType.isStderr)
-                  stderr.append(event.text)
-                else
-                  system.append(event.text)
-              }
-
-            }
-
-            override fun processTerminated(event: ProcessEvent) {
-              sema.up()
-              edt<RuntimeException> {
-                Disposer.dispose(descriptor)
-              }
-            }
-          })
+          descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))
         }, false)
     }
-    sema.waitFor()
+    sema.waitFor(maxTimeToWait.inWholeMilliseconds)
     return ExecutionInfo(system.toString(), stdout.toString(), stderr.toString())
   }
+
+
+  class MyTestExecutionListener(
+    val stdout: StringBuilder = StringBuilder(),
+    val stderr: StringBuilder = StringBuilder(),
+    val system: StringBuilder = StringBuilder(),
+    val semaphore: Semaphore,
+    val descriptor: RunContentDescriptor,
+  ) : ProcessListener {
+
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+      if (outputType !is ProcessOutputType) {
+        fail("output type is wrong")
+      }
+      else {
+        if (outputType.isStdout)
+          stdout.append(event.text)
+        else if (outputType.isStderr)
+          stderr.append(event.text)
+        else
+          system.append(event.text)
+      }
+    }
+
+
+    override fun processTerminated(event: ProcessEvent) {
+      semaphore.up()
+      edt<RuntimeException> {
+        Disposer.dispose(descriptor)
+      }
+    }
+  }
+
+  fun debugMavenRunConfiguration(parameters: MavenRunnerParameters, maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
+    val runManager = getInstanceImpl(project)
+    val mavenTemplateConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createTemplateConfiguration(
+      project)
+    val mavenConfiguration = MavenRunConfigurationType.getInstance().configurationFactories[0].createConfiguration("myConfiguration",
+                                                                                                                   mavenTemplateConfiguration)
+    (mavenConfiguration as MavenRunConfiguration).runnerParameters = parameters
+
+    val configuration = RunnerAndConfigurationSettingsImpl(runManager, mavenConfiguration)
+
+    val sema = Semaphore()
+    val stdout = StringBuilder()
+    val stderr = StringBuilder()
+    val system = StringBuilder()
+    sema.down()
+
+    ExecutionUtil.doRunConfiguration(configuration, DefaultDebugExecutor.getDebugExecutorInstance(), null, null, null) { environment ->
+      environment.callback = ProgramRunner.Callback { descriptor ->
+        descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))
+      }
+    }
+    sema.waitFor(maxTimeToWait.inWholeMilliseconds)
+    return ExecutionInfo(system.toString(), stdout.toString(), stderr.toString())
+  }
+
 }
 
 data class ExecutionInfo(val system: String, val stdout: String, val stderr: String)

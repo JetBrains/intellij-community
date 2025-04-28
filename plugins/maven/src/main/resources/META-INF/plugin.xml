@@ -333,6 +333,9 @@
     <registryKey key="maven.use.scripts" defaultValue="true"
                  description="Run maven goals via mvn.sh/mvn.bat"/>
 
+    <registryKey key="maven.use.scripts.debug.agent" defaultValue="true"
+                 description="Use instrumentation agent when debugging with maven"/>
+
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
 

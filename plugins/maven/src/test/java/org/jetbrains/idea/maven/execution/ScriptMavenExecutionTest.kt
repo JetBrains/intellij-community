@@ -24,7 +24,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
          <artifactId>project</artifactId>
          <version>1</version>"""
     )
-    createProjectWrapper()
+    createFakeProjectWrapper()
     mavenGeneralSettings.mavenHomeType = MavenWrapper
     val executionInfo = execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()))
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
@@ -46,7 +46,7 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
         """.trimIndent()
     ))
     projectsManager.addManagedFiles(listOf(anotherLinkedProject))
-    createProjectWrapper()
+    createFakeProjectWrapper()
     mavenGeneralSettings.mavenHomeType = MavenWrapper
     val path = MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toString()
     val executionInfo = execute(MavenRunnerParameters(true, anotherLinkedProject.parent.path, null as String?, mutableListOf("verify"), emptyList()))
@@ -54,14 +54,14 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
                executionInfo.system.contains(if (SystemInfo.isWindows) "\\bin\\mvn.cmd" else "/bin/mvn"))
   }
 
-  private fun createProjectWrapper() {
+  private fun createFakeProjectWrapper() {
     createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=http://example.com")
     if (SystemInfo.isWindows) {
-      createProjectSubFile("mvnw.cmd", "@echo $wrapperOutput\r\n@echo %*\r\n")
+      createProjectSubFile("mvnw.cmd", "@echo $wrapperOutput\r\n@echo %*\r\n@set")
     }
     else {
-      createProjectSubFile("mvnw", "#!/bin/sh\necho $wrapperOutput\n echo $@")
+      createProjectSubFile("mvnw", "#!/bin/sh\necho $wrapperOutput\necho $@ \nprintenv ")
     }
   }
 
@@ -85,11 +85,29 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
          </modules>
          """
     )
-    createProjectWrapper()
+    createFakeProjectWrapper()
     mavenGeneralSettings.mavenHomeType = MavenWrapper
     val executionInfo = execute(MavenRunnerParameters(true, projectPath.resolve("m1").toCanonicalPath(), null as String?, mutableListOf("verify"), emptyList()))
     assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
 
+  }
+
+  @Test
+  fun testShouldExecuteMavenScriptWithDebugParameters() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+
+    val debugExecInfo = debugMavenRunConfiguration(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("exec:java"), emptyList()))
+    assertTrue("Should run wrapper", debugExecInfo.stdout.contains(wrapperOutput))
+    val debugOpts = debugExecInfo.stdout.lines().singleOrNull { it.startsWith("MAVEN_OPTS") }
+    assertNotNull(debugExecInfo.toString(), debugOpts)
+    assertTrue(debugOpts, debugOpts!!.contains("-agentlib:jdwp=transport=dt_socket"))
   }
 
 

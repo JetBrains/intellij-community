@@ -12,7 +12,10 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RemoteConnection
+import com.intellij.execution.configurations.RemoteConnectionCreator
+import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -51,8 +54,8 @@ import java.util.function.Function
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
-class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteState, PatchedRunnableState {
-  private var myRemoteConnection: MavenRemoteConnection? = null
+class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteConnectionCreator {
+  private var mavenConnectionWrapper: MavenRemoteConnectionWrapper? = null
   private val workingDir: EelPath by lazy {
     Path(myConfiguration.runnerParameters.workingDirPath).asEelPath()
   }
@@ -86,7 +89,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
         is EelResult.Ok -> {
           KillableColoredProcessHandler.Silent(result.value.convertToJavaProcess(), "$exe ${args.joinToString(" ")}", Charsets.UTF_8, emptySet())
         }
-
       }
     }
   }
@@ -250,10 +252,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     map.putAll(existingEnv)
     myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(map) }
     val javaParams = myConfiguration.createJavaParameters(myConfiguration.project)
-    map.put("JAVA_HOME", Path(javaParams.jdkPath).asEelPath().toString())
-    if (debug && myRemoteConnection != null) {
+    map["JAVA_HOME"] = Path(javaParams.jdkPath).asEelPath().toString()
+    if (debug && mavenConnectionWrapper != null) {
       val maven_opts = map["MAVEN_OPTS"] ?: ""
-      map["MAVEN_OPTS"] = myRemoteConnection!!.enhanceMavenOpts(maven_opts)
+      map["MAVEN_OPTS"] = mavenConnectionWrapper!!.enhanceMavenOpts(maven_opts)
     }
     return map
   }
@@ -303,18 +305,18 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     }
   }
 
-  override fun getRemoteConnection(): RemoteConnection? {
-    if (myRemoteConnection == null) {
-      myRemoteConnection = createRemoteConnection()
+  private fun getOrCreateRemoteConnection(): MavenRemoteConnectionWrapper? {
+    if (mavenConnectionWrapper == null) {
+      mavenConnectionWrapper = createRemoteConnection()
     }
-    return myRemoteConnection
+    return mavenConnectionWrapper
   }
 
-  private fun createRemoteConnection(): MavenRemoteConnection? {
+  private fun createRemoteConnection(): MavenRemoteConnectionWrapper? {
     for (creator in MavenExtRemoteConnectionCreator.EP_NAME.extensionList) {
       val connection = creator.createRemoteConnectionForScript(myConfiguration)
       if (connection != null) {
-        myRemoteConnection = connection
+        mavenConnectionWrapper = connection
         return connection
       }
     }
@@ -330,4 +332,11 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
   private fun String.asTargetPathString(): String = Path.of(this).asEelPath().toString()
+
+  override fun createRemoteConnection(environment: ExecutionEnvironment?): RemoteConnection? {
+    return createRemoteConnection()?.myRemoteConnection
+  }
+
+  override fun isPollConnection(): Boolean = true
+
 }

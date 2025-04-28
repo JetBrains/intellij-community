@@ -106,30 +106,31 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
                                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException {
+
+    if (state instanceof RemoteConnectionCreator) {
+      RemoteConnection connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
+      boolean isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
+      if (connection != null) {
+        return attachVirtualMachine(state, environment, connection, isPollConnection);
+      }
+    }
+
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      boolean isPollConnection = true;
-      RemoteConnection connection = null;
-      if (state instanceof RemoteConnectionCreator) {
-        connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
-        isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
-      }
-      if (connection == null) {
-        int transport = DebuggerSettings.getInstance().getTransport();
-        connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
-          .asyncAgent(true)
-          .project(environment.getProject())
-          .create(parameters);
-        isPollConnection = true;
-      }
-
-      return attachVirtualMachine(state, environment, connection, isPollConnection);
+      int transport = DebuggerSettings.getInstance().getTransport();
+      RemoteConnection connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
+        .asyncAgent(true)
+        .project(environment.getProject())
+        .create(parameters);
+      return attachVirtualMachine(state, environment, connection, true);
     }
+
     if (state instanceof PatchedRunnableState) {
       RemoteConnection connection =
         doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
       return attachVirtualMachine(state, environment, connection, true);
     }
+
     if (state instanceof RemoteState) {
       final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, environment.getRunnerSettings());
       return attachVirtualMachine(state, environment, connection, false);

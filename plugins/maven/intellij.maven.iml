@@ -117,6 +117,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
   </component>
   <component name="copyright">
     <Base>
