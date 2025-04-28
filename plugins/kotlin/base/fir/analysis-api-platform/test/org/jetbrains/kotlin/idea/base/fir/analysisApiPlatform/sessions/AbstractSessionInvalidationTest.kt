@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions
 import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLResolutionFacadeService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
@@ -59,7 +59,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
         val projectModules = ModuleManager.getInstance(mainModule.project).modules
             .flatMap { listOfNotNull(it.toKaSourceModuleForProductionOrTest(), it.toKaSourceModuleForTest()) }
 
-        val resolveSession = LLFirResolveSessionService.getInstance(mainModule.project).getFirResolveSession(mainModule)
-        return projectModules.map(resolveSession::getSessionFor)
+        val resolutionFacade = LLResolutionFacadeService.getInstance(mainModule.project).getResolutionFacade(mainModule)
+        return projectModules.map(resolutionFacade::getSessionFor)
     }
 }

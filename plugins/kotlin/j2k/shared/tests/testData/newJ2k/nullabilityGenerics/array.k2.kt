@@ -1,5 +1,4 @@
 // ERROR: Initializer type mismatch: expected 'Array<String>', actual 'Array<String?>'.
-// ERROR: Type mismatch: inferred type is 'Array<String?>', but 'Array<String>' was expected.
 // ERROR: Return type mismatch: expected 'Array<String>', actual 'Array<String?>'.
 // TODO support array initializers
 internal class ArrayArgument {

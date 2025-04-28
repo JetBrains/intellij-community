@@ -29,7 +29,6 @@ object CliArgumentStringBuilder {
         get() = when (this) {
             LanguageFeature.State.ENABLED -> "+"
             LanguageFeature.State.DISABLED -> "-"
-            LanguageFeature.State.ENABLED_WITH_WARNING -> "+" // not supported normally
         }
 
     private fun LanguageFeature.getFeatureMentionInCompilerArgsRegex(): Regex {
@@ -40,7 +39,7 @@ object CliArgumentStringBuilder {
     }
 
     fun LanguageFeature.buildArgumentString(state: LanguageFeature.State, kotlinVersion: IdeKotlinVersion?): String {
-        val shouldBeFeatureEnabled = state == LanguageFeature.State.ENABLED || state == LanguageFeature.State.ENABLED_WITH_WARNING
+        val shouldBeFeatureEnabled = state == LanguageFeature.State.ENABLED
         val dedicatedFlag = dedicatedFlagInfo?.run {
             val (xFlag, xFlagSinceVersion) = this
             if (kotlinVersion == null || xFlagSinceVersion == null || kotlinVersion.kotlinVersion >= xFlagSinceVersion) xFlag else null

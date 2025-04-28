@@ -20,7 +20,7 @@ abstract class AbstractChangeFeatureSupportLevelFix(
     private val featureShortName: String = feature.presentableName
 ) : KotlinQuickFixAction<PsiElement>(element) {
     protected val featureSupportEnabled: Boolean
-        get() = featureSupport == LanguageFeature.State.ENABLED || featureSupport == LanguageFeature.State.ENABLED_WITH_WARNING
+        get() = featureSupport == LanguageFeature.State.ENABLED
 
     final override fun getFamilyName() = KotlinInspectionsBundle.message("fix.change.feature.support.family", featureShortName)
 
@@ -32,9 +32,6 @@ abstract class AbstractChangeFeatureSupportLevelFix(
             return when (state) {
                 LanguageFeature.State.ENABLED -> {
                     KotlinInspectionsBundle.message("fix.change.feature.support.enabled", featureShortName)
-                }
-                LanguageFeature.State.ENABLED_WITH_WARNING -> {
-                    KotlinInspectionsBundle.message("fix.change.feature.support.enabled.warning", featureShortName)
                 }
                 LanguageFeature.State.DISABLED -> {
                     KotlinInspectionsBundle.message("fix.change.feature.support.disabled", featureShortName)
