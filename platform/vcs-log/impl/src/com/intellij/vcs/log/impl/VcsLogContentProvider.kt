@@ -10,11 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
-import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
@@ -22,7 +23,6 @@ import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.awt.BorderLayout
 import java.util.concurrent.ExecutionException
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -35,7 +35,7 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
   private val projectLog = VcsProjectLog.getInstance(project)
-  private val container = JBPanel<JBPanel<*>>(BorderLayout())
+  private val container = Wrapper(AsyncProcessIcon.createBig("VCS Log initializing"))
 
   private var tabContent: Content? = null
   var ui: MainVcsLogUi? = null
@@ -76,7 +76,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
       val ui = logManager.createLogUi(MAIN_LOG_ID, VcsLogTabLocation.TOOL_WINDOW, false)
       this.ui = ui
       val panel = VcsLogPanel(logManager, ui)
-      container.add(panel, BorderLayout.CENTER)
+      container.setContent(panel)
 
       updateDisplayName()
       ui.onDisplayNameChange { updateDisplayName() }
@@ -98,7 +98,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
   internal fun disposeMainUi() {
     ThreadingAssertions.assertEventDispatchThread()
 
-    container.removeAll()
+    container.setContent(null)
     logCreationCallback?.let { callback ->
       logCreationCallback = null
       callback.set(null)
