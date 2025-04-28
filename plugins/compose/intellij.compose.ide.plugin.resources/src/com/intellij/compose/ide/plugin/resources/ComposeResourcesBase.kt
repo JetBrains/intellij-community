@@ -2,6 +2,7 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.lang.xml.XMLLanguage
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -45,7 +46,7 @@ internal interface ComposeResourcesBase {
     val psiFile = getPsiFile(element) ?: return false
     val parentName = psiFile.parent?.name ?: return false
     if (!parentName.isValidInnerComposeResourcesDirNameFor(validInnerComposeResourcesDirNames)) return false
-    val composeResourcesDir = psiFile.parent?.parent?.virtualFile?.toNioPath() ?: return false
+    val composeResourcesDir = psiFile.parent?.parent?.virtualFile?.toNioPathOrNull() ?: return false
     return psiFile.project.getAllComposeResourcesDirs().any { it.directoryPath == composeResourcesDir }
   }
 
