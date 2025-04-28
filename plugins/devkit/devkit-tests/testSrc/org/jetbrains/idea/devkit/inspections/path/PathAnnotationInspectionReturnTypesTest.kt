@@ -51,20 +51,20 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
           @MultiRoutingFileSystemPath
           public String getNativePathAsMultiRouting() {
               @NativePath String path = "/native/path";
-              return <warning descr="${message("inspections.message.nativepath.passed.to.multiroutingfilesystempath.method.parameter")}">path</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@MultiRoutingFileSystemPath", "@NativePath")}">path</warning>; // Should be warned
           }
 
           // Return unannotated value
           @MultiRoutingFileSystemPath
           public String getUnannotatedAsMultiRouting() {
               String path = "/unannotated/path";
-              return <warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">path</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@MultiRoutingFileSystemPath")}">path</warning>; // Should be warned
           }
 
           // Return string literal
           @MultiRoutingFileSystemPath
           public String getStringLiteralAsMultiRouting() {
-              return <warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/string/literal"</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@MultiRoutingFileSystemPath")}">"/string/literal"</warning>; // Should be warned
           }
 
           // Return filename string literal
@@ -105,27 +105,27 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
           @NativePath
           public String getMultiRoutingPathAsNativePath() {
               @MultiRoutingFileSystemPath String path = "/path/to/file";
-              return <warning descr="${message("inspections.message.multiroutingfilesystempath.passed.to.nativepath.method.parameter")}">path</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@NativePath", "@MultiRoutingFileSystemPath")}">path</warning>; // Should be warned
           }
 
           // Return @LocalPath value
           @NativePath
           public String getLocalPathAsNativePath() {
               @LocalPath String path = "/local/path";
-              return <warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">path</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@NativePath", "@LocalPath")}">path</warning>; // Should be warned
           }
 
           // Return unannotated value
           @NativePath
           public String getUnannotatedAsNativePath() {
               String path = "/unannotated/path";
-              return <warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">path</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@NativePath")}">path</warning>; // Should be warned
           }
 
           // Return string literal
           @NativePath
           public String getStringLiteralAsNativePath() {
-              return <warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">"/string/literal"</warning>; // Should be warned
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@NativePath")}">"/string/literal"</warning>; // Should be warned
           }
 
           // Return filename string literal
@@ -166,27 +166,27 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
           @LocalPath
           public String getMultiRoutingPathAsLocalPath() {
               @MultiRoutingFileSystemPath String path = "/path/to/file";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@LocalPath", "@MultiRoutingFileSystemPath")}">path</warning>; // Should be warned
           }
 
           // Return @NativePath value
           @LocalPath
           public String getNativePathAsLocalPath() {
               @NativePath String path = "/native/path";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@LocalPath", "@NativePath")}">path</warning>; // Should be warned
           }
 
           // Return unannotated value
           @LocalPath
           public String getUnannotatedAsLocalPath() {
               String path = "/unannotated/path";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@LocalPath")}">path</warning>; // Should be warned
           }
 
           // Return string literal
           @LocalPath
           public String getStringLiteralAsLocalPath() {
-              return "/string/literal"; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@LocalPath")}">"/string/literal"</warning>; // Should be warned
           }
 
           // Return filename string literal
@@ -220,34 +220,34 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
           @Filename
           public String getMultiRoutingPathAsFilename() {
               @MultiRoutingFileSystemPath String path = "/path/to/file";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@Filename", "@MultiRoutingFileSystemPath")}">path</warning>; // Should be warned
           }
 
           // Return @LocalPath value
           @Filename
           public String getLocalPathAsFilename() {
               @LocalPath String path = "/local/path";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@Filename", "@LocalPath")}">path</warning>; // Should be warned
           }
 
           // Return @NativePath value
           @Filename
           public String getNativePathAsFilename() {
               @NativePath String path = "/native/path";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.method.annotated.with.returns.value.annotated.with", "@Filename", "@NativePath")}">path</warning>; // Should be warned
           }
 
           // Return unannotated value
           @Filename
           public String getUnannotatedAsFilename() {
               String path = "/unannotated/path";
-              return path; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@Filename")}">path</warning>; // Should be warned
           }
 
           // Return string literal with path
           @Filename
           public String getStringLiteralAsFilename() {
-              return "/string/literal"; // Should be warned (currently not implemented)
+              return <warning descr="${message("inspection.message.return.value.without.path.annotation.where.expected", "@Filename")}">"/string/literal"</warning>; // Should be warned
           }
 
           // Return filename string literal
