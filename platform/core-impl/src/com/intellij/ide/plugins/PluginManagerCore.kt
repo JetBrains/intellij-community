@@ -752,12 +752,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmStatic
   fun writeThirdPartyPluginsIds(pluginIds: Collection<PluginId>) {
-    try {
-      writePluginIdsToFile(thirdPartyPluginsFilePath, pluginIds.asSequence(), openOptions = arrayOf(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
-    }
-    catch (e: IOException) {
-      logger.error(thirdPartyPluginsFilePath.toString(), e)
-    }
+    PluginStringSetFile.appendIdsSafe(thirdPartyPluginsFilePath, pluginIds.toSet(), logger)
   }
 
   private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginStringSetFile.consumeIdsSafe(thirdPartyPluginsFilePath, logger)
