@@ -62,10 +62,6 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.description
   override val changeNotes: String?
     get() = pluginDescriptor.changeNotes
-  override val downloads: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloads else null
-  override val rating: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.rating else null
   override val productCode: String?
     get() = pluginDescriptor.productCode
   override val size: String?
@@ -74,10 +70,6 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.repositoryName else null
   override val reviewComments: PageContainer<PluginReviewComment>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
-  override val externalPluginIdForScreenShots: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginIdForScreenShots else null
-  override val date: Long
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.date else Long.MAX_VALUE
 
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
@@ -151,6 +143,13 @@ class PluginUiModelAdapter(
         pluginDescriptor.setScreenShots(value)
       }
     }
+  override var externalPluginIdForScreenShots: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginIdForScreenShots else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.externalPluginIdForScreenShots = value
+      }
+    }
   override var externalPluginId: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginId else null
     set(value) {
@@ -201,6 +200,27 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.suggestedCommercialIde = value
+      }
+    }
+  override var downloads: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloads else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.downloads = value
+      }
+    }
+  override var rating: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.rating else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.rating = value
+      }
+    }
+  override var date: Long
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.date else Long.MAX_VALUE
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.date = value
       }
     }
 

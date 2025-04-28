@@ -48,18 +48,12 @@ interface PluginUiModel {
   @get:NlsSafe
   val changeNotes: String?
   @get:NlsSafe
-  val downloads: String?
-  @get:NlsSafe
-  val rating: String?
-  @get:NlsSafe
   val productCode: String?
   @get:NlsSafe
   val size: String?
   @get:NlsSafe
   val repositoryName: String?
   val reviewComments: PageContainer<PluginReviewComment>?
-  val externalPluginIdForScreenShots: String?
-  val date: Long
 
   @get:NlsSafe
   var forumUrl: String?
@@ -80,15 +74,23 @@ interface PluginUiModel {
   var isTrader: Boolean
 
   var screenShots: List<String>?
+  var externalPluginIdForScreenShots: String? 
   var externalPluginId: String?
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
-  
+  var date: Long
+
+
   @get:NlsSafe
   var name: String
   var tags: List<String>
   var suggestedCommercialIde: String?
+  
+  @get:NlsSafe
+  var downloads: String?
+  @get:NlsSafe
+  var rating: String?
 
   /**
    * Java compatibility method. Going to be removed after refactoring is done.
