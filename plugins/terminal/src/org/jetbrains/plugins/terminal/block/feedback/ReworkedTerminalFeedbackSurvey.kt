@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.feedback
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.feedback.FeedbackSurvey
@@ -26,18 +28,24 @@ private val REWORKED_TERMINAL_DISABLING: Key<Boolean> = Key.create("ReworkedTerm
 
 @ApiStatus.Internal
 fun askForFeedbackIfReworkedTerminalDisabled(project: Project, oldEngine: TerminalEngine, newEngine: TerminalEngine) {
-  if (oldEngine == TerminalEngine.REWORKED && newEngine != TerminalEngine.REWORKED) {
-    // REWORKED_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
-    // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
-    project.putUserData(REWORKED_TERMINAL_DISABLING, true)
-    OnDemandFeedbackResolver.getInstance()
-      .showFeedbackNotification(ReworkedTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
-        if (!isNotificationShown) {
-          // If the notification was not shown, the REWORKED_TERMINAL_DISABLING would not be used, so we can just clear it.
-          project.putUserData(REWORKED_TERMINAL_DISABLING, null)
-        }
+  ApplicationManager.getApplication().invokeLater(
+    {
+      if (oldEngine == TerminalEngine.REWORKED && newEngine != TerminalEngine.REWORKED) {
+        // REWORKED_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
+        // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
+        project.putUserData(REWORKED_TERMINAL_DISABLING, true)
+        OnDemandFeedbackResolver.getInstance()
+          .showFeedbackNotification(ReworkedTerminalFeedbackSurvey::class, project) { isNotificationShown: Boolean ->
+            if (!isNotificationShown) {
+              // If the notification was not shown, the REWORKED_TERMINAL_DISABLING would not be used, so we can just clear it.
+              project.putUserData(REWORKED_TERMINAL_DISABLING, null)
+            }
+          }
       }
-  }
+    },
+    ModalityState.nonModal(), // when invoked from the settings dialog, show the notification after the dialog is closed
+    project.disposed,
+  )
 }
 
 internal fun getFeedbackMoment(project: Project): TerminalFeedbackMoment {
