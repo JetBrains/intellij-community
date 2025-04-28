@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
@@ -30,6 +31,7 @@ internal val k2MoveModelChecks: List<K2MoveModelCheck> = listOf(
     MultiFileMoveTargetIsDirectoryCheck,
     MultiFileMoveNoDeclarationsCheck,
     FunctionModalityCheck,
+    CompanionObjectCheck,
 )
 
 internal sealed class K2MoveModelCheck(
@@ -97,6 +99,11 @@ private object FunctionModalityCheck : K2MoveModelCheck("text.move.declaration.n
     private fun KtNamedFunction.hasForbiddenModalityOrOverride(): Boolean =
         hasModifier(OVERRIDE_KEYWORD) || hasModifier(OPEN_KEYWORD) || hasModifier(ABSTRACT_KEYWORD)
                 || containingClass()?.isInterface() == true // abstract without body or open with body
+}
+
+private object CompanionObjectCheck : K2MoveModelCheck("text.move.declaration.no.support.for.companion.objects") {
+    override fun isMoveAllowed(elementsToMove: List<PsiElement>, targetContainer: PsiElement?): Boolean =
+        elementsToMove.none { it is KtObjectDeclaration && it.isCompanion() }
 }
 
 private val MOVE_DECLARATIONS: String

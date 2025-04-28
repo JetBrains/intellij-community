@@ -650,4 +650,16 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             K2MoveModel.create(arrayOf(openFunction), null)
         }
     }
+
+    fun `test moving companion object should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            class Foo {
+                companion object<caret> { }
+            }
+        """.trimIndent()) as KtFile
+        val element = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(element), null)
+        }
+    }
 }
