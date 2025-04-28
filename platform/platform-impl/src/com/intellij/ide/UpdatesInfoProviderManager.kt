@@ -6,18 +6,36 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.launch
 import java.util.function.Supplier
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.APP)
-class UpdatesInfoProviderManager {
+class UpdatesInfoProviderManager(coroutineScope: CoroutineScope) {
+
   companion object {
     @JvmStatic
     fun getInstance(): UpdatesInfoProviderManager = service<UpdatesInfoProviderManager>()
 
     private val EP = ExtensionPointName.create<ExternalUpdateProvider>("com.intellij.updatesInfoProvider")
+  }
+
+  init {
+    //listen for restart requests
+    coroutineScope.launch {
+      EP.extensionList.asFlow()
+        .flatMapMerge { it.updatesStateFlow }
+        .filter { it == ExternalUpdateState.RestartNeeded }
+        .collect { requestShutdown() }
+    }
   }
 
   val availableUpdate: IdeUpdateInfo?
@@ -33,6 +51,10 @@ class UpdatesInfoProviderManager {
   fun createUpdateAction(): AnAction? {
     if (availableUpdate == null) return null
     return RunUpdateAction(this)
+  }
+
+  private fun requestShutdown() {
+    TODO("Not yet implemented")
   }
 }
 
