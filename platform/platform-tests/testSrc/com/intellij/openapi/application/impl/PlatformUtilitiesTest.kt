@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
 import com.intellij.testFramework.IndexingTestUtil
@@ -18,6 +18,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assertions
@@ -98,4 +99,25 @@ class PlatformUtilitiesTest {
     checkpoint(3)
   }
 
+  private class DummyAction() : AnAction(), DumbAware {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
+  @Test
+  fun `action can be updated when background write action is in progress under write intent`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    withContext(Dispatchers.EDT) {
+      launch(Dispatchers.Default) {
+        backgroundWriteAction {
+        }
+      }
+      Thread.sleep(50)
+      ActionManager.getInstance().tryToExecute(DummyAction(), null, null, null, true)
+    }
+  }
 }

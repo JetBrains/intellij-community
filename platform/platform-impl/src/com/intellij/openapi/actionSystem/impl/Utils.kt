@@ -928,8 +928,8 @@ object Utils {
 
   fun <R> runWithInputEventEdtDispatcher(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
     val applicationEx = ApplicationManagerEx.getApplicationEx()
-    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
-      LOG.error("Actions cannot be updated when write-action is running or pending")
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) && !applicationEx.isBackgroundWriteActionRunningOrPending) {
+      LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
       return null
     }
     if (ourInUpdateSessionForInputEventEDTLoop) {
