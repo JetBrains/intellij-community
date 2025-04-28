@@ -106,7 +106,6 @@ class BlockTerminalController(
     }
     else {
       session.commandExecutionManager.sendCommandToExecute(command) // will trigger `userCommandSent`
-      TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
     }
     // report event even if it is an empty command, because it will be reported as a separate command type
     TerminalUsageTriggerCollector.triggerCommandStarted(project, command, isBlockTerminal = true)
