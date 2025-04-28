@@ -159,7 +159,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
 
     if (giveConsentToUseThirdPartyPlugins && 
         ContainerUtil.exists(installed, plugin -> !plugin.isBundled() && !PluginManagerCore.isVendorTrusted(plugin))) {
-      PluginManagerCore.giveConsentToSpecificThirdPartyPlugins(pluginIds);
+      ThirdPartyPluginsWithoutConsentFile.giveConsentToSpecificThirdPartyPlugins(pluginIds);
     }
     PluginEnabler.HEADLESS.enable(installed);
 

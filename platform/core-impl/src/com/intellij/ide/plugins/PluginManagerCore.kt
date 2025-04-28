@@ -7,7 +7,6 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID
-import com.intellij.ide.plugins.PluginManagerCore.appendThirdPartyPluginsIds
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
@@ -68,7 +67,6 @@ object PluginManagerCore {
   const val EDIT: String = "edit"
 
   private const val PLATFORM_ALIAS_DEPENDENCY_PREFIX = "com.intellij.module"
-  private const val THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt"
 
   @JvmField val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
   @JvmField val JAVA_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.java")
@@ -608,11 +606,11 @@ object PluginManagerCore {
 
   /**
    * processes postponed consent check from the previous run (e.g., when the previous run was headless)
-   * see usages of [appendThirdPartyPluginsIds]
+   * see usages of [com.intellij.ide.plugins.ThirdPartyPluginsWithoutConsentFile.appendAliens]
    */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
-    val aliens = consumeThirdPartyPluginIdsFile().mapNotNull { idMap[it] }
+    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { idMap[it] }
     if (!aliens.isEmpty()) {
       checkThirdPartyPluginsPrivacyConsent(aliens)
     }
@@ -713,7 +711,7 @@ object PluginManagerCore {
         descriptor.isMarkedForLoading = false
       }
       //write the list of third-party plugins back to ensure that the privacy note will be shown next time
-      appendThirdPartyPluginsIds(aliens.map { it.pluginId })
+      ThirdPartyPluginsWithoutConsentFile.appendAliens(aliens.map { it.pluginId })
     }
     else if (AppMode.isRemoteDevHost()) {
       logger.warn("""
@@ -732,15 +730,6 @@ object PluginManagerCore {
       thirdPartyPluginsNoteAccepted = true
     }
   }
-  
-  @ApiStatus.Internal
-  @JvmStatic
-  fun giveConsentToSpecificThirdPartyPlugins(acceptedPlugins: Set<PluginId>) {
-    val notAcceptedThirdPartyPluginIds = consumeThirdPartyPluginIdsFile() - acceptedPlugins
-    if (notAcceptedThirdPartyPluginIds.isNotEmpty()) {
-      appendThirdPartyPluginsIds(notAcceptedThirdPartyPluginIds)
-    }
-  }
 
   @ApiStatus.Internal
   fun isThirdPartyPluginsNoteAccepted(): Boolean? {
@@ -748,16 +737,6 @@ object PluginManagerCore {
     thirdPartyPluginsNoteAccepted = null
     return result
   }
-
-  private val thirdPartyPluginsFilePath: Path get() = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE)
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun appendThirdPartyPluginsIds(pluginIds: Collection<PluginId>) {
-    PluginStringSetFile.appendIdsSafe(thirdPartyPluginsFilePath, pluginIds.toSet(), logger)
-  }
-
-  private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginStringSetFile.consumeIdsSafe(thirdPartyPluginsFilePath, logger)
 
   private fun askThirdPartyPluginsPrivacyConsent(descriptors: List<IdeaPluginDescriptorImpl>): Boolean {
     val title = CoreBundle.message("third.party.plugins.privacy.note.title")

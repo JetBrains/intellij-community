@@ -342,7 +342,7 @@ public final class PluginManagerMain {
 
     if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
-      PluginManagerCore.appendThirdPartyPluginsIds(ContainerUtil.map(aliens, IdeaPluginDescriptor::getPluginId));
+      ThirdPartyPluginsWithoutConsentFile.appendAliens(ContainerUtil.map(aliens, IdeaPluginDescriptor::getPluginId));
       return true;
     }
 
