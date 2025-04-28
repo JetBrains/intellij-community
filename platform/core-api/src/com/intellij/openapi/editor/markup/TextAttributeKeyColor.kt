@@ -6,6 +6,7 @@ import com.intellij.util.ui.ComparableColor
 import com.intellij.util.ui.PresentableColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.util.*
 
 @ApiStatus.Internal
 class TextAttributeKeyColor private constructor(color: Color, val keyName: String, val type: TextAttributeKeyColorType) : Color(color.rgb, true), PresentableColor, ComparableColor {
@@ -19,7 +20,7 @@ class TextAttributeKeyColor private constructor(color: Color, val keyName: Strin
   }
 
   override fun colorHashCode(): Int {
-    return keyName.hashCode() + type.hashCode()
+    return Objects.hash(keyName, type)
   }
 
   companion object {
