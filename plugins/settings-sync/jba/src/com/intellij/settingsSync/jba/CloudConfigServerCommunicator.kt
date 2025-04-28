@@ -182,6 +182,14 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     }
   }
 
+  override fun dispose() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Disposing...")
+    }
+    clientRef.set(null)
+    _currentIdTokenVar = null
+  }
+
   companion object {
     private const val URL_PROVIDER = "https://www.jetbrains.com/config/IdeaCloudConfig.xml"
     private const val DEFAULT_PRODUCTION_URL = "https://cloudconfig.jetbrains.com/cloudconfig"

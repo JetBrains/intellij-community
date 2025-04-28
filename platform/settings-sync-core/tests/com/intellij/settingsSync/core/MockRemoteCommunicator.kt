@@ -25,6 +25,7 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
   private val versionIdStorage = mutableMapOf<String, String>()
   private val LOG = logger<MockRemoteCommunicator>()
   var isConnected = true
+  var wasDisposed = false
 
   private lateinit var pushedLatch: CountDownLatch
   private lateinit var pushedSnapshot: SettingsSnapshot
@@ -137,6 +138,11 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
     if (!isConnected) {
       throw IOException(DISCONNECTED_ERROR)
     }
+  }
+
+  override fun dispose() {
+    LOG.info("Disposing...")
+    wasDisposed = true
   }
 
   companion object {
