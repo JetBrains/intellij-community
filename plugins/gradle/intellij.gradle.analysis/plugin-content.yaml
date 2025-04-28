@@ -1,3 +1,0 @@
-- name: lib/gradle-analysis.jar
-  modules:
-  - name: intellij.gradle.analysis

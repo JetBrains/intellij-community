@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <plugin id="org.jetbrains.idea.gradle.dsl"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <externallyHandledExtensions implementation="org.jetbrains.plugins.gradle.service.resolve.static.GradleDslVersionCatalogHandler"/>
+  </extensions>
+</idea-plugin>

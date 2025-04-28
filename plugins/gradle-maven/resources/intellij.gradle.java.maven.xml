@@ -1,15 +1,9 @@
-<idea-plugin implementation-detail="true">
-  <name>Gradle-Maven</name>
-  <id>org.jetbrains.plugins.gradle.maven</id>
-  <category>Build Tools</category>
-  <vendor>JetBrains</vendor>
-  <description>
-    Provides integration with Maven Repositories in Gradle build script: exract repositories information for indexing, provide dependencies completion etc.
-  </description>
-  <depends>org.intellij.groovy</depends>
-  <depends>org.jetbrains.idea.maven</depends>
-  <depends>org.jetbrains.plugins.gradle</depends>
-  <depends>org.jetbrains.idea.reposearch</depends>
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.idea.reposearch"/>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <plugin id="org.intellij.groovy"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <repositoryProvider implementation="org.jetbrains.plugins.gradle.integrations.maven.GradleMavenRepositoryProvider"/>
