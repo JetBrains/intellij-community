@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 
 internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommandProvider(
   actionId = "CommentByBlockComment",
-  name = "Comment by block comment",
+  name = "Comment/uncomment by block comment",
   i18nName = CodeInsightBundle.message("command.completion.psi.element.comment.block.text"),
   previewText = ActionsBundle.message("action.CommentByBlockComment.description")) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
@@ -42,13 +42,8 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
         val selectionModel = editor.selectionModel
         val highLevelContext = getHighLevelContext(offset, psiFile) ?: return
         val textRange = highLevelContext.textRange
-        var startOffset = textRange.startOffset
+        val startOffset = textRange.startOffset
         val endOffset = textRange.endOffset
-        var current: PsiElement? = highLevelContext
-        while (current is PsiComment) {
-          startOffset = current.textRange.endOffset
-          current = PsiTreeUtil.skipWhitespacesBackward(current)
-        }
         selectionModel.setSelection(startOffset, endOffset)
         super.execute(offset, psiFile, editor)
         selectionModel.removeSelection()
@@ -67,6 +62,7 @@ internal class PsiElementCommentByLineCompletionCommandProvider : ActionCommandP
     val fileDocument = psiFile.fileDocument
     if (offset - 1 < 0) return false
     val context = getHighLevelContext(offset, psiFile) ?: return false
+    if (context is PsiComment) return false
     if (PsiTreeUtil.skipWhitespacesBackward(context) is PsiComment) return true
     val startLineNumber = fileDocument.getLineNumber(context.textRange.startOffset)
     val endLineNumber = fileDocument.getLineNumber(context.textRange.endOffset)

@@ -548,6 +548,30 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     """.trimIndent())
   }
 
+  fun testUncommentBlockComment() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        class A {
+            /*// Static initialization block
+            static {
+                System.out.println("Class A is being initialized");
+            }*/<caret>
+        }
+      """.trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("uncomment", ignoreCase = true) })
+    myFixture.checkResult("""
+        class A {
+            // Static initialization block
+            static {
+                System.out.println("Class A is being initialized");
+            }
+        }
+    """.trimIndent())
+  }
+
   fun testCreateFromUsages() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
