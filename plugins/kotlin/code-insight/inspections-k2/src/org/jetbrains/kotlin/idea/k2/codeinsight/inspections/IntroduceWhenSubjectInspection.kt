@@ -19,29 +19,29 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 internal class IntroduceWhenSubjectInspection :
-  KotlinApplicableInspectionBase.Simple<KtWhenExpression, String>() {
+    KotlinApplicableInspectionBase.Simple<KtWhenExpression, String>() {
 
     override fun getProblemDescription(
-      element: KtWhenExpression,
-      context: String,
+        element: KtWhenExpression,
+        context: String,
     ): String = KotlinBundle.message("introduce.0.as.subject.0.when", context)
 
     override fun createQuickFix(
-      element: KtWhenExpression,
-      context: String,
+        element: KtWhenExpression,
+        context: String,
     ): KotlinModCommandQuickFix<KtWhenExpression> = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
         override fun applyFix(
-          project: Project,
-          element: KtWhenExpression,
-          updater: ModPsiUpdater,
+            project: Project,
+            element: KtWhenExpression,
+            updater: ModPsiUpdater,
         ) {
             val commentSaver = CommentSaver(element, true)
 
             // If we use the subject from 'prepareContext' phase we can't restore comments on the result element
             val subjectedExpression = analyze(element) {
-              val subject = element.getSubjectToIntroduce() ?: return
-              element.introduceSubjectIfPossible(subject)
+                val subject = element.getSubjectToIntroduce() ?: return
+                element.introduceSubjectIfPossible(subject)
             }
 
             val result = element.replace(subjectedExpression)
@@ -53,8 +53,8 @@ internal class IntroduceWhenSubjectInspection :
     }
 
     override fun buildVisitor(
-      holder: ProblemsHolder,
-      isOnTheFly: Boolean,
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
     ) = object : KtVisitorVoid() {
 
         override fun visitWhenExpression(expression: KtWhenExpression) {
