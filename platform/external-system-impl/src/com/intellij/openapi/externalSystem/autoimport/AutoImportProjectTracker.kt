@@ -172,11 +172,11 @@ class AutoImportProjectTracker(
           LOG.debug("$projectId: Skip project reload (UpToDate)")
           notificationAware.notificationExpire(projectId)
         }
-        isDisabledReload(projectData) -> {
+        isDisabledReload(projectData, context) -> {
           LOG.debug("$projectId: Skip project reload (disabled)")
           notificationAware.notificationExpire(projectId)
         }
-        !isExplicitReload && isDisabledAutoReload(projectData) -> {
+        !isExplicitReload && isDisabledAutoReload(projectData, context) -> {
           LOG.debug("$projectId: Skip project auto-reload (disabled)")
           notificationAware.notificationNotify(projectData.projectAware)
         }
@@ -207,7 +207,7 @@ class AutoImportProjectTracker(
     }
   }
 
-  private fun isDisabledReload(projectData: ProjectData): Boolean {
+  private fun isDisabledReload(projectData: ProjectData, context: ExternalSystemProjectReloadContext): Boolean {
     val projectId = projectData.projectAware.projectId
 
     if (!isEnabledReload) {
@@ -225,10 +225,15 @@ class AutoImportProjectTracker(
       return true
     }
 
+    if (projectData.projectAware.isDisabledReload(context)) {
+      LOG.debug("$projectId: Disabled reload (custom)")
+      return true
+    }
+
     return false
   }
 
-  private fun isDisabledAutoReload(projectData: ProjectData): Boolean {
+  private fun isDisabledAutoReload(projectData: ProjectData, context: ExternalSystemProjectReloadContext): Boolean {
     val projectId = projectData.projectAware.projectId
 
     if (!isEnableAutoReload) {
@@ -265,6 +270,11 @@ class AutoImportProjectTracker(
     }
     if (isDisabledAutoReload) {
       LOG.debug("$projectId: Disabled auto-reload ($autoReloadType, $modificationType)")
+      return true
+    }
+
+    if (projectData.projectAware.isDisabledAutoReload(context)) {
+      LOG.debug("$projectId: Disabled auto-reload (custom)")
       return true
     }
 

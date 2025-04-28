@@ -76,4 +76,34 @@ interface ExternalSystemProjectAware {
   @ApiStatus.Experimental
   fun adjustModificationType(path: String, modificationType: ExternalSystemModificationType): ExternalSystemModificationType =
     modificationType
+
+  /**
+   * Experimental. Please see implementation limitations.
+   *
+   * This function allows to disable all project syncs for a build tool project.
+   *
+   * Note: It disables auto-syncs and manual syncs that started by a build tool integration and by explicit user actions.
+   * For example, if project caches invalidated, if settings files are changed or from the editor floating toolbar.
+   *
+   * Note: The auto-sync will be automatically re-scheduled in several cases like auto-sync settings changed,
+   * project settings files changed, etc. However, it can be re-scheduled after any custom event using
+   * the [ExternalSystemProjectTracker.scheduleChangeProcessing] function.
+   */
+  @ApiStatus.Experimental
+  fun isDisabledReload(context: ExternalSystemProjectReloadContext): Boolean = false
+
+  /**
+   * Experimental. Please see implementation limitations.
+   *
+   * This function allows to disable only project auto syncs for a build tool project.
+   *
+   * Note: It disables auto-syncs that started by a build tool integration.
+   * For example, if project caches invalidated or if settings files are changed.
+   *
+   * Note: The auto-sync will be automatically re-scheduled in several cases like auto-sync settings changed,
+   * project settings files changed, etc. However, it can be re-scheduled after any custom event using
+   * the [ExternalSystemProjectTracker.scheduleChangeProcessing] function.
+   */
+  @ApiStatus.Experimental
+  fun isDisabledAutoReload(context: ExternalSystemProjectReloadContext): Boolean = false
 }

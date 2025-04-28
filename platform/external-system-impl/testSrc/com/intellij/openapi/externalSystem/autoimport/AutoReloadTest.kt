@@ -1164,4 +1164,60 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, notified = false, event = "settings file deleted by java nio")
     }
   }
+
+  fun `test disabled reload state customisation`() {
+    test { settingsFile ->
+      projectAware.setDisabledReload(true)
+      assertStateAndReset(numReload = 0, notified = false, event = "disabled reload")
+
+      settingsFile.modify(INTERNAL)
+      assertStateAndReset(numReload = 0, notified = false, event = "modify internally when disabled reload")
+
+      settingsFile.revert()
+      assertStateAndReset(numReload = 0, notified = false, event = "revert all changes when disabled reload")
+
+      settingsFile.modify(EXTERNAL)
+      assertStateAndReset(numReload = 0, notified = false, event = "modify externally when disabled reload")
+
+      scheduleChangeProcessing()
+      assertStateAndReset(numReload = 0, notified = false, event = "schedule implicit project reload with pending external changes when disabled reload")
+
+      scheduleProjectReload()
+      assertStateAndReset(numReload = 0, notified = false, event = "schedule explicit project reload with pending external changes when disabled reload")
+
+      projectAware.setDisabledReload(false) // setDisabledReload function doesn't produce change event
+      assertStateAndReset(numReload = 0, notified = false, event = "enable reload with external pending changes")
+
+      scheduleChangeProcessing()
+      assertStateAndReset(numReload = 1, notified = false, event = "schedule implicit project reload with pending external changes")
+    }
+  }
+
+  fun `test disabled auto-reload state customisation`() {
+    test { settingsFile ->
+      projectAware.setDisabledAutoReload(true)
+      assertStateAndReset(numReload = 0, notified = false, event = "disabled reload")
+
+      settingsFile.modify(INTERNAL)
+      assertStateAndReset(numReload = 0, notified = true, event = "modify internally when disabled reload")
+
+      settingsFile.revert()
+      assertStateAndReset(numReload = 0, notified = false, event = "revert all changes when disabled reload")
+
+      settingsFile.modify(EXTERNAL)
+      assertStateAndReset(numReload = 0, notified = true, event = "modify externally when disabled reload")
+
+      scheduleChangeProcessing()
+      assertStateAndReset(numReload = 0, notified = true, event = "schedule implicit project reload with pending external changes when disabled reload")
+
+      scheduleProjectReload()
+      assertStateAndReset(numReload = 1, notified = false, event = "schedule explicit project reload with pending external changes when disabled reload")
+
+      projectAware.setDisabledAutoReload(false) // setDisabledAutoReload function doesn't produce change event
+      assertStateAndReset(numReload = 0, notified = false, event = "enable reload with external pending changes")
+
+      scheduleChangeProcessing()
+      assertStateAndReset(numReload = 0, notified = false, event = "schedule implicit project reload without any changes")
+    }
+  }
 }
