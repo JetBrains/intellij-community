@@ -18,15 +18,21 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     @JvmField internal val descriptorContent: CharArray?,
     @JvmField val loadingRule: ModuleLoadingRule,
   ) {
-    @JvmField
-    internal var descriptor: IdeaPluginDescriptorImpl? = null
+    /**
+     * all content module descriptors are assigned during plugin descriptor loading
+     */
+    private var _descriptor: IdeaPluginDescriptorImpl? = null
 
-    fun requireDescriptor(): IdeaPluginDescriptorImpl = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
+    fun assignDescriptor(descriptor: IdeaPluginDescriptorImpl) {
+      _descriptor = descriptor
+    }
+
+    fun requireDescriptor(): IdeaPluginDescriptorImpl = _descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
 
     @TestOnly
-    fun getDescriptorOrNull(): IdeaPluginDescriptorImpl? = descriptor
+    fun getDescriptorOrNull(): IdeaPluginDescriptorImpl? = _descriptor
 
-    override fun toString(): String = "ModuleItem(name=$name, descriptor=$descriptor, configFile=$configFile)"
+    override fun toString(): String = "ModuleItem(name=$name, descriptor=$_descriptor, configFile=$configFile)"
   }
 
   override fun toString(): String = "PluginContentDescriptor(modules=$modules)"

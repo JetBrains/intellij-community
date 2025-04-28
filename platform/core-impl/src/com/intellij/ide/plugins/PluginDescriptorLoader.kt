@@ -222,12 +222,12 @@ fun loadPluginSubDescriptors(
         val subRaw = loadModuleFromSeparateJar(pool, jarFile, subDescriptorFile, loadingContext)
         val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
         subDescriptor.jarFiles = Collections.singletonList(jarFile)
-        module.descriptor = subDescriptor
+        module.assignDescriptor(subDescriptor)
       }
       else {
         val subRaw = pathResolver.resolveModuleFile(loadingContext, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, module)
-        module.descriptor = subDescriptor
+        module.assignDescriptor(subDescriptor)
         val customRoots = pathResolver.resolveCustomModuleClassesRoots(module.name)
         if (customRoots.isNotEmpty()) {
           subDescriptor.jarFiles = customRoots
@@ -243,7 +243,7 @@ fun loadPluginSubDescriptors(
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
         subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
       }
-      module.descriptor = subDescriptor
+      module.assignDescriptor(subDescriptor)
     }
   }
 
@@ -779,7 +779,7 @@ private fun loadPluginDescriptor(
     if (classPath != null) {
       subDescriptor.jarFiles = classPath
     }
-    module.descriptor = subDescriptor
+    module.assignDescriptor(subDescriptor)
   }
 
   descriptor.loadPluginDependencyDescriptors(loadingContext = loadingContext, pathResolver = pluginPathResolver, dataLoader = dataLoader)
@@ -1013,7 +1013,7 @@ private fun loadContentModuleDescriptors(
     if (customModuleClassesRoots.isNotEmpty()) {
       subDescriptor.jarFiles = customModuleClassesRoots
     }
-    module.descriptor = subDescriptor
+    module.assignDescriptor(subDescriptor)
   }
 }
 
@@ -1047,7 +1047,7 @@ private fun loadProductModule(
   }
   val subDescriptor = containerDescriptor.createSub(moduleRaw, subDescriptorFile, module)
   subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()
-  module.descriptor = subDescriptor
+  module.assignDescriptor(subDescriptor)
   return true
 }
 
@@ -1323,7 +1323,7 @@ private fun loadDescriptorFromResource(
           // no package in run from sources - load module from main classpath
           subDescriptor.jarFiles = Collections.emptyList()
         }
-        module.descriptor = subDescriptor
+        module.assignDescriptor(subDescriptor)
       }
     }
     else {

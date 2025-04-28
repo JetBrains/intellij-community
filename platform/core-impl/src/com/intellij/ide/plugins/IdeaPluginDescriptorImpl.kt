@@ -356,7 +356,7 @@ class IdeaPluginDescriptorImpl private constructor(
 
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     assert(type == Type.PluginMainDescriptor)
-    assert(content.modules.all { it.descriptor != null })
+    content.modules.forEach { it.requireDescriptor() }
     if (context.isPluginDisabled(id)) {
       return onInitError(PluginIsMarkedDisabled(this))
     }
