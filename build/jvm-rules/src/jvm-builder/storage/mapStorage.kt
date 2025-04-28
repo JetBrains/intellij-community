@@ -15,6 +15,9 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
+import org.jetbrains.bazel.jvm.mvStore.HashValue128KeyDataType
+import org.jetbrains.bazel.jvm.mvStore.ModernStringDataType
+import org.jetbrains.bazel.jvm.mvStore.StringEnumerator
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.Externalizer
 import org.jetbrains.jps.dependency.Maplet
@@ -24,7 +27,8 @@ import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.impl.MemoryMultiMaplet
 import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
-import org.jetbrains.jps.dependency.storage.StringEnumerator
+import org.jetbrains.jps.dependency.storage.createImmutableIndexToStringMap
+import org.jetbrains.jps.dependency.storage.createImmutableStringMap
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import java.io.Closeable
 import java.io.IOException
@@ -59,6 +63,10 @@ private fun tryOpenMvStore(dbFile: Path, span: Span): MVStore {
   store.setVersionsToKeep(0)
   return store
 }
+
+private val dictStringToInt = createImmutableStringMap()
+private val dictIntToString = createImmutableIndexToStringMap()
+private val stringEnumeratorOffset = dictStringToInt.size
 
 internal class BazelPersistentMapletFactory private constructor(
   private val store: MVStore,
@@ -106,21 +114,28 @@ internal class BazelPersistentMapletFactory private constructor(
 
   private val stringEnumerator = CachingStringEnumerator(object : StringEnumerator {
     override fun enumerate(string: String): Int {
-      val hash = Hashing.xxh3_128().hashBytesTo128Bits(string.toByteArray())
-      stringHashToIndexMap.get(hash)?.let { return it }
+      return dictStringToInt.getOrElse(string) {
+        val hash = Hashing.xxh3_128().hashBytesTo128Bits(string.toByteArray())
+        stringHashToIndexMap.get(hash)?.let { return it }
 
-      synchronized(indexToStringMap) {
-        val newId = (indexToStringMap.lastKey() ?: 0) + 1
-        val old = indexToStringMap.put(newId, string)
-        require(old == null) { "Duplicate index $newId for string $string, old=$old" }
-        stringHashToIndexMap.put(hash, newId)
-        return newId
+        synchronized(indexToStringMap) {
+          val newId = stringEnumeratorOffset + (indexToStringMap.lastKey() ?: -1) + 1
+          val old = indexToStringMap.put(newId, string)
+          require(old == null) { "Duplicate index $newId for string $string, old=$old" }
+          stringHashToIndexMap.put(hash, newId)
+          newId
+        }
       }
     }
 
     @Synchronized
     override fun valueOf(id: Int): String {
-      return indexToStringMap.get(id) ?: invalidIdError(id)
+      if (id < stringEnumeratorOffset) {
+        return dictIntToString.get(id) ?: throw IOException("$id is not valid (stringEnumeratorOffset: $stringEnumeratorOffset)")
+      }
+      else {
+        return indexToStringMap.get(id) ?: invalidIdError(id)
+      }
     }
   })
 
@@ -155,7 +170,7 @@ internal class BazelPersistentMapletFactory private constructor(
   }
 
   override fun close() {
-    // during save, we enumerate strings, so, we cannot save as a part of close,
+    // during save, we enumerate strings, so we cannot save as a part of close,
     // as in this case string enumerator maps maybe not saved (as being closed)
     store.commit()
     store.close()

@@ -27,6 +27,7 @@ kt_jvm_library(
         "//src/builder-state",
         "//src/jps-shadow",
         "//:jps",
+        "//src/mvstore-data-types",
         "//src/jvm-builder-core",
         "//src/kotlin/kotlin-builder",
         "//src/worker-framework",

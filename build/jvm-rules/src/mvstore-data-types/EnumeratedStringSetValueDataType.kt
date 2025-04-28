@@ -1,4 +1,4 @@
-package org.jetbrains.jps.dependency.storage
+package org.jetbrains.bazel.jvm.mvStore
 
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentHashSetOf

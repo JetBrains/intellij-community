@@ -13,7 +13,7 @@ import java.nio.ByteBuffer
 
 private val emptyNodes = arrayOfNulls<Set<Node<*, *>>>(0)
 
-class AnyGraphElementDataType(
+internal class AnyGraphElementDataType(
   private val elementInterner: ((ExternalizableGraphElement) -> ExternalizableGraphElement)?,
 ) : DataType<Set<Node<*, *>>> {
   override fun getMemory(obj: Set<Node<*, *>>) = 0

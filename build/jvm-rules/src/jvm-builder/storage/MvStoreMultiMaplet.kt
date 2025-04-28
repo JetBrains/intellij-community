@@ -91,7 +91,6 @@ internal class MvStoreMultiMaplet<K : Any, V : Any>(
   }
 }
 
-
 private class AddValueToSetDecisionMaker<V>(private val toAdd: V) : MVMap.DecisionMaker<Set<V>>() {
   override fun decide(existingValue: Set<V>?, providedValue: Set<V>?): MVMap.Decision {
     if (existingValue.isNullOrEmpty() || !existingValue.contains(toAdd)) {

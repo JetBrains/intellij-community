@@ -1,4 +1,4 @@
-package org.jetbrains.jps.dependency.storage
+package org.jetbrains.bazel.jvm.mvStore
 
 import org.h2.mvstore.DataUtils
 import org.h2.mvstore.WriteBuffer

@@ -4,8 +4,12 @@ package org.jetbrains.jps.dependency.impl
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
-import org.jetbrains.bazel.jvm.jps.storage.IntLong
-import org.jetbrains.bazel.jvm.jps.storage.IntLongPairKeyDataType
+import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringDataType
+import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringDataTypeExternalizer
+import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringSetValueDataType
+import org.jetbrains.bazel.jvm.mvStore.IntLong
+import org.jetbrains.bazel.jvm.mvStore.IntLongPairKeyDataType
+import org.jetbrains.bazel.jvm.mvStore.StringEnumerator
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Graph
 import org.jetbrains.jps.dependency.Node
@@ -13,12 +17,8 @@ import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.dependency.storage.AnyGraphElementDataType
-import org.jetbrains.jps.dependency.storage.EnumeratedStringDataType
-import org.jetbrains.jps.dependency.storage.EnumeratedStringDataTypeExternalizer
-import org.jetbrains.jps.dependency.storage.EnumeratedStringSetValueDataType
 import org.jetbrains.jps.dependency.storage.MultiMapletEx
 import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
-import org.jetbrains.jps.dependency.storage.StringEnumerator
 
 abstract class GraphImpl(
   containerFactory: MvStoreContainerFactory,

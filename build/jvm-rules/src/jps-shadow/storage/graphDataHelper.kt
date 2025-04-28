@@ -6,6 +6,7 @@ package org.jetbrains.jps.dependency.storage
 import androidx.collection.ScatterSet
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
+import org.jetbrains.bazel.jvm.mvStore.StringEnumerator
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.MultiMaplet
 

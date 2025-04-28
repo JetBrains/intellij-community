@@ -10,13 +10,13 @@ import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.annotations.Unmodifiable
-import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
-import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
-import org.jetbrains.bazel.jvm.worker.state.isDependencyTracked
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
 import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
+import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
+import org.jetbrains.bazel.jvm.worker.state.isDependencyTracked
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -53,7 +53,7 @@ import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Properties
+import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val jpsElementFactory = JpsElementFactory.getInstance()
@@ -62,7 +62,7 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-private const val TOOL_VERSION: Long = 44
+private const val TOOL_VERSION: Long = 48
 
 internal fun loadJpsModel(
   sources: List<Path>,

@@ -4,7 +4,7 @@
 package org.jetbrains.jps.dependency.impl
 
 import com.dynatrace.hash4j.hashing.Hashing
-import org.jetbrains.bazel.jvm.jps.storage.IntLong
+import org.jetbrains.bazel.jvm.mvStore.IntLong
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.NodeSource
 import java.io.File

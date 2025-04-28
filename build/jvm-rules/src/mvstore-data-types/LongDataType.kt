@@ -1,4 +1,4 @@
-package org.jetbrains.bazel.jvm.jps.storage
+package org.jetbrains.bazel.jvm.mvStore
 
 import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.DataType
@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 
 private val emptyLongs = arrayOfNulls<Long>(0)
 
-internal object LongDataType : DataType<Long> {
+object LongDataType : DataType<Long> {
   override fun getMemory(obj: Long) = Long.SIZE_BYTES
 
   override fun isMemoryEstimationAllowed(): Boolean = true
@@ -34,7 +34,7 @@ internal object LongDataType : DataType<Long> {
   }
 
   override fun createStorage(size: Int): Array<Long?> {
-    return if (size == 0) org.jetbrains.bazel.jvm.jps.storage.emptyLongs else arrayOfNulls(size)
+    return if (size == 0) emptyLongs else arrayOfNulls(size)
   }
 
   override fun compare(one: Long, two: Long): Int = one.compareTo(two)
