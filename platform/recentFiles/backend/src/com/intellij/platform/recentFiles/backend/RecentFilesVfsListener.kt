@@ -22,7 +22,7 @@ internal class RecentFilesVfsListener : AsyncFileListener {
     return object : AsyncFileListener.ChangeApplier {
       override fun beforeVfsChange() {
         for (project in ProjectManager.getInstance().openProjects) {
-          val recentFilesModel = BackendRecentFilesModel.getInstance(project)
+          val recentFilesModel = BackendRecentFileEventsModel.getInstance(project)
 
           val projectFilesToRemove = filterProjectFiles(removedFiles, project)
           if (projectFilesToRemove.isNotEmpty()) {

@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 private val LOG by lazy { fileLogger() }
 
 @Service(Service.Level.PROJECT)
-internal class BackendRecentFilesModel(private val project: Project, private val coroutineScope: CoroutineScope) {
+internal class BackendRecentFileEventsModel(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val bufferSize = Registry.intValue("editor.navigation.history.stack.size").coerceIn(100, 1000)
 
   private val recentlyOpenedFiles = MutableSharedFlow<RecentFilesEvent>(
@@ -193,12 +193,12 @@ internal class BackendRecentFilesModel(private val project: Project, private val
   }
 
   companion object {
-    fun getInstance(project: Project): BackendRecentFilesModel {
-      return project.service<BackendRecentFilesModel>()
+    fun getInstance(project: Project): BackendRecentFileEventsModel {
+      return project.service<BackendRecentFileEventsModel>()
     }
 
-    suspend fun getInstanceAsync(project: Project): BackendRecentFilesModel {
-      return project.serviceAsync<BackendRecentFilesModel>()
+    suspend fun getInstanceAsync(project: Project): BackendRecentFileEventsModel {
+      return project.serviceAsync<BackendRecentFileEventsModel>()
     }
   }
 }
