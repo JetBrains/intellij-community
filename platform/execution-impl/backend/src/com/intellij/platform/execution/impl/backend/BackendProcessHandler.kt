@@ -5,13 +5,13 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.rpc.*
+import com.intellij.execution.rpc.KillableProcessInfo
+import com.intellij.execution.rpc.ProcessHandlerDto
+import com.intellij.execution.rpc.ProcessHandlerEvent
+import com.intellij.execution.rpc.ProcessHandlerEventData
 import com.intellij.openapi.util.Key
-import com.jetbrains.rhizomedb.entity
-import fleet.kernel.change
 import fleet.rpc.core.toRpc
-import fleet.util.UID
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.buffer
@@ -22,12 +22,10 @@ import org.jetbrains.annotations.ApiStatus
  * Returns [ProcessHandlerDto] which may be passed through RPC.
  *
  * @param coroutineScope provides the lifetime for given [ProcessHandlerDto] and its [ProcessHandlerDto.processHandlerId]
- *
- * @see findProcessHandler
  */
 @ApiStatus.Internal
 suspend fun createProcessHandlerDto(coroutineScope: CoroutineScope, processHandler: ProcessHandler): ProcessHandlerDto {
-  val processHandlerId = processHandler.createId(coroutineScope)
+  val processHandlerId = processHandler.storeGlobally(coroutineScope)
   val flow = channelFlow {
     val listener = object : ProcessListener {
       override fun startNotified(event: ProcessEvent) {
@@ -84,37 +82,6 @@ suspend fun createProcessHandlerDto(coroutineScope: CoroutineScope, processHandl
   return ProcessHandlerDto(processHandlerId, processHandler.detachIsDefault(), flow.toRpc(), killableProcessInfo)
 }
 
-@ApiStatus.Internal
-fun ProcessHandlerId.findProcessHandler(): ProcessHandler? {
-  return entity(BackendProcessHandlerEntity.ProcessHandlerId, this)?.processHandler
-}
-
 private fun ProcessEvent.toRpc(): ProcessHandlerEventData {
   return ProcessHandlerEventData(text, exitCode)
-}
-
-private suspend fun ProcessHandler.createId(coroutineScope: CoroutineScope): ProcessHandlerId {
-  val processHandler = this
-  val processHandlerId = ProcessHandlerId(UID.random())
-  val processHandlerEntity = change {
-    BackendProcessHandlerEntity.new {
-      it[BackendProcessHandlerEntity.ProcessHandlerId] = processHandlerId
-      it[BackendProcessHandlerEntity.ProcessHandler] = processHandler
-    }
-  }
-
-  coroutineScope.launch {
-    try {
-      awaitCancellation()
-    }
-    finally {
-      withContext(NonCancellable) {
-        change {
-          processHandlerEntity.delete()
-        }
-      }
-    }
-  }
-
-  return processHandlerId
 }

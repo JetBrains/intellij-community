@@ -3,7 +3,6 @@
     <module name="intellij.platform.kernel.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <platform.entityTypes implementation="com.intellij.platform.execution.impl.backend.ExecutionEntityTypesProvider"/>
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.platform.execution.impl.backend.BackendExecutionRemoteApiProvider"/>
   </extensions>

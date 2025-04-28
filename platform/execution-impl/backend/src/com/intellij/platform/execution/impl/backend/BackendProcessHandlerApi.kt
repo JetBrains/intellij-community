@@ -15,12 +15,12 @@ import kotlinx.coroutines.*
 
 internal class BackendProcessHandlerApi : ProcessHandlerApi {
   override suspend fun startNotify(handlerId: ProcessHandlerId) {
-    val processHandler = handlerId.findProcessHandler() ?: return
+    val processHandler = handlerId.findValue() ?: return
     processHandler.startNotify()
   }
 
   override suspend fun waitFor(project: ProjectId, handlerId: ProcessHandlerId, timeoutInMilliseconds: Long?): Deferred<Boolean> {
-    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(true)
+    val processHandler = handlerId.findValue() ?: return CompletableDeferred(true)
     return project.findProject().service<BackendProcessHandlerApiCoroutineScope>().cs.async(Dispatchers.IO) {
       if (timeoutInMilliseconds != null) {
         processHandler.waitFor(timeoutInMilliseconds)
@@ -32,21 +32,21 @@ internal class BackendProcessHandlerApi : ProcessHandlerApi {
   }
 
   override suspend fun destroyProcess(handlerId: ProcessHandlerId): Deferred<Int?> {
-    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(value = null)
+    val processHandler = handlerId.findValue() ?: return CompletableDeferred(value = null)
     return stopProcess(processHandler) {
       it.destroyProcess()
     }
   }
 
   override suspend fun detachProcess(handlerId: ProcessHandlerId): Deferred<Int?> {
-    val processHandler = handlerId.findProcessHandler() ?: return CompletableDeferred(value = null)
+    val processHandler = handlerId.findValue() ?: return CompletableDeferred(value = null)
     return stopProcess(processHandler) {
       it.detachProcess()
     }
   }
 
   override suspend fun killProcess(handlerId: ProcessHandlerId) {
-    val processHandler = handlerId.findProcessHandler() ?: return
+    val processHandler = handlerId.findValue() ?: return
     if (processHandler is KillableProcess) {
       processHandler.killProcess()
     }

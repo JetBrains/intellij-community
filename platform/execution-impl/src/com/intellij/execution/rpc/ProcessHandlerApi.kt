@@ -3,12 +3,13 @@ package com.intellij.execution.rpc
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -34,9 +35,7 @@ interface ProcessHandlerApi : RemoteApi<Unit> {
 }
 
 @Serializable
-data class ProcessHandlerId(
-  val processHandlerId: UID,
-)
+data class ProcessHandlerId(override val uid: UID) : Id
 
 @Serializable
 data class KillableProcessInfo(
