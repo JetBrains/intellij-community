@@ -5,8 +5,7 @@ import org.jetbrains.plugins.textmate.getLogger
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.Plist
-import org.jetbrains.plugins.textmate.plist.PlistReader
-import java.io.InputStream
+import org.jetbrains.plugins.textmate.plist.PlistReaderCore
 
 interface TextMateBundleReader {
   companion object {
@@ -38,8 +37,8 @@ data class TextMatePreferences(val scopeName: TextMateScopeName,
                                val customHighlightingAttributes: TextMateTextAttributes?,
                                val onEnterRules: Set<OnEnterRule>?)
 
-fun readTextMateBundle(fallbackBundleName: String, plistReader: PlistReader, resourceReader: TextMateResourceReader): TextMateBundleReader {
-  val infoPlist = resourceReader.read(Constants.BUNDLE_INFO_PLIST_NAME)?.use { plistReader.read(it) }
+fun readTextMateBundle(fallbackBundleName: String, plistReader: PlistReaderCore, resourceReader: TextMateResourceReader): TextMateBundleReader {
+  val infoPlist = resourceReader.read(Constants.BUNDLE_INFO_PLIST_NAME)?.let { plistReader.read(it) }
   val bundleName = infoPlist?.getPlistValue(Constants.NAME_KEY, fallbackBundleName)?.string!!
 
   return object : TextMateBundleReader {
@@ -81,7 +80,7 @@ fun readTextMateBundle(fallbackBundleName: String, plistReader: PlistReader, res
 
 fun readSublimeBundle(
   bundleName: String,
-  plistReader: PlistReader,
+  plistReader: PlistReaderCore,
   resourceReader: TextMateResourceReader,
 ): TextMateBundleReader {
   return object : TextMateBundleReader {
@@ -162,20 +161,20 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
 }
 
 private fun TextMateResourceReader.readPlistInDirectory(
-  plistReader: PlistReader,
+  plistReader: PlistReaderCore,
   relativePath: String,
   filter: (String) -> Boolean = { true },
 ): Sequence<Plist> {
   return list(relativePath).asSequence().filter(filter).mapNotNull { childName ->
-    read("$relativePath/$childName")?.use { inputStream ->
-      readPlist(inputStream.buffered(), plistReader, "$relativePath/$childName")
+    read("$relativePath/$childName")?.let { bytes ->
+      readPlist(bytes, plistReader, "$relativePath/$childName")
     }
   }
 }
 
-internal fun readPlist(inputStream: InputStream, plistReader: PlistReader, debugName: String): Plist? {
+internal fun readPlist(bytes: ByteArray, plistReader: PlistReaderCore, debugName: String): Plist? {
   return runCatching {
-    inputStream.use { plistReader.read(it) }
+    plistReader.read(bytes)
   }.onFailure { e ->
     TextMateBundleReader.logger.warn(e) { "Can't load plist from file: $debugName" }
   }.getOrNull()

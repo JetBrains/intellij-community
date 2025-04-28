@@ -3,13 +3,10 @@ package org.jetbrains.plugins.textmate.plist
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.IOException
-import java.io.InputStream
-import kotlin.text.toDouble
-import kotlin.text.toInt
 
-class XmlPlistReaderForTests : PlistReader {
-  override fun read(inputStream: InputStream): Plist {
-    return internalRead(readXmlAsModel(inputStream))
+class XmlPlistReaderForTests : PlistReaderCore {
+  override fun read(bytes: ByteArray): Plist {
+    return internalRead(readXmlAsModel(bytes))
   }
 
   companion object {

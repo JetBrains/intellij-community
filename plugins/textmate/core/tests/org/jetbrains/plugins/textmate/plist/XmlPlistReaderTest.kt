@@ -7,7 +7,6 @@ import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -100,7 +99,7 @@ class XmlPlistReaderTestBase {
   }
 
   private fun read(string: String?): Plist {
-    return XmlPlistReaderForTests().read(ByteArrayInputStream(prepareText(string).toByteArray(Charsets.UTF_8)))
+    return XmlPlistReaderForTests().read(prepareText(string).encodeToByteArray())
   }
 
   companion object {

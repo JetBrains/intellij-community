@@ -6,7 +6,7 @@ import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleT
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.plist.JsonOrXmlPlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
-import org.jetbrains.plugins.textmate.plist.PlistReader
+import org.jetbrains.plugins.textmate.plist.PlistReaderCore
 
 object TestUtil {
   const val BAT: @NonNls String = "bat"
@@ -43,7 +43,7 @@ object TestUtil {
   const val GIT: @NonNls String = "git-base"
   const val RESTRUCTURED_TEXT: @NonNls String = "restructuredtext"
 
-  fun readBundle(bundleName: String, xmlPlistReader: PlistReader): TextMateBundleReader {
+  fun readBundle(bundleName: String, xmlPlistReader: PlistReaderCore): TextMateBundleReader {
     val resourceReader = TestUtilMultiplatform.getResourceReader(bundleName)
     val bundleType = detectBundleType(resourceReader, bundleName)
     val plistReader = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(), xmlReader = xmlPlistReader)

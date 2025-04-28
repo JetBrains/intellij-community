@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.plist
 
-import java.io.IOException
 import java.io.InputStream
 
 @Deprecated("Use JsonOrXmlPlistReader instead")
@@ -11,8 +10,13 @@ class CompositePlistReader : PlistReader {
   private val delegate = JsonOrXmlPlistReader(jsonReader = JsonPlistReader(),
                                               xmlReader = XmlPlistReader())
 
-  @Throws(IOException::class)
   override fun read(inputStream: InputStream): Plist {
-    return delegate.read(inputStream)
+    return inputStream.use {
+      delegate.read(inputStream.readBytes())
+    }
+  }
+
+  override fun read(bytes: ByteArray): Plist {
+    return delegate.read(bytes)
   }
 }

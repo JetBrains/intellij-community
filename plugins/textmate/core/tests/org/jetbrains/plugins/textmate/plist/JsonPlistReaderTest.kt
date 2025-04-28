@@ -7,7 +7,6 @@ import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -80,6 +79,6 @@ class JsonPlistReaderTest {
   }
 
   private fun read(string: String): Plist {
-    return JsonPlistReader().read(ByteArrayInputStream(string.toByteArray(Charsets.UTF_8)))
+    return JsonPlistReader().read(string.encodeToByteArray())
   }
 }

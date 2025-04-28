@@ -2,13 +2,11 @@ package org.jetbrains.plugins.textmate.bundles
 
 import org.jetbrains.plugins.textmate.getLogger
 import org.jetbrains.plugins.textmate.logging.TextMateLogger
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+import kotlin.io.path.readBytes
 
 class TextMateNioResourceReader(private val directory: Path) : TextMateResourceReader {
   companion object {
@@ -29,9 +27,9 @@ class TextMateNioResourceReader(private val directory: Path) : TextMateResourceR
     }
   }
 
-  override fun read(relativePath: String): InputStream? {
+  override fun read(relativePath: String): ByteArray? {
     return try {
-      ByteArrayInputStream(Files.readAllBytes(directory.resolve(relativePath)))
+      directory.resolve(relativePath).readBytes()
     }
     catch (_: NoSuchFileException) {
       LOG.warn { "Cannot find referenced file `$relativePath` in bundle `$directory`" }

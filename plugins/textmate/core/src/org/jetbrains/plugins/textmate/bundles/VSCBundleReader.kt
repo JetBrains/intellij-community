@@ -11,22 +11,21 @@ import org.jetbrains.plugins.textmate.language.TextMateStandardTokenType
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
-import org.jetbrains.plugins.textmate.plist.PlistReader
+import org.jetbrains.plugins.textmate.plist.PlistReaderCore
 import org.jetbrains.plugins.textmate.plist.PlistValueType
-import java.io.InputStream
 
 private typealias VSCodeExtensionLanguageId = String
 
-fun readVSCBundle(plistReader: PlistReader, resourceReader: TextMateResourceReader): TextMateBundleReader? {
-  return resourceReader.read(Constants.PACKAGE_JSON_NAME)?.use { packageJsonStream ->
-    val extension = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtension.serializer(), packageJsonStream)
+fun readVSCBundle(plistReader: PlistReaderCore, resourceReader: TextMateResourceReader): TextMateBundleReader? {
+  return resourceReader.read(Constants.PACKAGE_JSON_NAME)?.let { bytes ->
+    val extension = JsonPlistReader.textmateJson.decodeFromString(VSCodeExtension.serializer(), bytes.decodeToString())
 
     VSCBundleReader(plistReader = plistReader, extension = extension, resourceReader = resourceReader)
   }
 }
 
 private class VSCBundleReader(private val extension: VSCodeExtension,
-                              private val plistReader: PlistReader,
+                              private val plistReader: PlistReaderCore,
                               private val resourceReader: TextMateResourceReader) : TextMateBundleReader {
   override val bundleName: String = extension.name
 
@@ -51,7 +50,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readGrammars(): Sequence<TextMateGrammar> {
     return extension.contributes.grammars.asSequence().map { grammar ->
       val plist = lazy {
-        resourceReader.read(grammar.path)?.use { readPlist(it, plistReader, grammar.path) } ?: Plist.EMPTY_PLIST
+        resourceReader.read(grammar.path)?.let { readPlist(it, plistReader, grammar.path) } ?: Plist.EMPTY_PLIST
       }
 
       val language = languages[grammar.language]
@@ -72,8 +71,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readPreferences(): Sequence<TextMatePreferences> {
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
-        resourceReader.read(path)?.use { inputStream ->
-          readPreferencesImpl(inputStream, scopesForLanguage(language.id))
+        resourceReader.read(path)?.let { bytes ->
+          readPreferencesImpl(bytes, scopesForLanguage(language.id))
         }
       } ?: emptySequence()
     }
@@ -83,8 +82,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     return extension.contributes.snippets.asSequence().filter { snippetConfiguration ->
       snippetConfiguration.path.endsWith(".json") || snippetConfiguration.path.endsWith(".code-snippets")
     }.flatMap { snippetConfiguration ->
-      resourceReader.read(snippetConfiguration.path)?.use { inputStream ->
-        readPlist(inputStream, plistReader, snippetConfiguration.path)?.entries()?.asSequence()?.flatMap { (name, value) ->
+      resourceReader.read(snippetConfiguration.path)?.let { bytes ->
+        readPlist(bytes, plistReader, snippetConfiguration.path)?.entries()?.asSequence()?.flatMap { (name, value) ->
           val valuePlist = value.plist
           val bodyValue = valuePlist.getPlistValue("body", "")
           val body = when (bodyValue.type) {
@@ -117,8 +116,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   }
 }
 
-internal fun readPreferencesImpl(inputStream: InputStream, scopeNames: Sequence<TextMateScopeName>): Sequence<TextMatePreferences> {
-  val configuration = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtensionLanguageConfiguration.serializer(), inputStream)
+internal fun readPreferencesImpl(bytes: ByteArray, scopeNames: Sequence<TextMateScopeName>): Sequence<TextMatePreferences> {
+  val configuration = JsonPlistReader.textmateJson.decodeFromString(VSCodeExtensionLanguageConfiguration.serializer(), bytes.decodeToString())
 
   val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
   val smartTypingPairs = configuration.autoClosingPairs

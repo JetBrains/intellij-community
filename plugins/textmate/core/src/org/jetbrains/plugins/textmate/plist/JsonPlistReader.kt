@@ -2,10 +2,8 @@ package org.jetbrains.plugins.textmate.plist
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.*
-import java.io.InputStream
-import kotlin.jvm.Throws
 
-class JsonPlistReader : PlistReader {
+class JsonPlistReader : PlistReaderCore {
   companion object {
     @OptIn(ExperimentalSerializationApi::class)
     val textmateJson: Json by lazy {
@@ -19,8 +17,8 @@ class JsonPlistReader : PlistReader {
   }
 
   @OptIn(ExperimentalSerializationApi::class)
-  override fun read(inputStream: InputStream): Plist {
-    val json = textmateJson.decodeFromStream(JsonElement.serializer(), inputStream) as JsonObject
+  override fun read(bytes: ByteArray): Plist {
+    val json = textmateJson.decodeFromString(JsonElement.serializer(), bytes.decodeToString()) as JsonObject
     val dict = readDict(json)
     return dict.value as Plist
   }
