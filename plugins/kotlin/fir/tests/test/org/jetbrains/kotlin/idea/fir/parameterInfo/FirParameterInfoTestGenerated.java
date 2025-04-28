@@ -555,6 +555,16 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../../idea/tests/testData/parameterInfo/functionCall/UnresolvedCurrent.kt");
         }
 
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiver.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiver() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiver.kt");
+        }
+
+        @TestMetadata("UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt")
+        public void testUnsafeCallOfExtensionOnNullableReceiverWithOverloads() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/UnsafeCallOfExtensionOnNullableReceiverWithOverloads.kt");
+        }
+
         @TestMetadata("UpdateOnTyping.kt")
         public void testUpdateOnTyping() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/UpdateOnTyping.kt");
