@@ -44,7 +44,7 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
               processMultiRoutingPath(<warning descr="${message("inspections.message.nativepath.passed.to.multiroutingfilesystempath.method.parameter")}">nativePath</warning>); // Should be warned
 
               // Test with string literals
-              processMultiRoutingPath(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/unannotated/path"</warning>); // Should be warned
+              processMultiRoutingPath(<warning descr="${message("inspections.message.string.without.path.annotation.used.in.method.parameter.annotated.with", "@MultiRoutingFileSystemPath")}">"/unannotated/path"</warning>); // Should be warned
               processMultiRoutingPath("file.txt"); // Should be accepted as it's a valid filename
           }
 
@@ -81,10 +81,10 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
 
               // Test with @LocalPath values
               @LocalPath String localPath = "/local/path";
-              processNativePath(<warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">localPath</warning>); // Should be warned
+              processNativePath(<warning descr="${message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@LocalPath", "@NativePath")}">localPath</warning>); // Should be warned
 
               // Test with string literals
-              processNativePath(<warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">"/unannotated/path"</warning>); // Should be warned
+              processNativePath(<warning descr="${message("inspections.message.string.without.path.annotation.used.in.method.parameter.annotated.with", "@NativePath")}">"/unannotated/path"</warning>); // Should be warned
               processNativePath("file.txt"); // Should be accepted as it's a valid filename
           }
 
