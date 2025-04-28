@@ -165,11 +165,6 @@ internal class BuildDataManager private constructor(
   @Suppress("unused")
   fun saveVersion() {
   }
-
-  @Suppress("unused")
-  fun reportUnhandledRelativizerPaths() {
-    relativizer.reportUnhandledPaths()
-  }
 }
 
 internal fun runAllCatching(tasks: Sequence<() -> Unit>) {
