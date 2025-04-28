@@ -44,6 +44,11 @@ object TerminalTestUtil {
    * Updates the terminal engine value to [engine], but returns the previous value on [parentDisposable] dispose.
    */
   fun setTerminalEngineForTest(engine: TerminalEngine, parentDisposable: Disposable) {
-    TerminalOptionsProvider.instance.setTerminalEngineForTest(engine, parentDisposable)
+    val options = TerminalOptionsProvider.instance
+    val prevValue = options.terminalEngine
+    options.terminalEngine = engine
+    Disposer.register(parentDisposable) {
+      options.terminalEngine = prevValue
+    }
   }
 }
