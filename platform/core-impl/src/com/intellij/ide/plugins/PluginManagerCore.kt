@@ -7,10 +7,10 @@ import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
 import com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID
+import com.intellij.ide.plugins.PluginManagerCore.appendThirdPartyPluginsIds
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
-import com.intellij.ide.plugins.PluginManagerCore.writeThirdPartyPluginsIds
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
@@ -608,7 +608,7 @@ object PluginManagerCore {
 
   /**
    * processes postponed consent check from the previous run (e.g., when the previous run was headless)
-   * see usages of [writeThirdPartyPluginsIds]
+   * see usages of [appendThirdPartyPluginsIds]
    */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
@@ -713,7 +713,7 @@ object PluginManagerCore {
         descriptor.isMarkedForLoading = false
       }
       //write the list of third-party plugins back to ensure that the privacy note will be shown next time
-      writeThirdPartyPluginsIds(aliens.map { it.pluginId })
+      appendThirdPartyPluginsIds(aliens.map { it.pluginId })
     }
     else if (AppMode.isRemoteDevHost()) {
       logger.warn("""
@@ -738,7 +738,7 @@ object PluginManagerCore {
   fun giveConsentToSpecificThirdPartyPlugins(acceptedPlugins: Set<PluginId>) {
     val notAcceptedThirdPartyPluginIds = consumeThirdPartyPluginIdsFile() - acceptedPlugins
     if (notAcceptedThirdPartyPluginIds.isNotEmpty()) {
-      writeThirdPartyPluginsIds(notAcceptedThirdPartyPluginIds)
+      appendThirdPartyPluginsIds(notAcceptedThirdPartyPluginIds)
     }
   }
 
@@ -753,7 +753,7 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun writeThirdPartyPluginsIds(pluginIds: Collection<PluginId>) {
+  fun appendThirdPartyPluginsIds(pluginIds: Collection<PluginId>) {
     PluginStringSetFile.appendIdsSafe(thirdPartyPluginsFilePath, pluginIds.toSet(), logger)
   }
 
