@@ -406,7 +406,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
       // Get the containing method
       val containingMethod = node.getContainingUMethod() ?: return true
-      val methodPsi = containingMethod.javaPsi ?: return true
+      val methodPsi = containingMethod.javaPsi
 
       // Check if the method has a return type with a path annotation
       val expectedInfo = PathAnnotationInfo.forModifierListOwner(methodPsi)
