@@ -602,13 +602,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         return false;
       }
     }
-    if (!(breakpoint instanceof XBreakpointProxy.Monolith monolith)) {
-      // TODO IJPL-185322
+    if (breakpoint instanceof XBreakpointProxy.Monolith monolith) {
+      // TODO IJPL-185322 support last removed breakpoint persistance
+      ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
+        .rememberRemovedBreakpoint(monolith.getBreakpoint());
       return false;
     }
-    ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
-      .rememberRemovedBreakpoint(monolith.getBreakpoint());
-    getInstance().removeBreakpoint(project, monolith.getBreakpoint());
+    XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).removeBreakpoint(breakpoint);
     return true;
   }
 
