@@ -27,6 +27,9 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
+  private val setupFileName = "setup_tests.sh"
+  private val runFileName = "run_tests.sh"
+
   override fun getGeneratedCodeFile(basePath: String, code: String): Path {
     extractCodeDirectory(code)?.let {
       val detectedPath = if (!it.startsWith("/")) "/$it" else it
@@ -46,7 +49,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
 
     if (sdk?.sdkType !is PythonSdkType) return
 
-    val setupFile = Path.of("$basePath/setup_tests.sh")
+    val setupFile = Path.of("$basePath/$setupFileName")
     if (!setupFile.exists()) return
     val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.toString()), sdk)
 
@@ -55,9 +58,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   protected fun constructScriptFiles(basePath: String, setupCommands: List<String>) {
     // Create a setup script with provided commands for test environment initialization
-    val setupFile = Path.of("$basePath/setup_tests.sh")
-    val runFile = Path.of("$basePath/run_tests.sh")
-
+    val setupFile = Path.of("$basePath/$setupFileName")
     setupFile.writeText(buildString {
       appendLine("#!/bin/bash")
       appendLine("if [ -d ./venv ]; then rm -rf ./venv ; fi")
@@ -67,6 +68,8 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
       setupCommands.forEach { appendLine(it) }
     })
 
+    // Create a run script for test execution
+    val runFile = Path.of("$basePath/$runFileName")
     runFile.writeText(buildString {
       appendLine("#!/bin/bash")
       appendLine("source \"./venv/bin/activate\"")
@@ -94,7 +97,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
   override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: Path, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
-    val runFile = Path.of("$basePath/run_tests.sh")
+    val runFile = Path.of("$basePath/$runFileName")
 
     if (!runFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1)
     if (!codeFilePath.exists()) return ProcessExecutionLog("", "The Python test file does not exist", -1)
@@ -160,6 +163,11 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
   }
 
   override fun removeEnvironment(project: Project) {
-    // TODO Remove files for scripts
+    // Remove the setup and run scripts
+    val basePath = project.basePath ?: return
+
+    // Remove setup and run scripts
+    ProcessBuilder("rm", "-f", "$basePath/$setupFileName").start().waitFor()
+    ProcessBuilder("rm", "-f", "$basePath/$runFileName").start().waitFor()
   }
 }
