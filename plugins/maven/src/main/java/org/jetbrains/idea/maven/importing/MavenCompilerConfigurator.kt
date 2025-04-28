@@ -311,11 +311,15 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT
         }
       }
     }
-    MavenJDOMUtil.findChildrenValuesByPath(element, "compilerArgs", "arg").forEach {
-      val text = getResolvedText(it)
+    element.getChild("compilerArgs")?.children?.forEach {
+      val text = getResolvedText(it.text)
       if (text != null && !hasUnresolvedProperty(text)) {
         result.add(text)
       }
+    }
+
+    MavenJDOMUtil.findChildrenValuesByPath(element, "compilerArgs", "arg").forEach {
+
     }
     element.getChild("compilerArgument")?.textTrim?.let {
       val text = getResolvedText(it)

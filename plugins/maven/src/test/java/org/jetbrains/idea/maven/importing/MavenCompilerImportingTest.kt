@@ -1214,4 +1214,36 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                                   "--add-exports", "java.base/sun.reflect.annotation=ALL-UNNAMED", "--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED")
   }
 
+  @Test
+  @TestFor(issues = ["IDEA-371747"])
+  fun testCompilerArgumentsWithWeirdNames() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>  
+        <plugins>
+          <plugin> 
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <version>3.12.1</version>
+             <configuration>
+                <release>17</release>
+                <encoding>UTF-8</encoding>
+                <source>17</source>
+                <compilerArgs>
+                    <myWeirdName>-blablabla</myWeirdName>
+                    <anotherWeirdname>-qwerty</anotherWeirdname>
+                </compilerArgs>
+             </configuration>
+          </plugin>
+        </plugins>
+      </build> """.trimIndent())
+
+    assertModules("project")
+    assertOrderedElementsAreEqual(ideCompilerConfiguration.getAdditionalOptions(getModule("project")),
+                                  "-blablabla", "-qwerty")
+
+  }
+
 }
