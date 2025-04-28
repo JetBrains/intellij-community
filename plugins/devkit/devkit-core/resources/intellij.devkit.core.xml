@@ -502,7 +502,7 @@
     <localInspection language="UAST" shortName="PathAnnotationInspection"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection"
                      key="inspection.path.annotation.display.name"/>
 
