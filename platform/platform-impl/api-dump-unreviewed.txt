@@ -7984,12 +7984,10 @@ Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - setShowingTime(I):V
 a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
-- sf:Companion:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider$Companion
 - <init>(java.lang.String):V
 - getActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 - register(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
-f:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider$Companion
 f:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.editor.impl.EditorImpl):V

@@ -4,23 +4,21 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
-import com.intellij.util.application
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
+@Language("devkit-action-id") private const val ACTION_GROUP = "ExternalSystem.ProjectRefreshActionGroup"
 
-  override val autoHideable: Boolean = false
+private class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
+  override val autoHideable: Boolean
+    get() = false
 
-  override fun isApplicable(dataContext: DataContext): Boolean {
-    return isInsideMainEditor(dataContext)
-  }
+  override fun isApplicable(dataContext: DataContext): Boolean = isInsideMainEditor(dataContext)
 
   private fun updateToolbarComponent(project: Project, component: FloatingToolbarComponent) {
     val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
@@ -36,7 +34,7 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
     val myProject = dataContext.getData(PROJECT) ?: return
 
-    application.messageBus.connect(parentDisposable)
+    ApplicationManager.getApplication().messageBus.connect(parentDisposable)
       .subscribe(ExternalSystemProjectNotificationAware.TOPIC, object : ExternalSystemProjectNotificationAware.Listener {
         override fun onNotificationChanged(project: Project) {
           if (project == myProject) {
@@ -46,9 +44,5 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
       })
 
     updateToolbarComponent(myProject, component)
-  }
-
-  companion object {
-    @Language("devkit-action-id") private const val ACTION_GROUP = "ExternalSystem.ProjectRefreshActionGroup"
   }
 }
