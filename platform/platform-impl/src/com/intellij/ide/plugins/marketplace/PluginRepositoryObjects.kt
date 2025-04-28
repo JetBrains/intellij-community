@@ -77,8 +77,9 @@ internal data class IntellijUpdateMetadata(
   }
 }
 
+@ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal class MarketplaceSearchPluginData(
+class MarketplaceSearchPluginData(
   @get:JsonProperty("xmlId")
   val id: String = "",
   var isPaid: Boolean = false,
