@@ -52,6 +52,7 @@ data class FindInProjectModel (
   val isWithSubdirectories: Boolean,
   val searchContext: String,
   val scopeId: Int?,
+  val filesToScanInitially: List<VirtualFileId>
 )
 
 @Serializable

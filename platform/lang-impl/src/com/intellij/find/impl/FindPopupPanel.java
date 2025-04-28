@@ -1126,7 +1126,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     int hash = System.identityHashCode(myResultsPreviewSearchProgress);
 
     // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
-    Set<VirtualFile> filesToScanInitially = getFilesToScanInitially();
+    Set<UsageInfoAdapter>  previousUsages = getPreviousUsages();
 
     myHelper.myPreviousModel = myHelper.getModel().clone();
 
@@ -1163,7 +1163,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
         ConcurrentHashMap<String, Reference<FindPopupItem>> fileToRecentItemRef = new ConcurrentHashMap<>();
 
-        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, filesToScanInitially, (usage, usageCount, fileCount)-> {
+        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, (usage, usageCount, fileCount)-> {
           if (isCancelled()) {
             onStop(hash);
             return false;
@@ -1308,8 +1308,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }, myResultsPreviewSearchProgress);
   }
 
-  private @NotNull Set<VirtualFile> getFilesToScanInitially() {
-    Set<VirtualFile> filesToScanInitially = new LinkedHashSet<>();
+  private @NotNull Set<UsageInfoAdapter> getPreviousUsages() {
+    Set<UsageInfoAdapter> previousUsages = new LinkedHashSet<>();
 
     if (myHelper.myPreviousModel != null && myHelper.myPreviousModel.getStringToFind().length() < myHelper.getModel().getStringToFind().length()) {
       DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
@@ -1317,14 +1317,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         Object value = previousModel.getValueAt(i, 0);
         if (value instanceof FindPopupItem) {
           UsageInfoAdapter usage = ((FindPopupItem)value).getUsage();
-          if (usage instanceof UsageInfo2UsageAdapter) {
-            VirtualFile file = ((UsageInfo2UsageAdapter)usage).getFile();
-            if (file != null) filesToScanInitially.add(file);
-          }
+          previousUsages.add(usage);
         }
       }
     }
-    return filesToScanInitially;
+    return previousUsages;
   }
 
   private void reset() {

@@ -5,6 +5,8 @@ import com.intellij.find.FindModel
 import com.intellij.find.impl.FindInProjectExecutor
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
+import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -28,7 +30,7 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
     progressIndicator: ProgressIndicatorEx,
     presentation: FindUsagesProcessPresentation,
     findModel: FindModel,
-    filesToScanInitially: Set<VirtualFile>,
+    previousUsages: Set<UsageInfoAdapter>,
     onResult: (UsageInfoAdapter, Int?, Int?) -> Boolean,
     onFinish: () -> Unit?
   ) {
@@ -39,7 +41,8 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
 
     if (FindKey.isEnabled) {
       coroutineScope.launch {
-        FindRemoteApi.getInstance().findByModel(getModel(project, findModel)).collect { findResult ->
+        val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.mergedModel?.fileId?.virtualFile() }.toSet()
+        FindRemoteApi.getInstance().findByModel(getModel(project, findModel, filesToScanInitially)).collect { findResult ->
           val usage = UsageInfoModel(project, findResult, coroutineScope)
           onResult(usage, findResult.usagesCount, findResult.fileCount)
         }
@@ -47,18 +50,12 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
       }
     }
     else {
-      FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
-        val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
-        usage.presentation.icon // cache icon
-
-        onResult.invokeWithDefault(usage)
-      }
-      onFinish()
+      super.findUsages(project, progressIndicator, presentation, findModel, previousUsages, onResult, onFinish)
     }
   }
 }
 
-private fun getModel(project: Project, findModel: FindModel): FindInProjectModel {
+private fun getModel(project: Project, findModel: FindModel, filesToScanInitially: Set<VirtualFile>): FindInProjectModel {
   return FindInProjectModel(projectId = project.projectId(),
                             stringToFind = findModel.stringToFind,
                             isWholeWordsOnly = findModel.isWholeWordsOnly,
@@ -76,6 +73,7 @@ private fun getModel(project: Project, findModel: FindModel): FindInProjectModel
                             directoryName = findModel.directoryName,
                             isWithSubdirectories = findModel.isWithSubdirectories,
                             searchContext = findModel.searchContext.name,
+                            filesToScanInitially = filesToScanInitially.map { it.rpcId() },
                             scopeId = findModel.customScope?.let { SearchScopeProvider.getScopeId(it.displayName) }, //TODO rework
                             )
 }

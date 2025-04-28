@@ -2,6 +2,7 @@
 package com.intellij.find.impl
 
 import com.intellij.find.FindModel
+import com.intellij.lang.findUsages.LanguageFindUsages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,14 +28,15 @@ open class FindInProjectExecutor {
     }
 
     open fun findUsages(
-        project: Project,
-        progressIndicator: ProgressIndicatorEx,
-        presentation: FindUsagesProcessPresentation,
-        findModel: FindModel,
-        filesToScanInitially: Set<VirtualFile>,
-        onResult: (UsageInfoAdapter, Int?, Int?) -> Boolean,
-        onFinish:() -> Unit?
+      project: Project,
+      progressIndicator: ProgressIndicatorEx,
+      presentation: FindUsagesProcessPresentation,
+      findModel: FindModel,
+      previousUsages: Set<UsageInfoAdapter>,
+      onResult: (UsageInfoAdapter, Int?, Int?) -> Boolean,
+      onFinish:() -> Unit?
     ) {
+      val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfo2UsageAdapter)?.file }.toSet()
         FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
             val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
             usage.presentation.icon // cache icon

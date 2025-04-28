@@ -7,6 +7,7 @@ import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.getPresentableFilePath
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInProjectModel
@@ -31,36 +32,39 @@ import org.jetbrains.annotations.NotNull
 import java.awt.Font
 import java.util.concurrent.atomic.AtomicInteger
 
-class FindRemoteApiImpl: FindRemoteApi {
+class FindRemoteApiImpl : FindRemoteApi {
   override suspend fun findByModel(model: FindInProjectModel): Flow<FindInProjectResult> {
     return channelFlow {
-      val findModel = FindModel().apply {
-        stringToFind = model.stringToFind
-        isWholeWordsOnly = model.isWholeWordsOnly
-        isRegularExpressions = model.isRegularExpressions
-        isCaseSensitive = model.isCaseSensitive
-        isProjectScope = model.isProjectScope
-        fileFilter = model.fileFilter
-        moduleName = model.moduleName
-        directoryName = model.directoryName
-        isWithSubdirectories = model.isWithSubdirectories
-        searchContext = FindModel.SearchContext.valueOf(model.searchContext)
-        isCustomScope = model.isCustomScope
-        //customScope = model.customScopeId.getScope
-        isReplaceState = model.isReplaceState
-      }
-      val project = model.projectId.findProject()
-      //TODO rewrite find function without using progress indicator and presentation
-      val progressIndicator = EmptyProgressIndicator()
-      val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
-      val isReplaceState = findModel.isReplaceState
-      val previousResultMap: ConcurrentHashMap<String, UsageInfo2UsageAdapter> = ConcurrentHashMap()
-      val maxUsages = ShowUsagesAction.getUsagesPageSize()
-      val usagesCount = AtomicInteger()
       coroutineScope {
+        //TODO rewrite find function without using progress indicator and presentation
+        val progressIndicator = EmptyProgressIndicator()
+        val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
+        val findModel = FindModel().apply {
+          stringToFind = model.stringToFind
+          isWholeWordsOnly = model.isWholeWordsOnly
+          isRegularExpressions = model.isRegularExpressions
+          isCaseSensitive = model.isCaseSensitive
+          isProjectScope = model.isProjectScope
+          fileFilter = model.fileFilter
+          moduleName = model.moduleName
+          directoryName = model.directoryName
+          isWithSubdirectories = model.isWithSubdirectories
+          searchContext = FindModel.SearchContext.valueOf(model.searchContext)
+          isCustomScope = model.isCustomScope
+          //customScope = model.customScopeId.getScope
+          isReplaceState = model.isReplaceState
+        }
+
+        val isReplaceState = findModel.isReplaceState
+        val previousResultMap: ConcurrentHashMap<String, UsageInfo2UsageAdapter> = ConcurrentHashMap()
+        val maxUsages = ShowUsagesAction.getUsagesPageSize()
+        val usagesCount = AtomicInteger()
+
         val files = mutableSetOf<String>()
+        val project = model.projectId.findProject()
+        val filesToScanInitially = model.filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
         val scope = FindInProjectUtil.getGlobalSearchScope(project, findModel)
-        FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, emptySet()) { usageInfo ->
+        FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
             return@findUsages true
@@ -105,24 +109,24 @@ class FindRemoteApiImpl: FindRemoteApi {
   }
 }
 
-  private fun createSimpleTextAttributes(textChunk: @NotNull TextChunk): RdSimpleTextAttributes {
-    var at = textChunk.simpleAttributesIgnoreBackground
-    if (at.fontStyle == Font.BOLD) {
-      at = SimpleTextAttributes(
-        null, at.fgColor, at.waveColor,
-        at.style and SimpleTextAttributes.STYLE_BOLD.inv() or
-          SimpleTextAttributes.STYLE_SEARCH_MATCH
-      )
-    }
-
-    return at.toModel()
-  }
-
-  fun SimpleTextAttributes.toModel(): RdSimpleTextAttributes {
-    return RdSimpleTextAttributes(
-      this.fgColor?.rgb,
-      this.bgColor?.rgb,
-      this.waveColor?.rgb,
-      this.style
+private fun createSimpleTextAttributes(textChunk: @NotNull TextChunk): RdSimpleTextAttributes {
+  var at = textChunk.simpleAttributesIgnoreBackground
+  if (at.fontStyle == Font.BOLD) {
+    at = SimpleTextAttributes(
+      null, at.fgColor, at.waveColor,
+      at.style and SimpleTextAttributes.STYLE_BOLD.inv() or
+        SimpleTextAttributes.STYLE_SEARCH_MATCH
     )
   }
+
+  return at.toModel()
+}
+
+fun SimpleTextAttributes.toModel(): RdSimpleTextAttributes {
+  return RdSimpleTextAttributes(
+    this.fgColor?.rgb,
+    this.bgColor?.rgb,
+    this.waveColor?.rgb,
+    this.style
+  )
+}
