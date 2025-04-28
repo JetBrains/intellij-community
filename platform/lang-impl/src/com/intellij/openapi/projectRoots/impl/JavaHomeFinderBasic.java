@@ -56,6 +56,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
     myFinders.add(this::findJavaInstalledByMise);
+    myFinders.add(this::findJavaInstalledByJabba);
 
     myFinders.add(
       () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
@@ -440,6 +441,14 @@ public class JavaHomeFinderBasic {
     return null;
   }
 
+  /**
+   * Finds Java home directories installed by <a href="https://github.com/shyiko/jabba">jabba</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByJabba() {
+    Path installsDir = getPathInUserHome(".jabba/jdk");
+    if (installsDir == null) return Collections.emptySet();
+    return safeIsDirectory(installsDir) ? scanAll(installsDir, true) : Collections.emptySet();
+  }
 
   private boolean safeIsDirectory(@NotNull Path dir) {
     try {
