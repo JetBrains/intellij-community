@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
   </component>
 </module>
