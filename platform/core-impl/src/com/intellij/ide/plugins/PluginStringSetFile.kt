@@ -10,6 +10,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption.*
 import java.util.*
 import kotlin.streams.asSequence
 
@@ -47,6 +48,35 @@ object PluginStringSetFile {
       return true
     } catch (e: IOException) {
       logger.warn("failed to write plugin strings to $path", e)
+      return false
+    }
+  }
+
+  @Synchronized
+  @Throws(IOException::class)
+  fun append(path: Path, strings: Set<String>) {
+    NioFiles.createDirectories(path.parent)
+    Files.write(path, TreeSet(strings), CREATE, WRITE, APPEND)
+  }
+
+  @Synchronized
+  fun appendSafe(path: Path, strings: Set<String>, logger: Logger): Boolean {
+    try {
+      append(path, strings)
+      return true
+    } catch (e: IOException) {
+      logger.warn("failed to append plugin strings to $path", e)
+      return false
+    }
+  }
+
+  @Synchronized
+  fun appendIdsSafe(path: Path, ids: Set<PluginId>, logger: Logger): Boolean {
+    try {
+      append(path, ids.mapTo(mutableSetOf()) { it.idString })
+      return true
+    } catch (e: IOException) {
+      logger.warn("failed to append plugin strings to $path", e)
       return false
     }
   }
