@@ -16,7 +16,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 
 @ApiStatus.Internal
@@ -60,27 +59,14 @@ object BundledPluginsState {
   }
 
   fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<BundledPlugin> {
-    val file = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
-    if (!Files.exists(file)) {
-      return emptySet()
-    }
-    else if (!Files.isRegularFile(file)) {
-      return emptySet()
-    }
-
-    val bundledPlugins = mutableSetOf<BundledPlugin>()
-    try {
-      Files.readAllLines(file).map(String::trim)
-        .filter { !it.isEmpty() }.map {
-          val splitResult = it.split('|')
-          val id = splitResult.first()
-          val category = splitResult.getOrNull(1)
-          bundledPlugins.add(BundledPlugin(PluginId.getId(id), if (category == "null") null else category))
-        }
-    }
-    catch (e: IOException) {
-      PluginManagerCore.logger.warn("Unable to load bundled plugins list from $file", e)
-    }
+    val path = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
+    val bundledPlugins = PluginStringSetFile.readSafe(path, PluginManagerCore.logger)
+      .mapTo(mutableSetOf()) {
+        val splitResult = it.split('|')
+        val id = splitResult.first()
+        val category = splitResult.getOrNull(1)
+        BundledPlugin(PluginId.getId(id), if (category == "null") null else category)
+      }
     return bundledPlugins
   }
 
