@@ -2,4 +2,7 @@
   <dependencies>
     <module name="intellij.platform.frontend"/>
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.execution.impl.frontend.FrontendRunInitializationProjectActivity"/>
+  </extensions>
 </idea-plugin>

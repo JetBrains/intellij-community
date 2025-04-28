@@ -19,6 +19,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.AppModeAssertions;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
@@ -58,6 +59,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.execution.ui.RunContentManagerImpl.isSplitRun;
 
 public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
@@ -199,12 +202,21 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     AtomicReference<RunContentDescriptor> result = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
+      if (isSplitRun() && AppModeAssertions.isBackend()) {
+        result.set(contentBuilder.buildHiddenDescriptor(env.getContentToReuse()));
+        return;
+      }
       if (!(state instanceof JavaCommandLineState) || ((JavaCommandLineState)state).shouldAddJavaProgramRunnerActions()) {
         addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);
       }
       result.set(contentBuilder.showRunContent(env.getContentToReuse()));
     });
-    return result.get();
+
+    RunContentDescriptor descriptor = result.get();
+    if (isSplitRun() && AppModeAssertions.isBackend()) {
+      RunSessionService.getInstance(env.getProject()).storeRunSession(env, descriptor);
+    }
+    return descriptor;
   }
 
   private static void addDefaultActions(@NotNull RunContentBuilder contentBuilder,

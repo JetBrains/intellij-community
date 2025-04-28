@@ -315,6 +315,25 @@ public final class RunContentBuilder extends RunTab {
     return descriptor;
   }
 
+  /**
+   * Build a mock descriptor for the split mode backend part
+   */
+  @ApiStatus.Internal
+  public RunContentDescriptor buildHiddenDescriptor(@Nullable RunContentDescriptor reuseContent) {
+    RunContentDescriptor descriptor = new RunContentDescriptor(myEnvironment.getRunProfile(), myExecutionResult, myUi) {
+      @Override
+      public boolean isHiddenContent() {
+        return true; // will be hidden on a backend in split mode
+      }
+    };
+    Disposer.register(descriptor, this);
+    Disposer.register(myProject, descriptor);
+    // todo: do we need to copy reuseContent to a hidden descriptor?
+    RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
+    myRunContentDescriptor = descriptor;
+    return descriptor;
+  }
+
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
     private final @NotNull Project myProject;
     private final @NotNull Executor myExecutor;

@@ -89,6 +89,8 @@
     <actionConfigurationCustomizer implementation="com.intellij.execution.runToolbar.MyActionConfigurationCustomizer"/>
 
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
+
+    <registryKey defaultValue="false" description="Run implementation for split mode." key="run.toolwindow.split.enabled"/>
   </extensions>
   <extensionPoints>
     <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"

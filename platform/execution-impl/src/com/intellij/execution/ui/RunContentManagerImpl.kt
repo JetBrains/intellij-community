@@ -3,10 +3,7 @@
 
 package com.intellij.execution.ui
 
-import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.Executor
-import com.intellij.execution.KillableProcess
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -73,6 +70,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     @ApiStatus.Internal
     @JvmField
     val TEMPORARY_CONFIGURATION_KEY = Key.create<RunnerAndConfigurationSettings>("TemporaryConfiguration")
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isSplitRun(): Boolean = Registry.`is`("run.toolwindow.split.enabled", false)
 
     @JvmStatic
     fun copyContentAndBehavior(descriptor: RunContentDescriptor, contentToReuse: RunContentDescriptor?) {
