@@ -3,6 +3,7 @@ package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class DvcsBranchManager<T extends Repository> {
+  private static final Logger LOG = Logger.getInstance(DvcsBranchManager.class);
+
   private final AbstractRepositoryManager<T> myRepositoryManager;
 
   private final @NotNull DvcsBranchSettings myBranchSettings;
@@ -143,6 +146,11 @@ public abstract class DvcsBranchManager<T extends Repository> {
                           @Nullable T repository,
                           @NotNull String branchName,
                           boolean shouldBeFavorite) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Changing favorite state of %s(%s) to %s in %s"
+                  .formatted(branchName, branchType != null ? branchType.getName() : "", shouldBeFavorite, repository));
+    }
+
     if (branchType == null) return;
     String branchTypeName = branchType.getName();
     VirtualFile root = repository == null ? null : repository.getRoot();

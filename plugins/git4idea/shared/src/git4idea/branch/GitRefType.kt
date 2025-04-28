@@ -2,11 +2,13 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.BranchType
+import com.intellij.vcs.git.shared.ref.GitReferenceName
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.branch.GitBranchType.LOCAL
 import git4idea.branch.GitBranchType.REMOTE
+import org.jetbrains.annotations.ApiStatus
 
 sealed interface GitRefType : BranchType {
   companion object {
@@ -15,6 +17,16 @@ sealed interface GitRefType : BranchType {
         recent -> GitBranchType.RECENT
         reference is GitBranch -> if (reference.isRemote) REMOTE else LOCAL
         reference is GitTag -> return GitTagType
+        else -> throw IllegalArgumentException()
+      }
+    }
+
+    @ApiStatus.Internal
+    fun of(referenceName: GitReferenceName): GitRefType {
+      return when {
+        referenceName.fullName.startsWith(GitBranch.REFS_HEADS_PREFIX) -> LOCAL
+        referenceName.fullName.startsWith(GitBranch.REFS_REMOTES_PREFIX) -> REMOTE
+        referenceName.fullName.startsWith(GitTag.REFS_TAGS_PREFIX) -> GitTagType
         else -> throw IllegalArgumentException()
       }
     }

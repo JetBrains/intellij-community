@@ -10,6 +10,7 @@ import com.intellij.platform.project.findProject
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
+import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.repo.GitRepositoryState
 import com.intellij.vcs.git.shared.rpc.GitReferencesSet
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
@@ -19,6 +20,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitDisposable
 import git4idea.GitStandardRemoteBranch
 import git4idea.branch.GitBranchType
+import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
@@ -27,6 +29,8 @@ import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.tree.tags
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
+
+private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
 
 class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositories(projectId: ProjectId): List<GitRepositoryDto> {
@@ -47,6 +51,21 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       getAllRepositories(project).forEach(synchronizer::sendDeletedEventOnDispose)
 
       connection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
+    }
+  }
+
+  override suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean) {
+    val project = projectId.findProject()
+
+    val resolvedRepositories = resolveRepositories(project, repositories)
+
+    val refType = GitRefType.of(reference)
+    val branchManager = project.service<GitBranchManager>()
+    resolvedRepositories.forEach {
+      branchManager.setFavorite(refType,
+                                it,
+                                SharedRefUtil.stripRefsPrefix(reference.fullName),
+                                favorite)
     }
   }
 
@@ -145,6 +164,21 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         remoteBranches = branchManager.getFavoriteRefs(GitBranchType.REMOTE, repository),
         tags = branchManager.getFavoriteRefs(GitTagType, repository),
       )
+    }
+
+    private fun resolveRepositories(project: Project, repositoryIds: List<RepositoryId>): List<GitRepository> {
+      val repositories = GitRepositoryManager.getInstance(project).repositories.associateBy { it.rpcId }
+
+      val notFound = mutableListOf<RepositoryId>()
+      val resolved = repositoryIds.mapNotNull {
+        val resolved = repositories[it]
+        if (resolved == null) notFound.add(it)
+        resolved
+      }
+
+      assert(notFound.isEmpty()) { "Not found repositories: $notFound" }
+
+      return resolved
     }
   }
 }
