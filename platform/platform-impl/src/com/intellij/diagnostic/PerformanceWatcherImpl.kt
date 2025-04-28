@@ -89,7 +89,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
   init {
     if (isActive) {
-      coroutineScope.launch {
+      coroutineScope.launch(CoroutineName("EDT freeze reporter")) {
         asyncInit()
 
         taskFlow.collectLatest { task ->
@@ -116,7 +116,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       return
     }
 
-    coroutineScope.launch {
+    coroutineScope.launch(CoroutineName("EDT sampling")) {
       val samplingIntervalMs = samplingInterval
       @Suppress("KotlinConstantConditions")
       if (samplingIntervalMs <= 0) {
