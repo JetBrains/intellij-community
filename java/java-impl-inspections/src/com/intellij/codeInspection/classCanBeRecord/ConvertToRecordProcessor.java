@@ -329,13 +329,13 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
     tryToCompactCanonicalCtor(result);
     removeRedundantObjectMethods(result, redundantObjectMethods);
-    addImplicitLombokGetters(result, syntheticGetters.toArray(PsiMethod.EMPTY_ARRAY));
+    addImplicitSyntheticGetters(result, syntheticGetters.toArray(PsiMethod.EMPTY_ARRAY));
     removeRedundantLombokAnnotations(result);
     generateJavaDocForDocumentedFields(result, myRecordCandidate.getFieldsToAccessorCandidates().keySet());
     CodeStyleManager.getInstance(myProject).reformat(JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(result));
   }
 
-  private void addImplicitLombokGetters(@NotNull PsiClass record, @NotNull PsiMethod @NotNull [] implicitGetters) {
+  private void addImplicitSyntheticGetters(@NotNull PsiClass record, @NotNull PsiMethod @NotNull [] implicitGetters) {
     if (!mySuggestAccessorsRenaming) {
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
       for (PsiMethod getter : implicitGetters) {
