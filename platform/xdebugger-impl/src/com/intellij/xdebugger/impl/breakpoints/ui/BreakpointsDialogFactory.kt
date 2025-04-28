@@ -33,7 +33,6 @@ class BreakpointsDialogFactory(private val project: Project) {
 
   private val showDialogEvents = MutableSharedFlow<XBreakpointId?>(extraBufferCapacity = 1)
 
-  // should be used only by backend RPC, so frontend will handle backend requests
   fun subscribeToShowDialogEvents(cs: CoroutineScope, onShowDialogRequest: suspend (breakpointId: XBreakpointId?) -> Unit) {
     cs.launch(Dispatchers.EDT) {
       showDialogEvents.collectLatest {

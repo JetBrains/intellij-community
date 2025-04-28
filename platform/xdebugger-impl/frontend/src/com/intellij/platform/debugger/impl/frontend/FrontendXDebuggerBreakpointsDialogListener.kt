@@ -27,6 +27,14 @@ internal fun subscribeOnBreakpointsDialogRequest(project: Project) {
       }
     }
   }
+
+  project.service<FrontendXDebuggerBreakpointsDialogListenerCoroutineScope>().cs.launch {
+    BreakpointsDialogFactory.getInstance(project).subscribeToShowDialogEvents(this) { breakpointId ->
+      runCatching {
+        BreakpointsDialogFactory.getInstance(project).showDialogImpl(breakpointId)
+      }.getOrLogException(LOG)
+    }
+  }
 }
 
 @Service(Service.Level.PROJECT)
