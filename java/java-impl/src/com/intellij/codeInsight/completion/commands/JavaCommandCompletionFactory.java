@@ -25,6 +25,8 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
   @Override
   public boolean isApplicable(@NotNull PsiFile psiFile, int offset) {
     if (!(psiFile instanceof PsiJavaFile)) return false;
+    //Doesn't work well. Disable for now
+    if (psiFile instanceof PsiJShellFile) return false;
     PsiElement elementAt = psiFile.findElementAt(offset);
     if (elementAt == null) return true;
     if (!(elementAt.getParent() instanceof PsiParameterList)) return true;
