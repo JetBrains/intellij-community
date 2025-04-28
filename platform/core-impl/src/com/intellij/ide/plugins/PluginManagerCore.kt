@@ -37,10 +37,12 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.GraphicsEnvironment
-import java.io.IOException
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -756,12 +758,6 @@ object PluginManagerCore {
   }
 
   private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginStringSetFile.consumeIdsSafe(thirdPartyPluginsFilePath, logger)
-
-  @ApiStatus.Internal
-  @Throws(IOException::class)
-  fun writePluginIdsToFile(path: Path, pluginIds: Sequence<PluginId>, openOptions: Array<OpenOption>? = null) {
-    PluginStringSetFile.write(path, pluginIds.map { it.idString }.toSet(), openOptions)
-  }
 
   @VisibleForTesting
   @JvmStatic
