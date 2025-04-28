@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 
 %%
 
+%public
 %class _PythonLexer
 %implements FlexLexerEx
 
