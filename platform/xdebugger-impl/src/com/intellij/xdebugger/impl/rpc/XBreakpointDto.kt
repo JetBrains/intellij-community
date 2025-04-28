@@ -68,7 +68,15 @@ data class XLineBreakpointInfo(
   val isTemporary: Boolean,
   val line: Int,
   val fileUrl: String?,
+  val highlightingRange: XLineBreakpointTextRange?,
   val file: VirtualFileId?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointTextRange(
+  val startOffset: Int,
+  val endOffset: Int,
 )
 
 @ApiStatus.Internal
@@ -158,5 +166,6 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
 }
 
 private fun XLineBreakpointImpl<*>.getInfo(): XLineBreakpointInfo {
-  return XLineBreakpointInfo(isTemporary, line, fileUrl, file?.rpcId())
+  val highlightingRange = highlightRange?.let { XLineBreakpointTextRange(it.startOffset, it.endOffset) }
+  return XLineBreakpointInfo(isTemporary, line, fileUrl, highlightingRange, file?.rpcId())
 }

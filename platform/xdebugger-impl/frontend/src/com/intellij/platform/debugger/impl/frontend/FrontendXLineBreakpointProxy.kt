@@ -86,8 +86,7 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun getHighlightRange(): TextRange? {
-    // TODO IJPL-185322 implement highlight range through type
-    return null
+    return lineBreakpointInfo.highlightingRange?.let { TextRange(it.startOffset, it.endOffset) }
   }
 
   override fun doUpdateUI(callOnUpdate: () -> Unit) {
