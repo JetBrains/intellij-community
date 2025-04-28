@@ -47,6 +47,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
   private inner class PathAnnotationVisitor(
     private val holder: ProblemsHolder,
   ) : AbstractUastNonRecursiveVisitor() {
+    // `expectedInfo` to `actualInfo`
+    private val compatibleAnnotations = mapOf(
+      PathAnnotationInfo.MultiRouting to setOf(PathAnnotationInfo.FilenameInfo, PathAnnotationInfo.LocalPathInfo),
+      PathAnnotationInfo.Native to setOf(PathAnnotationInfo.FilenameInfo),
+      PathAnnotationInfo.LocalPathInfo to setOf(PathAnnotationInfo.FilenameInfo),
+    )
+
     override fun visitCallExpression(node: UCallExpression): Boolean {
       val sourcePsi = node.sourcePsi ?: return true
       val target = node.resolve() ?: return true
@@ -344,13 +351,6 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
           }
         }
 
-        // `expectedInfo` to `actualInfo`
-        val compatibleAnnotations = mapOf(
-          PathAnnotationInfo.MultiRouting to setOf(PathAnnotationInfo.FilenameInfo, PathAnnotationInfo.LocalPathInfo),
-          PathAnnotationInfo.Native to setOf(PathAnnotationInfo.FilenameInfo),
-          PathAnnotationInfo.LocalPathInfo to setOf(PathAnnotationInfo.FilenameInfo),
-        )
-
         when (actualInfo) {
           is PathAnnotationInfo.Unspecified -> {
             // Report error: Unannotated string passed to the method that expects a particular path annotation
@@ -411,55 +411,35 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
       // Check if the method has a return type with a path annotation
       val expectedInfo = PathAnnotationInfo.forModifierListOwner(methodPsi)
-      if (expectedInfo is PathAnnotationInfo.Unspecified) {
-        // If the method doesn't have a path annotation, don't register any problems
-        return true
+      when (expectedInfo) {
+        is PathAnnotationInfo.Specified -> Unit
+        is PathAnnotationInfo.Unspecified -> {
+          // If the method doesn't have a path annotation, don't register any problems
+          return true
+        }
       }
 
       // Check if the return value has a path annotation
       val actualInfo = PathAnnotationInfo.forExpression(returnValue)
 
       // Check if the return value matches the expected path annotation type
-      when {
-        // Methods returning @MultiRoutingFileSystemPath should not return @NativePath values
-        expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Native -> {
+      when (actualInfo) {
+        is PathAnnotationInfo.Unspecified -> {
+          // Report error: Unannotated string passed to the method that expects a particular path annotation
           holder.registerProblem(
             returnValue.sourcePsi ?: sourcePsi,
-            DevKitBundle.message("inspections.message.nativepath.passed.to.multiroutingfilesystempath.method.parameter"),
-            AddMultiRoutingAnnotationFix()
+            DevKitBundle.message("inspection.message.return.value.without.path.annotation.where.expected", expectedInfo.shortAnnotationName),
+            expectedInfo.quickFix()
           )
         }
-        // Methods returning @NativePath should not return @MultiRoutingFileSystemPath values
-        expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.MultiRouting -> {
-          holder.registerProblem(
-            returnValue.sourcePsi ?: sourcePsi,
-            DevKitBundle.message("inspections.message.multiroutingfilesystempath.passed.to.nativepath.method.parameter"),
-            AddNativePathAnnotationFix()
-          )
-        }
-        // Methods returning @NativePath should not return @LocalPath values
-        expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.LocalPathInfo -> {
-          holder.registerProblem(
-            returnValue.sourcePsi ?: sourcePsi,
-            DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-            AddNativePathAnnotationFix()
-          )
-        }
-        // Methods returning @MultiRoutingFileSystemPath should not return unannotated values
-        expectedInfo is PathAnnotationInfo.MultiRouting && actualInfo is PathAnnotationInfo.Unspecified -> {
-          holder.registerProblem(
-            returnValue.sourcePsi ?: sourcePsi,
-            DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath"),
-            AddMultiRoutingAnnotationFix()
-          )
-        }
-        // Methods returning @NativePath should not return unannotated values
-        expectedInfo is PathAnnotationInfo.Native && actualInfo is PathAnnotationInfo.Unspecified -> {
-          holder.registerProblem(
-            returnValue.sourcePsi ?: sourcePsi,
-            DevKitBundle.message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath"),
-            AddNativePathAnnotationFix()
-          )
+        is PathAnnotationInfo.Specified -> {
+          if (expectedInfo != actualInfo && compatibleAnnotations[expectedInfo]?.contains(actualInfo) != true) {
+            holder.registerProblem(
+              returnValue.sourcePsi ?: sourcePsi,
+              DevKitBundle.message("inspection.message.method.annotated.with.returns.value.annotated.with", expectedInfo.shortAnnotationName, actualInfo.shortAnnotationName),
+              expectedInfo.quickFix()
+            )
+          }
         }
       }
 
@@ -638,8 +618,8 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     fun getPathAnnotationStatus(): ThreeState
 
     sealed class Specified : PathAnnotationInfo {
-      abstract fun getAnnotationClass(): Class<*>?
-      val shortAnnotationName: String? = getAnnotationClass()?.simpleName.let { "@$it" }
+      abstract fun getAnnotationClass(): Class<*>
+      val shortAnnotationName: String = getAnnotationClass().simpleName.let { "@$it" }
       abstract val quickFix: () -> LocalQuickFix
     }
 
