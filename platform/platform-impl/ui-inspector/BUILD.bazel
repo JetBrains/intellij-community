@@ -20,6 +20,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "@lib//:miglayout-swing",
     "@lib//:guava",
+    "//platform/editor-ui-ex:editor-ex",
   ],
   runtime_deps = [":ide-ui-inspector_resources"]
 )

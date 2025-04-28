@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.execution.dashboard.frontend` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "frontend",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":frontend_resources"]
+)
+### auto-generated section `build intellij.platform.execution.dashboard.frontend` end
