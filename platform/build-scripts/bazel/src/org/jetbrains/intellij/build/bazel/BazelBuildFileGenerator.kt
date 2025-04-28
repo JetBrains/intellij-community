@@ -137,7 +137,7 @@ internal class BazelBuildFileGenerator(
 
       val labelTracker = fileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
       buildFile(out = bazelFileUpdater, sectionName = owner.sectionName) {
-        load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+        load("@rules_jvm//:jvm.bzl", "jvm_import")
 
         for (entry in groupedByTargetName) {
           val libs = entry.value

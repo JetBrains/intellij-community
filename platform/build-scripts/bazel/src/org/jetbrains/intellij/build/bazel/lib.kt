@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.bazel
 
 import java.nio.file.Path
-import java.util.zip.ZipFile
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
@@ -70,20 +69,6 @@ private fun getUrlAndSha256(jar: MavenFileDescription, jarRepositories: List<Jar
   return entry
 }
 
-private fun isKotlinLib(jars: List<MavenFileDescription>): Boolean {
-  for (file in jars) {
-    ZipFile(file.path.toFile()).use { zipFile ->
-      for (entry in zipFile.entries()) {
-        if (entry.name.startsWith("META-INF/") && entry.name.endsWith("kotlin_module")) {
-          return true
-        }
-      }
-    }
-  }
-
-  return false
-}
-
 internal fun BuildFile.generateMavenLib(
   lib: MavenLibrary,
   labelTracker: MutableSet<String>,
@@ -96,13 +81,6 @@ internal fun BuildFile.generateMavenLib(
     return
   }
 
-  // 1. wire: ERROR: /Users/develar/projects/idea-push/plugins/bigdatatools/kafka/BUILD.bazel:31:12: Building plugins/bigdatatools/kafka/kafka-java.jar (1 source file) failed:
-  // (Exit 1): java failed: error executing Javac command (from target //plugins/bigdatatools/kafka:kafka) ../rules_java~~toolchains~remotejdk21_macos_aarch64/bin/java
-  // '--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED' '--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED' ... (remaining 19 arguments skipped)
-  // error: cannot determine module name for ../ultimate_lib~~_repo_rules~wire-compiler-3_7_1_http/file/wire-compiler-3.7.1.jar
-  // 2. jetbrains-annotations - ijar doesn't add JPMS
-  val isJavaLib = !targetName.startsWith("jetbrains-annotations") && (targetName.startsWith("bigdatatools-") || targetName.startsWith("wire") || !isKotlinLib(lib.jars))
-
   var exportedCompilerPlugins = emptyList<String>()
   if (lib.jars.size == 1) {
     val jar = lib.jars.single()
@@ -113,36 +91,22 @@ internal fun BuildFile.generateMavenLib(
 
     val sourceJar = lib.sourceJars.singleOrNull { it.path.name == "${jar.path.nameWithoutExtension}-sources.jar" }
 
-    if (isJavaLib) {
-      target("java_import") {
-        option("name", targetName)
-        option("jars", arrayOf("@${fileToHttpRuleFile(jar.path)}"))
-        if (sourceJar != null) {
-          option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
-        }
-        libVisibility?.let {
-          visibility(arrayOf(it))
-        }
+    target("jvm_import") {
+      option("name", targetName)
+      option("jar", "@${fileToHttpRuleFile(jar.path)}")
+      if (sourceJar != null) {
+        option("source_jar", "@${fileToHttpRuleFile(sourceJar.path)}")
       }
-    }
-    else {
-      target("kt_jvm_import") {
-        option("name", targetName)
-        option("jar", "@${fileToHttpRuleFile(jar.path)}")
-        if (sourceJar != null) {
-          option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
-        }
-        if (targetName == "kotlinx-serialization-core") {
-          exportedCompilerPlugins = listOf("@lib//:kotlin-serialization-plugin")
-          option("exported_compiler_plugins", exportedCompilerPlugins)
-        }
-        if (targetName == "rhizomedb-compiler-plugin") {
-          option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
-        }
+      if (targetName == "kotlinx-serialization-core") {
+        exportedCompilerPlugins = listOf("@lib//:kotlin-serialization-plugin")
+        option("exported_compiler_plugins", exportedCompilerPlugins)
+      }
+      if (targetName == "rhizomedb-compiler-plugin") {
+        option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
+      }
 
-        libVisibility?.let {
-          visibility(arrayOf(it))
-        }
+      libVisibility?.let {
+        visibility(arrayOf(it))
       }
     }
   }
@@ -164,23 +128,11 @@ internal fun BuildFile.generateMavenLib(
       }
 
       val sourceJar = lib.sourceJars.singleOrNull { it.path.name == "${jar.path.nameWithoutExtension}-sources.jar" }
-      if (isJavaLib) {
-        load("@rules_java//java:defs.bzl", "java_import")
-        target("java_import") {
-          option("name", label)
-          option("jars", arrayOf("@$bazelLabel//file"))
-          if (sourceJar != null) {
-            option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
-          }
-        }
-      }
-      else {
-        target("kt_jvm_import") {
-          option("name", label)
-          option("jar", "@$bazelLabel//file")
-          if (sourceJar != null) {
-            option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
-          }
+      target("jvm_import") {
+        option("name", label)
+        option("jar", "@$bazelLabel//file")
+        if (sourceJar != null) {
+          option("source_jar", "@${fileToHttpRuleFile(sourceJar.path)}")
         }
       }
     }
