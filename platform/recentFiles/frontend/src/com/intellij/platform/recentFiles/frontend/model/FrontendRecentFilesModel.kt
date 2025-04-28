@@ -35,7 +35,7 @@ class FrontendRecentFilesModel(private val project: Project) {
   private val recentlyOpenedPinnedFilesState = MutableStateFlow(RecentFilesState())
 
   fun getRecentFiles(fileKind: RecentFileKind): List<SwitcherVirtualFile> {
-    val capturedModelState = chooseState(fileKind).value.entries
+    val capturedModelState = chooseStateToReadFrom(fileKind).value.entries
     val filteredModel = capturedModelState.filter {  fileModel ->
       val file = fileModel.virtualFile ?: return@filter true
       val excluder = RecentFilesExcluder.EP_NAME.findFirstSafe { ext ->
@@ -60,7 +60,7 @@ class FrontendRecentFilesModel(private val project: Project) {
 
   fun applyFrontendChanges(filesKind: RecentFileKind, files: List<VirtualFile>, isAdded: Boolean) {
     modelUpdateScope.launch {
-      val frontendStateToUpdate = chooseState(filesKind)
+      val frontendStateToUpdate = chooseStateToWriteTo(filesKind)
       val fileModels = files.map { convertVirtualFileToViewModel(it, project) }
 
       frontendStateToUpdate.update { oldList ->
@@ -95,7 +95,7 @@ class FrontendRecentFilesModel(private val project: Project) {
   }
 
   private suspend fun applyChangesFromBackendToModel(change: RecentFilesEvent, targetFilesKind: RecentFileKind) {
-    val targetModel = chooseState(targetFilesKind)
+    val targetModel = chooseStateToWriteTo(targetFilesKind)
     when (change) {
       is RecentFilesEvent.ItemsAdded -> {
         val toAdd = change.batch.map(::convertSwitcherDtoToViewModel)
@@ -132,17 +132,31 @@ class FrontendRecentFilesModel(private val project: Project) {
       }
       is RecentFilesEvent.UncertainChangeOccurred -> {
         LOG.debug("Updating all items in $targetFilesKind frontend model because of undetermined backend IDE state change")
-        val targetState = chooseState(targetFilesKind).value.entries.mapNotNull { it.virtualFile }
+        val targetState = chooseStateToWriteTo(targetFilesKind).value.entries.mapNotNull { it.virtualFile }
         FileSwitcherApi.getInstance().updateRecentFilesBackendState(createFilesUpdateRequest(targetFilesKind, targetState, project))
       }
     }
   }
 
-  private fun chooseState(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState> {
+  private fun chooseStateToWriteTo(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState> {
     return when (filesKind) {
       RecentFileKind.RECENTLY_EDITED -> recentlyEditedFilesState
       RecentFileKind.RECENTLY_OPENED -> recentlyOpenedFilesState
       RecentFileKind.RECENTLY_OPENED_UNPINNED -> recentlyOpenedPinnedFilesState
+    }
+  }
+
+  private fun chooseStateToReadFrom(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState> {
+    return when (filesKind) {
+      RecentFileKind.RECENTLY_EDITED -> recentlyEditedFilesState
+      RecentFileKind.RECENTLY_OPENED -> recentlyOpenedFilesState
+      RecentFileKind.RECENTLY_OPENED_UNPINNED -> {
+        // If there is only one opened file, users will benefit more from the entire _recently opened_ files list
+        if (recentlyOpenedPinnedFilesState.value.entries.size > 1)
+          recentlyOpenedPinnedFilesState
+        else
+          recentlyOpenedFilesState
+      }
     }
   }
 
