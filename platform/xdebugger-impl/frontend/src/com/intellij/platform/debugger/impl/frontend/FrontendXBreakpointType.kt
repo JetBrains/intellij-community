@@ -11,6 +11,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
@@ -104,7 +105,11 @@ private open class FrontendXBreakpointType(
   }
 
   override fun isAddBreakpointButtonVisible(): Boolean {
-    return false // TODO IJPL-185322
+    return false // TODO IJPL-184116
+  }
+
+  override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
+    return null // TODO: IJPL-184116
   }
 
   override fun equals(other: Any?): Boolean {

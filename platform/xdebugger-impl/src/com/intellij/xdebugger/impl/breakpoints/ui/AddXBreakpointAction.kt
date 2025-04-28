@@ -4,16 +4,21 @@ package com.intellij.xdebugger.impl.breakpoints.ui
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointType
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class AddXBreakpointAction(
   private val project: Project,
-  private val myType: XBreakpointType<*, *>,
+  private val myType: XBreakpointTypeProxy,
   private val saveCurrentItem: () -> Unit,
   private val selectBreakpoint: (breakpointId: XBreakpointId) -> Unit,
 ) : AnAction(), DumbAware {
@@ -26,9 +31,13 @@ internal class AddXBreakpointAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     saveCurrentItem()
-    val breakpoint: XBreakpoint<*>? = myType.addBreakpoint(project, null)
-    if (breakpoint is XBreakpointBase<*, *, *>) {
-      selectBreakpoint(breakpoint.breakpointId)
+    project.service<AddXBreakpointActionCoroutineScope>().cs.launch {
+      val breakpoint = myType.addBreakpoint(project)
+      if (breakpoint != null) {
+        withContext(Dispatchers.EDT) {
+          selectBreakpoint(breakpoint.id)
+        }
+      }
     }
   }
 
@@ -36,3 +45,6 @@ internal class AddXBreakpointAction(
     return ActionUpdateThread.EDT
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class AddXBreakpointActionCoroutineScope(val cs: CoroutineScope)
