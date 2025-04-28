@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
@@ -64,7 +64,7 @@ internal class FrontendXLineBreakpointProxy(
 
 
   override fun getFile(): VirtualFile? {
-    return lineBreakpointInfo.fileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
+    return lineBreakpointInfo.file?.virtualFile()
   }
 
   override fun getLine(): Int {

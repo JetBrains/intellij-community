@@ -204,7 +204,7 @@ public class XBreakpointVisualRepresentation {
     }).executeSynchronously();
   }
 
-  void removeHighlighter() {
+  public void removeHighlighter() {
     if (getHighlighter() != null) {
       try {
         getHighlighter().dispose();
@@ -220,7 +220,7 @@ public class XBreakpointVisualRepresentation {
     redrawInlineInlays(myBreakpoint.getFile(), myBreakpoint.getLine());
   }
 
-  void redrawInlineInlays(@Nullable VirtualFile file, int line) {
+  public void redrawInlineInlays(@Nullable VirtualFile file, int line) {
     if (file == null) return;
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
 

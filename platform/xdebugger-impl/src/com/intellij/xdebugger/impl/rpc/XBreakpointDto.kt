@@ -3,19 +3,16 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
+import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +68,7 @@ data class XLineBreakpointInfo(
   val isTemporary: Boolean,
   val line: Int,
   val fileUrl: String?,
+  val file: VirtualFileId?,
 )
 
 @ApiStatus.Internal
@@ -154,11 +152,11 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       timestamp = timeStamp,
       currentSessionCustomPresentation = (XDebuggerManager.getInstance(project).currentSession as? XDebugSessionImpl)?.getBreakpointPresentation(breakpoint)?.toRpc(),
       customPresentation = breakpoint.customizedPresentation?.toRpc(),
-      lineBreakpointInfo = (breakpoint as? XLineBreakpoint<*>)?.getInfo()
+      lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() }
     )
   }
 }
 
-private fun XLineBreakpoint<*>.getInfo(): XLineBreakpointInfo {
-  return XLineBreakpointInfo(isTemporary, line, fileUrl)
+private fun XLineBreakpointImpl<*>.getInfo(): XLineBreakpointInfo {
+  return XLineBreakpointInfo(isTemporary, line, fileUrl, file?.rpcId())
 }
