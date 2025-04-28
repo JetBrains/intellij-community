@@ -56,7 +56,7 @@ class ExpiredPluginsState : PluginEnabler {
 
       val expiredPluginIds = expiredPluginIds as MutableSet
       return (if (expired) expiredPluginIds.addAll(pluginIds) else expiredPluginIds.removeAll(pluginIds))
-             && PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, expiredPluginIds, logger)
+             && PluginStringSetFile.writeIdsSafe(defaultFilePath, expiredPluginIds, logger)
     }
   }
 

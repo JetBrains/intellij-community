@@ -150,7 +150,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     }
 
     private fun trySaveDisabledPlugins(pluginIds: Set<PluginId>, invalidate: Boolean): Boolean {
-      if (!PluginManagerCore.tryWritePluginIdsToFile(defaultFilePath, pluginIds, logger)) {
+      if (!PluginStringSetFile.writeIdsSafe(defaultFilePath, pluginIds, logger)) {
         return false
       }
 

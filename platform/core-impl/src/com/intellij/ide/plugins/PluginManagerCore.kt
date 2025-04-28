@@ -763,17 +763,6 @@ object PluginManagerCore {
   private fun consumeThirdPartyPluginIdsFile(): Set<PluginId> = PluginStringSetFile.consumeIdsSafe(thirdPartyPluginsFilePath, logger)
 
   @ApiStatus.Internal
-  fun tryWritePluginIdsToFile(path: Path, pluginIds: Set<PluginId>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean =
-    try {
-      writePluginIdsToFile(path, pluginIds.asSequence(), openOptions)
-      true
-    }
-    catch (e: IOException) {
-      logger.warn("Unable to write plugin ID list to ${path}", e)
-      false
-    }
-
-  @ApiStatus.Internal
   @Throws(IOException::class)
   fun writePluginIdsToFile(path: Path, pluginIds: Sequence<PluginId>, openOptions: Array<OpenOption>? = null) {
     PluginStringSetFile.write(path, pluginIds.map { it.idString }.toSet(), openOptions)

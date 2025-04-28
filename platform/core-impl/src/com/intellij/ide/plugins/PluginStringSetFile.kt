@@ -30,6 +30,28 @@ object PluginStringSetFile {
   }
 
   @Synchronized
+  fun writeSafe(path: Path, strings: Set<String>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean {
+    try {
+      write(path, strings, openOptions)
+      return true
+    } catch (e: IOException) {
+      logger.warn("failed to write plugin strings to $path", e)
+      return false
+    }
+  }
+
+  @Synchronized
+  fun writeIdsSafe(path: Path, ids: Set<PluginId>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean {
+    try {
+      write(path, ids.mapTo(mutableSetOf()) { it.idString }, openOptions)
+      return true
+    } catch (e: IOException) {
+      logger.warn("failed to write plugin strings to $path", e)
+      return false
+    }
+  }
+
+  @Synchronized
   fun consumeSafe(path: Path, logger: Logger): Set<String> {
     return try {
       val ids = read(path)
