@@ -3,8 +3,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "gradle-java-maven_resources",
-  files = glob(["plugin-resources/**/*"]),
-  strip_prefix = "plugin-resources"
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(

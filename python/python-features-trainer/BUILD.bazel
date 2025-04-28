@@ -63,6 +63,7 @@ jvm_library(
     "//python/python-venv:community-impl-venv_test_lib",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/pluginCore:community-plugin",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )

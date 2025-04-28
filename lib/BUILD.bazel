@@ -2026,16 +2026,16 @@ java_library(
 java_library(
   name = "guava",
   exports = [
-    ":guava-33_4_5-jre_http_import",
+    ":guava-33_4_8-jre_http_import",
     ":failureaccess-1_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "guava-33_4_5-jre_http_import",
-  jar = "@guava-33_4_5-jre_http//file",
-  source_jar = "@guava-33_4_5-jre-sources_http//file"
+  name = "guava-33_4_8-jre_http_import",
+  jar = "@guava-33_4_8-jre_http//file",
+  source_jar = "@guava-33_4_8-jre-sources_http//file"
 )
 
 jvm_import(
@@ -2067,8 +2067,8 @@ jvm_import(
 
 jvm_import(
   name = "hash4j",
-  jar = "@hash4j-0_20_0_http//file",
-  source_jar = "@hash4j-0_20_0-sources_http//file",
+  jar = "@hash4j-0_22_0_http//file",
+  source_jar = "@hash4j-0_22_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
