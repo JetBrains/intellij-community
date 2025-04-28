@@ -20,6 +20,7 @@ import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
+import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -53,11 +54,10 @@ class FindRemoteApiImpl: FindRemoteApi {
       val progressIndicator = EmptyProgressIndicator()
       val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
       val isReplaceState = findModel.isReplaceState
-      var previousResult: FindInProjectResult? = null
+      val previousResultMap: ConcurrentHashMap<String, UsageInfo2UsageAdapter> = ConcurrentHashMap()
       val maxUsages = ShowUsagesAction.getUsagesPageSize()
       val usagesCount = AtomicInteger()
       coroutineScope {
-        var previousItem: UsageInfo2UsageAdapter? = null
         val files = mutableSetOf<String>()
         val scope = FindInProjectUtil.getGlobalSearchScope(project, findModel)
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, emptySet()) { usageInfo ->
@@ -68,25 +68,20 @@ class FindRemoteApiImpl: FindRemoteApi {
           val usagesCountRes = usagesCount.incrementAndGet()
 
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
-          val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem!!)
-
           files.add(adapter.path)
-          if (!merged && previousResult != null) {
-            launch {
-              send(previousResult!!)
-            }
-          }
+          val previousItem: UsageInfo2UsageAdapter? = previousResultMap[adapter.path]
+          val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem)
+          adapter.updateCachedPresentation()
+          previousResultMap[adapter.path] = adapter
 
-          previousItem = adapter
-          previousItem.updateCachedPresentation()
-          val textChunks = previousItem.text.map {
+          val textChunks = adapter.text.map {
             val attributes = createSimpleTextAttributes(it)
             RdTextChunk(it.text, attributes)
           }
           val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
-          val presentablePath = getPresentableFilePath(project, scope, virtualFile) //scope isn't really used in this function
+          val presentablePath = getPresentableFilePath(project, scope, virtualFile)
 
-          previousResult = FindInProjectResult(
+          val result = FindInProjectResult(
             presentation = textChunks,
             line = adapter.line + 1,
             offset = adapter.navigationOffset,
@@ -94,17 +89,20 @@ class FindRemoteApiImpl: FindRemoteApi {
             fileId = virtualFile.rpcId(),
             path = virtualFile.path,
             presentablePath = presentablePath,
+            merged = merged,
+            backgroundColor = bgColor,
             usagesCount = usagesCountRes,
             fileCount = files.size,
-            backgroundColor = bgColor
           )
-          usagesCountRes < maxUsages
+
+          launch {
+            send(result)
+          }
+          usagesCount.get() < maxUsages
         }
       }
-      previousResult?.let { send(it) }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
   }
-
 }
 
   private fun createSimpleTextAttributes(textChunk: @NotNull TextChunk): RdSimpleTextAttributes {

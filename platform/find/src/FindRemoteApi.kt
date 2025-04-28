@@ -63,9 +63,10 @@ data class FindInProjectResult(
   val fileId: VirtualFileId,
   val path: String,
   @param:NlsSafe val presentablePath: String,
+  val merged: Boolean,
+  val backgroundColor: ColorId?,
   val usagesCount: Int,
   val fileCount: Int,
-  val backgroundColor: ColorId?
 )
 
 @Serializable

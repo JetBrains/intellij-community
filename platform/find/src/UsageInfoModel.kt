@@ -16,20 +16,21 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.CompletableFuture
 
 private val LOG = logger<UsageInfoModel>()
-class UsageInfoModel(val project: Project, val model: FindInProjectResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter {
-
+class UsageInfoModel(val project: Project, private val model: FindInProjectResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter {
+  private val mergedUsages = mutableListOf(model)
+  val mergedModel: FindInProjectResult
+    get() = mergedUsages.last()
   override fun isValid(): Boolean = true
 
-  //don't use it, use getMergedUsageInfos() instead
   override fun getMergedInfos(): Array<UsageInfo> {
     return emptyArray()
   }
 
   override fun getMergedInfosAsync(): CompletableFuture<Array<UsageInfo>> {
-    val virtualFile = model.fileId.virtualFile() ?: return CompletableFuture.completedFuture(emptyArray())
+    val virtualFile = mergedModel.fileId.virtualFile() ?: return CompletableFuture.completedFuture(emptyArray())
       val usageInfo = UsageInfo(
         PsiManager.getInstance(project).findFile(virtualFile) ?: return CompletableFuture.completedFuture(emptyArray()),
-        model.offset, model.offset + model.length
+        mergedModel.offset, mergedModel.offset + mergedModel.length
       )
 
     val future = CompletableFuture<Array<UsageInfo>>()
@@ -43,23 +44,23 @@ class UsageInfoModel(val project: Project, val model: FindInProjectResult, val c
   override fun canNavigateToSource(): Boolean = true
 
   override fun navigate(requestFocus: Boolean) {
-    val virtualFile = model.fileId.virtualFile()
+    val virtualFile = mergedModel.fileId.virtualFile()
     if (virtualFile == null) {
-      LOG.error("Cannot find virtual file for ${model.fileId}")
+      LOG.error("Cannot find virtual file for ${mergedModel.fileId}")
       return
     }
-    val openFileDescriptor = if (model.offset != -1)
-      OpenFileDescriptor(project, virtualFile, model.offset)
+    val openFileDescriptor = if (navigationOffset != -1)
+      OpenFileDescriptor(project, virtualFile, navigationOffset)
     else
-      OpenFileDescriptor(project, virtualFile, model.line, 0)
+      OpenFileDescriptor(project, virtualFile, line, 0)
     openFileDescriptor.navigate(requestFocus)
    }
 
-  override fun getPath(): String = model.path
+  override fun getPath(): String = mergedModel.path
 
-  override fun getLine(): Int = model.line
+  override fun getLine(): Int = mergedModel.line
 
-  override fun getNavigationOffset(): Int = model.offset
+  override fun getNavigationOffset(): Int = mergedModel.offset
 
   override fun getPresentation(): UsagePresentation {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -78,10 +79,16 @@ class UsageInfoModel(val project: Project, val model: FindInProjectResult, val c
   }
 
   override fun merge(mergeableUsage: MergeableUsage): Boolean {
+    if (mergeableUsage !is UsageInfoModel) return false
+    if (mergeableUsage.mergedModel.merged) {
+      mergedUsages.add(mergeableUsage.mergedModel)
+      return true
+    }
     return false
   }
 
   override fun reset() {
-    TODO("Not yet implemented")
+    mergedUsages.clear()
+    mergedUsages.add(model)
   }
 }

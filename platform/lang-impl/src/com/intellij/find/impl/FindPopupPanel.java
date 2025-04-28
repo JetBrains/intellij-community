@@ -60,7 +60,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.AnimatedIcon;
@@ -105,6 +104,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -1161,7 +1161,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
         ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
-        ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
+        ConcurrentHashMap<String, Reference<FindPopupItem>> fileToRecentItemRef = new ConcurrentHashMap<>();
 
         projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, filesToScanInitially, (usage, usageCount, fileCount)-> {
           if (isCancelled()) {
@@ -1193,8 +1193,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
           else if (fileCount > resultsFilesCount.get()) {
             resultsFilesCount.set(fileCount);
           }
-
-          FindPopupItem recentItem = SoftReference.dereference(recentItemRef.get());
+          FindPopupItem recentItem = SoftReference.dereference(fileToRecentItemRef.get(usage.getPath()));
           FindPopupItem newItem;
           boolean merged = !myHelper.isReplaceState() && recentItem != null && recentItem.getUsage().merge(usage);
           if (!merged) {
@@ -1214,7 +1213,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             UsagePresentation recentUsagePresentation = UsagePresentationProvider.Companion.getPresentation(recentItemUsage, project, scope);
             newItem = recentItem.withPresentation(recentUsagePresentation);
           }
-          recentItemRef.set(new WeakReference<>(newItem));
+          fileToRecentItemRef.put(usage.getPath(), new WeakReference<>(newItem));
 
           ApplicationManager.getApplication().invokeLater(() -> {
             if (isCancelled()) {
@@ -1227,7 +1226,13 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
               model.addRow(new Object[]{newItem});
             }
             else {
-              model.fireTableRowsUpdated(model.getRowCount() - 1, model.getRowCount() - 1);
+              for (int rowNum = 0; rowNum < model.getRowCount(); rowNum++) {
+                if (model.getValueAt(rowNum, 0) == recentItem) {
+                  model.setValueAt(newItem, rowNum, 0);
+                  model.fireTableRowsUpdated(rowNum, rowNum);
+                  break;
+                }
+              }
             }
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1) {
