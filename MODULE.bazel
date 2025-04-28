@@ -1,7 +1,7 @@
 module(name = "community")
 
-bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.6")
-bazel_dep(name = "rules_java", version = "8.8.0")
+bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.14")
+bazel_dep(name = "rules_java", version = "8.11.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
 
 bazel_dep(name = "lib")
