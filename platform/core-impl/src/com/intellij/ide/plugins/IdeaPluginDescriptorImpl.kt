@@ -298,27 +298,6 @@ class IdeaPluginDescriptorImpl private constructor(
     return result
   }
 
-  fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
-    assert(type == Type.PluginMainDescriptor)
-    if (context.isPluginDisabled(id)) {
-      return onInitError(PluginIsMarkedDisabled(this))
-    }
-    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
-      return it
-    }
-    for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
-      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
-        return onInitError(PluginDependencyIsDisabled(this, dependency.pluginId, false))
-      }
-    }
-    for (pluginDependency in moduleDependencies.plugins) {
-      if (context.isPluginDisabled(pluginDependency.id)) {
-        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
-      }
-    }
-    return null
-  }
-
   internal fun loadPluginDependencyDescriptors(loadingContext: PluginDescriptorLoadingContext, pathResolver: PathResolver, dataLoader: DataLoader): Unit =
     loadPluginDependencyDescriptors(loadingContext, pathResolver, dataLoader, ArrayList(3))
 
@@ -375,9 +354,25 @@ class IdeaPluginDescriptorImpl private constructor(
     }
   }
 
-  private fun onInitError(error: PluginNonLoadReason): PluginNonLoadReason {
-    isMarkedForLoading = false
-    return error
+  fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
+    assert(type == Type.PluginMainDescriptor)
+    if (context.isPluginDisabled(id)) {
+      return onInitError(PluginIsMarkedDisabled(this))
+    }
+    checkCompatibility(context::productBuildNumber, context::isPluginBroken)?.let {
+      return it
+    }
+    for (dependency in pluginDependencies) { // FIXME: likely we actually have to recursively traverse these after they are resolved
+      if (context.isPluginDisabled(dependency.pluginId) && !dependency.isOptional) {
+        return onInitError(PluginDependencyIsDisabled(this, dependency.pluginId, false))
+      }
+    }
+    for (pluginDependency in moduleDependencies.plugins) {
+      if (context.isPluginDisabled(pluginDependency.id)) {
+        return onInitError(PluginDependencyIsDisabled(this, pluginDependency.id, false))
+      }
+    }
+    return null
   }
 
   private fun checkCompatibility(getBuildNumber: () -> BuildNumber, isPluginBroken: (PluginId, version: String?) -> Boolean): PluginNonLoadReason? {
@@ -404,6 +399,11 @@ class IdeaPluginDescriptorImpl private constructor(
       return onInitError(PluginIsMarkedBroken(this))
     }
     return null
+  }
+
+  private fun onInitError(error: PluginNonLoadReason): PluginNonLoadReason {
+    isMarkedForLoading = false
+    return error
   }
 
   @ApiStatus.Internal
