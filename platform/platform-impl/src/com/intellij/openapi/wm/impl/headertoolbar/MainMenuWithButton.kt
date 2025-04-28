@@ -27,7 +27,7 @@ import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.*
-import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 import kotlin.math.roundToInt
 
 private val LOG = Logger.getInstance(MainMenuWithButton::class.java)
@@ -135,7 +135,7 @@ class MainMenuWithButton(
 
   private fun supportKeyNavigationToFullMenu() {
     val selectionManager = MenuSelectionManager.defaultManager()
-    val listener: (ChangeEvent) -> Unit = {
+    val listener = ChangeListener {
       val path = selectionManager.selectedPath
       if (path.size > 0 && path[0] === toolbarMainMenu) {
         val map = frame.rootPane.actionMap
