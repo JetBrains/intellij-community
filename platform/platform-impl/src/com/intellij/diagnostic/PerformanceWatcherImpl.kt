@@ -89,7 +89,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
   init {
     if (isActive) {
-      coroutineScope.launch(CoroutineName("EDT freeze reporter")) {
+      LOG.debug("Freeze detection started")
+      coroutineScope.launch(CoroutineName("EDT freeze detector")) {
         asyncInit()
 
         taskFlow.collectLatest { task ->
@@ -116,16 +117,22 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       return
     }
 
+    LOG.debug("EDT sampling started")
     coroutineScope.launch(CoroutineName("EDT sampling")) {
-      val samplingIntervalMs = samplingInterval
-      @Suppress("KotlinConstantConditions")
-      if (samplingIntervalMs <= 0) {
-        return@launch
-      }
+      try {
+        val samplingIntervalMs = samplingInterval
+        @Suppress("KotlinConstantConditions")
+        if (samplingIntervalMs <= 0) {
+          return@launch
+        }
 
-      while (true) {
-        delay(samplingIntervalMs)
-        samplePerformance(samplingIntervalMs)
+        while (true) {
+          delay(samplingIntervalMs)
+          samplePerformance(samplingIntervalMs)
+        }
+      }
+      finally {
+        LOG.debug("EDT sampling stopped")
       }
     }
   }
@@ -200,7 +207,9 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       diffMs -= samplingIntervalMs
     }
     jitWatcher.checkJitState()
+    LOG.trace("Scheduling EDT sample")
     val latencyMs = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      LOG.trace("Processing EDT sample")
       TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current)
     }
     swingApdex = swingApdex.withEvent(TOLERABLE_LATENCY, latencyMs)
