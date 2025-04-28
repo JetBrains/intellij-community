@@ -67,7 +67,7 @@ suspend fun saveBundledPluginsState() {
 fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path = PathManager.getConfigDir()) {
   PluginStringSetFile.write(
     path = configDir.resolve(BUNDLED_PLUGINS_FILENAME),
-    strings = pluginIds.map { "${it.pluginId.idString}|${it.category}\n" }.toSet(), // FIXME whyyyyyyy
+    strings = pluginIds.mapTo(HashSet()) { "${it.pluginId.idString}|${it.category}" },
   )
 }
 
