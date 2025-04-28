@@ -29,7 +29,7 @@
       version: 2.1.20
     # other libs
     - id: com.dynatrace.hash4j:hash4j
-      version: 0.21.0
+      version: 0.22.0
     - id: com.fasterxml.jackson.core:jackson-core
       version: 2.17.0
     - id: com.fasterxml.jackson.core:jackson-annotations
@@ -101,7 +101,7 @@
     - id: io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi
       version: 1.49.0
     - id: io.opentelemetry.semconv:opentelemetry-semconv
-      version: 1.30.0
+      version: 1.32.0
       # OpenTelemetry Exporters
     - id: io.opentelemetry:opentelemetry-exporter-logging-otlp
       version: 1.49.0
@@ -134,7 +134,7 @@
     - id: com.intellij.platform:kotlinx-coroutines-core-jvm
       version: 1.10.1-intellij-4
     - id: jetbrains.fleet:expects-compiler-plugin
-      version: 2.1.20-0.1
+      version: 2.1.20-0.2
     - id: org.jetbrains.intellij.deps:asm-all
       version: 9.6.1
     - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil

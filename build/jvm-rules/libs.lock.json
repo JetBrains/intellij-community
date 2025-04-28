@@ -3,9 +3,9 @@
     "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341",
     "bcc6197ec5fb349e86ae3ba6c94b164d3a9ac5a03d9f9c235d7c4eb24e5878b3"
   ],
-  "com.dynatrace.hash4j:hash4j:0.21.0": [
-    "77290461b41542171cc8d1e1a33b54c98358e3124fdbd49bd2222555df1281f3",
-    "c6c18138cd9754fbc75c59e79e44b26d0afd721fd90b4701d5b46efa459288bc"
+  "com.dynatrace.hash4j:hash4j:0.22.0": [
+    "23028a3fd006e530bf495f551083208187cafd8f80624d048eba56442f16a50e",
+    "eae47daa9a783fdb4e811e03d62f841ad2272ba08e2df972da4bca95cdac8847"
   ],
   "com.fasterxml.jackson.core:jackson-annotations:2.17.2": [
     "873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1",
@@ -51,9 +51,9 @@
     "52370b6c131f536b60c9b1e643e9a9b6e7ffecf787d5d3453b1689afbd894886",
     "49c34b8bb551c0df48342dea94429568b1be4b65fd35f7d28bdef043fa08540f"
   ],
-  "io.opentelemetry.semconv:opentelemetry-semconv:1.30.0": [
-    "99c2478a9b803b7d385d1624d5c1ab6f9a64cac5a2dc00f44a350744a1d858ac",
-    "96bf3ea26a26276d3d877782a0f5c00f7b4d133cea409d08f04b31bbc38ec872"
+  "io.opentelemetry.semconv:opentelemetry-semconv:1.32.0": [
+    "d55c19372d3af757136de763514c0a1a0d80cea0eb185afc4751081a28c42ba0",
+    "bf46ed1a8210c3d90f33e88b49fed158d69897cc48a3005d3bd418ea576ec8d4"
   ],
   "io.opentelemetry:opentelemetry-api:1.49.0": [
     "a813c9a92b82a4ffa3a62e88216a9e9ef9a407fcd41614fe596b2895167ed638",
@@ -107,9 +107,9 @@
     "d6fdaf0f04724d5c9362db2f809fd21f36e95c9c039d22fe695692d606107bff",
     "dd827c172d20f046d5bf6a9df772290b0eaafb59589b6b98fd742c6bc78c2d37"
   ],
-  "jetbrains.fleet:expects-compiler-plugin:2.1.20-0.1": [
-    "577642d0d6dbfa29305a97421c95157dcc62183044d312666979c3888dc43ec7",
-    "8a6573bf3f41894a7011d3394402e658d35e6a6962994642c06dcdd59257fd05"
+  "jetbrains.fleet:expects-compiler-plugin:2.1.20-0.2": [
+    "53f345b9ec17aa821e8e4acce59b6584f55a2193f5c48dcea9ffc41eaac4add4",
+    "a9125f58235ac48fbc657210b43eb2a8a80d2c6cc9538219764d5d64a852c49f"
   ],
   "org.apache.arrow:arrow-format:18.2.0": [
     "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
