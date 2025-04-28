@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGr
 import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -1272,8 +1273,13 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
 internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = EmptyCoroutineContext,
                                                    noinline block: suspend CoroutineScope.() -> R): R = prepareThreadContext { ctx ->
   try {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking(ctx + context + Context.current().asContextElement(), block)
+    // read actions inside this `runBlocking` would be stuck if there is a pending background write action.
+    // here we enter a new parallelization layer for the acquired write-intent lock so that inner read actions would ignore the pending background wa.
+    val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, true)
+    cleanup.use {
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking(ctx + context + lockContextElement + Context.current().asContextElement(), block)
+    }
   }
   catch (pce : ProcessCanceledException) {
     throw pce
