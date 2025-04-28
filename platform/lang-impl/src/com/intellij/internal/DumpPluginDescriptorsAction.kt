@@ -82,7 +82,7 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
           ClassLoader.getPlatformClassLoader() -> "java.PlatformClassLoader"
           coreClassLoader -> "ij.CoreClassLoader"
           else -> "${classLoader.javaClass.simpleName}[${nonPluginClassLoaders[classLoader]}]"
-        }
+        } + " @${Integer.toHexString(System.identityHashCode(classLoader))}" // errors reported by the JVM don't use classloader's `toString`, but instead only put the address tag
       }
       
       val printedClassLoaders = HashSet<ClassLoader>()
