@@ -7,8 +7,6 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
@@ -17,8 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.terminal.block.feedback.showReworkedTerminalFeedbackNotification
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -82,31 +78,18 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     }
   }
 
-  @ApiStatus.Internal
-  fun switchTerminalEngine(terminalEngine: TerminalEngine, project: Project) {
-    if (state.terminalEngine != terminalEngine) {
-      if (state.terminalEngine == TerminalEngine.REWORKED) {
-        showReworkedTerminalFeedbackNotification(project)
-      }
-      state.terminalEngine = terminalEngine
-      fireSettingsChanged()
-    }
-  }
-
-  @TestOnly
-  fun setTerminalEngineForTest(engine: TerminalEngine, parentDisposable: Disposable) {
-    val prevValue = state.terminalEngine
-    state.terminalEngine = engine
-    Disposer.register(parentDisposable) {
-      state.terminalEngine = prevValue
-    }
-  }
-
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
 
   @get:ApiStatus.Internal
-  val terminalEngine: TerminalEngine
+  @set:ApiStatus.Internal
+  var terminalEngine: TerminalEngine
     get() = state.terminalEngine
+    set(value) {
+      if (state.terminalEngine != value) {
+        state.terminalEngine = value
+        fireSettingsChanged()
+      }
+    }
 
   @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
   var shellPath: String?

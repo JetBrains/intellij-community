@@ -81,10 +81,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           terminalEngineComboBox = comboBox(values, renderer)
             .label(message("settings.terminal.engine"))
-            .bindItem(
-              getter = { TerminalOptionsProvider.instance.terminalEngine },
-              setter = { TerminalOptionsProvider.instance.switchTerminalEngine(it!!, project) },
-            )
+            .bindItem(optionsProvider::terminalEngine.toNullableProperty())
             .component
         }
         indent {
