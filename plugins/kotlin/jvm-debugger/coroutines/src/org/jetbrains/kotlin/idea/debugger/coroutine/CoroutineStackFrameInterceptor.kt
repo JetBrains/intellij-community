@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackFrameLight
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
@@ -49,16 +48,15 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
         val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
 
-        val (isSuspendFrame, isFirst) = CoroutineFrameBuilder.isFirstSuspendFrame(frame)
-        if (!isSuspendFrame) {
-            return null
-        }
+        val isSuspendFrame = extractContinuation(frame) != null
 
-        if (!isFirst) {
+        if (!isSuspendFrame) return null
+
+        // only get the information for the first suspend frame
+        if (anySuspendFramesBefore(frame)) {
             return emptyList() // skip
         }
 
-        // only get the information for the first suspend frame
         val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
         if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
@@ -70,6 +68,12 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
         val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContext, withPreFrames = false)
         return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+    }
+
+    private fun anySuspendFramesBefore(frame: StackFrameProxyImpl): Boolean {
+        val frames = frame.threadProxy().frames()
+        val frameIndex = frames.indexOf(frame)
+        return frames.subList(0, frameIndex).any { extractContinuation(it) != null  }
     }
 
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {

@@ -124,15 +124,6 @@ class CoroutineFrameBuilder {
             suspendContext: SuspendContextImpl
         ): CoroutinePreflightFrame? = lookupContinuation(suspendContext, frame)
 
-        // Fast check to get the whole coroutine information only for the first suspend frame
-        internal fun isFirstSuspendFrame(frame: StackFrameProxyImpl): Pair<Boolean, Boolean> {
-            if (extractContinuation(frame) == null) {
-                return Pair(false, false)
-            }
-
-            return Pair(true, theFollowingFrames(frame).second)
-        }
-
         @ApiStatus.Internal
         @VisibleForTesting
         fun lookupContinuation(suspendContext: SuspendContextImpl, frame: StackFrameProxyImpl): CoroutinePreflightFrame? {
@@ -142,7 +133,7 @@ class CoroutineFrameBuilder {
 
             val continuation = extractContinuation(frame) ?: return null
             if (!threadAndContextSupportsEvaluation(suspendContext, frame)) return null
-            val (theFollowingFrames, _) = theFollowingFrames(frame)
+            val theFollowingFrames = theFollowingFrames(frame)
             val context = DefaultExecutionContext(suspendContext, frame)
             val coroutineStacksInfo = fetchCoroutineStacksInfoData(context, continuation) ?: return null
             return CoroutinePreflightFrame(
@@ -153,39 +144,22 @@ class CoroutineFrameBuilder {
             )
         }
 
-        private fun theFollowingFrames(frame: StackFrameProxyImpl): Pair<List<StackFrameProxyImpl>, Boolean> {
+        private fun theFollowingFrames(frame: StackFrameProxyImpl): List<StackFrameProxyImpl> {
             val frames = frame.threadProxy().frames()
             val indexOfCurrentFrame = frames.indexOf(frame)
             if (indexOfCurrentFrame < 0) {
                 log.error("Frame isn't found on the thread stack.")
-                return Pair(emptyList(), true)
+                return emptyList()
             }
             val indexOfGetCoroutineSuspended = hasGetCoroutineSuspended(frames)
             // @TODO if found - skip this thread stack
             if (indexOfGetCoroutineSuspended < 0 && frames.size > indexOfCurrentFrame + 1) {
-                return Pair(
-                    frames.asSequence()
-                        .drop(indexOfCurrentFrame + 1)
-                        .dropWhile { it.getSuspendExitMode() != SuspendExitMode.NONE }
-                        .toList(),
-                    isFirstSuspendFrame(indexOfCurrentFrame, frames)
-                )
+                return frames.asSequence()
+                    .drop(indexOfCurrentFrame + 1)
+                    .dropWhile { it.getSuspendExitMode() != SuspendExitMode.NONE }
+                    .toList()
             }
-            return Pair(emptyList(), true)
-        }
-
-        private fun isFirstSuspendFrame(frameIndex: Int, frames: List<StackFrameProxyImpl>): Boolean {
-            var index = frameIndex
-            while (index > 0) {
-                val frame = frames[--index]
-                if (frame.getSuspendExitMode() == SuspendExitMode.NONE) { // found first non-suspend frame
-                    return true
-                }
-                if (extractContinuation(frame) != null) { // skip only if the suspend frame is with continuation
-                    return false
-                }
-            }
-            return true
+            return emptyList()
         }
     }
 }
