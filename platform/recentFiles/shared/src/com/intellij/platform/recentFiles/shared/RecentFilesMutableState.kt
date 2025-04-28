@@ -37,7 +37,7 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
     }
   }
 
-  suspend fun applyChangesFromBackendToModel(change: RecentFilesEvent, targetFilesKind: RecentFileKind) {
+  suspend fun applyChangesToModel(change: RecentFilesEvent, targetFilesKind: RecentFileKind) {
     val targetModel = chooseStateToWriteTo(targetFilesKind)
     when (change) {
       is RecentFilesEvent.ItemsAdded -> {

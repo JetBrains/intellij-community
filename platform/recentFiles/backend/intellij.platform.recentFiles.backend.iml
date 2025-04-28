@@ -52,5 +52,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

@@ -11,6 +11,8 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.recentFiles.frontend.*
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
+import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
+import com.intellij.platform.recentFiles.shared.createFilesUpdateRequest
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -82,7 +84,7 @@ class FrontendRecentFilesModel(private val project: Project) {
     LOG.debug("Started collecting recent files updates for kind: $targetFilesKind")
     FileSwitcherApi.getInstance()
       .getRecentFileEvents(targetFilesKind, project.projectId())
-      .collect { update -> modelState.applyChangesFromBackendToModel(update, targetFilesKind) }
+      .collect { update -> modelState.applyChangesToModel(update, targetFilesKind) }
   }
 
   companion object {
