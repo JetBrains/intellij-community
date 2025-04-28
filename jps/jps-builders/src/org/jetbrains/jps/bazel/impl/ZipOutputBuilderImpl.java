@@ -1,13 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel.impl;
 
+import org.h2.mvstore.MVMap;
+import org.h2.mvstore.MVStore;
+import org.h2.mvstore.OffHeapStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.bazel.ZipOutputBuilder;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -24,11 +29,20 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final ZipFile myZipFile;
   @NotNull
   private final Path myOutputZip;
+  private final MVStore myDataSwapStore;
+  private final MVMap<String, byte[]> mySwap;
   private boolean myHasChanges;
 
   public ZipOutputBuilderImpl(Path outputZip) throws IOException {
-    myZipFile = new ZipFile(outputZip.toFile());
     myOutputZip = outputZip;
+    myDataSwapStore = new MVStore.Builder()
+      .fileStore(new OffHeapStore())
+      .autoCommitDisabled()
+      .cacheSize(8)
+      .open();
+    myDataSwapStore.setVersionsToKeep(0);
+    mySwap = myDataSwapStore.openMap("data-swap");
+    myZipFile = new ZipFile(outputZip.toFile());
     Enumeration<? extends ZipEntry> entries = myZipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = entries.nextElement();
@@ -67,13 +81,15 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     if (isDirectoryName(entryName)) {
       throw new RuntimeException("Unexpected name with trailing slash for ZIP entry with content: \"" + entryName + "\"");
     }
-    myEntries.put(entryName, EntryData.create(entryName, content));
+    myEntries.put(entryName, EntryData.create(mySwap, entryName, content));
     myHasChanges = true;
   }
 
   @Override
   public void deleteEntry(String entryName) {
-    if (myEntries.remove(entryName) != null) {
+    EntryData data = myEntries.remove(entryName);
+    if (data != null) {
+      data.cleanup();
       myHasChanges = true;
     }
   }
@@ -104,6 +120,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       }
       finally {
         myZipFile.close();
+        myDataSwapStore.close();
         Files.move(newOutputName, myOutputZip, StandardCopyOption.REPLACE_EXISTING);
       }
     }
@@ -149,6 +166,9 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         os.write(data);
       }
     }
+
+    default void cleanup() {
+    }
     
     static EntryData create(String entryName, byte[] content) {
       return new EntryData() {
@@ -161,6 +181,29 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         @Override
         public ZipEntry getZipEntry() {
           return entry != null? entry : (entry = new ZipEntry(entryName));
+        }
+      };
+    }
+
+    static EntryData create(Map<String, byte[]> swap, String entryName, byte[] content) {
+      swap.put(entryName, content);
+      return new CachingDataEntry(content) {
+        private ZipEntry entry;
+        @Override
+        protected byte[] loadData() {
+          return swap.get(entryName);
+        }
+
+        @Override
+        public ZipEntry getZipEntry() {
+          return entry != null? entry : (entry = new ZipEntry(entryName));
+        }
+
+        @Override
+        public void cleanup() {
+          super.cleanup();
+          entry = null;
+          swap.remove(entryName);
         }
       };
     }
@@ -179,22 +222,23 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           }
         };
       }
-      return new EntryData() {
-        private byte[] loaded;
+      return new CachingDataEntry(null) {
         @Override
-        public byte[] getContent() throws IOException {
-          if (loaded == null) {
-            try (InputStream is = zip.getInputStream(entry)) {
-              loaded = is.readAllBytes();
-            }
+        protected byte[] loadData() throws IOException {
+          try (InputStream is = zip.getInputStream(entry)) {
+            return is.readAllBytes();
           }
-          return loaded;
         }
 
         @Override
         public void transferTo(OutputStream os) throws IOException {
-          // todo: here can be an optimized implementation to directly copy existing deflated content avoiding inflate/deflate procedures
-          EntryData.super.transferTo(os);
+          byte[] data = getCached();
+          if (data != null) {
+            os.write(data);
+          }
+          else {
+            StreamAccessor.unwrapInputStream(zip.getInputStream(entry)).transferTo(StreamAccessor.unwrapOutputStream(os));
+          }
         }
 
         @Override
@@ -202,6 +246,80 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           return entry;
         }
       };
+    }
+
+  }
+
+  private static abstract class CachingDataEntry implements EntryData {
+    private WeakReference<byte[]> myCached;
+
+    CachingDataEntry(byte[] data) {
+      cacheData(data);
+    }
+
+    protected abstract byte[] loadData() throws IOException;
+
+    private byte[] cacheData(byte[] data) {
+      myCached = data != null? new WeakReference<>(data) : null;
+      return data;
+    }
+
+    @Override
+    public final byte[] getContent() throws IOException {
+      byte[] data = getCached();
+      return data != null? data : cacheData(loadData());
+    }
+
+    protected final byte @Nullable [] getCached() {
+      return myCached != null? myCached.get() : null;
+    }
+
+    @Override
+    public void cleanup() {
+      myCached = null;
+    }
+  }
+
+  private static final class StreamAccessor {
+    private static final MethodHandle outFieldAccessor;
+    private static final MethodHandle inFieldAccessor;
+
+    static {
+      outFieldAccessor = getMethodHandle(FilterOutputStream.class, "out");
+      inFieldAccessor = getMethodHandle(FilterInputStream.class, "in");
+    }
+
+    private static MethodHandle getMethodHandle(Class<?> aClass, String fieldName) {
+      try {
+        Field outField = aClass.getDeclaredField(fieldName);
+        outField.setAccessible(true);
+        return MethodHandles.lookup().unreflectGetter(outField);
+      }
+      catch (Throwable e) {
+        return null;
+      }
+    }
+
+    static InputStream unwrapInputStream(InputStream is) {
+      //if (inFieldAccessor != null && is instanceof FilterInputStream) {
+      //  try {
+      //    return (InputStream) inFieldAccessor.invoke(is);
+      //  }
+      //  catch (Throwable ignored) {
+      //  }
+      //}
+      return is;
+    }
+
+    static OutputStream unwrapOutputStream(OutputStream os) {
+      //if (outFieldAccessor != null && os instanceof ZipOutputStream) {
+      //  try {
+      //    return (OutputStream) outFieldAccessor.invoke(os);
+      //  }
+      //  catch (Throwable ignored) {
+      //  }
+      //}
+      return os;
     }
   }
 
