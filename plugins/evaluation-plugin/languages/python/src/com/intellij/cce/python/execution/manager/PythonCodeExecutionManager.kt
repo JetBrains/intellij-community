@@ -56,14 +56,22 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
   protected fun constructScriptFiles(basePath: String, setupCommands: List<String>) {
     // Create a setup script with provided commands for test environment initialization
     val setupFile = Path.of("$basePath/setup_tests.sh")
-    var content = javaClass.getResourceAsStream("/scriptFiles/setup_tests.sh")!!.bufferedReader().readText()
-      .replace("\$SETUP_COMMANDS", setupCommands.joinToString("\n"))
-    setupFile.writeText(content)
-
-    // Create a run script for test execution
     val runFile = Path.of("$basePath/run_tests.sh")
-    content = javaClass.getResourceAsStream("/scriptFiles/run_tests.sh")!!.bufferedReader().readText()
-    runFile.writeText(content)
+
+    setupFile.writeText(buildString {
+      appendLine("#!/bin/bash")
+      appendLine("if [ -d ./venv ]; then rm -rf ./venv ; fi")
+      appendLine("PYTHON_ENV=\${PYTHON:-\"python3\"}")
+      appendLine("\"\$PYTHON_ENV\" -m venv ./venv")
+      appendLine("source \"./venv/bin/activate\"")
+      setupCommands.forEach { appendLine(it) }
+    })
+
+    runFile.writeText(buildString {
+      appendLine("#!/bin/bash")
+      appendLine("source \"./venv/bin/activate\"")
+      appendLine("PYTHONPATH=. pytest -v \"\$1.py\" --rootdir=. --junit-xml=\$1-junit --cov=\"\$2\" --cov-branch --cov-report json:\$1-coverage")
+    })
   }
 
   private fun extractCodeDirectory(code: String): String? {
@@ -151,5 +159,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog(output, error, exitCode)
   }
 
-  override fun removeEnvironment() {}
+  override fun removeEnvironment(project: Project) {
+    // TODO Remove files for scripts
+  }
 }
