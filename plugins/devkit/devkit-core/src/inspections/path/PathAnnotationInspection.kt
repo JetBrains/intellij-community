@@ -858,7 +858,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
    * Quick fix to add @LocalPath annotation.
    */
   private class AddLocalPathAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = "Add @LocalPath annotation"
+    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.localpath.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
@@ -892,7 +892,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
    * Quick fix to add @Filename annotation.
    */
   private class AddFilenameAnnotationFix() : LocalQuickFix {
-    override fun getFamilyName(): String = "Add @Filename annotation"
+    override fun getFamilyName(): String = DevKitBundle.message("inspections.intention.family.name.add.filename.annotation")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val element = descriptor.psiElement
