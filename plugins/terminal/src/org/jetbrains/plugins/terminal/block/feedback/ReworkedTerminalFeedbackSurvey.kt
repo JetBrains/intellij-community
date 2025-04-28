@@ -88,6 +88,6 @@ internal class ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterNotificationShowed(project: Project) {
-    TerminalUsageLocalStorage.getInstance().state.feedbackNotificationShown = true
+    TerminalUsageLocalStorage.getInstance().recordFeedbackNotificationShown()
   }
 }
