@@ -38,6 +38,9 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
 
 @ApiStatus.Internal
 public class XBreakpointVisualRepresentation {
@@ -47,16 +50,20 @@ public class XBreakpointVisualRepresentation {
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
   private final Project myProject;
   private final Consumer<Runnable> myQueueBreakpointUpdateCallback;
+  private final boolean myIsEnabled;
 
   private @Nullable RangeMarker myRangeMarker;
 
-  XBreakpointVisualRepresentation(
+  @ApiStatus.Internal
+  public XBreakpointVisualRepresentation(
     XLineBreakpointProxy xBreakpoint,
+    boolean isEnabled,
     Consumer<Runnable> queueBreakpointUpdateCallback
   ) {
     myBreakpoint = xBreakpoint;
     myProject = xBreakpoint.getProject();
     myQueueBreakpointUpdateCallback = queueBreakpointUpdateCallback;
+    myIsEnabled = isEnabled;
   }
 
   public @Nullable RangeMarker getRangeMarker() {
@@ -67,16 +74,21 @@ public class XBreakpointVisualRepresentation {
     return myRangeMarker instanceof RangeHighlighter ? (RangeHighlighter)myRangeMarker : null;
   }
 
-  void updateUI() {
+  @ApiStatus.Internal
+  public void updateUI() {
     myQueueBreakpointUpdateCallback.accept(() -> {
       doUpdateUI(() -> {
       });
     });
   }
 
+  @ApiStatus.Internal
   @RequiresBackgroundThread
-  void doUpdateUI(@NotNull Runnable callOnUpdate) {
+  public void doUpdateUI(@NotNull Runnable callOnUpdate) {
     if (myBreakpoint.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+    if (!myIsEnabled) {
       return;
     }
 
@@ -230,7 +242,8 @@ public class XBreakpointVisualRepresentation {
       });
   }
 
-  protected @NotNull GutterDraggableObject createBreakpointDraggableObject() {
+  @ApiStatus.Internal
+  public @NotNull GutterDraggableObject createBreakpointDraggableObject() {
     return new GutterDraggableObject() {
       @Override
       public boolean copy(int line, VirtualFile file, int actionId) {

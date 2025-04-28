@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.Objects;
 
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
 
 @ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState>
@@ -40,7 +41,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this), (callback) -> {
+    myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this), !useFeLineBreakpointProxy(), (callback) -> {
       getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdateCallback(this, callback);
     });
   }

@@ -7,12 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -23,8 +26,29 @@ internal class FrontendXLineBreakpointProxy(
   override val type: XLineBreakpointTypeProxy,
   onBreakpointChange: () -> Unit,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
+
+  private val visualRepresentation = XBreakpointVisualRepresentation(
+    this,
+    useFeLineBreakpointProxy(),
+  ) { callback ->
+    FrontendXLineBreakpointUpdatesManager.getInstance(project).queueBreakpointUpdate(this@FrontendXLineBreakpointProxy) {
+      callback.run()
+    }
+  }
+
   private val lineBreakpointInfo: XLineBreakpointInfo
     get() = _state.value.lineBreakpointInfo!!
+
+  init {
+    cs.launch(Dispatchers.Default) {
+      visualRepresentation.updateUI()
+    }
+  }
+
+  override fun onBreakpointChange() {
+    super.onBreakpointChange()
+    visualRepresentation.updateUI()
+  }
 
   override fun isTemporary(): Boolean {
     return lineBreakpointInfo.isTemporary
@@ -67,7 +91,9 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun doUpdateUI(callOnUpdate: () -> Unit) {
-    // TODO IJPL-185322 implement do update UI through XBreakpointVisualRepresentation
+    if (useFeLineBreakpointProxy()) {
+      visualRepresentation.doUpdateUI(callOnUpdate)
+    }
   }
 
   private fun updateLineBreakpointState(update: (XLineBreakpointInfo) -> XLineBreakpointInfo) {
@@ -75,7 +101,6 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun createBreakpointDraggableObject(): GutterDraggableObject? {
-    // TODO IJPL-185322 implement createBreakpointDraggableObject
-    return null
+    return visualRepresentation.createBreakpointDraggableObject()
   }
 }

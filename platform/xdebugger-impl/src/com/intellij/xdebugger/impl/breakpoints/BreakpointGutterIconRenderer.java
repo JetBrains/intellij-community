@@ -12,15 +12,18 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
+@ApiStatus.Internal
+public final class BreakpointGutterIconRenderer extends CommonBreakpointGutterIconRenderer implements DumbAware {
   private final XBreakpointProxy myBreakpoint;
 
-  BreakpointGutterIconRenderer(XBreakpointProxy breakpoint) { myBreakpoint = breakpoint; }
+  @ApiStatus.Internal
+  public BreakpointGutterIconRenderer(XBreakpointProxy breakpoint) { myBreakpoint = breakpoint; }
 
   @Override
   public @NotNull Icon getIcon() {

@@ -14,6 +14,7 @@ import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconRenderer
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase.calculateIcon
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
@@ -49,11 +50,11 @@ internal open class FrontendXBreakpointProxy(
   parentCs: CoroutineScope,
   private val dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  protected val onBreakpointChange: () -> Unit,
+  private val _onBreakpointChange: () -> Unit,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
 
-  private val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
+  protected val cs = parentCs.childScope("FrontendXBreakpointProxy#$id")
 
   protected val _state: MutableStateFlow<XBreakpointDtoState> = MutableStateFlow(dto.initialState)
 
@@ -66,6 +67,10 @@ internal open class FrontendXBreakpointProxy(
         onBreakpointChange()
       }
     }
+  }
+
+  protected open fun onBreakpointChange() {
+    _onBreakpointChange()
   }
 
   private fun createFrontendEditorsProvider(): FrontendXDebuggerEditorsProvider? {
@@ -262,8 +267,7 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {
-    // TODO IJPL-185322 implement create gutter icon renderer
-    return null
+    return BreakpointGutterIconRenderer(this)
   }
 
   override fun getGutterIconRenderer(): GutterIconRenderer? {
