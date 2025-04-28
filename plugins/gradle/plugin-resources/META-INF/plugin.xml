@@ -230,8 +230,8 @@
                  description="Send progress information like files download during project import to `Build Output`"/>
     <registryKey key="gradle.daemon.opentelemetry.agent.enabled" defaultValue="false"
                  description="Enable performance trace collection in the Gradle daemon collected by OTLP java agent"/>
-    <registryKey key="gradle.daemon.experimental.dependency.resolver" defaultValue="false"
-                 description="Use ArtifactView to resolve Javadoc/Sources"/>
+    <registryKey key="gradle.daemon.legacy.dependency.resolver" defaultValue="false"
+                 description="Use ArtifactResolutionQuery instead of ArtifactView to resolve Javadoc/Sources"/>
     <registryKey key="gradle.sync.use.eel.for.wsl" defaultValue="true" description="Use EEL API for WSL projects"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>

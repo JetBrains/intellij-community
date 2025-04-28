@@ -616,8 +616,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         executionSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
     }
-    if (Registry.is("gradle.daemon.experimental.dependency.resolver", false)) {
-      executionSettings.withArgument("-Didea.experimental.gradle.dependency.resolver=true");
+    if (Registry.is("gradle.daemon.legacy.dependency.resolver", false)) {
+      executionSettings.withArgument("-Didea.gradle.daemon.legacy.dependency.resolver=true");
     }
 
     GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();

@@ -22,21 +22,21 @@ import java.io.File;
 import java.util.*;
 
 /**
- * Can be used only since Gradle 7.3.
+ * Can be used only since Gradle 7.5 because the `withVariantReselection` method is mandatory.
  * Does not support ivy repositories and multi-artifact mapping when a few different Sources/Javadoc are available for a single library.
  * Relies on ArtifactView, as a result, if a library does not declare Sources/Javadoc in Gradle Module Metadata, the artifact will not be
  * picked up by ArtifactView.
  */
 @ApiStatus.Internal
-public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactResolver {
+public class AuxiliaryArtifactResolverImpl implements AuxiliaryArtifactResolver {
 
   private final @NotNull Project project;
   private final @NotNull GradleDependencyDownloadPolicy policy;
-  private final Set<String> allowedDependencyGroups;
+  private final @NotNull Set<String> allowedDependencyGroups;
 
-  public ExperimentalAuxiliaryArtifactResolver(@NotNull Project project,
-                                               @NotNull GradleDependencyDownloadPolicy policy,
-                                               Set<String> allowedDependencyGroups
+  public AuxiliaryArtifactResolverImpl(@NotNull Project project,
+                                       @NotNull GradleDependencyDownloadPolicy policy,
+                                       @NotNull Set<String> allowedDependencyGroups
   ) {
     this.project = project;
     this.policy = policy;

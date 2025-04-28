@@ -4,8 +4,8 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactResolver;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryArtifactResolverImpl;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.AuxiliaryConfigurationArtifacts;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.ExperimentalAuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary.LegacyAuxiliaryArtifactResolver;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -23,10 +23,11 @@ import org.gradle.internal.resolve.ModuleVersionResolveException;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
-import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
+import org.jetbrains.plugins.gradle.tooling.util.GradleRepositoryUtils;
 
 import java.io.File;
 import java.util.*;
@@ -137,8 +138,8 @@ public final class GradleDependencyResolver {
       }
     }
     // Here we collect java doc and source files for a given dependencies
-    AuxiliaryConfigurationArtifacts auxiliaryArtifacts =
-      resolveAuxiliaryArtifacts(configuration, resolvedArtifacts, allowedDependencyGroups);
+    AuxiliaryConfigurationArtifacts auxiliaryArtifacts = getAuxiliaryArtifactResolver(resolvedArtifacts, allowedDependencyGroups)
+      .resolve(configuration);
     Set<String> resolvedFiles = new HashSet<>();
     Collection<ExternalDependency> artifactDependencies = resolveArtifactDependencies(
       resolvedFiles, resolvedArtifacts, auxiliaryArtifacts, transformedProjectDependenciesResultMap
@@ -339,21 +340,19 @@ public final class GradleDependencyResolver {
     return projectDependency;
   }
 
-  private @NotNull AuxiliaryConfigurationArtifacts resolveAuxiliaryArtifacts(
-    @NotNull Configuration configuration,
+  private @NotNull AuxiliaryArtifactResolver getAuxiliaryArtifactResolver(
     @NotNull Map<ResolvedDependency, Set<ResolvedArtifact>> resolvedArtifacts,
-    Set<String> allowedDependencyGroups
+    @NotNull Set<String> allowedDependencyGroups
   ) {
-    String experimentalResolverPropertyValue = System.getProperty("idea.experimental.gradle.dependency.resolver", "false");
-    boolean useExperimentalResolver = Boolean.parseBoolean(experimentalResolverPropertyValue);
-    AuxiliaryArtifactResolver resolver;
-    if (GradleVersionUtil.isCurrentGradleAtLeast("7.3") && useExperimentalResolver) {
-      resolver = new ExperimentalAuxiliaryArtifactResolver(myProject, myDownloadPolicy, allowedDependencyGroups);
+    String useLegacyResolverPropertyValue = System.getProperty("idea.gradle.daemon.legacy.dependency.resolver", "false");
+    boolean useLegacyResolver = Boolean.parseBoolean(useLegacyResolverPropertyValue);
+    if (useLegacyResolver || GradleVersionUtil.isCurrentGradleOlderThan("7.5")) {
+      return new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
     }
-    else {
-      resolver = new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
+    if (GradleRepositoryUtils.isIvyRepositoryUsed(myProject)) {
+      return new LegacyAuxiliaryArtifactResolver(myProject, myDownloadPolicy, resolvedArtifacts);
     }
-    return resolver.resolve(configuration);
+    return new AuxiliaryArtifactResolverImpl(myProject, myDownloadPolicy, allowedDependencyGroups);
   }
 
   // resolve generated dependencies such as annotation processing build roots and compilation result
