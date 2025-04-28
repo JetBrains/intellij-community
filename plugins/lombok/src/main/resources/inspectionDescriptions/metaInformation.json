@@ -17,6 +17,10 @@
       "codeQualityCategory": "Code Style"
     },
     {
+      "id": "LombokFlagUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
       "id": "RedundantModifiersUtilityClassLombok",
       "codeQualityCategory": "Code Style"
     },

@@ -134,6 +134,17 @@
       groupPath="Java"
       groupKey="inspection.lombok.group.name.lombok"
       groupBundle="messages.LombokBundle"
+      shortName="LombokFlagUsage"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokFlagUsageInspection"
+      key="inspection.lombok.flag.usage.display.name"
+      bundle="messages.LombokBundle"/>
+
+    <localInspection
+      language="JAVA"
+      groupPath="Java"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
       shortName="SpringQualifierCopyableLombok"
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.SpringQualifierCopyableLombokAnnotationInspection"

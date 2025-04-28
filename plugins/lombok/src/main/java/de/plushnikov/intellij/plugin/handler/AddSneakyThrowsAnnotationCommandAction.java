@@ -18,6 +18,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,13 @@ public class AddSneakyThrowsAnnotationCommandAction extends PsiUpdateModCommandA
 
     // applicable only for methods
     if (importantParent instanceof PsiMethod psiMethod) {
+      final PsiClass methodContainingClass = psiMethod.getContainingClass();
+      if (null == methodContainingClass ||
+          !"ALLOW".equalsIgnoreCase(
+            ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.SNEAKY_THROWS_FLAG_USAGE, methodContainingClass))) {
+        return null;
+      }
+
       final PsiMethodCallExpression thisOrSuperCallInConstructor = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(psiMethod);
       if (null == thisOrSuperCallInConstructor ||
           !SneakyThrowsExceptionHandler.throwsExceptionsTypes(thisOrSuperCallInConstructor,
