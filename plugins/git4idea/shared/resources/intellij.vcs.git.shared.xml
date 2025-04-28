@@ -22,6 +22,8 @@
     <projectSettings service="git4idea.config.GitVcsSettings"/>
 
     <rdct.remoteSettingProvider implementation="git4idea.config.GitRemoteSettingsInfoProvider"/>
+
+    <postStartupActivity implementation="com.intellij.vcs.git.shared.GitDataHoldersInitializer"/>
   </extensions>
 
   <extensionPoints>

@@ -11,6 +11,7 @@ import com.intellij.testFramework.assertions.Assertions
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.test.*
@@ -19,6 +20,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopup
 import git4idea.ui.branch.popup.GitBranchesTreePopupRenderer
 import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
 private const val TEST_DATA_SUBFOLDER = "widgetTree"
@@ -39,6 +41,11 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     cd(projectPath)
     refresh()
     repositoryManager.updateAllRepositories()
+
+    runBlocking {
+      // Ensure that the state holder is initialized
+      GitRepositoriesFrontendHolder.getInstance(project).init()
+    }
   }
 
   fun testSingleRepo() {
