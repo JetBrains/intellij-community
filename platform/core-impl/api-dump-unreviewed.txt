@@ -479,9 +479,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:isVendorJetBrains(java.lang.String):Z
 - sf:isVendorTrusted(com.intellij.openapi.extensions.PluginDescriptor):Z
 - sf:isVendorTrusted(java.lang.String):Z
-- sf:toPluginIds(java.util.Collection):java.util.Set
-- f:writePluginIdsToFile(java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[]):V
-- bs:writePluginIdsToFile$default(com.intellij.ide.plugins.PluginManagerCore,java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[],I,java.lang.Object):V
 a:com.intellij.indentation.AbstractIndentParser
 - com.intellij.lang.PsiParser
 - p:myBuilder:com.intellij.indentation.IndentPsiBuilder
