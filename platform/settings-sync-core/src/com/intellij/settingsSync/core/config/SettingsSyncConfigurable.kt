@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -540,12 +541,13 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     syncConfigPanel: DialogPanel,
   ) {
     coroutineScope.launch(ModalityState.current().asContextElement()) {
+      val loginDisposable = Disposer.newDisposable("BackupAndSyncLoginDisposable")
       try {
         val userData = provider.authService.login(syncConfigPanel)
         if (userData != null) {
           withContext(Dispatchers.EDT) {
             updateUserAccountsList()
-            val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id) ?: return@withContext
+            val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id, loginDisposable) ?: return@withContext
             if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
               SettingsSyncEvents.getInstance().fireLoginStateChanged()
               userDropDownLink.selectedItem = UserProviderHolder(userData.id, userData, provider.authService.providerCode,
@@ -567,6 +569,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
       catch (ex: Throwable) {
         LOG.warn("Error during login", ex)
+      }
+      finally {
+        Disposer.dispose(loginDisposable)
       }
       syncConfigPanel.requestFocusInWindow()
     }

@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.core
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
@@ -10,7 +11,7 @@ import java.io.InputStream
 import java.util.UUID
 import kotlin.io.path.inputStream
 
-abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator {
+abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator, Disposable {
   companion object {
     private val LOG = logger<AbstractServerCommunicator>()
   }
