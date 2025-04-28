@@ -40,4 +40,5 @@ interface PluginManagerController {
   fun fetchReviews(targetModel: PluginUiModel): PluginUiModel?
   fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel?
   fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment>
+  fun isLoaded(pluginUiModel: PluginUiModel): Boolean
 }

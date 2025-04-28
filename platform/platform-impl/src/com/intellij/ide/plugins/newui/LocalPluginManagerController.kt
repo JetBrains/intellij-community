@@ -137,6 +137,10 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
     return marketplaceRequests.loadPluginReviews(targetModel.getPluginDescriptor() as PluginNode, page) ?: emptyList()
   }
 
+  override fun isLoaded(pluginUiModel: PluginUiModel): Boolean {
+    return localPluginModel.isLoaded(pluginUiModel.pluginId)
+  }
+
   override fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel? {
     val resultNode = targetModel.getPluginDescriptor() as? PluginNode ?: return null
     resultNode.dependencyNames = resultNode.dependencies.asSequence()

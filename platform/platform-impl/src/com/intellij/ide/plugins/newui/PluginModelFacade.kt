@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -143,10 +144,13 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return getController(targetModel.source).loadPluginReviews(targetModel, page)
   }
 
+  fun isLoaded(model: PluginUiModel): Boolean {
+    return getController(model).isLoaded(model)
+  }
+
   private fun getController(model: PluginUiModel): PluginManagerController {
     return getController(model.source)
   }
-
   private fun getController(source: PluginSource): PluginManagerController{
     return when (source) {
       PluginSource.LOCAL -> localController

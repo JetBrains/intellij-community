@@ -1404,7 +1404,7 @@ public final class PluginManagerConfigurable
                                           null,
                                           (__, ___) -> setEnabledState());
       rightAction.setVisible(hasPluginsForEnableDisable(descriptors));
-      titleWithEnabled(myPluginModelFacade.getModel());
+      titleWithEnabled(myPluginModelFacade);
     }
 
     @Override

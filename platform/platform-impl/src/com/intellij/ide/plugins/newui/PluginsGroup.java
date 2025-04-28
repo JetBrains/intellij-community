@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +27,7 @@ public class PluginsGroup {
   public UIPluginGroup ui;
   public Runnable clearCallback;
   public PluginsGroupType type;
-  private final List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
+  private final List<PluginUiModel> models = new ArrayList<>();
 
   public PluginsGroup(@NotNull @Nls String title, @NotNull PluginsGroupType type) {
     myTitlePrefix = title;
@@ -38,7 +37,7 @@ public class PluginsGroup {
 
   public void clear() {
     ui = null;
-    descriptors.clear();
+    models.clear();
     titleLabel = null;
     rightAction = null;
     rightActions = null;
@@ -56,16 +55,16 @@ public class PluginsGroup {
   }
 
   public void titleWithCount() {
-    title = myTitlePrefix + " (" + descriptors.size() + ")";
+    title = myTitlePrefix + " (" + models.size() + ")";
     updateTitle();
   }
 
-  public void titleWithEnabled(@NotNull MyPluginModel pluginModel) {
+  public void titleWithEnabled(@NotNull PluginModelFacade pluginModel) {
     int enabled = 0;
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (pluginModel.isLoaded(descriptor.getPluginId()) &&
+    for (PluginUiModel descriptor : models) {
+      if (pluginModel.isLoaded(descriptor) &&
           pluginModel.isEnabled(descriptor) &&
-          !PluginManagerCore.isIncompatible(descriptor)) {
+          !descriptor.isIncompatible()) {
         enabled++;
       }
     }
@@ -73,13 +72,13 @@ public class PluginsGroup {
   }
 
   public void titleWithCount(int enabled) {
-    title = IdeBundle.message("plugins.configurable.title.with.count", myTitlePrefix, enabled, descriptors.size());
+    title = IdeBundle.message("plugins.configurable.title.with.count", myTitlePrefix, enabled, models.size());
     updateTitle();
   }
 
   public int getPluginIndex(@NotNull PluginId pluginId) {
-    for (int i = 0; i < descriptors.size(); i++) {
-      if (descriptors.get(i).getPluginId().equals(pluginId)) {
+    for (int i = 0; i < models.size(); i++) {
+      if (models.get(i).getPluginId().equals(pluginId)) {
         return i;
       }
     }
@@ -92,41 +91,71 @@ public class PluginsGroup {
     }
   }
 
+  @Deprecated
   public int addWithIndex(@NotNull IdeaPluginDescriptor descriptor) {
-    descriptors.add(descriptor);
+    return addWithIndex(new PluginUiModelAdapter(descriptor));
+  }
+
+  public int addWithIndex(@NotNull PluginUiModel model) {
+    models.add(model);
     sortByName();
-    return descriptors.indexOf(descriptor);
+    return models.indexOf(model);
   }
 
+  @Deprecated
   public void addDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    descriptors.add(descriptor);
+    models.add(new PluginUiModelAdapter(descriptor));
   }
 
+  public void addModel(@NotNull PluginUiModel model) {
+    models.add(model);
+  }
+
+  @Deprecated
   public void addDescriptors(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    this.descriptors.addAll(descriptors);
+    this.models.addAll(ContainerUtil.map(descriptors, PluginUiModelAdapter::new));
   }
 
+  public void addModels(@NotNull Collection<? extends PluginUiModel> models) {
+    this.models.addAll(models);
+  }
+
+  @Deprecated
   public void addDescriptors(int index, @NotNull Collection<IdeaPluginDescriptor> descriptors) {
-    this.descriptors.addAll(index, descriptors);
+    this.models.addAll(index, ContainerUtil.map(descriptors, PluginUiModelAdapter::new));
   }
 
+  public void addModels(int index, @NotNull Collection<PluginUiModel> models) {
+    this.models.addAll(index, models);
+  }
+
+  @Deprecated
   public void removeDescriptor(@NotNull IdeaPluginDescriptor descriptor) {
-    descriptors.remove(descriptor);
+    models.removeIf(it -> it.getDescriptor() == descriptor);
   }
 
+  public void removeDescriptor(@NotNull PluginUiModel model) {
+    models.remove(model);
+  }
+
+  @Deprecated
   public @NotNull List<IdeaPluginDescriptor> getDescriptors() {
-    return descriptors;
+    return ContainerUtil.map(models, it -> it.getDescriptor());
+  }
+
+  public @NotNull List<PluginUiModel> getModels() {
+    return models;
   }
 
   public void removeDuplicates(){
-    ContainerUtil.removeDuplicates(descriptors);
+    ContainerUtil.removeDuplicates(models);
   }
 
   public void sortByName() {
-    sortByName(descriptors);
+    sortByName(models);
   }
 
-  public static void sortByName(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
-    ContainerUtil.sort(descriptors, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
+  public static void sortByName(@NotNull List<PluginUiModel> models) {
+    ContainerUtil.sort(models, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
   }
 }

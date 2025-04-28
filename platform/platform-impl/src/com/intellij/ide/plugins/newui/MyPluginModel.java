@@ -845,7 +845,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     if (myDownloaded.ui == null) {
       myDownloaded.addDescriptor(descriptor);
-      myDownloaded.titleWithEnabled(this);
+      myDownloaded.titleWithEnabled(new PluginModelFacade(this));
 
       myInstalledPanel.addGroup(myDownloaded, myInstalling == null || myInstalling.ui == null ? 0 : 1);
       myInstalledPanel.setSelection(myDownloaded.ui.plugins.get(0));
@@ -864,7 +864,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
 
       myInstalledPanel.addToGroup(myDownloaded, descriptor);
-      myDownloaded.titleWithEnabled(this);
+      myDownloaded.titleWithEnabled(new PluginModelFacade(this));
       myInstalledPanel.doLayout();
     }
   }
@@ -1093,7 +1093,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       detailPanel.updateEnabledState();
     }
     for (PluginsGroup group : myEnabledGroups) {
-      group.titleWithEnabled(this);
+      group.titleWithEnabled(new PluginModelFacade(this));
     }
   }
 

@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -32,6 +33,8 @@ class PluginUiModelAdapter(
       if ("com.jetbrains.kmm" != pluginId.idString || SystemInfoRt.isMac) return true
       return getUnfulfilledOsRequirement(pluginDescriptor) != null
     }
+  override val isIncompatible: Boolean
+    get() = PluginManagerCore.isIncompatible(pluginDescriptor)
   override val canBeEnabled: Boolean
     get() = PluginManagementPolicy.getInstance().canEnablePlugin(pluginDescriptor)
   override val requiresUpgrade: Boolean

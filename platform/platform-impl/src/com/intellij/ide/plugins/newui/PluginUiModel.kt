@@ -27,6 +27,7 @@ interface PluginUiModel {
   val isDeleted: Boolean
 
   val isIncompatibleWithCurrentOs: Boolean
+  val isIncompatible: Boolean
   val canBeEnabled: Boolean
   val requiresUpgrade: Boolean
   val isFromMarketplace: Boolean
