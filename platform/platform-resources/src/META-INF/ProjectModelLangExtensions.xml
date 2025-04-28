@@ -1,0 +1,131 @@
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
+                        serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
+                        overrides="true"/>
+    <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
+                    overrides="true"/>
+
+    <projectServiceInitializer.essential
+      id="moduleBridgeLoaderService"
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService"
+      order="before workspaceFileIndexInitializer"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
+    <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
+                    serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl" overrides="true"/>
+    <notificationGroup id="Automatic Module Unloading" displayType="BALLOON" bundle="messages.ProjectBundle"
+                       key="notification.group.automatic.module.unloading"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootManager"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker"/>
+    <applicationService serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkDetector"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkPopupFactory"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.PlatformSdkPopupFactory"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.SdkLookup"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupImpl"/>
+
+    <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features"/>
+    <registryKey key="java.home.finder.use.eel" defaultValue="true" description="Use new API for OS abstraction in Project SDKs"/>
+
+    <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootModificationTracker"
+                    serviceImplementation="com.intellij.openapi.roots.ProjectRootModificationTrackerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
+                        serviceImplementation="com.intellij.facet.impl.FacetTypeRegistryImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryDetectionManager"
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryDetectionManagerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeService"
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeInitializer"/>
+
+    <projectService
+      serviceInterface="com.intellij.openapi.module.ModuleManager"
+      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge"
+      overrides="true"/>
+    <workspace.bridgeInitializer
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
+    <initProjectActivity
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
+      order="first"/>
+
+    <projectService serviceInterface="com.intellij.facet.ProjectWideFacetListenersRegistry"
+                    serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
+
+    <projectService serviceInterface="com.intellij.facet.FacetFinder" serviceImplementation="com.intellij.facet.impl.FacetFinderImpl"/>
+    <projectService serviceImplementation="com.intellij.facet.impl.FacetEventsPublisher" preload="await"/>
+    <workspaceModel.facetContributor implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityContributor"/>
+
+    <projectService serviceInterface="com.intellij.facet.ProjectFacetManager"
+                    serviceImplementation="com.intellij.facet.impl.ProjectFacetManagerImpl"/>
+    <projectService serviceInterface="com.intellij.facet.FacetManagerFactory"
+                    serviceImplementation="com.intellij.facet.impl.FacetManagerFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.facet.impl.invalid.InvalidFacetManager"
+                    serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
+    <backgroundPostStartupActivity implementation="com.intellij.facet.FacetTypeFeatureCollector"/>
+    <registerToolWindowTaskProvider implementation="com.intellij.facet.impl.ui.FacetDependentToolWindowManager"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                        serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
+
+    <applicationService
+      serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"/>
+
+    <projectService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
+                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
+                        serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
+    <fileBasedIndex implementation="com.intellij.framework.detection.impl.FrameworkDetectionIndex"/>
+    <projectService serviceInterface="com.intellij.framework.detection.DetectionExcludesConfiguration"
+                    serviceImplementation="com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl"/>
+
+    <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first"
+                                  id="PlatformProjectConfigurator"/>
+
+    <jdkDownloader.jdkInstallerListener implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.UnknownJdkInstallerListener"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderLogger"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryKindRegistry"
+                        serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryKindRegistryImpl"
+                        overrides="true"/>
+
+    <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaModuleSourceRootEditHandler"/>
+    <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler"/>
+
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.CustomSourceRootPropertyIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleGroupPathIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaResourceRootPropertiesIndexableEntityProvider"/>
+    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaModuleSettingsIndexableEntityProvider"/>
+    <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ModuleRootsIndexableIteratorHandler"/>
+    <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SdkIndexableIteratorHandler"/>
+    <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.LibraryIndexableIteratorHandler"/>
+  </extensions>
+  <projectListeners>
+    <listener class="com.intellij.psi.impl.file.impl.PsiVFSModuleRootListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener$WorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeCleaner"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.facet.impl.invalid.FacetIgnorer" name="facetIgnorer" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

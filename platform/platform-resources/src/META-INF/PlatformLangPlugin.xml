@@ -61,6 +61,7 @@
   </xi:include>
 
   <xi:include href="/META-INF/LangExtensions.xml"/>
+  <xi:include href="/META-INF/ProjectModelLangExtensions.xml"/>
   <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
