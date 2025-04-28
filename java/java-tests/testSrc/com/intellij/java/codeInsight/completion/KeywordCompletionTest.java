@@ -328,6 +328,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     });
   }
 
+  public void testNoVoidWithPackageStatement() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+      configureFromFileText("Test.java", """
+      package a;
+      vo<caret>""");
+      complete();
+      assertNotContainItems("void");
+    });
+  }
   public void testNoPrimitivesAfterExpressions() { doTest(); }
 
   public void testNoPrimitivesAfterExpressions2() { doTest(); }
