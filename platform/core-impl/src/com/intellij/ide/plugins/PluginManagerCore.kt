@@ -732,7 +732,7 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  fun isThirdPartyPluginsNoteAccepted(): Boolean? {
+  fun consumeThirdPartyPluginsNoteAcceptedFlag(): Boolean? {
     val result = thirdPartyPluginsNoteAccepted
     thirdPartyPluginsNoteAccepted = null
     return result
