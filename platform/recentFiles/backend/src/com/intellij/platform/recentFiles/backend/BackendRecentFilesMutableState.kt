@@ -6,6 +6,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.recentFiles.frontend.model.RecentFilesMutableState
+import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 
 internal class BackendRecentFilesMutableState(project: Project) : RecentFilesMutableState<VirtualFile>(project) {
@@ -21,5 +22,9 @@ internal class BackendRecentFilesMutableState(project: Project) : RecentFilesMut
 
   override fun convertModelToVirtualFile(model: VirtualFile): VirtualFile? {
     return model
+  }
+
+  fun getFilesByKind(filesKind: RecentFileKind): List<VirtualFile> {
+    return chooseStateToWriteTo(filesKind).value.entries
   }
 }

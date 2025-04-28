@@ -11,7 +11,7 @@ internal class RecentFilesVcsStatusListener(private val project: Project) : File
   override fun fileStatusChanged(virtualFile: VirtualFile) {
     val newStatus = FileStatusManager.getInstance(project).getStatus(virtualFile)
     thisLogger().debug("Updating recent files model with new VCS status $newStatus for: ${virtualFile.name}")
-    BackendRecentFileEventsModel.getInstance(project).applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, listOf(virtualFile))
+    BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(virtualFile), FileChangeKind.UPDATED, project)
   }
 
   override fun fileStatusesChanged() {

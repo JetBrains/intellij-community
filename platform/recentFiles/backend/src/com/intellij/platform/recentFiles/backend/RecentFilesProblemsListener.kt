@@ -7,14 +7,14 @@ import com.intellij.problems.ProblemListener
 
 internal class RecentFilesProblemsListener(private val project: Project) : ProblemListener {
   override fun problemsAppeared(file: VirtualFile) {
-    BackendRecentFileEventsModel.getInstance(project).applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, listOf(file))
+    BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(file), FileChangeKind.UPDATED, project)
   }
 
   override fun problemsChanged(file: VirtualFile) {
-    BackendRecentFileEventsModel.getInstance(project).applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, listOf(file))
+    BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(file), FileChangeKind.UPDATED, project)
   }
 
   override fun problemsDisappeared(file: VirtualFile) {
-    BackendRecentFileEventsModel.getInstance(project).applyBackendChangesToAllFileKinds(FileChangeKind.UPDATED, listOf(file))
+    BackendRecentFileEventsController.applyRelevantEventsToModel(listOf(file), FileChangeKind.UPDATED, project)
   }
 }
