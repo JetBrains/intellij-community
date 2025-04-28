@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.com.intellij.openapi.util.SystemInfo
+import org.jetbrains.kotlin.konan.target.HostManager
 
 plugins {
     kotlin("multiplatform")
@@ -6,9 +6,9 @@ plugins {
 
 kotlin {
     when {
-        SystemInfo.isLinux -> linuxX64("native")
-        SystemInfo.isMac -> macosX64("native")
-        SystemInfo.isWindows -> mingwX64("native")
+        HostManager.hostIsLinux -> linuxX64("native")
+        HostManager.hostIsMac -> macosX64("native")
+        HostManager.hostIsMingw -> mingwX64("native")
         else -> throw IllegalStateException("Unsupported host")
     }
 

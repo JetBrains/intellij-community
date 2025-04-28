@@ -1,10 +1,10 @@
 KaLibraryModule:
-  description: Library NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305)
+  description: Library NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683)
   targetPlatform: Native (android_arm32)/Native (android_arm64)/Native (android_x64)/Native (android_x86)/Native (ios_arm64)/Native (ios_simulator_arm64)/Native (ios_x64)/Native (linux_arm32_hfp)/Native (linux_arm64)/Native (linux_x64)/Native (macos_arm64)/Native (macos_x64)/Native (mingw_x64)/Native (tvos_arm64)/Native (tvos_simulator_arm64)/Native (tvos_x64)/Native (watchos_arm32)/Native (watchos_arm64)/Native (watchos_device_arm64)/Native (watchos_simulator_arm64)/Native (watchos_x64)
-  libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305)
+  libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683)
   isSdk: false
   regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
+    KaLibraryFallbackDependenciesModule(fallback dependencies of NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -35,12 +35,12 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683
   targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683
   isSdk: false
   regularDependencies:
-    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
+    KaLibraryFallbackDependenciesModule(fallback dependencies of org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -162,7 +162,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
@@ -176,9 +176,9 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <Linux>
   regularDependencies:
-    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
     KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
     KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
@@ -200,7 +200,7 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <MinGW>
   regularDependencies:
-    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
     KaLibraryModule(SDK)
     KaLibraryModule(org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)
@@ -219,9 +219,9 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <Native>
   regularDependencies:
-    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-3305))
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.2.0-dev-15683))
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.2.0-dev-15683)
     KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
     KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)

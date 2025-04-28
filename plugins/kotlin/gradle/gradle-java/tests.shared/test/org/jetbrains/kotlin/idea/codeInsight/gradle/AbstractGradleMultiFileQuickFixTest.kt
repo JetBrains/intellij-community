@@ -140,6 +140,11 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                                         ".gradle", "gradle", "build", "gradle.properties", "gradlew", "gradlew.bat", ".kotlin" -> return false
                                     }
                                 }
+                                // submodules could contain a build dir as well as a root project
+                                // it usually contains commonizedNativeDistributionLocation.txt
+                                when (vFile.name) {
+                                    "build" -> return false
+                                }
 
                                 if (ignoreChangesInBuildScriptFiles && ".gradle" in vFile.name) return false
 

@@ -93,7 +93,7 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "2.1+")
+    @PluginTargetVersions(pluginVersion = "2.1.0 <=> 2.1.255")
     fun testEnableMultiDollarInterpolationKmp() {
         doMultiFileQuickFixTest(
             ignoreChangesInBuildScriptFiles = false,

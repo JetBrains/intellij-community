@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.com.intellij.openapi.util.SystemInfo.*
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 operator fun KotlinSourceSet.invoke(builder: SourceSetHierarchyBuilder.() -> Unit): KotlinSourceSet {
@@ -33,14 +33,14 @@ fun registerListDependenciesTask(sourceSet: KotlinSourceSet) {
 kotlin {
 
     when {
-        isMac -> macosX64("nativePlatform")
-        isLinux -> linuxX64("nativePlatform")
-        isWindows -> mingwX64("nativePlatform")
+        HostManager.hostIsMac -> macosX64("nativePlatform")
+        HostManager.hostIsLinux -> linuxX64("nativePlatform")
+        HostManager.hostIsMingw -> mingwX64("nativePlatform")
         else -> throw IllegalStateException("Unsupported host")
     }
 
     when {
-        isMac -> mingwX64("unsupportedNativePlatform")
+        HostManager.hostIsMac -> mingwX64("unsupportedNativePlatform")
         else -> macosX64("unsupportedNativePlatform")
     }
 
