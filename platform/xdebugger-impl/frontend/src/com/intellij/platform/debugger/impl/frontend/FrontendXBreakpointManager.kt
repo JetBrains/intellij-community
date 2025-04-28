@@ -15,6 +15,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
+import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import kotlinx.coroutines.CoroutineScope
@@ -56,17 +57,31 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
         val newBreakpoints = breakpointDtos.filter { it.id !in breakpoints }
         for (breakpointDto in newBreakpoints) {
-          val type = breakpointTypesManager.getTypeById(breakpointDto.typeId)
-          if (type == null) {
-            LOG.error("Breakpoint type with id ${breakpointDto.typeId} not found")
-            continue
-          }
-          breakpoints[breakpointDto.id] = createXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
-            breakpointsChanged.tryEmit(Unit)
-          })
+          addBreakpoint(breakpointTypesManager, breakpointDto)
         }
       }
     }
+  }
+
+  private fun addBreakpoint(
+    breakpointTypesManager: FrontendXBreakpointTypesManager,
+    breakpointDto: XBreakpointDto,
+  ): XBreakpointProxy? {
+    val currentBreakpoint = breakpoints[breakpointDto.id]
+    if (currentBreakpoint != null) {
+      return currentBreakpoint
+    }
+    val type = breakpointTypesManager.getTypeById(breakpointDto.typeId)
+    if (type == null) {
+      LOG.error("Breakpoint type with id ${breakpointDto.typeId} not found")
+      return null
+    }
+    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
+      breakpointsChanged.tryEmit(Unit)
+    })
+    val previousBreakpoint = breakpoints.put(breakpointDto.id, newBreakpoint)
+    previousBreakpoint?.dispose()
+    return newBreakpoint
   }
 
   private fun removeBreakpoints(breakpointsToRemove: Collection<XBreakpointId>) {
