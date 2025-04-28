@@ -73,7 +73,6 @@
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0/nlp-patterns-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0/nlp-similarity-jvm-0.jar
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
   contentModules:
   - name: intellij.grazie.java
   - name: intellij.grazie.json
