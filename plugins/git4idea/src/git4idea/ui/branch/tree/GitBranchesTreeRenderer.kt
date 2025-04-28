@@ -17,13 +17,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.frontend.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranch
 import git4idea.GitReference
-import git4idea.branch.GitRefType
-import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesClippedNamesCache
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupStepBase
@@ -64,9 +62,13 @@ internal abstract class GitBranchesTreeRenderer(
   private fun getBranchIcon(reference: GitReference,
                             repositories: List<GitRepository> = treePopupStep.affectedRepositories,
                             selected: Boolean): Icon {
-    val isCurrent = repositories.all { GitRefUtil.getCurrentReference(it) == reference }
-    val branchManager = treePopupStep.project.service<GitBranchManager>()
-    val isFavorite = repositories.all { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
+    val holder = GitRepositoriesFrontendHolder.getInstance(treePopupStep.project)
+    val repositoriesFrontendModel = repositories.map { holder.get(it.rpcId) }
+
+    val isCurrent = repositoriesFrontendModel.all {
+      it.state.currentRef?.matches(reference) ?: false
+    }
+    val isFavorite = repositoriesFrontendModel.all { it.favoriteRefs.contains(reference) }
 
     return GitBranchesTreeIconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = selected)
   }
