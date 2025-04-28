@@ -832,12 +832,12 @@ public final class BuildDataManager {
 
       @Override
       public void flush() throws IOException {
-        lock.writeLock().lock();
+        lock.readLock().lock(); // flush is not supposed to mutate graph data
         try {
           delegate.flush();
         }
         finally {
-          lock.writeLock().unlock();
+          lock.readLock().unlock();
         }
       }
     };
