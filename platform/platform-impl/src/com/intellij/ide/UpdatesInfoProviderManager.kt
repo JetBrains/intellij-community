@@ -1,21 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.icons.AllIcons
-import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.launch
-import java.util.function.Supplier
+import javax.swing.Icon
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.APP)
@@ -28,50 +20,21 @@ class UpdatesInfoProviderManager(coroutineScope: CoroutineScope) {
     private val EP = ExtensionPointName.create<ExternalUpdateProvider>("com.intellij.updatesInfoProvider")
   }
 
-  init {
-    //listen for restart requests
-    coroutineScope.launch {
-      EP.extensionList.asFlow()
-        .flatMapMerge { it.updatesStateFlow }
-        .filter { it == ExternalUpdateState.RestartNeeded }
-        .collect { requestShutdown() }
-    }
-  }
-
   val availableUpdate: IdeUpdateInfo?
-    get() = EP.extensionList.firstNotNullOfOrNull { (it.updatesState as? ExternalUpdateState.UpdateAvailable)?.info }
+    get() = EP.extensionList.firstNotNullOfOrNull { (it.updatesState as? ExternalUpdateState.Available)?.info }
 
   val updateInProcess: Boolean
-    get() = EP.extensionList.any { it.updatesState is ExternalUpdateState.Preparing }
+    get() = EP.extensionList.any { it.updatesState is ExternalUpdateState.Downloading }
 
   fun runUpdate() {
-    EP.extensionList.firstOrNull { it.updatesState is ExternalUpdateState.UpdateAvailable }?.runUpdate()
+    EP.extensionList.firstOrNull { it.updatesState is ExternalUpdateState.Available }?.runUpdate()
   }
 
-  fun createUpdateAction(): AnAction? {
-    if (availableUpdate == null) return null
-    return RunUpdateAction(this)
+  fun getUpdateActions(): List<AnAction> {
+    return EP.extensionList.flatMap { it.updatesState.info?.let { info -> listOf(info.action) } ?: emptyList() }
   }
 
-  private fun requestShutdown() {
-    TODO("Not yet implemented")
-  }
-}
-
-private class RunUpdateAction(
-  private val manager: UpdatesInfoProviderManager,
-): AnAction(
-  Supplier { ActionsBundle.message("action.UpdateIDEWithStation.text", manager.availableUpdate?.fullName) },
-  AllIcons.Ide.Notification.IdeUpdate,
-) {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  override fun actionPerformed(e: AnActionEvent) {
-    manager.runUpdate()
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = manager.availableUpdate != null
+  fun getUpdateIcons(): List<Icon> {
+    return EP.extensionList.flatMap { it.updatesState.info?.let { info -> listOf(info.icon) } ?: emptyList() }
   }
 }

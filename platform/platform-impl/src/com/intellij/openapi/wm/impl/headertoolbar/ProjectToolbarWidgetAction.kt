@@ -112,7 +112,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
     val icons = buildList {
-      getUpdateInfoIcon()?.let { add(it) }
+      UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { addAll(it) }
 
       val customizer = ProjectWindowCustomizerService.getInstance()
       if (project != null && customizer.isAvailable()) {
@@ -120,26 +120,6 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       }
     }
     e.presentation.putClientProperty(lefIconsKey, icons)
-  }
-
-  private fun getUpdateInfoIcon(): Icon? {
-    val updatesManager = UpdatesInfoProviderManager.getInstance()
-
-    if (updatesManager.updateInProcess) {
-      return AnimatedIcon.Default.INSTANCE
-    } else if (updatesManager.availableUpdate != null) {
-
-      val icon = TextIcon("Update", JBColor.foreground(), Color(0x40EB26F0, true), Color(0xF48633), 0, true).apply {
-        font = JBFont.regular().asBold()
-        insets = JBUI.insets(4, 10, 4, 10)
-        round = 20
-        //background = GradientPaint(0.toFloat(), 0.toFloat(), Color(0x40F48633), iconWidth.toFloat(), 0.toFloat(), Color(0x40EB26F0))
-        //borderColor = GradientPaint(0.toFloat(), 0.toFloat(), Color(0xF48633), iconWidth.toFloat(), 0.toFloat(), Color(0xEB26F0))
-      }
-      return icon
-    }
-
-    return null
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {
@@ -168,10 +148,13 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
     val result = DefaultActionGroup()
 
-    UpdatesInfoProviderManager.getInstance().createUpdateAction()?.let {
-      result.add(it)
-      result.addSeparator()
-    }
+    UpdatesInfoProviderManager.getInstance()
+      .getUpdateActions()
+      .takeIf { it.isNotEmpty() }
+      ?.let {
+        result.addAll(it)
+        result.addSeparator()
+      }
 
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     result.addAll(group.getChildren(initEvent).asList())

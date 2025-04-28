@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.openapi.actionSystem.AnAction
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.Icon
 
 /**
  * Provider for IDE updates information.
@@ -18,15 +20,21 @@ interface ExternalUpdateProvider {
 
 }
 
+@ApiStatus.Internal
 sealed interface ExternalUpdateState {
-  object Preparing : ExternalUpdateState
-  object NoUpdates : ExternalUpdateState
-  object RestartNeeded : ExternalUpdateState
-  data class UpdateAvailable(val info: IdeUpdateInfo) : ExternalUpdateState
+  val info: IdeUpdateInfo?
+
+  object NoUpdates : ExternalUpdateState {
+    override val info = null
+  }
+
+  data class Available(override val info: IdeUpdateInfo) : ExternalUpdateState
+  data class Downloading(override val info: IdeUpdateInfo) : ExternalUpdateState
+  data class ReadyToInstall(override val info: IdeUpdateInfo) : ExternalUpdateState
 }
 
 @ApiStatus.Internal
 data class IdeUpdateInfo(
-  val fullName: String,
-  val version: String,
+  val icon: Icon,
+  val action: AnAction,
 )
