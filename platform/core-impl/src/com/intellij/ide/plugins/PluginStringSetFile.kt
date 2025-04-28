@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
-import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 import java.util.*
@@ -23,17 +22,18 @@ import kotlin.streams.asSequence
 object PluginStringSetFile {
   @Synchronized
   @Throws(IOException::class)
-  fun write(path: Path, strings: Set<String>, openOptions: Array<OpenOption>? = null) {
+  fun write(path: Path, strings: Set<String>) {
     NioFiles.createDirectories(path.parent)
     // TODO: TreeSet demands comparable, probably we can drop Comparable on PluginId if we drop this usage
     //  wait, it's String, not PluginId
-    Files.write(path, TreeSet(strings), *(openOptions ?: emptyArray()))
+
+    Files.write(path, TreeSet(strings))
   }
 
   @Synchronized
-  fun writeSafe(path: Path, strings: Set<String>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean {
+  fun writeSafe(path: Path, strings: Set<String>, logger: Logger): Boolean {
     try {
-      write(path, strings, openOptions)
+      write(path, strings)
       return true
     } catch (e: IOException) {
       logger.warn("failed to write plugin strings to $path", e)
@@ -42,9 +42,9 @@ object PluginStringSetFile {
   }
 
   @Synchronized
-  fun writeIdsSafe(path: Path, ids: Set<PluginId>, logger: Logger, openOptions: Array<OpenOption>? = null): Boolean {
+  fun writeIdsSafe(path: Path, ids: Set<PluginId>, logger: Logger): Boolean {
     try {
-      write(path, ids.mapTo(mutableSetOf()) { it.idString }, openOptions)
+      write(path, ids.mapTo(mutableSetOf()) { it.idString })
       return true
     } catch (e: IOException) {
       logger.warn("failed to write plugin strings to $path", e)
