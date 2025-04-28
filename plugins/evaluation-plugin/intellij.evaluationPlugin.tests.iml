@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
   </component>
 </module>

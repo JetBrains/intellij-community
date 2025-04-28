@@ -27,6 +27,7 @@ jvm_library(
     "//platform/extensions",
     "//platform/statistics/uploader",
     "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [
     ":core_resources",

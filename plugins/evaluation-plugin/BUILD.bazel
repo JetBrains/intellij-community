@@ -63,6 +63,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/evaluation-plugin/languages/python",
+    "@lib//:mockito-kotlin",
   ]
 )
 
