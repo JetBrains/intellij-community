@@ -69,6 +69,8 @@ data class XBreakpointDtoState(
 @Serializable
 data class XLineBreakpointInfo(
   val isTemporary: Boolean,
+  val line: Int,
+  val fileUrl: String?,
 )
 
 @ApiStatus.Internal
@@ -158,5 +160,5 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
 }
 
 private fun XLineBreakpoint<*>.getInfo(): XLineBreakpointInfo {
-  return XLineBreakpointInfo(isTemporary)
+  return XLineBreakpointInfo(isTemporary, line, fileUrl)
 }

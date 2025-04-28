@@ -2,12 +2,11 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
@@ -24,9 +23,11 @@ internal class FrontendXLineBreakpointProxy(
   override val type: XLineBreakpointTypeProxy,
   onBreakpointChange: () -> Unit,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
+  private val lineBreakpointInfo: XLineBreakpointInfo
+    get() = _state.value.lineBreakpointInfo!!
 
   override fun isTemporary(): Boolean {
-    return _state.value.lineBreakpointInfo!!.isTemporary
+    return lineBreakpointInfo.isTemporary
   }
 
   override fun setTemporary(isTemporary: Boolean) {
@@ -39,25 +40,29 @@ internal class FrontendXLineBreakpointProxy(
 
 
   override fun getFile(): VirtualFile? {
-    // TODO IJPL-185322 pass through line breakpoint info
-    return null
+    return lineBreakpointInfo.fileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
   }
 
   override fun getLine(): Int {
-    // TODO IJPL-185322 pass through line breakpoint info
-    return 0
+    return lineBreakpointInfo.line
   }
 
   override fun setFileUrl(url: String) {
-    // TODO IJPL-185322 implement set file url
+    // TODO IJPL-185322 implement like it is done in XLineBreakpointImpl
+    // TODO IJPL-185322 send through RPC
+    updateLineBreakpointState { it.copy(fileUrl = url) }
+    onBreakpointChange()
   }
 
   override fun setLine(line: Int) {
-    // TODO IJPL-185322 implement set line
+    // TODO IJPL-185322 implement like it is done in XLineBreakpointImpl
+    // TODO IJPL-185322 send through RPC
+    updateLineBreakpointState { it.copy(line = line) }
+    onBreakpointChange()
   }
 
   override fun getHighlightRange(): TextRange? {
-    // TODO IJPL-185322 implement highlight range
+    // TODO IJPL-185322 implement highlight range through type
     return null
   }
 
