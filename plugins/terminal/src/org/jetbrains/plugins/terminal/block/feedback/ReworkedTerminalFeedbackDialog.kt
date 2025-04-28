@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.feedback
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
@@ -12,7 +13,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
+import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 
 internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<ReworkedTerminalUsageData>(project, forTest) {
   override val myFeedbackReportId: String = "reworked_terminal"
@@ -21,6 +24,7 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
 
   override val mySystemInfoData: ReworkedTerminalUsageData by lazy {
     ReworkedTerminalUsageData(
+      selectedShell = TerminalShellInfoStatistics.getShellNameForStat(TerminalProjectOptionsProvider.getInstance(project).shellPath),
       feedbackMoment = getFeedbackMoment(project),
       systemInfo = CommonFeedbackSystemData.getCurrentData()
     )
@@ -29,6 +33,9 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
   @Suppress("HardCodedStringLiteral")
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
     showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
+      row(TerminalBundle.message("feedback.system.info.shell")) {
+        label(mySystemInfoData.selectedShell)
+      }
       row(TerminalBundle.message("feedback.system.info.moment")) {
         label(mySystemInfoData.feedbackMoment.toString())
       }
@@ -58,6 +65,7 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
 
 @Serializable
 internal data class ReworkedTerminalUsageData(
+  @get:NlsSafe val selectedShell: String,
   val feedbackMoment: TerminalFeedbackMoment,
   val systemInfo: CommonFeedbackSystemData
 ) : SystemDataJsonSerializable {
@@ -66,6 +74,8 @@ internal data class ReworkedTerminalUsageData(
   }
 
   override fun toString(): String = buildString {
+    appendLine(TerminalBundle.message("feedback.system.info.shell"))
+    appendLine(selectedShell)
     appendLine(TerminalBundle.message("feedback.system.info.moment"))
     appendLine(feedbackMoment.toString())
     append(systemInfo.toString())
