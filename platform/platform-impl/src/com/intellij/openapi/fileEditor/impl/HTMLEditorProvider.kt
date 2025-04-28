@@ -15,8 +15,9 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
-import org.cef.handler.CefRequestHandler
 import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
+import java.net.URI
 
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   @Suppress("CompanionObjectInExtension")
@@ -79,7 +80,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
       private set
     internal var queryHandler: JsQueryHandler? = null
       private set
-    internal var requestHandler: CefRequestHandler? = null; private set
+    internal var requestHandler: ResourceHandler? = null; private set
 
     companion object {
       @JvmStatic
@@ -100,7 +101,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     }
 
     @ApiStatus.Internal
-    fun withRequestHandler(requestHandler: CefRequestHandler?): Request {
+    fun withResourceHandler(requestHandler: ResourceHandler?): Request {
       this.requestHandler = requestHandler
       return this
     }
@@ -128,5 +129,23 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
    */
   interface JsQueryHandler {
     suspend fun query(id: Long, request: String): String
+  }
+
+  @ApiStatus.Internal
+  interface ResourceHandler {
+    fun shouldInterceptRequest(request: ResourceRequest): Boolean
+    suspend fun handleResourceRequest(request: ResourceRequest): ResourceResponse
+
+    interface Resource {
+      val mimeType: String
+      suspend fun getResourceStream(): InputStream?
+    }
+
+    data class ResourceRequest(val uri: URI)
+
+    sealed class ResourceResponse {
+      data object NotFound : ResourceResponse()
+      data class HandleResource(val resource: Resource) : ResourceResponse()
+    }
   }
 }

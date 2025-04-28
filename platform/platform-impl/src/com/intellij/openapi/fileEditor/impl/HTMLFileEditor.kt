@@ -8,9 +8,13 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.ResourceHandler.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
@@ -32,11 +36,18 @@ import kotlinx.coroutines.*
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
+import org.cef.callback.CefCallback
 import org.cef.callback.CefQueryCallback
 import org.cef.handler.*
+import org.cef.misc.BoolRef
+import org.cef.misc.IntRef
+import org.cef.misc.StringRef
 import org.cef.network.CefRequest
+import org.cef.network.CefResponse
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
+import java.io.InputStream
+import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
@@ -58,6 +69,7 @@ internal class HTMLFileEditor(
   private val navigating = AtomicBoolean(false)
   private val htmlTabScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope("HTMLFileEditor[${file.name}]")
   private var jsRouter: CefMessageRouter? = null
+  private var requestHandler: CefRequestHandler? = null
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent {
@@ -141,7 +153,33 @@ internal class HTMLFileEditor(
     }
 
     request.requestHandler?.let { handler ->
-      contentPanel.jbCefClient.addRequestHandler(handler, contentPanel.cefBrowser)
+      val coroutineScope = htmlTabScope.childScope("HTMLFileEditorResourceHandler", Dispatchers.IO)
+
+      requestHandler = object : CefRequestHandlerAdapter() {
+        private val REQUEST_HANDLER = object : CefResourceRequestHandlerAdapter() {
+          override fun getResourceHandler(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): CefResourceHandler? {
+            return HTMLFileEditorResourceHandler(handler, coroutineScope)
+          }
+        }
+
+        override fun getResourceRequestHandler(
+          browser: CefBrowser?,
+          frame: CefFrame?,
+          request: CefRequest?,
+          isNavigation: Boolean,
+          isDownload: Boolean,
+          requestInitiator: String?,
+          disableDefaultHandling: BoolRef?,
+        ): CefResourceRequestHandler? {
+          val uri = request?.url?.toURIOrNull() ?: return null
+          if (!handler.shouldInterceptRequest(ResourceRequest(uri)))
+            return null
+
+          return REQUEST_HANDLER
+        }
+      }
+
+      contentPanel.jbCefClient.addRequestHandler(this.requestHandler!!, contentPanel.cefBrowser)
     }
 
     contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
@@ -200,10 +238,82 @@ internal class HTMLFileEditor(
       router.dispose()
     }
 
-    request.requestHandler?.let { handler ->
+    requestHandler?.let { handler ->
       contentPanel.jbCefClient.removeRequestHandler(handler, contentPanel.cefBrowser)
     }
   }
 
   override fun getFile(): VirtualFile = file
 }
+
+internal class HTMLFileEditorResourceHandler(val handler: HTMLEditorProvider.ResourceHandler, parentCoroutineScope: CoroutineScope) : CefResourceHandlerAdapter() {
+
+  lateinit var uri: URI
+  var myStream: InputStream? = null
+  val coroutineScope: CoroutineScope = parentCoroutineScope.childScope("HTMLFileEditorResourceHandler")
+  lateinit var resourceResponse: ResourceResponse
+  lateinit var resource: Resource
+
+  override fun processRequest(request: CefRequest, callback: CefCallback): Boolean {
+    val uri = request.url.toURIOrNull() ?: return false.also { callback.cancel() }
+    coroutineScope.launch {
+      logger.runAndLogException {
+        resourceResponse = handler.handleResourceRequest(ResourceRequest(uri))
+        if(resourceResponse is ResourceResponse.HandleResource) resource = (resourceResponse as ResourceResponse.HandleResource).resource
+        callback.Continue()
+      } ?: return@launch callback.cancel()
+    }
+    return true
+  }
+
+  override fun getResponseHeaders(response: CefResponse, responseLength: IntRef?, redirectUrl: StringRef?) {
+    when(resourceResponse) {
+      is ResourceResponse.HandleResource -> {
+        response.mimeType = resource.mimeType
+        response.status = 200
+      }
+      ResourceResponse.NotFound -> {
+        response.status = 404
+      }
+    }
+  }
+
+  override fun readResponse(dataOut: ByteArray, bytesToRead: Int, bytesRead: IntRef, callback: CefCallback): Boolean {
+    if (myStream == null) {
+      when (resourceResponse) {
+        ResourceResponse.NotFound -> return false.also { callback.cancel() }
+        is ResourceResponse.HandleResource -> {
+          bytesRead.set(0)
+          coroutineScope.launch {
+            myStream = logger.runAndLogException { resource.getResourceStream() } ?: return@launch callback.cancel()
+            callback.Continue()
+          }
+          return true
+        }
+      }
+    }
+
+    try {
+      bytesRead.set(myStream!!.read(dataOut, 0, bytesToRead))
+      if (bytesRead.get() != -1) {
+        return true
+      }
+    }
+    catch (e: Exception) {
+      logger.error(e)
+      callback.cancel()
+    }
+    bytesRead.set(0)
+    logger.runAndLogException { myStream?.close() }
+    return false
+  }
+
+  override fun cancel() {
+    coroutineScope.cancel()
+    logger.runAndLogException { myStream?.close() }
+  }
+}
+
+private fun String.toURIOrNull() = runCatching { URI(this) }.getOrLogException { logger.trace(it) }
+
+private val logger = logger<HTMLFileEditor>()
