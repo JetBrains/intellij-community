@@ -2,11 +2,15 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import org.jetbrains.annotations.ApiStatus
+
+private val LOG = logger<XBreakpointManagerProxy>()
 
 @ApiStatus.Internal
 interface XBreakpointManagerProxy {
@@ -19,6 +23,8 @@ interface XBreakpointManagerProxy {
   fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState)
 
   fun setDefaultGroup(group: String)
+
+  suspend fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy?
 
   fun getAllBreakpointItems(): List<BreakpointItem>
 
@@ -46,6 +52,11 @@ interface XBreakpointManagerProxy {
 
     override fun setDefaultGroup(group: String) {
       breakpointManager.defaultGroup = group
+    }
+
+    override suspend fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+      LOG.error("addBreakpoint with Dto should not be called for monolith")
+      return null
     }
 
     override fun getAllBreakpointItems(): List<BreakpointItem> {

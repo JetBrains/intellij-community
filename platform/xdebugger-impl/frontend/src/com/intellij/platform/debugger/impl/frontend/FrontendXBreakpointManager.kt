@@ -105,6 +105,11 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     // TODO: implement groups
   }
 
+  override suspend fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+    val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
+    return addBreakpoint(breakpointTypesManager, breakpointDto)
+  }
+
   override fun getAllBreakpointItems(): List<BreakpointItem> {
     return breakpoints.values.map { proxy ->
       XBreakpointItem(proxy, this)

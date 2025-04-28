@@ -2,7 +2,10 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.extensions.ExtensionPointAdapter
@@ -18,10 +21,16 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.toRpc
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 
@@ -82,6 +91,15 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
+  override suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): Deferred<XBreakpointDto?> {
+    val project = projectId.findProjectOrNull() ?: return CompletableDeferred<XBreakpointDto?>(value = null)
+    val type = XBreakpointUtil.findType(typeId.id) ?: return CompletableDeferred<XBreakpointDto?>(value = null)
+    return project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.async(Dispatchers.EDT) {
+      val rawBreakpoint = type.addBreakpoint(project, null)
+      (rawBreakpoint as? XBreakpointBase<*, *, *>)?.toRpc()
+    }
+  }
+
   private fun getCurrentBreakpointTypeDtos(project: Project): List<XBreakpointTypeDto> {
     return XBreakpointType.EXTENSION_POINT_NAME.extensionList.map { it.toRpc(project) }
   }
@@ -122,3 +140,6 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class BackendXBreakpointTypeApiProjectCoroutineScope(val cs: CoroutineScope)
