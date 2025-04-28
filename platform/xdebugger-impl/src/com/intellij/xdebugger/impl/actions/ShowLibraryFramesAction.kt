@@ -26,7 +26,7 @@ internal class ShowLibraryFramesAction : ToggleAction(), FrontendOtherwiseBacken
 
   init {
     templatePresentation.apply {
-      text = XDebuggerBundle.message("show.all.frames.tooltip")
+      text = XDebuggerBundle.message("hide.library.frames.tooltip")
       description = ""
       icon = AllIcons.General.Filter
     }
