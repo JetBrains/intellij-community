@@ -84,8 +84,8 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
 
     private fun getTypeAliasDeclaration(symbol: KtTypeAlias): Array<PsiElement> {
         analyze(symbol) {
-            val typeAliasSymbol = symbol.symbol as? KaTypeAliasSymbol
-            (typeAliasSymbol?.expandedType?.expandedSymbol as? KaNamedClassSymbol)?.psi?.let {
+            val typeAliasSymbol = symbol.symbol
+            (typeAliasSymbol.expandedType.expandedSymbol as? KaNamedClassSymbol)?.psi?.let {
                 return arrayOf(it)
             }
         }
@@ -107,6 +107,6 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationPlaceAwareProvider
         analyze(this) {
             val memberCall = resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze null
             val type = memberCall.partiallyAppliedSymbol.signature.returnType
-            type.abbreviationOrSelf.symbol?.psi
+            type.upperBoundIfFlexible().abbreviationOrSelf.symbol?.psi
         }
 }
