@@ -370,7 +370,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: @MultiRoutingFileSystemPath string passed to method expecting @LocalPath
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @LocalPath",
+              DevKitBundle.message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@MultiRoutingFileSystemPath", "@LocalPath"),
               AddLocalPathAnnotationFix()
             )
           }
@@ -379,7 +379,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: @NativePath string passed to method expecting @LocalPath
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "A string annotated with @NativePath is passed to a method parameter annotated with @LocalPath",
+              DevKitBundle.message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@NativePath", "@LocalPath"),
               AddLocalPathAnnotationFix()
             )
           }
@@ -388,7 +388,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: @MultiRoutingFileSystemPath string passed to method expecting @Filename
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "A string annotated with @MultiRoutingFileSystemPath is passed to a method parameter annotated with @Filename",
+              DevKitBundle.message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@MultiRoutingFileSystemPath", "@Filename"),
               AddFilenameAnnotationFix()
             )
           }
@@ -397,7 +397,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: @LocalPath string passed to method expecting @Filename
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "A string annotated with @LocalPath is passed to a method parameter annotated with @Filename",
+              DevKitBundle.message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@LocalPath", "@Filename"),
               AddFilenameAnnotationFix()
             )
           }
@@ -406,7 +406,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: @NativePath string passed to method expecting @Filename
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "A string annotated with @NativePath is passed to a method parameter annotated with @Filename",
+              DevKitBundle.message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@NativePath", "@Filename"),
               AddFilenameAnnotationFix()
             )
           }
@@ -433,7 +433,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: Unannotated string passed to method expecting @LocalPath
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "String without path annotation used in method parameter annotated with @LocalPath",
+              DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.method.parameter.annotated.with", "@LocalPath"),
               AddLocalPathAnnotationFix()
             )
           }
@@ -442,7 +442,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             // Report error: Unannotated string passed to method expecting @Filename
             holder.registerProblem(
               arg.sourcePsi ?: sourcePsi,
-              "String without path annotation used in method parameter annotated with @Filename",
+              DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.method.parameter.annotated.with", "@Filename"),
               AddFilenameAnnotationFix()
             )
           }
