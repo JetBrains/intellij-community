@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.util.ThreeState
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase
@@ -621,7 +620,6 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
    * Contains information about path annotation status.
    */
   private sealed interface PathAnnotationInfo {
-    fun getPathAnnotationStatus(): ThreeState
 
     sealed class Specified : PathAnnotationInfo {
       abstract fun getAnnotationClass(): Class<*>
@@ -630,32 +628,26 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
     }
 
     object MultiRouting : Specified() {
-      override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
       override fun getAnnotationClass(): Class<*> = MultiRoutingFileSystemPath::class.java
       override val quickFix: () -> LocalQuickFix = { AddMultiRoutingAnnotationFix() }
     }
 
     object Native : Specified() {
-      override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
       override fun getAnnotationClass(): Class<*> = NativePath::class.java
       override val quickFix: () -> LocalQuickFix = { AddNativePathAnnotationFix() }
     }
 
     object LocalPathInfo : Specified() {
-      override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
       override fun getAnnotationClass(): Class<*> = LocalPath::class.java
       override val quickFix: () -> LocalQuickFix = { AddLocalPathAnnotationFix() }
     }
 
     object FilenameInfo : Specified() {
-      override fun getPathAnnotationStatus(): ThreeState = ThreeState.YES
       override fun getAnnotationClass(): Class<*> = Filename::class.java
       override val quickFix: () -> LocalQuickFix = { AddFilenameAnnotationFix() }
     }
 
-    object Unspecified : PathAnnotationInfo {
-      override fun getPathAnnotationStatus(): ThreeState = ThreeState.UNSURE
-    }
+    object Unspecified : PathAnnotationInfo
 
     companion object {
       /**
