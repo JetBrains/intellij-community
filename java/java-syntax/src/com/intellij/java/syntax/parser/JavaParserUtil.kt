@@ -14,6 +14,7 @@ import com.intellij.platform.syntax.util.parser.SyntaxTreeBuilderAdapter
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
+import kotlin.jvm.JvmStatic // don't remove this import, it must be preserved for compilation in Kotlin/WasmJs
 
 @ApiStatus.Experimental
 object JavaParserUtil {
