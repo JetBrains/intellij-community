@@ -233,7 +233,13 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
                     }.firstOrNull()
 
                     if (callableSymbol is KaDeclarationSymbol) {
-                        renderEnumSpecialSymbol(this, callableSymbol, memberName, element, quickNavigation)
+                        renderEnumSpecialSymbol(
+                            this,
+                            callableSymbol,
+                            callableSymbol.name?.asString() ?: memberName, // it has to be a Kotlin name rather java-visible name
+                            element,
+                            quickNavigation
+                        )
                         return
                     }
                 }
