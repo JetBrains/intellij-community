@@ -24,7 +24,7 @@ interface XBreakpointManagerProxy {
 
   fun setDefaultGroup(group: String)
 
-  suspend fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy?
+  fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy?
 
   fun getAllBreakpointItems(): List<BreakpointItem>
 
@@ -54,7 +54,7 @@ interface XBreakpointManagerProxy {
       breakpointManager.defaultGroup = group
     }
 
-    override suspend fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+    override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
       LOG.error("addBreakpoint with Dto should not be called for monolith")
       return null
     }

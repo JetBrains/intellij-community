@@ -11,54 +11,31 @@ import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.multiplatform.shims.ConcurrentHashMap
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
-
-
-@ApiStatus.Internal
-interface FrontendXBreakpointTypesManager {
-  fun getTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy?
-  fun getBreakpointTypes(): List<XBreakpointTypeProxy>
-  fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy>
-
-  companion object {
-    fun getInstance(project: Project): FrontendXBreakpointTypesManager = project.service<FrontendXBreakpointTypesManagerService>()
-
-    suspend fun getInstanceSuspending(project: Project): FrontendXBreakpointTypesManager {
-      return project.service<FrontendXBreakpointTypesManagerService>().also {
-        it.awaitInitialized()
-      }
-    }
-  }
-}
 
 
 @Service(Service.Level.PROJECT)
-private class FrontendXBreakpointTypesManagerService(
+internal class FrontendXBreakpointTypesManager(
   private val project: Project,
   private val cs: CoroutineScope,
-) : FrontendXBreakpointTypesManager {
-  private val initialized = CompletableDeferred<Unit>()
-
+) {
   private val types = ConcurrentHashMap<XBreakpointTypeId, XBreakpointTypeProxy>()
+  private val typesChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
   init {
     cs.launch {
       val (initialBreakpointTypes, breakpointTypesFlow) = XBreakpointTypeApi.getInstance().getBreakpointTypeList(project.projectId())
       handleBreakpointTypesFromBackend(initialBreakpointTypes)
-      initialized.complete(Unit)
 
       breakpointTypesFlow.toFlow().collectLatest {
         handleBreakpointTypesFromBackend(it)
+        typesChanged.tryEmit(Unit)
       }
     }
-  }
-
-  suspend fun awaitInitialized() {
-    initialized.await()
   }
 
   private fun handleBreakpointTypesFromBackend(breakpointTypes: List<XBreakpointTypeDto>) {
@@ -71,16 +48,30 @@ private class FrontendXBreakpointTypesManagerService(
     }
   }
 
+  fun subscribeOnBreakpointTypesChanges(scope: CoroutineScope, action: suspend () -> Unit) {
+    scope.launch {
+      typesChanged.collectLatest {
+        action()
+      }
+    }
+  }
 
-  override fun getTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy? {
+  fun typesChangedFlow(): Flow<Unit> = typesChanged
+
+  fun getTypeById(id: XBreakpointTypeId): XBreakpointTypeProxy? {
     return types[id]
   }
 
-  override fun getBreakpointTypes(): List<XBreakpointTypeProxy> {
+  fun getBreakpointTypes(): List<XBreakpointTypeProxy> {
     return types.values.toList()
   }
 
-  override fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy> {
+  fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy> {
     return types.values.filterIsInstance<XLineBreakpointTypeProxy>()
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): FrontendXBreakpointTypesManager = project.service<FrontendXBreakpointTypesManager>()
   }
 }

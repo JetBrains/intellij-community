@@ -4,15 +4,11 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XBreakpointType
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
@@ -24,10 +20,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentMap
-
-private val LOG = logger<FrontendXBreakpointManager>()
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -51,30 +46,29 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   init {
     cs.launch {
-      val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
-      XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).collectLatest { breakpointDtos ->
+      val typesChangedFlow = FrontendXBreakpointTypesManager.getInstance(project).typesChangedFlow()
+      XDebuggerManagerApi.getInstance().getBreakpoints(project.projectId()).combine(typesChangedFlow) { breakpointDtos, _ ->
+        // this way we subscribe on breakpoint types updates
+        breakpointDtos
+      }.collectLatest { breakpointDtos ->
         val breakpointsToRemove = breakpoints.keys - breakpointDtos.map { it.id }.toSet()
         removeBreakpoints(breakpointsToRemove)
 
         val newBreakpoints = breakpointDtos.filter { it.id !in breakpoints }
         for (breakpointDto in newBreakpoints) {
-          addBreakpoint(breakpointTypesManager, breakpointDto)
+          addBreakpoint(breakpointDto)
         }
       }
     }
   }
 
-  private fun addBreakpoint(
-    breakpointTypesManager: FrontendXBreakpointTypesManager,
-    breakpointDto: XBreakpointDto,
-  ): XBreakpointProxy? {
+  override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
       return currentBreakpoint
     }
-    val type = breakpointTypesManager.getTypeById(breakpointDto.typeId)
+    val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId)
     if (type == null) {
-      LOG.error("Breakpoint type with id ${breakpointDto.typeId} not found")
       return null
     }
     val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
@@ -103,11 +97,6 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   override fun setDefaultGroup(group: String) {
     // TODO: implement groups
-  }
-
-  override suspend fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
-    val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
-    return addBreakpoint(breakpointTypesManager, breakpointDto)
   }
 
   override fun getAllBreakpointItems(): List<BreakpointItem> {

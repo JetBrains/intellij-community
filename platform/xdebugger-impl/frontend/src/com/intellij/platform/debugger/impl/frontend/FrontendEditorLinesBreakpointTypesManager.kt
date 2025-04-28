@@ -101,6 +101,11 @@ private class EditorBreakpointTypesMap(
       }
     }, cs.asDisposable())
 
+    FrontendXBreakpointTypesManager.getInstance(project).subscribeOnBreakpointTypesChanges(cs) {
+      breakpointsMap.clear()
+      mapUpdateRequest.tryEmit(Unit)
+    }
+
     editor.scrollingModel.addVisibleAreaListener({ debouncedUpdateRequests.tryEmit(Unit) }, cs.asDisposable())
   }
 
@@ -134,12 +139,12 @@ private class EditorBreakpointTypesMap(
 
 internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, line: Int): List<XBreakpointTypeProxy> {
   val availableTypeIds = XBreakpointTypeApi.getInstance().getAvailableBreakpointTypesForLine(project.projectId(), editor.editorId(), line)
-  val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
+  val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstance(project)
   return availableTypeIds.mapNotNull { breakpointTypesManager.getTypeById(it) }
 }
 
 private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, start: Int, endInclusive: Int): List<List<XBreakpointTypeProxy>>? {
-  val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstanceSuspending(project)
+  val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstance(project)
   // TODO: is it possible to avoid this retry?
   val retriesCount = 5
   repeat(retriesCount) {
