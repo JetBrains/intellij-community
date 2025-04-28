@@ -17,14 +17,6 @@ internal fun createFilesSearchRequestRequest(recentFileKind: RecentFileKind, pro
   )
 }
 
-internal fun createFilesUpdateRequest(recentFileKind: RecentFileKind, frontendRecentFiles: List<VirtualFile>, project: Project): RecentFilesBackendRequest.FetchMetadata {
-  return RecentFilesBackendRequest.FetchMetadata(
-    filesKind = recentFileKind,
-    frontendRecentFiles = frontendRecentFiles.map { it.rpcId() },
-    projectId = project.projectId()
-  )
-}
-
 internal fun createHideFilesRequest(recentFileKind: RecentFileKind, filesToHide: List<VirtualFile>, project: Project): RecentFilesBackendRequest.HideFiles {
   return RecentFilesBackendRequest.HideFiles(
     filesKind = recentFileKind,
