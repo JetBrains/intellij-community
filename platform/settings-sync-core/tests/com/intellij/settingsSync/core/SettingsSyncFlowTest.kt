@@ -17,6 +17,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.junit.Assert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -67,6 +68,26 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState("options/laf.xml", "LaF Initial")
     }
   }
+
+
+  @Test
+  fun `dispose communicator when disabling sync`() {
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    Assertions.assertFalse(remoteCommunicator.wasDisposed)
+    SettingsSyncSettings.getInstance().syncEnabled = false
+    Assertions.assertTrue(remoteCommunicator.wasDisposed)
+
+  }
+
 
   @Test
   fun `settings modified between IDE sessions should be logged`() = timeoutRunBlockingAndStopBridge {

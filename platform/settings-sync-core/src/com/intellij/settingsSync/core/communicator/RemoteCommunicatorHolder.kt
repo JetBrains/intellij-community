@@ -3,23 +3,23 @@ package com.intellij.settingsSync.core.communicator
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
 import com.intellij.ide.plugins.PluginInstaller
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.loadDescriptor
 import com.intellij.ide.plugins.loadDescriptorFromArtifact
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.settingsSync.core.RestartForPluginInstall
-import com.intellij.settingsSync.core.RestartReason
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
@@ -39,6 +39,10 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
   const val DEFAULT_PROVIDER_CODE = "jba"
   const val DEFAULT_USER_ID = "jba"
 
+  init {
+    SettingsSyncEvents.getInstance().addListener(this)
+  }
+
   // pair userId:remoteCommunicator
   private val communicatorLazy = resettableLazy {
     createRemoteCommunicator()
@@ -50,8 +54,16 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
 
   fun isAvailable() = communicatorLazy.value != null
 
-  fun invalidateCommunicator() = communicatorLazy.reset().also {
-    logger.warn("Invalidating remote communicator")
+  fun invalidateCommunicator() {
+    val communicator: SettingsSyncRemoteCommunicator = communicatorLazy.value ?: let {
+      logger.info("Communicator is null, not need to invalidate")
+      return
+    }
+    communicatorLazy.reset()
+    if (communicator is Disposable) {
+      logger.info("Invalidating remote communicator $communicator")
+      Disposer.dispose(communicator)
+    }
   }
 
   fun getCurrentUserData(): SettingsSyncUserData? {
@@ -70,8 +82,20 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
     invalidateCommunicator()
   }
 
-  fun createRemoteCommunicator(provider: SettingsSyncCommunicatorProvider, userId: String): SettingsSyncRemoteCommunicator? {
-    return provider.createCommunicator(userId)
+  override fun enabledStateChanged(syncEnabled: Boolean) {
+    if (!syncEnabled) {
+      invalidateCommunicator()
+    }
+  }
+
+  fun createRemoteCommunicator(provider: SettingsSyncCommunicatorProvider,
+                               userId: String,
+                               parentDisposable: Disposable? = null): SettingsSyncRemoteCommunicator? {
+    val communicator: SettingsSyncRemoteCommunicator = provider.createCommunicator(userId) ?: return null
+    if (parentDisposable != null && communicator is Disposable) {
+      Disposer.register(parentDisposable, communicator)
+    }
+    return communicator
   }
 
   private fun createRemoteCommunicator(): SettingsSyncRemoteCommunicator? {
