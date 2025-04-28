@@ -5,6 +5,11 @@ bazel_dep(name = "rules_java", version = "8.11.0")
 bazel_dep(name = "rules_jvm", version = "0.0.1")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
+local_path_override(
+  module_name = "rules_jvm",
+  path = "../build/jvm-rules",
+)
+
 archive_override(
   module_name = "rules_kotlin",
   url = "https://github.com/develar/rules_kotlin/releases/download/v2.0.0-jb.14/rules_kotlin-v2.0.0-jb.14.tar.gz",
