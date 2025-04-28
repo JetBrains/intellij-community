@@ -11973,6 +11973,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/removeUnused/implicitlyUsedContextParameters1.kt");
         }
 
+        @TestMetadata("implicitlyUsedContextParametersInvoke.kt")
+        public void testImplicitlyUsedContextParametersInvoke() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnused/implicitlyUsedContextParametersInvoke.kt");
+        }
+
         @TestMetadata("importEnumValues.kt")
         public void testImportEnumValues() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeUnused/importEnumValues.kt");

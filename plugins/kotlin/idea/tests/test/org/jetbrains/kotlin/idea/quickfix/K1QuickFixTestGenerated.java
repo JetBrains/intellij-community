@@ -14647,6 +14647,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/removeUnused/implicitlyUsedContextParameters1.kt");
         }
 
+        @TestMetadata("implicitlyUsedContextParametersInvoke.kt")
+        public void testImplicitlyUsedContextParametersInvoke() throws Exception {
+            runTest("testData/quickfix/removeUnused/implicitlyUsedContextParametersInvoke.kt");
+        }
+
         @TestMetadata("importEnumValues.kt")
         public void testImportEnumValues() throws Exception {
             runTest("testData/quickfix/removeUnused/importEnumValues.kt");

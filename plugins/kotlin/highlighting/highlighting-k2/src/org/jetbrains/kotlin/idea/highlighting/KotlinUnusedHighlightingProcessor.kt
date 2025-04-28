@@ -137,6 +137,11 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
                 refHolder.registerLocalRef((call as? KaSimpleFunctionCall)?.symbol?.psi)
+                if (call is KaSimpleFunctionCall && call.isImplicitInvoke) {
+                    call.partiallyAppliedSymbol.contextArguments.forEach {
+                        refHolder.registerLocalRef(((it as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)?.psi)
+                    }
+                }
             }
 
             override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
