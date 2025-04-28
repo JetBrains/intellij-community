@@ -21,11 +21,11 @@ internal const val SETTINGS_SYNC_STORAGE_FOLDER: String = "settingsSync"
 
 @ApiStatus.Internal
 @Service
-class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
+class SettingsSyncMain(coroutineScope: CoroutineScope, appConfigPath: Path) : Disposable {
+  constructor(coroutineScope: CoroutineScope) : this(coroutineScope, PathManager.getConfigDir())
   val controls: SettingsSyncControls
 
   init {
-    val appConfigPath = PathManager.getConfigDir()
     val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = appConfigPath, enabledCondition = {
       isAvailable() && isSettingsSyncEnabledInSettings()
