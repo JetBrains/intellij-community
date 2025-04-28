@@ -25,7 +25,6 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
-import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -36,8 +35,6 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.GraphicsEnvironment
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,7 +44,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import javax.swing.JOptionPane
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 
 /**
@@ -123,12 +119,6 @@ object PluginManagerCore {
 
   private var ourBuildNumber: BuildNumber? = null
 
-  private val findLoadedClassHandle: MethodHandle by lazy(LazyThreadSafetyMode.NONE) {
-    val method = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
-    method.isAccessible = true
-    MethodHandles.lookup().unreflect(method)
-  }
-
   /**
    * Returns a list of all available plugin descriptors (bundled and custom, including disabled ones).
    * Use [loadedPlugins] if you need to get loaded plugins only.
@@ -141,6 +131,9 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun getPluginSet(): PluginSet = nullablePluginSet!!
+
+  @ApiStatus.Internal
+  fun getPluginSetOrNull(): PluginSet? = nullablePluginSet
 
   /**
    * Returns descriptors of plugins which are successfully loaded into the IDE.
@@ -212,72 +205,10 @@ object PluginManagerCore {
   fun findPluginByPlatformAlias(id: PluginId): IdeaPluginDescriptorImpl? =
     getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link PluginManager#getPluginByClass}.")
-  @JvmStatic
-  fun getPluginByClassName(className: String): PluginId? {
-    val id = getPluginDescriptorOrPlatformByClassName(className)?.getPluginId()
-    return if (id == null || CORE_ID == id) null else id
-  }
-
   @ApiStatus.Internal
   @JvmStatic
   fun isPlatformClass(fqn: String): Boolean =
     fqn.startsWith("java.") || fqn.startsWith("javax.") || fqn.startsWith("kotlin.") || fqn.startsWith("groovy.")
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun getPluginDescriptorOrPlatformByClassName(className: String): PluginDescriptor? {
-    val pluginSet = nullablePluginSet
-    if (pluginSet == null || isPlatformClass(className) || !className.contains('.')) {
-      return null
-    }
-
-    var result: IdeaPluginDescriptorImpl? = null
-    for (descriptor in pluginSet.getEnabledModules()) {
-      val classLoader = descriptor.getPluginClassLoader()
-      if (classLoader is UrlClassLoader) {
-        if (classLoader.hasLoadedClass(className)) {
-          result = descriptor
-          break
-        }
-      }
-      else if (classLoader != null && findLoadedClassHandle.invoke(classLoader, className) != null) {
-        result = descriptor
-        break
-      }
-    }
-
-    if (result == null) {
-      return null
-    }
-
-    // return if the found plugin is not `core`, or the package is unambiguously "core"
-    if (CORE_ID != result.getPluginId() ||
-        className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
-        className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
-        className.startsWith("com.android.") ||
-        className.startsWith("git4idea.") || className.startsWith("org.angularjs.")) {
-      return result
-    }
-    else {
-      return findClassInPluginThatUsesCoreClassloader(className, pluginSet)
-    }
-
-    // otherwise, we need to check plugins with use-idea-classloader="true"
-  }
-
-  @ApiStatus.Internal
-  fun getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass: Class<*>): PluginDescriptor? {
-    val className = aClass.getName()
-    val pluginSet = nullablePluginSet
-    if (pluginSet == null || isPlatformClass(className) || !className.contains('.')) {
-      return null
-    }
-    else {
-      return findClassInPluginThatUsesCoreClassloader(className, pluginSet)
-    }
-  }
 
   private fun isVendorItemTrusted(vendorItem: String): Boolean =
     if (vendorItem.isEmpty()) false
@@ -947,27 +878,6 @@ object PluginManagerCore {
     return actions
   }
 
-  private fun findClassInPluginThatUsesCoreClassloader(className: String, pluginSet: PluginSet): IdeaPluginDescriptorImpl? {
-    var root: String? = null
-    for (descriptor in pluginSet.enabledPlugins) {
-      if (!descriptor.isUseIdeaClassLoader) {
-        continue
-      }
-
-      if (root == null) {
-        root = PathManager.getResourceRoot(descriptor.getClassLoader(), className.replace('.', '/') + ".class")
-        if (root == null) {
-          return null
-        }
-      }
-      val path = descriptor.getPluginPath()
-      if (root.startsWith(path.invariantSeparatorsPathString)) {
-        return descriptor
-      }
-    }
-    return null
-  }
-
   @ApiStatus.Internal
   fun dependsOnUltimateOptionally(pluginDescriptor: IdeaPluginDescriptor?): Boolean {
     if (pluginDescriptor == null || pluginDescriptor !is IdeaPluginDescriptorImpl || !isDisabled(ULTIMATE_PLUGIN_ID)) return false
@@ -984,6 +894,21 @@ object PluginManagerCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use {@link PluginManager#getPluginByClass}.")
+  @JvmStatic
+  fun getPluginByClassName(className: String): PluginId? {
+    val id = PluginUtils.getPluginDescriptorOrPlatformByClassName(className)?.getPluginId()
+    return if (id == null || CORE_ID == id) null else id
+  }
+
+  @ApiStatus.Internal
+  @Deprecated("Moved to PluginUtils", replaceWith = ReplaceWith("PluginUtils.getPluginDescriptorOrPlatformByClassName(className)"))
+  @JvmStatic
+  fun getPluginDescriptorOrPlatformByClassName(className: String): PluginDescriptor? {
+    return PluginUtils.getPluginDescriptorOrPlatformByClassName(className)
+  }
+
   @Deprecated("Use {@link #disablePlugin(PluginId)}", level = DeprecationLevel.ERROR)
   @JvmStatic
   fun disablePlugin(id: String): Boolean = disablePlugin(PluginId.getId(id))

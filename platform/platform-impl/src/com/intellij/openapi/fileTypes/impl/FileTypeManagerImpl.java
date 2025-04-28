@@ -1116,7 +1116,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @ApiStatus.Internal
   public static @NotNull FileTypeWithDescriptor detectPluginDescriptor(@NotNull FileType type) {
-    PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(type.getClass().getName());
+    PluginDescriptor pluginDescriptor = PluginUtils.getPluginDescriptorOrPlatformByClassName(type.getClass().getName());
     if (pluginDescriptor == null) pluginDescriptor = coreIdeaPluginDescriptor();
     return new FileTypeWithDescriptor(type, pluginDescriptor);
   }

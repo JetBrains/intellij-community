@@ -36,7 +36,7 @@ public class PluginUtilImpl implements PluginUtil {
       if (element != null) {
         String className = element.getClassName();
         if (visitedClassNames.add(className)) {
-          PluginDescriptor descriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
+          PluginDescriptor descriptor = PluginUtils.getPluginDescriptorOrPlatformByClassName(className);
           PluginId id = descriptor == null ? null : descriptor.getPluginId();
           if (id != null && !PluginManagerCore.CORE_ID.equals(id)) {
             if (descriptor.isBundled()) {
