@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.endOffset
@@ -29,10 +31,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 data class FoldInitializerAndIfExpressionData(
-    val initializer: KtExpression,
-    val variableDeclaration: KtVariableDeclaration,
-    val ifNullExpression: KtExpression,
-    val typeChecked: KtTypeReference? = null,
+    val initializer: SmartPsiElementPointer<KtExpression>,
+    val variableDeclaration: SmartPsiElementPointer<KtVariableDeclaration>,
+    val ifNullExpression: SmartPsiElementPointer<KtExpression>,
+    val typeChecked: SmartPsiElementPointer<KtTypeReference>? = null,
     val variableTypeString: String?,
     val couldBeVal: Boolean = false,
 )
@@ -94,10 +96,10 @@ fun prepareData(element: KtIfExpression, enforceNonNullableTypeIfPossible: Boole
     }
 
     return FoldInitializerAndIfExpressionData(
-        initializer,
-        variableDeclaration,
-        statement,
-        typeReference,
+        initializer.createSmartPointer(),
+        variableDeclaration.createSmartPointer(),
+        statement.createSmartPointer(),
+        typeReference?.createSmartPointer(),
         type,
         couldBeVal
     )

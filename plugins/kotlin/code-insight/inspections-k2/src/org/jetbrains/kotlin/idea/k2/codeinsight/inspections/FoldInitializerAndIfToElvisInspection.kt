@@ -53,10 +53,10 @@ internal class FoldInitializerAndIfToElvisInspection :
             element: KtIfExpression,
             updater: ModPsiUpdater,
         ) {
-            val variableDeclaration = updater.getWritable(context.variableDeclaration)
-            val initializer = updater.getWritable(context.initializer)
-            val ifNullExpr = updater.getWritable(context.ifNullExpression)
-            val typeChecked = updater.getWritable<KtTypeReference>(context.typeChecked)
+            val variableDeclaration = context.variableDeclaration.element?.let(updater::getWritable) ?: return
+            val initializer = context.initializer.element?.let(updater::getWritable) ?: return
+            val ifNullExpr = context.ifNullExpression.element?.let(updater::getWritable) ?: return
+            val typeChecked = context.typeChecked?.element?.let(updater::getWritable)
 
             if (context.couldBeVal) {
                 variableDeclaration.replaceVarWithVal()
