@@ -62,7 +62,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
 import com.intellij.ui.*
-import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -700,7 +699,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     if (isUnifiedToolWindowSizesEnabled()) {
       info.weight = layoutState.getUnifiedAnchorWeight(info.anchor)
-      LOG.debug("Activated tool window: ${info.id}, using ${info.anchor} unified weight of ${info.weight}")
+      LOG.debug { "Activated tool window: ${info.id}, using ${info.anchor} unified weight of ${info.weight}" }
     }
 
     if (source != null) {
@@ -723,10 +722,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     if (!entry.readOnlyWindowInfo.isVisible) {
       info.isActiveOnStart = autoFocusContents
-      showToolWindowImpl(entry, info, dirtyMode = false, source = source)
+      showToolWindowImpl(entry = entry, toBeShownInfo = info, dirtyMode = false, source = source)
     }
     else if (!autoFocusContents /* if focus is requested, focusing code will do this */ && !info.type.isInternal) {
-      bringOwnerToFront(entry.toolWindow, false)
+      bringOwnerToFront(toolWindow = entry.toolWindow, focus = false)
     }
 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
@@ -841,8 +840,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    */
   private fun getWindowedDecorator(id: String) = idToEntry.get(id)?.windowedDecorator
 
-  override fun getIdsOn(anchor: ToolWindowAnchor): List<String> = getVisibleToolWindowsOn(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID,
-                                                                                          anchor).map { it.id }.toList()
+  override fun getIdsOn(anchor: ToolWindowAnchor): List<String> {
+    return getVisibleToolWindowsOn(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID, anchor).map { it.id }.toList()
+  }
 
   internal fun getToolWindowsOn(paneId: String, anchor: ToolWindowAnchor, excludedId: String): MutableList<ToolWindowEx> {
     return getVisibleToolWindowsOn(paneId, anchor)
@@ -858,7 +858,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun getShowInFindToolWindowIcon(): Icon {
-    return if (isNewUI()) AllIcons.General.OpenInToolWindow else getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab)
+    return if (isNewUi) AllIcons.General.OpenInToolWindow else getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab)
   }
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {
@@ -1032,9 +1032,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   private fun doShowWindow(entry: ToolWindowEntry, info: WindowInfo, dirtyMode: Boolean) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Showing the tool window ${info.id}")
-    }
+    LOG.debug { "Showing the tool window ${info.id}" }
     if (entry.readOnlyWindowInfo.type == ToolWindowType.FLOATING) {
       addFloatingDecorator(entry, info)
     }
@@ -1367,20 +1365,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     if (!idToEntry.isEmpty()) {
       LOG.error("idToEntry must be empty (idToEntry={\n${idToEntry.entries.joinToString(separator = "\n") { (k, v) -> "$k: $v" }})")
     }
-    if (LOG.isDebugEnabled) {
-      LOG.debug("The initial tool window layout is $newLayout")
-    }
+    LOG.debug { "The initial tool window layout is $newLayout" }
     layoutState = newLayout
   }
 
   override fun setLayout(newLayout: DesktopLayout) {
     ThreadingAssertions.assertEventDispatchThread()
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Restoring layout $newLayout")
-    }
+    LOG.debug { "Restoring layout $newLayout" }
 
     if (idToEntry.isEmpty()) {
-      LOG.debug("The current layout is empty, not applying anything")
+      LOG.debug { "The current layout is empty, not applying anything" }
       layoutState = newLayout
       return
     }
@@ -1405,15 +1399,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             isVisible = false
             isShowStripeButton = false
           }
-          if (LOG.isDebugEnabled) {
-            LOG.debug("The window ${old.id} doesn't exist in the new layout, making it and its stripe button invisible, " +
-                      "its new state will be $new")
+          LOG.debug {
+            "The window ${old.id} doesn't exist in the new layout, making it and its stripe button invisible, its new state will be $new"
           }
         }
         else {
-          if (LOG.isDebugEnabled) {
-            LOG.debug("The window ${old.id} doesn't exist in the new layout, resetting it to the default, " +
-                      "its new state will be $new")
+          LOG.debug {
+            "The window ${old.id} doesn't exist in the new layout, resetting it to the default, its new state will be $new"
           }
         }
         newLayout.addInfo(entry.id, new)
@@ -1421,9 +1413,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (old != new) {
         if (!entry.toolWindow.isAvailable) {
           new.isVisible = false // Preserve invariants: if it can't be shown, don't consider it visible.
-          if (LOG.isDebugEnabled) {
-            LOG.debug("The window ${old.id} isn't currently available, making it invisible, its new state will be $new")
-          }
+          LOG.debug { "The window ${old.id} isn't currently available, making it invisible, its new state will be $new" }
         }
         list.add(LayoutData(old = old, new = new, entry = entry))
       }
@@ -1453,10 +1443,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
 
       if (item.old.isVisible && !item.new.isVisible) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Hiding the tool window ${item.entry.id} as it's invisible in the new layout")
-        }
-        updateStateAndRemoveDecorator(item.new, item.entry, dirtyMode = true)
+        LOG.debug { "Hiding the tool window ${item.entry.id} as it's invisible in the new layout" }
+        updateStateAndRemoveDecorator(state = item.new, entry = item.entry, dirtyMode = true)
       }
 
       if (item.old.safeToolWindowPaneId != item.new.safeToolWindowPaneId
@@ -1464,13 +1452,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           || item.old.order != item.new.order
           || item.old.isShowStripeButton != item.new.isShowStripeButton
       ) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Updating the anchor of the tool window ${item.entry.id} because one of the following has changed:" +
-                    " pane (old=${item.old.safeToolWindowPaneId} new=${item.new.safeToolWindowPaneId})," +
-                    " anchor (old=${item.old.anchor} new=${item.new.anchor})," +
-                    " order (old=${item.old.order} new=${item.new.order})," +
-                    " isShowStripeButton (old=${item.old.isShowStripeButton} new=${item.new.isShowStripeButton})"
-          )
+        LOG.debug {
+          "Updating the anchor of the tool window ${item.entry.id} because one of the following has changed:" +
+          " pane (old=${item.old.safeToolWindowPaneId} new=${item.new.safeToolWindowPaneId})," +
+          " anchor (old=${item.old.anchor} new=${item.new.anchor})," +
+          " order (old=${item.old.order} new=${item.new.order})," +
+          " isShowStripeButton (old=${item.old.isShowStripeButton} new=${item.new.isShowStripeButton})"
         }
         setToolWindowAnchorImpl(item.entry, item.old, item.new, item.new.safeToolWindowPaneId, item.new.anchor, item.new.order, null)
       }
@@ -1482,11 +1469,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         // we should hide the window and show it in a 'new place'
         // to automatically hide a possible window that is already located in a 'new place'
         if (wasVisible) {
-          if (LOG.isDebugEnabled) {
-            LOG.debug("Temporarily hiding the tool window ${item.entry.id} because one of the following is changed:" +
-                      " isSplit (old=${item.old.isSplit} new=${item.new.isSplit})," +
-                      " isInternal (old=${item.old.type.isInternal} new=${item.new.type.isInternal})"
-            )
+          LOG.debug {
+            "Temporarily hiding the tool window ${item.entry.id} because one of the following is changed:" +
+            " isSplit (old=${item.old.isSplit} new=${item.new.isSplit})," +
+            " isInternal (old=${item.old.type.isInternal} new=${item.new.type.isInternal})"
           }
           hideToolWindow(item.entry.id)
           toShowWindow = true
@@ -1495,11 +1481,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
       if (item.old.type != item.new.type) {
         val dirtyMode = item.old.type.isInternal
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Saving the tool window ${item.entry.id} state and removing its decorators " +
-                    "as its type has changed: ${item.old.type} -> ${item.new.type}, " +
-                    "will ${if (item.new.isVisible) "re-show" else "NOT re-show"} it again later"
-          )
+        LOG.debug {
+          "Saving the tool window ${item.entry.id} state and removing its decorators " +
+          "as its type has changed: ${item.old.type} -> ${item.new.type}, " +
+          "will ${if (item.new.isVisible) "re-show" else "NOT re-show"} it again later"
         }
         updateStateAndRemoveDecorator(item.old, item.entry, dirtyMode)
         if (item.new.isVisible) {
@@ -1507,9 +1492,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
       }
       else if (!item.old.isVisible && item.new.isVisible) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("The tool window ${item.entry.id} will become visible in the new layout")
-        }
+        LOG.debug { "The tool window ${item.entry.id} will become visible in the new layout" }
         toShowWindow = true
       }
 
@@ -1524,26 +1507,23 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (item.new.isVisible && item.new.isDocked) {
         val toolWindowPane = getToolWindowPane(item.entry.toolWindow)
         if (item.old.weight != item.new.weight) {
-          if (LOG.isDebugEnabled) {
-            LOG.debug("Changing the tool window ${item.entry.id} weight from ${item.old.weight} to ${item.new.weight}")
-          }
+          LOG.debug { "Changing the tool window ${item.entry.id} weight from ${item.old.weight} to ${item.new.weight}" }
           val anchor = item.new.anchor
           var weight = item.new.weight
           val another = list.firstOrNull { it !== item && it.new.anchor == anchor && it.new.isVisible && it.new.isDocked }
           if (another != null && anchor.isUltrawideLayout()) { // split windows side-by-side, set weight of the entire splitter
             weight += another.new.weight
-            if (LOG.isDebugEnabled) {
-              LOG.debug("Adding to the tool window ${item.entry.id} weight " +
-                        "the weight of ${another.entry.id} (${another.new.weight}) " +
-                        "because they're displayed side-by-side in the ultrawide layout"
-              )
+            LOG.debug {
+              "Adding to the tool window ${item.entry.id} weight " +
+              "the weight of ${another.entry.id} (${another.new.weight}) " +
+              "because they're displayed side-by-side in the ultrawide layout"
             }
           }
-          LOG.debug("Setting ${item.entry.id} weight=${weight} from the saved layout")
+          LOG.debug { "Setting ${item.entry.id} weight=${weight} from the saved layout" }
           toolWindowPane.setWeight(anchor, weight)
         }
         if (item.old.sideWeight != item.new.sideWeight) {
-          LOG.debug("Setting ${item.entry.id} side weight ${item.new.sideWeight} from the saved layout")
+          LOG.debug { "Setting ${item.entry.id} side weight ${item.new.sideWeight} from the saved layout" }
           toolWindowPane.setSideWeight(item.entry.toolWindow, item.new.sideWeight)
         }
       }
@@ -1551,7 +1531,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     LOG.debug("PASS 3: revalidate/repaint panes")
     val rootPanes = HashSet<JRootPane>()
-    list.forEach { layoutData ->
+    for (layoutData in list) {
       getToolWindowPane(layoutData.entry.toolWindow).let { toolWindowPane ->
         toolWindowPane.buttonManager.revalidateNotEmptyStripes()
         toolWindowPane.validate()
@@ -1941,14 +1921,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     if (layoutState != null) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Updating order of the affected windows because ${entry.id} has changed anchor")
-      }
+      LOG.debug { "Updating order of the affected windows because ${entry.id} has changed anchor" }
       for (otherInfo in layoutState.setAnchor(info, paneId, anchor, order)) {
         val otherToolWindow = idToEntry.get(otherInfo.id ?: continue)?.toolWindow ?: continue
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Affected tool window ${otherInfo.id}: ${windowInfoChanges(otherToolWindow.windowInfo, otherInfo)}")
-        }
+        LOG.debug { "Affected tool window ${otherInfo.id}: ${windowInfoChanges(otherToolWindow.windowInfo, otherInfo)}" }
         otherToolWindow.setWindowInfoSilently(otherInfo.copy())
       }
     }
@@ -2223,18 +2199,16 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val rootPaneBounds = rootPane.bounds
     val point = rootPane.locationOnScreen
     val windowBounds = window.bounds
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Adjusting the bounds of the windowed tool window ${info.id} according to " +
-                "its bounds ($windowBounds) and its root pane bounds ($rootPaneBounds)")
+    LOG.debug {
+      "Adjusting the bounds of the windowed tool window ${info.id} according to " +
+      "its bounds ($windowBounds) and its root pane bounds ($rootPaneBounds)"
     }
     window.setLocation(2 * windowBounds.x - point.x, 2 * windowBounds.y - point.y)
     window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height)
-    if (LOG.isDebugEnabled) {
-      LOG.debug("The adjusted bounds are ${window.bounds}")
-    }
+    LOG.debug { "The adjusted bounds are ${window.bounds}" }
     if (shouldBeMaximized && window is Frame) {
       window.extendedState = Frame.MAXIMIZED_BOTH
-      LOG.debug("The window has also been maximized")
+      LOG.debug { "The window has also been maximized" }
     }
   }
 
@@ -2249,48 +2223,34 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     val needToCenter: Boolean
     val bounds: Rectangle
     if (storedBounds != null && isValidBounds(storedBounds)) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Keeping the tool window ${info.id} valid bounds: $storedBounds")
-      }
+      LOG.debug { "Keeping the tool window ${info.id} valid bounds: $storedBounds" }
       bounds = Rectangle(storedBounds)
       needToCenter = false
     }
     else if (storedBounds != null && storedBounds.width > 0 && storedBounds.height > 0) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusting the stored bounds for the tool window ${info.id} to fit the screen $screen")
-      }
+      LOG.debug { "Adjusting the stored bounds for the tool window ${info.id} to fit the screen $screen" }
       bounds = Rectangle(storedBounds)
       ScreenUtil.moveToFit(bounds, screen, null, true)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Adjusted the stored bounds to fit the screen: $bounds")
-      }
+      LOG.debug { "Adjusted the stored bounds to fit the screen: $bounds" }
       needToCenter = true
     }
     else {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Computing default bounds for the tool window ${info.id}")
-      }
+      LOG.debug { "Computing default bounds for the tool window ${info.id}" }
       // place a new frame at the center of the current frame if there are no floating bounds
       var size = internalDecorator.size
       if (size.width == 0 || size.height == 0) {
         val preferredSize = internalDecorator.preferredSize
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Using the preferred size $preferredSize because the size $size is invalid")
-        }
+        LOG.debug { "Using the preferred size $preferredSize because the size $size is invalid" }
         size = preferredSize
       }
       bounds = Rectangle(externalDecorator.visibleWindowBounds.location, size)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Computed the bounds using the default location: $bounds")
-      }
+      LOG.debug { "Computed the bounds using the default location: $bounds" }
       needToCenter = true
     }
     externalDecorator.visibleWindowBounds = bounds
     if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.visibleWindowBounds}")
-      }
+      LOG.debug { "Centered the bounds relative to the IDE frame: ${externalDecorator.visibleWindowBounds}" }
     }
   }
 
@@ -2302,9 +2262,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       bounds.width > 0 && bounds.height > 0 &&
       (topLeftVisible || topRightVisible) && // At least some part of the header must be visible,
       mostlyVisible // and that some sensible portion of the window is better be visible too.
-    if (!isValid && LOG.isDebugEnabled) {
-      LOG.debug("Not using saved bounds $bounds because they're invalid: " +
-                "topLeftVisible=$topLeftVisible, topRightVisible=$topRightVisible mostlyVisible=$mostlyVisible")
+    if (!isValid) {
+      LOG.debug {
+        "Not using saved bounds $bounds because they're invalid: " +
+        "topLeftVisible=$topLeftVisible, topRightVisible=$topRightVisible mostlyVisible=$mostlyVisible"
+      }
     }
     return isValid
   }
@@ -2384,9 +2346,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     if (info.type == ToolWindowType.FLOATING) {
       if (externalFloatingBounds != null) {
         info.floatingBounds = externalFloatingBounds
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Floating tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}")
-        }
+        LOG.debug { "Floating tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}" }
       }
     }
     else if (info.type == ToolWindowType.WINDOWED) {
@@ -2397,9 +2357,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
       info.floatingBounds = externalFloatingBounds
       info.isMaximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Windowed tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}, maximized=${info.isMaximized}")
-      }
+      LOG.debug { "Windowed tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}, maximized=${info.isMaximized}" }
     }
     else {
       // docked and sliding windows
@@ -2407,6 +2365,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (!dockingAreaComponentSizeCanBeTrusted(dockingAreaComponent)) {
         return
       }
+
       val anchor = info.anchor
       if (source.parent is Splitter) {
         var sizeInSplit = if (anchor.isSplitVertically) source.height else source.width
