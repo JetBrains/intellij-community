@@ -55,9 +55,11 @@ import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getShortText
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import com.intellij.xdebugger.impl.frame.FileColorsComputer
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.showFeWarnings
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxyKeeper
 import com.intellij.xdebugger.impl.frame.XValueMarkers
@@ -856,9 +858,17 @@ class XDebugSessionImpl @JvmOverloads constructor(
       }
     }
     val debuggerManager = myDebuggerManager.breakpointManager
-    debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint, Runnable {
-      (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
-    })
+    if (useFeLineBreakpointProxy() && breakpoint is XLineBreakpointImpl<*>) {
+      // for useFeLineBreakpointProxy we call update directly since visual presentation is disabled on the backend
+      debuggerManager.lineBreakpointManager.queueBreakpointUpdateCallback(breakpoint, Runnable {
+        breakpoint.fireBreakpointPresentationUpdated(this)
+      })
+    }
+    else {
+      debuggerManager.lineBreakpointManager.queueBreakpointUpdate(breakpoint, Runnable {
+        (breakpoint as XBreakpointBase<*, *, *>).fireBreakpointPresentationUpdated(this)
+      })
+    }
   }
 
   override fun setBreakpointVerified(breakpoint: XLineBreakpoint<*>) {
