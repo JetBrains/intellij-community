@@ -154,10 +154,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     return delegate.getRootProvider();
   }
 
-  void copyTo(@NotNull ProjectJdkImpl dest) {
-    LOG.error("Function is unsupported for the new implementation of SDK");
-  }
-
   @Override
   @ApiStatus.Internal
   public void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement) {
