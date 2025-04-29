@@ -119,6 +119,7 @@
       <action id="Debugger.ThawSelectedThreads" class="com.intellij.xdebugger.impl.actions.ThawSelectedThreadsAction" icon="AllIcons.Debugger.Thaw">
         <synonym key="action.Debugger.ThawSelectedThreads.synonym"/>
       </action>
+      <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -200,7 +201,7 @@
     </group>
 
     <group id="XDebugger.Frames.TopToolbar">
-      <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
+      <reference ref="Debugger.ShowLibraryFrames"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Popup">

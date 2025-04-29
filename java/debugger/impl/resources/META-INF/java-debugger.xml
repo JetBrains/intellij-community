@@ -236,10 +236,6 @@
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="last"/>
       </action>
-      <action id="Debugger.LibraryFramesToggle" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="last"/>
-      </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
@@ -421,5 +417,10 @@
 
     <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
             class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
+
+    <reference ref="Debugger.ShowLibraryFrames">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="before" relative-to-action="Debugger.AsyncStacks"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="before" relative-to-action="Debugger.AsyncStacks"/>
+    </reference>
   </actions>
 </idea-plugin>
