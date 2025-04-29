@@ -246,14 +246,15 @@ class ClassLoaderConfigurator(
   private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
     for (dependency in module.dependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
+      if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
+        continue
+      }
       if (!isKotlinPlugin(module.pluginId) &&
           isKotlinPlugin(dependency.pluginId) &&
           isIncompatibleWithKotlinPlugin(module)
-        ) {
+      ) {
+        LOG.error("unexpected condition $module") // TODO drop this branch, probably dead code, should be handled by plugin init
         // disable dependencies which optionally deepened on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
-        continue
-      }
-      if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
         continue
       }
       // classLoader must be set - otherwise sub descriptor considered as inactive
