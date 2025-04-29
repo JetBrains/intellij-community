@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.TerminalNonToolWindowFocus
 import java.awt.AWTEvent.FOCUS_EVENT_MASK
 import java.awt.AWTEvent.WINDOW_FOCUS_EVENT_MASK
 import java.awt.Component
@@ -57,10 +59,10 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
     val focusedWindow = this.focusedWindow
     return when {
       focusedComponent == null || focusedWindow == null -> {
-        FocusedNonToolWindow(NonToolWindowFocus.OTHER_APPLICATION)
+        FocusedNonToolWindow(TerminalNonToolWindowFocus.OTHER_APPLICATION)
       }
       ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusedComponent) != null -> {
-        FocusedNonToolWindow(NonToolWindowFocus.EDITOR)
+        FocusedNonToolWindow(TerminalNonToolWindowFocus.EDITOR)
       }
       else -> {
         val id = ComponentUtil.getParentOfType(InternalDecoratorImpl::class.java, focusedComponent)?.toolWindowId
@@ -68,7 +70,7 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
           FocusedToolWindow(id)
         }
         else {
-          FocusedNonToolWindow(NonToolWindowFocus.OTHER_COMPONENT)
+          FocusedNonToolWindow(TerminalNonToolWindowFocus.OTHER_COMPONENT)
         }
       }
     }
@@ -130,6 +132,7 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
       return
     }
     LOG.debug("The terminal gained focus from '$fusString'")
+    ReworkedTerminalUsageCollector.logFocusGained(fusString)
   }
 
   private fun logFocusLeavingTerminal(nextState: FocusedComponent) {
@@ -139,6 +142,7 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
       return
     }
     LOG.debug("Focus is going from the terminal to '$fusString'")
+    ReworkedTerminalUsageCollector.logFocusLost(fusString)
   }
 }
 
@@ -154,14 +158,8 @@ private data class FocusedToolWindow(val id: String) : FocusedComponent() {
   override fun toFusString(): String = id
 }
 
-private data class FocusedNonToolWindow(val focus: NonToolWindowFocus) : FocusedComponent() {
+private data class FocusedNonToolWindow(val focus: TerminalNonToolWindowFocus) : FocusedComponent() {
   override fun toFusString(): String = focus.name
-}
-
-private enum class NonToolWindowFocus {
-  EDITOR,
-  OTHER_COMPONENT,
-  OTHER_APPLICATION,
 }
 
 private val FocusedComponent.isTerminalFocused: Boolean
