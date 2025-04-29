@@ -11,29 +11,30 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? =
-        when (diagnostic) {
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+        val expression = diagnostic.psi as? KtExpression ?: return null
+
+        val destructuredType = when (diagnostic) {
             is KaFirDiagnostic.ComponentFunctionMissing,
             is KaFirDiagnostic.ComponentFunctionAmbiguity -> {
-                val destructuredExpression = diagnostic.psi as? KtExpression ?: return null
-
-                val destructuredType = when (destructuredExpression) {
+                when (expression) {
                     // destructuring in lambda parameter position (e.g. `foo { (a, b) -> ... }`)
-                    is KtParameter -> destructuredExpression.returnType
+                    is KtParameter -> expression.returnType
 
                     // regular assignment destructuring (e.g. `val (a, b) = ...`)
-                    else -> destructuredExpression.expressionType
-                } ?: return null
-
-                ImportContextWithFixedReceiverType(
-                    destructuredExpression,
-                    ImportPositionType.OperatorCall,
-                    explicitReceiverType = destructuredType,
-                )
+                    else -> expression.expressionType
+                }
             }
 
             else -> null
-        }
+        } ?: return null
+
+        return ImportContextWithFixedReceiverType(
+            expression,
+            ImportPositionType.OperatorCall,
+            explicitReceiverType = destructuredType,
+        )
+    }
 
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importContext: ImportContext): Set<Name> {
         val missingName = when (diagnostic) {
