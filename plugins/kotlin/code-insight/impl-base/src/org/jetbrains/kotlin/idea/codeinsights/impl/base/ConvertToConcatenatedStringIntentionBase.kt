@@ -32,7 +32,7 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
     override fun invoke(context: ActionContext, element: KtStringTemplateExpression, updater: ModPsiUpdater) {
         checkNotNull(element.text) { "Failed to get template expression's text" }
         val psiFactory = KtPsiFactory(element.project)
-        val oldPrefixLength = element.interpolationPrefix?.textLength ?: 1
+        val oldPrefixLength = element.entryPrefixLength
 
         val entries = element.entries.filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
         val convertFirstEntryExplicitly = entries.firstOrNull().needsExplicitToStringConversion()
@@ -87,7 +87,7 @@ abstract class ConvertToConcatenatedStringIntentionBase : PsiUpdateModCommandAct
                         .flatMap { nestedEntry ->
                             nestedEntry.toOperandExpressions(
                                 psiFactory,
-                                oldPrefixLength = expression.interpolationPrefix?.textLength ?: 1,
+                                oldPrefixLength = expression.entryPrefixLength,
                                 isSingleQuoted = expression.isSingleQuoted(),
                             )
                         }
