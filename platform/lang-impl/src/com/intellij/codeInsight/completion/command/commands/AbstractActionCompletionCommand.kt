@@ -7,11 +7,13 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiNameIdentifierOwner
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -111,6 +113,21 @@ open class ActionCommandProvider(
       if (ch == '\n') return true
     }
     return true
+  }
+
+  protected fun createCommandWithNameIdentifier(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+    var element = getCommandContext(context.offset, context.psiFile) ?: return null
+    if (element is PsiNameIdentifierOwner) {
+      element = element.nameIdentifier ?: return null
+    }
+    val range = element.textRange ?: return null
+    return ActionCompletionCommand(actionId = actionId,
+                                   name = name,
+                                   i18nName = i18nName,
+                                   icon = icon,
+                                   priority = priority,
+                                   previewText = previewText,
+                                   highlightInfo = HighlightInfoLookup(range, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0))
   }
 }
 

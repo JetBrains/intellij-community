@@ -10,7 +10,8 @@ import com.intellij.psi.util.PsiTreeUtil
 internal class JavaGoToSuperMethodCommandCompletionProvider : AbstractGoToSuperMethodCompletionCommandProvider() {
   override fun canGoToSuperMethod(element: PsiElement, offset: Int): Boolean {
     val method = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java) ?: return false
-    if (!TextRange(method.textRange.startOffset, method.body?.textRange?.startOffset ?: method.textRange.endOffset)
+    val methodTextRange = method.textRange
+    if (!TextRange(methodTextRange.startOffset, method.body?.textRange?.startOffset ?: methodTextRange.endOffset)
         .contains(offset)
     ) {
       return false

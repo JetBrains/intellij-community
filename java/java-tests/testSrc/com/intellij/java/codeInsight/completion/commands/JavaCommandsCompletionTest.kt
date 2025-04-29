@@ -405,7 +405,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       """.trimIndent())
     val elements = myFixture.completeBasic()
     selectItem(elements.first { element -> element.lookupString.contains("Go to super", ignoreCase = true) })
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
         public class TestSuper {
         
