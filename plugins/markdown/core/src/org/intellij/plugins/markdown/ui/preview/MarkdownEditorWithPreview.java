@@ -96,12 +96,13 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
       int currentLine = editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).getLine() : y / editor.getLineHeight();
+
       if (currentLine == previousLine) {
         return;
       }
 
+      ((MarkdownPreviewFileEditor) myPreview).ensureMarkdownSrcOffsetIsVisible(editor.getCaretModel().getOffset());
       previousLine = currentLine;
-      ((MarkdownPreviewFileEditor)myPreview).scrollToLine(editor, currentLine);
     }
   }
 }

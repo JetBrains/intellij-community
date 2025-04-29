@@ -6,6 +6,7 @@ class ScrollController {
 
   constructor() {
     this.positionAttributeName = document.querySelector(`meta[name="markdown-position-attribute-name"]`).content;
+    this.setScrollEventName = document.querySelector(`meta[name="markdown-set-scroll-event-name"]`).content;
     this.collectMarkdownElements = this.#doCollectMarkdownElements();
     IncrementalDOM.notifications.afterPatchListeners.push(() => {
       this.collectMarkdownElements = this.#doCollectMarkdownElements();
@@ -34,7 +35,7 @@ class ScrollController {
 
   #scrollHandler() {
     const value = this._getElementsAtOffset(window.scrollY);
-    window.__IntelliJTools.messagePipe.post("setScroll", value.previous.from);
+    window.__IntelliJTools.messagePipe.post(this.setScrollEventName, value.previous.from);
   }
 
   getNodeOffsets(node) {
@@ -126,11 +127,24 @@ class ScrollController {
     return { previous: hiElement };
   }
 
-  #doScroll(element, smooth) {
+  #isElementVisible(element) {
+    const rect = element.getBoundingClientRect();
+
+    return (
+      rect.top >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+    );
+  }
+
+  #doScroll(element, smooth, doNothingIfAlreadyOnScreen = false) {
+    if (doNothingIfAlreadyOnScreen && this.#isElementVisible(element))
+      return;
+
     if (!smooth) {
-      element.scrollIntoView();
+      element.scrollIntoView(element.getBoundingClientRect().top < 0);
       return;
     }
+
     this.#scrollFinished = false;
     ScrollController.#performSmoothScroll(element).then(() => {
       this.#scrollFinished = true;
@@ -164,7 +178,7 @@ class ScrollController {
     }
   }
 
-  scrollTo(offset, smooth = true) {
+  scrollTo(offset, smooth = true, doNothingIfAlreadyOnScreen = false) {
     if (this.currentScrollElement) {
       const position = this.getNodeOffsets(this.currentScrollElement);
       if (offset >= position[0] && offset <= position[1]) {
@@ -182,7 +196,38 @@ class ScrollController {
       return;
     }
     this.currentScrollElement = element;
-    this.#doScroll(element, smooth);
+    this.#doScroll(element, smooth, doNothingIfAlreadyOnScreen);
+  }
+
+  ensureMarkdownSrcOffsetIsVisible(offset) {
+    // Find an element with the narrowest range inclusive of `offset`
+    const elements = this.collectMarkdownElements();
+    let element;
+    let e;
+    let minSpan = Number.MAX_SAFE_INTEGER;
+    let fallbackElement;
+
+    for (const elem of elements) {
+      if (!fallbackElement && elem.from >= offset)
+        fallbackElement = elem.element;
+
+      if (elem.element.localName !== 'div' && elem.from <= offset && offset <= elem.to && elem.to - elem.from < minSpan) {
+        e = elem;
+        element = elem.element;
+        minSpan = elem.to - elem.from;
+      }
+    }
+
+    if (!element && !fallbackElement) {
+      console.info(`*** no match at ${offset} ***`);
+      return;
+    }
+    else if (!element)
+      element = fallbackElement;
+
+    const rect = element.getBoundingClientRect();
+    console.info(`*** match: ${offset}, ${element.localName}, height: ${rect.height}, span: ${minSpan} ***`);
+    this.#doScroll(element, true, true);
   }
 
   static #throttle(callback, limit) {
@@ -199,11 +244,13 @@ class ScrollController {
   }
 
   static #performSmoothScroll(element) {
-    return new Promise( (resolve) => {
+    return new Promise((resolve) => {
       let frames = 0;
       let lastPosition = null;
       element.scrollIntoView({
-        behavior: "smooth"
+        behavior: 'smooth',
+        block: element.getBoundingClientRect().top < 0 ? 'start' : 'end',
+        inline: 'nearest'
       });
       const action = () => {
         const currentPosition = element.getBoundingClientRect().top;

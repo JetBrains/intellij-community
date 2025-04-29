@@ -18,9 +18,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -41,6 +39,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.findFirstOpenEditorForFile
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.codeFenceParsingStartUp
@@ -103,33 +102,25 @@ class MarkdownPreviewFileEditor(
         }
       })
 
-    messageBusConnection.subscribe(
-      MarkdownJCEFHtmlPanel.PreviewClickListener.TOPIC,
-      object : MarkdownJCEFHtmlPanel.PreviewClickListener {
-        override fun receivedPosition(charOffset: Int, lineOffset: Int, file: VirtualFile) {
-          if (file == this@MarkdownPreviewFileEditor.file) {
-            val fileEditorManager = FileEditorManager.getInstance(project)
-            val fileEditors = fileEditorManager.getEditors(file)
+    messageBusConnection.subscribe(MarkdownJCEFHtmlPanel.PreviewClickListener.TOPIC,
+                                   object : MarkdownJCEFHtmlPanel.PreviewClickListener {
+      override fun receivedPosition(charOffset: Int, lineOffset: Int, file: VirtualFile) {
+        if (file == this@MarkdownPreviewFileEditor.file) {
+          var editor = findFirstOpenEditorForFile(project, file)
 
-            for (fileEditor in fileEditors) {
-              if (fileEditor is TextEditor && fileEditor.editor.contentComponent.isShowing) {
-                val editor = fileEditor.editor
-                val document = editor.document
-                val line = document.getLineNumber(charOffset) + lineOffset
-                val column = if (lineOffset == 0) charOffset - document.getLineStartOffset(line) else 0
+          if (editor != null) {
+            val document = editor.document
+            val line = document.getLineNumber(charOffset) + lineOffset
 
-                ApplicationManager.getApplication().invokeLater {
-                  editor.caretModel.moveToLogicalPosition(LogicalPosition(line, column))
-                  editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
-                  editor.contentComponent.requestFocusInWindow()
-                }
-
-                return
-              }
+            ApplicationManager.getApplication().invokeLater {
+              editor.caretModel.moveToLogicalPosition(LogicalPosition(line, 0))
+              editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+              editor.contentComponent.requestFocusInWindow()
             }
           }
         }
-      })
+      }
+    })
 
     StartupUiUtil.addAwtListener(AWTEvent.MOUSE_EVENT_MASK, this) { event ->
       if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED && event.button == MouseEvent.BUTTON3
@@ -180,6 +171,18 @@ class MarkdownPreviewFileEditor(
   fun scrollToLine(editor: Editor, line: Int) {
     coroutineScope.launch(Dispatchers.EDT) {
       panel?.scrollTo(editor, line)
+    }
+  }
+
+  fun scrollToSourceOffset(offset: Int) {
+    coroutineScope.launch(Dispatchers.EDT) {
+      panel?.scrollToMarkdownSrcOffset(offset, true)
+    }
+  }
+
+  fun ensureMarkdownSrcOffsetIsVisible(offset: Int) {
+    coroutineScope.launch(Dispatchers.EDT) {
+      panel?.ensureMarkdownSrcOffsetIsVisible(offset)
     }
   }
 

@@ -78,6 +78,8 @@ public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable
   @Deprecated
   default void scrollToMarkdownSrcOffset(int offset, boolean smooth) {}
 
+  default void ensureMarkdownSrcOffsetIsVisible(int offset) {}
+
   @Override
   @Nullable
   default Object scrollTo(@NotNull Editor editor, int line, @NotNull Continuation<? super @NotNull Unit> $completion) {

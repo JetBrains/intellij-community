@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.collectLatest
 import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
-import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.handler.CefResourceRequestHandler
 import org.cef.handler.CefResourceRequestHandlerAdapter
@@ -54,10 +53,11 @@ import java.net.URL
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.round
+import org.cef.handler.CefDisplayHandlerAdapter
 
 class MarkdownJCEFHtmlPanel(
   private val project: Project?,
-  private val virtualFile: VirtualFile?
+  private val virtualFile: VirtualFile?,
 ) : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
   constructor() : this(null, null)
 
@@ -113,6 +113,7 @@ class MarkdownJCEFHtmlPanel(
           <title>IntelliJ Markdown Preview</title>
           <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
           <meta name="markdown-position-attribute-name" content="${HtmlGenerator.SRC_ATTRIBUTE_NAME}"/>
+          <meta name="markdown-set-scroll-event-name" content="$SET_SCROLL_EVENT"/>
           $scriptingLines
           $stylesLines
         </head>
@@ -154,20 +155,10 @@ class MarkdownJCEFHtmlPanel(
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
+    // TODO: Removing after using for debugging.
     jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
-      // Get feedback from preview when content is double-clicked so we can scroll the editor
-      // to a matching position.
       override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
-        if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && virtualFile != null) {
-          val match = Regex("""^(\d+),(\d+)""").find(message)
-
-          if (match != null) {
-            val publisher = project?.messageBus?.syncPublisher(PreviewClickListener.TOPIC) ?: return false
-            publisher.receivedPosition(match.groupValues[1].toInt(), match.groupValues[2].toInt(), virtualFile)
-            return true
-          }
-       }
-
+        println("$level [$source:$line]: $message")
         return false
       }
     }, cefBrowser)
@@ -178,6 +169,20 @@ class MarkdownJCEFHtmlPanel(
         return false
       }
     })
+
+    browserPipe.subscribe(SCROLL_SOURCE_EVENT, object : BrowserPipe.Handler {
+      override fun processMessageReceived(data: String): Boolean {
+        var match = Regex("""^(\d+),(\d+)""").find(data)
+
+        if (match != null && virtualFile != null) {
+          val publisher = project?.messageBus?.syncPublisher(PreviewClickListener.TOPIC) ?: return false
+          publisher.receivedPosition(match.groupValues[1].toInt(), match.groupValues[2].toInt(), virtualFile)
+        }
+
+        return false
+      }
+    }) // SCROLL_SOURCE_EVENT
+
     val connection = application.messageBus.connect(this)
     connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
       changeFontSize(settings.state.fontSize)
@@ -217,7 +222,7 @@ class MarkdownJCEFHtmlPanel(
       |        lineHeight = fontSize * 1.2;
       |
       |      if (offset != null) {
-      |        console.info(offset + ',' + Math.floor((event.clientY - rect.top) / lineHeight));
+      |        window.__IntelliJTools.messagePipe.post("$SCROLL_SOURCE_EVENT", offset + ',' + Math.floor((event.clientY - rect.top) / lineHeight));
       |        evt.stopPropagation();
       |        evt.preventDefault();
       |      }
@@ -247,6 +252,7 @@ class MarkdownJCEFHtmlPanel(
     }
   }
 
+  @Suppress("JSUnresolvedReference")
   private suspend fun updateDom(renderClosure: String, initialScrollOffset: Int, firstUpdate: Boolean) {
     previousRenderClosure = renderClosure
     // language=JavaScript
@@ -353,6 +359,10 @@ class MarkdownJCEFHtmlPanel(
   @Deprecated("Deprecated in Java")
   override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
     executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
+  }
+
+  override fun ensureMarkdownSrcOffsetIsVisible(offset: Int) {
+    executeJavaScript("window.scrollController?.ensureMarkdownSrcOffsetIsVisible($offset)")
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
@@ -530,6 +540,7 @@ class MarkdownJCEFHtmlPanel(
     private val logger = logger<MarkdownJCEFHtmlPanel>()
 
     private const val SET_SCROLL_EVENT = "setScroll"
+    private const val SCROLL_SOURCE_EVENT = "scrollSource"
     private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 
     private val baseScripts = listOf(

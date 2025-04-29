@@ -40,14 +40,13 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
               jsExecLatch?.await()
               jsResult = message.substring(12)
               jsResultLatch?.countDown()
-              return true
             }
             else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
               System.err.println("Error while executing highlighter: $message")
               jsError = true
             }
 
-            return false
+            return true // Prevent creation of jcef_*.log files
           }
         }, cefBrowser)
       }
