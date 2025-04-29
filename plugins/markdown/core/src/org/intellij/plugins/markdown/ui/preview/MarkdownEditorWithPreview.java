@@ -3,6 +3,9 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -54,7 +57,9 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
         }
       }
     });
+
     editor.getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
+    editor.getEditor().getCaretModel().addCaretListener(new MyCaretListener(), this);
   }
 
   @Override
@@ -84,8 +89,21 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     this.autoScrollPreview = autoScrollPreview;
   }
 
+  private final class MyCaretListener implements CaretListener {
+    @Override
+    public void caretPositionChanged(@NotNull CaretEvent event) {
+      if (isAutoScrollPreview()) {
+        ((MarkdownPreviewFileEditor) myPreview).ensureMarkdownSrcOffsetIsVisible(event.getEditor().getCaretModel().getOffset());
+      }
+    }
+  }
+
   private final class MyVisibleAreaListener implements VisibleAreaListener {
     private int previousLine = 0;
+
+    private static int pixelOffsetToLine(Editor editor, int y) {
+      return editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).line : y / editor.getLineHeight();
+    }
 
     @Override
     public void visibleAreaChanged(@NotNull VisibleAreaEvent event) {
@@ -95,13 +113,21 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
       final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
-      int currentLine = editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).getLine() : y / editor.getLineHeight();
+      int currentLine = pixelOffsetToLine(editor, y);
 
       if (currentLine == previousLine) {
         return;
       }
 
-      ((MarkdownPreviewFileEditor) myPreview).ensureMarkdownSrcOffsetIsVisible(editor.getCaretModel().getOffset());
+      int scrollLine = currentLine;
+
+      if (currentLine > previousLine) {
+        scrollLine = pixelOffsetToLine(editor, y + editor.getScrollingModel().getVisibleArea().height);
+      }
+
+      ((MarkdownPreviewFileEditor) myPreview)
+        .ensureMarkdownSrcOffsetIsVisible(editor.logicalPositionToOffset(new LogicalPosition(scrollLine, 0)));
+
       previousLine = currentLine;
     }
   }

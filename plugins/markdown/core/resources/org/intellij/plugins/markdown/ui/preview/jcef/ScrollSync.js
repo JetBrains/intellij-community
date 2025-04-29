@@ -2,7 +2,6 @@
 class ScrollController {
   #lastOffset = 0;
   #scrollFinished = true;
-  // #nextScrollElement = null;
 
   constructor() {
     this.positionAttributeName = document.querySelector(`meta[name="markdown-position-attribute-name"]`).content;
@@ -127,50 +126,51 @@ class ScrollController {
     return { previous: hiElement };
   }
 
-  #isElementVisible(element) {
-    const rect = element.getBoundingClientRect();
+  #doScroll(elementOrRect, smooth, doNothingIfAlreadyOnScreen = false) {
+    let top, bottom;
+    const wh = window.innerHeight;
 
-    return (
-      rect.top >= 0 &&
-      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
-    );
-  }
+    if (elementOrRect instanceof Element) {
+      // If the element has children which add to its height, for scrolling-into-view purposes treat the
+      // parent element as if it has reduced height.
+      const rect = elementOrRect.getBoundingClientRect();
 
-  #doScroll(element, smooth, doNothingIfAlreadyOnScreen = false) {
-    if (doNothingIfAlreadyOnScreen && this.#isElementVisible(element))
-      return;
+      top = rect.top;
+      bottom = rect.bottom;
 
-    if (!smooth) {
-      element.scrollIntoView(element.getBoundingClientRect().top < 0);
-      return;
+      const checkChildren = (element) => {
+        for (const child of element.children) {
+          if (child.hasAttribute(this.positionAttributeName)) {
+            const childRect = child.getBoundingClientRect();
+
+            if (childRect.top > rect.top + 12) {
+              bottom = childRect.top;
+              break;
+            }
+          }
+
+          if (child.children)
+            checkChildren(child);
+        }
+      };
+
+      checkChildren(elementOrRect);
+    }
+    else {
+      top = elementOrRect.top;
+      bottom = elementOrRect.bottom;
     }
 
-    this.#scrollFinished = false;
-    ScrollController.#performSmoothScroll(element).then(() => {
-      this.#scrollFinished = true;
-    });
-  }
+    if (doNothingIfAlreadyOnScreen && top >= 0 && bottom <= wh)
+      return;
 
-  // #doScroll(element, smooth) {
-  //   if (!smooth) {
-  //     element.scrollIntoView();
-  //     return;
-  //   }
-  //   if (!this.#scrollFinished) {
-  //     this.#nextScrollElement = element;
-  //     return;
-  //   }
-  //   this.#scrollFinished = false;
-  //   const resolve = () => {
-  //     this.#scrollFinished = true;
-  //     if (this.#nextScrollElement) {
-  //       const element = this.#nextScrollElement;
-  //       this.#nextScrollElement = null;
-  //       this.#doScroll(element, true).then(resolve);
-  //     }
-  //   };
-  //   return ScrollController.#performSmoothScroll(element).then(resolve);
-  // }
+    if (bottom > wh)
+      window.scrollBy({ left: 0, top: bottom - wh, behavior: smooth ? "smooth" : "instant" });
+    else
+      window.scrollBy({ left: 0, top, behavior: smooth ? "smooth" : "instant" });
+
+    this.#monitorScrollCompletion();
+  }
 
   scrollBy(horizontal, vertical) {
     if (this.#scrollFinished) {
@@ -226,7 +226,6 @@ class ScrollController {
       element = fallbackElement;
 
     const rect = element.getBoundingClientRect();
-    console.info(`*** match: ${offset}, ${element.localName}, height: ${rect.height}, span: ${minSpan} ***`);
     this.#doScroll(element, true, true);
   }
 
@@ -243,30 +242,33 @@ class ScrollController {
     };
   }
 
-  static #performSmoothScroll(element) {
-    return new Promise((resolve) => {
-      let frames = 0;
-      let lastPosition = null;
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: element.getBoundingClientRect().top < 0 ? 'start' : 'end',
-        inline: 'nearest'
-      });
-      const action = () => {
-        const currentPosition = element.getBoundingClientRect().top;
-        if (currentPosition === lastPosition) {
-          frames += 1;
-          if (frames > 2) {
-            return resolve();
-          }
-        } else {
-          frames = 0;
-          lastPosition = currentPosition;
+  #monitorScrollCompletion() {
+    this.#scrollFinished = false;
+
+    let frames = 0;
+    let currentPosition = window.scrollY;
+    let lastPosition = null;
+
+    const action = () => {
+      currentPosition = window.scrollY;
+
+      if (currentPosition === lastPosition) {
+        frames += 1;
+
+        if (frames > 2) {
+          this.#scrollFinished = false;
+          return;
         }
-        requestAnimationFrame(action);
-      };
+      }
+      else {
+        frames = 0;
+        lastPosition = currentPosition;
+      }
+
       requestAnimationFrame(action);
-    });
+    };
+
+    requestAnimationFrame(action);
   }
 }
 
