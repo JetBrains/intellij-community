@@ -341,30 +341,22 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     val startTime = System.nanoTime()
-    var lastBundleName: String? = null
-    var lastBundle: ResourceBundle? = null
     for (descriptor in elements) {
       val bundleName = descriptor.resourceBundle
                        ?: if (PluginManagerCore.CORE_ID == module.pluginId) "messages.ActionsBundle" else module.resourceBundleBaseName
       val element = descriptor.element
-      var bundle: ResourceBundle?
-      when (bundleName) {
-        null -> bundle = null
-        lastBundleName -> bundle = lastBundle
-        else -> {
+
+      val bundleSupplier = {
+        bundleName?.let {
           try {
-            bundle = DynamicBundle.getResourceBundle(module.classLoader, bundleName)
-            lastBundle = bundle
-            lastBundleName = bundleName
+            DynamicBundle.getResourceBundle(module.classLoader, bundleName)
           }
           catch (e: MissingResourceException) {
             LOG.error(PluginException("Cannot resolve resource bundle $bundleName for action $element", e, module.pluginId))
-            bundle = null
+            null
           }
         }
       }
-
-      val bundleSupplier = { bundleName?.let { DynamicBundle.getResourceBundle(module.classLoader, it) } ?: bundle }
 
       when (descriptor) {
         is ActionDescriptorAction -> {
