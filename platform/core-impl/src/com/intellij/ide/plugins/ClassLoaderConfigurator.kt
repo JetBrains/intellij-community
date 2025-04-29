@@ -32,7 +32,7 @@ class ClassLoaderConfigurator(
   @Suppress("JoinDeclarationAndAssignment")
   private val resourceFileFactory: Function<Path, ResourceFile>?
 
-  private val mainToClassPath = IdentityHashMap<PluginId, MainInfo>()
+  private val mainToClassPath = IdentityHashMap<PluginId, MainPluginDescriptorClassPathInfo>()
 
   init {
     resourceFileFactory = try {
@@ -57,7 +57,7 @@ class ClassLoaderConfigurator(
 
     // class cast fails in case IU is running from sources, IDEA-318252
     (mainDescriptor.pluginClassLoader as? PluginClassLoader)?.let {
-      mainToClassPath.put(pluginId, MainInfo(classLoader = it))
+      mainToClassPath.put(pluginId, MainPluginDescriptorClassPathInfo(classLoader = it))
     }
 
     if (mainDescriptor.dependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
@@ -188,7 +188,7 @@ class ClassLoaderConfigurator(
     return dependencies
   }
 
-  private fun configureMainPluginModule(mainDescriptor: IdeaPluginDescriptorImpl): MainInfo {
+  private fun configureMainPluginModule(mainDescriptor: IdeaPluginDescriptorImpl): MainPluginDescriptorClassPathInfo {
     assert(mainDescriptor.isMainPluginDescriptor)
     val exisingMainInfo = mainToClassPath.get(mainDescriptor.pluginId)
     if (exisingMainInfo != null) {
@@ -233,7 +233,7 @@ class ClassLoaderConfigurator(
     else {
       createPluginClassLoader(module = mainDescriptor, dependencies = getSortedDependencies(mainDescriptor), classPath = pluginClassPath, libDirectories = libDirectories)
     }
-    val mainInfo = MainInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainDependentClassLoader)
+    val mainInfo = MainPluginDescriptorClassPathInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainDependentClassLoader)
     mainToClassPath.put(mainDescriptor.pluginId, mainInfo)
     mainDescriptor.pluginClassLoader = mainDependentClassLoader
     configureDependenciesInOldFormat(mainDescriptor, mainDependentClassLoader)
@@ -540,7 +540,7 @@ fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
   }
 }
 
-private class MainInfo(
+private class MainPluginDescriptorClassPathInfo(
   @JvmField val classPath: ClassPath,
   @JvmField val libDirectories: List<Path>,
   @JvmField val mainClassLoader: ClassLoader,
