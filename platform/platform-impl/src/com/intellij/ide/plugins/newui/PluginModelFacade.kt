@@ -4,11 +4,11 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import javax.swing.JComponent
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -47,8 +47,8 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return getController(model).getIcon(model, big, error, disabled)
   }
 
-  fun getErrors(model: PluginUiModel): List<com.intellij.openapi.util.text.HtmlChunk> {
-    return pluginModel.getErrors(model.getDescriptor())
+  fun getErrors(model: PluginUiModel): List<HtmlChunk> {
+    return getController(model).getErrors(model)
   }
 
   fun enableRequiredPlugins(model: PluginUiModel) {
@@ -56,15 +56,15 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun isUninstalled(model: PluginUiModel): Boolean {
-    return pluginModel.isUninstalled(model.getDescriptor())
+    return getController(model).isUninstalled(model)
   }
 
   fun isEnabled(model: PluginUiModel): Boolean {
     return getController(model).isEnabled(model)
   }
 
-  fun finishInstall(model: PluginUiModel, installedDescriptor: com.intellij.ide.plugins.IdeaPluginDescriptorImpl?, success: Boolean, showErrors: Boolean, restartRequired: Boolean) {
-    pluginModel.finishInstall(model.getDescriptor(), installedDescriptor, success, showErrors, restartRequired)
+  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, success: Boolean, showErrors: Boolean, restartRequired: Boolean) {
+    getController(model).finishInstall(model, installedModel, success, showErrors, restartRequired)
   }
 
   fun isPluginRequiredForProject(model: PluginUiModel): Boolean {
@@ -163,11 +163,11 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   companion object {
 
     @JvmStatic
-    fun addProgress(model: PluginUiModel, indicator: com.intellij.openapi.wm.ex.ProgressIndicatorEx) {
+    fun addProgress(model: PluginUiModel, indicator: ProgressIndicatorEx) {
       MyPluginModel.addProgress(model.getDescriptor(), indicator)
     }
     @JvmStatic
-    fun removeProgress(model: PluginUiModel, indicator: com.intellij.openapi.wm.ex.ProgressIndicatorEx) {
+    fun removeProgress(model: PluginUiModel, indicator: ProgressIndicatorEx) {
       MyPluginModel.removeProgress(model.getDescriptor(), indicator)
     }
   }

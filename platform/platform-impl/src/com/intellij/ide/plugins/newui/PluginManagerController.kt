@@ -5,9 +5,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -30,7 +30,7 @@ interface PluginManagerController {
   fun isBundledUpdate(model: PluginUiModel): Boolean
   fun uninstallAndUpdateUi(model: PluginUiModel)
   fun findInstalledPlugin(model: PluginUiModel): PluginUiModel?
-  fun getPluginManagerUrl(model: PluginUiModel) : String
+  fun getPluginManagerUrl(model: PluginUiModel): String
   fun isDisabledInDiff(model: PluginUiModel): Boolean
   fun findPlugin(model: PluginUiModel): PluginUiModel?
   fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
@@ -41,4 +41,7 @@ interface PluginManagerController {
   fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel?
   fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment>
   fun isLoaded(pluginUiModel: PluginUiModel): Boolean
+  fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, finishedSuccessfully: Boolean, showErrors: Boolean, restartRequired: Boolean)
+  fun getErrors(model: PluginUiModel): List<HtmlChunk>
+  fun isUninstalled(model: PluginUiModel): Boolean
 }

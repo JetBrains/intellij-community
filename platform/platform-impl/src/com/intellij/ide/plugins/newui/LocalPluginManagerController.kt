@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
@@ -16,6 +17,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -139,6 +141,18 @@ class LocalPluginManagerController(private val localPluginModel: MyPluginModel) 
 
   override fun isLoaded(pluginUiModel: PluginUiModel): Boolean {
     return localPluginModel.isLoaded(pluginUiModel.pluginId)
+  }
+
+  override fun finishInstall(model: PluginUiModel, installedModel: PluginUiModel?, finishedSuccessfully: Boolean, showErrors: Boolean, restartRequired: Boolean) {
+    return localPluginModel.finishInstall(model.getDescriptor(), installedModel?.getDescriptor() as? IdeaPluginDescriptorImpl, finishedSuccessfully, showErrors, restartRequired)
+  }
+
+  override fun getErrors(model: PluginUiModel): List<HtmlChunk> {
+    return localPluginModel.getErrors(model.getDescriptor())
+  }
+
+  override fun isUninstalled(model: PluginUiModel): Boolean {
+    return localPluginModel.isUninstalled(model.getDescriptor())
   }
 
   override fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel? {
