@@ -44,7 +44,7 @@ class ClassLoaderConfigurator(
       null
     }
     catch (e: Throwable) {
-      log.error(e)
+      LOG.error(e)
       null
     }
   }
@@ -198,7 +198,7 @@ class ClassLoaderConfigurator(
     var mainModuleFiles = mainDescriptor.jarFiles
     if (mainModuleFiles == null) {
       if (!mainDescriptor.isUseIdeaClassLoader) {
-        log.error("jarFiles is not set for $mainDescriptor")
+        LOG.error("jarFiles is not set for $mainDescriptor")
       }
       mainModuleFiles = emptyList()
     }
@@ -363,11 +363,6 @@ class ClassLoaderConfigurator(
   }
 }
 
-// do not use class reference here
-@Suppress("SSBasedInspection")
-private val log: Logger
-  get() = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
-
 private fun createModuleResolveScopeManager(): ResolveScopeManager {
   return object : ResolveScopeManager {
     override fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String? {
@@ -509,7 +504,7 @@ internal val canExtendIdeaClassLoader: Boolean by lazy {
 }
 
 private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: IdeaPluginDescriptorImpl): ClassLoader {
-  log.warn("${descriptor.pluginId} uses deprecated `use-idea-classloader` attribute")
+  LOG.warn("deprecated `use-idea-classloader` attribute used by $descriptor")
   val loader = ClassLoaderConfigurator::class.java.classLoader
   try {
     // `UrlClassLoader#addPath` can't be invoked directly, because the core classloader is created at bootstrap in a "lost" branch
@@ -553,3 +548,7 @@ private class MainInfo(
   constructor(classLoader: PluginClassLoader) 
     : this(classPath = classLoader.classPath, libDirectories = classLoader.getLibDirectories(), mainClassLoader = classLoader)
 }
+
+@Suppress("SSBasedInspection") // do not use class reference here
+private val LOG: Logger
+  get() = Logger.getInstance("#com.intellij.ide.plugins.ClassLoaderConfigurator")
