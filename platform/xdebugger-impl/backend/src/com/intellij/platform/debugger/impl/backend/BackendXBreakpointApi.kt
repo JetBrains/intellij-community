@@ -15,6 +15,7 @@ import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
@@ -61,6 +62,13 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     val expression = condition?.xExpression()
     edtWriteAction {
       breakpoint.conditionExpression = expression
+    }
+  }
+
+  override suspend fun setFileUrl(breakpointId: XBreakpointId, fileUrl: String?) {
+    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
+    edtWriteAction {
+      breakpoint.fileUrl = fileUrl
     }
   }
 

@@ -68,15 +68,29 @@ internal class FrontendXLineBreakpointProxy(
     return lineBreakpointInfo.file?.virtualFile()
   }
 
+  private fun getFileUrl(): String? {
+    return lineBreakpointInfo.fileUrl
+  }
+
   override fun getLine(): Int {
     return lineBreakpointInfo.line
   }
 
   override fun setFileUrl(url: String) {
-    // TODO IJPL-185322 implement like it is done in XLineBreakpointImpl
-    // TODO IJPL-185322 send through RPC
-    updateLineBreakpointState { it.copy(fileUrl = url) }
-    onBreakpointChange()
+    if (getFileUrl() != url) {
+      val oldFile = getFile()
+      updateLineBreakpointState { it.copy(fileUrl = url) }
+      // TODO IJPL-185322 support source position?
+      // mySourcePosition = null
+      visualRepresentation.removeHighlighter()
+      visualRepresentation.redrawInlineInlays(oldFile, getLine())
+      visualRepresentation.redrawInlineInlays(getFile(), getLine())
+      onBreakpointChange()
+
+      project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+        XBreakpointApi.getInstance().setFileUrl(id, url)
+      }
+    }
   }
 
   override fun setLine(line: Int) {
