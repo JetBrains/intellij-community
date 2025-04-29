@@ -380,7 +380,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     if (!isShown()) return ContainerUtil.emptyList();
 
     updateHistoryIterator();
-    return myHistoryIterator.list;
+    return myHistoryIterator.getList();
   }
 
   private void updateHistoryIterator() {
@@ -412,109 +412,5 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private static void addShortcut(Map<String, @Nls String> map, String tabId, String actionID) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
     if (shortcut != null) map.put(tabId, KeymapUtil.getShortcutText(shortcut));
-  }
-
-  private static final class SearchHistoryList {
-
-    private static final int HISTORY_LIMIT = 50;
-
-    private record HistoryItem(String searchText, String contributorID) {
-    }
-
-    private final List<HistoryItem> historyList = new ArrayList<>();
-
-    public HistoryIterator getIterator(String contributorID) {
-      List<String> list = getHistoryForContributor(contributorID);
-      return new HistoryIterator(contributorID, list);
-    }
-
-    public void saveText(@NotNull String text, @NotNull String contributorID) {
-      historyList.stream()
-        .filter(item -> text.equals(item.searchText()) && contributorID.equals(item.contributorID()))
-        .findFirst()
-        .ifPresent(historyList::remove);
-
-      historyList.add(new HistoryItem(text, contributorID));
-
-      List<String> list = filteredHistory(item -> item.contributorID().equals(contributorID));
-      if (list.size() > HISTORY_LIMIT) {
-        historyList.stream()
-          .filter(item -> item.contributorID().equals(contributorID))
-          .findFirst()
-          .ifPresent(historyList::remove);
-      }
-    }
-
-    private List<String> getHistoryForContributor(String contributorID) {
-      if (ALL_CONTRIBUTORS_GROUP_ID.equals(contributorID)) {
-        List<String> res = filteredHistory(item -> true);
-        int size = res.size();
-        return size > HISTORY_LIMIT ? res.subList(size - HISTORY_LIMIT, size) : res;
-      }
-      else {
-        return filteredHistory(item -> item.contributorID().equals(contributorID));
-      }
-    }
-
-    private @NotNull List<String> filteredHistory(Predicate<? super HistoryItem> predicate) {
-      return historyList.stream()
-        .filter(predicate)
-        .map(item -> item.searchText())
-        .collect(distinctCollector);
-    }
-
-    private static final Collector<String, List<String>, List<String>> distinctCollector = Collector.of(
-      () -> new ArrayList<>(),
-      (lst, str) -> {
-        lst.remove(str);
-        lst.add(str);
-      },
-      (lst1, lst2) -> {
-        lst1.removeAll(lst2);
-        lst1.addAll(lst2);
-        return lst1;
-      }
-    );
-  }
-
-  private static final class HistoryIterator {
-
-    private final String contributorID;
-    private final List<String> list;
-    private int index;
-
-    HistoryIterator(String id, List<String> list) {
-      contributorID = id;
-      this.list = list;
-      index = -1;
-    }
-
-    public String getContributorID() {
-      return contributorID;
-    }
-
-    public String next() {
-      if (list.isEmpty()) {
-        return "";
-      }
-
-      index += 1;
-      if (index >= list.size()) {
-        index = 0;
-      }
-      return list.get(index);
-    }
-
-    public String prev() {
-      if (list.isEmpty()) {
-        return "";
-      }
-
-      index -= 1;
-      if (index < 0) {
-        index = list.size() - 1;
-      }
-      return list.get(index);
-    }
   }
 }
