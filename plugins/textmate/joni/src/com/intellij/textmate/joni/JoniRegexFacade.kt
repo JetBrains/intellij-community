@@ -10,7 +10,6 @@ import org.joni.Region
 import org.joni.exception.JOniException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.math.max
 
 class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
@@ -24,7 +23,7 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
     matchBeginString: Boolean,
     checkCancelledCallback: Runnable?
   ): MatchData {
-    val gosOffset = if (matchBeginPosition) byteOffset else Int.Companion.MAX_VALUE
+    val gosOffset = if (matchBeginPosition) byteOffset else Int.MAX_VALUE
     val options = if (matchBeginString) Option.NONE else Option.NOTBOS
 
     checkCancelledCallback?.run()
@@ -62,8 +61,8 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
         val offsets = IntArray(matchedRegion.numRegs * 2)
         for (i in 0..<matchedRegion.numRegs) {
           val startIndex = i * 2
-          offsets[startIndex] = max(matchedRegion.getBeg(i), 0)
-          offsets[startIndex + 1] = max(matchedRegion.getEnd(i), 0)
+          offsets[startIndex] = matchedRegion.getBeg(i)
+          offsets[startIndex + 1] = matchedRegion.getEnd(i)
         }
         return MatchData(true, offsets)
       }
