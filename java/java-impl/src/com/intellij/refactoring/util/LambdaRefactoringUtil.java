@@ -2,14 +2,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -19,8 +12,6 @@ import com.intellij.psi.impl.RecaptureTypeMapper;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +23,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public final class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
@@ -307,46 +300,6 @@ public final class LambdaRefactoringUtil {
     final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(body);
     if (singleExpression != null) {
       body.replace(singleExpression);
-    }
-  }
-
-  /**
-   * Works for expression lambdas/one statement code block lambdas to ensures equivalent method ref -> lambda transformation.
-   */
-  public static void removeSideEffectsFromLambdaBody(Editor editor, PsiLambdaExpression lambdaExpression) {
-    if (lambdaExpression != null && lambdaExpression.isValid()) {
-      final PsiElement body = lambdaExpression.getBody();
-      PsiExpression methodCall = LambdaUtil.extractSingleExpressionFromBody(body);
-      PsiExpression qualifierExpression = null;
-      if (methodCall instanceof PsiMethodCallExpression) {
-        qualifierExpression = ((PsiMethodCallExpression)methodCall).getMethodExpression().getQualifierExpression();
-      }
-      else if (methodCall instanceof PsiNewExpression) {
-        qualifierExpression = ((PsiNewExpression)methodCall).getQualifier();
-      }
-
-      if (qualifierExpression != null) {
-        final List<PsiElement> sideEffects = new ArrayList<>();
-        if (ExpressionUtils.isNewObject(qualifierExpression)) {
-          sideEffects.add(qualifierExpression);
-        }
-        else {
-          SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
-        }
-        if (!sideEffects.isEmpty()) {
-          if (ApplicationManager.getApplication().isUnitTestMode() ||
-              Messages.showYesNoDialog(lambdaExpression.getProject(),
-                                       JavaRefactoringBundle.message("lambda.to.reference.side.effect.warning.message"),
-                                       JavaRefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
-            //ensure introduced before lambda
-            qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
-            RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
-            JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
-            assert handler != null;
-            handler.invoke(qualifierExpression.getProject(), editor, qualifierExpression);
-          }
-        }
-      }
     }
   }
 

@@ -1,34 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Set;
+
+import static java.util.Objects.requireNonNull;
 
 public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
@@ -48,16 +45,9 @@ public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspec
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
-    final boolean onTheFly = (Boolean)infos[1];
-    if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
-      return new MethodRefToLambdaFix();
-    }
-    else if (onTheFly) {
-      return new SideEffectsMethodRefToLambdaFix();
-    }
-    return null;
+    return LocalQuickFix.from(new SideEffectsMethodRefToLambdaFix(methodReferenceExpression));
   }
 
   private static class MethodRefToLambdaVisitor extends BaseInspectionVisitor {
@@ -65,72 +55,91 @@ public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspec
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
       super.visitMethodReferenceExpression(methodReferenceExpression);
       if (LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression)) {
-        registerError(methodReferenceExpression, methodReferenceExpression, isOnTheFly());
+        registerError(methodReferenceExpression, methodReferenceExpression);
       }
     }
   }
 
-  private static class MethodRefToLambdaFix extends PsiUpdateModCommandQuickFix {
+  private static class SideEffectsMethodRefToLambdaFix extends PsiBasedModCommandAction<PsiMethodReferenceExpression> {
+    private final ThreeState myExtractSideEffect;
+
+    SideEffectsMethodRefToLambdaFix(@NotNull PsiMethodReferenceExpression methodRef) {
+      this(methodRef, ThreeState.UNSURE);
+    }
+
+    SideEffectsMethodRefToLambdaFix(@NotNull PsiMethodReferenceExpression methodRef, @NotNull ThreeState extractSideEffect) {
+      super(methodRef);
+      myExtractSideEffect = extractSideEffect;
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodReferenceExpression element) {
+      String message = switch (myExtractSideEffect) {
+        case YES -> InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix.side.effects");
+        case NO -> InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix.no.side.effects");
+        case UNSURE -> InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
+      };
+      return Presentation.of(message);
+    }
+
     @Override
     public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (element instanceof PsiMethodReferenceExpression methodRef) {
-        LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, false, true);
+    protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiMethodReferenceExpression methodRef) {
+      boolean extractSideEffect;
+      if (myExtractSideEffect == ThreeState.UNSURE) {
+        if (possibleToExtractSideEffect(methodRef)) {
+          //noinspection DialogTitleCapitalization
+          return ModCommand.chooseAction(getFamilyName(),
+                                         new SideEffectsMethodRefToLambdaFix(methodRef, ThreeState.YES),
+                                         new SideEffectsMethodRefToLambdaFix(methodRef, ThreeState.NO));
+        }
+        extractSideEffect = false;
       }
-    }
-  }
-
-  private static class SideEffectsMethodRefToLambdaFix extends InspectionGadgetsFix {
-    @Override
-    public @Nls @NotNull String getFamilyName() {
-      return ApplicationManager.getApplication().isUnitTestMode() ?
-             (InspectionGadgetsBundle.message("side.effects.method.ref.to.lambda.fix.family.name",
-                                              InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix"))) :
-             InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiMethodReferenceExpression methodRef = ObjectUtils.tryCast(previewDescriptor.getPsiElement(), PsiMethodReferenceExpression.class);
-      if (methodRef == null) {
-        return IntentionPreviewInfo.EMPTY;
+      else {
+        extractSideEffect = myExtractSideEffect == ThreeState.YES && possibleToExtractSideEffect(methodRef);
       }
-      LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, false, true);
-      return IntentionPreviewInfo.DIFF;
+      if (!extractSideEffect) {
+        return ModCommand.psiUpdate(methodRef, mr -> LambdaRefactoringUtil.convertMethodReferenceToLambda(mr, false, true));
+      }
+      return ModCommand.psiUpdate(methodRef, (mr, updater) -> {
+        CodeBlockSurrounder surrounder = requireNonNull(CodeBlockSurrounder.forExpression(mr));
+        CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+        PsiLambdaExpression lambdaExpression =
+          LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)result.getExpression(), false, true);
+        if (lambdaExpression == null) return;
+        PsiExpression methodCall = LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody());
+        PsiExpression qualifierExpression = null;
+        if (methodCall instanceof PsiMethodCallExpression call) {
+          qualifierExpression = call.getMethodExpression().getQualifierExpression();
+        }
+        else if (methodCall instanceof PsiNewExpression call) {
+          qualifierExpression = call.getQualifier();
+        }
+        if (qualifierExpression == null) return;
+        PsiType type = qualifierExpression.getType();
+        if (type == null) return;
+        List<String> varNames =
+          new VariableNameGenerator(result.getAnchor(), VariableKind.LOCAL_VARIABLE).byExpression(qualifierExpression).generateAll(true);
+        String name = varNames.get(0);
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+        PsiDeclarationStatement declaration = factory
+          .createVariableDeclarationStatement(name, type, qualifierExpression, result.getAnchor());
+        declaration = (PsiDeclarationStatement)result.getAnchor().getParent().addBefore(declaration, result.getAnchor());
+        PsiVariable declaredVariable = (PsiVariable)declaration.getDeclaredElements()[0];
+        qualifierExpression.replace(factory.createExpressionFromText(name, null));
+        updater.rename(declaredVariable, varNames);
+      });
     }
 
-    @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiMethodReferenceExpression methodRef) {
-        DataManager.getInstance()
-          .getDataContextFromFocusAsync()
-          .onSuccess(context -> {
-            final Editor editor = CommonDataKeys.EDITOR.getData(context);
-            if (editor != null) {
-              CommandProcessor.getInstance()
-                .executeCommand(project, () -> doFixAndRemoveSideEffects(editor, methodRef), getFamilyName(), null);
-            }
-          });
-      }
-    }
-
-    private static void doFixAndRemoveSideEffects(@NotNull Editor editor, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodReferenceExpression)) return;
-      final PsiLambdaExpression lambdaExpression =
-        WriteAction.compute(() -> LambdaRefactoringUtil.convertMethodReferenceToLambda(methodReferenceExpression, false, true));
-      if (lambdaExpression != null) {
-        LambdaRefactoringUtil.removeSideEffectsFromLambdaBody(editor, lambdaExpression);
-      }
+    private static boolean possibleToExtractSideEffect(@NotNull PsiMethodReferenceExpression methodRef) {
+      PsiExpression qualifier = methodRef.getQualifierExpression();
+      return qualifier != null && qualifier.getType() != null && 
+             (SideEffectChecker.mayHaveSideEffects(qualifier) || ExpressionUtils.isNewObject(qualifier)) &&
+             CodeBlockSurrounder.canSurround(methodRef);
     }
   }
 }
