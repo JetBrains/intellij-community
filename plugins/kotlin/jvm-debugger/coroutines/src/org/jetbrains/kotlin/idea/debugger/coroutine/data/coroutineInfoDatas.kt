@@ -23,7 +23,7 @@ open class CoroutineInfoData(
     name: String?,
     val id: Long?,
     state: String?,
-    val dispatcher: String?,
+    dispatcher: String?,
     val lastObservedFrame: ObjectReference?,
     val lastObservedThread: ThreadReference?,
     val debugCoroutineInfoRef: ObjectReference?,
@@ -37,8 +37,15 @@ open class CoroutineInfoData(
 
     var parentJob: String? = null
 
+    // NOTE: dispatchers may have a custom String representation, see IDEA-371498
+    val dispatcher: String? by lazy {
+        dispatcher?.let {
+            CLASS_WITH_HASHCODE_REGEX.matchEntire(it)?.groups[1]?.value ?: it
+        }
+    }
+
     private val contextSummary by lazy {
-        "[$dispatcher${if (job == null) "" else ", $job"}]"
+        "[${this.dispatcher}${if (job == null) "" else ", $job"}]"
     }
 
     val coroutineDescriptor: String by lazy {
@@ -73,6 +80,7 @@ open class CoroutineInfoData(
         const val DEFAULT_COROUTINE_STATE: String = "UNKNOWN"
         internal const val UNKNOWN_JOB: String = "UNKNOWN_JOB"
         private const val UNKNOWN_THREAD: String = "UNKNOWN_THREAD"
+        private val CLASS_WITH_HASHCODE_REGEX = "([a-zA-Z0-9._]+@[0-9a-f]+)(.*?)?".toRegex()
     }
 
     @Deprecated("Please use API of CoroutineInfoData instead.")
