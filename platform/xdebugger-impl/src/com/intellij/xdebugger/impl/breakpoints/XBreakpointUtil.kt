@@ -189,18 +189,40 @@ object XBreakpointUtil {
     moveCaret: Boolean,
     canRemove: Boolean,
   ): Promise<XLineBreakpoint<*>?> {
-    val info = getAvailableLineBreakpointInfo(project, position, selectVariantByPositionColumn, editor)
-    val typeWinner = info.first
-    val lineWinner = info.second
+    return toggleLineBreakpointProxy(project, position, selectVariantByPositionColumn, editor, temporary, moveCaret, canRemove)
+      .then { proxy ->
+        (proxy as? XLineBreakpointProxy.Monolith)?.breakpoint as? XLineBreakpoint<*>
+      }
+  }
+
+  /**
+   * Toggle line breakpoint with editor support:
+   * - unfolds folded block on the line
+   * - if folded, checks if line breakpoints could be toggled inside folded text
+   */
+  @JvmStatic
+  internal fun toggleLineBreakpointProxy(
+    project: Project,
+    position: XSourcePosition,
+    selectVariantByPositionColumn: Boolean,
+    editor: Editor?,
+    temporary: Boolean,
+    moveCaret: Boolean,
+    canRemove: Boolean,
+    isConditional: Boolean = false,
+    condition: String? = null,
+  ): Promise<XLineBreakpointProxy?> {
+    val (typeWinner, lineWinner) = getAvailableLineBreakpointInfo(project, position, selectVariantByPositionColumn, editor)
 
     if (typeWinner.isEmpty()) {
       return rejectedPromise(RuntimeException("Cannot find appropriate type"))
     }
 
     val lineStart = position.line
+    val types = typeWinner.filterIsInstance<XLineBreakpointTypeProxy.Monolith>().map { it.breakpointType }
     val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
     val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(
-      project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove)
+      project, types, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove)
 
     if (editor != null && lineStart != lineWinner) {
       val offset = editor.document.getLineStartOffset(lineWinner)
@@ -209,7 +231,18 @@ object XBreakpointUtil {
         editor.caretModel.moveToOffset(offset)
       }
     }
-    return res
+    return res.then { breakpoint ->
+      if (breakpoint != null && isConditional) {
+        breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
+        if (condition != null) {
+          breakpoint.setLogExpression(condition)
+        }
+        else {
+          breakpoint.setLogMessage(true)
+        }
+      }
+      if (breakpoint is XLineBreakpointImpl<*>) breakpoint.asProxy() else null
+    }
   }
 
   @ApiStatus.Internal
@@ -255,13 +288,15 @@ object XBreakpointUtil {
     editor: Editor?,
   ): List<XLineBreakpointType<*>> =
     getAvailableLineBreakpointInfo(project, position, selectTypeByPositionColumn, editor).first
+      .filterIsInstance<XLineBreakpointTypeProxy.Monolith>()
+      .map { it.breakpointType }
 
   private fun getAvailableLineBreakpointInfo(
     project: Project,
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
     editor: Editor?,
-  ): Pair<List<XLineBreakpointType<*>>, Int> {
+  ): Pair<List<XLineBreakpointTypeProxy>, Int> {
     val lineStart = position.line
     val file = position.file
 
@@ -279,9 +314,9 @@ object XBreakpointUtil {
       }
     }
 
-    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-    val lineTypes = XDebuggerUtil.getInstance().lineBreakpointTypes
-    val typeWinner = SmartList<XLineBreakpointType<*>>()
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+    val lineTypes = breakpointManager.getLineBreakpointTypes()
+    val typeWinner = SmartList<XLineBreakpointTypeProxy>()
     var lineWinner = -1
     if (linesEnd != lineStart) { // folding mode
       for (line in lineStart..linesEnd) {
@@ -306,7 +341,7 @@ object XBreakpointUtil {
     else {
       for (type in lineTypes) {
         val breakpoint = breakpointManager.findBreakpointAtLine(type, file, lineStart)
-        if ((type.canPutAt(file, lineStart, project) || breakpoint != null)) {
+        if (type.canPutAt(file, lineStart, project) || breakpoint != null) {
           typeWinner.add(type)
           lineWinner = lineStart
         }
