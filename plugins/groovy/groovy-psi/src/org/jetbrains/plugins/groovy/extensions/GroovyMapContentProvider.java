@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.extensions;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -32,4 +33,8 @@ public abstract class GroovyMapContentProvider {
     return null;
   }
 
+  @ApiStatus.Internal
+  public static Collection<String> getKeyVariants(@NotNull GroovyMapContentProvider provider, @NotNull GrExpression qualifier, @Nullable PsiElement resolved) {
+    return provider.getKeyVariants(qualifier, resolved);
+  }
 }

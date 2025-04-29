@@ -3986,10 +3986,6 @@
           <module name="intellij.xml" />
         </modules-set>
         <modules-set>
-          <module name="intellij.groovy" />
-          <module name="intellij.groovy.psi" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.jboss.arquillian.junit" />
           <module name="intellij.jboss.arquillian" />
           <module name="intellij.jboss.arquillian.testng" />

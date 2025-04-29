@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public final class GroovyMapCompletionUtil {
   public static void addKeyVariants(@NotNull GroovyMapContentProvider contentProvider, @NotNull GrExpression qualifier, @Nullable PsiElement resolve, @NotNull CompletionResultSet result) {
-    for (String key : contentProvider.getKeyVariants(qualifier, resolve)) {
+    for (String key : GroovyMapContentProvider.getKeyVariants(contentProvider, qualifier, resolve)) {
       LookupElement lookup = LookupElementBuilder.create(key);
       lookup = PrioritizedLookupElement.withPriority(lookup, 1);
       result.addElement(lookup);
