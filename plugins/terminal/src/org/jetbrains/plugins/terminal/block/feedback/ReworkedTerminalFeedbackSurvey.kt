@@ -53,10 +53,10 @@ internal fun getFeedbackMoment(project: Project): TerminalFeedbackMoment {
 }
 
 internal class ReworkedTerminalFeedbackSurvey : FeedbackSurvey() {
-  override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(ReworkedTerminalSurveyConfig())
+  override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(ReworkedTerminalSurveyConfig)
 }
 
-internal class ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
+internal object ReworkedTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
   override val surveyId: String = "reworked_terminal"
 
   override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
