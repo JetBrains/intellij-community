@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.url
 
 import org.jetbrains.annotations.ApiStatus
@@ -9,6 +9,8 @@ import org.jetbrains.annotations.ApiStatus
  *
  * In order to obtain a [VirtualFileUrl] instance for a [VirtualFile][com.intellij.openapi.vfs.VirtualFile], use 
  * `virtualFile.toVirtualFileUrl(virtualFileUrlManager)` extension function.
+ *
+ * @see [com.intellij.platform.backend.workspace.WorkspaceModel.getVirtualFileUrlManager]
  */
 @ApiStatus.NonExtendable
 public interface VirtualFileUrlManager {
