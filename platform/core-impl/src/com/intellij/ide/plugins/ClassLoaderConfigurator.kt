@@ -273,6 +273,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureCorePluginContentModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
+    assert(module.isContentModuleDescriptor)
     val jarFiles = module.jarFiles
     if (jarFiles != null) {
       module.pluginClassLoader = PluginClassLoader(
@@ -289,7 +290,8 @@ class ClassLoaderConfigurator(
 
     val coreUrlClassLoader = getCoreUrlClassLoaderIfPossible()
     if (coreUrlClassLoader == null) {
-      setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
+      assert(module.dependencies.isEmpty())
+      module.pluginClassLoader = coreLoader
       return
     }
 
