@@ -69,21 +69,21 @@ class XmlPlistReader : PlistReaderCore {
     private fun readBasicValue(type: String, valueElement: XmlElement): PListValue? {
       val content = valueElement.content
 
-      return when {
-        "string" == type && content != null -> {
-          PListValue.value(content, PlistValueType.STRING)
+      return when (type) {
+        "string" -> {
+          PListValue.value(content.orEmpty(), PlistValueType.STRING)
         }
-        "true" == type -> {
+        "true" -> {
           PListValue.value(Boolean.TRUE, PlistValueType.BOOLEAN)
         }
-        "false" == type -> {
+        "false" -> {
           PListValue.value(Boolean.FALSE, PlistValueType.BOOLEAN)
         }
-        "integer" == type && content != null -> {
-          PListValue.value(content.toInt(), PlistValueType.INTEGER)
+        "integer" -> {
+          PListValue.value(content?.toIntOrNull() ?: 0, PlistValueType.INTEGER)
         }
-        "real" == type && content != null -> {
-          PListValue.value(content.toDouble(), PlistValueType.REAL)
+        "real" -> {
+          PListValue.value(content?.toDoubleOrNull() ?: 0.0, PlistValueType.REAL)
         }
         else -> null
       }

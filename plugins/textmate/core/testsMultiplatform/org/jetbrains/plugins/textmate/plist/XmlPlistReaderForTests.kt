@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.plist
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.IOException
+import java.lang.Boolean
 
 class XmlPlistReaderForTests : PlistReaderCore {
   override fun read(bytes: ByteArray): Plist {
@@ -12,7 +13,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
   companion object {
     private fun internalRead(root: XmlElement): Plist {
       if (root.children.isEmpty()) {
-        return Plist.Companion.EMPTY_PLIST
+        return Plist.EMPTY_PLIST
       }
 
       if ("plist" != root.name) {
@@ -20,7 +21,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
       }
 
       val dictElement = root.getChild("dict")
-      return if (dictElement != null) readDict(dictElement).plist else Plist.Companion.EMPTY_PLIST
+      return if (dictElement != null) readDict(dictElement).plist else Plist.EMPTY_PLIST
     }
 
     private fun readDict(dictElement: XmlElement): PListValue {
@@ -42,7 +43,7 @@ class XmlPlistReaderForTests : PlistReaderCore {
         }
       }
 
-      return PListValue.Companion.value(Plist(map), PlistValueType.DICT)
+      return PListValue.value(Plist(map), PlistValueType.DICT)
     }
 
     private fun readValue(key: String, valueElement: XmlElement): PListValue? {
@@ -60,27 +61,27 @@ class XmlPlistReaderForTests : PlistReaderCore {
     }
 
     private fun readArray(key: String, element: XmlElement): PListValue {
-      return PListValue.Companion.value(element.children.mapNotNull { readValue(key, it) }, PlistValueType.ARRAY)
+      return PListValue.value(element.children.mapNotNull { readValue(key, it) }, PlistValueType.ARRAY)
     }
 
     private fun readBasicValue(type: String, valueElement: XmlElement): PListValue? {
       val content = valueElement.content
 
-      return when {
-        "string" == type && content != null -> {
-          PListValue.Companion.value(content, PlistValueType.STRING)
+      return when (type) {
+        "string" -> {
+          PListValue.value(content.orEmpty(), PlistValueType.STRING)
         }
-        "true" == type -> {
-          PListValue.Companion.value(true, PlistValueType.BOOLEAN)
+        "true" -> {
+          PListValue.value(Boolean.TRUE, PlistValueType.BOOLEAN)
         }
-        "false" == type -> {
-          PListValue.Companion.value(false, PlistValueType.BOOLEAN)
+        "false" -> {
+          PListValue.value(Boolean.FALSE, PlistValueType.BOOLEAN)
         }
-        "integer" == type && content != null -> {
-          PListValue.Companion.value(content.toInt(), PlistValueType.INTEGER)
+        "integer" -> {
+          PListValue.value(content?.toIntOrNull() ?: 0, PlistValueType.INTEGER)
         }
-        "real" == type && content != null -> {
-          PListValue.Companion.value(content.toDouble(), PlistValueType.REAL)
+        "real" -> {
+          PListValue.value(content?.toDoubleOrNull() ?: 0.0, PlistValueType.REAL)
         }
         else -> null
       }

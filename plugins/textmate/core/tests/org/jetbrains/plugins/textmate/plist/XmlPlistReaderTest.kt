@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class XmlPlistReaderTestBase {
+class XmlPlistReaderTest {
   @Test
   fun getStringMethod() {
     val plist = read("<dict><key>someKey</key><string>someValue</string></dict>")
@@ -78,6 +78,34 @@ class XmlPlistReaderTestBase {
     val map = mapOf("dict" to dict(Plist(inner)))
     assertEquals(Plist(map), plist)
   }
+
+  @Test
+  fun parseEmptyElements() {
+    val plist = read("""
+      <dict>
+        <key>name</key>
+        <string/>
+        <key>lastname</key>
+        <string></string>
+        <key>age</key>
+        <integer></integer>
+        <key>day_of_birth</key>
+        <integer/>
+        <key>age_real</key>
+        <real></real>
+        <key>day_of_birth_real</key>
+        <real/>
+      </dict>""".trimIndent())
+    val inner = mapOf(
+      "name" to string(""),
+      "lastname" to string(""),
+      "age" to integer(0),
+      "day_of_birth" to integer(0),
+      "age_real" to real(0.0),
+      "day_of_birth_real" to real(0.0))
+    assertEquals(Plist(inner), plist)
+  }
+
 
   @Test
   fun plistWithoutDictRoot() {

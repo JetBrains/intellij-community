@@ -84,7 +84,7 @@ class TextMateSyntaxMatcherImpl(
     checkCancelledCallback: Runnable?,
   ): MatchData {
     val regex = lexerState.syntaxRule.getStringAttribute(keyName)
-    if (regex == null) return MatchData.NOT_MATCHED
+    if (regex.isNullOrEmpty()) return MatchData.NOT_MATCHED
     val regexString = if (lexerState.syntaxRule.hasBackReference(keyName)) {
       SyntaxMatchUtils.replaceGroupsWithMatchDataInRegex(regex, lexerState.string, lexerState.matchData)
     }
@@ -114,15 +114,25 @@ class TextMateSyntaxMatcherImpl(
   ): TextMateLexerState {
     val match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH)
     if (match != null) {
-      val regex = regexFactory.regex(match)
-      val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
-      return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
+      return if (match.isEmpty()) {
+        TextMateLexerState.notMatched(syntaxNodeDescriptor)
+      }
+      else {
+        val regex = regexFactory.regex(match)
+        val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
+        return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
+      }
     }
     val begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN)
     if (begin != null) {
-      val regex = regexFactory.regex(begin)
-      val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
-      return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
+      if (begin.isEmpty()) {
+        return TextMateLexerState.notMatched(syntaxNodeDescriptor)
+      }
+      else {
+        val regex = regexFactory.regex(begin)
+        val matchData = regex.match(string, byteOffset, matchBeginPosition, matchBeginString, checkCancelledCallback)
+        return TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string)
+      }
     }
     if (syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.END) != null) {
       return TextMateLexerState.notMatched(syntaxNodeDescriptor)
