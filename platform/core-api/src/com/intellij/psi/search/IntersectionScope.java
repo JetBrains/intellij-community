@@ -17,8 +17,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 final class IntersectionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
-  private final GlobalSearchScope myScope1;
-  private final GlobalSearchScope myScope2;
+  final GlobalSearchScope myScope1;
+  final GlobalSearchScope myScope2;
 
   IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
     super(scope1.getProject() == null ? scope2.getProject() : scope1.getProject());
