@@ -45,17 +45,26 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
   override val myBlocks: List<FeedbackBlock> = listOf(
     TopLabelBlock(TerminalBundle.message("feedback.dialog.header")),
     DescriptionBlock(TerminalBundle.message("feedback.dialog.description")),
-    RatingGroupBlock(TerminalBundle.message("feedback.dialog.rating.title"), createRatingItems())
-      .setHint(TerminalBundle.message("feedback.dialog.rating.description"))
-      .setRandomOrder(true),
-    TextAreaBlock(TerminalBundle.message("feedback.dialog.other"), "other")
-      .setPlaceholder(TerminalBundle.message("feedback.dialog.other.placeholder"))
+
+    RatingBlock(TerminalBundle.message("feedback.dialog.rating.title"), "overall_rating"),
+
+    RegularLabelBlock(TerminalBundle.message("feedback.dialog.issues.1")),
+    TextAreaBlock(TerminalBundle.message("feedback.dialog.issues.2"), "issues"),
+
+    RadioButtonGroupBlock(TerminalBundle.message("feedback.dialog.improvement"), improvementItems(), "important_improvement")
+      .requireAnswer()
+      .addOtherTextField(),
+
+    TextAreaBlock(TerminalBundle.message("feedback.dialog.other"), "extra")
+      .setPlaceholder(TerminalBundle.message("feedback.dialog.other.placeholder")),
   )
 
-  private fun createRatingItems(): List<RatingItem> = listOf(
-    RatingItem(TerminalBundle.message("feedback.dialog.rating.interface"), "interface"),
-    RatingItem(TerminalBundle.message("feedback.dialog.rating.feature.set"), "feature_set"),
-    RatingItem(TerminalBundle.message("feedback.dialog.rating.performance"), "performance"),
+  private fun improvementItems(): List<RadioButtonItemData> = listOf(
+    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.compatibility"), "app_compatibility"),
+    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.performance"), "performance"),
+    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.shell.support"), "shell_support"),
+    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.ai.integration"), "ai_integration"),
+    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.ide.integration"), "ide_integration"),
   )
 
   init {
