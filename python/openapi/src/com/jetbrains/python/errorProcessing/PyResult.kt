@@ -23,3 +23,12 @@ fun <T> Result<T>.asPythonResult(): com.jetbrains.python.Result<T, PyError> =
     }
   }
   )
+
+@Deprecated("Use python result, not kotlin result")
+fun <S> PyResult<S>.asKotlinResult(): Result<S> = when (this) {
+  is com.jetbrains.python.Result.Success -> {
+    Result.success(result)
+  }
+  is com.jetbrains.python.Result.Failure -> Result.failure(PyExecutionException(error))
+}
+

@@ -25,7 +25,7 @@ typealias EelProcessInteractiveHandler<T> = suspend (EelProcess) -> Result<T, @N
 
 object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
   override fun invoke(processOutput: ProcessOutput): Result<String, String?> =
-    if (processOutput.exitCode == 0) Result.success(processOutput.stdout) else Result.failure(null)
+    if (processOutput.exitCode == 0) Result.success(processOutput.stdout.trim()) else Result.failure(null)
 }
 
 /**

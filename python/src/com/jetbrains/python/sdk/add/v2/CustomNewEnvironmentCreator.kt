@@ -20,6 +20,7 @@ import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
@@ -166,12 +167,12 @@ internal abstract class CustomNewEnvironmentCreator(
 
     // installedSdk is null when the selected sdk isn't downloadable
     // model.state.baseInterpreter could be null if no SDK was selected
-    val pythonExecutable = installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
+    val pythonExecutable = Path.of(installedSdk?.homePath ?: model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString())
 
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
         val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
-        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray())
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray()).asKotlinResult()
         executablePath.onSuccess {
           savePathToExecutableToProperties(it)
         }.onFailure {

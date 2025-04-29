@@ -15,9 +15,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.WhatToExec
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.asKotlinResult
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyRequirement
@@ -31,10 +36,10 @@ import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
+import io.github.z4kn4fein.semver.toVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.github.z4kn4fein.semver.toVersion
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemDependent
@@ -53,7 +58,7 @@ private val VERSION_2 = "2.0.0".toVersion()
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
   val executable = getPoetryExecutable().getOrElse { return Result.failure(it) }
-  return runExecutable(executable, projectPath, *args)
+  return runExecutable(executable, projectPath, *args).asKotlinResult()
 }
 
 
@@ -118,7 +123,9 @@ suspend fun setupPoetry(projectPath: Path, python: String?, installPackages: Boo
   if (init) {
     runPoetry(projectPath, *listOf("init", "-n").toTypedArray())
     if (python != null) { // Replace a python version in toml
-      runCommand(projectPath, python, "-c", REPLACE_PYTHON_VERSION)
+      ExecService().execGetStdout(WhatToExec.Binary(Path.of(python)), listOf("-c", REPLACE_PYTHON_VERSION), ExecOptions(workingDirectory = projectPath)).onFailure {
+        return Result.failure(Exception(it.message))
+      }
     }
   }
   when {

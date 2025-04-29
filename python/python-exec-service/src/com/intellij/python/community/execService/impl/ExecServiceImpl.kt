@@ -4,7 +4,6 @@ package com.intellij.python.community.execService.impl
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.*
@@ -20,7 +19,6 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
-import kotlin.io.path.pathString
 import kotlin.time.Duration
 
 
@@ -87,7 +85,7 @@ private data class EelExecutableProcess(
 
 private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, options: ExecOptions): EelExecutableProcess {
   val (eel, exe, args) = when (this) {
-    is WhatToExec.Binary -> Triple(binary.getEelDescriptor().upgrade(), binary.pathString, args)
+    is WhatToExec.Binary -> Triple(binary.getEelDescriptor().upgrade(), binary.asEelPath().toString(), args)
     is WhatToExec.Helper -> {
       val eel = python.getEelDescriptor().upgrade()
       val localHelper = PythonHelpersLocator.findPathInHelpers(helper)
@@ -96,7 +94,7 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
         source = localHelper,
         target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
       ).asEelPath().toString()
-      Triple(eel, python.pathString, listOf(remoteHelper) + args)
+      Triple(eel, python.asEelPath().toString(), listOf(remoteHelper) + args)
     }
     is WhatToExec.Command -> Triple(eel, command, args)
   }
@@ -112,11 +110,11 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
 
 @CheckReturnValue
 private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecError> {
-  val workDirectoryEelPath = workingDirectory?.let { EelPath.parse(it.toString(), eel.descriptor) }
+  val workingDirectory = if (workingDirectory != null && !workingDirectory.isAbsolute) workingDirectory.toRealPath() else workingDirectory
   val executionResult = eel.exec.execute(exe)
     .args(args)
     .env(env)
-    .workingDirectory(workDirectoryEelPath).eelIt()
+    .workingDirectory(workingDirectory?.asEelPath()).eelIt()
 
   val process = executionResult.getOr { err ->
     return failAsCantStart(err.error)
