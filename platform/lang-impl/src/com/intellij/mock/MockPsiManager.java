@@ -149,11 +149,13 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
     return null;
   }
 
+  @ApiStatus.Internal
   @Override
   public void cleanupForNextTest() {
     
   }
 
+  @ApiStatus.Internal
   @Override
   public void dropResolveCacheRegularly(@NotNull ProgressIndicator indicator) {
 
@@ -188,6 +190,7 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
+  @ApiStatus.Internal
   public @NotNull FileManagerEx getFileManagerEx() {
     throw new UnsupportedOperationException();
   }
@@ -200,56 +203,67 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   public void beforeChildReplacement(final @NotNull PsiTreeChangeEventImpl event) {
   }
 
+  @ApiStatus.Internal
   @Override
   public void beforeChildrenChange(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void beforeChildMovement(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void beforePropertyChange(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void childAdded(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void childRemoved(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void childReplaced(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void childMoved(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void childrenChanged(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void propertyChanged(@NotNull PsiTreeChangeEventImpl event) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void addTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
 
   }
 
+  @ApiStatus.Internal
   @Override
   public void removeTreeChangePreprocessor(@NotNull PsiTreeChangePreprocessor preprocessor) {
 

@@ -143,6 +143,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return myFileManager;
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull FileManagerEx getFileManagerEx() {
     return myFileManager;

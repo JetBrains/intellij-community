@@ -2098,8 +2098,8 @@ a:com.intellij.psi.filters.position.PositionElementFilter
 - setFilter(com.intellij.psi.filters.ElementFilter):V
 a:com.intellij.psi.impl.AbstractModificationTracker
 - com.intellij.psi.impl.PsiTreeChangePreprocessor
-- <init>(com.intellij.psi.impl.PsiManagerImpl):V
-- getPsiManager():com.intellij.psi.impl.PsiManagerImpl
+- <init>(com.intellij.psi.impl.PsiManagerEx):V
+- getPsiManager():com.intellij.psi.impl.PsiManagerEx
 - p:initTracker():V
 - pa:isInsideCodeBlock(com.intellij.psi.PsiElement):Z
 - p:processOutOfCodeBlockModification(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
@@ -2600,7 +2600,7 @@ c:com.intellij.psi.impl.file.PsiBinaryFileImpl
 - com.intellij.psi.PsiBinaryFile
 - com.intellij.psi.impl.PsiFileEx
 - java.lang.Cloneable
-- <init>(com.intellij.psi.impl.PsiManagerImpl,com.intellij.psi.FileViewProvider):V
+- <init>(com.intellij.psi.impl.PsiManagerEx,com.intellij.psi.FileViewProvider):V
 - accept(com.intellij.psi.PsiElementVisitor):V
 - add(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - addAfter(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -2659,7 +2659,7 @@ c:com.intellij.psi.impl.file.PsiDirectoryImpl
 - com.intellij.psi.impl.PsiElementBase
 - com.intellij.openapi.ui.Queryable
 - com.intellij.psi.PsiDirectory
-- <init>(com.intellij.psi.impl.PsiManagerImpl,com.intellij.openapi.vfs.VirtualFile):V
+- <init>(com.intellij.psi.impl.PsiManagerEx,com.intellij.openapi.vfs.VirtualFile):V
 - accept(com.intellij.psi.PsiElementVisitor):V
 - add(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - addAfter(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
