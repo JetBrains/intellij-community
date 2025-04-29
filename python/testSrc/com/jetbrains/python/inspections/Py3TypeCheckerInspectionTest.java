@@ -1310,6 +1310,52 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    caller(func, 42, <warning descr="Unexpected argument (from ParamSpec 'P')">n=42</warning>)""");
   }
 
+  // PY-80704
+  public void testParamSpecDerived() {
+    doTestByText("""
+             class Base[**P]: ...
+             b: Base[[int]]
+
+             class Derived1(Base[int]): ...
+             b = Derived1()
+             
+             class Derived2(Base[str]): ...
+             b = <warning descr="Expected type 'Base[[int]]', got 'Derived2' instead">Derived2()</warning>
+
+             class Derived3[**P](Base[P]): ...
+             b = Derived3()
+             """);
+  }
+
+  // PY-80704
+  public void testParamSpecProtocol() {
+    doTestByText("""
+             from typing import Protocol, Callable
+             
+             class Proto[**P](Protocol):
+                 f: Callable[P, None]
+             p: Proto[[int]]
+             
+             class Match:
+                 f: Callable[[int], None]
+             p = Match()
+             
+             class Mismatch:
+                 f: Callable[[str], None]
+             p = <warning descr="Expected type 'Proto[[int]]', got 'Mismatch' instead">Mismatch()</warning>
+             """);
+  }
+
+  public void testParamSpecProtocolEmpty() {
+    doTestByText("""
+             from typing import Protocol
+             
+             class Proto[**P](Protocol): ...
+             
+             _: Proto[[]] = 1
+             """);
+  }
+
   // PY-46661
   public void testTypedDictInReturnType() {
     doTest();
