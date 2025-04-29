@@ -737,7 +737,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         return JUnitStarter.JUNIT4_PARAMETER;
       }
     }
-    return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
+    return JUnitUtil.isJUnit5(globalSearchScope, project) || isCustomJUnit5(globalSearchScope) || hasVintageTestEngine(globalSearchScope) ? JUnitStarter.JUNIT5_PARAMETER : DEFAULT_RUNNER;
   }
 
   private @NotNull String getRunnerForJUnit3(@NotNull GlobalSearchScope globalSearchScope, boolean isClassConfiguration) {
