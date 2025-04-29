@@ -14,6 +14,7 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineB
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
+import com.intellij.xdebugger.impl.rpc.toTextRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
@@ -86,7 +87,7 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun getHighlightRange(): TextRange? {
-    return lineBreakpointInfo.highlightingRange?.let { TextRange(it.startOffset, it.endOffset) }
+    return lineBreakpointInfo.highlightingRange?.toTextRange()
   }
 
   override fun dispose() {

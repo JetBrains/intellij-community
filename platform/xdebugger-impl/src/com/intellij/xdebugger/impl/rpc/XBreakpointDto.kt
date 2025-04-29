@@ -7,6 +7,7 @@ import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -71,6 +72,12 @@ data class XLineBreakpointInfo(
   val highlightingRange: XLineBreakpointTextRange?,
   val file: VirtualFileId?,
 )
+
+@ApiStatus.Internal
+fun XLineBreakpointTextRange.toTextRange(): TextRange = TextRange(startOffset, endOffset)
+
+@ApiStatus.Internal
+fun TextRange.toRpc(): XLineBreakpointTextRange = XLineBreakpointTextRange(startOffset, endOffset)
 
 @ApiStatus.Internal
 @Serializable
@@ -166,6 +173,6 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
 }
 
 private fun XLineBreakpointImpl<*>.getInfo(): XLineBreakpointInfo {
-  val highlightingRange = highlightRange?.let { XLineBreakpointTextRange(it.startOffset, it.endOffset) }
+  val highlightingRange = highlightRange?.toRpc()
   return XLineBreakpointInfo(isTemporary, line, fileUrl, highlightingRange, file?.rpcId())
 }
