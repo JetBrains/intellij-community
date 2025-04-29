@@ -237,8 +237,13 @@ private suspend fun navigateToSourceImpl(
         }
       }
 
+      if (options.openInRightSplit) {
+        if (openFile(request = request, project = project, options = options)) {
+          return
+        }
+      }
       // TODO: replace with openFile once IJPL-184882 is fixed
-      if (FileNavigator.getInstance().canNavigate(descriptor)) {
+      else if (FileNavigator.getInstance().canNavigate(descriptor)) {
         withContext(Dispatchers.EDT) {
           FileNavigator.getInstance().navigate(descriptor, true)
         }
