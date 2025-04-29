@@ -606,7 +606,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       // TODO IJPL-185322 support last removed breakpoint persistance
       ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
         .rememberRemovedBreakpoint(monolith.getBreakpoint());
-      return false;
     }
     XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).removeBreakpoint(breakpoint);
     return true;
