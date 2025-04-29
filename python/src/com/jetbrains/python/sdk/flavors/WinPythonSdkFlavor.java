@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -71,7 +70,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     WinPythonSdkFlavor::getPythonsFromStore);
 
   public static WinPythonSdkFlavor getInstance() {
-    return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);
+    return EP_NAME.findExtension(WinPythonSdkFlavor.class);
   }
 
   @Override
@@ -130,7 +129,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     return path != null && isPythonFromStore(path); // Python from store might be non-executable, but still usable
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false) // Still used by some code from EDT
   private boolean isPythonFromStore(@NotNull Path path) {
     String pathStr = path.toString();
     if (myAppxCache.getValue().contains(pathStr)) {
