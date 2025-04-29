@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("//:rules/impl/associates.bzl", "get_associates")
-load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_flags")
+load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions", "kotlinc_options_to_args")
 
 visibility("private")
 
@@ -24,7 +24,7 @@ def init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins, com
     if ctx.attr._trace[BuildSettingInfo].value:
         args.add("--trace")
 
-    kotlinc_options_to_flags(kotlinc_options, args)
+    kotlinc_options_to_args(kotlinc_options, args)
 
     args.add_all("--opt-in", kotlinc_options.opt_in)
     args.add_all("--cp", compile_deps.compile_jars)

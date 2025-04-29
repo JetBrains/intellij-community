@@ -49,6 +49,7 @@ _KOPTS = {
             doc = "Define APIs to opt-in to.",
         ),
         type = attr.string_list,
+        flag_name = "opt-in",
     ),
     "allow_kotlin_package": struct(
         args = dict(
@@ -123,7 +124,24 @@ kt_kotlinc_options = rule(
     attrs = {n: o.type(**o.args) for n, o in _KOPTS.items()},
 )
 
-def kotlinc_options_to_flags(kotlinc_options, args):
+# Used by the Bazel plugin
+def kotlinc_options_to_flags(kotlinc_options):
+    flags = []
+    for n, o in _KOPTS.items():
+        value = getattr(kotlinc_options, n, None)
+        if value:
+            flagName = getattr(o, "flag_name", None)
+            if flagName:
+                if value == True:
+                    flags.append("-" + flagName)
+                elif type(value) == "list":
+                    for element in value:
+                        flags.append("-" + flagName + "=" + str(element))
+                else:
+                    flags.append("-" + flagName + "=" + str(value))
+    return flags
+
+def kotlinc_options_to_args(kotlinc_options, args):
     for n, o in _KOPTS.items():
         value = getattr(kotlinc_options, n, None)
         if value:
@@ -131,5 +149,7 @@ def kotlinc_options_to_flags(kotlinc_options, args):
             if flagName:
                 if value == True:
                     args.add("--" + flagName)
+                elif type(value) == "list":
+                    pass
                 else:
                     args.add("--" + flagName, value)
