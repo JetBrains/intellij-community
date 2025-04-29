@@ -69,8 +69,7 @@ class ClassLoaderConfigurator(
       }
       val mainDependentClassLoader = mainDescriptor.pluginClassLoader
       assert(mainDependentClassLoader != null) { "plugin $mainDescriptor is not yet enabled"}
-      moduleDescriptor.pluginClassLoader = mainDependentClassLoader!!
-      configureDependenciesInOldFormat(moduleDescriptor, mainDependentClassLoader)
+      setClassLoaderForModuleAndDependsSubDescriptors(moduleDescriptor, mainDependentClassLoader!!)
       return true
     }
 
@@ -88,7 +87,7 @@ class ClassLoaderConfigurator(
 
     if (module.isMainPluginDescriptor) {
       if (module.useCoreClassLoader || module.pluginId == PluginManagerCore.CORE_ID) {
-        setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
+        setClassLoaderForModuleAndDependsSubDescriptors(module, coreLoader)
       }
       else {
         configureMainPluginModule(module)
@@ -238,12 +237,12 @@ class ClassLoaderConfigurator(
     }
     val mainInfo = MainPluginDescriptorClassPathInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainDependentClassLoader)
     mainToClassPath.put(mainDescriptor.pluginId, mainInfo)
-    mainDescriptor.pluginClassLoader = mainDependentClassLoader
-    configureDependenciesInOldFormat(mainDescriptor, mainDependentClassLoader)
+    setClassLoaderForModuleAndDependsSubDescriptors(mainDescriptor, mainDependentClassLoader)
     return mainInfo
   }
 
-  private fun configureDependenciesInOldFormat(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
+  private fun setClassLoaderForModuleAndDependsSubDescriptors(module: IdeaPluginDescriptorImpl, mainDependentClassLoader: ClassLoader) {
+    module.pluginClassLoader = mainDependentClassLoader
     for (dependency in module.dependencies) {
       val subDescriptor = dependency.subDescriptor ?: continue
       if (pluginSet.findEnabledPlugin(dependency.pluginId)?.takeIf { it !== module } == null) {
@@ -257,19 +256,7 @@ class ClassLoaderConfigurator(
         // disable dependencies which optionally deepened on Kotlin plugin which are incompatible with Kotlin Plugin K2 mode KTIJ-24797
         continue
       }
-      // classLoader must be set - otherwise sub descriptor considered as inactive
-      subDescriptor.pluginClassLoader = mainDependentClassLoader
-      configureDependenciesInOldFormat(subDescriptor, mainDependentClassLoader)
-    }
-  }
-
-  private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
-    rootDescriptor.pluginClassLoader = classLoader
-    for (dependency in rootDescriptor.dependencies) {
-      val subDescriptor = dependency.subDescriptor
-      if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {
-        setPluginClassLoaderForModuleAndOldSubDescriptors(subDescriptor, classLoader)
-      }
+      setClassLoaderForModuleAndDependsSubDescriptors(subDescriptor, mainDependentClassLoader)
     }
   }
 
