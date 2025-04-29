@@ -13,10 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
 class UvUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+  private val openProvider = UvOpenProvider()
+  
   override val systemId: ProjectSystemId = UvConstants.SYSTEM_ID
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
-    return Registry.`is`("python.project.model.uv") && buildFile.name == UvConstants.PYPROJECT_TOML
+    return Registry.`is`("python.project.model.uv") && openProvider.canOpenProject(buildFile)
   }
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
@@ -32,10 +34,10 @@ class UvUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   }
 
   override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
-    UvOpenProvider().linkToExistingProjectAsync(externalProjectPath, project)
+    openProvider.linkToExistingProjectAsync(externalProjectPath, project)
   }
 
   override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    UvOpenProvider().unlinkProject(project, externalProjectPath)
+    openProvider.unlinkProject(project, externalProjectPath)
   }
 }

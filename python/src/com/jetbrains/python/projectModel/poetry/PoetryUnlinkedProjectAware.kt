@@ -13,10 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
 class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
+  private val openProvider = PoetryOpenProvider()
+  
   override val systemId: ProjectSystemId = PoetryConstants.SYSTEM_ID
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
-    return Registry.`is`("python.project.model.poetry") && buildFile.name == PoetryConstants.PYPROJECT_TOML
+    return Registry.`is`("python.project.model.poetry") && openProvider.canOpenProject(buildFile)
   }
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
@@ -32,10 +34,10 @@ class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   }
 
   override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
-    PoetryOpenProvider().linkToExistingProjectAsync(externalProjectPath, project)
+    openProvider.linkToExistingProjectAsync(externalProjectPath, project)
   }
 
   override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    PoetryOpenProvider().unlinkProject(project, externalProjectPath)
+    openProvider.unlinkProject(project, externalProjectPath)
   }
 }
