@@ -1080,7 +1080,7 @@ private fun saveMemorySnapshot(pluginId: PluginId): Boolean {
 private fun processImplementationDetailDependenciesOnPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
                                                             pluginSet: PluginSet,
                                                             processor: (descriptor: IdeaPluginDescriptorImpl) -> Boolean) {
-  processDependenciesOnPlugin(dependencyPlugin = pluginDescriptor,
+  processDependenciesOnPlugin(dependencyTarget = pluginDescriptor,
                               pluginSet = pluginSet,
                               loadStateFilter = LoadStateFilter.ANY,
                               onlyOptional = false) { _, module ->
@@ -1166,7 +1166,7 @@ private fun processOptionalDependenciesOnPlugin(
   processor: (pluginDescriptor: IdeaPluginDescriptorImpl, moduleDescriptor: IdeaPluginDescriptorImpl) -> Boolean,
 ) {
   processDependenciesOnPlugin(
-    dependencyPlugin = dependencyPlugin,
+    dependencyTarget = dependencyPlugin,
     pluginSet = pluginSet,
     onlyOptional = true,
     loadStateFilter = if (isLoaded) LoadStateFilter.LOADED else LoadStateFilter.NOT_LOADED,
@@ -1175,25 +1175,25 @@ private fun processOptionalDependenciesOnPlugin(
 }
 
 private fun processDependenciesOnPlugin(
-  dependencyPlugin: IdeaPluginDescriptorImpl,
+  dependencyTarget: IdeaPluginDescriptorImpl,
   pluginSet: PluginSet,
   loadStateFilter: LoadStateFilter,
   onlyOptional: Boolean,
   processor: (pluginDescriptor: IdeaPluginDescriptorImpl, moduleDescriptor: IdeaPluginDescriptorImpl) -> Boolean,
 ) {
-  val wantedIds = HashSet<String>(1 + dependencyPlugin.content.modules.size)
-  wantedIds.add(dependencyPlugin.pluginId.idString)
-  for (module in dependencyPlugin.content.modules) {
+  val wantedIds = HashSet<String>(1 + dependencyTarget.content.modules.size)
+  wantedIds.add(dependencyTarget.pluginId.idString)
+  for (module in dependencyTarget.content.modules) {
     wantedIds.add(module.name)
   }
   // FIXME plugin aliases probably missing?
 
   for (plugin in pluginSet.enabledPlugins) {
-    if (plugin === dependencyPlugin) {
+    if (plugin === dependencyTarget) {
       continue
     }
 
-    if (!processOptionalDependenciesInOldFormatOnPlugin(dependencyPluginId = dependencyPlugin.pluginId,
+    if (!processOptionalDependenciesInOldFormatOnPlugin(dependencyTargetId = dependencyTarget.pluginId,
                                                         mainDescriptor = plugin,
                                                         loadStateFilter = loadStateFilter,
                                                         onlyOptional = onlyOptional,
@@ -1217,7 +1217,7 @@ private fun processDependenciesOnPlugin(
         }
       }
       for (item in module.moduleDependencies.plugins) {
-        if (dependencyPlugin.pluginId == item.id && !processor(plugin, module)) {
+        if (dependencyTarget.pluginId == item.id && !processor(plugin, module)) {
           return
         }
       }
@@ -1230,7 +1230,7 @@ private enum class LoadStateFilter {
 }
 
 private fun processOptionalDependenciesInOldFormatOnPlugin(
-  dependencyPluginId: PluginId,
+  dependencyTargetId: PluginId,
   mainDescriptor: IdeaPluginDescriptorImpl,
   loadStateFilter: LoadStateFilter,
   onlyOptional: Boolean,
@@ -1238,7 +1238,7 @@ private fun processOptionalDependenciesInOldFormatOnPlugin(
 ): Boolean {
   for (dependency in mainDescriptor.dependencies) {
     if (!dependency.isOptional) {
-      if (!onlyOptional && dependency.pluginId == dependencyPluginId && !processor(mainDescriptor, mainDescriptor)) {
+      if (!onlyOptional && dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, mainDescriptor)) {
         return false
       }
       continue
@@ -1252,12 +1252,12 @@ private fun processOptionalDependenciesInOldFormatOnPlugin(
       }
     }
 
-    if (dependency.pluginId == dependencyPluginId && !processor(mainDescriptor, subDescriptor)) {
+    if (dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, subDescriptor)) {
       return false
     }
 
     if (!processOptionalDependenciesInOldFormatOnPlugin(
-        dependencyPluginId = dependencyPluginId,
+        dependencyTargetId = dependencyTargetId,
         mainDescriptor = subDescriptor,
         loadStateFilter = loadStateFilter,
         onlyOptional = onlyOptional,
