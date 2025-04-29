@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.ApiStatus;
@@ -82,13 +83,7 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
   }
 
   private static final class VfsRefreshWidget implements CustomStatusBarWidget {
-    private final Icon myInactive = EmptyIcon.ICON_16;
-    private final Icon myProgress = new AnimatedIcon.FS();
-    private final JLabel myComponent = new JLabel(myInactive);
-
-    private VfsRefreshWidget() {
-      myComponent.setEnabled(false);
-    }
+    private final LazyInitializer.LazyValue<VfsRefreshWidgetComponent> myComponent = LazyInitializer.create(VfsRefreshWidgetComponent::new);
 
     @Override
     public @NotNull String ID() {
@@ -97,19 +92,37 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
 
     @Override
     public JComponent getComponent() {
-      return myComponent;
+      return myComponent.get();
     }
 
     private void start(@NlsContexts.Tooltip String tooltipText) {
-      myComponent.setIcon(myProgress);
-      myComponent.setEnabled(true);
-      myComponent.setToolTipText(tooltipText);
+      myComponent.get().start(tooltipText);
     }
 
     private void stop() {
-      myComponent.setIcon(myInactive);
-      myComponent.setEnabled(false);
-      myComponent.setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
+      myComponent.get().stop();
+    }
+
+    private static class VfsRefreshWidgetComponent extends JLabel {
+      private static final Icon INACTIVE_ICON = EmptyIcon.ICON_16;
+      private static final Icon PROGRESS_ICON = new AnimatedIcon.FS();
+
+      VfsRefreshWidgetComponent() {
+        super(INACTIVE_ICON);
+        setEnabled(false);
+      }
+
+      private void start(@NlsContexts.Tooltip String tooltipText) {
+        setIcon(PROGRESS_ICON);
+        setEnabled(true);
+        setToolTipText(tooltipText);
+      }
+
+      private void stop() {
+        setIcon(INACTIVE_ICON);
+        setEnabled(false);
+        setToolTipText(UIBundle.message("status.bar.vfs.refresh.widget.tooltip"));
+      }
     }
   }
 }
