@@ -832,7 +832,7 @@ public final class PluginManagerConfigurable
               try {
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
-                Map<IdeaPluginDescriptor, Double> pluginToScore = null;
+                Map<PluginUiModel, Double> pluginToScore = null;
 
                 if (parser.internal) {
                   PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
@@ -848,7 +848,7 @@ public final class PluginManagerConfigurable
                         }
                       }
                     }
-                    ContainerUtil.removeDuplicates(result.getDescriptors());
+                    result.removeDuplicates();
                     result.sortByName();
                     return;
                   }
@@ -878,7 +878,7 @@ public final class PluginManagerConfigurable
                       }
                     }
                   }
-                  ContainerUtil.removeDuplicates(result.getDescriptors());
+                  result.removeDuplicates();
                   result.sortByName();
                 }
                 else {
@@ -902,7 +902,7 @@ public final class PluginManagerConfigurable
 
                   final var localRanker = MarketplaceLocalRanker.getInstanceIfEnabled();
                   if (localRanker != null) {
-                    pluginToScore = localRanker.rankPlugins(parser, result.getDescriptors());
+                    pluginToScore = localRanker.rankPlugins(parser, result.getModels());
                   }
 
                   if (!result.getDescriptors().isEmpty()) {
@@ -933,7 +933,7 @@ public final class PluginManagerConfigurable
                 }
 
                 PluginManagerUsageCollector.INSTANCE.performMarketplaceSearch(
-                  ProjectUtil.getActiveProject(), parser, result.getDescriptors(), searchIndex, pluginToScore);
+                  ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, pluginToScore);
               }
               catch (IOException e) {
                 LOG.info(e);
@@ -1291,7 +1291,7 @@ public final class PluginManagerConfigurable
 
             result.addDescriptors(descriptors);
             PluginManagerUsageCollector.performInstalledTabSearch(
-              ProjectUtil.getActiveProject(), parser, result.getDescriptors(), searchIndex, null);
+              ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
 
             if (!result.getDescriptors().isEmpty()) {
               if (parser.invalid) {

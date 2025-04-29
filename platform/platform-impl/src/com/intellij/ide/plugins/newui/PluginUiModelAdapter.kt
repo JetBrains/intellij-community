@@ -49,6 +49,8 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.detailsLoaded() else true
   override val allowBundledUpdate: Boolean
     get() = pluginDescriptor.allowBundledUpdate()
+  override val isPaid: Boolean
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.getIsPaid() else false
 
   override val source: PluginSource = PluginSource.LOCAL
   override val dependencies: List<PluginDependencyModel>

@@ -123,6 +123,11 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     return this
   }
 
+  override fun setIsPaid(isPaid: Boolean): PluginUiModelBuilder {
+    pluginNode.setIsPaid(isPaid)
+    return this
+  }
+
   override fun build(): PluginUiModel {
     return PluginUiModelAdapter(pluginNode)
   }

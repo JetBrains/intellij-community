@@ -35,6 +35,7 @@ interface PluginUiModel {
   val isConverted: Boolean
   val detailsLoaded: Boolean
   val allowBundledUpdate: Boolean
+  val isPaid: Boolean
 
   val source: PluginSource
   val dependencies: List<PluginDependencyModel>
