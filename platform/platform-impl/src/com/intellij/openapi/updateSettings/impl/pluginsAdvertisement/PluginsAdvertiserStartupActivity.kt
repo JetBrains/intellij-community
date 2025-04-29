@@ -6,12 +6,12 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -124,14 +124,14 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
   }
 }
 
-internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginNode>>): List<IdeaPluginDescriptor> {
+internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginUiModel>>): List<PluginUiModel> {
   return runBlockingMaybeCancellable {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || application.isHeadlessEnvironment) {
       return@runBlockingMaybeCancellable emptyList()
     }
 
-    val customPlugins = ArrayList<PluginNode>()
+    val customPlugins = ArrayList<PluginUiModel>()
     for (value in customRepositories.values) {
       customPlugins.addAll(value)
     }

@@ -1359,7 +1359,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
-    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+    return ContainerUtil.map(CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(), it -> (PluginNode)it.getDescriptor());
   }
 
   public static @Unmodifiable @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {

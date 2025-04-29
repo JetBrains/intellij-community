@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService;
 import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -200,13 +201,25 @@ public final class RepositoryHelper {
     }
   }
 
-  @ApiStatus.Internal
+
+  @Deprecated(forRemoval = true)
   public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,
     @NotNull List<PluginNode> customPlugins,
+    boolean addMissing) {
+    List<PluginUiModel> marketplaceModels = ContainerUtil.map(marketplacePlugins, PluginUiModelAdapter::new);
+    List<PluginUiModel> customPluginsModels = ContainerUtil.map(customPlugins, PluginUiModelAdapter::new);
+    Collection<PluginUiModel> mergedPluginModels = mergePluginModelsFromRepositories(marketplaceModels, customPluginsModels, addMissing);
+    return ContainerUtil.map(mergedPluginModels, model-> (PluginNode)model.getDescriptor());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Collection<PluginUiModel> mergePluginModelsFromRepositories(
+    @NotNull List<PluginUiModel> marketplacePlugins,
+    @NotNull List<PluginUiModel> customPlugins,
     boolean addMissing
   ) {
-    var compatiblePluginMap = new LinkedHashMap<PluginId, PluginNode>(marketplacePlugins.size());
+    var compatiblePluginMap = new LinkedHashMap<PluginId, PluginUiModel>(marketplacePlugins.size());
 
     for (var marketplacePlugin : marketplacePlugins) {
       compatiblePluginMap.put(marketplacePlugin.getPluginId(), marketplacePlugin);
@@ -216,7 +229,7 @@ public final class RepositoryHelper {
       var pluginId = customPlugin.getPluginId();
       var plugin = compatiblePluginMap.get(pluginId);
       if (plugin == null && addMissing ||
-          plugin != null && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin) > 0) {
+          plugin != null && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin.getDescriptor()) > 0) {
         compatiblePluginMap.put(pluginId, customPlugin);
       }
     }

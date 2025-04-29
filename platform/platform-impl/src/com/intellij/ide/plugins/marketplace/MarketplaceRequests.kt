@@ -521,6 +521,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return executePluginSearch(query, count, includeUpgradeToCommercialIde).map { it.getPluginDescriptor() as PluginNode }
   }
 
+  @Throws(IOException::class)
   fun executePluginSearch(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): List<PluginUiModel> {
     val activeProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
     val suggestedIdeCode = PluginAdvertiserService.getSuggestedCommercialIdeCode(activeProductCode)

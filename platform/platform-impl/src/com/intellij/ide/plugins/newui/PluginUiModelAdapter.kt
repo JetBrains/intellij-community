@@ -62,8 +62,6 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.vendor
   override val organization: String?
     get() = pluginDescriptor.organization
-  override val description: String?
-    get() = pluginDescriptor.description
   override val changeNotes: String?
     get() = pluginDescriptor.changeNotes
   override val productCode: String?
@@ -246,6 +244,13 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.date = value
+      }
+    }
+  override var description: String?
+    get() = pluginDescriptor.description
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.description = value
       }
     }
 

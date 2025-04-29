@@ -464,7 +464,7 @@ public final class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<PluginNode>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
+            Map<String, List<PluginUiModel>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
               .getCustomRepositoryPluginMap();
             try {
               if (project != null) {
@@ -519,7 +519,7 @@ public final class PluginManagerConfigurable
             }
 
             for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
-              List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
+              List<PluginUiModel> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
                 String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
                 LOG.info("Marketplace tab: '" + groupName + "' group load started");
@@ -527,7 +527,7 @@ public final class PluginManagerConfigurable
                          groupName,
                          PluginsGroupType.CUSTOM_REPOSITORY,
                          "/repository:\"" + host + "\"",
-                         ContainerUtil.map(allDescriptors, it -> new PluginUiModelAdapter(it)),
+                         allDescriptors,
                          group -> {
                            PluginsGroup.sortByName(group.getModels());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
@@ -615,7 +615,7 @@ public final class PluginManagerConfigurable
               case TAG -> {
                 if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
-                  for (PluginNode descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
+                  for (PluginUiModel descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
                     List<String> tags = descriptor.getTags();
                     if (tags != null && !tags.isEmpty()) {
                       allTags.addAll(tags);
@@ -854,26 +854,26 @@ public final class PluginManagerConfigurable
                   }
                 }
 
-                Map<String, List<PluginNode>> customRepositoriesMap =
+                Map<String, List<PluginUiModel>> customRepositoriesMap =
                   CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
 
                 if (parser.suggested && project != null) {
-                  result.addDescriptors(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
+                  result.addModels(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
                 }
                 else if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
-                    List<PluginNode> descriptors = customRepositoriesMap.get(repository);
+                    List<PluginUiModel> descriptors = customRepositoriesMap.get(repository);
                     if (descriptors == null) {
                       continue;
                     }
                     if (parser.searchQuery == null) {
-                      result.addDescriptors(descriptors);
+                      result.addModels(descriptors);
                     }
                     else {
-                      for (PluginNode descriptor : descriptors) {
+                      for (PluginUiModel descriptor : descriptors) {
                         if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                          result.addDescriptor(descriptor);
+                          result.addModel(descriptor);
                         }
                       }
                     }
@@ -882,20 +882,20 @@ public final class PluginManagerConfigurable
                   result.sortByName();
                 }
                 else {
-                  List<PluginNode> pluginsFromMarketplace =
-                    myMarketplaceRequests.searchPlugins(parser.getUrlQuery(), 10000, true);
+                  List<PluginUiModel> pluginsFromMarketplace =
+                    myMarketplaceRequests.executePluginSearch(parser.getUrlQuery(), 10000, true);
                   // compare plugin versions between marketplace & custom repositories
-                  List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
-                  Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
+                  List<PluginUiModel> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
+                  Collection<PluginUiModel> plugins = RepositoryHelper.mergePluginModelsFromRepositories(pluginsFromMarketplace,
                                                                                                  customPlugins,
                                                                                                  false);
-                  result.addDescriptors(0, new ArrayList<>(plugins));
+                  result.addModels(0, new ArrayList<>(plugins));
 
                   if (parser.searchQuery != null) {
-                    List<IdeaPluginDescriptor> descriptors = ContainerUtil.filter(customPlugins,
+                    List<PluginUiModel> descriptors = ContainerUtil.filter(customPlugins,
                                                                         descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
                                                                                                                     parser.searchQuery));
-                    result.addDescriptors(0, descriptors);
+                    result.addModels(0, descriptors);
                   }
 
                   result.removeDuplicates();
@@ -1366,21 +1366,19 @@ public final class PluginManagerConfigurable
 
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
-                                 Map<String, @NotNull List<PluginNode>> customMap) {
+                                 Map<String, @NotNull List<PluginUiModel>> customMap) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
-    List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
+    List<PluginUiModel> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
 
-    for (IdeaPluginDescriptor plugin : plugins) {
-      if (plugin instanceof PluginNode) {
-        ((PluginNode)plugin).setInstallSource(FUSEventSource.PLUGINS_SUGGESTED_GROUP);
+    for (PluginUiModel plugin : plugins) {
+      if (plugin.isFromMarketplace()) {
+        plugin.setInstallSource(FUSEventSource.PLUGINS_SUGGESTED_GROUP);
       }
 
       FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
     }
-    List<PluginUiModel> models = ContainerUtil.map(plugins, it -> new PluginUiModelAdapter(it));
-
-    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", models, group -> false);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
 

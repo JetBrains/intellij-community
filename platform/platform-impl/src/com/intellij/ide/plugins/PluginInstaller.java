@@ -303,7 +303,8 @@ public final class PluginInstaller {
         new Task.WithResult<>(null, parent, IdeBundle.message("progress.title.checking.plugin.dependencies"), true) {
           @Override
           protected @NotNull Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
-            var repositoryPlugins = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
+            var repositoryPlugins = ContainerUtil.map(CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins(),
+                                                      it -> (PluginNode)it.getDescriptor());
             var operation = new PluginInstallOperation(List.of(), repositoryPlugins, pluginEnabler, indicator);
             operation.setAllowInstallWithoutRestart(true);
             return operation.checkMissingDependencies(pluginDescriptor, null) ?

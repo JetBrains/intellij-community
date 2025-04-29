@@ -118,6 +118,11 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     return this
   }
 
+  override fun setIsConverted(converted: Boolean): PluginUiModelBuilder {
+    pluginNode.isConverted = converted
+    return this
+  }
+
   override fun build(): PluginUiModel {
     return PluginUiModelAdapter(pluginNode)
   }

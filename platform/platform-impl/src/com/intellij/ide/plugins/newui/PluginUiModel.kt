@@ -46,8 +46,6 @@ interface PluginUiModel {
   @get:NlsSafe
   val organization: String?
   @get:NlsSafe
-  val description: String?
-  @get:NlsSafe
   val changeNotes: String?
   @get:NlsSafe
   val productCode: String?
@@ -96,6 +94,8 @@ interface PluginUiModel {
   @get:NlsSafe
   var repositoryName: String?
   var installSource: FUSEventSource?
+  @get:NlsSafe
+  var description: String?
 
   fun addDependency(id: PluginId, optional: Boolean)
   /**

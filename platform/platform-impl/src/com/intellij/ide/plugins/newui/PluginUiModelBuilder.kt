@@ -32,6 +32,7 @@ interface PluginUiModelBuilder {
   fun addTag(tag: String): PluginUiModelBuilder
   fun setIncomplete(incomplete: Boolean): PluginUiModelBuilder
   fun setOrganization(string: String?): PluginUiModelBuilder
+  fun setIsConverted(converted: Boolean): PluginUiModelBuilder
 
   fun build(): PluginUiModel
 }
