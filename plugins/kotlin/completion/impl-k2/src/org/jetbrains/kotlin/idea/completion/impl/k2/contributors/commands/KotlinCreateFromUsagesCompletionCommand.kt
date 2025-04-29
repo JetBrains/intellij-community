@@ -98,6 +98,7 @@ internal class KotlinCreateFromUsagesCompletionCommand(val ktClass: KtClass) : C
                 fileDocument.insertString(currentOffset, "method")
                 currentOffset = currentOffset + 6
             }
+            //only methods are supported (a.something()). Fields are not supported (a.something)
             if (previousElement == null || PsiTreeUtil.nextLeaf(previousElement)?.text?.startsWith("(") != true) {
                 fileDocument.insertString(currentOffset, "()")
             }
