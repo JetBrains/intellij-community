@@ -141,6 +141,10 @@ object PyTypeShed {
     "typing.AsyncGenerator" to "_collections_abc.AsyncGenerator"
   )
 
+  val typeshedModuleRedirections: Map<String, String> = mapOf(
+    "collections.abc" to "_collections_abc",
+  )
+
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */

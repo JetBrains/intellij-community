@@ -166,9 +166,13 @@ public final class PyiUtil {
   }
 
   private static @Nullable PyFile getOriginalFile(@NotNull PyiFile file) {
-    final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
+    QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
     if (name == null) {
       return null;
+    }
+    String moduleRedirect = PyTypeShed.INSTANCE.getTypeshedModuleRedirections().get(name.toString());
+    if (moduleRedirect != null) {
+      name = QualifiedName.fromDottedString(moduleRedirect);
     }
     final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file).copyWithoutStubs();
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
