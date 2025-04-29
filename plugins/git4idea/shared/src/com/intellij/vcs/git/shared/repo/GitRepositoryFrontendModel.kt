@@ -8,9 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 
 // This class is temporarily moved to the shared module until the branch widget can be fully moved to the frontend.
 @ApiStatus.Internal
-class GitRepositoryFrontendModel(
-  val repositoryId: RepositoryId,
-  val shortName: String,
-  var state: GitRepositoryState,
-  var favoriteRefs: GitFavoriteRefs,
-)
+interface GitRepositoryFrontendModel {
+  val repositoryId: RepositoryId
+  val shortName: String
+  val state: GitRepositoryState
+  val favoriteRefs: GitFavoriteRefs
+}

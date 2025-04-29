@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
+import com.intellij.vcs.git.shared.repo.GitRepositoryState
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
@@ -24,7 +26,7 @@ class GitRepositoriesFrontendHolder(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
-  private val repositories: MutableMap<RepositoryId, GitRepositoryFrontendModel> = ConcurrentHashMap()
+  private val repositories: MutableMap<RepositoryId, GitRepositoryFrontendModelImpl> = ConcurrentHashMap()
   private val widgetUpdateFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   fun getAll(): List<GitRepositoryFrontendModel> = repositories.values.toList()
@@ -71,8 +73,8 @@ class GitRepositoriesFrontendHolder(
 
     private val LOG = Logger.getInstance(GitRepositoriesFrontendHolder::class.java)
 
-    private fun convertToRepositoryInfo(repositoryDto: GitRepositoryDto): GitRepositoryFrontendModel =
-      GitRepositoryFrontendModel(
+    private fun convertToRepositoryInfo(repositoryDto: GitRepositoryDto) =
+      GitRepositoryFrontendModelImpl(
         repositoryId = repositoryDto.repositoryId,
         shortName = repositoryDto.shortName,
         state = repositoryDto.state,
@@ -80,3 +82,10 @@ class GitRepositoriesFrontendHolder(
       )
   }
 }
+
+private class GitRepositoryFrontendModelImpl(
+  override val repositoryId: RepositoryId,
+  override val shortName: String,
+  override var state: GitRepositoryState,
+  override var favoriteRefs: GitFavoriteRefs,
+): GitRepositoryFrontendModel
