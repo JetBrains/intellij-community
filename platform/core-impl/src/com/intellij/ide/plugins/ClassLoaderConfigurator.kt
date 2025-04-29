@@ -188,21 +188,22 @@ class ClassLoaderConfigurator(
     return dependencies
   }
 
-  private fun configureMainPluginModule(module: IdeaPluginDescriptorImpl): MainInfo {
-    val exisingMainInfo = mainToClassPath.get(module.pluginId)
+  private fun configureMainPluginModule(mainDescriptor: IdeaPluginDescriptorImpl): MainInfo {
+    assert(mainDescriptor.isMainPluginDescriptor)
+    val exisingMainInfo = mainToClassPath.get(mainDescriptor.pluginId)
     if (exisingMainInfo != null) {
       return exisingMainInfo
     } 
 
-    var mainModuleFiles = module.jarFiles
+    var mainModuleFiles = mainDescriptor.jarFiles
     if (mainModuleFiles == null) {
-      if (!module.isUseIdeaClassLoader) {
-        log.error("jarFiles is not set for $module")
+      if (!mainDescriptor.isUseIdeaClassLoader) {
+        log.error("jarFiles is not set for $mainDescriptor")
       }
       mainModuleFiles = emptyList()
     }
     var allFiles: MutableSet<Path>? = null
-    for (contentModule in module.content.modules) {
+    for (contentModule in mainDescriptor.content.modules) {
       if (contentModule.loadingRule == ModuleLoadingRule.EMBEDDED) {
         val customJarFiles = contentModule.requireDescriptor().jarFiles
         if (customJarFiles != null) {
@@ -215,27 +216,27 @@ class ClassLoaderConfigurator(
     }
 
     var libDirectories = Collections.emptyList<Path>()
-    val libDir = module.pluginPath.resolve("lib")
+    val libDir = mainDescriptor.pluginPath.resolve("lib")
     if (Files.exists(libDir)) {
       libDirectories = Collections.singletonList(libDir)
     }
 
-    val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
+    val mimicJarUrlConnection = !mainDescriptor.isBundled && mainDescriptor.vendor != "JetBrains"
     val files = allFiles?.toList() ?: mainModuleFiles
     val pluginClassPath = ClassPath(/* files = */ files,
                                     /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
                                     /* resourceFileFactory = */ resourceFileFactory,
                                     /* mimicJarUrlConnection = */ mimicJarUrlConnection)
-    val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
-      configureUsingIdeaClassloader(files, module)
+    val mainDependentClassLoader = if (mainDescriptor.isUseIdeaClassLoader) {
+      configureUsingIdeaClassloader(files, mainDescriptor)
     }
     else {
-      createPluginClassLoader(module = module, dependencies = getSortedDependencies(module), classPath = pluginClassPath, libDirectories = libDirectories)
+      createPluginClassLoader(module = mainDescriptor, dependencies = getSortedDependencies(mainDescriptor), classPath = pluginClassPath, libDirectories = libDirectories)
     }
     val mainInfo = MainInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainDependentClassLoader)
-    mainToClassPath.put(module.pluginId, mainInfo)
-    module.pluginClassLoader = mainDependentClassLoader
-    configureDependenciesInOldFormat(module, mainDependentClassLoader)
+    mainToClassPath.put(mainDescriptor.pluginId, mainInfo)
+    mainDescriptor.pluginClassLoader = mainDependentClassLoader
+    configureDependenciesInOldFormat(mainDescriptor, mainDependentClassLoader)
     return mainInfo
   }
 
