@@ -26,8 +26,6 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
-  protected val ICON_TEXT_GAP: Int = 6
-  protected val BETWEEN_ICONS_GAP: Int = 0
 
   protected open fun setUIDefaults(c: AbstractToolbarCombo) {
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()))
@@ -82,7 +80,7 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     var minY = Int.MAX_VALUE
     var width = 0
     for (icon in icons) {
-      if (width != 0) width += BETWEEN_ICONS_GAP
+      if (width != 0) width += combo.betweenIconsGap
       val x: Int = bounds.x + width
       val y: Int = bounds.y + bounds.height / 2 - icon.iconHeight / 2
       icon.paintIcon(combo, g, x, y)

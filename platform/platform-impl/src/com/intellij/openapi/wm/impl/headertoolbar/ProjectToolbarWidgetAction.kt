@@ -93,6 +93,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
         toolTipText = presentation.description
         leftIcons = presentation.getClientProperty(lefIconsKey) ?: emptyList()
         rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
+        betweenIconsGap = 9
       }
     }
   }

@@ -27,6 +27,9 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
   var transparentHoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var highlightBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
 
+  var betweenIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)
+  var iconTextGap: Int by Delegates.observable(6, this::fireUpdateEvents)
+
   override fun updateUI() {
     setUI(UIManager.getUI(this))
   }
