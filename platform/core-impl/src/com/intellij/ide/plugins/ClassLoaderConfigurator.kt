@@ -259,6 +259,16 @@ class ClassLoaderConfigurator(
     }
   }
 
+  private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
+    rootDescriptor.pluginClassLoader = classLoader
+    for (dependency in rootDescriptor.dependencies) {
+      val subDescriptor = dependency.subDescriptor
+      if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {
+        setPluginClassLoaderForModuleAndOldSubDescriptors(subDescriptor, classLoader)
+      }
+    }
+  }
+
   private fun configureCorePluginContentModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
     val jarFiles = module.jarFiles
     if (jarFiles != null) {
@@ -305,16 +315,6 @@ class ClassLoaderConfigurator(
     }
 
     return coreUrlClassLoader
-  }
-
-  private fun setPluginClassLoaderForModuleAndOldSubDescriptors(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader) {
-    rootDescriptor.pluginClassLoader = classLoader
-    for (dependency in rootDescriptor.dependencies) {
-      val subDescriptor = dependency.subDescriptor
-      if (subDescriptor != null && pluginSet.isPluginEnabled(dependency.pluginId)) {
-        setPluginClassLoaderForModuleAndOldSubDescriptors(subDescriptor, classLoader)
-      }
-    }
   }
 
   private fun checkPackagePrefixUniqueness(module: IdeaPluginDescriptorImpl) {
