@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
@@ -50,6 +51,8 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.pathString
+
+private val LOG: Logger = fileLogger()
 
 @OptIn(ExperimentalCoroutinesApi::class)
 abstract class PythonAddInterpreterModel(
@@ -116,7 +119,7 @@ abstract class PythonAddInterpreterModel(
       val executor = targetEnvironmentConfiguration.toExecutor()
       val suggestedCondaPath = runCatching {
         suggestCondaPath(targetCommandExecutor = executor)
-      }.getOrLogException(PythonAddInterpreterPresenter.LOG)
+      }.getOrLogException(LOG)
       val suggestedCondaLocalPath = suggestedCondaPath?.toLocalPathOn(targetEnvironmentConfiguration)
       withContext(uiContext) {
         state.condaExecutable.set(suggestedCondaLocalPath?.toString().orEmpty())

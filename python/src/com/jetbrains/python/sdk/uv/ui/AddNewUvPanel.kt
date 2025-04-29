@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
@@ -250,7 +250,4 @@ class PyAddUvSdkProvider : PyAddSdkProvider {
     return PyAddSdkGroupPanel(Supplier { "uv environment" }, UV_ICON, listOf(panel), panel)
   }
 
-  private fun allowCreatingNewEnvironments(project: Project?): Boolean {
-    return project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
-  }
 }

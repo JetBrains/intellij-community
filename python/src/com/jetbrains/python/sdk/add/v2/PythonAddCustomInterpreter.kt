@@ -22,11 +22,9 @@ import com.jetbrains.python.sdk.add.v2.poetry.EnvironmentCreatorPoetry
 import com.jetbrains.python.sdk.add.v2.poetry.PoetryExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
 import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.file.Path
 
-class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, projectPathFlow: Flow<Path>? = null, private val errorSink: ErrorSink) {
+class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, private val errorSink: ErrorSink) {
 
   private val propertyGraph = model.propertyGraph
   private val selectionMethod = propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)

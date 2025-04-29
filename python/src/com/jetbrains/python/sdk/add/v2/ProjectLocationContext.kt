@@ -1,22 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-
-internal class ProjectLocationContexts {
-  fun getProjectLocationContextFor(projectPath: String): ProjectLocationContext {
-    val wslPath = parseWindowsUncPath(projectPath)
-    return if (wslPath != null) WslContext(wslPath.distribution) else LocalContext
-  }
-}
 
 interface ProjectLocationContext {
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
