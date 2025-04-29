@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
-import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapResult
 import org.jetbrains.annotations.Nls
@@ -37,7 +36,7 @@ class ResultShowCaseTest {
         readData(it)
       }.mapResultWithErr( // Errors are different: IOException vs. LocalizedErrorString, use mapping
         onSuccess = { businessLogic(it) },
-        onErr = { LocalizedErrorString("Oops, ${it.message}") }
+        onErr = { "Oops, ${it.message}" }
       )
     when (result) { // Classic matching
       is Result.Success -> println("Money: ${result.result.dollars}")
