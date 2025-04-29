@@ -18,6 +18,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScope) : BaseProjectDirectories(project) {
 
@@ -25,6 +29,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   private val processingCounter = AtomicInteger(0)
 
   private var baseDirectoriesSet: Set<VirtualFile> = emptySet()
+  private val rwLock = ReentrantReadWriteLock()
 
   init {
     scope.launch {
@@ -39,7 +44,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
       }
     }
 
-    synchronized(virtualFilesTree) {
+    rwLock.write {
       @Suppress("LeakingThis")
       collectRoots(WorkspaceModel.getInstance(project).currentSnapshot).forEach { virtualFilesTree.add(it) }
       baseDirectoriesSet = virtualFilesTree.getRoots()
@@ -59,7 +64,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
     val oldRoots: Set<VirtualFile>
     val newRoots: Set<VirtualFile>
 
-    synchronized(virtualFilesTree) {
+    rwLock.write {
       oldRoots = virtualFilesTree.getRoots()
       oldPossibleRoots.forEach { virtualFilesTree.remove(it) }
       newPossibleRoots.forEach { virtualFilesTree.add(it) }
@@ -97,7 +102,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   }
 
   override fun getBaseDirectories(): Set<VirtualFile> {
-    return synchronized(virtualFilesTree) { baseDirectoriesSet }
+    return rwLock.read { baseDirectoriesSet }
   }
 
   override fun getBaseDirectoryFor(virtualFile: VirtualFile): VirtualFile? {
