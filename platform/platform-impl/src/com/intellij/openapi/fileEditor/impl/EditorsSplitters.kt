@@ -13,6 +13,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
@@ -293,7 +294,10 @@ open class EditorsSplitters internal constructor(
       return
     }
 
-    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
+    UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) {
+      add(it, BorderLayout.CENTER)
+      InternalUICustomization.getInstance()?.installEditorBackground(it)
+    }
     withContext(Dispatchers.EDT) {
       validate()
 
@@ -321,7 +325,10 @@ open class EditorsSplitters internal constructor(
       .process(
         state = state,
         requestFocus = true,
-        addChild = { add(it, BorderLayout.CENTER) },
+        addChild = {
+          add(it, BorderLayout.CENTER)
+          InternalUICustomization.getInstance()?.installEditorBackground(it)
+        },
       )
   }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.*
@@ -68,15 +69,19 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
+import com.intellij.toolWindow.xNext.island.XNextIslandHolder
+import com.intellij.toolWindow.xNext.island.XNextRoundedBorder
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
+import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -305,6 +310,7 @@ open class FileEditorManagerImpl(
       initJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val component = EditorsSplitters(manager = this@FileEditorManagerImpl, coroutineScope = coroutineScope)
         component.isFocusable = false
+        InternalUICustomization.getInstance()?.configureEditorsSplitters(component)
         // prepare for toolwindow manager
         mainSplitters = component
         check(splitterFlow.tryEmit(component))

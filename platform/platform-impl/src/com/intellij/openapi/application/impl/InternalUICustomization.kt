@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
@@ -65,7 +66,11 @@ open class InternalUICustomization {
 
   open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
 
+  open fun configureEditorsSplitters(component: EditorsSplitters) {}
+
   open fun installBackgroundUpdater(component: JComponent) {}
+
+  open fun installEditorBackground(component: JComponent) {}
 
   open fun frameHeaderBackgroundConverter(color: Color?): Color? = color
 
