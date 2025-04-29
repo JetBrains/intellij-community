@@ -72,7 +72,8 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
 
       Thread {
         try {
-          fallbackJS = this.javaClass.getResourceAsStream("highlighter.js")?.bufferedReader().use { it?.readText() }
+          fallbackJS = ::CodeFenceLanguageParsingSupport.javaClass
+            .getResourceAsStream("highlighter.js")?.bufferedReader().use { it?.readText() }
         }
         catch (_: Exception) {}
         scriptLatch.countDown()
