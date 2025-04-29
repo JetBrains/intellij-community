@@ -2,20 +2,18 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
+import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlay
+import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayProvider
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.CaretEvent
@@ -35,7 +33,7 @@ import java.awt.Point
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
   private val shouldCheckInlayOffsets: Boolean,
-  private val notebook: EditorNotebook,
+  val notebook: EditorNotebook,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
 
   private val notebookCellLines = NotebookCellLines.get(editor)
@@ -44,10 +42,9 @@ class NotebookCellInlayManager private constructor(
 
   val cells: List<EditorCell> get() = notebook.cells
 
-  internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf()
+  val endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
 
-  val belowLastCellPanel: NotebookBelowLastCellPanel = NotebookBelowLastCellPanel(editor)
-  private var belowLastCellInlay: Inlay<*>? = null
+  internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf()
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
@@ -128,7 +125,7 @@ class NotebookCellInlayManager private constructor(
 
     setupFoldingListener()
     setupSelectionUI()
-    addBelowLastCellInlay()
+
 
     notebook.addCellEventsListener(this, object : EditorCellEventListener {
       override fun onEditorCellEvents(events: List<EditorCellEvent>) {
@@ -216,22 +213,6 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  private fun addBelowLastCellInlay() {  // PY-77218
-    belowLastCellInlay = editor.addComponentInlay(
-      UiDataProvider.wrapComponent(belowLastCellPanel) { sink ->
-        sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.lastOrNull()?.interval
-      },
-      isRelatedToPrecedingText = true,
-      showAbove = false,
-      priority = editor.notebookAppearance.jupyterBelowLastCellInlayPriority,
-      offset = editor.document.getLineEndOffset((editor.document.lineCount - 1).coerceAtLeast(0))
-    )
-  }
-
-  fun removeBelowLastCellInlay() {
-    belowLastCellInlay?.let { Disposer.dispose(it) }
-    belowLastCellInlay = null
-  }
 
   private fun setupFoldingListener() {
     val foldingModel = editor.foldingModel

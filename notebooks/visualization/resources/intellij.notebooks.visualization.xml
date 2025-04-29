@@ -29,6 +29,11 @@
                     interface="com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editorNotebookEndInlayProvider"
+                    interface="com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlayProvider"
+                    dynamic="true"/>
+
+
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.inputFactory"
                     interface="com.intellij.notebooks.visualization.NotebookCellInlayController$InputFactory"
                     dynamic="true"/>
