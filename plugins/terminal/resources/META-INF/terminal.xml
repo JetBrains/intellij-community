@@ -29,6 +29,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.terminal.fus.TerminalFocusRule"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
