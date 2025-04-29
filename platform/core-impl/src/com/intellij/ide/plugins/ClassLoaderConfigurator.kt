@@ -229,15 +229,15 @@ class ClassLoaderConfigurator(
                                     /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
                                     /* resourceFileFactory = */ resourceFileFactory,
                                     /* mimicJarUrlConnection = */ mimicJarUrlConnection)
-    val mainDependentClassLoader = if (mainDescriptor.isUseIdeaClassLoader) {
+    val mainClassLoader = if (mainDescriptor.isUseIdeaClassLoader) {
       configureUsingIdeaClassloader(files, mainDescriptor)
     }
     else {
       createPluginClassLoader(module = mainDescriptor, dependencies = getSortedDependencies(mainDescriptor), classPath = pluginClassPath, libDirectories = libDirectories)
     }
-    val mainInfo = MainPluginDescriptorClassPathInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainDependentClassLoader)
+    val mainInfo = MainPluginDescriptorClassPathInfo(classPath = pluginClassPath, libDirectories = libDirectories, mainClassLoader = mainClassLoader)
     mainToClassPath.put(mainDescriptor.pluginId, mainInfo)
-    setClassLoaderForModuleAndDependsSubDescriptors(mainDescriptor, mainDependentClassLoader)
+    setClassLoaderForModuleAndDependsSubDescriptors(mainDescriptor, mainClassLoader)
     return mainInfo
   }
 
