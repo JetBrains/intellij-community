@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -23,9 +24,11 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -42,7 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class OverridingMethodsDialog extends DialogWrapper {
+public class OverridingMethodsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;
@@ -52,7 +55,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   private JBTable myTable;
   private final UsagePreviewPanel myUsagePreviewPanel;
 
-  OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
+  public OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
     myProject = project;
     myOverridingMethods = overridingMethods;
@@ -60,27 +63,46 @@ class OverridingMethodsDialog extends DialogWrapper {
     Arrays.fill(myChecked, true);
 
     myMethodText = new String[myOverridingMethods.size()];
-    for (int i = 0; i < myMethodText.length; i++) {
-      PsiElement overridingMethod = ((SafeDeleteOverridingMethodUsageInfo)myOverridingMethods.get(i)).getOverridingMethod();
-      if (overridingMethod instanceof PsiMethod method) {
-        int options = PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                      PsiFormatUtilBase.SHOW_NAME |
-                      PsiFormatUtilBase.SHOW_PARAMETERS |
-                      PsiFormatUtilBase.SHOW_TYPE;
-        myMethodText[i] = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE);
-      }
-      else {
-        myMethodText[i] = SymbolPresentationUtil.getSymbolPresentableText(overridingMethod);
-      }
-    }
+    Arrays.setAll(myMethodText, i -> getElementDescription(myOverridingMethods.get(i)));
     myUsagePreviewPanel = new UsagePreviewPanel(project, new UsageViewPresentation());
-    setTitle(JavaRefactoringBundle.message("unused.overriding.methods.title"));
+    setTitle(getTitleText());
     init();
+  }
+
+  protected @NlsContexts.DialogTitle @NotNull String getTitleText() {
+    return JavaRefactoringBundle.message("unused.overriding.methods.title");
+  }
+
+  protected @NlsContexts.DialogMessage @NotNull String getDescriptionText() {
+    return JavaRefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete");
+  }
+
+  protected @NlsContexts.ColumnName @NotNull String getColumnName() {
+    return JavaRefactoringBundle.message("method.column");
+  }
+
+  protected String getElementDescription(UsageInfo info) {
+    PsiElement overridingMethod = ((SafeDeleteOverridingMethodUsageInfo)info).getOverridingMethod();
+    if (overridingMethod instanceof PsiMethod method) {
+      int options = PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                    PsiFormatUtilBase.SHOW_NAME |
+                    PsiFormatUtilBase.SHOW_PARAMETERS |
+                    PsiFormatUtilBase.SHOW_TYPE;
+      return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE);
+    }
+    else {
+      return SymbolPresentationUtil.getSymbolPresentableText(overridingMethod);
+    }
   }
 
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.safeDelete.OverridingMethodsDialog";
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.large();
   }
 
   public ArrayList<UsageInfo> getSelected() {
@@ -112,7 +134,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(0, UIUtil.DEFAULT_VGAP));
-    panel.add(new JLabel(JavaRefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")), BorderLayout.NORTH);
+    panel.add(new JLabel(getDescriptionText()), BorderLayout.NORTH);
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
     myTable.setShowGrid(false);
@@ -153,7 +175,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     ListSelectionListener selectionListener = new ListSelectionListener() {
       @Override
-      public void valueChanged(final ListSelectionEvent e) {
+      public void valueChanged(ListSelectionEvent e) {
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
           UsageInfo usageInfo = myOverridingMethods.get(index);
@@ -191,7 +213,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == CHECK_COLUMN ? " " : JavaRefactoringBundle.message("method.column");
+      return column == CHECK_COLUMN ? " " : OverridingMethodsDialog.this.getColumnName();
     }
 
     @Override
