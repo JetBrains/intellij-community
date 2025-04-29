@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//plugins/evaluation-plugin/core:evaluationPlugin-core",
     "//plugins/completion-ml-ranking:completionMlRanking",
+    "//libraries/ktor-client",
     "//plugins/stats-collector:statsCollector",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
@@ -32,8 +33,7 @@ jvm_library(
     "//platform/warmup",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:ktor-client-core",
-    "@lib//:ktor-client-java",
+    "@lib//:ktor-client-logging",
   ],
   runtime_deps = [":evaluationPlugin_resources"]
 )

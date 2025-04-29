@@ -4395,10 +4395,10 @@ http_file(
 )
 
 http_file(
-  name = "junit-jupiter-api-5_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.11.3/junit-jupiter-api-5.11.3.jar",
-  sha256 = "5d8147a60f49453973e250ed68701b7ff055964fe2462fc2cb1ec1d6d44889ba",
-  downloaded_file_path = "junit-jupiter-api-5.11.3.jar"
+  name = "junit-jupiter-api-5_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2.jar",
+  sha256 = "0b9ca728e4bcd9adc57f29deb9556ff9ed5e08b4e8843b875aba4e4e3e04f092",
+  downloaded_file_path = "junit-jupiter-api-5.12.2.jar"
 )
 
 http_file(
@@ -4409,10 +4409,10 @@ http_file(
 )
 
 http_file(
-  name = "junit-platform-commons-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.11.3/junit-platform-commons-1.11.3.jar",
-  sha256 = "be262964b0b6b48de977c61d4f931df8cf61e80e750cc3f3a0a39cdd21c1008c",
-  downloaded_file_path = "junit-platform-commons-1.11.3.jar"
+  name = "junit-platform-commons-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2.jar",
+  sha256 = "e683a01e85dfabea520c056ac6015a6162756e602ec653c0da85e233f0afbc18",
+  downloaded_file_path = "junit-platform-commons-1.12.2.jar"
 )
 
 http_file(
@@ -4423,10 +4423,10 @@ http_file(
 )
 
 http_file(
-  name = "junit-jupiter-api-5_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.11.3/junit-jupiter-api-5.11.3-sources.jar",
-  sha256 = "7f6a333b8c4e5c2d29c76c52883dfe2484145b8b2fc20346f8880b9e087f6336",
-  downloaded_file_path = "junit-jupiter-api-5.11.3-sources.jar"
+  name = "junit-jupiter-api-5_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2-sources.jar",
+  sha256 = "babbccb7ae82e7ed4f14c140fb11f21fc6ac595c60e8cafe445fbc84d938adab",
+  downloaded_file_path = "junit-jupiter-api-5.12.2-sources.jar"
 )
 
 http_file(
@@ -4437,10 +4437,10 @@ http_file(
 )
 
 http_file(
-  name = "junit-platform-commons-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.11.3/junit-platform-commons-1.11.3-sources.jar",
-  sha256 = "a2f0c562a7fe4066044d93bb20ce527b4669c1ddaefca2244a53356db747c5e2",
-  downloaded_file_path = "junit-platform-commons-1.11.3-sources.jar"
+  name = "junit-platform-commons-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2-sources.jar",
+  sha256 = "4c4275ef8401d04156e9e447c140b57bc8799b889a3095e4809ac8ad4e09b9f4",
+  downloaded_file_path = "junit-platform-commons-1.12.2-sources.jar"
 )
 
 http_file(
@@ -4451,59 +4451,59 @@ http_file(
 )
 
 http_file(
-  name = "junit-jupiter-engine-5_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3.jar",
-  sha256 = "e62420c99f7c0d59a2159a2ef63e61877e9c80bd722c03ca8bf3bdcea050a589",
-  downloaded_file_path = "junit-jupiter-engine-5.11.3.jar"
+  name = "junit-jupiter-engine-5_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar",
+  sha256 = "f576c06b8accde9985063b8bc80526cb980eec24dee0b7221fc8ddd7ace65800",
+  downloaded_file_path = "junit-jupiter-engine-5.12.2.jar"
 )
 
 http_file(
-  name = "junit-jupiter-engine-5_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.11.3/junit-jupiter-engine-5.11.3-sources.jar",
-  sha256 = "b2343451cf7f9cd0044b4a614adca1dd88f3a9265256c88a4a6f3b68e65075c8",
-  downloaded_file_path = "junit-jupiter-engine-5.11.3-sources.jar"
+  name = "junit-jupiter-engine-5_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2-sources.jar",
+  sha256 = "95d15c0094b9af41bbeffb3f1fc9bfffbf68676de1c9497c4b2a8350969cd19e",
+  downloaded_file_path = "junit-jupiter-engine-5.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-platform-launcher-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3.jar",
-  sha256 = "b4727459201b0011beb0742bd807421a1fc8426b116193031ed87825bc2d4f04",
-  downloaded_file_path = "junit-platform-launcher-1.11.3.jar"
+  name = "junit-platform-launcher-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.12.2/junit-platform-launcher-1.12.2.jar",
+  sha256 = "dccf2c1fa0a977c53ad094ad859bfdddd524d97594b76307ad787de71985757f",
+  downloaded_file_path = "junit-platform-launcher-1.12.2.jar"
 )
 
 http_file(
-  name = "junit-platform-engine-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.jar",
-  sha256 = "0043f72f611664735da8dc9a308bf12ecd2236b05339351c4741edb4d8fab0da",
-  downloaded_file_path = "junit-platform-engine-1.11.3.jar"
+  name = "junit-platform-engine-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2.jar",
+  sha256 = "cef0efcb5bd2e05e2b808d38bab5c655089c0c3001527376e74cb606a7911ec8",
+  downloaded_file_path = "junit-platform-engine-1.12.2.jar"
 )
 
 http_file(
-  name = "junit-platform-launcher-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3-sources.jar",
-  sha256 = "e560e5e7bc6eed184774f75a7b36b824e20ec818be4b991213c0d31aff4260c5",
-  downloaded_file_path = "junit-platform-launcher-1.11.3-sources.jar"
+  name = "junit-platform-launcher-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-launcher/1.12.2/junit-platform-launcher-1.12.2-sources.jar",
+  sha256 = "b25eddab9b9b48faa08ffb1646938d899cae2ae7ce528e1c86aac274798705fb",
+  downloaded_file_path = "junit-platform-launcher-1.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-platform-engine-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3-sources.jar",
-  sha256 = "96acc7bc533f52421a149faff2e3e9d6958d167f4200da74815b208f9846a615",
-  downloaded_file_path = "junit-platform-engine-1.11.3-sources.jar"
+  name = "junit-platform-engine-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2-sources.jar",
+  sha256 = "054e04ebe1df5268cac321b30f1ef86f0e32a059ec71a6f36b8d0e44518a5157",
+  downloaded_file_path = "junit-platform-engine-1.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-jupiter-params-5_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.11.3/junit-jupiter-params-5.11.3.jar",
-  sha256 = "0f798ebec744c4e6605fd4f2072f41a8e989e2d469e21db5aa67cf799c0b51ec",
-  downloaded_file_path = "junit-jupiter-params-5.11.3.jar"
+  name = "junit-jupiter-params-5_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.12.2/junit-jupiter-params-5.12.2.jar",
+  sha256 = "b219ffa949b90a71aa3b6c2b606456b82bca0b2089b7459c8ff461156ff59b0f",
+  downloaded_file_path = "junit-jupiter-params-5.12.2.jar"
 )
 
 http_file(
-  name = "junit-jupiter-params-5_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.11.3/junit-jupiter-params-5.11.3-sources.jar",
-  sha256 = "073ce1b0f7fa3ee1e89e301e5f92078058ce7702ba662652cc3932d9573137bc",
-  downloaded_file_path = "junit-jupiter-params-5.11.3-sources.jar"
+  name = "junit-jupiter-params-5_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-params/5.12.2/junit-jupiter-params-5.12.2-sources.jar",
+  sha256 = "e1353aa5fb5205bb9263394b944b567d168bdeb6df56d3d2a6005beadcd37c73",
+  downloaded_file_path = "junit-jupiter-params-5.12.2-sources.jar"
 )
 
 http_file(
@@ -4521,73 +4521,73 @@ http_file(
 )
 
 http_file(
-  name = "junit-platform-suite-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite/1.11.3/junit-platform-suite-1.11.3.jar",
-  sha256 = "ef4cb7ed1625394c3cecfa8a1eed3559cd119be75b5cba3b7cb4a60c511aa2d3",
-  downloaded_file_path = "junit-platform-suite-1.11.3.jar"
+  name = "junit-platform-suite-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite/1.12.2/junit-platform-suite-1.12.2.jar",
+  sha256 = "6d86156bca0b50feb851a1589cbe0a2f4f2165041be697811b8ca5bb184b81e7",
+  downloaded_file_path = "junit-platform-suite-1.12.2.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-api-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-api/1.11.3/junit-platform-suite-api-1.11.3.jar",
-  sha256 = "c728aa61ccd7942552f8bd4e50ec3064260d4a1e085022cbfccd64a88f9b3820",
-  downloaded_file_path = "junit-platform-suite-api-1.11.3.jar"
+  name = "junit-platform-suite-api-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-api/1.12.2/junit-platform-suite-api-1.12.2.jar",
+  sha256 = "e17b2006290de11f6444a4f98b6d71bbbd7d6fccfc40fd85db413210cb2cbc8d",
+  downloaded_file_path = "junit-platform-suite-api-1.12.2.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-engine-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-engine/1.11.3/junit-platform-suite-engine-1.11.3.jar",
-  sha256 = "b09dda0a52850bfb7cb8b94b76225b0245cac9dd3fa2d3cc4beef68dc255e6ca",
-  downloaded_file_path = "junit-platform-suite-engine-1.11.3.jar"
+  name = "junit-platform-suite-engine-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-engine/1.12.2/junit-platform-suite-engine-1.12.2.jar",
+  sha256 = "5f1e4ebae81b26eec980e49a497901856fb10ea2bbb139f0a3c837cf0fd22fba",
+  downloaded_file_path = "junit-platform-suite-engine-1.12.2.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-commons-1_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-commons/1.11.3/junit-platform-suite-commons-1.11.3.jar",
-  sha256 = "1369846b83b7ea6f24670b2b4d8a372a1bbbc844e2746f5a93396b5a13a28ca6",
-  downloaded_file_path = "junit-platform-suite-commons-1.11.3.jar"
+  name = "junit-platform-suite-commons-1_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-commons/1.12.2/junit-platform-suite-commons-1.12.2.jar",
+  sha256 = "e9e43efdc85c8d83a612efd298c816447a11dc00c46ceb720c63ac386a065094",
+  downloaded_file_path = "junit-platform-suite-commons-1.12.2.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite/1.11.3/junit-platform-suite-1.11.3-sources.jar",
-  sha256 = "71828fc6b56fa12daa926bed4642d9283d542509a339ca00c7ca868f1b66b8e2",
-  downloaded_file_path = "junit-platform-suite-1.11.3-sources.jar"
+  name = "junit-platform-suite-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite/1.12.2/junit-platform-suite-1.12.2-sources.jar",
+  sha256 = "ced53f6a12ec881f6285f81ed7b969ec9978ad4fe5d226397fb91c22d63805b4",
+  downloaded_file_path = "junit-platform-suite-1.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-api-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-api/1.11.3/junit-platform-suite-api-1.11.3-sources.jar",
-  sha256 = "e6829871bab067836ed8957645bc425cce0b302cbcd56adfd634d643852c0fab",
-  downloaded_file_path = "junit-platform-suite-api-1.11.3-sources.jar"
+  name = "junit-platform-suite-api-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-api/1.12.2/junit-platform-suite-api-1.12.2-sources.jar",
+  sha256 = "9a0be94aa7084a730005221c1c7d0b705bfd397d8ddc97d7f21262c1251a0e3a",
+  downloaded_file_path = "junit-platform-suite-api-1.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-engine-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-engine/1.11.3/junit-platform-suite-engine-1.11.3-sources.jar",
-  sha256 = "18e3a0273720e4d520aaf86e3b03a1bc394ebe0806aec11c72ec53faf20d43b0",
-  downloaded_file_path = "junit-platform-suite-engine-1.11.3-sources.jar"
+  name = "junit-platform-suite-engine-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-engine/1.12.2/junit-platform-suite-engine-1.12.2-sources.jar",
+  sha256 = "8ec8433787a4cb9c4647a2d9cab0130eba591060a8d86d6b1445be79276535b5",
+  downloaded_file_path = "junit-platform-suite-engine-1.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-platform-suite-commons-1_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-commons/1.11.3/junit-platform-suite-commons-1.11.3-sources.jar",
-  sha256 = "725c614351c9101ee27432d6e861f5ddd74a7d9c149cd1dc6ad6b7d4a856b5e8",
-  downloaded_file_path = "junit-platform-suite-commons-1.11.3-sources.jar"
+  name = "junit-platform-suite-commons-1_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-suite-commons/1.12.2/junit-platform-suite-commons-1.12.2-sources.jar",
+  sha256 = "d275400c31c186efc3bc2d3e2b8ef8eba6241321cad225e72c585e4fcf06448c",
+  downloaded_file_path = "junit-platform-suite-commons-1.12.2-sources.jar"
 )
 
 http_file(
-  name = "junit-vintage-engine-5_11_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/vintage/junit-vintage-engine/5.11.3/junit-vintage-engine-5.11.3.jar",
-  sha256 = "d58022419bc76b3df4f479a2b3599d95e24464cd68fb7c2267f1a1a871215c47",
-  downloaded_file_path = "junit-vintage-engine-5.11.3.jar"
+  name = "junit-vintage-engine-5_12_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/vintage/junit-vintage-engine/5.12.2/junit-vintage-engine-5.12.2.jar",
+  sha256 = "bb88528a3c4af920db540cdbac2050b83f68078ab28583e6dbf9457522dee4eb",
+  downloaded_file_path = "junit-vintage-engine-5.12.2.jar"
 )
 
 http_file(
-  name = "junit-vintage-engine-5_11_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/vintage/junit-vintage-engine/5.11.3/junit-vintage-engine-5.11.3-sources.jar",
-  sha256 = "2ce8055143bae22e0a495349e49d0ee9a402693e7382b5b7d91db624cad68613",
-  downloaded_file_path = "junit-vintage-engine-5.11.3-sources.jar"
+  name = "junit-vintage-engine-5_12_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/vintage/junit-vintage-engine/5.12.2/junit-vintage-engine-5.12.2-sources.jar",
+  sha256 = "9303a9d5b599232556496c0f5febe7fff57bfa946789af754d7de07efb8cd97c",
+  downloaded_file_path = "junit-vintage-engine-5.12.2-sources.jar"
 )
 
 http_file(

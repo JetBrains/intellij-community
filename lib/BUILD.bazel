@@ -27,7 +27,7 @@ kt_compiler_plugin(
 
 kt_jvm_import(
   name = "rhizomedb-compiler-plugin-lib",
-  jar = "@rhizomedb-compiler-plugin-2_1_20-RC2-0_3_http//file",
+  jar = "@rhizomedb-compiler-plugin-2_1_20-0_2_http//file",
 )
 
 kt_compiler_plugin(
@@ -3155,18 +3155,18 @@ java_library(
 java_library(
   name = "junit5",
   exports = [
-    ":junit-jupiter-api-5_11_3_http_import",
+    ":junit-jupiter-api-5_12_2_http_import",
     ":opentest4j-1_3_0_http_import",
-    ":junit-platform-commons-1_11_3_http_import",
+    ":junit-platform-commons-1_12_2_http_import",
     ":apiguardian-api-1_1_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "junit-jupiter-api-5_11_3_http_import",
-  jar = "@junit-jupiter-api-5_11_3_http//file",
-  source_jar = "@junit-jupiter-api-5_11_3-sources_http//file"
+  name = "junit-jupiter-api-5_12_2_http_import",
+  jar = "@junit-jupiter-api-5_12_2_http//file",
+  source_jar = "@junit-jupiter-api-5_12_2-sources_http//file"
 )
 
 jvm_import(
@@ -3176,9 +3176,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "junit-platform-commons-1_11_3_http_import",
-  jar = "@junit-platform-commons-1_11_3_http//file",
-  source_jar = "@junit-platform-commons-1_11_3-sources_http//file"
+  name = "junit-platform-commons-1_12_2_http_import",
+  jar = "@junit-platform-commons-1_12_2_http//file",
+  source_jar = "@junit-platform-commons-1_12_2-sources_http//file"
 )
 
 jvm_import(
@@ -3196,8 +3196,8 @@ java_library(
 
 jvm_import(
   name = "junit5Jupiter",
-  jar = "@junit-jupiter-engine-5_11_3_http//file",
-  source_jar = "@junit-jupiter-engine-5_11_3-sources_http//file",
+  jar = "@junit-jupiter-engine-5_12_2_http//file",
+  source_jar = "@junit-jupiter-engine-5_12_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3211,22 +3211,22 @@ java_library(
 java_library(
   name = "junit5Launcher",
   exports = [
-    ":junit-platform-launcher-1_11_3_http_import",
-    ":junit-platform-engine-1_11_3_http_import",
+    ":junit-platform-launcher-1_12_2_http_import",
+    ":junit-platform-engine-1_12_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "junit-platform-launcher-1_11_3_http_import",
-  jar = "@junit-platform-launcher-1_11_3_http//file",
-  source_jar = "@junit-platform-launcher-1_11_3-sources_http//file"
+  name = "junit-platform-launcher-1_12_2_http_import",
+  jar = "@junit-platform-launcher-1_12_2_http//file",
+  source_jar = "@junit-platform-launcher-1_12_2-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-engine-1_11_3_http_import",
-  jar = "@junit-platform-engine-1_11_3_http//file",
-  source_jar = "@junit-platform-engine-1_11_3-sources_http//file"
+  name = "junit-platform-engine-1_12_2_http_import",
+  jar = "@junit-platform-engine-1_12_2_http//file",
+  source_jar = "@junit-platform-engine-1_12_2-sources_http//file"
 )
 
 java_library(
@@ -3238,8 +3238,8 @@ java_library(
 
 jvm_import(
   name = "junit5Params",
-  jar = "@junit-jupiter-params-5_11_3_http//file",
-  source_jar = "@junit-jupiter-params-5_11_3-sources_http//file",
+  jar = "@junit-jupiter-params-5_12_2_http//file",
+  source_jar = "@junit-jupiter-params-5_12_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3260,42 +3260,42 @@ jvm_import(
 java_library(
   name = "junit5Suites",
   exports = [
-    ":junit-platform-suite-1_11_3_http_import",
-    ":junit-platform-suite-api-1_11_3_http_import",
-    ":junit-platform-suite-engine-1_11_3_http_import",
-    ":junit-platform-suite-commons-1_11_3_http_import",
+    ":junit-platform-suite-1_12_2_http_import",
+    ":junit-platform-suite-api-1_12_2_http_import",
+    ":junit-platform-suite-engine-1_12_2_http_import",
+    ":junit-platform-suite-commons-1_12_2_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "junit-platform-suite-1_11_3_http_import",
-  jar = "@junit-platform-suite-1_11_3_http//file",
-  source_jar = "@junit-platform-suite-1_11_3-sources_http//file"
+  name = "junit-platform-suite-1_12_2_http_import",
+  jar = "@junit-platform-suite-1_12_2_http//file",
+  source_jar = "@junit-platform-suite-1_12_2-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-suite-api-1_11_3_http_import",
-  jar = "@junit-platform-suite-api-1_11_3_http//file",
-  source_jar = "@junit-platform-suite-api-1_11_3-sources_http//file"
+  name = "junit-platform-suite-api-1_12_2_http_import",
+  jar = "@junit-platform-suite-api-1_12_2_http//file",
+  source_jar = "@junit-platform-suite-api-1_12_2-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-suite-engine-1_11_3_http_import",
-  jar = "@junit-platform-suite-engine-1_11_3_http//file",
-  source_jar = "@junit-platform-suite-engine-1_11_3-sources_http//file"
+  name = "junit-platform-suite-engine-1_12_2_http_import",
+  jar = "@junit-platform-suite-engine-1_12_2_http//file",
+  source_jar = "@junit-platform-suite-engine-1_12_2-sources_http//file"
 )
 
 jvm_import(
-  name = "junit-platform-suite-commons-1_11_3_http_import",
-  jar = "@junit-platform-suite-commons-1_11_3_http//file",
-  source_jar = "@junit-platform-suite-commons-1_11_3-sources_http//file"
+  name = "junit-platform-suite-commons-1_12_2_http_import",
+  jar = "@junit-platform-suite-commons-1_12_2_http//file",
+  source_jar = "@junit-platform-suite-commons-1_12_2-sources_http//file"
 )
 
 jvm_import(
   name = "junit5Vintage",
-  jar = "@junit-vintage-engine-5_11_3_http//file",
-  source_jar = "@junit-vintage-engine-5_11_3-sources_http//file",
+  jar = "@junit-vintage-engine-5_12_2_http//file",
+  source_jar = "@junit-vintage-engine-5_12_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
