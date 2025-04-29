@@ -48,7 +48,9 @@ internal class FrontendXLineBreakpointProxy(
 
   override fun onBreakpointChange() {
     super.onBreakpointChange()
-    visualRepresentation.updateUI()
+    cs.launch(Dispatchers.Default) {
+      visualRepresentation.doUpdateUI {}
+    }
   }
 
   override fun isTemporary(): Boolean {

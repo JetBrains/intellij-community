@@ -263,7 +263,7 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun updateIcon() {
-    // TODO IJPL-185322 does nothing since we calculate icon for each getIcon request
+    onBreakpointChange()
   }
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {
