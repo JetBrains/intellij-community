@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
+import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.Tags
@@ -92,7 +93,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     @JvmStatic
     fun parsePluginList(input: InputStream): List<PluginNode> {
       try {
-        val handler = RepositoryContentHandler()
+        val handler = RepositoryContentHandler(PluginNodeModelBuilderFactory)
 
         val spf = SAXParserFactory.newDefaultInstance()
         spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
