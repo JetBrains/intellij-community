@@ -234,7 +234,6 @@ private class CommandCompletionHighlightingListener(
     completionService?.addFilters(lookup, nonWrittenFiles, psiFile, editor)
     val item = lookup.currentItemOrEmpty
     if (updateItem(item)) return
-    super.uiRefreshed()
   }
 
   private fun updateItem(item: LookupElement?): Boolean {
@@ -315,7 +314,6 @@ private class CommandCompletionHighlightingListener(
     if (updateItem(item)) return
     val element = item?.`as`(CommandCompletionLookupElement::class.java) ?: return
     updateIcon(lookup, element)
-    super.currentItemChanged(event)
   }
 
   private fun updateHighlighting(lookup: LookupImpl, element: CommandCompletionLookupElement) {
