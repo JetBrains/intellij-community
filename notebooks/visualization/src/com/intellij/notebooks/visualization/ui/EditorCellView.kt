@@ -7,7 +7,7 @@ import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory
-import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
+import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
@@ -58,9 +58,6 @@ class EditorCellView(
 
   // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on the same lines.
   private var lastHighLightersLines: IntRange? = null
-
-  //We do not use it
-  var disableActions: Boolean = false
 
   var isUnderDiff: Boolean
     get() = cell.isUnderDiff.get()
@@ -322,11 +319,11 @@ class EditorCellView(
   }
 
   fun addDropHighlightIfApplicable() {
-    selfManagedControllers.filterIsInstance<DropHighlightableCellPanel>().firstOrNull()?.addDropHighlight()
+    selfManagedControllers.filterIsInstance<DropHighlightable>().firstOrNull()?.addDropHighlight()
   }
 
   fun removeDropHighlightIfPresent() {
-    selfManagedControllers.filterIsInstance<DropHighlightableCellPanel>().firstOrNull()?.removeDropHighlight()
+    selfManagedControllers.filterIsInstance<DropHighlightable>().firstOrNull()?.removeDropHighlight()
   }
 
 

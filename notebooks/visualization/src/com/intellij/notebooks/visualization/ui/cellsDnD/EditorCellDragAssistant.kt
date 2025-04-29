@@ -197,9 +197,14 @@ class EditorCellDragAssistant(
     }
   }
 
-  private fun addHighlightAfterLastCell() = inlayManager?.belowLastCellPanel?.addDropHighlight()
+  private fun addHighlightAfterLastCell() = inlayManager?.endNotebookInlays?.filterIsInstance<DropHighlightable>()?.forEach {
+    it.addDropHighlight()
+  }
 
-  private fun removeHighlightAfterLastCell() = inlayManager?.belowLastCellPanel?.removeDropHighlight()
+  private fun removeHighlightAfterLastCell() = inlayManager?.endNotebookInlays?.filterIsInstance<DropHighlightable>()?.forEach {
+    it.removeDropHighlight()
+  }
+
 
   private fun deleteDropIndicatorForTargetCell(cell: EditorCell) = try {
     cell.view?.removeDropHighlightIfPresent()
