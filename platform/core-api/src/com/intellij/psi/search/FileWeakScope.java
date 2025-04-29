@@ -95,16 +95,15 @@ final class FileWeakScope extends GlobalSearchScope implements VirtualFileEnumer
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || o.getClass() != getClass()) return false;
-    FileWeakScope files = (FileWeakScope)o;
+    FileWeakScope otherFileScope = (FileWeakScope)o;
     VirtualFile currentVirtualFile = myVirtualFile.get();
     if (currentVirtualFile == null) return false;
-    VirtualFile otherVirtualFile = files.myVirtualFile.get();
-    if (currentVirtualFile instanceof LightVirtualFile &&
-        !(otherVirtualFile instanceof LightVirtualFile)) {
+    VirtualFile otherVirtualFile = otherFileScope.myVirtualFile.get();
+    if ((currentVirtualFile instanceof LightVirtualFile) != (otherVirtualFile instanceof LightVirtualFile)) {
       return false;
     }
     return Objects.equals(currentVirtualFile, otherVirtualFile) &&
-           Objects.equals(myDisplayName, files.myDisplayName) &&
-           Objects.equals(myModule, files.myModule);
+           Objects.equals(myDisplayName, otherFileScope.myDisplayName) &&
+           Objects.equals(myModule, otherFileScope.myModule);
   }
 }
