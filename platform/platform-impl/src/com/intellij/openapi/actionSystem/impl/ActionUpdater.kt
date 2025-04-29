@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
@@ -433,7 +433,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val deferred = scope.async(
       currentCoroutineContext().minusKey(Job) +
       CoroutineName("computeOnEdt ($place)") + edtDispatcher) {
-      writeIntentReadAction {
+      runReadAction { // will immediately succeed because lock is parallelized here
         supplier()
       }
     }

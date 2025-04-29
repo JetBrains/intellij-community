@@ -517,7 +517,7 @@ fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pa
     if (isLockStoredInContext) {
       val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
       val targetContext = if (EDT.isCurrentThreadEdt()) {
-        context + LockLeakedFromEDTMarker
+        context + SafeForRunBlockingUnderReadAction
       }
       else {
         context
@@ -541,7 +541,7 @@ fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pa
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
   return if (isLockStoredInContext) {
     val application = ApplicationManager.getApplication()
-    application != null && application.isParallelizedReadAction(this) && application.isReadAccessAllowed && this[LockLeakedFromEDTMarker] == null
+    application != null && application.isParallelizedReadAction(this) && application.isReadAccessAllowed && this[SafeForRunBlockingUnderReadAction] == null
   }
   else {
     this[RunBlockingUnderReadActionMarker] != null
@@ -554,9 +554,11 @@ private object RunBlockingUnderReadActionMarker
   override val key: CoroutineContext.Key<*> get() = this
 }
 
-private object LockLeakedFromEDTMarker
+// public only because needed in actions API
+@Internal
+object SafeForRunBlockingUnderReadAction
   : CoroutineContext.Element,
-    CoroutineContext.Key<LockLeakedFromEDTMarker> {
+    CoroutineContext.Key<SafeForRunBlockingUnderReadAction> {
   override val key: CoroutineContext.Key<*> get() = this
 }
 
