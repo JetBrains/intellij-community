@@ -1243,7 +1243,8 @@ open class FileEditorManagerImpl(
       var composite = if (forceCompositeCreation) null else window.getComposite(file)
       val isNewEditor = composite == null
       if (composite == null) {
-        composite = options.explicitlyOpenComposite // IJPL-183875: Explicitly set a composite to open a backend supplied composite
+        // IJPL-183875: Explicitly set a composite to open a backend supplied composite
+        composite = options.explicitlyOpenComposite?.also { LOG.info("doOpenInEdt: Using explicitly selected composite for file=${file.name}")}
                     ?: createCompositeAndModel(file = file, window = window, fileEntry = fileEntry)
                     ?: return@Computable null
         openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
