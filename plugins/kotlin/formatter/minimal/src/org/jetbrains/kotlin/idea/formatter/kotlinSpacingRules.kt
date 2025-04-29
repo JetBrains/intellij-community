@@ -574,6 +574,11 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
         inPosition(parent = KtNodeTypes.CLASS_INITIALIZER, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
         inPosition(parent = KtNodeTypes.PROPERTY_ACCESSOR, right = KtNodeTypes.BLOCK).customRule(leftBraceRule())
 
+        // No space before the spread operator.
+        // MUL with a direct VALUE_ARGUMENT parent is always a spread operator.
+        // Otherwise, it would be part of a binary expression or similar.
+        inPosition(parent = KtNodeTypes.VALUE_ARGUMENT, left = KtTokens.MUL).spacing(createSpacing(0))
+
         inPosition(right = KtNodeTypes.CLASS_BODY).customRule(leftBraceRule(blockType = KtNodeTypes.CLASS_BODY))
         inPosition(left = KtNodeTypes.WHEN_ENTRY, right = KtNodeTypes.WHEN_ENTRY).customRule { _, left, right ->
           val blankLines = kotlinCustomSettings.BLANK_LINES_AROUND_BLOCK_WHEN_BRANCHES

@@ -1294,6 +1294,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/NewLineForRBrace.after.kt");
             }
 
+            @TestMetadata("NoSpaceBeforeSpread.after.kt")
+            public void testNoSpaceBeforeSpread() throws Exception {
+                runTest("testData/formatter/NoSpaceBeforeSpread.after.kt");
+            }
+
             @TestMetadata("NotIn.after.kt")
             public void testNotIn() throws Exception {
                 runTest("testData/formatter/NotIn.after.kt");
