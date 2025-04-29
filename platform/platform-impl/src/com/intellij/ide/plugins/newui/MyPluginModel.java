@@ -692,7 +692,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           myInstalledPanel.removeGroup(myInstalling);
         }
         else {
-          myInstalledPanel.removeFromGroup(myInstalling, descriptor);
+          myInstalledPanel.removeFromGroup(myInstalling, new PluginUiModelAdapter(descriptor));
           myInstalling.titleWithCount();
         }
         myInstalledPanel.doLayout();

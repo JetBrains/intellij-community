@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -300,7 +299,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     group.clear();
   }
 
-  public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
+  public void removeFromGroup(@NotNull PluginsGroup group, @NotNull PluginUiModel descriptor) {
     int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginDescriptor() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);

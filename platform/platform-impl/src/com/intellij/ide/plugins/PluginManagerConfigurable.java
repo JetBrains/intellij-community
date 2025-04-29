@@ -1306,7 +1306,7 @@ public final class PluginManagerConfigurable
 
                   for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.getDescriptors())) {
                     if (!myPluginModelFacade.getModel().hasErrors(descriptor)) {
-                      resultPanel.removeFromGroup(group, descriptor);
+                      resultPanel.removeFromGroup(group, new PluginUiModelAdapter(descriptor));
                     }
                   }
 
@@ -1353,7 +1353,7 @@ public final class PluginManagerConfigurable
       PluginsGroup group = myInstalledSearchPanel.getGroup();
 
       if (group.ui != null && group.ui.findComponent(descriptor) != null) {
-        myInstalledSearchPanel.getPanel().removeFromGroup(group, descriptor);
+        myInstalledSearchPanel.getPanel().removeFromGroup(group, new PluginUiModelAdapter(descriptor));
         group.titleWithCount();
         myInstalledSearchPanel.fullRepaint();
 
@@ -1520,7 +1520,7 @@ public final class PluginManagerConfigurable
       }
 
       for (ListPluginComponent component : toDelete) {
-        myInstalledPanel.removeFromGroup(myBundledUpdateGroup, component.getPluginDescriptor());
+        myInstalledPanel.removeFromGroup(myBundledUpdateGroup, component.getPluginModel());
       }
 
       for (IdeaPluginDescriptor update : updates) {
