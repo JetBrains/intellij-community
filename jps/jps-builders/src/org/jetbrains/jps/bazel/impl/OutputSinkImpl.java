@@ -6,6 +6,7 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.util.Pair;
 import kotlin.metadata.*;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.bazel.DiagnosticSink;
 import org.jetbrains.jps.bazel.Message;
 import org.jetbrains.jps.bazel.ZipOutputBuilder;
@@ -45,43 +46,57 @@ public class OutputSinkImpl implements OutputSink, CompilerDataSink {
   @Override
   public void addFile(OutputFile outFile, Iterable<NodeSource> originSources) {
     // todo: make sure the outFile.getPath() is relative to output root
-    // todo: parse/instrument files and create nodes asynchronously?
     processAndSave(outFile, originSources);
+  }
+
+  @Override
+  public Iterable<String> listFiles(String packageName, boolean recurse) {
+    String dirName = packageName.replace('.', '/') + "/";
+    var result = recurse? Iterators.recurse(dirName, myOutBuilder::listEntries, false) : myOutBuilder.listEntries(dirName);
+    return Iterators.filter(result, n -> !myOutBuilder.isDirectory(n));
+  }
+
+  @Override
+  public byte @Nullable [] getFileContent(String path) {
+    return myOutBuilder.getContent(path);
   }
 
   private void processAndSave(OutputFile outFile, Iterable<NodeSource> originSources) {
     byte[] content = outFile.getContent();
-    try {
-      if (outFile.getKind() == OutputFile.Kind.bytecode) {
-        ClassReader reader = new FailSafeClassReader(content);
-        associate(outFile.getPath(), originSources, reader, outFile.isFromGeneratedSource());
+    myOutBuilder.putEntry(outFile.getPath(), content); // make file content immediately available
 
-        InstrumentationClassFinder finder = getInstrumentationClassFinder();
-        if (finder != null) {
-          for (BytecodeInstrumenter instrumenter : myInstrumenters) {
-            try {
-              if (reader == null) {
-                reader = new FailSafeClassReader(content);
-              }
-              int version = InstrumenterClassWriter.getClassFileVersion(reader);
-              ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
-              final byte[] instrumented = instrumenter.instrument(outFile.getPath(), reader, writer, finder);
-              if (instrumented != null) {
-                content = instrumented;
-                finder.cleanCachedData(reader.getClassName());
-                reader = null;
-              }
+    if (outFile.getKind() == OutputFile.Kind.bytecode) {
+      // todo: parse/instrument files and create nodes asynchronously?
+      ClassReader reader = new FailSafeClassReader(content);
+      associate(outFile.getPath(), originSources, reader, outFile.isFromGeneratedSource());
+
+      InstrumentationClassFinder finder = getInstrumentationClassFinder();
+      if (finder != null) {
+        boolean changes = false;
+        for (BytecodeInstrumenter instrumenter : myInstrumenters) {
+          try {
+            if (reader == null) {
+              reader = new FailSafeClassReader(content);
             }
-            catch (Exception e) {
-              // todo: better diagnostics?
-              myDiagnostic.report(Message.error(instrumenter, e.getMessage()));
+            int version = InstrumenterClassWriter.getClassFileVersion(reader);
+            ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
+            final byte[] instrumented = instrumenter.instrument(outFile.getPath(), reader, writer, finder);
+            if (instrumented != null) {
+              changes = true;
+              content = instrumented;
+              finder.cleanCachedData(reader.getClassName());
+              reader = null;
             }
           }
+          catch (Exception e) {
+            // todo: better diagnostics?
+            myDiagnostic.report(Message.error(instrumenter, e.getMessage()));
+          }
+        }
+        if (changes) {
+          myOutBuilder.putEntry(outFile.getPath(), content);
         }
       }
-    }
-    finally {
-      myOutBuilder.putEntry(outFile.getPath(), content);
     }
   }
 

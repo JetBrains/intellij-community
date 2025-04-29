@@ -31,6 +31,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final Path myOutputZip;
   private final MVStore myDataSwapStore;
   private final MVMap<String, byte[]> mySwap;
+  private final Map<String, Set<String>> myPackageIndex = new HashMap<>();
   private boolean myHasChanges;
 
   public ZipOutputBuilderImpl(Path outputZip) throws IOException {
@@ -46,6 +47,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     Enumeration<? extends ZipEntry> entries = myZipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = entries.nextElement();
+      addToPackageIndex(entry.getName());
       if (entry.isDirectory()) {
         myDirectoryEntries.put(entry.getName(), entry);
       }
@@ -66,13 +68,19 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
 
   @Override
+  public Iterable<String> listEntries(String entryName) {
+    return isDirectoryName(entryName)? myPackageIndex.getOrDefault(entryName, Set.of()) : List.of();
+  }
+
+  @Override
   public byte[] getContent(String entryName) {
     try {
-      return myEntries.getOrDefault(entryName, EntryData.DIR_DATA).getContent();
+      EntryData data = myEntries.get(entryName);
+      return data != null? data.getContent() : null;
     }
     catch (IOException e) {
       // todo: diagnostics
-      return EntryData.NO_DATA_BYTES;
+      return null;
     }
   }
 
@@ -82,6 +90,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       throw new RuntimeException("Unexpected name with trailing slash for ZIP entry with content: \"" + entryName + "\"");
     }
     myEntries.put(entryName, EntryData.create(mySwap, entryName, content));
+    addToPackageIndex(entryName);
     myHasChanges = true;
   }
 
@@ -90,6 +99,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     EntryData data = myEntries.remove(entryName);
     if (data != null) {
       data.cleanup();
+      removeFromPackageIndex(entryName);
       myHasChanges = true;
     }
   }
@@ -102,7 +112,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     else {
       // augment entry map with all currently present directory entries
       for (String dirName : collect(flat(map(myEntries.keySet(), ZipOutputBuilderImpl::allParentNames)), new HashSet<>())) {
-        ZipEntry existingEntry = myDirectoryEntries.get(dirName);
+        ZipEntry existingEntry = myDirectoryEntries.get(dirName); // todo: need to generate '/' entry?
         myEntries.put(dirName, EntryData.create(myZipFile, existingEntry != null? existingEntry : new ZipEntry(dirName)));
       }
       Path newOutputName = getNewOutputName();
@@ -133,8 +143,11 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
   @Nullable
   private static String getParent(String entryName) {
+    if (entryName == null || entryName.isEmpty() || "/".equals(entryName)) {
+      return null;
+    }
     int idx = isDirectoryName(entryName)? entryName.lastIndexOf('/', entryName.length() - 2) : entryName.lastIndexOf('/');
-    return idx >= 0? entryName.substring(0, idx + 1) : null;
+    return idx > 0? entryName.substring(0, idx + 1) : "/";
   }
 
   private static boolean isDirectoryName(String entryName) {
@@ -344,4 +357,27 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     };
   }
 
+  private void addToPackageIndex(String entryName) {
+    String parent = getParent(entryName);
+    if (parent != null) {
+      boolean added = myPackageIndex.computeIfAbsent(parent, k -> new HashSet<>()).add(entryName);
+      if (added) {
+        addToPackageIndex(parent);
+      }
+    }
+  }
+
+  private void removeFromPackageIndex(String entryName) {
+    String parent = getParent(entryName);
+    if (parent != null) {
+      Set<String> children = myPackageIndex.get(parent);
+      if (children != null) {
+        boolean removed = children.remove(entryName);
+        if (removed && children.isEmpty()) {
+          myPackageIndex.remove(parent);
+          removeFromPackageIndex(parent);
+        }
+      }
+    }
+  }
 }
