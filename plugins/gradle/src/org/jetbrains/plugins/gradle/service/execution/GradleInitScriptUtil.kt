@@ -59,12 +59,12 @@ val GRADLE_TOOLING_EXTENSION_CLASSES: Set<Class<*>> = setOf(
   ExternalSystemRtClass::class.java, // intellij.platform.externalSystem.rt
   GradleToolingExtensionClass::class.java, // intellij.gradle.toolingExtension
   GradleToolingExtensionImplClass::class.java, // intellij.gradle.toolingExtension.impl
+  Unit::class.java // kotlin-stdlib
 )
 
 @JvmField
 @ApiStatus.Internal
 val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES: Set<Class<*>> = GRADLE_TOOLING_EXTENSION_CLASSES + setOf(
-  KotlinVersion::class.java, // kotlin-stdlib-jdk8
   Gradle::class.java, // gradle-api jar
   LoggerFactory::class.java, JDK14LoggerFactory::class.java, // logging jars
   Main::class.java, // gradle tooling proxy module

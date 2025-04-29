@@ -22,3 +22,4 @@ org.jetbrains.plugins.gradle.tooling.builder.DependencyAccessorsModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.MavenRepositoriesModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.VersionCatalogsModelBuilder
 com.intellij.gradle.toolingExtension.impl.javaModel.manifestModel.JavaGradleManifestModelBuilder
+org.jetbrains.plugins.gradle.tooling.builder.ProjectRepositoriesModelBuilder

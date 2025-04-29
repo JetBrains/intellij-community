@@ -732,6 +732,33 @@ f:com.intellij.openapi.externalSystem.model.project.TestData
 - getSourceFolders():java.util.Set
 - getTestName():java.lang.String
 - getTestTaskName():java.lang.String
+c:com.intellij.openapi.externalSystem.model.project.repository.FileRepositoryData
+- com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,java.util.List):V
+- equals(java.lang.Object):Z
+- getFiles():java.util.List
+- hashCode():I
+c:com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
+- com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData
+- sf:KEY:com.intellij.openapi.externalSystem.model.Key
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+c:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData
+- com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
+- <init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type):V
+- equals(java.lang.Object):Z
+- getType():com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- getUrl():java.lang.String
+- hashCode():I
+e:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- java.lang.Enum
+- sf:IVY:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- sf:MAVEN:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- sf:OTHER:com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type
+- s:values():com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData$Type[]
 c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 - com.intellij.openapi.util.UserDataHolder
 - java.io.Serializable
