@@ -13,6 +13,7 @@ import com.jetbrains.ml.api.model.MLModel
 import com.jetbrains.ml.api.model.MLModelLoader
 import com.jetbrains.ml.models.PythonImportsRankingModelHolder
 import com.jetbrains.ml.tools.model.MLModelLoaders
+import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.ml.tools.model.ModelDistributionReaders
 import com.jetbrains.ml.tools.model.catboost.CatBoostDistributionFormat
 import com.jetbrains.ml.tools.model.suspendable.MLModelSuspendableService
@@ -30,7 +31,12 @@ class ImportsRankingModelService : MLModelSuspendableService<MLModel<Double>, Do
 
 private class QuickfixRankingModelLoading : ProjectActivity {
   override suspend fun execute(project: Project) {
-    service<ImportsRankingModelService>().loadModel()
+    if (!service<FinalImportRankingStatusService>().shouldLoadModel) return
+    try {
+      service<ImportsRankingModelService>().loadModel()
+    } catch (e: RuntimeException) {
+      thisLogger().error("Failed to load python imports ranking model", e)
+    }
   }
 }
 
