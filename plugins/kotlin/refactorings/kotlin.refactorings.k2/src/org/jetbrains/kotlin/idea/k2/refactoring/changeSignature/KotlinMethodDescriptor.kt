@@ -89,11 +89,30 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
         parameters = allowAnalysisOnEdt {
             analyze(callable) {
                 val params = mutableListOf< KotlinParameterInfo>()
-                receiver?.let { params.add(it) }
+                var oldParamIndex = 0
+                callable.modifierList?.contextReceiverList?.contextParameters()?.forEach { p ->
+                    val parameterInfo = KotlinParameterInfo(
+                        originalIndex = oldParamIndex++,
+                        originalType = KotlinTypeInfo(p.returnType, callable),
+                        name = p.name ?: "",
+                        valOrVar = KotlinValVar.None,
+                        isContextParameter = true,
+                        defaultValueForCall = null,
+                        defaultValueAsDefaultParameter = false,
+                        defaultValue = null,
+                        context = callable
+                    )
+                    params.add(parameterInfo)
+                }
+                oldParamIndex = 0
+                receiver?.let {
+                    params.add(it)
+                    oldParamIndex++
+                }
                 (callable as? KtCallableDeclaration)
                     ?.valueParameters?.forEach { p ->
                         val parameterInfo = KotlinParameterInfo(
-                            originalIndex = params.size,
+                            originalIndex = oldParamIndex++,
                             originalType = KotlinTypeInfo(p.returnType, callable),
                             name = p.name ?: "",
                             valOrVar = p.valOrVarKeyword.toValVar(),

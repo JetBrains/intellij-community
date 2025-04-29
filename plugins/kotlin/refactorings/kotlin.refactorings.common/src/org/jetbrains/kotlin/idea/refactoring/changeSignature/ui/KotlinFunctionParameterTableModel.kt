@@ -27,6 +27,7 @@ abstract class KotlinFunctionParameterTableModel<P: KotlinModifiableParameterInf
         KotlinFileType.INSTANCE
     ),
   DefaultParameterColumn(),
+  ContextParameterColumn<KotlinModifiableParameterInfo, ParameterTableModelItemBase<KotlinModifiableParameterInfo>>(),
   ReceiverColumn(methodDescriptor),
 ) {
     override fun removeRow(idx: Int) {
@@ -41,6 +42,7 @@ abstract class KotlinFunctionParameterTableModel<P: KotlinModifiableParameterInf
         get() = (columnInfos.last() as ReceiverColumn<*, *>).receiver
         set(receiver) {
             (columnInfos.last() as ReceiverColumn<*, *>).receiver = receiver
+            receiver?.isContextParameter = false
         }
 
     private class ReceiverColumn<P: KotlinModifiableParameterInfo, V>(methodDescriptor: KotlinModifiableMethodDescriptor<P, V>) :
@@ -62,7 +64,27 @@ abstract class KotlinFunctionParameterTableModel<P: KotlinModifiableParameterInf
             BooleanTableCellEditor()
     }
 
+    private class ContextParameterColumn<P: KotlinModifiableParameterInfo, V>() :
+        ColumnInfoBase<P, ParameterTableModelItemBase<P>, Boolean>(KotlinBundle.message("column.name.context.parameter")) {
+
+        override fun valueOf(item: ParameterTableModelItemBase<P>): Boolean = item.parameter.isContextParameter
+
+        override fun setValue(item: ParameterTableModelItemBase<P>, value: Boolean?) {
+            if (value == null) return
+            item.parameter.isContextParameter = value
+        }
+
+        override fun isCellEditable(pParameterTableModelItemBase: ParameterTableModelItemBase<P>): Boolean = true
+
+        override fun doCreateRenderer(item: ParameterTableModelItemBase<P>): TableCellRenderer =
+            BooleanTableCellRenderer()
+
+        override fun doCreateEditor(o: ParameterTableModelItemBase<P>): TableCellEditor =
+            BooleanTableCellEditor()
+    }
+
     companion object {
         fun isReceiverColumn(column: ColumnInfo<*, *>?): Boolean = column is ReceiverColumn<*, *>
+        fun isContextParameterColumn(column: ColumnInfo<*, *>?): Boolean = column is ContextParameterColumn<*, *>
     }
 }

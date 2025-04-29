@@ -83,6 +83,8 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
         return false
     }
 
+    open fun supportContextParameters() = false
+
     override fun createParametersListTable(): ParametersListTable = object : ParametersListTable() {
         private val rowRenderer = object : EditorTextFieldJBTableRowRenderer(project, KotlinLanguage.INSTANCE, disposable) {
             override fun getText(table: JTable?, row: Int): String {
@@ -193,7 +195,26 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
 
                         component = checkBox
                         editor = null
-                    } else {
+                    } else if (supportContextParameters() && KotlinFunctionParameterTableModel.isContextParameterColumn(columnInfo)) {
+                        val checkBox = JCheckBox()
+                        checkBox.isSelected = item.parameter.isContextParameter
+                        checkBox.addItemListener(
+                            disposable,
+                            ItemListener {
+                                val isSelected = it.stateChange == ItemEvent.SELECTED
+                                item.parameter.isContextParameter = isSelected
+                                if (isSelected && parametersTableModel.receiver == item.parameter) {
+                                    parametersTableModel.receiver = null
+                                }
+                                updateSignature()
+                                notifyReceiverListeners()
+                            },
+                        )
+
+                        component = checkBox
+                        editor = null
+                    }
+                    else {
                         continue
                     }
 

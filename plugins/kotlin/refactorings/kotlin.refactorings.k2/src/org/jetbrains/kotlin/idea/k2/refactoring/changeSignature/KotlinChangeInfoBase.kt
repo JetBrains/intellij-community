@@ -32,7 +32,7 @@ interface KotlinChangeInfoBase: ChangeInfo {
         baseFunction: PsiElement,
         isInherited: Boolean
     ): String {
-        val signatureParameters = newParameters.filter { it != receiverParameterInfo }
+        val signatureParameters = newParameters.filter { it != receiverParameterInfo && !it.isContextParameter }
 
         val isLambda = inheritedCallable is KtFunctionLiteral
         if (isLambda && signatureParameters.size == 1 && !signatureParameters[0].requiresExplicitType(inheritedCallable)) {

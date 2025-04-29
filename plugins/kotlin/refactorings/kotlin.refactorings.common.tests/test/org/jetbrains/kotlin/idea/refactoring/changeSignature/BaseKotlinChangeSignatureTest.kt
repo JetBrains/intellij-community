@@ -231,8 +231,10 @@ public @interface NotNull {
             if (configureFiles) {
                 configureFiles()
             }
-            doRefactoring(configure)
-            compareEditorsWithExpectedData()
+            withCustomCompilerOptions(file.text, project, module) {
+                doRefactoring(configure)
+                compareEditorsWithExpectedData()
+            }
         }
     }
 

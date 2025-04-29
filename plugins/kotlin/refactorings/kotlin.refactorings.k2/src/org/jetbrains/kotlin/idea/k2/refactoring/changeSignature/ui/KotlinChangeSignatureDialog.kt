@@ -61,6 +61,8 @@ internal class KotlinChangeSignatureDialog(
         }
     }
 
+    override fun supportContextParameters(): Boolean = true
+
     override fun validateButtons() {
         validateButtonsAsync()
     }
@@ -229,6 +231,13 @@ internal class KotlinChangeSignatureDialog(
                 buffer.append(' ').append(visibility).append(" constructor ")
             }
         } else {
+            val contextParameters = getNonReceiverParameters().filter { it.isContextParameter }
+            if (contextParameters.isNotEmpty()) {
+                buffer.append("context(")
+                buffer.append(contextParameters.joinToString { it.getDeclarationSignature(null, method, false).text })
+                buffer.append(") ")
+            }
+
             if (!KtPsiUtil.isLocal(methodDescriptor.method) && isCustomizedVisibility) {
                 buffer.append(visibility).append(' ')
             }

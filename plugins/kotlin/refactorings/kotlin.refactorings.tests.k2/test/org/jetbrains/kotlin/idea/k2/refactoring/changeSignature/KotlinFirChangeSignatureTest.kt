@@ -183,4 +183,55 @@ class KotlinFirChangeSignatureTest :
             super.testRemoveAllOriginalDataClassParameters()
         }
     }
+
+    fun testToContextParameterClassFunction() = doTest {
+        newParameters[0].isContextParameter = true
+    }
+
+    fun testToContextParameterClassFunctionWithReturnValue() = doTest {
+        newParameters[0].isContextParameter = true
+    }
+
+    fun testToContextParameterExtensionClassFunction() = doTest {
+        newParameters[1].isContextParameter = true
+    }
+
+    fun testToContextParameterExtensionFunction() = doTest {
+        newParameters[1].isContextParameter = true
+    }
+
+    fun testAddContextParameter() = doTest {
+        val newIntParameter = createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue,
+                                                       defaultValueAsDefaultParameter = true)
+        newIntParameter.isContextParameter = true
+        addParameter(newIntParameter)
+    }
+
+    fun testToContextParameterExtensionTopLevelFunctionReceiver() = doTest {
+        newParameters[0].isContextParameter = true
+        receiverParameterInfo = null
+    }
+
+    fun testToContextParameterClassFunctionFromReceiver() = doTest {
+        this.newParameters[0].isContextParameter = true
+        receiverParameterInfo = null
+    }
+
+    fun testFromContextParameterClassFunction() = doTest {
+        newParameters[0].isContextParameter = false
+    }
+
+    fun testFromContextParameterExtensionFunction() = doTest {
+        newParameters[0].isContextParameter = false
+    }
+
+    fun testFromContextParameterClassFunctionToReceiver() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.isContextParameter = false
+        receiverParameterInfo = parameterInfo
+    }
+
+    fun testDeleteUsedContextParameter() = doTestConflict {
+        removeParameter(0)
+    }
 }

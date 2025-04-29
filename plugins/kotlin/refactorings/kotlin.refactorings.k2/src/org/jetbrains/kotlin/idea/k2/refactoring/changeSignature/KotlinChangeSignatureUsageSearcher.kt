@@ -4,10 +4,13 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
@@ -15,6 +18,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal object KotlinChangeSignatureUsageSearcher {
@@ -66,6 +70,61 @@ internal object KotlinChangeSignatureUsageSearcher {
         ) {
             findReceiverReferences(ktCallableDeclaration, result, changeInfo)
         }
+
+        if (changeInfo is KotlinChangeInfo) {
+            val contextParameters = changeInfo.method.modifierList?.contextReceiverList?.contextParameters()
+            val parameterInfos = changeInfo.newParameters.filter { it.isContextParameter }
+            if ((contextParameters?.size ?: 0) != parameterInfos.size) {
+                findContextParameterReferences(ktCallableDeclaration, result, changeInfo)
+            }
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun findContextParameterReferences(
+        ktCallableDeclaration: KtCallableDeclaration,
+        result: MutableList<in UsageInfo>,
+        changeInfo: KotlinChangeInfo
+    ) {
+        val oldContextParameters = changeInfo.methodDescriptor.parameters.filter { it.wasContextParameter }
+        if (oldContextParameters.isEmpty()) return
+        val preservedContextParameters = changeInfo.newParameters.filter { it.isContextParameter }
+        analyze(ktCallableDeclaration) {
+            ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
+                override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                    val memberCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+                    val partiallyAppliedSymbol = memberCall?.partiallyAppliedSymbol ?: return
+
+                    if (partiallyAppliedSymbol.symbol is KaContextParameterSymbol) {
+                        val contextParameter = partiallyAppliedSymbol.symbol.psi as? KtParameter ?: return
+                        val parameterInfo =
+                            oldContextParameters.find { it.oldIndex == contextParameter.parameterIndex() } ?: return
+                        if (parameterInfo == changeInfo.receiverParameterInfo) {
+                            result.add(KotlinParameterUsage(expression, parameterInfo))
+                        }
+                        return
+                    }
+
+                    val usedContextParameters =
+                        partiallyAppliedSymbol
+                            .contextArguments
+                            .mapNotNull { receiverValue ->
+                                val contextParameterSymbol =
+                                    (receiverValue.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol
+                                (contextParameterSymbol?.psi as? KtParameter)?.takeIf { it.isContextParameter }
+                            }
+                            .takeIf { it.isNotEmpty() } ?: return
+
+                    val preservedIndexes = preservedContextParameters.map { it.oldIndex }
+                    for (contextParameter in usedContextParameters) {
+                        val index = contextParameter.parameterIndex()
+                        if (index in preservedIndexes) continue
+                        val parameterInfo = changeInfo.getNonReceiverParameters().find { it.wasContextParameter && it.oldIndex == index } ?: continue
+                        result.add(KotlinContextParameterUsage(expression, parameterInfo))
+                    }
+                }
+            })
+        }
     }
 
     internal fun findReceiverReferences(ktCallableDeclaration: KtCallableDeclaration, result: MutableList<in UsageInfo>, changeInfo: KotlinChangeInfo) {
@@ -109,7 +168,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                             result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
                                         }
                                     }
-                                    else if (((receiverValue as? KaSmartCastedReceiverValue)?.original ?: receiverValue) is KaImplicitReceiverValue) {
+                                    else if (receiverValue.unwrapSmartCasts() is KaImplicitReceiverValue) {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }

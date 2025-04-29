@@ -1,11 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
+import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 
 internal class KotlinParameterUsage(
@@ -29,6 +34,24 @@ internal class KotlinParameterUsage(
         if (newName.isIdentifier()) return "this@$newName"
 
         return "this"
+    }
+}
+
+internal class KotlinContextParameterUsage(
+    element: KtSimpleNameExpression,
+    private val parameterInfo: KotlinParameterInfo
+) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
+    override fun processUsage(
+        changeInfo: KotlinChangeInfoBase,
+        element: KtElement,
+        allUsages: Array<out UsageInfo>
+    ): KtElement? {
+        val elementToReplace = element.parent as? KtCallExpression ?: element
+        elementToReplace.qualifyNestedThisExpressions()
+        val wrapped =
+            KtPsiFactory(element.project).createExpression("with (${parameterInfo.getInheritedName(null)}) {\n${elementToReplace.text}\n}")
+        elementToReplace.replace(wrapped)
+        return null
     }
 }
 
@@ -85,5 +108,22 @@ internal class KotlinImplicitThisUsage(
         val newQualifiedCall = KtPsiFactory(element.project).createExpression("$newReceiver.${element.text}"
         ) as KtQualifiedExpression
         return element.replace(newQualifiedCall).parent as KtElement
+    }
+}
+
+fun PsiElement.qualifyNestedThisExpressions() {
+    forEachDescendantOfType<KtThisExpression> { thisExpression ->
+        val labelQualifier = thisExpression.labelQualifier
+        if (labelQualifier != null) {
+            return@forEachDescendantOfType
+        }
+        val element = thisExpression.instanceReference.mainReference.resolve()
+        val label = when (element) {
+            is KtClassOrObject -> element.nameAsName?.asString()
+            is KtTypeReference -> element.getParentOfType<KtCallableDeclaration>(true)?.nameAsName?.asString()
+            else -> null
+        } ?: return@forEachDescendantOfType
+        thisExpression.replace(KtPsiFactory(project).createExpression("this@$label"))
+        return@forEachDescendantOfType
     }
 }

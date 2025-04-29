@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -413,9 +414,14 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         isCaller: Boolean
     ) {
         var parameterList = originalParameterList
-        val parametersCount = changeInfo.newParameters.count { it != changeInfo.receiverParameterInfo }
+        val parametersCount = changeInfo.newParameters.count { it != changeInfo.receiverParameterInfo && !it.isContextParameter }
         val isLambda = element is KtFunctionLiteral
         var canReplaceEntireList = false
+
+        if (!isCaller && !isLambda) {
+            val contextParams = changeInfo.newParameters.filter { it.isContextParameter }
+            updateContextParametersList(contextParams, element, baseFunction, isInherited, psiFactory)
+        }
 
         var newParameterList: KtParameterList? = null
         if (isLambda) {
@@ -483,6 +489,32 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         shortenReferences(newParameterList)
+    }
+
+    private fun updateContextParametersList(
+        contextParams: List<KotlinParameterInfo>,
+        element: KtDeclaration,
+        baseFunction: PsiElement,
+        isInherited: Boolean,
+        psiFactory: KtPsiFactory
+    ) {
+        if (contextParams.isNotEmpty()) {
+            val list = contextParams.joinToString { it.getDeclarationSignature(element, baseFunction, isInherited).text }
+            val newModifierList = psiFactory.createFunction("context($list) fun test() {}").modifierList!!
+            val modifierList = element.modifierList
+            if (modifierList != null) {
+                val contextReceiverList = modifierList.contextReceiverList
+                if (contextReceiverList == null) {
+                    modifierList.add(newModifierList.contextReceiverList!!)
+                } else {
+                    contextReceiverList.replace(newModifierList.contextReceiverList!!)
+                }
+            } else {
+                element.setModifierList(newModifierList)
+            }
+        } else {
+            (element as? KtTypeParameterListOwnerStub<*>)?.contextReceiverList?.delete()
+        }
     }
 
     private fun isReturnTypeRequired(element: KtNamedDeclaration): Boolean {

@@ -79,6 +79,10 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
             return PsiTreeUtil.getParentOfType(parameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
         }
 
+        element.parentOfType<KtContextReceiverList>()?.let { contextReceiverList ->
+            return PsiTreeUtil.getParentOfType(contextReceiverList, KtFunction::class.java, KtProperty::class.java)
+        }
+
         element.parentOfType<KtTypeParameterList>()?.let { typeParameterList ->
             return PsiTreeUtil.getParentOfType(typeParameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
         }
