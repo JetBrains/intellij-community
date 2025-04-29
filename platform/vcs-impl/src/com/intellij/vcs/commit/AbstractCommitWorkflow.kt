@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.BundleBase
@@ -217,11 +217,21 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) =
     eventDispatcher.addListener(listener, parent)
 
-  fun addVcsCommitListener(listener: CommitterResultHandler, parent: Disposable) =
-    commitEventDispatcher.addListener(listener, parent)
+  fun addVcsCommitListener(listener: CommitterResultHandler, parent: Disposable?) {
+    if (parent != null) {
+      commitEventDispatcher.addListener(listener, parent)
+    } else {
+      commitEventDispatcher.addListener(listener)
+    }
+  }
 
-  fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
-    commitCustomEventDispatcher.addListener(listener, parent)
+  fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable?) {
+    if (parent != null) {
+      commitCustomEventDispatcher.addListener(listener, parent)
+    } else {
+      commitCustomEventDispatcher.addListener(listener)
+    }
+  }
 
   internal suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return withModalProgress(project, message("commit.checks.on.commit.progress.text")) {
