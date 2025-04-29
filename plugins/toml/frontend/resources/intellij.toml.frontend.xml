@@ -11,6 +11,9 @@
 
         <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
 
+        <enterBetweenBracesDelegate language="TOML"
+                                    implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
     </extensions>
 </idea-plugin>

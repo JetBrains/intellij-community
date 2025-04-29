@@ -18,8 +18,6 @@
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider
             implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
-        <enterBetweenBracesDelegate language="TOML"
-                                    implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
 
 
         <virtualFileCustomDataProvider implementation="org.toml.ide.formatter.settings.TomlCodeStyleSettingsSynchronizer"/>
