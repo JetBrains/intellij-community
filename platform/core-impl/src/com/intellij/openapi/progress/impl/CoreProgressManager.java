@@ -255,8 +255,36 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     if (progressText == null) return;
     if (ApplicationManagerEx.isInIntegrationTest()) {
       LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
+      if (System.getProperty("idea.performanceReport.projectName") != null) { //in startup tests only
+        ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
+          long timestamp = System.currentTimeMillis();
+
+          if (started) {
+            if (progressTimestamps.size() > 20) {
+              progressTimestamps.clear();
+            }
+            progressTimestamps.put(progressText, timestamp);
+            throw new RuntimeException("Progress Indicator Test Stats:\n" +
+                                       "started\n" +
+                                       "message: " + progressText);
+          }
+          else {
+            long lengthMillis = -1;
+            Long start = progressTimestamps.remove(progressText);
+            if (start != null) {
+              lengthMillis = timestamp - start;
+            }
+            throw new RuntimeException("Progress Indicator Test Stats:\n" +
+                                       "finished" + "\n" +
+                                       "message: " + progressText + "\n" +
+                                       "millis: " + lengthMillis);
+          }
+        });
+      }
     }
   }
+
+  private static final Map<String, Long> progressTimestamps = new ConcurrentHashMap<>();
 
   private static @Nullable Span startProcessSpan(@Nullable ProgressIndicator progress) {
     String progressText = getProgressIndicatorText(progress);
