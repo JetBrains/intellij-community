@@ -38,47 +38,66 @@ class PluginCompatibilityConfigurator(val project: Project) : MavenSyncListener 
 
   fun configure() {
     MavenCoroutineScopeProvider.getCoroutineScope(project).launch {
-      val map = ConcurrentHashMap<MavenProject, List<Pair<MavenId, MavenPluginM2ELifecycles>>>()
-      MavenProjectsManager.getInstance(project).projects.map { mavenProject ->
-        async(Dispatchers.IO) {
-          val list = mavenProject.pluginInfos.mapNotNull { pl -> getLifecycle(pl)?.let { pl.plugin.mavenId to it } }
-          if (list.isNotEmpty()) {
-            map[mavenProject] = list
-          }
-        }
-      }.joinAll()
+      configureAsync()
+    }
+  }
+
+  suspend fun configureAsync() {
+    val map = collectPluginsMap()
 
 
-      val runAfterConfiguration = HashMap<MavenProject, MutableSet<String>>()
-      val runBeforeBuild = HashMap<MavenProject, MutableSet<String>>()
-      map.forEach { prj, list ->
-        list.forEach { (pluginId, lcs) ->
-          val plugin = prj.findPlugin(pluginId.groupId, pluginId.artifactId, false)
-          plugin?.executions?.forEach { execution ->
-            execution.goals.forEach { g ->
-              if (lcs.runOnConfiguration(g)) {
-                runAfterConfiguration.compute(prj) { k, v ->
-                  (v
-                   ?: HashSet()).also { it.add(toTaskGoal(lcs, g)) }
-                }
+    val runAfterConfiguration = HashMap<MavenProject, MutableSet<String>>()
+    val runBeforeBuild = HashMap<MavenProject, MutableSet<String>>()
+
+    extractRunConfigurations(map, runAfterConfiguration, runBeforeBuild)
+
+    runAllMavenConfigurations(runAfterConfiguration)
+    setupBeforeCompileTasks(runBeforeBuild)
+  }
+
+  private fun extractRunConfigurations(
+    map: ConcurrentHashMap<MavenProject, List<Pair<MavenId, MavenPluginM2ELifecycles>>>,
+    runAfterConfiguration: HashMap<MavenProject, MutableSet<String>>,
+    runBeforeBuild: HashMap<MavenProject, MutableSet<String>>,
+  ) {
+    map.forEach { prj, list ->
+      list.forEach { (pluginId, lcs) ->
+        val plugin = prj.findPlugin(pluginId.groupId, pluginId.artifactId, false)
+        plugin?.executions?.forEach { execution ->
+          execution.goals.forEach { g ->
+            if (lcs.runOnConfiguration(g)) {
+              runAfterConfiguration.compute(prj) { k, v ->
+                (v
+                 ?: HashSet()).also { it.add(toTaskGoal(lcs, g)) }
               }
-              if (lcs.runOnIncremental(g)) {
-                runBeforeBuild.compute(prj) { k, v ->
-                  (v ?: HashSet()).also { it.add(toTaskGoal(lcs, g)) }
-                }
+            }
+            if (lcs.runOnIncremental(g)) {
+              runBeforeBuild.compute(prj) { k, v ->
+                (v ?: HashSet()).also { it.add(toTaskGoal(lcs, g)) }
               }
             }
           }
+        }
 
+      }
+    }
+    if (MavenLog.LOG.isDebugEnabled) {
+      MavenLog.LOG.debug("run on configuration: $runAfterConfiguration")
+      MavenLog.LOG.debug("run on inc: $runBeforeBuild")
+    }
+  }
+
+  private suspend fun collectPluginsMap(): ConcurrentHashMap<MavenProject, List<Pair<MavenId, MavenPluginM2ELifecycles>>> {
+    val map = ConcurrentHashMap<MavenProject, List<Pair<MavenId, MavenPluginM2ELifecycles>>>()
+    MavenProjectsManager.getInstance(project).projects.map { mavenProject ->
+      MavenCoroutineScopeProvider.getCoroutineScope(project).async(Dispatchers.IO) {
+        val list = mavenProject.pluginInfos.mapNotNull { pl -> getLifecycle(pl)?.let { pl.plugin.mavenId to it } }
+        if (list.isNotEmpty()) {
+          map[mavenProject] = list
         }
       }
-      if (MavenLog.LOG.isDebugEnabled) {
-        MavenLog.LOG.debug("run on configuration: $runAfterConfiguration")
-        MavenLog.LOG.debug("run on inc: $runBeforeBuild")
-      }
-      runAllMavenConfigurations(runAfterConfiguration)
-      setupBeforeCompileTasks(runBeforeBuild)
-    }
+    }.joinAll()
+    return map
   }
 
   private fun toTaskGoal(lcs: MavenPluginM2ELifecycles, g: String?): String = "${lcs.prefix}:$g"

@@ -26,6 +26,7 @@ import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -228,6 +229,14 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     catch (Exception e) {
       MavenLog.LOG.error("Cannot execute:", e);
       return false;
+    }
+  }
+
+
+  @TestOnly
+  public @NotNull Set<MavenCompilerTask> getTasks(@NotNull Phase phase) {
+    synchronized (myStateLock){
+      return myState.getTasks(phase);
     }
   }
 
