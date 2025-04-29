@@ -578,7 +578,7 @@ public final class UndoManagerImpl extends UndoManager {
   }
 
   boolean isUndoOrRedoAvailable(@Nullable FileEditor editor, boolean undo) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<DocumentReference> refs = getDocRefs(editor);
     return refs != null && isUndoOrRedoAvailable(getClientState(editor), refs, undo);
