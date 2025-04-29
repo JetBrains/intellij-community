@@ -20,16 +20,6 @@ class UpdatesInfoProviderManager(coroutineScope: CoroutineScope) {
     private val EP = ExtensionPointName.create<ExternalUpdateProvider>("com.intellij.updatesInfoProvider")
   }
 
-  val availableUpdate: IdeUpdateInfo?
-    get() = EP.extensionList.firstNotNullOfOrNull { (it.updatesState as? ExternalUpdateState.Available)?.info }
-
-  val updateInProcess: Boolean
-    get() = EP.extensionList.any { it.updatesState is ExternalUpdateState.Downloading }
-
-  fun runUpdate() {
-    EP.extensionList.firstOrNull { it.updatesState is ExternalUpdateState.Available }?.runUpdate()
-  }
-
   fun getUpdateActions(): List<AnAction> {
     return EP.extensionList.flatMap { it.updatesState.info?.let { info -> listOf(info.action) } ?: emptyList() }
   }
