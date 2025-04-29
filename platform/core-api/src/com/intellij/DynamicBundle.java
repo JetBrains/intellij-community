@@ -71,12 +71,19 @@ public class DynamicBundle extends AbstractBundle {
         ));
   }
 
+  @Nullable
   private static ResourceBundle getBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
     Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
     if (loaderCache == null) return null;
     return loaderCache.get(pathToBundle);
   }
-  
+
+  private static void removeBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
+    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
+    if (loaderCache == null) return;
+    loaderCache.remove(pathToBundle);
+  }
+
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader bundleClassLoader,
                                                                @NotNull ClassLoader baseLoader,
                                                                @NotNull String defaultPath,
@@ -221,10 +228,14 @@ public class DynamicBundle extends AbstractBundle {
       LOG.warn("Bundle without name cannot be properly cached: " + bundle);
       return bundle;
     }
-
-    if (getBundleFromCache(classLoader, bundleName) == null ||
-        getBundleFromCache(classLoader, bundleName) != bundle) {
+    ResourceBundle bundleFromCache = getBundleFromCache(classLoader, bundleName);
+    if (bundleFromCache == null) {
+      // Return null to force findBundle execution which will properly resolve and cache the bundle
+      return null;
+    }
+    if (bundleFromCache != bundle) {
       LOG.info("Cleanup bundle cache for " + bundleName);
+      removeBundleFromCache(classLoader, bundleName);
       return null;
     }
     return bundle;
