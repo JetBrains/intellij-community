@@ -57,6 +57,11 @@
   - name: $MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/5/woodstox-core-5.jar
   - name: $MAVEN_REPOSITORY$/org/apache/hadoop/hadoop-mapreduce-client-core/3/hadoop-mapreduce-client-core-3.jar
   reason: <- intellij.evaluationPlugin.llm
+- name: lib/ktor-client-logging.jar
+  library: ktor-client-logging
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3/ktor-client-logging-jvm-3.jar
+  reason: <- intellij.evaluationPlugin
 - name: lib/xerial.snappy.java.jar
   library: xerial.snappy.java
   files:

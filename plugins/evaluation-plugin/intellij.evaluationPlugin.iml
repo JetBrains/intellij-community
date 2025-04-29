@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.core" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.statsCollector" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
@@ -27,7 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.warmup" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="ktor-client-core" level="project" />
-    <orderEntry type="library" name="ktor-client-java" level="project" />
+    <orderEntry type="library" name="ktor-client-logging" level="project" />
   </component>
 </module>
