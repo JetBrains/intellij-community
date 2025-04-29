@@ -684,7 +684,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor == null) {
       @Nullable FileEditor fileEditor = context.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
-      return fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+      return fileEditor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
     }
     return editor;
   }

@@ -10,17 +10,16 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -47,10 +48,11 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     if (editor == null || DiffUtil.isDiffEditor(editor)) {
       return false;
     }
-    XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
-    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    for (XSourcePosition position : ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.getDataContext())) {
-      for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
+    XBreakpointManagerProxy breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
+    List<XLineBreakpointTypeProxy> breakpointTypes = breakpointManager.getLineBreakpointTypes();
+    Collection<XSourcePosition> breakpointPositions = ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.getDataContext());
+    for (XSourcePosition position : breakpointPositions) {
+      for (XLineBreakpointTypeProxy breakpointType : breakpointTypes) {
         VirtualFile file = position.getFile();
         int line = position.getLine();
         if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
@@ -68,6 +70,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     InputEvent inputEvent = event.getInputEvent();
     boolean isAltClick = isFromGutterClick && inputEvent != null && inputEvent.isAltDown();
     boolean isShiftClick = isFromGutterClick && inputEvent != null && inputEvent.isShiftDown();
+    boolean canRemove = !isFromGutterClick || (!isShiftClick && !Registry.is("debugger.click.disable.breakpoints"));
 
     // do not toggle more than once on the same line
     Set<Integer> processedLines = new HashSet<>();
@@ -79,7 +82,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
                                              editor,
                                              isAltClick || myTemporary,
                                              !isFromGutterClick,
-                                             !isFromGutterClick || (!isShiftClick && !Registry.is("debugger.click.disable.breakpoints")))
+                                             canRemove)
           .onSuccess(breakpoint -> {
             if (!isFromGutterClick) return;
             setupLogBreakpoint(breakpoint, inputEvent, editor, project);
@@ -98,6 +101,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       return;
     }
 
+    // TODO IJPL-185322 move to Backend
     breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
     String selection = editor.getSelectionModel().getSelectedText();
     if (selection != null) {
