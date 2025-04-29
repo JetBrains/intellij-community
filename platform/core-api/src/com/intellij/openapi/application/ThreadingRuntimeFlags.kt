@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import org.jetbrains.annotations.ApiStatus
-import java.lang.NumberFormatException
 
 /**
  * - `false` means that lock permits are bound only to threads
@@ -23,7 +22,7 @@ val useNestedLocking: Boolean = System.getProperty("ide.nested.locking.enabled",
  * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
  */
 @ApiStatus.Internal
-val useBackgroundWriteAction: Boolean = useNestedLocking && System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
+val useBackgroundWriteAction: Boolean = useNestedLocking && System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
 
 /**
  * - `false` means wrong action chains are ignored and not reported
