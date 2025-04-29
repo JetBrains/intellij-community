@@ -29,10 +29,14 @@ internal fun getUpdatedBrokenPluginFile(configDir: Path? = null): Path =
 private var brokenPluginVersions: Reference<Map<PluginId, Set<String>>>? = null
 
 @Internal
-fun isBrokenPlugin(descriptor: IdeaPluginDescriptor): Boolean {
-  val pluginId = descriptor.pluginId
+fun isBrokenPlugin(pluginId: PluginId, version: String?): Boolean {
   val set = getBrokenPluginVersions()[pluginId]
-  return set != null && set.contains(descriptor.version)
+  return set != null && set.contains(version)
+}
+
+@Internal
+fun isBrokenPlugin(descriptor: IdeaPluginDescriptor): Boolean {
+  return isBrokenPlugin(descriptor.pluginId, descriptor.version)
 }
 
 internal fun getBrokenPluginVersions(): Map<PluginId, Set<String>> {

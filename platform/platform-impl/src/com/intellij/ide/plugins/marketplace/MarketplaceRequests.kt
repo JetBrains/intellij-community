@@ -91,7 +91,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
     @Suppress("HttpUrlsUsage")
     @JvmStatic
-    fun parsePluginList(input: InputStream): List<PluginNode> {
+    fun parsePluginList(input: InputStream): List<PluginUiModel> {
       try {
         val handler = RepositoryContentHandler(PluginNodeModelBuilderFactory)
 
@@ -567,10 +567,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   private fun getPluginNameForUi(pluginNode: PluginUiModel): String {
     if (pluginNode.suggestedCommercialIde != null) {
       // convert name for Database plugin in Community Edition
-      return PLUGIN_NAMES_IN_COMMUNITY_EDITION[pluginNode.pluginId.idString] ?: pluginNode.name
+      return PLUGIN_NAMES_IN_COMMUNITY_EDITION[pluginNode.pluginId.idString] ?: pluginNode.name!!
     }
 
-    return pluginNode.name
+    return pluginNode.name!!
   }
 
   private fun getTagsForUi(pluginUiModel: PluginUiModel): Collection<String> {

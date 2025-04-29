@@ -72,7 +72,7 @@ internal data class IntellijUpdateMetadata(
       pluginNode.addDepends(dep, true)
     }
 
-    RepositoryHelper.addMarketplacePluginDependencyIfRequired(pluginNode)
+    RepositoryHelper.addMarketplacePluginDependencyIfRequired(PluginUiModelAdapter(pluginNode))
 
     return pluginNode
   }

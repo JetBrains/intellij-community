@@ -70,8 +70,8 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.productCode
   override val size: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.size else null
-  override val repositoryName: String?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.repositoryName else null
+  override val downloadUrl: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloadUrl else null
   override val reviewComments: PageContainer<PluginReviewComment>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
 
@@ -183,7 +183,7 @@ class PluginUiModelAdapter(
       }
     }
 
-  override var name: String
+  override var name: String?
     get() = pluginDescriptor.name
     set(value) {
       if (pluginDescriptor is PluginNode) {
@@ -206,6 +206,13 @@ class PluginUiModelAdapter(
         pluginDescriptor.installSource = value
       }
     }
+
+  override fun addDependency(id: PluginId, optional: Boolean) {
+    if (pluginDescriptor is PluginNode) {
+      pluginDescriptor.addDepends(pluginId, optional)
+    }
+  }
+
   override var suggestedCommercialIde: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedCommercialIde else null
     set(value) {
@@ -225,6 +232,13 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.rating = value
+      }
+    }
+  override var repositoryName: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.repositoryName else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.repositoryName = value
       }
     }
   override var date: Long

@@ -470,6 +470,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myDependencies.add(new PluginNodeDependency(PluginId.getId(id), optional));
   }
 
+  public void addDepends(@NotNull PluginId id, boolean optional) {
+    myDependencies.add(new PluginNodeDependency(id, optional));
+  }
+
   @Override
   public @NotNull List<IdeaPluginDependency> getDependencies() {
     return myDependencies;

@@ -3310,6 +3310,7 @@ f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 - <init>(com.intellij.openapi.extensions.PluginId):V
 - <init>(com.intellij.openapi.extensions.PluginId,java.lang.String,java.lang.String):V
+- addDepends(com.intellij.openapi.extensions.PluginId,Z):V
 - addDepends(java.lang.String):V
 - addDepends(java.lang.String,Z):V
 - addTags(java.lang.String):V
@@ -3477,12 +3478,13 @@ f:com.intellij.ide.plugins.PluginUpdateStatus$Update
 - f:getPluginDescriptor():com.intellij.ide.plugins.IdeaPluginDescriptor
 f:com.intellij.ide.plugins.RepositoryHelper
 - <init>():V
-- s:addMarketplacePluginDependencyIfRequired(com.intellij.ide.plugins.PluginNode):V
 - s:getCustomPluginRepositoryHosts():java.util.List
 - s:getPluginHosts():java.util.List
+- s:loadPluginModels(java.lang.String,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - s:loadPlugins(java.lang.String,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - s:loadPlugins(java.lang.String,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - s:loadPlugins(java.util.Set):java.util.Collection
+- s:mergePluginsFromRepositories(java.util.List,java.util.List,Z):java.util.Collection
 c:com.intellij.ide.plugins.StandalonePluginUpdateChecker
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.ide.plugins.StandalonePluginUpdateChecker$Companion

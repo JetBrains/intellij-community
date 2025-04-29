@@ -54,7 +54,7 @@ interface PluginUiModel {
   @get:NlsSafe
   val size: String?
   @get:NlsSafe
-  val repositoryName: String?
+  val downloadUrl: String?
   val reviewComments: PageContainer<PluginReviewComment>?
 
   @get:NlsSafe
@@ -85,7 +85,7 @@ interface PluginUiModel {
 
 
   @get:NlsSafe
-  var name: String
+  var name: String?
   var tags: List<String>?
   var suggestedCommercialIde: String?
   
@@ -93,8 +93,11 @@ interface PluginUiModel {
   var downloads: String?
   @get:NlsSafe
   var rating: String?
+  @get:NlsSafe
+  var repositoryName: String?
   var installSource: FUSEventSource?
 
+  fun addDependency(id: PluginId, optional: Boolean)
   /**
    * Java compatibility method. Going to be removed after refactoring is done.
    */

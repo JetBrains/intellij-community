@@ -353,7 +353,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
       if (e.description == "showFeedback") {
         val pluginIdString = plugin.pluginId.idString
-        val pluginName = plugin.name
+        val pluginName = plugin.name!!
         val component = e.inputEvent.component
         val project = getProjectForComponent(component)
 

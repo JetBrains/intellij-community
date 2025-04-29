@@ -151,6 +151,7 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   private fun getController(model: PluginUiModel): PluginManagerController {
     return getController(model.source)
   }
+
   private fun getController(source: PluginSource): PluginManagerController{
     return when (source) {
       PluginSource.LOCAL -> localController

@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins.marketplace;
 
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.plugins.newui.PluginUiModelBuilder;
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory;
@@ -52,7 +51,7 @@ final class RepositoryContentHandler extends DefaultHandler {
   private final StringBuilder currentValue = new StringBuilder();
   private final PluginUiModelBuilderFactory factory;
   private PluginUiModelBuilder builder = null;
-  private List<PluginNode> plugins;
+  private List<PluginUiModel> plugins;
   private Stack<String> categories;
   private String categoryName;
 
@@ -61,7 +60,7 @@ final class RepositoryContentHandler extends DefaultHandler {
   }
 
   @NotNull
-  List<PluginNode> getPluginsList() {
+  List<PluginUiModel> getPluginsList() {
     return plugins == null ? Collections.emptyList() : plugins;
   }
 
@@ -132,7 +131,7 @@ final class RepositoryContentHandler extends DefaultHandler {
       case DOWNLOAD_URL, DOWNLOAD_URL_NEW_STYLE -> builder.setDownloadUrl(currentValueString);
       case IDEA_PLUGIN, PLUGIN -> {
         if (builder != null) {
-          plugins.add((PluginNode)builder.build().getDescriptor());
+          plugins.add(builder.build());
         }
         builder = null;
       }
