@@ -137,8 +137,8 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     }
   }
 
-  override fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? {
-    return breakpoints.values.filterIsInstance<XLineBreakpointProxy>().firstOrNull {
+  override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy> {
+    return breakpoints.values.filterIsInstance<XLineBreakpointProxy>().filter {
       it.type == type && it.getFile()?.url == file.url && it.getLine() == line
     }
   }

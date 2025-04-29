@@ -35,7 +35,9 @@ interface XBreakpointManagerProxy {
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
   fun removeBreakpoint(breakpoint: XBreakpointProxy)
-  fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy?
+  fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
+    findBreakpointsAtLine(type, file, line).firstOrNull()
+  fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -101,6 +103,10 @@ interface XBreakpointManagerProxy {
         return breakpoint.asProxy()
       }
       return null
+    }
+
+    override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy> {
+      return breakpointManager.findBreakpointsAtLine((type as XLineBreakpointTypeProxy.Monolith).breakpointType, file, line).map { it.asProxy() }
     }
   }
 }
