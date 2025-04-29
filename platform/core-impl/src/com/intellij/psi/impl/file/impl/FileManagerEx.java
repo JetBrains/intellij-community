@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Consumer;
 
@@ -19,6 +20,10 @@ public interface FileManagerEx extends FileManager {
 
   @ApiStatus.Internal
   void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer);
+
+  @TestOnly
+  @ApiStatus.Internal
+  void assertNoInjectedFragmentsStoredInMaps();
 
   @ApiStatus.Internal
   @Nullable CodeInsightContext trySetContext(@NotNull FileViewProvider viewProvider, @NotNull CodeInsightContext context);
@@ -67,6 +72,10 @@ public interface FileManagerEx extends FileManager {
 
   @ApiStatus.Internal
   void dispatchPendingEvents();
+
+  @TestOnly
+  @ApiStatus.Internal
+  void checkConsistency();
 
   @ApiStatus.Internal
   PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile);

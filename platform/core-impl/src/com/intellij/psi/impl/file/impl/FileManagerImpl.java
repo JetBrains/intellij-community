@@ -104,6 +104,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @TestOnly
+  @Override
   public void assertNoInjectedFragmentsStoredInMaps() {
     myVFileToViewProviderMap.forEach((file, __, provider) -> {
       if (file instanceof VirtualFileWindow) {
@@ -459,7 +460,8 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @TestOnly
-  void checkConsistency() {
+  @Override
+  public void checkConsistency() {
     removePossiblyInvalidated();
 
     List<Entry> values = myVFileToViewProviderMap.getAllEntries();

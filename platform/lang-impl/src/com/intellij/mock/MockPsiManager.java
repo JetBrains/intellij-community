@@ -17,6 +17,7 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -184,6 +185,11 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
       myMockFileManager = new MockFileManager(this);
     }
     return myMockFileManager;
+  }
+
+  @Override
+  public @NotNull FileManagerEx getFileManagerEx() {
+    throw new UnsupportedOperationException();
   }
 
   @Override

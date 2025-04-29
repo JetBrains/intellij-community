@@ -43,7 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
@@ -366,7 +365,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", scope));
 
-    assertNull(((FileManagerImpl)getPsiManager().getFileManager()).getCachedDirectory(psiFile.getVirtualFile().getParent()));
+    assertNull(getPsiManager().getFileManagerEx().getCachedDirectory(psiFile.getVirtualFile().getParent()));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       assertEquals(psiFile.setName("Foo1.java"), psiFile);
     });
@@ -389,7 +388,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("pkg.Foo", scope));
 
     final VirtualFile dir = psiFile.getVirtualFile().getParent();
-    assertNull(((FileManagerImpl)getPsiManager().getFileManager()).getCachedDirectory(dir));
+    assertNull(getPsiManager().getFileManagerEx().getCachedDirectory(dir));
     WriteAction.run(() -> dir.rename(this, "bar"));
 
     assertTrue(FileDocumentManager.getInstance().getUnsavedDocuments().length > 0);

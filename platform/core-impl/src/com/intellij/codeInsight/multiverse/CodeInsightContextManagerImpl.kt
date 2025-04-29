@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerEx
-import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

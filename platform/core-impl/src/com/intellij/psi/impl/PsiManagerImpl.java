@@ -144,6 +144,11 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  public @NotNull FileManagerEx getFileManagerEx() {
+    return myFileManager;
+  }
+
+  @Override
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 

@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
@@ -291,7 +290,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     VirtualFile parentDir = createChildDirectory(getOrCreateProjectBaseDir(), "tmp");
 
-    assertNull(((FileManagerImpl)psiManager.getFileManager()).getCachedDirectory(parentDir));
+    assertNull(psiManager.getFileManagerEx().getCachedDirectory(parentDir));
 
     File file = new File(parentDir.getPath(), "Foo.java");
     FileUtil.writeToFile(file, "class Foo {}");
@@ -307,7 +306,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
     final PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
     VirtualFile parentDir = getTempDir().createVirtualDir();
-    assertNull(((FileManagerImpl)psiManager.getFileManager()).getCachedDirectory(parentDir));
+    assertNull(psiManager.getFileManagerEx().getCachedDirectory(parentDir));
 
     File file = new File(parentDir.getPath() + "/foo", "Foo.java");
     FileUtil.writeToFile(file, "package foo; class Foo {}");

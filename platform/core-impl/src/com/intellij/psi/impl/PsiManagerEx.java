@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.psi.impl.file.impl.FileManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +33,8 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
   public abstract @NotNull FileManager getFileManager();
+  
+  public abstract @NotNull FileManagerEx getFileManagerEx();
 
   public abstract void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event);
 
