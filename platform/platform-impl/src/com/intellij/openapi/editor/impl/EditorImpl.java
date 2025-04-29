@@ -145,7 +145,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
   private static final Object CUSTOM_LAYER_MARKER = new Object();
-  private static final float MIN_FONT_SIZE = 8;
+  private static final float MIN_FONT_SIZE = 4;
   private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   static final Logger EVENT_LOG = Logger.getInstance("editor.input.events");
   private static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
