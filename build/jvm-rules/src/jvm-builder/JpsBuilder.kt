@@ -382,7 +382,7 @@ private suspend fun initAndBuild(
               tracer = tracer,
             ),
             // If not rebuilding, we still need to create a JavaBuilder even if there are no Java files,
-            // as there might be some old ones cached (so, we have to update incremental cache).
+            // as there might be some old ones cached (so, we have to update an incremental cache).
             if (isRebuild && moduleTarget.javaFileCount == 0) {
               null
             }

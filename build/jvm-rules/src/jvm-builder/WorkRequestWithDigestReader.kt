@@ -32,11 +32,6 @@ internal open class WorkRequestWithDigestReader(
   private val argListToReuse = ArrayList<String>()
 
   override fun readWorkRequestFromStream(): WorkRequestWithDigests? {
-    //val digests = VarBinaryVector("digests", allocator)
-    //var counter = 0
-    //try {
-    //  digests.allocateNew()
-
     val inputDigestToReuse = inputDigestToReuse
     inputDigestToReuse.clear()
     val result = doReadWorkRequestFromStream(
@@ -63,10 +58,5 @@ internal open class WorkRequestWithDigestReader(
       },
     )
     return result
-    //}
-    //finally {
-    //  if (counter != -1) {
-    //    digests.close()
-    //  }
   }
 }

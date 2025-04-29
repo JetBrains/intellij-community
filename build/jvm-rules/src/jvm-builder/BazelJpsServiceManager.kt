@@ -3,6 +3,7 @@
 
 package org.jetbrains.bazel.jvm.worker
 
+import org.jetbrains.bazel.jvm.worker.impl.BazelSharedThreadPool
 import org.jetbrains.jps.builders.AdditionalRootsProviderService
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
@@ -11,7 +12,11 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.BuilderService
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
-import org.jetbrains.jps.model.*
+import org.jetbrains.jps.model.JpsEncodingConfigurationService
+import org.jetbrains.jps.model.JpsEncodingProjectConfiguration
+import org.jetbrains.jps.model.JpsGlobal
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.jps.service.SharedThreadPool
