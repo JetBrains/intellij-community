@@ -658,7 +658,7 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       }
 
       fun forExpression(expression: UExpression): PathAnnotationInfo {
-        val callExpression = expression.getUCallExpression(searchLimit = 1)
+        val callExpression = expression.getUCallExpression()
         if (callExpression != null) {
           // Check if the expression is a call to Path.toString()
           val method = callExpression.resolve()
@@ -688,6 +688,22 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
 
         // Check if the expression is a reference to a variable with a path annotation
         if (expression is UReferenceExpression) {
+          val resolvedUElement = expression.resolveToUElement()
+          if (resolvedUElement is UAnnotated) {
+            if (resolvedUElement.findAnnotation(NativePath::class.java.canonicalName) != null) {
+              return Native
+            }
+            if (resolvedUElement.findAnnotation(MultiRoutingFileSystemPath::class.java.canonicalName) != null) {
+              return MultiRouting
+            }
+            if (resolvedUElement.findAnnotation(LocalPath::class.java.canonicalName) != null) {
+              return LocalPathInfo
+            }
+            if (resolvedUElement.findAnnotation(Filename::class.java.canonicalName) != null) {
+              return FilenameInfo
+            }
+          }
+
           val resolved = expression.resolve()
           if (resolved is PsiModifierListOwner) {
             val info = forModifierListOwner(resolved)
@@ -740,6 +756,11 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
                   if (method != null && VirtualPathAnnotationRegistry.isMethodReturningLocalPath(method)) {
                     return LocalPathInfo
                   }
+                }
+
+                val evaluatedValue = expression.evaluate()
+                if (evaluatedValue is String && isValidFilename(evaluatedValue)) {
+                  return FilenameInfo
                 }
 
                 // Try to evaluate the initializer as a string constant
@@ -975,7 +996,7 @@ private fun findVariableToAnnotate(element: PsiElement): PsiModifierListOwner? {
  * Checks if the expression is a call to System.getProperty("user.home").
  */
 private fun isSystemGetPropertyAbsolutePathResult(expression: UExpression): Boolean {
-  val callExpression = expression.getUCallExpression(searchLimit = 1) ?: return false
+  val callExpression = expression.getUCallExpression() ?: return false
   val method = callExpression.resolve()
   if (method is com.intellij.psi.PsiMethod) {
     val containingClass = method.containingClass
@@ -1005,7 +1026,7 @@ private fun isSystemGetPropertyAbsolutePathResult(expression: UExpression): Bool
  * Checks if the expression is a call to a method that effectively returns a `@LocalPath` annotated string.
  */
 private fun isMethodReturningLocalPathResult(expression: UExpression): Boolean {
-  val callExpression = expression.getUCallExpression(searchLimit = 1) ?: return false
+  val callExpression = expression.getUCallExpression() ?: return false
   val method = callExpression.resolve()
   if (method is com.intellij.psi.PsiMethod) {
     return VirtualPathAnnotationRegistry.isMethodReturningLocalPath(method)
