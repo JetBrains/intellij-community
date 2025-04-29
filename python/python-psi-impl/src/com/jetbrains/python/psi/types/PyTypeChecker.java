@@ -158,13 +158,13 @@ public final class PyTypeChecker {
     if (expected instanceof PyConcatenateType concatenateType) {
       return Optional.of(match(concatenateType, actual, context));
     }
-
-    if (expected instanceof PyCallableParameterListType callableParameterListType) {
-      return Optional.of(match(callableParameterListType, actual, context));
-    }
     
     if (expected == null || actual == null || isUnknown(actual, context.context)) {
       return Optional.of(true);
+    }
+
+    if (expected instanceof PyCallableParameterListType callableParameterListType) {
+      return Optional.of(match(callableParameterListType, actual, context));
     }
 
     if (actual instanceof PyUnionType) {
@@ -854,7 +854,10 @@ public final class PyTypeChecker {
           assert entry.getValue() instanceof PyPositionalVariadicType;
           result.typeVarTuples.put(typeVarTuple, (PyPositionalVariadicType)entry.getValue());
         }
-        // TODO Handle ParamSpecs here
+        else if (entry.getKey() instanceof PyParamSpecType specType) {
+          assert entry.getValue() instanceof PyCallableParameterVariadicType;
+          result.paramSpecs.put(specType, (PyCallableParameterVariadicType)entry.getValue());
+        }
       }
       PyCollectionType genericDefinitionType = as(provider.getGenericType(classType.getPyClass(), context), PyCollectionType.class);
       // TODO Re-use PyTypeParameterMapping, at the moment C[*Ts] <- C leads to *Ts being mapped to *tuple[], which breaks inference later on
@@ -1600,7 +1603,7 @@ public final class PyTypeChecker {
     Generics typeParams = collectGenerics(genericType, context);
     if (!typeParams.isEmpty()) {
       List<PyType> expectedTypeParams = new ArrayList<>(new LinkedHashSet<>(typeParams.getAllTypeParameters()));
-      var substitutions = mapTypeParametersToSubstitutions(expectedTypeParams, 
+      var substitutions = mapTypeParametersToSubstitutions(expectedTypeParams,
                                                            actualTypeParams,
                                                            Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
                                                            Option.USE_DEFAULTS);
