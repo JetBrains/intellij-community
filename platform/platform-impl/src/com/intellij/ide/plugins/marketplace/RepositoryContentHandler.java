@@ -81,31 +81,32 @@ final class RepositoryContentHandler extends DefaultHandler {
       }
     }
     else if (qName.equals(IDEA_PLUGIN)) {
-      builder = factory.createBuilder(PluginId.getId("unknown"));
-      builder.setCategory(buildCategoryName());
-      builder.setDownloads(attributes.getValue(DOWNLOADS));
-      builder.setSize(attributes.getValue(SIZE));
-      builder.setUrl(attributes.getValue(URL));
-      String dateString = attributes.getValue(PLUGIN_UPDATED_DATE) != null ? attributes.getValue(PLUGIN_UPDATED_DATE) : attributes.getValue(DATE);
+      builder = factory.createBuilder(PluginId.getId("unknown"))
+        .setCategory(buildCategoryName())
+        .setDownloads(attributes.getValue(DOWNLOADS))
+        .setSize(attributes.getValue(SIZE))
+        .setUrl(attributes.getValue(URL));
+      String dateString =
+        attributes.getValue(PLUGIN_UPDATED_DATE) != null ? attributes.getValue(PLUGIN_UPDATED_DATE) : attributes.getValue(DATE);
       if (dateString != null) {
         builder.setDate(dateString);
       }
       builder.setIncomplete(false);
     }
     else if (qName.equals(IDEA_VERSION)) {
-      builder.setSinceBuild(attributes.getValue(SINCE_BUILD));
-      builder.setUntilBuild(PluginManager.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
+      builder.setSinceBuild(attributes.getValue(SINCE_BUILD))
+        .setUntilBuild(PluginManager.convertExplicitBigNumberInUntilBuildToStar(attributes.getValue(UNTIL_BUILD)));
     }
     else if (qName.equals(VENDOR)) {
-      builder.setVendorEmail(attributes.getValue(EMAIL));
-      builder.setVendorUrl(attributes.getValue(URL));
+      builder.setVendorEmail(attributes.getValue(EMAIL))
+        .setVendorUrl(attributes.getValue(URL));
     }
     else if (qName.equals(PLUGIN)) {
       String id = attributes.getValue(ID);
       builder = id == null ? factory.createBuilder(PluginId.getId("unknown")) : factory.createBuilder(PluginId.getId(id));
-      builder.setDownloadUrl(attributes.getValue(URL));
-      builder.setVersion(attributes.getValue(VERSION));
-      builder.setIncomplete(true);
+      builder.setDownloadUrl(attributes.getValue(URL))
+        .setVersion(attributes.getValue(VERSION))
+        .setIncomplete(true);
     }
     currentValue.setLength(0);
   }
