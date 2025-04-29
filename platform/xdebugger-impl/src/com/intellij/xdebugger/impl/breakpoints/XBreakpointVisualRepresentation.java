@@ -250,19 +250,17 @@ public class XBreakpointVisualRepresentation {
         if (canMoveTo(line, file)) {
           XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
           XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
-          // TODO IJPL-185322 support gutter DnD
-          if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
-            XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
-            if (isCopyAction(actionId)) {
-              breakpointManager.copyLineBreakpoint(monolithBreakpoint, file.getUrl(), line);
-            }
-            else {
-              myBreakpoint.setFileUrl(file.getUrl());
-              myBreakpoint.setLine(line);
-              XDebugSessionImpl session = debuggerManager.getCurrentSession();
-              if (session != null) {
-                session.checkActiveNonLineBreakpointOnRemoval(monolithBreakpoint);
-              }
+          if (isCopyAction(actionId) && myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+            // TODO IJPL-185322 support copy through gutter DnD
+            breakpointManager.copyLineBreakpoint(monolithBreakpointProxy.getBreakpoint(), file.getUrl(), line);
+          }
+          else {
+            myBreakpoint.setFileUrl(file.getUrl());
+            myBreakpoint.setLine(line);
+            XDebugSessionImpl session = debuggerManager.getCurrentSession();
+            if (session != null && myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+              // TODO IJPL-185322 support active breakpoint update on DnD
+              session.checkActiveNonLineBreakpointOnRemoval(monolithBreakpointProxy.getBreakpoint());
             }
             return true;
           }
@@ -292,12 +290,15 @@ public class XBreakpointVisualRepresentation {
 
   private boolean canMoveTo(int line, VirtualFile file) {
     if (file != null && myBreakpoint.getType().canPutAt(file, line, myProject)) {
-      // TODO IJPL-185322 support canMoveTo for DnD
       if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
         XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
         XLineBreakpoint<?> existing =
           monolithBreakpoint.getBreakpointManager().findBreakpointAtLine(monolithBreakpoint.getType(), file, line);
         return existing == null || existing == monolithBreakpoint;
+      }
+      else {
+        // TODO IJPL-185322 support findBreakpointAtLine check for split
+        return true;
       }
     }
     return false;
