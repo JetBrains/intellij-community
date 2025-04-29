@@ -162,12 +162,14 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog(output, error, exitCode)
   }
 
-  override fun removeEnvironment(project: Project) {
-    // Remove the setup and run scripts
-    val basePath = project.basePath ?: return
-
+  protected fun removeScriptFiles(basePath: String) {
     // Remove setup and run scripts
     ProcessBuilder("rm", "-f", "$basePath/$setupFileName").start().waitFor()
     ProcessBuilder("rm", "-f", "$basePath/$runFileName").start().waitFor()
+  }
+
+  override fun removeEnvironment(project: Project) {
+    // Remove the setup and run scripts
+    removeScriptFiles(project.basePath ?: return)
   }
 }
