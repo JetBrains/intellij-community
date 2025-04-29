@@ -71,7 +71,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
 
   @Test
-  fun `dispose communicator when disabling sync`() {
+  fun `dispose communicator when disabling sync`() = timeoutRunBlockingAndStopBridge {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -88,6 +88,17 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   }
 
+  @Test
+  fun `reset user data if cannot find`() = timeoutRunBlockingAndStopBridge {
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, MOCK_CODE)
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, DUMMY_USER_ID)
+    authService.userData = null
+    initSettingsSync()
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, null)
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, null)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+
+  }
 
   @Test
   fun `settings modified between IDE sessions should be logged`() = timeoutRunBlockingAndStopBridge {
@@ -485,8 +496,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR,
                             (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage
     )
-
-
   }
 
   private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {

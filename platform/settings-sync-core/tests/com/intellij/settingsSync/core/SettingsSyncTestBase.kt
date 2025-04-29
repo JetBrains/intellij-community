@@ -6,6 +6,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -36,6 +37,7 @@ internal abstract class SettingsSyncTestBase {
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path
   protected lateinit var remoteCommunicator: MockRemoteCommunicator
+  protected lateinit var authService: MockAuthService
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
@@ -65,12 +67,16 @@ internal abstract class SettingsSyncTestBase {
         providerEP.unregisterExtension(it)
       }
     }
+
+    authService = MockAuthService(SettingsSyncUserData("mockId", MOCK_CODE, "", ""))
+
     val mockCommunicatorProvider = MockCommunicatorProvider(
-      remoteCommunicator
+      remoteCommunicator,
+      authService
     )
     providerEP.registerExtension(mockCommunicatorProvider, disposable)
     SettingsSyncLocalSettings.getInstance().providerCode = mockCommunicatorProvider.providerCode
-    SettingsSyncLocalSettings.getInstance().userId = "dummyUserId"
+    SettingsSyncLocalSettings.getInstance().userId = DUMMY_USER_ID
 
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
