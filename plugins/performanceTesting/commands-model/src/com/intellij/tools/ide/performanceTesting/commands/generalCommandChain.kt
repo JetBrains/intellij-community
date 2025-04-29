@@ -115,6 +115,12 @@ fun <T : CommandChain> T.closeProject(): T = apply {
   addCommand("${CMD_PREFIX}closeProject")
 }
 
+/** @see com.jetbrains.performancePlugin.commands.CloseOtherProjectsCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.closeOtherProjects(): T = apply {
+  addCommand("${CMD_PREFIX}closeOtherProjects")
+}
+
 fun <T : CommandChain> T.storeIndices(): T = apply {
   addCommand("${CMD_PREFIX}storeIndices")
 }
