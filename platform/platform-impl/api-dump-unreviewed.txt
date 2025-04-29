@@ -2418,7 +2418,6 @@ f:com.intellij.ide.actions.ToggleToolbarAction
 - s:createToggleToolbarGroup(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):com.intellij.openapi.actionSystem.DefaultActionGroup
 - s:createToolWindowAction(com.intellij.openapi.wm.ToolWindow,com.intellij.ide.util.PropertiesComponent):com.intellij.ide.actions.ToggleToolbarAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:hasVisibleToolwindowToolbars(com.intellij.openapi.wm.ToolWindow):Z
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - s:isToolbarVisible(com.intellij.openapi.wm.ToolWindow):Z
 - s:isToolbarVisible(com.intellij.openapi.wm.ToolWindow,com.intellij.ide.util.PropertiesComponent):Z
@@ -2431,7 +2430,7 @@ f:com.intellij.ide.actions.ToggleToolbarAction
 - s:setToolbarVisible(java.lang.Iterable,Z):V
 - s:setToolbarVisible(java.lang.String,com.intellij.ide.util.PropertiesComponent,java.lang.Iterable,java.lang.Boolean):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:updateToolbarsVisibility(com.intellij.openapi.wm.ToolWindow,com.intellij.ide.util.PropertiesComponent):V
+- s:updateToolbarVisibility(com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.actionSystem.ActionToolbar,com.intellij.ide.util.PropertiesComponent):V
 f:com.intellij.ide.actions.ToggleZenModeAction
 - com.intellij.openapi.project.DumbAwareAction
 - sf:Companion:com.intellij.ide.actions.ToggleZenModeAction$Companion

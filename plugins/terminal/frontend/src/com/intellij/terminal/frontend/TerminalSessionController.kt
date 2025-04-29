@@ -3,6 +3,8 @@ package com.intellij.terminal.frontend
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.*
@@ -31,6 +33,8 @@ internal class TerminalSessionController(
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
   private val shellIntegrationEventDispatcher: EventDispatcher<TerminalShellIntegrationEventsListener> =
     EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
+
+  private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   fun handleEvents(session: TerminalSession) {
     coroutineScope.launch {
@@ -89,25 +93,25 @@ internal class TerminalSessionController(
         fireSessionTerminated()
       }
       TerminalPromptStartedEvent -> {
-        withContext(Dispatchers.EDT) {
+        withContext(edtContext) {
           blocksModel.promptStarted(outputModel.cursorOffsetState.value)
         }
         shellIntegrationEventDispatcher.multicaster.promptStarted()
       }
       TerminalPromptFinishedEvent -> {
-        withContext(Dispatchers.EDT) {
+        withContext(edtContext) {
           blocksModel.promptFinished(outputModel.cursorOffsetState.value)
         }
         shellIntegrationEventDispatcher.multicaster.promptFinished()
       }
       is TerminalCommandStartedEvent -> {
-        withContext(Dispatchers.EDT) {
+        withContext(edtContext) {
           blocksModel.commandStarted(outputModel.cursorOffsetState.value)
         }
         shellIntegrationEventDispatcher.multicaster.commandStarted(event.command)
       }
       is TerminalCommandFinishedEvent -> {
-        withContext(Dispatchers.EDT) {
+        withContext(edtContext) {
           blocksModel.commandFinished(event.exitCode)
         }
         shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode)
@@ -116,7 +120,7 @@ internal class TerminalSessionController(
   }
 
   private suspend fun updateOutputModel(block: (TerminalOutputModel) -> Unit) {
-    withContext(Dispatchers.EDT) {
+    withContext(edtContext) {
       block(getCurrentOutputModel())
     }
   }

@@ -8,12 +8,15 @@ import com.intellij.collaboration.util.URIUtil
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.fold
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.http.HttpResponse
 
 object ApiPageUtil {
-  fun <T> createGQLPagesFlow(reversed: Boolean = false,
-                             loader: suspend (GraphQLRequestPagination) -> GraphQLPagedResponseDataDTO<T>?): Flow<GraphQLPagedResponseDataDTO<T>> =
+  fun <T> createGQLPagesFlow(
+    reversed: Boolean = false,
+    loader: suspend (GraphQLRequestPagination) -> GraphQLPagedResponseDataDTO<T>?,
+  ): Flow<GraphQLPagedResponseDataDTO<T>> =
     flow {
       var pagination: GraphQLRequestPagination? = GraphQLRequestPagination.DEFAULT
       while (pagination != null) {
@@ -56,6 +59,24 @@ object ApiPageUtil {
           }
         }
       }
+    }
+
+  /**
+   * Prefer not to use this method!
+   * This is a last resort if Link headers are missing and you need paginated info.
+   * It's recommended to use the Link header in all other cases though.
+   *
+   * Careful: starts pagination at page=1 and increments from there.
+   */
+  @ApiStatus.Internal
+  fun <T> createPagesFlowByPagination(loader: suspend (page: Int) -> HttpResponse<out List<T>>): Flow<HttpResponse<out List<T>>> =
+    flow {
+      var page = 1
+      do {
+        val data = loader(page++)
+        if (data.body().isNotEmpty()) emit(data)
+      }
+      while (data.body().isNotEmpty())
     }
 }
 

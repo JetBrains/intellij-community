@@ -324,7 +324,7 @@ object MavenImportUtil {
       if (compilerArgs != null) {
         if (isPreviewText(compilerArgs) ||
             compilerArgs.getChildren("arg").any { isPreviewText(it) } ||
-            compilerArgs.getChildren("compilerArg").any{ isPreviewText(it) }
+            compilerArgs.getChildren("compilerArg").any { isPreviewText(it) }
         ) {
           return level.getPreviewLevel() ?: level
         }
@@ -399,13 +399,12 @@ object MavenImportUtil {
     })
   }
 
-  internal fun MavenProject.getAllCompilerConfigs(): List<Element> {
+  internal fun MavenProject.compilerConfigsForCompilePhase(): List<Element> {
     val result = ArrayList<Element>(1)
     this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
 
     this.findCompilerPlugin()
-      ?.executions?.filter { it.goals.contains("compile") }
-      ?.filter { it.phase != "none" }
+      ?.executions?.filter { it.isCompilePhase() }
       ?.mapNotNull { it.configurationElement }
       ?.forEach(result::add)
     return result
@@ -413,15 +412,15 @@ object MavenImportUtil {
 
   internal val MavenProject.declaredAnnotationProcessors: List<String>
     get() {
-      return compilerConfigsOrPluginConfig.flatMap { getDeclaredAnnotationProcessors(it) }
+      return compilerExecutions
+        .filter { it.isCompilePhase() }
+        .mapNotNull { it.configurationElement }
+        .ifEmpty { pluginConfig }.flatMap { getDeclaredAnnotationProcessors(it) }
     }
 
-  private val MavenProject.compilerConfigsOrPluginConfig: List<Element>
-    get() {
-      val configurations: List<Element> = compilerConfigs
-      if (!configurations.isEmpty()) return configurations
-      return pluginConfig
-    }
+  private fun MavenPlugin.Execution.isCompilePhase(): Boolean {
+    return (phase.isNullOrBlank() && goals.contains("compile")) || phase == "compile"
+  }
 
   private val MavenProject.pluginConfig: List<Element>
     get() {

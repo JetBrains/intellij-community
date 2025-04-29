@@ -237,7 +237,12 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
             }
             librariesByName[dependency.name]
                 ?.let { library -> module.addDependency(library, exported = dependency.isExported, dependencyScope = scope) }
-                ?: module.addDependency(modulesByName.getValue(dependency.name), exported = dependency.isExported, dependencyScope = scope)
+                ?: module.addDependency(
+                    modulesByName.getValue(dependency.name),
+                    exported = dependency.isExported,
+                    dependencyScope = scope,
+                    productionOnTest = dependency.productionOnTest,
+                )
         }
     }
 

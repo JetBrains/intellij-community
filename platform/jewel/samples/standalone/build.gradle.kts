@@ -9,20 +9,23 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.kotlin.reflect)
-    implementation(projects.intUi.intUiStandalone)
     implementation(projects.intUi.intUiDecoratedWindow)
-    implementation(projects.markdown.intUiStandaloneStyling)
-    implementation(projects.markdown.extension.gfmAlerts)
-    implementation(projects.markdown.extension.gfmStrikethrough)
-    implementation(projects.markdown.extension.gfmTables)
-    implementation(projects.markdown.extension.autolink)
-    implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
-    implementation(compose.components.resources)
-    implementation(project(":samples:showcase"))
+    implementation(projects.intUi.intUiStandalone)
     implementation(projects.markdown.core)
-    implementation("com.darkrockstudios:mpfilepicker:3.1.0")
+    implementation(projects.markdown.extensions.gfmAlerts)
+    implementation(projects.markdown.extensions.gfmStrikethrough)
+    implementation(projects.markdown.extensions.gfmTables)
+    implementation(projects.markdown.extensions.autolink)
+    implementation(projects.markdown.intUiStandaloneStyling)
+    implementation(projects.samples.showcase)
+
+    implementation(compose.components.resources)
+    implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
+
+    implementation(libs.filePicker)
     implementation(libs.intellijPlatform.icons)
+    implementation(libs.kotlin.reflect)
+
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }

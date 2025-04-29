@@ -23,8 +23,9 @@ internal object JewelMavenArtifacts {
     "intellij.platform.jewel.foundation" to "jewel-foundation",
     "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
     "intellij.platform.jewel.ui" to "jewel-ui",
-    "intellij.platform.jewel.markdown.extension.gfmTables" to "jewel-markdown-extension-gfm-tables",
-    "intellij.platform.jewel.markdown.extension.gfmAlerts" to "jewel-markdown-extension-gfm-alerts",
+    "intellij.platform.jewel.markdown.extensions.gfmTables" to "jewel-markdown-extensions-gfm-tables",
+    "intellij.platform.jewel.markdown.extensions.gfmStrikethrough" to "jewel-markdown-extensions-gfm-strikethrough",
+    "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
   )
   val STANDALONE: Map<String, String> = mapOf(
     "intellij.platform.jewel.markdown.intUiStandaloneStyling" to "jewel-markdown-int-ui-standalone-styling",

@@ -78,7 +78,7 @@ final class ActionsLoader {
         final String actId = ActionManager.getInstance().getId(butt.getAnAction());
 
         final boolean isRunConfigPopover = "RunConfiguration".equals(actId);
-        final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
+        final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId) || "Terminal.OpenInReworkedTerminal".equals(actId);
         if (isRunConfigPopover || isOpenInTerminalAction) {
           butt.setText(presentation.getText());
           butt.setIconFromPresentation(presentation);

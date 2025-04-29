@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.idea.TestFor
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
@@ -557,9 +558,9 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
 
     importProjectAsync("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<packaging>pom</packaging>" +
-                  "<version>1</version>")
+                       "<artifactId>project</artifactId>" +
+                       "<packaging>pom</packaging>" +
+                       "<version>1</version>")
 
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
   }
@@ -567,22 +568,22 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testRemoveEmptyInnerProfile() = runBlocking {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-    val profileName =getModuleProfileName("test-profile")
+    val profileName = getModuleProfileName("test-profile")
     WriteAction.runAndWait<RuntimeException> {
       compilerConfiguration.addNewProcessorProfile(profileName).isEnabled = true
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
 
     importProjectAsync("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<packaging>pom</packaging>" +
-                  "<version>1</version>")
+                       "<artifactId>project</artifactId>" +
+                       "<packaging>pom</packaging>" +
+                       "<version>1</version>")
 
     Assert.assertNull(compilerConfiguration.findModuleProcessorProfile(profileName))
   }
 
   @Test
-  fun testImportManagedDependencyAnnotationProcessor()  = runBlocking{
+  fun testImportManagedDependencyAnnotationProcessor() = runBlocking {
     importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -635,7 +636,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testImportManagedDependencyAnnotationProcessorFromExecution()  = runBlocking{
+  fun testImportManagedDependencyAnnotationProcessorFromExecution() = runBlocking {
     importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -693,5 +694,53 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     assertNotNull(projectProfile)
     val path = projectProfile!!.processorPath
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")))
+  }
+
+  @Test
+  @TestFor(issues = ["IDEA-368907"])
+  fun testShouldNotImportManagedDependencyAnnotationProcessorForNonCompilePhases() = runBlocking {
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1.0</version>
+      <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
+                <executions>
+                    <execution>
+                        <id>log4j2-plugin-processor</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>process-classes</phase>
+                        <configuration>
+                            <proc>only</proc>
+                            <compileSourceRoots>${'$'}{project.build.outputDirectory}</compileSourceRoots>
+                            <annotationProcessors>
+                                <annotationProcessor>
+                                    org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor
+                                </annotationProcessor>
+                            </annotationProcessors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+      </build>  
+      """)
+
+    val mavenProject = projectsManager.findProject(getModule("project"))
+    assertNotNull(mavenProject)
+
+    val annotationProcessors = mavenProject!!.externalAnnotationProcessors
+    assertEmpty(annotationProcessors)
+
+    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+
+    val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
+    assertNull(projectProfile)
   }
 }

@@ -2000,6 +2000,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/override/ContextReceiver.kt");
             }
 
+            @TestMetadata("EnumMethodNameMatch.kt")
+            public void testEnumMethodNameMatch() throws Exception {
+                runTest("../testData/basic/common/override/EnumMethodNameMatch.kt");
+            }
+
             @TestMetadata("Generics.kt")
             public void testGenerics() throws Exception {
                 runTest("../testData/basic/common/override/Generics.kt");
@@ -3662,6 +3667,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("parameterDefaultValueInFunction.kt")
             public void testParameterDefaultValueInFunction() throws Exception {
                 runTest("../testData/basic/common/parameterDefaultValueInFunction.kt");
+            }
+
+            @TestMetadata("PreferConstructorInReturn.kt")
+            public void testPreferConstructorInReturn() throws Exception {
+                runTest("../testData/basic/common/PreferConstructorInReturn.kt");
             }
 
             @TestMetadata("PreferLessParameters.kt")
