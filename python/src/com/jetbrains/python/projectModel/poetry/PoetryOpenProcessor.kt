@@ -2,7 +2,6 @@
 package com.jetbrains.python.projectModel.poetry
 
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,17 +18,13 @@ import org.jetbrains.annotations.Nls
  * - pyproject.toml files are found in non-top-level directories (requires IJPL-180733).
  */
 class PoetryOpenProcessor: ProjectOpenProcessor() {
-  init {
-    if (!Registry.`is`("python.project.model.poetry")) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }  
-  
   private val importProvider = PoetryOpenProvider()
   
   override val name: @Nls String = PyBundle.message("python.project.model.poetry")
 
-  override fun canOpenProject(file: VirtualFile): Boolean = importProvider.canOpenProject(file)
+  override fun canOpenProject(file: VirtualFile): Boolean {
+    return Registry.`is`("python.project.model.poetry") && importProvider.canOpenProject(file)
+  }
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     return runUnderModalProgressIfIsEdt { importProvider.openProject(virtualFile, projectToClose, forceOpenInNewFrame) }
