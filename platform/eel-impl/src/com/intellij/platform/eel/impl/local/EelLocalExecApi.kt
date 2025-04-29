@@ -1,6 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.local
 
+import com.intellij.execution.CommandLineUtil
+import com.intellij.execution.Platform
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil.getPathDirs
 import com.intellij.execution.process.LocalProcessService
@@ -37,7 +39,6 @@ class EelLocalExecApi : EelExecApi {
     get() = LocalEelDescriptor
 
   override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
-    val args = builder.args.toTypedArray()
     val pty = builder.ptyOrStdErrSettings
 
     val process: LocalEelProcess =
@@ -45,13 +46,14 @@ class EelLocalExecApi : EelExecApi {
         // Inherit env vars because lack of `PATH` might break things
         val environment = System.getenv().toMutableMap()
         environment.putAll(builder.env)
+        val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, Platform.current())
         when (val p = pty) {
           is EelExecApi.Pty -> {
             if ("TERM" !in environment) {
               environment.getOrPut("TERM") { "xterm" }
             }
             LocalEelProcess(LocalProcessService.getInstance().startPtyProcess(
-              listOf(builder.exe) + args,
+              escapedCommandLine,
               builder.workingDirectory?.toString(),
               environment,
               LocalPtyOptions.defaults().builder().also {
@@ -63,7 +65,7 @@ class EelLocalExecApi : EelExecApi {
             ) as PtyProcess)
           }
           EelExecApi.RedirectStdErr, null -> {
-            LocalEelProcess(ProcessBuilder(builder.exe, *args).apply {
+            LocalEelProcess(ProcessBuilder(escapedCommandLine).apply {
               environment().putAll(environment)
               redirectErrorStream(p != null)
               builder.workingDirectory?.let {
