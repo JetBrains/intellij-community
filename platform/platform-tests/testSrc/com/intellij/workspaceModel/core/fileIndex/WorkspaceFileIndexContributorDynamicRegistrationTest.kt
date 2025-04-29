@@ -41,13 +41,15 @@ class WorkspaceFileIndexContributorDynamicRegistrationTest {
 
   @Test
   fun `register and unregister contributor`(@TestDisposable testDisposable: Disposable) {
+    val extensionPoint = WorkspaceFileIndexImpl.EP_NAME.point
+    assertTrue(extensionPoint.isDynamic)
     val file = projectModel.baseProjectDir.newVirtualFile("root/a.txt")
     val excludedFile = projectModel.baseProjectDir.newVirtualFile("root/$EXCLUDED_FILE_NAME")
     val contributorDisposable = Disposer.newDisposable()
     assertTrue(fileIndex.isInContent(excludedFile))
     Disposer.register(testDisposable, contributorDisposable)
-    
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludeSpecialFileContributor(), contributorDisposable)
+
+    extensionPoint.registerExtension(ExcludeSpecialFileContributor(), contributorDisposable)
     assertFalse(fileIndex.isInContent(excludedFile))
     assertTrue(fileIndex.isInContent(file))
 
