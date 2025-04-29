@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.openapi.util.userData.ExternalUserDataStorage;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.*;
@@ -13,6 +14,14 @@ import java.util.concurrent.atomic.AtomicReference;
 @Transient
 public class UserDataHolderBase extends AtomicReference<KeyFMap> implements UserDataHolderEx {
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+
+  @Nullable
+  private static ExternalUserDataStorage ourExternalUserDataStorage = null;
+
+  @ApiStatus.Internal
+  public static void setExternalUserDataStorage(@Nullable ExternalUserDataStorage externalUserDataStorage) {
+    ourExternalUserDataStorage = externalUserDataStorage;
+  }
 
   public UserDataHolderBase() {
     set(KeyFMap.EMPTY_MAP);
@@ -44,24 +53,42 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
 
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
-    T t = getUserMap().get(key);
-    if (t == null && key instanceof KeyWithDefaultValue) {
-      t = putUserDataIfAbsent(key, ((KeyWithDefaultValue<T>)key).getDefaultValue());
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      return external.getUserData(this, key);
     }
-    return t;
+    else {
+      T t = getUserMap().get(key);
+      if (t == null && key instanceof KeyWithDefaultValue) {
+        t = putUserDataIfAbsent(key, ((KeyWithDefaultValue<T>)key).getDefaultValue());
+      }
+      return t;
+    }
   }
 
   protected @NotNull KeyFMap getUserMap() {
-    return get();
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      return external.getUserMap(this);
+    }
+    else {
+      return get();
+    }
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    while (true) {
-      KeyFMap map = getUserMap();
-      KeyFMap newMap = value == null ? map.minus(key) : map.plus(key, value);
-      if (newMap == map || changeUserMap(map, newMap)) {
-        break;
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      external.putUserData(this, key, value);
+    }
+    else {
+      while (true) {
+        KeyFMap map = getUserMap();
+        KeyFMap newMap = value == null ? map.minus(key) : map.plus(key, value);
+        if (newMap == map || changeUserMap(map, newMap)) {
+          break;
+        }
       }
     }
   }
@@ -76,45 +103,88 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
-    while (true) {
-      KeyFMap map = getUserMap();
-      KeyFMap copyableMap = map.get(COPYABLE_USER_MAP_KEY);
-      if (copyableMap == null) {
-        copyableMap = KeyFMap.EMPTY_MAP;
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      while (true) {
+        KeyFMap oldCopyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+        KeyFMap newCopyableMap = oldCopyableMap;
+        if (oldCopyableMap == null) {
+          if (value == null) {
+            //nothing
+          }
+          else {
+            newCopyableMap = KeyFMap.EMPTY_MAP.plus(key, value);
+          }
+        }
+        else {
+          if (value == null) {
+            newCopyableMap = oldCopyableMap.minus(key);
+          }
+          else {
+            newCopyableMap = oldCopyableMap.plus(key, value);
+          }
+        }
+        if (
+          oldCopyableMap == newCopyableMap ||
+          external.compareAndPutUserData(this, COPYABLE_USER_MAP_KEY, oldCopyableMap, newCopyableMap)
+        ) {
+          break;
+        }
       }
-      KeyFMap newCopyableMap = value == null ? copyableMap.minus(key) : copyableMap.plus(key, value);
-      KeyFMap newMap = newCopyableMap.isEmpty() ? map.minus(COPYABLE_USER_MAP_KEY) : map.plus(COPYABLE_USER_MAP_KEY, newCopyableMap);
-      if (newMap == map || changeUserMap(map, newMap)) {
-        return;
+    }
+    else {
+      while (true) {
+        KeyFMap map = getUserMap();
+        KeyFMap copyableMap = map.get(COPYABLE_USER_MAP_KEY);
+        if (copyableMap == null) {
+          copyableMap = KeyFMap.EMPTY_MAP;
+        }
+        KeyFMap newCopyableMap = value == null ? copyableMap.minus(key) : copyableMap.plus(key, value);
+        KeyFMap newMap = newCopyableMap.isEmpty() ? map.minus(COPYABLE_USER_MAP_KEY) : map.plus(COPYABLE_USER_MAP_KEY, newCopyableMap);
+        if (newMap == map || changeUserMap(map, newMap)) {
+          return;
+        }
       }
     }
   }
 
   @Override
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
-    while (true) {
-      KeyFMap map = getUserMap();
-      if (map.get(key) != oldValue) {
-        return false;
-      }
-      KeyFMap newMap = newValue == null ? map.minus(key) : map.plus(key, newValue);
-      if (newMap == map || changeUserMap(map, newMap)) {
-        return true;
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      return external.compareAndPutUserData(this, key, oldValue, newValue);
+    }
+    else {
+      while (true) {
+        KeyFMap map = getUserMap();
+        if (map.get(key) != oldValue) {
+          return false;
+        }
+        KeyFMap newMap = newValue == null ? map.minus(key) : map.plus(key, newValue);
+        if (newMap == map || changeUserMap(map, newMap)) {
+          return true;
+        }
       }
     }
   }
 
   @Override
   public @NotNull <T> T putUserDataIfAbsent(final @NotNull Key<T> key, final @NotNull T value) {
-    while (true) {
-      KeyFMap map = getUserMap();
-      T oldValue = map.get(key);
-      if (oldValue != null) {
-        return oldValue;
-      }
-      KeyFMap newMap = map.plus(key, value);
-      if (newMap == map || changeUserMap(map, newMap)) {
-        return value;
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      return external.putUserDataIfAbsent(this, key, value);
+    }
+    else {
+      while (true) {
+        KeyFMap map = getUserMap();
+        T oldValue = map.get(key);
+        if (oldValue != null) {
+          return oldValue;
+        }
+        KeyFMap newMap = map.plus(key, value);
+        if (newMap == map || changeUserMap(map, newMap)) {
+          return value;
+        }
       }
     }
   }
@@ -133,7 +203,13 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   protected void setUserMap(@NotNull KeyFMap map) {
-    set(map);
+    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    if (external != null) {
+      external.setUserMap(this, map);
+    }
+    else {
+      set(map);
+    }
   }
 
   public boolean isUserDataEmpty() {
