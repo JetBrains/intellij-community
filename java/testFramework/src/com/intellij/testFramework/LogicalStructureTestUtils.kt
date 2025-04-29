@@ -74,6 +74,7 @@ class LogicalStructureNode(
 
   private val subNodes = mutableListOf<LogicalStructureNode>()
   private var childrenDontMatter = false
+  private var childrenOrderDontMatter = false
   private var navigationElementSupplier: (() -> PsiElement?)? = null
 
   fun subNode(subNode: LogicalStructureNode) {
@@ -95,6 +96,10 @@ class LogicalStructureNode(
 
   fun anyNodes() {
     childrenDontMatter = true
+  }
+
+  fun arbitraryChildrenOrder() {
+    childrenOrderDontMatter = true
   }
 
   fun navigationElement(element: PsiElement) {
@@ -135,8 +140,15 @@ class LogicalStructureNode(
     }
     if (!childrenDontMatter) {
       if (subNodes.size != other.subNodes.size) return false
-      for (i in subNodes.indices) {
-        if (!subNodes[i].isEqualTo(other.subNodes[i], true, availableDepth - 1)) return false
+      if (childrenOrderDontMatter) {
+        return subNodes.all {
+          other.subNodes.any { otherSubNode -> it.isEqualTo(otherSubNode, true, availableDepth - 1) }
+        }
+      }
+      else {
+        for (i in subNodes.indices) {
+          if (!subNodes[i].isEqualTo(other.subNodes[i], true, availableDepth - 1)) return false
+        }
       }
     }
     return true
