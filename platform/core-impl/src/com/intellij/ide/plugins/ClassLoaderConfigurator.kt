@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.cl.ResolveScopeManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ResourceFile
@@ -108,7 +109,9 @@ class ClassLoaderConfigurator(
     assert(module.dependencies.isEmpty()) { "Module $module shouldn't have plugin dependencies: ${module.dependencies}" }
     val dependencies = getSortedDependencies(module)
     // if the module depends on an unavailable plugin, it will not be loaded
-    if (dependencies.any { it.pluginClassLoader == null }) {
+    val missingDependency = dependencies.find { it.pluginClassLoader == null }
+    if (missingDependency != null) {
+      LOG.debug { "content module $module is missing dependency $missingDependency" }
       return false
     }
 
