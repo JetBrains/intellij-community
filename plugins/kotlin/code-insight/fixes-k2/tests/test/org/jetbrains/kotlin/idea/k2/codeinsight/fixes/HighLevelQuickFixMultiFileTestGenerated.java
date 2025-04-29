@@ -952,6 +952,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent2.test");
             }
 
+            @TestMetadata("multiDeclarationInLoopExtensionComponent1.test")
+            public void testMultiDeclarationInLoopExtensionComponent1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLoopExtensionComponent1.test");
+            }
+
+            @TestMetadata("multiDeclarationInLoopExtensionComponent1_ambiguousFunction.test")
+            public void testMultiDeclarationInLoopExtensionComponent1_ambiguousFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLoopExtensionComponent1_ambiguousFunction.test");
+            }
+
             @TestMetadata("multiFunctionCandidate.test")
             public void testMultiFunctionCandidate() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/multiFunctionCandidate.test");

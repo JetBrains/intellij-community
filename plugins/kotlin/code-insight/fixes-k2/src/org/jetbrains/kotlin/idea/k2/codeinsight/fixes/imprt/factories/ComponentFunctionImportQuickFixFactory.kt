@@ -7,7 +7,9 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtContainerNode
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtParameter
 
 internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixFactory() {
@@ -15,14 +17,27 @@ internal object ComponentFunctionImportQuickFixFactory : AbstractImportQuickFixF
         val expression = diagnostic.psi as? KtExpression ?: return null
 
         val destructuredType = when (diagnostic) {
-            is KaFirDiagnostic.ComponentFunctionMissing,
+            is KaFirDiagnostic.ComponentFunctionMissing -> diagnostic.destructingType
+
             is KaFirDiagnostic.ComponentFunctionAmbiguity -> {
+                // This diagnostic does not contain the destructured type explicitly, see KT-77203
+
                 when (expression) {
-                    // destructuring in lambda parameter position (e.g. `foo { (a, b) -> ... }`)
+                    // Destructuring in lambda parameter position (e.g. `foo { (a, b) -> ... }`)
                     is KtParameter -> expression.returnType
 
-                    // regular assignment destructuring (e.g. `val (a, b) = ...`)
-                    else -> expression.expressionType
+                    else -> {
+                        val forLoopParent = (expression.parent as? KtContainerNode)?.parent as? KtForExpression
+
+                        if (forLoopParent != null) {
+                            // Destructuring in for loop parameter position (e.g. `for ((a, b) in xs) { ... }`).
+                            // In this case, `(a, b)` is the loop parameter, and we use its type
+                            forLoopParent.loopParameter?.returnType
+                        } else {
+                            // Regular assignment destructuring (e.g. `val (a, b) = ...`)
+                            expression.expressionType
+                        }
+                    }
                 }
             }
 
