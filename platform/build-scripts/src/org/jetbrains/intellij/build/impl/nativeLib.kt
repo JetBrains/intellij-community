@@ -186,7 +186,8 @@ private suspend fun unpackNativeLibraries(
         null
       }
       else {
-        signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
+        val presignedFile = signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
+        presignedFile ?: error("Presigned file is not found. Path='$path', libName='$libName', libVersion='$libVersion'")
       }
 
       // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
