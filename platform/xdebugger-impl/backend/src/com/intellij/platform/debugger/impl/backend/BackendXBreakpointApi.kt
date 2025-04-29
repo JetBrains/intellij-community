@@ -72,6 +72,13 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
+  override suspend fun setLine(breakpointId: XBreakpointId, line: Int) {
+    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
+    edtWriteAction {
+      breakpoint.line = line
+    }
+  }
+
   override suspend fun setLogMessage(breakpointId: XBreakpointId, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {

@@ -94,10 +94,25 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun setLine(line: Int) {
-    // TODO IJPL-185322 implement like it is done in XLineBreakpointImpl
-    // TODO IJPL-185322 send through RPC
-    updateLineBreakpointState { it.copy(line = line) }
-    onBreakpointChange()
+    if (getLine() != line) {
+      // TODO IJPL-185322 support type.lineShouldBeChanged()
+      val oldLine = getLine()
+      updateLineBreakpointState { it.copy(line = line) }
+      // TODO IJPL-185322 support source position?
+      // mySourcePosition = null
+      visualRepresentation.removeHighlighter()
+
+      // We try to redraw inlays every time,
+      // due to lack of synchronization between inlay redrawing and breakpoint changes.
+      visualRepresentation.redrawInlineInlays(getFile(), oldLine)
+      visualRepresentation.redrawInlineInlays(getFile(), line)
+
+      onBreakpointChange()
+
+      project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+        XBreakpointApi.getInstance().setLine(id, line)
+      }
+    }
   }
 
   override fun getHighlightRange(): TextRange? {
