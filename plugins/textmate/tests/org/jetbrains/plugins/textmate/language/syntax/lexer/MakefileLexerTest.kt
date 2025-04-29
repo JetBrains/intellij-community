@@ -1,16 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.junit.jupiter.api.Test
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
 
-public class MakefileLexerTest extends LexerTestCase {
+class MakefileLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun test() = doTest("test.mk", "test_after.mk")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "make";
-  }
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.MAKE;
-  }
+  override val testDirRelativePath = "make"
+  override val bundleName = TestUtil.MAKE
 }

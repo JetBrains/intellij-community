@@ -1,24 +1,14 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-import java.util.Collections;
-import java.util.List;
+class MarkdownHtmlLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun heading() = doTest("heading.md", "heading_after.md")
 
-public class MarkdownHtmlLexerTest extends LexerTestCase {
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.MARKDOWN_TEXTMATE;
-  }
-
-  @Override
-  protected List<String> getExtraBundleNames() {
-    return Collections.singletonList(TestUtil.HTML);
-  }
-
-  @Override
-  protected String getTestDirRelativePath() {
-    return "markdown_html";
-  }
+  override val testDirRelativePath = "markdown_html"
+  override val bundleName = TestUtil.MARKDOWN_TEXTMATE
+  override val extraBundleNames = listOf(TestUtil.HTML)
 }

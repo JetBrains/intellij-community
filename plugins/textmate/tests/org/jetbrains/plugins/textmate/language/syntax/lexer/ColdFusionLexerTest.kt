@@ -1,16 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class ColdFusionLexerTest extends LexerTestCase {
+class ColdFusionLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun coldfusion() = doTest("coldfusion.cfm", "coldfusion_after.cfm")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "coldfusion";
-  }
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.COLD_FUSION;
-  }
+  override val testDirRelativePath = "coldfusion"
+  override val bundleName = TestUtil.COLD_FUSION
 }

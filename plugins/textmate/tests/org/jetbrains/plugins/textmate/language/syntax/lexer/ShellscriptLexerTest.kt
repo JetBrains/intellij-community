@@ -1,16 +1,19 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class ShellscriptLexerTest extends LexerTestCase {
+class ShellscriptLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun case() = doTest("case.sh", "case_after.sh")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "shellscript";
-  }
+  @Test
+  fun comment() = doTest("comment.sh", "comment_after.sh")
 
-  @Override
-  protected String getBundleName() {
-    return TestUtil.SHELLSCRIPT;
-  }
+  @Test
+  fun heredoc() = doTest("heredoc.sh", "heredoc_after.sh")
+
+  override val testDirRelativePath = "shellscript"
+  override val bundleName = TestUtil.SHELLSCRIPT
 }

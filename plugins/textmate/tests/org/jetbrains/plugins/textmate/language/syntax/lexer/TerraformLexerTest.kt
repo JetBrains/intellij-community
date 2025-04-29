@@ -1,16 +1,16 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class TerraformLexerTest extends LexerTestCase {
+class TerraformLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun module() = doTest("module.tf", "module_after.tf")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "terraform";
-  }
+  @Test
+  fun splitScopeBySpace() = doTest("split_scope_by_space.tf", "split_scope_by_space_after.tf")
 
-  @Override
-  protected String getBundleName() {
-    return TestUtil.TERRAFORM;
-  }
+  override val testDirRelativePath = "terraform"
+  override val bundleName = TestUtil.TERRAFORM
 }

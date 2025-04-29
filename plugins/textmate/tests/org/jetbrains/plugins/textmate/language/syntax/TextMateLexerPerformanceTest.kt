@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer
+package org.jetbrains.plugins.textmate.language.syntax
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -7,13 +7,15 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.textmate.joni.JoniRegexFactory
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.jetbrains.plugins.textmate.TestUtil
-import org.jetbrains.plugins.textmate.findScopeByFileName
+import org.jetbrains.plugins.textmate.TestUtil.findScopeByFileName
+import org.jetbrains.plugins.textmate.TestUtil.loadBundle
 import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateCachingSyntaxMatcher
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateSyntaxMatcherImpl
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import org.jetbrains.plugins.textmate.loadBundle
 import org.jetbrains.plugins.textmate.regex.CachingRegexFactory
 import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory
 import java.io.File

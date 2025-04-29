@@ -1,16 +1,16 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class PerlLexerTest extends LexerTestCase {
+class PerlLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun perl() = doTest("perl.pl", "perl_after.pl")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "perl";
-  }
+  @Test
+  fun regex() = doTest("regex.pl", "regex_after.pl")
 
-  @Override
-  protected String getBundleName() {
-    return TestUtil.PERL;
-  }
+  override val testDirRelativePath = "perl"
+  override val bundleName = TestUtil.PERL
 }

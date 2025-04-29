@@ -1,15 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class MarkdownSublimeLexerTest extends LexerTestCase {
-  @Override
-  protected String getTestDirRelativePath() {
-    return "markdown_sublime";
-  }
+class MarkdownSublimeLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun infinityLoopBundleBug() = doTest("infinity_loop_bundle_bug.md", "infinity_loop_bundle_bug_after.md")
 
-  @Override
-  protected String getBundleName() {
-    return TestUtil.MARKDOWN_SUBLIME;
-  }
+  override val testDirRelativePath = "markdown_sublime"
+  override val bundleName = TestUtil.MARKDOWN_SUBLIME
 }

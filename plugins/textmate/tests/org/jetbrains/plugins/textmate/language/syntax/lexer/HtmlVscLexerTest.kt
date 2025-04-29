@@ -1,23 +1,17 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-import java.util.Collections;
-import java.util.List;
+class HtmlVscLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun doctype() = doTest("doctype.html", "doctype_after.html")
 
-public class HtmlVscLexerTest extends LexerTestCase {
-  @Override
-  protected String getBundleName() {
-    return TestUtil.HTML_VSC;
-  }
+  @Test
+  fun htmlCss() = doTest("html_css.html", "html_css_after.html")
 
-  @Override
-  protected List<String> getExtraBundleNames() {
-    return Collections.singletonList(TestUtil.CSS_VSC);
-  }
-
-  @Override
-  protected String getTestDirRelativePath() {
-    return "html_vsc";
-  }
+  override val testDirRelativePath = "html_vsc"
+  override val bundleName = TestUtil.HTML_VSC
+  override val extraBundleNames = listOf(TestUtil.CSS_VSC)
 }

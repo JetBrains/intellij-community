@@ -1,14 +1,12 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-public class CppLexerTest extends LexerTestCase {
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "cpp";
-  }
+class CppLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun test() = doTest("test.cc", "test_after.cc")
 
-  @Override
-  protected String getBundleName() {
-    return "cpp";
-  }
+  override val testDirRelativePath = "cpp"
+  override val bundleName = "cpp"
 }

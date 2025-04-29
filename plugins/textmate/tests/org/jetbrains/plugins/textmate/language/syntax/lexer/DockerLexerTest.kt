@@ -1,15 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class DockerLexerTest extends LexerTestCase {
-  @Override
-  protected String getBundleName() {
-    return TestUtil.DOCKER;
-  }
+class DockerLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun dockerfile() = doTest("Dockerfile", "Dockerfile_after")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "docker_vsc";
-  }
+  override val testDirRelativePath = "docker_vsc"
+  override val bundleName = TestUtil.DOCKER
 }

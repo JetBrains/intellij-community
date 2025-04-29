@@ -1,24 +1,14 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-import java.util.List;
+class MarkdownBloggingLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun ruby12703() = doTest("ruby12703.blog.md", "ruby12703_after.blog.md")
 
-import static java.util.Arrays.asList;
-
-public class MarkdownBloggingLexerTest extends LexerTestCase {
-  @Override
-  protected String getTestDirRelativePath() {
-    return "markdown_blogging";
-  }
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.MARKDOWN_BLOGGING;
-  }
-
-  @Override
-  protected List<String> getExtraBundleNames() {
-    return asList(TestUtil.MARKDOWN_TEXTMATE);
-  }
+  override val testDirRelativePath = "markdown_blogging"
+  override val bundleName = TestUtil.MARKDOWN_BLOGGING
+  override val extraBundleNames = listOf(TestUtil.MARKDOWN_TEXTMATE)
 }

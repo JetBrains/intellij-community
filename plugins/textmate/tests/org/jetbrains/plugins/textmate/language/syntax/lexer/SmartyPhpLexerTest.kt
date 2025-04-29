@@ -1,24 +1,14 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-import java.util.Collections;
-import java.util.List;
+class SmartyPhpLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun injection() = doTest("injection.tpl_hack", "injection_after.tpl_hack")
 
-public class SmartyPhpLexerTest extends LexerTestCase {
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.SMARTY;
-  }
-
-  @Override
-  protected List<String> getExtraBundleNames() {
-    return Collections.singletonList(TestUtil.PHP);
-  }
-
-  @Override
-  protected String getTestDirRelativePath() {
-    return "smarty";
-  }
+  override val testDirRelativePath = "smarty"
+  override val bundleName = TestUtil.SMARTY
+  override val extraBundleNames = listOf(TestUtil.PHP)
 }

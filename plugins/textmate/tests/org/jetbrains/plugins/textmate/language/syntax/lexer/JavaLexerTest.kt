@@ -1,16 +1,16 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.junit.jupiter.api.Test
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
 
-public class JavaLexerTest extends LexerTestCase {
+class JavaLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun javaUnicodeLiteral() = doTest("java_unicode_literal.java", "java_unicode_literal_after.java")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "java";
-  }
+  @Test
+  fun java() = doTest("java.java", "java_after.java")
 
-  @Override
-  protected String getBundleName() {
-    return TestUtil.JAVA;
-  }
+  override val testDirRelativePath = "java"
+  override val bundleName = TestUtil.JAVA
 }

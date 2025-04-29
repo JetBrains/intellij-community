@@ -1,16 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class LatexLexerTest extends LexerTestCase {
+class LatexLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun text() = doTest("text.tex", "text_after.tex")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "latex";
-  }
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.LATEX;
-  }
+  override val testDirRelativePath = "latex"
+  override val bundleName = TestUtil.LATEX
 }

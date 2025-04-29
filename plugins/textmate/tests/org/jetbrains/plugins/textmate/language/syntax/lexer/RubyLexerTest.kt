@@ -1,15 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
+import org.junit.jupiter.api.Test
 
-public class RubyLexerTest extends LexerTestCase {
-  @Override
-  protected String getTestDirRelativePath() {
-    return "ruby";
-  }
+class RubyLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun commentAtLineStart() = doTest("comment_at_line_start.rb", "comment_at_line_start_after.rb")
 
-  @Override
-  protected String getBundleName() {
-    return TestUtil.RUBY;
-  }
+  override val testDirRelativePath = "ruby"
+  override val bundleName = TestUtil.RUBY
 }

@@ -1,16 +1,13 @@
-package org.jetbrains.plugins.textmate.language.syntax.lexer;
+package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import org.jetbrains.plugins.textmate.TestUtil;
+import org.jetbrains.plugins.textmate.TestUtil
+import org.junit.jupiter.api.Test
+import org.jetbrains.plugins.textmate.language.syntax.TextMateLexerTestCase
 
-public class GitLexerTest extends LexerTestCase {
+class GitLexerTest : TextMateLexerTestCase() {
+  @Test
+  fun commitEDITMSG() = doTest("COMMIT_EDITMSG", "COMMIT_EDITMSG_after")
 
-  @Override
-  protected String getTestDirRelativePath() {
-    return "git";
-  }
-
-  @Override
-  protected String getBundleName() {
-    return TestUtil.GIT;
-  }
+  override val testDirRelativePath = "git"
+  override val bundleName = TestUtil.GIT
 }
