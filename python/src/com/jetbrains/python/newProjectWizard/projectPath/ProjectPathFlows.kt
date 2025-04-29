@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard.projectPath
 
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
@@ -7,6 +7,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.create
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -58,21 +60,21 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
     /**
      * checks that [pathAsString] is a valid path and returns it or error
      */
-    fun validatePath(pathAsString: String): Result<Path, @NlsSafe String> {
+    fun validatePath(pathAsString: String): Result<Path, MessageError> {
       val path = try {
         Paths.get(pathAsString)
       }
       catch (e: InvalidPathException) {
-        return Result.Failure(e.reason)
+        return failure(e.reason)
       }
 
       if (!path.isAbsolute) {
-        return Result.Failure(PyBundle.message("python.sdk.new.error.no.absolute"))
+        return failure(PyBundle.message("python.sdk.new.error.no.absolute"))
       }
 
       for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_RESERVED_WORDS)) {
         validator.curry { pathAsString }.validate()?.let {
-          return Result.Failure(it.message)
+          return failure(it.message)
         }
       }
       return Result.Success(path)

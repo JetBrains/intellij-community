@@ -88,7 +88,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
               if (!textField.isVisible) return@addInputRule null // We are hidden, hence valid
               locationValidationFailed.set(false)
               val locationPath = when (val path = validatePath(textField.text)) {
-                is com.jetbrains.python.Result.Failure -> return@addInputRule ValidationInfo(path.error) // Path is invalid
+                is com.jetbrains.python.Result.Failure -> return@addInputRule ValidationInfo(path.error.message) // Path is invalid
                 is com.jetbrains.python.Result.Success -> path.result
               }
               val pathExists = locationPath.exists()

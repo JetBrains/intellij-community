@@ -70,10 +70,9 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     coroutineScope.launch {
       val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
         withContext(Dispatchers.EDT) {
-          // TODO: Migrate to python Result using PyError as exception not to make this dynamic check
           uiServices.errorSink.emit(it.error)
         }
-        return@launch // Since we failed to generate project, we do not need to go any further
+        return@launch // Since we failed to generate a project, we do not need to go any further
       }
 
       withContext(Dispatchers.EDT) {
@@ -88,8 +87,8 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
                                    this@PyV3ProjectBaseGenerator,
                                    emptyList())
 
-      // Project view must be expanded (PY-75909) but it can't be unless it contains some files.
-      // Either base settings (which create venv) might generate some or type specific settings (like Django) may.
+      // The project view must be expanded (PY-75909), but it can't be unless it contains some files.
+      // Either base settings (which create venv) might generate some or type-specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       uiServices.expandProjectTreeView(project)
       typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
@@ -108,7 +107,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       is Result.Success -> {
         ValidationResult.OK
       }
-      is Result.Failure -> ValidationResult(pathOrError.error)
+      is Result.Failure -> ValidationResult(pathOrError.error.message)
     }
 
 
