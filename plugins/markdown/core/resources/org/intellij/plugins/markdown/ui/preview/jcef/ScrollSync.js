@@ -1,26 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// noinspection JSUnresolvedReference
+
 class ScrollController {
-  #lastOffset = 0;
-  #scrollFinished = true;
+  #cachedMarkdownElements = null;
+  #extraScroll = 50;
+  #lastScrollTime = 0;
+  #roughPartialLine = 12;
 
   constructor() {
     this.positionAttributeName = document.querySelector(`meta[name="markdown-position-attribute-name"]`).content;
-    this.setScrollEventName = document.querySelector(`meta[name="markdown-set-scroll-event-name"]`).content;
     this.collectMarkdownElements = this.#doCollectMarkdownElements();
     IncrementalDOM.notifications.afterPatchListeners.push(() => {
+      this.#cachedMarkdownElements = null;
       this.collectMarkdownElements = this.#doCollectMarkdownElements();
     });
-    const scrollHandler = ScrollController.#throttle(() => this.#scrollHandler(), 20);
-    document.addEventListener("scroll", event => scrollHandler());
   }
 
   #doCollectMarkdownElements() {
-    let elements = null;
     return () => {
-      if (elements != null) {
-        return elements;
-      }
-      elements = Array.from(document.body.querySelectorAll(`[${this.positionAttributeName}]`)).map(element => {
+      return Array.from(document.body.querySelectorAll(`[${this.positionAttributeName}]`)).map(element => {
         const position = element.getAttribute(this.positionAttributeName).split("..");
         return {
           element,
@@ -28,111 +26,24 @@ class ScrollController {
           to: position[1]
         };
       });
-      return elements;
     };
   }
 
-  #scrollHandler() {
-    const value = this._getElementsAtOffset(window.scrollY);
-    window.__IntelliJTools.messagePipe.post(this.setScrollEventName, value.previous.from);
+  #getCachedMarkdownElements() {
+    return this.#cachedMarkdownElements || (this.#cachedMarkdownElements = this.collectMarkdownElements());
   }
 
-  getNodeOffsets(node) {
-    if (!node || !("getAttribute" in node)) {
-      return null;
-    }
-    const value = node.getAttribute(this.positionAttributeName);
-    if (value) {
-      return value.split("..");
-    }
-    return null;
+  clearMarkdownElementsCache() {
+    this.#cachedMarkdownElements = null;
   }
 
-  getMaxOffset() {
-    const element = document.body.firstChild;
-    const offsets = this.getNodeOffsets(element);
-    if (!offsets) {
-      throw new Error("First body child is expected to be the root of the document!");
-    }
-    return offsets[1];
-  }
-
-  #findElementAtOffset(offset, node = document.body.firstChild, result = {}) {
-    for (let child = node.firstChild; child !== null; child = child.nextSibling) {
-      if (child.nodeType !== Node.ELEMENT_NODE) {
-        continue;
-      }
-      const position = this.getNodeOffsets(child);
-      if (!position) {
-        continue;
-      }
-      if (offset >= position[0] && offset <= position[1]) {
-        result.element = child;
-        this.#findElementAtOffset(offset, child, result);
-        break;
-      }
-    }
-    return result.element;
-  }
-
-  #actuallyFindElement(offset, forward = false) {
-    const targetElement = this.#findElementAtOffset(offset);
-    if (targetElement) {
-      return targetElement;
-    }
-    if (forward) {
-      const maxOffset = this.getMaxOffset();
-      for (let it = offset; it <= maxOffset; it += 1) {
-        const previousElement = this.#findElementAtOffset(it);
-        if (previousElement) {
-          return previousElement;
-        }
-      }
-    } else {
-      for (let it = offset - 1; it >= 0; it -= 1) {
-        const previousElement = this.#findElementAtOffset(it);
-        if (previousElement) {
-          return previousElement;
-        }
-      }
-    }
-    return null;
-  }
-
-  _getElementsAtOffset(offset) {
-    const elements = this.collectMarkdownElements();
-    const position = offset - window.scrollY;
-    let left = -1;
-    let right = elements.length - 1;
-    while (left + 1 < right) {
-      const mid = Math.floor((left + right) / 2);
-      const bounds = elements[mid].element.getBoundingClientRect();
-      if (bounds.top + bounds.height >= position) {
-        right = mid;
-      }
-      else {
-        left = mid;
-      }
-    }
-    const hiElement = elements[right];
-    const hiBounds = hiElement.element.getBoundingClientRect();
-    if (right >= 1 && hiBounds.top > position) {
-      const loElement = elements[left];
-      return { previous: loElement, next: hiElement };
-    }
-    if (right > 1 && right < elements.length && hiBounds.top + hiBounds.height > position) {
-      return { previous: hiElement, next: elements[right + 1] };
-    }
-    return { previous: hiElement };
-  }
-
-  #doScroll(elementOrRect, smooth, doNothingIfAlreadyOnScreen = false) {
+  #doScroll(elementOrRect) {
     let top, bottom;
     const wh = window.innerHeight;
 
     if (elementOrRect instanceof Element) {
-      // If the element has children which add to its height, for scrolling-into-view purposes treat the
-      // parent element as if it has reduced height.
+      // If the element has descendants which add to its height, for scrolling-into-view purposes treat the
+      // parent element as if it has height reduced by its range-marked descendants.
       const rect = elementOrRect.getBoundingClientRect();
 
       top = rect.top;
@@ -143,7 +54,7 @@ class ScrollController {
           if (child.hasAttribute(this.positionAttributeName)) {
             const childRect = child.getBoundingClientRect();
 
-            if (childRect.top > rect.top + 12) {
+            if (childRect.top > rect.top + this.#roughPartialLine) {
               bottom = childRect.top;
               break;
             }
@@ -161,47 +72,26 @@ class ScrollController {
       bottom = elementOrRect.bottom;
     }
 
-    if (doNothingIfAlreadyOnScreen && top >= 0 && bottom <= wh)
+    // Element rectangle already on screen?
+    if (top >= 0 && bottom <= wh)
       return;
 
-    if (bottom > wh)
-      window.scrollBy({ left: 0, top: bottom - wh, behavior: smooth ? "smooth" : "instant" });
-    else
-      window.scrollBy({ left: 0, top, behavior: smooth ? "smooth" : "instant" });
+    const extraScroll = Math.min(this.#extraScroll, wh / 25);
+    const now = performance.now();
+    let behavior = 'smooth';
+    let delta = bottom > wh ? bottom - wh + extraScroll : top - extraScroll;
 
-    this.#monitorScrollCompletion();
-  }
+    // For large jumps or rapid-fire scrolling, using instant scrolling.
+    if (now - this.#lastScrollTime < 250 || Math.abs(delta) > wh / 2)
+      behavior = 'instant';
 
-  scrollBy(horizontal, vertical) {
-    if (this.#scrollFinished) {
-      window.scrollBy(horizontal, vertical);
-    }
-  }
-
-  scrollTo(offset, smooth = true, doNothingIfAlreadyOnScreen = false) {
-    if (this.currentScrollElement) {
-      const position = this.getNodeOffsets(this.currentScrollElement);
-      if (offset >= position[0] && offset <= position[1]) {
-        return;
-      }
-    }
-    const body = document.body;
-    if (!body || !body.firstChild || !body.firstChild.firstChild) {
-      return;
-    }
-    const element = this.#actuallyFindElement(offset, offset >= this.#lastOffset);
-    this.#lastOffset = offset;
-    if (!element) {
-      console.warn(`Failed to find element for offset: ${offset}`);
-      return;
-    }
-    this.currentScrollElement = element;
-    this.#doScroll(element, smooth, doNothingIfAlreadyOnScreen);
+    window.scrollBy({ left: 0, top: delta, behavior });
+    this.#lastScrollTime = now;
   }
 
   ensureMarkdownSrcOffsetIsVisible(offset) {
     // Find an element with the narrowest range inclusive of `offset`
-    const elements = this.collectMarkdownElements();
+    const elements = this.#getCachedMarkdownElements();
     let element;
     let e;
     let minSpan = Number.MAX_SAFE_INTEGER;
@@ -218,57 +108,12 @@ class ScrollController {
       }
     }
 
-    if (!element && !fallbackElement) {
-      console.info(`*** no match at ${offset} ***`);
+    if (!element && !fallbackElement)
       return;
-    }
     else if (!element)
       element = fallbackElement;
 
-    const rect = element.getBoundingClientRect();
-    this.#doScroll(element, true, true);
-  }
-
-  static #throttle(callback, limit) {
-    let waiting = false;
-    return (...args) => {
-      if (!waiting) {
-        callback(...args);
-        waiting = true;
-        setTimeout(() => {
-          waiting = false;
-        }, limit);
-      }
-    };
-  }
-
-  #monitorScrollCompletion() {
-    this.#scrollFinished = false;
-
-    let frames = 0;
-    let currentPosition = window.scrollY;
-    let lastPosition = null;
-
-    const action = () => {
-      currentPosition = window.scrollY;
-
-      if (currentPosition === lastPosition) {
-        frames += 1;
-
-        if (frames > 2) {
-          this.#scrollFinished = false;
-          return;
-        }
-      }
-      else {
-        frames = 0;
-        lastPosition = currentPosition;
-      }
-
-      requestAnimationFrame(action);
-    };
-
-    requestAnimationFrame(action);
+    this.#doScroll(element);
   }
 }
 

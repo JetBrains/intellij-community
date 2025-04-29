@@ -17,6 +17,8 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * @author Konstantin Bulenkov
@@ -93,7 +95,27 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent event) {
       if (isAutoScrollPreview()) {
+        suppressNextScrollSyncForEditor(event.getEditor());
         ((MarkdownPreviewFileEditor) myPreview).ensureMarkdownSrcOffsetIsVisible(event.getEditor().getCaretModel().getOffset());
+      }
+    }
+  }
+
+  private static final Map<Editor, Long> scrollSuppressions = new WeakHashMap<>();
+
+  public static void suppressNextScrollSyncForEditor(Editor editor) {
+    scrollSuppressions.put(editor, System.currentTimeMillis());
+  }
+
+  private static void clearOutOldSuppressions() {
+    long now = System.currentTimeMillis();
+    var iterator = scrollSuppressions.entrySet().iterator();
+
+    while (iterator.hasNext()) {
+      var entry = iterator.next();
+
+      if (entry.getValue() < now - 3000) {
+        iterator.remove();
       }
     }
   }
@@ -107,11 +129,21 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
     @Override
     public void visibleAreaChanged(@NotNull VisibleAreaEvent event) {
+      // If the user double-clicks the preview, causing the editor to scroll to a new location,
+      //   we want to avoid having the editor scrolling turn around and cause the preview to scroll.
+
+      final Editor editor = event.getEditor();
+
+      clearOutOldSuppressions();
+
+      if (scrollSuppressions.get(editor) != null) {
+        return;
+      }
+
       if (!isAutoScrollPreview()) {
         return;
       }
 
-      final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
       int currentLine = pixelOffsetToLine(editor, y);
 

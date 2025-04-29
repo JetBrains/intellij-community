@@ -113,7 +113,6 @@ class MarkdownJCEFHtmlPanel(
           <title>IntelliJ Markdown Preview</title>
           <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
           <meta name="markdown-position-attribute-name" content="${HtmlGenerator.SRC_ATTRIBUTE_NAME}"/>
-          <meta name="markdown-set-scroll-event-name" content="$SET_SCROLL_EVENT"/>
           $scriptingLines
           $stylesLines
         </head>
@@ -163,13 +162,6 @@ class MarkdownJCEFHtmlPanel(
       }
     }, cefBrowser)
 
-    browserPipe.subscribe(SET_SCROLL_EVENT, object : BrowserPipe.Handler {
-      override fun processMessageReceived(data: String): Boolean {
-        data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
-        return false
-      }
-    })
-
     browserPipe.subscribe(SCROLL_SOURCE_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
         var match = Regex("""^(\d+),(\d+)""").find(data)
@@ -181,7 +173,7 @@ class MarkdownJCEFHtmlPanel(
 
         return false
       }
-    }) // SCROLL_SOURCE_EVENT
+    })
 
     val connection = application.messageBus.connect(this)
     connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
@@ -255,21 +247,18 @@ class MarkdownJCEFHtmlPanel(
   @Suppress("JSUnresolvedReference")
   private suspend fun updateDom(renderClosure: String, initialScrollOffset: Int, firstUpdate: Boolean) {
     previousRenderClosure = renderClosure
-    // language=JavaScript
-    val scrollCode = when {
-      firstUpdate -> "window.scrollController?.scrollTo($initialScrollOffset, true);"
-      else -> ""
-    }
+    // TODO: Handle initialScrollOffset, firstUpdate properly.
     // language=JavaScript
     val code = """
       (function() {
+        window.scrollController.clearMarkdownElementsCache();
+
         return new Promise( resolve => {
           const action = () => {
             console.time("incremental-dom-patch");
             const render = $renderClosure;
             // noinspection JSCheckFunctionSignatures
             IncrementalDOM.patch(document.body, () => render());
-            $scrollCode
             if (IncrementalDOM.notifications.afterPatchListeners) {
               IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
             }
@@ -354,11 +343,6 @@ class MarkdownJCEFHtmlPanel(
 
   override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
     scrollListeners.remove(listener)
-  }
-
-  @Deprecated("Deprecated in Java")
-  override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
-    executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
   }
 
   override fun ensureMarkdownSrcOffsetIsVisible(offset: Int) {
@@ -538,8 +522,6 @@ class MarkdownJCEFHtmlPanel(
 
   companion object {
     private val logger = logger<MarkdownJCEFHtmlPanel>()
-
-    private const val SET_SCROLL_EVENT = "setScroll"
     private const val SCROLL_SOURCE_EVENT = "scrollSource"
     private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 

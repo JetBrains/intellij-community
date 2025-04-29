@@ -42,6 +42,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.findFirstOpenEditorForFile
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview.suppressNextScrollSyncForEditor
 import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.codeFenceParsingStartUp
 import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
@@ -112,6 +113,8 @@ class MarkdownPreviewFileEditor(
             val document = editor.document
             val line = document.getLineNumber(charOffset) + lineOffset
 
+            suppressNextScrollSyncForEditor(editor)
+
             ApplicationManager.getApplication().invokeLater {
               editor.caretModel.moveToLogicalPosition(LogicalPosition(line, 0))
               editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
@@ -165,18 +168,6 @@ class MarkdownPreviewFileEditor(
     mainEditor.value = editor
     if (Registry.`is`("markdown.experimental.boundary.precise.scroll.enable")) {
       coroutineScope.launch { setupScrollHelper() }
-    }
-  }
-
-  fun scrollToLine(editor: Editor, line: Int) {
-    coroutineScope.launch(Dispatchers.EDT) {
-      panel?.scrollTo(editor, line)
-    }
-  }
-
-  fun scrollToSourceOffset(offset: Int) {
-    coroutineScope.launch(Dispatchers.EDT) {
-      panel?.scrollToMarkdownSrcOffset(offset, true)
     }
   }
 
