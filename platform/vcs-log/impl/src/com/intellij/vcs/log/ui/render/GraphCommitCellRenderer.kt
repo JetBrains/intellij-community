@@ -321,6 +321,7 @@ class GraphCommitCellRenderer(
     private val commitTextField = JBTextField("").apply {
       emptyText.text = VcsLogBundle.message("vcs.log.wip.label")
       foreground = UIUtil.getContextHelpForeground()
+      background = JBColor.lazy { UIUtil.getTextFieldBackground() }
     }
 
     init {
