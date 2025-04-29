@@ -1,14 +1,17 @@
 def get_jvm_flags(flags):
     return [
+        # Memory
         # "-XX:+UseZGC",
         # "-XX:+ZGenerational",
         "-Xms4g",
         "-Xmx16g",
-
+        # IJ PSI cache
+        "-XX:SoftRefLRUPolicyMSPerMB=50",
+        # Code Cache
         "-XX:NonProfiledCodeHeapSize=512m",
         "-XX:ProfiledCodeHeapSize=512m",
         "-XX:ReservedCodeCacheSize=2048m",
-
+        # Headless
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
         # IJ PHM
