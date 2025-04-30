@@ -51,7 +51,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
 
-public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
+public abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, Disposable {
 
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
 

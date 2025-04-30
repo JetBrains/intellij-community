@@ -2,7 +2,8 @@
 package org.jetbrains.plugins.github.ui.dialog
 
 import com.intellij.CommonBundle
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -10,13 +11,13 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 
-internal class GithubUntrackedFilesDialog(private val myProject: Project, untrackedFiles: List<VirtualFile>) :
-  SelectFilesDialog(myProject, untrackedFiles, null, null, true, false),
-  DataProvider {
+internal class GithubUntrackedFilesDialog(
+  private val myProject: Project,
+  untrackedFiles: List<VirtualFile>
+) : SelectFilesDialog(myProject, untrackedFiles, null, null, true, false), UiDataProvider {
   private var myCommitMessagePanel: CommitMessage? = null
 
   val commitMessage: String
@@ -50,11 +51,8 @@ internal class GithubUntrackedFilesDialog(private val myProject: Project, untrac
     return splitter
   }
 
-  override fun getData(@NonNls dataId: String): Any? {
-    return if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId)) {
-      myCommitMessagePanel
-    }
-    else null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = myCommitMessagePanel
   }
 
   override fun getDimensionServiceKey(): String {

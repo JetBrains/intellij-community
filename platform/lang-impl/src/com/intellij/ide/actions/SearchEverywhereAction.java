@@ -28,7 +28,6 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.JavaCoroutines;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Konstantin Bulenkov
  */
 public class SearchEverywhereAction extends SearchEverywhereBaseAction
-  implements CustomComponentAction, RightAlignedToolbarAction, DumbAware, DataProvider {
+  implements CustomComponentAction, RightAlignedToolbarAction, DumbAware {
   private static final Logger LOG = Logger.getInstance(SearchEverywhereAction.class);
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
@@ -91,11 +90,6 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   private static @NotNull Dimension getMinimumSize(@NotNull String place) {
     return isExperimentalToolbar(place) ? ActionToolbar.experimentalToolbarMinimumButtonSize()
                                         : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
-  }
-
-  @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    return null;
   }
 
   protected static String getShortcut() {

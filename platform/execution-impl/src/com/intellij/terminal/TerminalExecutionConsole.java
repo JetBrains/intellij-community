@@ -371,7 +371,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
            (process instanceof PtyBasedProcess && ((PtyBasedProcess)process).hasPty());
   }
 
-  private final class ConsoleTerminalWidget extends JBTerminalWidget implements DataProvider {
+  private final class ConsoleTerminalWidget extends JBTerminalWidget {
     private ConsoleTerminalWidget(@NotNull Project project, int columns, int lines, @NotNull JBTerminalSystemSettingsProviderBase provider) {
       super(project, columns, lines, provider, TerminalExecutionConsole.this, TerminalExecutionConsole.this);
     }

@@ -73,8 +73,8 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -96,7 +96,7 @@ import static com.intellij.util.ui.UIUtil.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
+public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, BuildConsoleView, Filterable<ExecutionNode>, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   private static final @NonNls String TREE = "tree";
@@ -817,15 +817,14 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.build.tool.window";
-    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractSelectedNodesNavigatables();
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return extractSelectedNodeNavigatable();
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "reference.build.tool.window");
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, extractSelectedNodesNavigatables());
+    sink.set(CommonDataKeys.NAVIGATABLE, extractSelectedNodeNavigatable());
   }
 
-  private @Nullable Object extractSelectedNodeNavigatable() {
+  private @Nullable Navigatable extractSelectedNodeNavigatable() {
     TreePath selectedPath = TreeUtil.getSelectedPathIfOne(myTree);
     if (selectedPath == null) return null;
     DefaultMutableTreeNode node = ObjectUtils.tryCast(selectedPath.getLastPathComponent(), DefaultMutableTreeNode.class);
@@ -837,7 +836,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     return navigatables.get(0);
   }
 
-  private Object extractSelectedNodesNavigatables() {
+  private Navigatable @Nullable [] extractSelectedNodesNavigatables() {
     final List<Navigatable> navigatables = new ArrayList<>();
     for (ExecutionNode each : getSelectedNodes()) {
       List<Navigatable> navigatable = each.getNavigatables();

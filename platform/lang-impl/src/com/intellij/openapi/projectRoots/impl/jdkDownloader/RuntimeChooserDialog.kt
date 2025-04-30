@@ -3,7 +3,8 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -45,7 +46,7 @@ internal sealed class RuntimeChooserDialogResult {
 internal class RuntimeChooserDialog(
   private val project: Project?,
   private val model: RuntimeChooserModel,
-) : DialogWrapper(project), DataProvider {
+) : DialogWrapper(project), UiDataProvider {
   private val USE_DEFAULT_RUNTIME_CODE = NEXT_USER_EXIT_CODE + 42
 
   private lateinit var jdkInstallDirSelector: TextFieldWithBrowseButton
@@ -87,8 +88,8 @@ internal class RuntimeChooserDialog(
     clipboardUpdateAction()
   }
 
-  override fun getData(dataId: String): Any? {
-    return RuntimeChooserCustom.jdkDownloaderExtensionProvider.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[JDK_DOWNLOADER_EXT] = RuntimeChooserCustom.jdkDownloaderExtension
   }
 
   override fun createSouthAdditionalPanel(): JPanel {

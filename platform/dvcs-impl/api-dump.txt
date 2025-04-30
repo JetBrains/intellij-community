@@ -355,7 +355,7 @@ c:com.intellij.dvcs.push.ui.VcsLinkedTextComponent
 c:com.intellij.dvcs.push.ui.VcsPushDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.dvcs.push.ui.VcsPushUi
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - pf:myController:com.intellij.dvcs.push.PushController
 - pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
@@ -372,7 +372,6 @@ c:com.intellij.dvcs.push.ui.VcsPushDialog
 - enableOkActions(Z):V
 - executeAfterRunningPrePushHandlers(com.intellij.openapi.progress.Task$Backgroundable):V
 - getAdditionalOptionValue(com.intellij.dvcs.push.PushSupport):com.intellij.dvcs.push.VcsPushOptionValue
-- getData(java.lang.String):java.lang.Object
 - p:getDimensionServiceKey():java.lang.String
 - p:getHelpId():java.lang.String
 - p:getOKAction():javax.swing.Action
@@ -382,6 +381,7 @@ c:com.intellij.dvcs.push.ui.VcsPushDialog
 - p:postponeValidation():Z
 - push(Z):V
 - runPrePushHandlersInModalTask():com.intellij.dvcs.push.PrePushHandler$Result
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateOkActions():V
 com.intellij.dvcs.push.ui.VcsPushUi
 - sf:VCS_PUSH_DIALOG:com.intellij.openapi.actionSystem.DataKey

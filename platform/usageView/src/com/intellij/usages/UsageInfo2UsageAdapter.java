@@ -5,7 +5,8 @@ import com.intellij.ide.SelectInEditorManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -45,7 +46,7 @@ import java.util.concurrent.CompletableFuture;
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage,
-                                               RenameableUsage, DataProvider, UsagePresentation {
+                                               RenameableUsage, UiCompatibleDataProvider, UsagePresentation {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
   @SuppressWarnings("StaticNonFinalField")
@@ -537,14 +538,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (UsageView.USAGE_INFO_KEY.is(dataId)) {
-      return getUsageInfo();
-    }
-    if (UsageView.USAGE_INFO_LIST_KEY.is(dataId)) {
-      return Arrays.asList(getMergedInfos());
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(UsageView.USAGE_INFO_KEY, getUsageInfo());
+    sink.set(UsageView.USAGE_INFO_LIST_KEY, Arrays.asList(getMergedInfos()));
   }
 
   private long myModificationStamp;

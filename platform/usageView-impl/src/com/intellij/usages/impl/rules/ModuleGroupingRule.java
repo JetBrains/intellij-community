@@ -3,8 +3,9 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleType;
@@ -142,7 +143,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
   }
 
-  private static class ModuleUsageGroup extends UsageGroupBase implements DataProvider {
+  private static class ModuleUsageGroup extends UsageGroupBase implements UiDataProvider {
     private final Module myModule;
     private final ModuleGrouper myGrouper;
 
@@ -186,12 +187,8 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (!isValid()) return null;
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        return myModule;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(LangDataKeys.MODULE_CONTEXT, myModule);
     }
   }
 

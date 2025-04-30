@@ -9906,7 +9906,7 @@ a:com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
 - s:createCustomComponentImpl(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
 c:com.intellij.openapi.ui.FrameWrapper
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - pf:coroutineScope:kotlinx.coroutines.CoroutineScope
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
@@ -9922,7 +9922,6 @@ c:com.intellij.openapi.ui.FrameWrapper
 - p:createJFrame(com.intellij.openapi.wm.IdeFrame):javax.swing.JFrame
 - dispose():V
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - p:getDimensionKey():java.lang.String
 - f:getFrame():java.awt.Window
 - getPreferredFocusedComponent():javax.swing.JComponent
@@ -9942,6 +9941,7 @@ c:com.intellij.openapi.ui.FrameWrapper
 - f:setTitle(java.lang.String):V
 - show():V
 - f:show(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.openapi.ui.VerticalSeparatorComponent
 - javax.swing.JComponent
 - <init>():V

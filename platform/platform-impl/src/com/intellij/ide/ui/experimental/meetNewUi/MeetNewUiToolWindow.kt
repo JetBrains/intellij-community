@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
@@ -37,8 +36,10 @@ import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class MeetNewUiToolWindow(private val project: Project, private val toolWindow: ToolWindow)
-  : SimpleToolWindowPanel(true, true), DataProvider {
+internal class MeetNewUiToolWindow(
+  private val project: Project,
+  private val toolWindow: ToolWindow
+) : SimpleToolWindowPanel(true, true) {
 
   companion object {
     internal val LOG: Logger = logger<MeetNewUiToolWindow>()

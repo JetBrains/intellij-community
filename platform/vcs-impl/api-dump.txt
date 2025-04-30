@@ -3682,10 +3682,10 @@ c:com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog
 - com.intellij.openapi.ui.FrameWrapper
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,com.intellij.openapi.vcs.history.VcsHistoryProvider,com.intellij.openapi.vcs.AbstractVcs,I,I,java.lang.String):V
 - dispose():V
-- getData(java.lang.String):java.lang.Object
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog$MyDiffAction
 - com.intellij.openapi.actionSystem.AnActionExtensionProvider
 - <init>():V

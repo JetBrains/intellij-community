@@ -973,7 +973,7 @@ f:com.intellij.build.BuildTreeConsoleView
 - com.intellij.build.Filterable
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.ide.OccurenceNavigator
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole,com.intellij.build.BuildViewSettingsProvider):V
 - addFilter(java.util.function.Predicate):V
@@ -987,7 +987,6 @@ f:com.intellij.build.BuildTreeConsoleView
 - dispose():V
 - getComponent():javax.swing.JComponent
 - getContentSize():I
-- getData(java.lang.String):java.lang.Object
 - getFilter():java.util.function.Predicate
 - getNextOccurenceActionName():java.lang.String
 - getPreferredFocusableComponent():javax.swing.JComponent
@@ -1009,6 +1008,7 @@ f:com.intellij.build.BuildTreeConsoleView
 - scrollTo(I):V
 - setHelpId(java.lang.String):V
 - setOutputPaused(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.build.BuildTreeFilters
 c:com.intellij.build.BuildView
 - com.intellij.build.BuildProgressListener
@@ -5918,12 +5918,12 @@ f:com.intellij.codeInspection.actions.InspectionElement
 - getToolWrapper():com.intellij.codeInspection.ex.InspectionToolWrapper
 f:com.intellij.codeInspection.actions.RunInspectionAction
 - com.intellij.ide.actions.GotoActionBase
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - <init>():V
 - <init>(java.lang.String):V
-- getData(java.lang.String):java.lang.Object
 - s:runInspection(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):V
 - s:runInspection(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile[],com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.codeInspection.actions.RunInspectionIntention
 - com.intellij.codeInsight.intention.HighPriorityAction
 - com.intellij.codeInsight.intention.IntentionAction
@@ -8366,7 +8366,6 @@ com.intellij.ide.actions.SaveFileAsTemplateHandler
 - a:getTemplateText(com.intellij.psi.PsiFile,java.lang.String,java.lang.String):java.lang.String
 c:com.intellij.ide.actions.SearchEverywhereAction
 - com.intellij.ide.actions.SearchEverywhereBaseAction
-- com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
 - com.intellij.openapi.project.DumbAware
@@ -8374,7 +8373,6 @@ c:com.intellij.ide.actions.SearchEverywhereAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - ps:getShortcut():java.lang.String
 a:com.intellij.ide.actions.SearchEverywhereBaseAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -11048,7 +11046,6 @@ c:com.intellij.ide.structureView.newStructureView.StructureViewComponent
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.ide.structureView.StructureView
 - com.intellij.ide.structureView.newStructureView.TreeActionsOwner
-- com.intellij.openapi.actionSystem.DataProvider
 - <init>(com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureViewModel,com.intellij.openapi.project.Project,Z):V
 - p:addGroupByActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - centerSelectedRow():V

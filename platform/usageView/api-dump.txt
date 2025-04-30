@@ -184,7 +184,7 @@ com.intellij.usages.UsageGroup
 - isValid():Z
 - update():V
 c:com.intellij.usages.UsageInfo2UsageAdapter
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.usages.RenameableUsage
 - com.intellij.usages.UsageInfoAdapter
 - com.intellij.usages.UsagePresentation
@@ -203,7 +203,6 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - p:computeText():com.intellij.usages.TextChunk[]
 - s:convert(com.intellij.usageView.UsageInfo[]):com.intellij.usages.UsageInfo2UsageAdapter[]
 - getBackgroundColor():java.awt.Color
-- getData(java.lang.String):java.lang.Object
 - getDocument():com.intellij.openapi.editor.Document
 - f:getElement():com.intellij.psi.PsiElement
 - getFile():com.intellij.openapi.vfs.VirtualFile
@@ -237,6 +236,7 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - reset():V
 - pf:resetCachedPresentation():V
 - selectInEditor():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.usages.UsageInfoAdapter
 - com.intellij.usages.Usage
 - com.intellij.usages.rules.MergeableUsage

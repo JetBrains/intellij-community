@@ -8,8 +8,9 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -41,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static java.util.Objects.requireNonNull;
 
-public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
+public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataProvider {
   private static final @NonNls String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
   private static final @NonNls String HELP_ID = "Vcs.Push.Dialog";
   private static final Logger LOG = Logger.getInstance(VcsPushDialog.class);
@@ -358,11 +359,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (VcsPushUi.VCS_PUSH_DIALOG.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(VcsPushUi.VCS_PUSH_DIALOG, this);
   }
 
   @ApiStatus.Experimental

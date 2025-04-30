@@ -27,7 +27,6 @@ a:com.intellij.ide.todo.TodoPanel
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
 - sf:TODO_PANEL_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - pf:myProject:com.intellij.openapi.project.Project

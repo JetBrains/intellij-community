@@ -83,7 +83,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");

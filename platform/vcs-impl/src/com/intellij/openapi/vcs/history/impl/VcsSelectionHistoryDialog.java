@@ -66,7 +66,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public final class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvider {
+public final class VcsSelectionHistoryDialog extends FrameWrapper implements UiDataProvider {
   private static final DataKey<VcsSelectionHistoryDialog> SELECTION_HISTORY_DIALOG_KEY = DataKey.create("VCS_SELECTION_HISTORY_DIALOG");
 
   private static final VcsRevisionNumber LOCAL_REVISION_NUMBER = new VcsRevisionNumber() {
@@ -459,31 +459,22 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (SELECTION_HISTORY_DIALOG_KEY.is(dataId)) {
-      return this;
-    }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      return myFile;
-    }
-    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      VcsFileRevision selectedObject = myList.getSelectedObject();
-      return selectedObject instanceof CurrentRevision ? null : selectedObject;
-    }
-    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
-      return ContainerUtil.filter(myList.getSelectedObjects(), Conditions.notEqualTo(myBlockLoader.getLocalRevision()))
-        .toArray(new VcsFileRevision[0]);
-    }
-    else if (VcsDataKeys.VCS.is(dataId)) {
-      return myActiveVcs.getKeyInstanceMethod();
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return notNull(myVcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history");
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(SELECTION_HISTORY_DIALOG_KEY, this);
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(VcsDataKeys.VCS_VIRTUAL_FILE, myFile);
+
+    VcsFileRevision selectedObject = myList.getSelectedObject();
+    sink.set(VcsDataKeys.VCS_FILE_REVISION, selectedObject instanceof CurrentRevision o ? o : null);
+    List<VcsFileRevision> selectedObjects = myList.getSelectedObjects();
+    sink.set(VcsDataKeys.VCS_FILE_REVISIONS, ContainerUtil.filter(
+      selectedObjects, Conditions.notEqualTo(myBlockLoader.getLocalRevision()))
+      .toArray(new VcsFileRevision[0]));
+
+    sink.set(VcsDataKeys.VCS, myActiveVcs.getKeyInstanceMethod());
+    sink.set(PlatformCoreDataKeys.HELP_ID,
+             notNull(myVcsHistoryProvider.getHelpId(), "reference.dialogs.vcs.selection.history"));
   }
 
   private @NotNull DiffFromHistoryHandler getDiffHandler() {
