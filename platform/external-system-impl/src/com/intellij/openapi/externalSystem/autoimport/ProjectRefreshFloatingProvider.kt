@@ -5,13 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
+import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,7 +30,7 @@ class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GR
   }
 
   private fun updateToolbarComponent(project: Project, component: FloatingToolbarComponent) {
-    project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+    project.esCoroutineScope.launch {
       val notificationAware = project.serviceAsync<ExternalSystemProjectNotificationAware>()
       withContext(Dispatchers.EDT) {
         when (notificationAware.isNotificationVisible()) {

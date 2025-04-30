@@ -3,11 +3,10 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.createExtensionDisposable
+import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
@@ -31,7 +30,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfigured
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
@@ -41,15 +39,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 @VisibleForTesting
 @ApiStatus.Internal
 class UnlinkedProjectStartupActivity : ProjectActivity {
-
-  @Service(Service.Level.PROJECT)
-  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-    companion object {
-      fun getCoroutineScope(project: Project): CoroutineScope {
-        return project.service<CoroutineScopeService>().coroutineScope
-      }
-    }
-  }
 
   override suspend fun execute(project: Project) {
     project.trackActivity(ExternalSystemActivityKey) {
@@ -138,11 +127,10 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     if (rootProjectPath != null && !hasLinkedProject(project, rootProjectPath)) {
       projectRoots.addProjectRoot(rootProjectPath)
     }
-    val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
         override fun onProjectLinked(externalProjectPath: String) {
-          coroutineScope.launch(extensionDisposable) {
+          project.esCoroutineScope.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
@@ -202,8 +190,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
       UnlinkedProjectNotificationAware.getInstance(project)
         .notificationNotify(extension.createProjectId(externalProjectPath)) {
-          val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
-          coroutineScope.launch(extensionDisposable) {
+          project.esCoroutineScope.launch(extensionDisposable) {
             project.trackActivity(ExternalSystemActivityKey) {
               extension.linkAndLoadProjectAsync(project, externalProjectPath)
             }
@@ -230,10 +217,9 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     parentDisposable: Disposable,
     action: suspend (Set<String>) -> Unit,
   ) {
-    val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     val virtualFileDispatcher = Dispatchers.Default.limitedParallelism(1)
     val listener = UnlinkedProjectWatcher(projectRoots) { changedRoots ->
-      coroutineScope.launch(parentDisposable, virtualFileDispatcher) {
+      project.esCoroutineScope.launch(parentDisposable, virtualFileDispatcher) {
         action(changedRoots)
       }
     }

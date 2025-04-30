@@ -2,17 +2,17 @@
 package com.intellij.openapi.externalSystem.service.ui.completion.collector
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.openapi.externalSystem.autolink.launch
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.ModificationTracker
-import kotlinx.coroutines.*
+import com.intellij.util.application
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,7 +31,7 @@ internal abstract class AsyncTextCompletionCollector<T> private constructor(
   }
 
   override fun collectCompletionVariants(modalityState: ModalityState, callback: (List<T>) -> Unit) {
-    CoroutineScopeService.coroutineScope.launch(parentDisposable, modalityState.asContextElement()) {
+    application.esCoroutineScope.launch(parentDisposable, modalityState.asContextElement()) {
       val modificationCount = completionModificationTracker.modificationCount
       val completionVariants = completionVariantCache.getOrCreateValue(modificationCount) {
         collectCompletionVariants()
@@ -41,14 +41,6 @@ internal abstract class AsyncTextCompletionCollector<T> private constructor(
           callback(completionVariants)
         }
       }
-    }
-  }
-
-  @Service
-  private class CoroutineScopeService(private val scope: CoroutineScope) {
-    companion object {
-      val coroutineScope: CoroutineScope
-        get() = ApplicationManager.getApplication().service<CoroutineScopeService>().scope
     }
   }
 
