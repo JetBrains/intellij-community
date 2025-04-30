@@ -1114,7 +1114,7 @@ private fun optionalDependenciesOnPlugin(
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first }).topologicalComparator
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first }.toSet()).topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
   return dependentPluginsAndItsModule

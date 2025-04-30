@@ -79,8 +79,10 @@ internal class ClassLoaderConfiguratorTest {
       .get(1)
     assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
 
-    val scope = createPluginDependencyAndContentBasedScope(plugin, PluginSetBuilder(
-      loadingResult.enabledPlugins).createPluginSetWithEnabledModulesMap())!!
+    val scope = createPluginDependencyAndContentBasedScope(
+      plugin,
+      PluginSetBuilder(loadingResult.enabledPlugins.toSet()).createPluginSetWithEnabledModulesMap()
+    )!!
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
       .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent plugin. " +
@@ -116,7 +118,7 @@ internal class ClassLoaderConfiguratorTest {
     val barPlugin = plugins.get(1)
     assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).createPluginSetWithEnabledModulesMap())
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap())
     classLoaderConfigurator.configure()
 
     assertThat((barPlugin.pluginClassLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
@@ -144,7 +146,7 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = loadResult.enabledPlugins
     assertThat(plugins).hasSize(2)
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).createPluginSetWithEnabledModulesMap())
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins.toSet()).createPluginSetWithEnabledModulesMap())
     classLoaderConfigurator.configure()
     return loadResult
   }
