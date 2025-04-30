@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.Disposer
@@ -35,12 +37,13 @@ class GHPRDataContext internal constructor(
 
   init {
     scope.launchNow {
-      listLoader.loadedData.collect {
-        if (it.isEmpty()) {
-          listUpdatesChecker.stop()
-        }
-        else {
+      listLoader.refreshOrReloadRequests.withInitial(Unit).collectScoped {
+        try {
           listUpdatesChecker.start()
+          awaitCancellation()
+        }
+        finally {
+          listUpdatesChecker.stop()
         }
       }
     }

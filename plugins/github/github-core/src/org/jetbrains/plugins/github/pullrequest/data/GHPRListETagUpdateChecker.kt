@@ -27,6 +27,7 @@ internal class GHPRListETagUpdateChecker(
   private val repoPath: GHRepositoryPath,
 ) : GHPRListUpdatesChecker {
   companion object {
+    private const val REFRESH_ENABLED_KEY = "github.pr.list.automatic.refresh.enabled"
     private const val REFRESH_SECONDS_KEY = "github.pr.list.automatic.refresh.seconds"
   }
 
@@ -46,7 +47,7 @@ internal class GHPRListETagUpdateChecker(
     }
 
   override fun start() {
-    if (scheduler == null) {
+    if (scheduler == null && Registry.`is`(REFRESH_ENABLED_KEY, true)) {
       val secondsBetweenRefreshes = Registry.get(REFRESH_SECONDS_KEY).asInteger().toLong()
 
       val indicator = NonReusableEmptyProgressIndicator()
@@ -54,7 +55,8 @@ internal class GHPRListETagUpdateChecker(
       scheduler = JobScheduler.getScheduler().scheduleWithFixedDelay(
         {
           try {
-            lastETag = loadListETag(indicator)
+            val etag = loadListETag(indicator)
+            lastETag = etag
           }
           catch (_: Exception) {
             //ignore
