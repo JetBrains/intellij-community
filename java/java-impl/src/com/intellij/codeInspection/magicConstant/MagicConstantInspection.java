@@ -336,7 +336,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       }
     }
     else {
-      Long longArgument = evaluateLongConstant(argument);
+      Long longArgument = MagicConstantUtils.evaluateLongConstant(argument);
       if (longArgument == null) { return null; }
 
       // try to find ored flags
@@ -344,7 +344,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       List<PsiAnnotationMemberValue> flags = new ArrayList<>();
       for (PsiAnnotationMemberValue value : allowedValues.getValues()) {
         if (value instanceof PsiExpression expression) {
-          Long constantValue = evaluateLongConstant(expression);
+          Long constantValue = MagicConstantUtils.evaluateLongConstant(expression);
           if (constantValue == null) {
             continue;
           }
@@ -359,7 +359,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (flags.size() > 1) {
           for (int i = flags.size() - 1; i >= 0; i--) {
             PsiAnnotationMemberValue flag = flags.get(i);
-            Long flagValue = evaluateLongConstant((PsiExpression)flag);
+            Long flagValue = MagicConstantUtils.evaluateLongConstant((PsiExpression)flag);
             if (flagValue != null && flagValue == 0) {
               // no sense in ORing with '0'
               flags.remove(i);
@@ -370,17 +370,6 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
           return LocalQuickFix.from(new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)));
         }
       }
-    }
-    return null;
-  }
-
-  private static Long evaluateLongConstant(@NotNull PsiExpression expression) {
-    Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
-    if (constantValue instanceof Long ||
-                 constantValue instanceof Integer ||
-                 constantValue instanceof Short ||
-                 constantValue instanceof Byte) {
-      return ((Number)constantValue).longValue();
     }
     return null;
   }
