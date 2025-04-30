@@ -38,6 +38,8 @@ import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.create
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.markdown.MarkdownMode
+import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
@@ -80,7 +82,8 @@ internal class MarkdownComposePanel(
     val processor = remember(markdownMode) {
       MarkdownProcessor(
         listOf(
-          GitHubTableProcessorExtension
+          GitHubTableProcessorExtension,
+          GitHubStrikethroughProcessorExtension(),
         ),
         markdownMode,
       )
@@ -88,11 +91,13 @@ internal class MarkdownComposePanel(
     val tableRenderer = remember(markdownStyling) {
       GitHubTableRendererExtension(GfmTableStyling.create(), markdownStyling)
     }
+    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension)
     val blockRenderer = remember(markdownStyling) {
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,
-        listOf(tableRenderer),
-        DefaultInlineMarkdownRenderer(listOf(tableRenderer)))
+        allRenderingExtensions,
+        DefaultInlineMarkdownRenderer(allRenderingExtensions),
+      )
     }
     ProvideMarkdownStyling(
       markdownMode = markdownMode,
