@@ -354,6 +354,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     switchToTab(selectedTab);
   }
 
+  @ApiStatus.Internal
+  public void switchToTabOrFirst(@NotNull String tabID) {
+    SETab selectedTab = ContainerUtil.find(myHeader.getTabs(), tab -> tab.getID().equals(tabID));
+    if (selectedTab == null) selectedTab = myHeader.getTabs().get(0);
+
+    switchToTab(selectedTab);
+  }
+
   private void switchToTab(SETab tab) {
     boolean prevTabIsSingleContributor = myHeader.getSelectedTab().isSingleContributor();
     myHeader.switchToTab(tab);
