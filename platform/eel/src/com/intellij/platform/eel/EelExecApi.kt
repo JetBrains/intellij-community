@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -118,3 +117,21 @@ suspend fun EelExecApi.where(exe: String): EelPath? {
 
 fun EelExecApi.execute(exe: String, vararg args: String): EelExecApiHelpers.Execute =
   execute(exe).args(*args)
+
+/**
+ * Path to a shell / command processor: `cmd.exe` on Windows and Bourne Shell (`sh`) on POSIX.
+ * Second argument is the one you might provide to this shell to execute command and exit, i.e.: `cmd /C` or `sh -c`
+ */
+suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
+  val (shell, cmdArg) = when (this.descriptor.platform) {
+    is EelPlatform.Windows -> {
+      val envs = fetchLoginShellEnvVariables()
+      Pair(envs["ComSpec"] ?: run {
+        val winRoot = envs.getOrDefault("SystemRoot", "c:\\Windows")
+        "$winRoot\\system32\\cmd.exe"
+      }, "/C")
+    }
+    is EelPlatform.Posix -> Pair("/bin/sh", "-c")
+  }
+  return Pair(EelPath.parse(shell, descriptor), cmdArg)
+}
