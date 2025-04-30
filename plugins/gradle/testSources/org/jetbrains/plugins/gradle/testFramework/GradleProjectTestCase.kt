@@ -68,11 +68,12 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   }
 
 
-  fun writeTextAndCommit(relativePath: String, text: String) {
+  fun writeTextAndCommit(relativePath: String, text: String): VirtualFile {
     val file = findOrCreateFile(relativePath)
     runWriteActionAndWait {
       file.writeTextAndCommit(text)
     }
+    return file
   }
 
   @RequiresWriteLock
