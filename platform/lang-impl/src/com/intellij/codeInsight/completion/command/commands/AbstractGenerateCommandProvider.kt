@@ -92,9 +92,7 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
       val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
       val presentation: Presentation = action.templatePresentation.clone()
       val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-      }
+      ActionUtil.performAction(action, event)
     }
   }
 }

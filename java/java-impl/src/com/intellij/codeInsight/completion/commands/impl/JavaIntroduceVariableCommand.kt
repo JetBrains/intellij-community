@@ -1,12 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.getDataContext
-import com.intellij.codeInsight.completion.command.getTargetContext
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -59,11 +54,10 @@ internal class JavaIntroduceVariableCommand : CompletionCommand(), CompletionCom
     if (editor == null) return
     val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
     val presentation: Presentation = action.templatePresentation.clone()
-    val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ActionUiKind.Companion.NONE, null)
-
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-    }
+    val event = AnActionEvent.createEvent(
+      action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
+      ActionUiKind.NONE, null)
+    ActionUtil.performAction(action, event)
   }
 
   override fun getPreview(): IntentionPreviewInfo? {

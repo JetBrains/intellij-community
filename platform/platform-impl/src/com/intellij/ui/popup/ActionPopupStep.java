@@ -296,9 +296,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     AnAction action = item.getAction();
     AnActionEvent event = createAnActionEvent(item, inputEvent);
     event.setInjectedContext(action.isInInjectedContext());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    ActionUtil.performAction(action, event);
   }
 
   public @NotNull AnActionEvent createAnActionEvent(@NotNull PopupFactoryImpl.ActionItem item, @Nullable InputEvent inputEvent) {

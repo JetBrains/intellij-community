@@ -215,8 +215,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
     ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
     AnActionEvent event = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, e);
-    if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, false) && isEnabled()) {
-      ActionUtil.performDumbAwareWithCallbacks(myAction, event, () -> actionPerformed(event));
+    if (!isEnabled()) return;
+    ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
+    AnActionResult result = actionManager.performWithActionCallbacks(
+      myAction, event, () -> actionPerformed(event));
+    if (result.isPerformed()) {
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace, e, event.getDataContext());
       }

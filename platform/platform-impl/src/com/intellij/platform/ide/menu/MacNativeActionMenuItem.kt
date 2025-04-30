@@ -129,8 +129,6 @@ private fun performAction(action: AnAction, place: String, presentation: Present
     val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
     val event = AnActionEvent.createEvent(
       context, presentation, place, ActionUiKind.MAIN_MENU, currentEvent as? InputEvent)
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-    }
+    ActionUtil.performAction(action, event)
   })
 }

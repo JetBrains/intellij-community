@@ -30,10 +30,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
   protected fun performAction(component: JComponent, place: String, presentation: Presentation) {
     val dataContext = ActionToolbar.getDataContextFor(component)
     val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
-
-    if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(this, event)
-    }
+    ActionUtil.performAction(this, event)
   }
 
   protected open fun createButton(): JButton = JButton().configureForToolbar()

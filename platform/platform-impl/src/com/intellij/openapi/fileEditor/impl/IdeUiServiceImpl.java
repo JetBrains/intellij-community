@@ -112,9 +112,7 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public void performActionDumbAwareWithCallbacks(AnAction action,
                                                   AnActionEvent event) {
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    ActionUtil.performAction(action, event);
   }
 
   @Override

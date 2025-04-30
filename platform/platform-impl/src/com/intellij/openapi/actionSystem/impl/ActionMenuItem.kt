@@ -269,9 +269,7 @@ class ActionMenuItem internal constructor(action: AnAction,
         context, presentation.clone(), place, uiKind,
         currentEvent as? InputEvent, modifiers,
         ActionManager.getInstance())
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-      }
+      ActionUtil.performAction(action, event)
     }
   }
 }

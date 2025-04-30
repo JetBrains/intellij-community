@@ -135,9 +135,7 @@ class ActionButton implements ActionListener {
   @Override
   public void actionPerformed(final ActionEvent e) {
     AnActionEvent event = createAnEvent(e);
-    if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event);
-    }
+    ActionUtil.performActionDumbAwareWithCallbacks(myAction, event);
   }
 
   private @NotNull AnActionEvent createAnEvent(final @NotNull ActionEvent e) {

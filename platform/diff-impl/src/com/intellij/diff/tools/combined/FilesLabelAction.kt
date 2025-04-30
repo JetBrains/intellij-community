@@ -63,9 +63,7 @@ internal class FilesLabelAction(private val goToChangeAction: AnAction?,
 
       val place = (toolbar as? ActionToolbarImpl)?.place ?: ActionPlaces.DIFF_TOOLBAR
       val event = AnActionEvent.createFromAnAction(goToChangeAction, e.inputEvent, place, ActionToolbar.getDataContextFor(toolbar))
-      if (ActionUtil.lastUpdateAndCheckDumb(goToChangeAction, event, false)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(goToChangeAction, event)
-      }
+      ActionUtil.performAction(goToChangeAction, event)
     }
   }
 

@@ -350,10 +350,7 @@ public final class ActionMacro {
       if (action == null) return;
       Presentation presentation = action.getTemplatePresentation().clone();
       AnActionEvent event = new AnActionEvent(null, context, "MACRO_PLAYBACK", presentation, ActionManager.getInstance(), 0);
-      if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        return;
-      }
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+      ActionUtil.performAction(action, event);
     }
 
     @Override

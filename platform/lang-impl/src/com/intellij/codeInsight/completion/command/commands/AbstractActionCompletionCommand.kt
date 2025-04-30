@@ -165,9 +165,7 @@ open class ActionCompletionCommand(
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
                                           ActionUiKind.NONE, null)
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-    }
+    ActionUtil.performAction(action, event)
   }
 
   override fun getPreview(): IntentionPreviewInfo? {

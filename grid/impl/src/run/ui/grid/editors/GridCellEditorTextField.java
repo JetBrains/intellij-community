@@ -170,9 +170,7 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
       private static void performEditorEnter(@NotNull AnActionEvent e) {
         AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ENTER);
         if (action == null) return;
-        if (ActionUtil.lastUpdateAndCheckDumb(action, e, false)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, e);
-        }
+        ActionUtil.performAction(action, e);
       }
     };
     registerAction(editor, action, enterAndControlEnter);

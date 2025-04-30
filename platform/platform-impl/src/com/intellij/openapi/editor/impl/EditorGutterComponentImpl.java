@@ -59,8 +59,6 @@ import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.impl.EditorCompositeKt;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.platform.ide.core.permissions.Permission;
-import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -75,6 +73,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -2444,9 +2444,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     addLoadingIconForGutterMark(info);
 
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
-    }
+    ActionUtil.performAction(action, actionEvent);
   }
 
   @Override

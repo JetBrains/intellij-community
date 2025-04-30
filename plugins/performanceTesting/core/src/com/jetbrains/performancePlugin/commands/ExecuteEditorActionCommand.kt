@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
@@ -61,10 +62,8 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
 
   fun executeAction(editor: Editor, action: AnAction) {
     val event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor))
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-    }
-    else {
+    val result = ActionUtil.performAction(action, event)
+    if (!result.isPerformed) {
       throw IllegalStateException("Cant execute action $action")
     }
   }

@@ -41,9 +41,9 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
     val dataContext = ActionToolbar.getDataContextFor(component)
     val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
-    if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
+    val result = ActionUtil.performAction(this, event)
+    if (result.isPerformed) {
       ImportSettingsEventsCollector.productPageDropdownClicked(this)
-      ActionUtil.performActionDumbAwareWithCallbacks(this, event)
     }
   }
 

@@ -456,9 +456,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    ActionUtil.performAction(action, event);
   }
 
   protected void executeAction(@NonNls String actionId, @NotNull HyperlinkEvent e) {
@@ -468,9 +466,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createEvent(dataContext, null, getActionPlace(), ActionUiKind.TOOLBAR, e.getInputEvent());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    ActionUtil.performAction(action, event);
   }
 
   protected @NotNull String getActionPlace() {

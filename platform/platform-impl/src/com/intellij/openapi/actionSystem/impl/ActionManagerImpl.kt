@@ -1301,27 +1301,24 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
 private fun doPerformAction(action: AnAction,
                             event: AnActionEvent,
-                            result: ActionCallback) {
+                            callback: ActionCallback) {
   (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-    ActionUtil.lastUpdateAndCheckDumb(action, event, false)
-    if (!event.presentation.isEnabled) {
-      result.setRejected()
-      return@performUserActivity
-    }
-    addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
+    addAwtListener(AWTEvent.WINDOW_EVENT_MASK, callback) {
       if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
-        if (!result.isProcessed) {
+        if (!callback.isProcessed) {
           val we = it as WindowEvent
           IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
-            result.createSetDoneRunnable(), ModalityState.defaultModalityState())
+            callback.createSetDoneRunnable(), ModalityState.defaultModalityState())
         }
       }
     }
+    var result = AnActionResult.IGNORED
     try {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+      result = ActionUtil.performAction(action, event)
     }
     finally {
-      result.setDone()
+      if (result.isIgnored) callback.setRejected()
+      else callback.setDone()
     }
   }
 }
@@ -1330,7 +1327,7 @@ private fun tryToExecuteNow(action: AnAction,
                             place: String,
                             contextComponent: Component?,
                             inputEvent: InputEvent?,
-                            result: ActionCallback) {
+                            callback: ActionCallback) {
   val presentationFactory = PresentationFactory()
   @Suppress("DEPRECATION")
   val dataContext = DataManager.getInstance().let {
@@ -1355,7 +1352,7 @@ private fun tryToExecuteNow(action: AnAction,
     }
   }?.event
   if (event != null && event.presentation.isEnabled) {
-    doPerformAction(action, event, result)
+    doPerformAction(action, event, callback)
   }
 }
 
@@ -1364,7 +1361,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
                                         contextComponent: Component?,
                                         inputEvent: InputEvent?,
                                         actionManager: ActionManagerImpl,
-                                        result: ActionCallback) {
+                                        callback: ActionCallback) {
   (if (contextComponent != null) IdeFocusManager.findInstanceByComponent(contextComponent)
   else IdeFocusManager.getGlobalInstance()).awaitFocusSettlesDown()
 
@@ -1384,7 +1381,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   if (event != null && event.presentation.isEnabled) {
     //todo fix all clients and move locks into them
     writeIntentReadAction {
-      doPerformAction(action, event, result)
+      doPerformAction(action, event, callback)
     }
   }
 }
