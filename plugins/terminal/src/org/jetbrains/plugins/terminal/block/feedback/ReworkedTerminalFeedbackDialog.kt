@@ -51,19 +51,19 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
     RegularLabelBlock(TerminalBundle.message("feedback.dialog.issues.1")),
     TextAreaBlock(TerminalBundle.message("feedback.dialog.issues.2"), "issues"),
 
-    RadioButtonGroupBlock(TerminalBundle.message("feedback.dialog.improvement"), improvementItems().shuffled(), "important_improvement")
+    CheckBoxGroupBlock(TerminalBundle.message("feedback.dialog.improvement"), improvementItems().shuffled(), "important_improvement")
       .addOtherTextField(),
 
     TextAreaBlock(TerminalBundle.message("feedback.dialog.other"), "extra")
       .setPlaceholder(TerminalBundle.message("feedback.dialog.other.placeholder")),
   )
 
-  private fun improvementItems(): List<RadioButtonItemData> = listOf(
-    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.compatibility"), "app_compatibility"),
-    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.performance"), "performance"),
-    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.shell.support"), "shell_support"),
-    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.ai.integration"), "ai_integration"),
-    RadioButtonItemData(TerminalBundle.message("feedback.dialog.improvement.ide.integration"), "ide_integration"),
+  private fun improvementItems(): List<CheckBoxItemData> = listOf(
+    CheckBoxItemData(TerminalBundle.message("feedback.dialog.improvement.compatibility"), "app_compatibility"),
+    CheckBoxItemData(TerminalBundle.message("feedback.dialog.improvement.performance"), "performance"),
+    CheckBoxItemData(TerminalBundle.message("feedback.dialog.improvement.shell.support"), "shell_support"),
+    CheckBoxItemData(TerminalBundle.message("feedback.dialog.improvement.ai.integration"), "ai_integration"),
+    CheckBoxItemData(TerminalBundle.message("feedback.dialog.improvement.ide.integration"), "ide_integration"),
   )
 
   init {
