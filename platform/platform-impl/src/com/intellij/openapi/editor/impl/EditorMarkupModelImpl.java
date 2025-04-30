@@ -260,7 +260,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        if (action instanceof HintManagerImpl.ActionToIgnore) {
+        if (HintManagerImpl.isActionToIgnore(action)) {
           return;
         }
         myTrafficLightPopup.hidePopup();

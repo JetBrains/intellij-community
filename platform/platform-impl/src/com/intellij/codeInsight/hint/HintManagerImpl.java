@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,6 +50,14 @@ public class HintManagerImpl extends HintManager {
   }
 
   public interface ActionToIgnore {
+    @ApiStatus.Internal
+    default boolean shouldBeIgnored() {
+      return true;
+    }
+  }
+
+  public static boolean isActionToIgnore(AnAction action) {
+    return action instanceof ActionToIgnore actionToIgnore && actionToIgnore.shouldBeIgnored();
   }
 
   record HintInfo(LightweightHint hint, @HideFlags int flags, boolean reviveOnEditorChange) {

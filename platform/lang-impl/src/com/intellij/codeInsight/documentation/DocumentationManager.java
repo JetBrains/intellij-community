@@ -125,7 +125,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
 
   private static final Class<?>[] ACTION_CLASSES_TO_IGNORE = {
-    HintManagerImpl.ActionToIgnore.class,
     ScrollingUtil.ScrollingAction.class,
     SwingActionDelegate.class,
     BaseNavigateToSourceAction.class,
@@ -384,6 +383,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         JBPopup hint = getDocInfoHint();
         if (hint != null &&
             LookupManager.getActiveLookup(myEditor) == null && // let the lookup manage all the actions
+            !HintManagerImpl.isActionToIgnore(action) &&
             !Conditions.instanceOf(ACTION_CLASSES_TO_IGNORE).value(action) &&
             !ArrayUtil.contains(event.getPlace(), ACTION_PLACES_TO_IGNORE) &&
             !ContainerUtil.exists(ACTION_IDS_TO_IGNORE, id -> ActionManager.getInstance().getAction(id) == action) &&

@@ -610,6 +610,7 @@ c:com.intellij.codeInsight.hint.HintManagerImpl
 - hasShownHintsThatWillHideByOtherHint(Z):Z
 - hideAllHints():V
 - hideHints(I,Z,Z):Z
+- s:isActionToIgnore(com.intellij.openapi.actionSystem.AnAction):Z
 - performCurrentQuestionAction():Z
 - setRequestFocusForNextHint(Z):V
 - showEditorHint(com.intellij.ui.LightweightHint,com.intellij.openapi.editor.Editor,java.awt.Point,I,I,Z):V
