@@ -214,7 +214,7 @@ class StructureViewWrapperImpl(
     val insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.component, owner)
                            // On the remote backend focus could be set to IdeFrame
                            // if the on the frontend focus set to a frontend-specific component
-                           && (AppMode.isRemoteDevHost() && owner !is IdeFrame)
+                           && (!AppMode.isRemoteDevHost() || owner !is IdeFrame)
     if (insideToolwindow) LOG.debug("inside structure view")
     if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive)) {
       return
