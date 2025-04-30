@@ -44,7 +44,7 @@ public abstract class PyTypeVisitorExt<T> extends PyTypeVisitor<T> {
   }
 
   public T visitPyTypingNewType(@NotNull PyTypingNewType typingNewType) {
-    return visitPyType(typingNewType);
+    return visitPyClassType(typingNewType);
   }
 
   public T visitPyNarrowedType(@NotNull PyNarrowedType narrowedType) {
