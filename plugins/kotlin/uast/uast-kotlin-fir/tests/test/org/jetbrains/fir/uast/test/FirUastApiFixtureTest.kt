@@ -202,6 +202,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkNoArgConstructorSourcePsi(myFixture)
     }
 
+    fun testDataClassCopy() {
+        checkDataClassCopy(myFixture)
+    }
+
     fun testNullLiteral() {
         checkNullLiteral(myFixture)
     }

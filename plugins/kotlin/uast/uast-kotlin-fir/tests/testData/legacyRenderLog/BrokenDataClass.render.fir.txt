@@ -5,7 +5,5 @@ public final class Cls : <ErrorType> {
         UIdentifier (Identifier (this))(a, a, a)
     }
     public final fun component1() : long = UastEmptyExpression
-    public final fun copy(a: long) : Cls {
-        UIdentifier (Identifier (this))(a, a, a)
-    }
+    public final fun copy(a: long) : Cls = UastEmptyExpression
 }
