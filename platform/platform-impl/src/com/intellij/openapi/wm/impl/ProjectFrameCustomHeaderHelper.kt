@@ -9,10 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -74,7 +71,7 @@ internal class ProjectFrameCustomHeaderHelper(
     val toolbarHolder = frameHeaderHelper.toolbarHolder
     if (toolbarHolder == null) {
       cs.launch(rootTask() + ModalityState.any().asContextElement()) {
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
           setupToolbar()
           toolbar!!.isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) { computeMainActionGroups() }
         }

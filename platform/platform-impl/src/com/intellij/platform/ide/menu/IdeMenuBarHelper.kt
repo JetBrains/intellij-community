@@ -83,7 +83,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       presentationFactory.reset()
       updateMenuActions(forceRebuild = true)
     })
-    var context = Dispatchers.EDT + ModalityState.any().asContextElement()
+    var context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()
     if (StartUpMeasurer.isEnabled()) {
       context += rootTask() + CoroutineName("ide menu bar actions init")
     }
