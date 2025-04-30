@@ -33,9 +33,11 @@ public abstract class DirectoryIndex {
   public abstract @NotNull
   Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 
+  /**
+   * @return a query producing single file source root files which correspond to {@code packageName}.
+   */
   @ApiStatus.Experimental
-  public @NotNull
-  Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
+  public @NotNull Query<VirtualFile> getFilesByPackageName(@NotNull String packageName) {
     return EmptyQuery.getEmptyQuery();
   }
 

@@ -32,12 +32,16 @@ public abstract class PackageIndex {
   public abstract VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 
   /**
-   * @return all directories in the given scope corresponding to the given package name.
+   * @return all directories in the given scope corresponding to the given package name. Note that package may also contain
+   * single file source roots. Use {@link #getFilesByPackageName(String)} to get them.
    */
   public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, @NotNull GlobalSearchScope scope) {
     return getDirsByPackageName(packageName, true).filtering(scope::contains);
   }
 
+  /**
+   * @return Returns a query producing single file source root files which correspond to {@code packageName}.
+   */
   @ApiStatus.Experimental
   public Query<VirtualFile> getFilesByPackageName(@NotNull @NlsSafe String packageName) { 
     return EmptyQuery.getEmptyQuery();
