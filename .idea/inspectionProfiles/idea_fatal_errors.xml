@@ -4080,10 +4080,6 @@
           <module name="intellij.platform.duplicates.analysis" />
         </modules-set>
         <modules-set>
-          <module name="intellij.vcs.perforce" />
-          <module name="intellij.vcs.perforce.util" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.gradle.java" />
           <module name="intellij.gradle.common" />
         </modules-set>
