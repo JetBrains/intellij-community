@@ -25,6 +25,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineEndAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineStartAction
@@ -297,7 +298,7 @@ class BlockTerminalView(
 
   private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()
 
-  private inner class BlockTerminalPanel : JPanel(), UiDataProvider {
+  private inner class BlockTerminalPanel : JPanel(), UiDataProvider, TerminalPanelMarker {
     init {
       background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
     }

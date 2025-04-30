@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalNonToolWindowFocus
@@ -61,12 +62,20 @@ internal class TerminalFocusFusService(private val coroutineScope: CoroutineScop
       focusedComponent == null || focusedWindow == null -> {
         FocusedNonToolWindow(TerminalNonToolWindowFocus.OTHER_APPLICATION)
       }
+      ComponentUtil.getParentOfType(TerminalPanelMarker::class.java, focusedComponent) != null -> {
+        FocusedTerminal
+      }
       ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusedComponent) != null -> {
         FocusedNonToolWindow(TerminalNonToolWindowFocus.EDITOR)
       }
       else -> {
         val id = ComponentUtil.getParentOfType(InternalDecoratorImpl::class.java, focusedComponent)?.toolWindowId
-        if (id != null) {
+        if (id == TerminalToolWindowFactory.TOOL_WINDOW_ID) {
+          // Could only be possible if the terminal tool window contains a focusable component that is not the terminal itself.
+          // But just in case let's check.
+          FocusedTerminal
+        }
+        else if (id != null) {
           FocusedToolWindow(id)
         }
         else {
@@ -154,6 +163,10 @@ private data object InitialState : FocusedComponent() {
   override fun toFusString(): String? = null
 }
 
+private data object FocusedTerminal : FocusedComponent() {
+  override fun toFusString(): String = TerminalToolWindowFactory.TOOL_WINDOW_ID
+}
+
 private data class FocusedToolWindow(val id: String) : FocusedComponent() {
   override fun toFusString(): String = id
 }
@@ -163,6 +176,6 @@ private data class FocusedNonToolWindow(val focus: TerminalNonToolWindowFocus) :
 }
 
 private val FocusedComponent.isTerminalFocused: Boolean
-  get() = (this as? FocusedToolWindow)?.id == TerminalToolWindowFactory.TOOL_WINDOW_ID
+  get() = this is FocusedTerminal
 
 private val LOG = logger<TerminalFocusFusService>()

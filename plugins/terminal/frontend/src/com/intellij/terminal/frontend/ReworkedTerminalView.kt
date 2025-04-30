@@ -38,6 +38,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalFontSettingsListener
 import org.jetbrains.plugins.terminal.TerminalFontSettingsService
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
+import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
@@ -427,7 +428,7 @@ internal class ReworkedTerminalView(
     terminalPanel.addFocusListener(parentDisposable, listener)
   }
 
-  private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider {
+  private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
     private val layeredPane = TerminalLayeredPane(initialContent)
     private var curEditor: Editor = initialContent
 
