@@ -30,6 +30,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
+import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
@@ -98,10 +99,12 @@ internal class ReworkedTerminalView(
 
     terminalInput = TerminalInput(sessionFuture, sessionModel, startupFusInfo, coroutineScope.childScope("TerminalInput"))
 
-    // Use the same instance of the cursor painting listener for both editors to report the metric only once.
-    // Usually, the cursor will be painted in the output editor first because it is shown by default on a new session opening.
+    // Use the same instance of the listeners for both editors to report the metrics only once.
+    // Usually, the cursor is painted or output received first in the output editor
+    // because it is shown by default on a new session opening.
     // But in the case of session restoration in RemDev, there can be an alternate buffer.
     val fusCursorPaintingListener = startupFusInfo?.let { TerminalFusCursorPainterListener(it) }
+    val fusFirstOutputListener = startupFusInfo?.let { TerminalFusFirstOutputListener(it) }
 
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
     val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
@@ -116,6 +119,7 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       scrollingModel = null,
       fusCursorPaintingListener,
+      fusFirstOutputListener,
       withTopAndBottomInsets = false,
     )
 
@@ -138,6 +142,7 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalOutputModel"),
       scrollingModel,
       fusCursorPaintingListener,
+      fusFirstOutputListener,
       withTopAndBottomInsets = true,
     )
 
@@ -281,6 +286,7 @@ internal class ReworkedTerminalView(
     coroutineScope: CoroutineScope,
     scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
+    fusFirstOutputListener: TerminalFusFirstOutputListener?,
     withTopAndBottomInsets: Boolean,
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
@@ -299,6 +305,10 @@ internal class ReworkedTerminalView(
         editor.repaint(startOffset, editor.document.textLength)
       }
     })
+
+    if (fusFirstOutputListener != null) {
+      model.addListener(parentDisposable, fusFirstOutputListener)
+    }
 
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
 

@@ -130,6 +130,12 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     DURATION_FIELD,
   )
 
+  private val startupFirstOutputLatency = GROUP.registerVarargEvent(
+    "startup.first.output.latency",
+    TERMINAL_OPENING_WAY,
+    DURATION_FIELD,
+  )
+
   @JvmStatic
   fun logTabOpened(project: Project, tabCount: Int) {
     tabOpenedEvent.log(project, tabCount)
@@ -243,6 +249,13 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   fun logStartupShellStartingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
     startupShellStartingLatency.log(
+      TERMINAL_OPENING_WAY with openingWay,
+      DURATION_FIELD with duration,
+    )
+  }
+
+  fun logStartupFirstOutputLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+    startupFirstOutputLatency.log(
       TERMINAL_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )
