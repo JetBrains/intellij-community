@@ -48,7 +48,7 @@ internal class TerminalOutputScrollingModelImpl(
     }
 
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
         if (shouldScrollToCursor) {
           // We already called in an EDT, but let's update the scroll later to not block output model updates.
           coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
