@@ -25,13 +25,13 @@ import static org.jetbrains.jps.javac.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private final Map<String, EntryData> myEntries = new TreeMap<>();
-  private final Map<String, ZipEntry> myDirectoryEntries = new HashMap<>();
+  private final Map<String, ZipEntry> myDirectories = new HashMap<>();
   private final ZipFile myZipFile;
   @NotNull
   private final Path myOutputZip;
   private final MVStore myDataSwapStore;
   private final MVMap<String, byte[]> mySwap;
-  private final Map<String, Set<String>> myPackageIndex = new HashMap<>();
+  private final Map<String, Set<String>> myDirIndex = new HashMap<>();
   private boolean myHasChanges;
 
   public ZipOutputBuilderImpl(Path outputZip) throws IOException {
@@ -49,7 +49,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       ZipEntry entry = entries.nextElement();
       addToPackageIndex(entry.getName());
       if (entry.isDirectory()) {
-        myDirectoryEntries.put(entry.getName(), entry);
+        myDirectories.put(entry.getName(), entry);
       }
       else {
         myEntries.put(entry.getName(), EntryData.create(myZipFile, entry));
@@ -69,7 +69,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
   @Override
   public Iterable<String> listEntries(String entryName) {
-    return isDirectoryName(entryName)? myPackageIndex.getOrDefault(entryName, Set.of()) : List.of();
+    return isDirectoryName(entryName)? myDirIndex.getOrDefault(entryName, Set.of()) : Set.of();
   }
 
   @Override
@@ -97,11 +97,11 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   @Override
   public void deleteEntry(String entryName) {
     EntryData data = myEntries.remove(entryName);
-    if (data != null) {
+    if (data != null) { 
       data.cleanup();
-      removeFromPackageIndex(entryName);
       myHasChanges = true;
     }
+    myHasChanges |= removeFromPackageIndex(entryName);
   }
 
   @Override
@@ -111,8 +111,11 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     }
     else {
       // augment entry map with all currently present directory entries
-      for (String dirName : collect(flat(map(myEntries.keySet(), ZipOutputBuilderImpl::allParentNames)), new HashSet<>())) {
-        ZipEntry existingEntry = myDirectoryEntries.get(dirName); // todo: need to generate '/' entry?
+      for (String dirName : myDirIndex.keySet()) {
+        ZipEntry existingEntry = myDirectories.get(dirName); 
+        if (existingEntry == null && "/".equals(dirName)) {
+          continue; // keep root '/' entry if it were present in the original zip
+        }
         myEntries.put(dirName, EntryData.create(myZipFile, existingEntry != null? existingEntry : new ZipEntry(dirName)));
       }
       Path newOutputName = getNewOutputName();
@@ -360,24 +363,37 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private void addToPackageIndex(String entryName) {
     String parent = getParent(entryName);
     if (parent != null) {
-      boolean added = myPackageIndex.computeIfAbsent(parent, k -> new HashSet<>()).add(entryName);
+      boolean added = myDirIndex.computeIfAbsent(parent, k -> new HashSet<>()).add(entryName);
       if (added) {
         addToPackageIndex(parent);
       }
     }
   }
 
-  private void removeFromPackageIndex(String entryName) {
-    String parent = getParent(entryName);
-    if (parent != null) {
-      Set<String> children = myPackageIndex.get(parent);
-      if (children != null) {
-        boolean removed = children.remove(entryName);
-        if (removed && children.isEmpty()) {
-          myPackageIndex.remove(parent);
-          removeFromPackageIndex(parent);
+  private boolean removeFromPackageIndex(String entryName) {
+    boolean changes = false;
+    if (isDirectoryName(entryName)) {
+      Set<String> toRemove = collect(recurseDepth(entryName, this::listEntries, true), new HashSet<>());
+      changes |= myDirIndex.keySet().removeAll(toRemove);
+      for (String name : filter(toRemove, n -> !isDirectoryName(n))) {
+        EntryData data = myEntries.remove(name);
+        if (data != null) {
+          data.cleanup();
+          changes = true;
         }
       }
     }
+    for (String parent = getParent(entryName); parent != null; parent = getParent(entryName)) {
+      Set<String> children = myDirIndex.getOrDefault(parent, Set.of());
+      changes |= children.remove(entryName);
+      if (children.isEmpty()) {
+        myDirIndex.remove(parent);
+        entryName = parent;
+      }
+      else {
+        break;
+      }
+    }
+    return changes;
   }
 }
