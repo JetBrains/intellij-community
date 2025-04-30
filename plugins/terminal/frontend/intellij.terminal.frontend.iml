@@ -52,6 +52,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
   </component>
 </module>

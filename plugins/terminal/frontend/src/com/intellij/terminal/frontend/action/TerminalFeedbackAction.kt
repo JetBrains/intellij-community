@@ -1,20 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.platform.feedback.isSuitableToShowByExplicitUserAction
 import com.intellij.platform.feedback.showFeedbackDialog
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalEngine
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.feedback.ReworkedTerminalSurveyConfig
 
-@ApiStatus.Internal
-class TerminalFeedbackAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class TerminalFeedbackAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
