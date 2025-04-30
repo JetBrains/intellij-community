@@ -777,6 +777,10 @@ fun <T : CommandChain> T.setRegistry(registry: String, value: String): T = apply
   addCommand("${CMD_PREFIX}set $registry=$value")
 }
 
+fun <T : CommandChain> T.setRegistrySelectedOption(registry: String, optionValue: String): T = apply {
+  addCommand("${CMD_PREFIX}set $registry=[option]$optionValue")
+}
+
 fun <T : CommandChain> T.validateGradleMatrixCompatibility(): T = apply {
   addCommand("${CMD_PREFIX}validateGradleMatrixCompatibility")
 }

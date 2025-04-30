@@ -10,6 +10,7 @@ import org.jetbrains.concurrency.Promises;
 public final class RegistryValueCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "set";
+  private static final String OPTION_PREFIX = "[option]";
 
   public RegistryValueCommand(String text, int line) {
     super(text, line);
@@ -27,8 +28,11 @@ public final class RegistryValueCommand extends AbstractCommand {
     final String value = keyValue[1];
 
     context.storeRegistryValue(key);
-
-    Registry.get(key).setValue(value);
+    if (value.startsWith(OPTION_PREFIX)) {
+      Registry.get(key).setSelectedOption(value.substring(OPTION_PREFIX.length()));
+    } else {
+      Registry.get(key).setValue(value);
+    }
 
     return Promises.resolvedPromise();
   }
