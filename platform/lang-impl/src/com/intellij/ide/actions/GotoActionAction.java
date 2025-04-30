@@ -23,6 +23,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.POPUP_HANDLER;
+
 public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -94,18 +96,16 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
       context, presentation, ActionPlaces.ACTION_SEARCH,
       ActionUiKind.SEARCH_POPUP, inputEvent, modifiers, ActionManager.getInstance());
     event.setInjectedContext(action.isInInjectedContext());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      Window window = SwingUtilities.getWindowAncestor(component);
-      ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
-        ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
-          if (window != null) {
-            popup.showInCenterOf(window);
-          }
-          else {
-            popup.showInFocusCenter();
-          }
-        }));
-    }
+    Window window = SwingUtilities.getWindowAncestor(component);
+    event.getPresentation().putClientProperty(POPUP_HANDLER, popup -> {
+      if (window != null) {
+        popup.showInCenterOf(window);
+      }
+      else {
+        popup.showInFocusCenter();
+      }
+    });
+    ActionUtil.performAction(action, event);
   }
 
   @Override

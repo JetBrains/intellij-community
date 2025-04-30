@@ -1764,6 +1764,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:INLINE_ACTIONS:com.intellij.openapi.util.Key
 - sf:INSTANCE:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key
+- sf:POPUP_HANDLER:com.intellij.openapi.util.Key
 - sf:SEARCH_TAG:com.intellij.openapi.util.Key
 - sf:SECONDARY_ICON:com.intellij.openapi.util.Key
 - sf:SECONDARY_TEXT:com.intellij.openapi.util.Key

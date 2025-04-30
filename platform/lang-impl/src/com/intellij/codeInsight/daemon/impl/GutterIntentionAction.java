@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.POPUP_HANDLER;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -60,13 +62,10 @@ public class GutterIntentionAction extends AbstractIntentionAction
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU,
       myPresentation.clone(), EditorUtil.getEditorDataContext(editor));
-
     AnAction action = getAction();
-    if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) return;
-    ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
-      ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
-        popup.showInBestPositionFor(editor);
-      }));
+    event.getPresentation().putClientProperty(
+      POPUP_HANDLER, popup -> popup.showInBestPositionFor(editor));
+    ActionUtil.performAction(action, event);
   }
 
   @Override

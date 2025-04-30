@@ -131,6 +131,9 @@ object ActionUtil {
   @JvmField
   val COMPONENT_PROVIDER: Key<CustomComponentAction> = Key.create("COMPONENT_PROVIDER")
 
+  @JvmField
+  val POPUP_HANDLER: Key<Consumer<in JBPopup>> = Key.create("POPUP_HANDLER")
+
   @ApiStatus.Internal
   @JvmField
   val ACTION_GROUP_POPUP_CAPTION: Key<ActionGroupPopupCaption> = Key.create("ACTION_GROUP_POPUP_CAPTION")
