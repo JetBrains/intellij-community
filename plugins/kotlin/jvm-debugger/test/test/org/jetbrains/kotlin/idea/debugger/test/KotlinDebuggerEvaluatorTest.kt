@@ -72,6 +72,13 @@ class KotlinDebuggerEvaluatorTest : JVMDebuggerEvaluatorTest() {
         doTestRange("class Abc { int aa; void foo() { Abc ins = new Abc(); ins.a<caret>a;}}", expressionWithoutSideEffects("ins.aa"))
     }
 
+    fun testContextParameters() {
+        doTestRange("context(c<caret>tx: String) fun f1(arg: String): String = ctx + arg",
+                    expressionWithoutSideEffects("ctx"))
+        doTestRange("context(ctx: String) fun f1(arg: String): String = c<caret>tx + arg",
+                    expressionWithoutSideEffects("ctx"))
+    }
+
     fun testMethods() {
         doTestRangeExpression("val ins = A(); i<caret>ns.foo()", expressionWithoutSideEffects("ins"))
         doTestRangeExpression("val ins = A(); ins.f<caret>oo()", expressionWithSideEffects("ins.foo()"))
