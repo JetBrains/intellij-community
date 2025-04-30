@@ -3926,25 +3926,6 @@
       <scope name="Tests" level="WARNING" enabled="false" />
       <option name="MODULES_SETS_LOADED_TOGETHER">
         <modules-set>
-          <module name="intellij.css.impl" />
-          <module name="intellij.css.psi" />
-          <module name="intellij.css" />
-          <module name="intellij.css.analysis" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.spring.core" />
-          <module name="intellij.spring" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.ruby" />
-          <module name="intellij.ruby.core" />
-          <module name="intellij.ruby.psi" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.spring.mvc.impl" />
-          <module name="intellij.spring.mvc" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.java.impl" />
           <module name="intellij.java.analysis.impl" />
           <module name="intellij.java.execution" />
@@ -3956,21 +3937,8 @@
           <module name="intellij.java.impl.refactorings" />
         </modules-set>
         <modules-set>
-          <module name="intellij.jboss.arquillian.junit" />
-          <module name="intellij.jboss.arquillian" />
-          <module name="intellij.jboss.arquillian.testng" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javaee.impl" />
-          <module name="intellij.javaee" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.android.profilers.ui" />
           <module name="intellij.android.profilers" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.struts2" />
-          <module name="intellij.struts2.dom" />
         </modules-set>
         <modules-set>
           <module name="intellij.java.testFramework" />
@@ -4016,24 +3984,8 @@
           <module name="intellij.platform.util.jdom" />
         </modules-set>
         <modules-set>
-          <module name="intellij.xslt.debugger.impl.rt" />
-          <module name="intellij.xslt.debugger.rt" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javaee.web.impl" />
-          <module name="intellij.javaee.web" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.android.wizard" />
           <module name="intellij.android.wizard.model" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.php.impl" />
-          <module name="intellij.php" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.rubyMotion.plugin" />
-          <module name="intellij.rubyMotion" />
         </modules-set>
         <modules-set>
           <module name="intellij.java.compiler.impl" />
@@ -4048,31 +4000,8 @@
           <module name="intellij.platform.duplicates.analysis" />
         </modules-set>
         <modules-set>
-          <module name="intellij.gradle.java" />
-          <module name="intellij.gradle.common" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.appcode" />
-          <module name="intellij.cidr.common" />
-          <module name="intellij.cidr.cocoaCommon" />
-          <module name="intellij.swift" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.database.sql.dialects" />
-          <module name="intellij.database.sql.impl" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.vcs.git" />
-          <module name="intellij.vcs.git.rt" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.marketplace.core" />
           <module name="intellij.platform.commercial.license" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.maven.server.m3.impl" />
-          <module name="intellij.maven.server.m3.common" />
-          <module name="intellij.maven.server.m30.impl" />
         </modules-set>
         <modules-set>
           <module name="intellij.platform.graph.impl" />
