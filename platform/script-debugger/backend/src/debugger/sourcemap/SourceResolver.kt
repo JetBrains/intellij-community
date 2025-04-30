@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.sourcemap
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -18,6 +19,8 @@ import org.jetbrains.debugger.ScriptDebuggerUrls
 import java.nio.file.InvalidPathException
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+
+private val LOG = logger<SourceResolver>()
 
 @ApiStatus.Internal
 interface SourceFileResolver {
@@ -173,7 +176,7 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, baseUrlIsFile: Boolean = true, t
 @ApiStatus.Internal
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
-  if (baseUrl.isInLocalFileSystem || asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && Path(path).exists()) {
+  if (baseUrl.isInLocalFileSystem || asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && pathExistsSafe(path)) {
     // file:///home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (baseUrl is in local fs)
     // http://localhost/home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (File(path) exists)
     return ScriptDebuggerUrls.newLocalFileUrl(path)
@@ -188,6 +191,13 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     val split = path.split('?', limit = 2)
     return Urls.newUrl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
   }
+}
+
+private fun pathExistsSafe(path: String): Boolean = try {
+  Path(path).exists()
+} catch (e: InvalidPathException) {
+  LOG.warn("Invalid path: $path", e)
+  false
 }
 
 private object CaseInsensitiveUrlHashingStrategy: Hash.Strategy<Url> {
