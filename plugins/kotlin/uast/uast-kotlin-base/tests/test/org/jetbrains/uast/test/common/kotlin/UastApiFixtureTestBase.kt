@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.KotlinConstructorUMethod
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -1809,6 +1810,24 @@ interface UastApiFixtureTestBase {
                 }
             }
         )
+    }
+
+    fun checkDataClassCopy(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "Foo.kt", """
+                data class Foo(
+                  val p1: Int,
+                  val p2: Float,
+                )
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        val foo = uFile.classes.single()
+        val copy = foo.methods.find { it.name == "copy" }
+        TestCase.assertNotNull(copy)
+        TestCase.assertFalse(copy!!.isConstructor)
+        TestCase.assertTrue(copy !is KotlinConstructorUMethod)
+        TestCase.assertEquals(1, foo.methods.count { it.isConstructor })
     }
 
     fun checkNullLiteral(myFixture: JavaCodeInsightTestFixture) {

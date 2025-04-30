@@ -15,11 +15,5 @@ UFile (package = ) [public final class Cls : <ErrorType> {...]
                     USimpleNameReferenceExpression (identifier = a) [a] : long
                     USimpleNameReferenceExpression (identifier = a) [a] : long
         UMethod (name = component1) [public final fun component1() : long = UastEmptyExpression]
-        UMethod (name = copy) [public final fun copy(a: long) : Cls {...}]
+        UMethod (name = copy) [public final fun copy(a: long) : Cls = UastEmptyExpression]
             UParameter (name = a) [var a: long]
-            UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [UIdentifier (Identifier (this))(a, a, a)]
-                    UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = a) [a] : long
-                    USimpleNameReferenceExpression (identifier = a) [a] : long
-                    USimpleNameReferenceExpression (identifier = a) [a] : long

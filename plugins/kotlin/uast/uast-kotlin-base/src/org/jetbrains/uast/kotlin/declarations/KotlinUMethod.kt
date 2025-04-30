@@ -168,7 +168,7 @@ open class KotlinUMethod(
         ): UMethod {
             val kotlinOrigin = psi.kotlinOrigin
             return when {
-                kotlinOrigin is KtConstructor<*> ->
+                kotlinOrigin is KtConstructor<*> && psi.isConstructor ->
                     KotlinConstructorUMethod(kotlinOrigin.containingClassOrObject, psi, givenParent)
 
                 kotlinOrigin is KtParameter && kotlinOrigin.getParentOfType<KtClass>(true)?.isAnnotation() == true ->
