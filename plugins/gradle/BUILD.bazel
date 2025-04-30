@@ -60,6 +60,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/ijent",
     "//platform/core-api:core",
+    "//java/java-psi-api:psi",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
