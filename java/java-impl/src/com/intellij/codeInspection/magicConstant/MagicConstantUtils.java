@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -13,6 +14,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -206,7 +208,8 @@ public final class MagicConstantUtils {
   static @Nullable AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element,
                                                   @Nullable PsiType type,
                                                   @Nullable PsiElement context,
-                                                  @Nullable Set<? super PsiClass> visited) {
+                                                  @Nullable Set<? super PsiModifierListOwner> visited) {
+    if (visited != null && visited.size() > 5) return null; // Avoid too deep traversal
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
@@ -226,6 +229,29 @@ public final class MagicConstantUtils {
       AllowedValues values = getAllowedValues(aClass, type, context, visited);
       if (values != null) {
         return values;
+      }
+    }
+    
+    if (element instanceof PsiLocalVariable localVariable) {
+      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(localVariable.getInitializer());
+      if (initializer != null) {
+        PsiModifierListOwner target = null;
+        if (initializer instanceof PsiMethodCallExpression call) {
+          target = call.resolveMethod();
+        } else if (initializer instanceof PsiReferenceExpression ref) {
+          target = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+        }
+        if (target != null) {
+          PsiElement block = PsiUtil.getVariableCodeBlock(localVariable, null);
+          if (block != null && ControlFlowUtil.isEffectivelyFinal(localVariable, block)) {
+            if (visited == null) {
+              visited = new HashSet<>();
+            }
+            if (visited.add(target)) {
+              return getAllowedValues(target, type, context, visited);
+            }
+          }
+        }
       }
     }
 

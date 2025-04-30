@@ -4,6 +4,8 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -56,5 +58,34 @@ public final class MagicConstantUtilsTest extends LightJavaCodeInsightFixtureTes
     assertEquals("DECENT", MagicConstantUtils.getPresentableText(2L, field));
     assertNull(MagicConstantUtils.getPresentableText(3L, field));
     assertEquals("BAD", MagicConstantUtils.getPresentableText(4L, field));
+  }
+
+  public void testTextualRepresentationValuesWithIntermediateVar() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.MagicConstant;
+
+      class Test {
+        @StateValue
+        native long getFlags();
+    
+        void use() {
+          long <caret>flags = getFlags();
+        }
+      }
+
+      @MagicConstant(valuesFromClass = State.class)
+      @interface StateValue {}
+    
+      interface State {
+        long GOOD = 1;
+        long DECENT = 2;
+        long BAD = 4;
+      }
+    """);
+    PsiLocalVariable variable =
+      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiLocalVariable.class);
+    assertEquals("DECENT", MagicConstantUtils.getPresentableText(2L, variable));
+    assertNull(MagicConstantUtils.getPresentableText(3L, variable));
+    assertEquals("BAD", MagicConstantUtils.getPresentableText(4L, variable));
   }
 }
