@@ -1237,32 +1237,30 @@ private fun processOptionalPluginDependenciesOnPlugin(
   processor: (main: IdeaPluginDescriptorImpl, sub: IdeaPluginDescriptorImpl) -> Boolean
 ): Boolean {
   for (dependency in mainDescriptor.dependencies) {
-    if (!dependency.isOptional) {
+    if (dependency.isOptional) {
+      val subDescriptor = dependency.subDescriptor ?: continue
+      if (loadStateFilter != LoadStateFilter.ANY) {
+        val isModuleLoaded = subDescriptor.pluginClassLoader != null
+        if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
+          continue
+        }
+      }
+      if (dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, subDescriptor)) {
+        return false
+      }
+      if (!processOptionalPluginDependenciesOnPlugin(
+          dependencyTargetId = dependencyTargetId,
+          mainDescriptor = subDescriptor,
+          loadStateFilter = loadStateFilter,
+          onlyOptional = onlyOptional,
+          processor = processor)) {
+        return false
+      }
+    }
+    else {
       if (!onlyOptional && dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, mainDescriptor)) {
         return false
       }
-      continue
-    }
-
-    val subDescriptor = dependency.subDescriptor ?: continue
-    if (loadStateFilter != LoadStateFilter.ANY) {
-      val isModuleLoaded = subDescriptor.pluginClassLoader != null
-      if (isModuleLoaded != (loadStateFilter == LoadStateFilter.LOADED)) {
-        continue
-      }
-    }
-
-    if (dependency.pluginId == dependencyTargetId && !processor(mainDescriptor, subDescriptor)) {
-      return false
-    }
-
-    if (!processOptionalPluginDependenciesOnPlugin(
-        dependencyTargetId = dependencyTargetId,
-        mainDescriptor = subDescriptor,
-        loadStateFilter = loadStateFilter,
-        onlyOptional = onlyOptional,
-        processor = processor)) {
-      return false
     }
   }
   return true
