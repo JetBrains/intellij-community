@@ -195,10 +195,8 @@ class CardReportGenerator(
               top: 1.5em;
               left: 0;
               
-              max-width: 60em;
+              width: 60em;
               max-height: 40em;
-              
-              min-width: 15em;
               min-height: 10em;
               
               background-color: lightgray;
@@ -233,19 +231,21 @@ private data class ResolvedProperty<T>(
 ) {
   companion object {
     fun <T> fromData(presenter: EvalDataPresenter<T>, props: DataProps): List<ResolvedProperty<T>> {
-      val resolved = presenter.data.placement.restore(props).mapIndexed { index, value ->
-        val problems = props.lookup.additionalList(AIA_PROBLEMS) ?: emptyList()
-        ResolvedProperty(
-          name = presenter.presentation.dynamicName?.resolve(props, value) ?: presenter.data.name,
-          placement = presenter.data.placement,
-          placementIndex = index,
-          category = presenter.presentation.category,
-          suffix = null,
-          value = value,
-          renderer = presenter.presentation.renderer,
-          hasProblems = problems.contains(presenter.data.valueId(index))
-        )
-      }
+      val resolved = presenter.data.placement.restore(props)
+        .filter { presenter.presentation.renderer?.skip(it) != true }
+        .mapIndexed { index, value ->
+          val problems = props.lookup.additionalList(AIA_PROBLEMS) ?: emptyList()
+          ResolvedProperty(
+            name = presenter.presentation.dynamicName?.resolve(props, value) ?: presenter.data.name,
+            placement = presenter.data.placement,
+            placementIndex = index,
+            category = presenter.presentation.category,
+            suffix = null,
+            value = value,
+            renderer = presenter.presentation.renderer,
+            hasProblems = problems.contains(presenter.data.valueId(index))
+          )
+        }
 
       if (resolved.isEmpty() && !presenter.presentation.ignoreMissingData) {
         val unresolved = ResolvedProperty(
@@ -312,7 +312,7 @@ private data class PropertyValue(
         is DataRenderer.InlineBoolean -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineLong -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineDouble -> PropertyValue(null, "${property.value}")
-        is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]});""", null)
+        is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${property.renderer.wrapping});""", null)
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]});""", null)
         is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]});""", null)
       }
@@ -357,7 +357,7 @@ private data class PropertyValue(
         DataRenderer.InlineBoolean -> listOf("\"${value}\"")
         DataRenderer.InlineLong -> listOf("\"${value}\"")
         DataRenderer.InlineDouble -> listOf("\"${value}\"")
-        DataRenderer.Text -> listOf(embedString(value as String))
+        is DataRenderer.Text -> listOf(embedString(value as String))
         DataRenderer.Lines -> listOf(embedString((value as List<*>).joinToString("\n") { "• $it" }))
         DataRenderer.TextDiff -> listOf(
           embedString((value as TextUpdate).originalText),

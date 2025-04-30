@@ -59,7 +59,7 @@ object Execution {
     DataPlacement.AdditionalText(AIA_USER_PROMPT),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Text
+      DataRenderer.Text()
     )
   )
 
@@ -69,7 +69,7 @@ object Execution {
     DataPlacement.AdditionalText(AIA_RESPONSE),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Text
+      DataRenderer.Text()
     )
   )
 
@@ -79,7 +79,7 @@ object Execution {
     DataPlacement.AdditionalText(AIA_CONTEXT),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Text
+      DataRenderer.Text()
     )
   )
 
@@ -89,7 +89,7 @@ object Execution {
     DataPlacement.AdditionalText(AIA_SYSTEM_CONTEXT),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Text
+      DataRenderer.Text()
     )
   )
 
@@ -99,7 +99,7 @@ object Execution {
     placement = DataPlacement.AdditionalText(AIA_CHAT_DUMP),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Text
+      DataRenderer.Text()
     )
   )
 
@@ -113,6 +113,28 @@ object Execution {
     name = "Preview",
     description = "Some description of an evaluation case",
     DataPlacement.AdditionalText(AIA_DESCRIPTION),
+  )
+
+  val LLMC_LOG: TrivialEvalData<String> = EvalDataDescription(
+    name = "LLMC log",
+    description = "LLMC logs during evaluation case",
+    placement = DataPlacement.AdditionalText(AIA_LLMC_LOG),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text(wrapping = true),
+      ignoreMissingData = true,
+    )
+  )
+
+  val HTTP_LOG: TrivialEvalData<String> = EvalDataDescription(
+    name = "HTTP log",
+    description = "HTTP logs during evaluation case",
+    placement = DataPlacement.AdditionalText(AIA_HTTP_LOG),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Text(wrapping = true),
+      ignoreMissingData = true,
+    )
   )
 }
 

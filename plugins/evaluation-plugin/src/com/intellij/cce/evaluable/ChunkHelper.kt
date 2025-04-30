@@ -75,21 +75,27 @@ class ChunkHelper(
     evaluate: ChunkHelper.(Props<T>) -> PresentableResult,
   ): Iterator<EvaluationChunk> {
     return chunks(entities) { props ->
-      val result = evaluate(props)
+      var call: CallFeature? = null
+      var presentationLineText: String? = null
 
-      layoutManager.processData(result.data)
+      val data = layoutManager.processData {
+        val result = evaluate(props)
+        call = result.call
+        presentationLineText = result.presentationLineText
+        result.data
+      }
 
-      val session = result.data.session(
-        result.call?.expectedText ?: "",
-        result.call?.offset ?: props.offset,
-        result.call?.nodeProperties ?: TokenProperties.Companion.UNKNOWN,
-        result.call?.sessionId?.id ?: UUID.randomUUID().toString()
+      val session = data.session(
+        call?.expectedText ?: "",
+        call?.offset ?: props.offset,
+        call?.nodeProperties ?: TokenProperties.Companion.UNKNOWN,
+        call?.sessionId?.id ?: UUID.randomUUID().toString()
       )
 
       return@chunks Result(
         session,
-        result.presentationLineText,
-        result.call,
+        presentationLineText,
+        call,
       )
     }
   }

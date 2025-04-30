@@ -89,7 +89,7 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
     config.actions ?: throw IllegalStateException("Configuration missing project description (actions)")
 }
 
-internal fun defaultSetupSteps(project: Project, language: Language, preferences: SetupSdkPreferences): List<EvaluationStep> {
+fun defaultSetupSteps(project: Project, language: Language, preferences: SetupSdkPreferences): List<EvaluationStep> {
   val setupSteps = SetupSdkStepFactory.forLanguage(project, language)?.steps(preferences) ?: emptyList()
   val checkStep = CheckProjectSdkStep(project, language.displayName).takeUnless { Registry.`is`("evaluation.plugin.disable.sdk.check") }
   return setupSteps + listOfNotNull(checkStep)

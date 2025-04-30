@@ -21,11 +21,14 @@ function openDiff(element, original, suggested) {
   element.style.visibility = "visible";
 }
 
-function openText(element, text) {
+function openText(element, text, wrapping = false) {
   closePopup();
 
   const highlighted = highlightedText(text)
   highlighted.setAttribute("class", "popup-content");
+  if (wrapping) {
+    highlighted.setAttribute("style", "white-space: pre-wrap;");
+  }
   element.appendChild(highlighted);
   element.style.visibility = "visible";
 }
