@@ -372,7 +372,8 @@ public final class PyDocumentationBuilder {
     final PyStringLiteralExpression effectiveDocstring = modifyDocStringByOwnerType(ownDocstring, elementDefinition, isProperty);
 
     if (PyUtil.isTopLevel(elementDefinition)) {
-      final PsiFile containing = elementDefinition.getContainingFile();
+      final PsiFile containing = ObjectUtils.chooseNotNull(PyiUtil.getOriginalElement(elementDefinition), 
+                                                           elementDefinition).getContainingFile();
       if (containing instanceof PyFile) {
         final HtmlChunk linkToModule = getLinkToModule((PyFile)containing);
         if (linkToModule != null) {

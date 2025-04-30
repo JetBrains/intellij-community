@@ -861,9 +861,10 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   // PY-38169
-  public void testDefinitionWrongInTypeshed() {
-    // TODO: PY-80728, this test contains _some_ invalid output
-    checkHTMLOnly();
+  public void testUnderscoreCollectionsAbcSymbolRealOrigin() {
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...", ignored -> {
+      checkHTMLOnly();
+    });
   }
 
   @Override
