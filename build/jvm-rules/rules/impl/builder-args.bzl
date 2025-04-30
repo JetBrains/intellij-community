@@ -26,7 +26,6 @@ def init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins, com
 
     kotlinc_options_to_args(kotlinc_options, args)
 
-    args.add_all("--opt-in", kotlinc_options.opt_in)
     args.add_all("--cp", compile_deps.compile_jars)
 
     if ctx.attr._reduced_classpath:

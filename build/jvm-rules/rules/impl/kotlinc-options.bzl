@@ -150,6 +150,6 @@ def kotlinc_options_to_args(kotlinc_options, args):
                 if value == True:
                     args.add("--" + flagName)
                 elif type(value) == "list":
-                    pass
+                    args.add_all("--" + flagName, value)
                 else:
                     args.add("--" + flagName, value)
