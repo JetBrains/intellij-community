@@ -99,10 +99,11 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
   // PY-38169
   fun testNavigationToCollectionNotTyping() {
     // ensure that `typing.Mapping` links to the definition in `_collections_abc.py`
-    myFixture.copyDirectoryToProject(getTestName(false), "")
-    myFixture.configureByFile("typing.pyi")
-
-    assertContainsElements(getMarkersInCurrentFile("Mapping").map { it.lineMarkerTooltip }, "Stub for item in _collections_abc.py")
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.copyDirectoryToProject(getTestName(false), "")
+      myFixture.configureByFile("typing.pyi")
+      assertContainsElements(getMarkersInCurrentFile("Mapping").map { it.lineMarkerTooltip }, "Stub for item in _collections_abc.py")
+    }
   }
 
   override fun getTestDataPath(): String {
