@@ -17,7 +17,6 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.*
@@ -219,7 +218,7 @@ object XBreakpointUtil {
     }
 
     val lineStart = position.line
-    val types = typeWinner.filterIsInstance<XLineBreakpointTypeProxy.Monolith>().map { it.breakpointType }
+    val types = typeWinner.toBreakpointTypes()
     val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
     val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(
       project, types, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove)
@@ -288,8 +287,14 @@ object XBreakpointUtil {
     editor: Editor?,
   ): List<XLineBreakpointType<*>> =
     getAvailableLineBreakpointInfo(project, position, selectTypeByPositionColumn, editor).first
-      .filterIsInstance<XLineBreakpointTypeProxy.Monolith>()
-      .map { it.breakpointType }
+      .toBreakpointTypes()
+
+
+  private fun List<XLineBreakpointTypeProxy>.toBreakpointTypes(): List<XLineBreakpointType<*>> {
+    if (isEmpty()) return emptyList()
+    val lineBreakpointTypes = XDebuggerUtil.getInstance().lineBreakpointTypes.associateBy { it.id }
+    return mapNotNull { lineBreakpointTypes[it.id] }
+  }
 
   private fun getAvailableLineBreakpointInfo(
     project: Project,
