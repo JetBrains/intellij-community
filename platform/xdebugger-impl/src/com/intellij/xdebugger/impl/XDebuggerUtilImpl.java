@@ -75,6 +75,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxyKt.asProxy;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
@@ -287,23 +288,44 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return toggleAndReturnLineBreakpoint(project, types, position, true, temporary, editor, canRemove);
   }
 
-  public static @NotNull Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(final @NotNull Project project,
-                                                                                          @NotNull List<? extends XLineBreakpointType> types,
-                                                                                          final @NotNull XSourcePosition position,
-                                                                                          boolean selectVariantByPositionColumn,
-                                                                                          final boolean temporary,
-                                                                                          final @Nullable Editor editor,
-                                                                                          boolean canRemove) {
+  /**
+   * Use proxy option instead.
+   */
+  @ApiStatus.Obsolete
+  public static @NotNull Promise<@Nullable XLineBreakpoint> toggleAndReturnLineBreakpoint(
+    final @NotNull Project project,
+    @NotNull List<? extends XLineBreakpointType> types,
+    final @NotNull XSourcePosition position,
+    boolean selectVariantByPositionColumn,
+    final boolean temporary,
+    final @Nullable Editor editor,
+    boolean canRemove
+  ) {
+    var proxyTypes = ContainerUtil.map(types, t -> asProxy(t, project));
+    return toggleAndReturnLineBreakpointProxy(project, proxyTypes, position, selectVariantByPositionColumn, temporary, editor, canRemove)
+      .then(b -> b instanceof XLineBreakpointProxy.Monolith monolith ? monolith.getBreakpoint() : null);
+  }
+
+  public static @NotNull Promise<@Nullable XLineBreakpointProxy> toggleAndReturnLineBreakpointProxy(
+    final @NotNull Project project,
+    @NotNull List<XLineBreakpointTypeProxy> types,
+    final @NotNull XSourcePosition position,
+    boolean selectVariantByPositionColumn,
+    final boolean temporary,
+    final @Nullable Editor editor,
+    boolean canRemove
+  ) {
     if (areInlineBreakpointsEnabled(position.getFile())) {
       return processInlineBreakpoints(project, types, position, selectVariantByPositionColumn, temporary, canRemove);
-    } else {
+    }
+    else {
       return selectBreakpointVariantWithPopup(project, types, position, temporary, editor, canRemove);
     }
   }
 
-  private static @NotNull Promise<@Nullable XLineBreakpoint> selectBreakpointVariantWithPopup(
+  private static @NotNull Promise<@Nullable XLineBreakpointProxy> selectBreakpointVariantWithPopup(
     @NotNull Project project,
-    @NotNull List<? extends XLineBreakpointType> types,
+    @NotNull List<XLineBreakpointTypeProxy> types,
     @NotNull XSourcePosition position,
     boolean temporary,
     @Nullable Editor editor,
@@ -311,25 +333,23 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   ) {
     final VirtualFile file = position.getFile();
     final int line = position.getLine();
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    var breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
 
-    var variantsAsync = FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, types, position);
-
-    for (XLineBreakpointType type : types) {
-      XLineBreakpoint breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
-      if (breakpoint instanceof XBreakpointBase<?,?,?> breakpointBase) {
+    for (XLineBreakpointTypeProxy type : types) {
+      XLineBreakpointProxy breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+      if (breakpoint != null) {
         if (!temporary && canRemove) {
-          removeBreakpointWithConfirmation(project, XBreakpointProxyKt.asProxy(breakpointBase));
+          removeBreakpointWithConfirmation(project, breakpoint);
         }
         return resolvedPromise();
       }
     }
-
+    var variantsAsync = FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, types, position, null);
     return variantsAsync.thenAsync(variants -> {
       assert !variants.isEmpty();
-      final AsyncPromise<XLineBreakpoint<?>> res = new AsyncPromise<>();
+      final AsyncPromise<XLineBreakpointProxy> res = new AsyncPromise<>();
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
-        for (XLineBreakpointType<?> type : types) {
+        for (XLineBreakpointTypeProxy type : types) {
           if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
             return;
           }
@@ -343,7 +363,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           variant.select(res, temporary);
         }
       });
-      return res.then(b -> b);
+      return res;
     });
   }
 
@@ -353,7 +373,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     boolean temporary,
     @NotNull Editor editor,
     List<FrontendXLineBreakpointVariant> variants,
-    AsyncPromise<XLineBreakpoint<?>> res,
+    AsyncPromise<XLineBreakpointProxy> res,
     RelativePoint relativePoint
   ) {
     final int line = position.getLine();
@@ -443,16 +463,16 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     popup.show(relativePoint);
   }
 
-  private static @NotNull Promise<@Nullable XLineBreakpoint> processInlineBreakpoints(
+  private static @NotNull Promise<@Nullable XLineBreakpointProxy> processInlineBreakpoints(
     @NotNull Project project,
-    @NotNull List<? extends XLineBreakpointType> types,
+    @NotNull List<XLineBreakpointTypeProxy> types,
     @NotNull XSourcePosition position,
     boolean selectVariantByPositionColumn,
     boolean temporary,
     boolean canRemove
   ) {
-    var variantsAsync = FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, types, position);
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    var variantsAsync = FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, types, position, null);
+    var breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
     final VirtualFile file = position.getFile();
     final int line = position.getLine();
     return variantsAsync.thenAsync(variantsWithAll -> {
@@ -469,13 +489,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         Object breakpointOrVariant = getBestMatchingBreakpoint(position.getOffset(),
                                                                Stream.concat(breakpoints.stream(), variants.stream()).iterator(),
                                                                o ->
-                                                                 o instanceof XLineBreakpoint b
-                                                                 ? b.getType().getHighlightRange(b)
+                                                                 o instanceof XLineBreakpointProxy b
+                                                                 ? b.getHighlightRange()
                                                                  : ((FrontendXLineBreakpointVariant)o).getHighlightRange());
 
-        if (breakpointOrVariant instanceof XBreakpointBase<?, ?, ?> existingBreakpoint) {
+        if (breakpointOrVariant instanceof XLineBreakpointProxy existingBreakpoint) {
           if (!temporary && canRemove) {
-            removeBreakpointWithConfirmation(project, XBreakpointProxyKt.asProxy(existingBreakpoint));
+            removeBreakpointWithConfirmation(project, existingBreakpoint);
           }
           return resolvedPromise(null);
         }
@@ -485,10 +505,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       else {
         if (!breakpoints.isEmpty()) {
           if (!temporary && canRemove) {
-            List<XBreakpointProxy> proxies = ContainerUtil.map(breakpoints, b ->
-              XBreakpointProxyKt.asProxy((XBreakpointBase<?, ?, ?>)b)
-            );
-            removeBreakpointsWithConfirmation(project, proxies);
+            removeBreakpointsWithConfirmation(project, breakpoints);
           }
           return resolvedPromise(null);
         }
@@ -496,7 +513,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         variant = variants.stream().max(Comparator.comparing(v -> v.getPriority())).get();
       }
 
-      var res = new AsyncPromise<XLineBreakpoint<?>>();
+      var res = new AsyncPromise<XLineBreakpointProxy>();
       variant.select(res, temporary);
 
       return res.then(b -> b);
@@ -537,7 +554,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
   }
 
-  public static  void removeBreakpointsWithConfirmation(final Project project, final List<XBreakpointProxy> breakpoints) {
+  public static  void removeBreakpointsWithConfirmation(final Project project, final List<? extends XBreakpointProxy> breakpoints) {
     // FIXME[inline-bp]: support multiple breakpoints restore
     // FIXME[inline-bp]: Reconsider this, maybe we should have single confirmation for all breakpoints.
     for (XBreakpointProxy b : breakpoints) {

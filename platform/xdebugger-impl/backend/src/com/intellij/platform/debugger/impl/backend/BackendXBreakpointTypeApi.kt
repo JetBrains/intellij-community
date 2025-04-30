@@ -21,18 +21,18 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import fleet.util.channels.use
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import org.jetbrains.concurrency.await
 
 internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
   override suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList {
@@ -98,6 +98,31 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       val rawBreakpoint = type.addBreakpoint(project, null)
       (rawBreakpoint as? XBreakpointBase<*, *, *>)?.toRpc()
     }
+  }
+
+  override suspend fun getLineBreakpointVariants(projectId: ProjectId, types: List<XBreakpointTypeId>, position: XSourcePositionDto): XLineBreakpointVariantResponse? {
+    val project = projectId.findProjectOrNull() ?: return null
+    val position = position.sourcePosition()
+    val lineTypes = types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
+    val variants = withContext(Dispatchers.EDT) {
+      XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position).await()
+    }
+    val variantDtos = variants.map {
+      XLineBreakpointVariantDto(it.text, it.icon?.rpcId(), it.highlightRange?.toRpc(),
+                                it.getPriority(project), it.shouldUseAsInlineVariant())
+    }
+    val selectionCallback = Channel<VariantSelectedResponse>()
+    project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
+      val (selectedVariantIndex, isTemporary, breakpointCallback) = selectionCallback.receive()
+      breakpointCallback.use {
+        val variant = variants[selectedVariantIndex]
+        val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+        val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant,
+                                                             position.file, position.line, isTemporary)
+        it.send((breakpoint as? XBreakpointBase<*, *, *>)?.toRpc())
+      }
+    }
+    return XLineBreakpointVariantResponse(variantDtos, selectionCallback)
   }
 
   private fun getCurrentBreakpointTypeDtos(project: Project): List<XBreakpointTypeDto> {
