@@ -7343,7 +7343,6 @@ f:com.intellij.find.actions.ShowUsagesAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getUsagesPageSize():I
-- s:hint(Z,java.lang.String,com.intellij.find.actions.ShowUsagesParameters,com.intellij.find.actions.ShowUsagesActionHandler):V
 - s:setPopupDelayTimeout(I):V
 - s:showElementUsagesWithResult(com.intellij.find.actions.ShowUsagesParameters,com.intellij.find.actions.ShowUsagesActionHandler,com.intellij.usages.impl.UsageViewImpl):java.util.concurrent.Future
 - s:startFindUsages(com.intellij.psi.PsiElement,com.intellij.ui.awt.RelativePoint,com.intellij.openapi.editor.Editor):V

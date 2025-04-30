@@ -749,22 +749,19 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           if (visibleUsages.isEmpty()) {
             if (usages.isEmpty()) {
               String hint = UsageViewBundle.message("no.usages.found.in", searchScope.getDisplayName());
-              hint(false, hint, parameters, actionHandler);
-              cancel(popup);
+              cancelAndShowHint(popup, false, hint, parameters, actionHandler);
             }
             // else all usages filtered out
           }
           else if (visibleUsages.size() == 1 && actionHandler.navigateToSingleUsageImmediately()) {
             final BiConsumer<Usage, String> onReady = (Usage usage, @Nls String hint) -> {
               var newEditor = getEditorFor(usage);
-              if (newEditor == null) {
+              if (newEditor != null && parameters.editor != null) {
+                cancelAndShowHint(popup, false, hint, parameters, actionHandler);
+              }
+              else {
                 cancel(popup);
-                return;
               }
-              if (parameters.editor != null) {
-                hint(false, hint, parameters.withEditor(parameters.editor), actionHandler);
-              }
-              cancel(popup);
             };
 
             if (usages.size() == 1) {
@@ -772,8 +769,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               Usage usage = visibleUsages.iterator().next();
               if (usage == table.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
                 String hint = UsageViewManagerImpl.outOfScopeMessage(outOfScopeUsages.get(), searchScope);
-                hint(true, hint, parameters, actionHandler);
-                cancel(popup);
+                cancelAndShowHint(popup, true, hint, parameters, actionHandler);
               }
               else {
                 String hint = UsageViewBundle.message("show.usages.only.usage", searchScope.getDisplayName());
@@ -1551,15 +1547,17 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
   }
 
-  public static void hint(boolean isWarning,
-                           @Nls(capitalization = Sentence) @NotNull String hint,
-                           @NotNull ShowUsagesParameters parameters,
-                           @NotNull ShowUsagesActionHandler actionHandler) {
+  private static void cancelAndShowHint(@NotNull AbstractPopup popupToCancel,
+                                        boolean isWarning,
+                                        @Nls(capitalization = Sentence) @NotNull String hint,
+                                        @NotNull ShowUsagesParameters parameters,
+                                        @NotNull ShowUsagesActionHandler actionHandler) {
     Project project = parameters.project;
     Editor editor = parameters.editor;
 
     Runnable runnable = () -> {
       if (!actionHandler.isValid()) {
+        cancel(popupToCancel);
         return;
       }
 
@@ -1567,6 +1565,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         () -> suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler))
       ).finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.HintText String secondInvocationHintHtml) -> {
         if (!actionHandler.isValid()) {
+          cancel(popupToCancel);
           return;
         }
 
@@ -1580,9 +1579,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           )
         );
 
-        ShowUsagesActionState state = getState(project);
-        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler, null);
-        Runnable clearContinuation = () -> state.continuation = null;
+        Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
+        // canceling here, as the action handler becomes not fully valid after the cancellation
+        // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
+        cancel(popupToCancel);
 
         if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
           label.setBorder(JBUI.Borders.empty(5));
@@ -1740,6 +1740,18 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   private static @NotNull ShowUsagesActionState getState(@NotNull Project project) {
     return project.getService(ShowUsagesActionState.class);
+  }
+
+  @ApiStatus.Internal
+  public static void requestMaximalScopeSearch(@NotNull ShowUsagesParameters parameters, @NotNull ShowUsagesActionHandler actionHandler) {
+    ShowUsagesAction.ShowUsagesActionState state = getState(parameters.project);
+    state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler, null);
+  }
+
+  @ApiStatus.Internal
+  public static void resetMaximalScopeSearch(@NotNull Project project) {
+    ShowUsagesAction.ShowUsagesActionState state = getState(project);
+    state.continuation = null;
   }
 
   @TestOnly
