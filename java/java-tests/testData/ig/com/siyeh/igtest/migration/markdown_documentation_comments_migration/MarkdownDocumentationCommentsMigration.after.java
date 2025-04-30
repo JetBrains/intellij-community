@@ -368,3 +368,19 @@ final class LookupWithIndentsBuilder {
 interface Foo<T, B, P, I>
 {
 }
+///    <prE>
+/// This has some formatted text with blank lines.
+///
+/// This has some formatted text with blank lines.
+///
+/// This has some formatted text with blank lines.
+///
+///     An indented line.
+///
+///
+/// Multiple blank lines above and more below.
+///
+///
+/// </Pre>
+/// end
+class Preformatted {}

@@ -7,6 +7,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -126,11 +127,13 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
       return result;
     }
 
+    private enum Context { PLAIN, LIST, PRE }
+
     private static String convertToMarkdown(String html) {
       int tag = -1;
       boolean endTag = false;
       boolean newLine = false;
-      boolean inList = false;
+      Context context = Context.PLAIN;
       StringBuilder result = new StringBuilder();
       for (int i = 0, length = html.length(); i < length; i++) {
         char c = html.charAt(i);
@@ -149,14 +152,14 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
             Matcher matcher; 
             if ("li".equals(name)) {
               if (endTag) {
-                inList = false;
+                context = Context.PLAIN;
               }
               else {
                 if (result.length() > 4 && "    ".equals(result.substring(result.length() - 4))) {
                   result.delete(result.length() - 4, result.length());
                 }
                 result.append("  - ");
-                inList = true;
+                context = Context.LIST;
               }
             }
             else if ("em".equals(name) || "i".equals(name)) {
@@ -176,7 +179,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
               if (i + 1 < length && html.charAt(i + 1) != '\n') result.append('\n');
             }
             else if ("ul".equals(name)) {
-              if (endTag) inList = false;
+              if (endTag) context = Context.PLAIN;
+            }
+            else if ("pre".equals(name)) {
+              context = endTag ? Context.PLAIN : Context.PRE;
+              result.append(html, tag, i + 1);
             }
             else if ((matcher = HEADING.matcher(name)).matches()) {
               if (!endTag) {
@@ -196,7 +203,11 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
           endTag = false;
         }
         else {
-          if (c == '\u0000') { // NUL surrounds text that should be taken raw
+          if (context == Context.PRE) {
+            if (c == '<' && match(html, "</pre>", i)) tag = i;
+            else result.append(c);
+          }
+          else if (c == '\u0000') { // NUL marks part where text should be taken raw
             int end = html.indexOf('\u0000', i + 1);
             result.append(html, i + 1, end);
             i = end;
@@ -205,22 +216,27 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
             if (newLine && !(i + 2 < length && html.charAt(i + 2) == '@')) {
               continue;
             }
-            result.append(inList ? "\n     " : "\n");
+            result.append(context == Context.LIST ? "\n     " : "\n");
             newLine = true;
           }
           else {
-            if (newLine && inList && c == ' ') continue;
+            if (newLine && context == Context.LIST && c == ' ') continue;
             newLine = false;
-            if (c == '<') {
-              tag = i;
-            }
-            else {
-              result.append(c);
-            }
+            if (c == '<') tag = i;
+            else result.append(c);
           }
         }
       }
       return result.toString();
+    }
+
+    private static boolean match(String s, String pattern, int offset) {
+      int length = pattern.length();
+      if (s.length() < offset + length) return false;
+      for (int i = 0; i < length; i++) {
+        if (!StringUtil.charsEqualIgnoreCase(s.charAt(offset + i), pattern.charAt(i))) return false;
+      }
+      return true;
     }
 
     private static boolean isLetterOrDigitAscii(char cur) {
