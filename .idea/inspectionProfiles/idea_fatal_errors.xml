@@ -3970,17 +3970,6 @@
           <module name="intellij.spring.boot.run" />
         </modules-set>
         <modules-set>
-          <module name="intellij.xml.dom.impl" />
-          <module name="intellij.xml.dom" />
-          <module name="intellij.xml.psi" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.xml.impl" />
-          <module name="intellij.xml.psi.impl" />
-          <module name="intellij.xml.analysis.impl" />
-          <module name="intellij.xml" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.jboss.arquillian.junit" />
           <module name="intellij.jboss.arquillian" />
           <module name="intellij.jboss.arquillian.testng" />

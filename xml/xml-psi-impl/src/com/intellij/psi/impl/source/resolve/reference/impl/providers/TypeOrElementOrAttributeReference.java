@@ -23,6 +23,7 @@ import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.XsdNsDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,7 +159,8 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return null;
   }
 
-  XsdNsDescriptor getDescriptor(final XmlTag tag, String text, boolean[] redefined) {
+  @ApiStatus.Internal
+  public XsdNsDescriptor getDescriptor(final XmlTag tag, String text, boolean[] redefined) {
     if (myType != ReferenceType.ElementReference &&
         myType != ReferenceType.AttributeReference) {
       final PsiElement parentElement = myElement.getContext();

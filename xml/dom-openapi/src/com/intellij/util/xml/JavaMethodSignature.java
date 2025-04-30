@@ -6,6 +6,7 @@ import com.intellij.util.JBIterableClassTraverser;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,8 @@ public final class JavaMethodSignature {
     return result;
   }
 
-  static @Nullable Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
+  @ApiStatus.Internal
+  public static @Nullable Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
     String sampleMethodName = sampleMethod.getName();
     Class<?>[] sampleMethodParameters = sampleMethod.getParameterCount() == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : sampleMethod.getParameterTypes();
 

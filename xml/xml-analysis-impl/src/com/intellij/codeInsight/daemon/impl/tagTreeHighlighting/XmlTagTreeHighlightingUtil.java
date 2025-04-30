@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -21,7 +22,8 @@ public final class XmlTagTreeHighlightingUtil {
   private XmlTagTreeHighlightingUtil() {
   }
 
-  static boolean containsTagsWithSameName(PsiElement[] elements) {
+  @ApiStatus.Internal
+  public static boolean containsTagsWithSameName(PsiElement[] elements) {
     final Set<String> names = new HashSet<>();
 
     for (PsiElement element : elements) {
@@ -36,7 +38,8 @@ public final class XmlTagTreeHighlightingUtil {
     return false;
   }
 
-  static boolean isTagTreeHighlightingActive(PsiFile file) {
+  @ApiStatus.Internal
+  public static boolean isTagTreeHighlightingActive(PsiFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return false;
     }
@@ -60,7 +63,8 @@ public final class XmlTagTreeHighlightingUtil {
     return false;
   }
 
-  static Color[] getBaseColors() {
+  @ApiStatus.Internal
+  public static Color[] getBaseColors() {
     final ColorKey[] colorKeys = XmlTagTreeHighlightingColors.getColorKeys();
     final Color[] colors = new Color[colorKeys.length];
 

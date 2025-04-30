@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInspectionTool {
-  protected static final @NonNls String AMP_ENTITY_REFERENCE = "&amp;";
-  protected static final @NonNls String LT_ENTITY_REFERENCE = "&lt;";
   private Lexer myXmlLexer;
 
   @Override
