@@ -4014,7 +4014,6 @@
           <module name="intellij.platform.projectModel.impl" />
           <module name="intellij.platform.analysis" />
           <module name="intellij.platform.analysis.impl" />
-          <module name="intellij.platform.vcs" />
           <module name="intellij.platform.editor" />
           <module name="intellij.platform.util.rt" />
           <module name="intellij.treeProjectModel.ide" />
@@ -4023,7 +4022,6 @@
           <module name="intellij.platform.indexing.impl" />
           <module name="intellij.javaee.testFramework" />
           <module name="intellij.platform.jps.model" />
-          <module name="intellij.platform.vcs.core" />
           <module name="intellij.platform.main" />
           <module name="intellij.platform.diff.impl" />
           <module name="intellij.platform.testFramework.core" />

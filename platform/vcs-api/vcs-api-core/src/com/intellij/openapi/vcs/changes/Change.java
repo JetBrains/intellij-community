@@ -10,10 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -54,6 +51,15 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
+  }
+  
+  @ApiStatus.Internal
+  public Change(@Nullable ContentRevision beforeRevision,
+                @Nullable ContentRevision afterRevision,
+                @Nullable FileStatus fileStatus,
+                @NotNull Change change) {
+    this(beforeRevision, afterRevision, fileStatus);
+    copyFieldsFrom(change);
   }
 
   protected void copyFieldsFrom(@NotNull Change change) {
