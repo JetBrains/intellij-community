@@ -313,21 +313,23 @@ class PyNavigationTest : PyTestCase() {
   // PY-80432
   fun testGoToCollectionsAbc() {
     // ensure that `collections.abc` navigates to `_collections_abc.py`, not `collections/abc.pyi`
-    myFixture.copyDirectoryToProject(getTestName(true), "")
-    myFixture.configureByFile("test.py")
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertEquals("_collections_abc.py", target!!.containingFile.name)
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.configureByFile(getTestName(true) + "/test.py")
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      assertNotNull(target)
+      assertEquals("_collections_abc.py", target!!.containingFile.name)
+    }
   }
 
   // PY-38169
   fun testGoToRealDefinitionNotTypeshed() {
     // ensure that `collections.abc.Mapping` navigates to `_collections_abc.py`, not `typing.pyi`
-    myFixture.copyDirectoryToProject(getTestName(true), "")
-    myFixture.configureByFile("test.py")
-    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
-    assertNotNull(target)
-    assertEquals("_collections_abc.py", target!!.containingFile.name)
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.configureByFile(getTestName(true) + "/test.py")
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      assertNotNull(target)
+      assertEquals("_collections_abc.py", target!!.containingFile.name)
+    }
   }
 
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
