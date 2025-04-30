@@ -389,7 +389,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     else {
       val frameName = "frame '${projectIdeFrame.name}'"
 
-      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) {
+      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused) && KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null) {
         LOG.info("Frame '$frameName' is already focused")
         true
       }
