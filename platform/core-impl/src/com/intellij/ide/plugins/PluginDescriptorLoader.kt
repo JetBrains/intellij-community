@@ -566,7 +566,6 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       isRunningFromSources = true,
       classLoader = mainClassLoader,
       pool = zipPool,
-      result = result,
     ))
     result.addAll(loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool))
     if (bundledPluginDir != null) {
@@ -593,7 +592,6 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       isRunningFromSources = isRunningFromSources,
       pool = zipPool,
       classLoader = mainClassLoader,
-      result = result,
     ))
     result.addAll(loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool))
     result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool))
@@ -840,24 +838,25 @@ private fun CoroutineScope.loadCoreModules(
   isRunningFromSources: Boolean,
   pool: ZipEntryResolverPool,
   classLoader: ClassLoader,
-  result: MutableList<Deferred<IdeaPluginDescriptorImpl?>>,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
-  if (loadCorePlugin(
-      platformPrefix = platformPrefix,
-      isInDevServerMode = isInDevServerMode,
-      isUnitTestMode = isUnitTestMode,
-      isRunningFromSources = isRunningFromSources,
-      loadingContext = loadingContext,
-      pathResolver = pathResolver,
-      useCoreClassLoader = useCoreClassLoader,
-      classLoader = classLoader,
-      result = result,
-    )) {
-    return result
+  val (corePluginDeferred, isSingleDescriptorCore) = loadCorePlugin(
+    platformPrefix = platformPrefix,
+    isInDevServerMode = isInDevServerMode,
+    isUnitTestMode = isUnitTestMode,
+    isRunningFromSources = isRunningFromSources,
+    loadingContext = loadingContext,
+    pathResolver = pathResolver,
+    useCoreClassLoader = useCoreClassLoader,
+    classLoader = classLoader,
+  )
+  if (isSingleDescriptorCore) {
+    return Collections.singletonList(corePluginDeferred)
   }
 
+  val result: MutableList<Deferred<IdeaPluginDescriptorImpl?>> = ArrayList()
+  result.add(corePluginDeferred)
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(classLoader)
   if (urlToFilename.isNotEmpty()) {
@@ -879,6 +878,9 @@ private fun CoroutineScope.loadCoreModules(
   return result
 }
 
+/**
+ * @returns `(corePluginDeferred, isSingleDescriptorCore)` (well, the last one is probably not precise description, FIXME)
+ */
 fun CoroutineScope.loadCorePlugin(
   platformPrefix: String,
   isInDevServerMode: Boolean,
@@ -888,22 +890,18 @@ fun CoroutineScope.loadCorePlugin(
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
   classLoader: ClassLoader,
-  result: MutableList<Deferred<IdeaPluginDescriptorImpl?>>,
-): Boolean {
+): Pair<Deferred<IdeaPluginDescriptorImpl?>, Boolean> {
   if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    result.add(async(Dispatchers.IO) {
+    return async(Dispatchers.IO) {
       val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
       loadCoreProductPlugin(loadingContext = loadingContext, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
-    })
-    return true
+    } to true
   }
-
-  result.add(async(Dispatchers.IO) {
+  return async(Dispatchers.IO) {
     val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
     val reader = getResourceReader(path, classLoader) ?: return@async null
     loadCoreProductPlugin(loadingContext = loadingContext, pathResolver = pathResolver, useCoreClassLoader = useCoreClassLoader, reader = reader)
-  })
-  return false
+  } to false
 }
 
 // should be the only plugin in lib
