@@ -3952,10 +3952,6 @@
           <module name="intellij.java.compiler.instrumentationUtil.java8" />
           <module name="intellij.java.compiler.instrumentationUtil" />
         </modules-set>
-        <modules-set>
-          <module name="intellij.platform.util" />
-          <module name="intellij.platform.util.jdom" />
-        </modules-set>
       </option>
     </inspection_tool>
     <inspection_tool class="SuspiciousReturnByteInputStream" enabled="false" level="WARNING" enabled_by_default="false" />

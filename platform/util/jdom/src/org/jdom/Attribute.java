@@ -164,6 +164,12 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
     this.namespace = namespace;
   }
 
+  @ApiStatus.Internal
+  protected Attribute(boolean ignored, @NotNull String name, @NotNull String value, @NotNull Namespace namespace, AttributeType type) {
+    this(ignored, name, value, namespace);
+    this.type = type;
+  }
+
   /**
    * This will create a new <code>Attribute</code> with the
    * specified (local) name and value, and does not place
