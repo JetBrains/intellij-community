@@ -160,7 +160,7 @@ internal data class ProviderRecentProjectItem(
   }
 
   fun searchName(): String {
-    return "${recentProject.projectPath.orEmpty()} ${recentProject.displayName}"
+    return "${recentProject.projectPath.orEmpty()} ${recentProject.displayName} ${recentProject.providerPath.orEmpty()}"
   }
 }
 
