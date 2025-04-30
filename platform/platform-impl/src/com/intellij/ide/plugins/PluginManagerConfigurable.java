@@ -921,7 +921,7 @@ public final class PluginManagerConfigurable
                     result.addRightAction(myMarketplaceSortByAction);
 
 
-                    Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
+                    Collection<PluginUiModel> updates = PluginUpdatesService.getUpdateModels();
                     if (!ContainerUtil.isEmpty(updates)) {
                       myPostFillGroupCallback = () -> {
                         applyUpdates(myPanel, updates);
@@ -1329,7 +1329,7 @@ public final class PluginManagerConfigurable
                 });
               }
 
-              Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
+              Collection<PluginUiModel> updates = PluginUpdatesService.getUpdateModels();
               if (!ContainerUtil.isEmpty(updates)) {
                 myPostFillGroupCallback = () -> {
                   applyUpdates(myPanel, updates);
@@ -1458,10 +1458,10 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<? extends IdeaPluginDescriptor> updates) {
-    for (IdeaPluginDescriptor descriptor : updates) {
+  private static void applyUpdates(@NotNull PluginsGroupComponent panel, @NotNull Collection<PluginUiModel> updates) {
+    for (PluginUiModel descriptor : updates) {
       for (UIPluginGroup group : panel.getGroups()) {
-        ListPluginComponent component = group.findComponent(descriptor);
+        ListPluginComponent component = group.findComponent(descriptor.getPluginId());
         if (component != null) {
           component.setUpdateDescriptor(descriptor);
           break;
@@ -1470,7 +1470,7 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private void applyBundledUpdates(@Nullable Collection<? extends IdeaPluginDescriptor> updates) {
+  private void applyBundledUpdates(@Nullable Collection<? extends PluginUiModel> updates) {
     if (ContainerUtil.isEmpty(updates)) {
       if (myBundledUpdateGroup.ui != null) {
         myInstalledPanel.removeGroup(myBundledUpdateGroup);
@@ -1478,21 +1478,21 @@ public final class PluginManagerConfigurable
       }
     }
     else if (myBundledUpdateGroup.ui == null) {
-      for (IdeaPluginDescriptor descriptor : updates) {
+      for (PluginUiModel descriptor : updates) {
         for (UIPluginGroup group : myInstalledPanel.getGroups()) {
-          ListPluginComponent component = group.findComponent(descriptor);
-          if (component != null && component.getPluginDescriptor().isBundled()) {
-            myBundledUpdateGroup.addDescriptor(component.getPluginDescriptor());
+          ListPluginComponent component = group.findComponent(descriptor.getPluginId());
+          if (component != null && component.getPluginModel().isBundled()) {
+            myBundledUpdateGroup.addModel(component.getPluginModel());
             break;
           }
         }
       }
-      if (!myBundledUpdateGroup.getDescriptors().isEmpty()) {
+      if (!myBundledUpdateGroup.getModels().isEmpty()) {
         myInstalledPanel.addGroup(myBundledUpdateGroup, 0);
         myBundledUpdateGroup.ui.excluded = true;
 
-        for (IdeaPluginDescriptor descriptor : updates) {
-          ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor);
+        for (PluginUiModel descriptor : updates) {
+          ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor.getPluginId());
           if (component != null) {
             component.setUpdateDescriptor(descriptor);
           }
@@ -1506,8 +1506,8 @@ public final class PluginManagerConfigurable
 
       for (ListPluginComponent plugin : myBundledUpdateGroup.ui.plugins) {
         boolean exist = false;
-        for (IdeaPluginDescriptor update : updates) {
-          if (plugin.getPluginDescriptor().getPluginId().equals(update.getPluginId())) {
+        for (PluginUiModel update : updates) {
+          if (plugin.getPluginModel().getPluginId().equals(update.getPluginId())) {
             exist = true;
             break;
           }
@@ -1521,8 +1521,8 @@ public final class PluginManagerConfigurable
         myInstalledPanel.removeFromGroup(myBundledUpdateGroup, component.getPluginModel());
       }
 
-      for (IdeaPluginDescriptor update : updates) {
-        ListPluginComponent exist = myBundledUpdateGroup.ui.findComponent(update);
+      for (PluginUiModel update : updates) {
+        ListPluginComponent exist = myBundledUpdateGroup.ui.findComponent(update.getPluginId());
         if (exist != null) {
           continue;
         }
@@ -1530,7 +1530,7 @@ public final class PluginManagerConfigurable
           if (group == myBundledUpdateGroup.ui) {
             continue;
           }
-          ListPluginComponent component = group.findComponent(update);
+          ListPluginComponent component = group.findComponent(update.getPluginId());
           if (component != null && component.getPluginModel().isBundled()) {
             myInstalledPanel.addToGroup(myBundledUpdateGroup, component.getPluginModel());
             break;
@@ -1538,12 +1538,12 @@ public final class PluginManagerConfigurable
         }
       }
 
-      if (myBundledUpdateGroup.getDescriptors().isEmpty()) {
+      if (myBundledUpdateGroup.getModels().isEmpty()) {
         myInstalledPanel.removeGroup(myBundledUpdateGroup);
       }
       else {
-        for (IdeaPluginDescriptor descriptor : updates) {
-          ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor);
+        for (PluginUiModel descriptor : updates) {
+          ListPluginComponent component = myBundledUpdateGroup.ui.findComponent(descriptor.getPluginId());
           if (component != null) {
             component.setUpdateDescriptor(descriptor);
           }

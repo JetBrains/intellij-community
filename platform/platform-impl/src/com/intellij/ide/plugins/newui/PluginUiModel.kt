@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.*
+import java.util.Date
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -54,6 +55,8 @@ interface PluginUiModel {
   val size: String?
   @get:NlsSafe
   val downloadUrl: String?
+  val releaseDate: Date?
+  val releaseVersion: Int
   val reviewComments: PageContainer<PluginReviewComment>?
 
   @get:NlsSafe
@@ -81,6 +84,7 @@ interface PluginUiModel {
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
   var date: Long
+  var isEnabled: Boolean
 
 
   @get:NlsSafe
@@ -94,6 +98,8 @@ interface PluginUiModel {
   var rating: String?
   @get:NlsSafe
   var repositoryName: String?
+  @get:NlsSafe
+  var channel: String?
   var installSource: FUSEventSource?
   @get:NlsSafe
   var description: String?

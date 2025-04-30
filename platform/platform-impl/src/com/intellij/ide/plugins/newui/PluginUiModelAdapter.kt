@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.ApiStatus
+import java.util.Date
 
 /**
  * A temporary class used to eliminate "runtime" PluginDescriptor usages in the UI. It will later be replaced with frontend and backend implementations.
@@ -72,6 +73,10 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.size else null
   override val downloadUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloadUrl else null
+  override val releaseDate: Date?
+    get() = pluginDescriptor.releaseDate
+  override val releaseVersion: Int
+    get() = pluginDescriptor.releaseVersion
   override val reviewComments: PageContainer<PluginReviewComment>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
 
@@ -241,11 +246,25 @@ class PluginUiModelAdapter(
         pluginDescriptor.repositoryName = value
       }
     }
+  override var channel: String?
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.channel else null
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.channel = value
+      }
+    }
   override var date: Long
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.date else Long.MAX_VALUE
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.date = value
+      }
+    }
+  override var isEnabled: Boolean
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isEnabled else true
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.isEnabled = value
       }
     }
   override var description: String?
