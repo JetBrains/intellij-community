@@ -521,12 +521,10 @@ private suspend fun loadAndInitDescriptors(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
 ): PluginLoadingResult {
-  val listDeferred: List<Deferred<IdeaPluginDescriptorImpl?>>
-  val extraListDeferred: List<Deferred<IdeaPluginDescriptorImpl?>>
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
-  coroutineScope {
-    listDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors(
+  val (plugins, pluginsFromProperty) = coroutineScope {
+    val pluginsDeferred = ProductLoadingStrategy.strategy.loadPluginDescriptors(
       scope = this,
       loadingContext = loadingContext,
       customPluginDir = Paths.get(PathManager.getPluginsPath()),
@@ -536,19 +534,19 @@ private suspend fun loadAndInitDescriptors(
       zipPool = zipPool,
       mainClassLoader = mainClassLoader,
     )
-    extraListDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
+    val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
+    pluginsDeferred.awaitAll() to pluginsFromPropertyDeferred.awaitAll()
   }
   val loadingResult = PluginLoadingResult()
   val isMainProcess = isMainProcess()
-  loadingResult.initAndAddAll(descriptors = toSequence(listDeferred, isMainProcess), overrideUseIfCompatible = false, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = toSequence(plugins, isMainProcess), overrideUseIfCompatible = false, initContext = initContext)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.initAndAddAll(descriptors = toSequence(extraListDeferred, isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = toSequence(pluginsFromProperty, isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
   return loadingResult
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun toSequence(list: List<Deferred<IdeaPluginDescriptorImpl?>>, isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
-  val result = list.asSequence().mapNotNull { it.getCompleted() }
+private fun toSequence(list: List<IdeaPluginDescriptorImpl?>, isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
+  val result = list.asSequence().filterNotNull()
   if (isMainProcess == null) {
     return result
   }
@@ -1153,7 +1151,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           zipPool = pool,
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
-        )
+        ).awaitAll()
       }, isMainProcess()),
       overrideUseIfCompatible = false,
       initContext = initContext
@@ -1170,6 +1168,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
       descriptors = toSequence(
         list = coroutineScope {
           loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
+            .awaitAll()
         },
         isMainProcess = isMainProcess(),
       ),
@@ -1219,7 +1218,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
               libDir = null,
             )
           }
-        }
+        }.awaitAll()
       },
       isMainProcess = isMainProcess(),
     ),
