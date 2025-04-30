@@ -65,7 +65,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
         if (ktCallableDeclaration is KtFunction &&
             changeInfo is KotlinChangeInfo &&
-            (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.contains(changeInfo.oldReceiverInfo)) &&
+            (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.any { it.oldIndex == changeInfo.oldReceiverInfo!!.oldIndex }) &&
             changeInfo.receiverParameterInfo?.oldIndex != changeInfo.oldReceiverInfo?.oldIndex
         ) {
             findReceiverReferences(ktCallableDeclaration, result, changeInfo)
