@@ -124,7 +124,7 @@ elements:
             name: name
             references:
               - |
-                [JetBrains Marketplace: Plugin Name](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name)
+                [JetBrains Marketplace: Plugin Name](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name)
             description: The user-visible plugin display name (Title Case).
             requirement:
               required: yes
@@ -179,7 +179,7 @@ elements:
                   description: |
                     The plugin product code used in the JetBrains Sales System.
                     The code must be agreed with JetBrains in advance and follow
-                    [the requirements](https://plugins.jetbrains.com/docs/marketplace/obtain-a-product-code-from-jetbrains.html).
+                    [the requirements](https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html).
               - attribute:
                   name: release-date
                   requirement:
@@ -250,7 +250,7 @@ elements:
             name: vendor
             references:
               - |
-                [JetBrains Marketplace: Contacts and Resources](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#contacts-and-resources)
+                [JetBrains Marketplace: Contacts and Resources](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#contacts-and-resources)
             description: |
               The vendor name or organization ID (if created) in the <control>Plugins</control> settings dialog and on
               the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
@@ -291,7 +291,7 @@ elements:
             name: description
             references:
               - |
-                [JetBrains Marketplace: Plugin Description](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description)
+                [JetBrains Marketplace: Plugin Description](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description)
             description: |
               The plugin description displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
               the <control>Plugins</control> settings dialog.
@@ -322,7 +322,7 @@ elements:
             name: change-notes
             references:
               - |
-                [JetBrains Marketplace: Change Notes](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#change-notes)
+                [JetBrains Marketplace: Change Notes](https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#change-notes)
             description: |
               A short summary of new features, bugfixes, and changes provided with the latest plugin version.
               Change notes are displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
