@@ -51,8 +51,7 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
     RegularLabelBlock(TerminalBundle.message("feedback.dialog.issues.1")),
     TextAreaBlock(TerminalBundle.message("feedback.dialog.issues.2"), "issues"),
 
-    RadioButtonGroupBlock(TerminalBundle.message("feedback.dialog.improvement"), improvementItems(), "important_improvement")
-      .requireAnswer()
+    RadioButtonGroupBlock(TerminalBundle.message("feedback.dialog.improvement"), improvementItems().shuffled(), "important_improvement")
       .addOtherTextField(),
 
     TextAreaBlock(TerminalBundle.message("feedback.dialog.other"), "extra")
