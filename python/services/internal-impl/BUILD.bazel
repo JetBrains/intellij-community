@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community.services.internal.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "python-community-services-internal-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "python-community-services-internal-impl",
@@ -15,7 +21,8 @@ jvm_library(
     "//python/openapi:community",
     "@lib//:kotlinx-coroutines-core",
     "//python/python-sdk:sdk",
-  ]
+  ],
+  runtime_deps = [":python-community-services-internal-impl_resources"]
 )
 
 jvm_library(
@@ -39,7 +46,8 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-  ]
+  ],
+  runtime_deps = [":python-community-services-internal-impl_resources"]
 )
 
 jvm_test(

@@ -39,7 +39,10 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/eel-provider",
   ],
-  runtime_deps = [":sdk_resources"]
+  runtime_deps = [
+    ":sdk_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(

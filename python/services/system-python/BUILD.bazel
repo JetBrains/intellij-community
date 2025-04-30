@@ -2,6 +2,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
+  name = "python-community-services-systemPython_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
   name = "python-community-services-systemPython_test_resources",
   files = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
@@ -27,7 +33,8 @@ jvm_library(
     "//platform/util",
     "//python/installer:community-impl-installer",
   ],
-  exports = ["//python/services/shared:python-community-services-shared"]
+  exports = ["//python/services/shared:python-community-services-shared"],
+  runtime_deps = [":python-community-services-systemPython_resources"]
 )
 
 jvm_library(
@@ -66,7 +73,10 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],
-  runtime_deps = [":python-community-services-systemPython_test_resources"]
+  runtime_deps = [
+    ":python-community-services-systemPython_resources",
+    ":python-community-services-systemPython_test_resources",
+  ]
 )
 
 jvm_test(

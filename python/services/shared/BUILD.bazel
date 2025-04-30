@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community.services.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "python-community-services-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "python-community-services-shared",
@@ -11,6 +17,7 @@ jvm_library(
     "//python/openapi:community",
     "@lib//:jetbrains-annotations",
     "//platform/eel-provider",
-  ]
+  ],
+  runtime_deps = [":python-community-services-shared_resources"]
 )
 ### auto-generated section `build intellij.python.community.services.shared` end

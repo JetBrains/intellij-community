@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.pyproject` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "pyproject_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "pyproject",
@@ -15,7 +21,8 @@ jvm_library(
     "//platform/util",
     "//plugins/toml/core",
     "@lib//:tuweni-toml",
-  ]
+  ],
+  runtime_deps = [":pyproject_resources"]
 )
 
 jvm_library(
@@ -36,7 +43,8 @@ jvm_library(
     "@lib//:tuweni-toml",
     "@lib//:junit5",
     "@lib//:junit5Params",
-  ]
+  ],
+  runtime_deps = [":pyproject_resources"]
 )
 
 jvm_test(

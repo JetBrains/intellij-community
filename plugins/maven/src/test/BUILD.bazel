@@ -57,6 +57,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
     "//platform/statistics/testFramework",
+    "//platform/xdebugger-api:debugger",
   ],
   runtime_deps = [":maven-tests_test_resources"]
 )

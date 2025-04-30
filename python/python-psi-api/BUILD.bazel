@@ -28,6 +28,9 @@ jvm_library(
     "//python/python-parser:parser",
     "//python/python-ast:ast",
   ],
-  runtime_deps = [":psi_resources"]
+  runtime_deps = [
+    ":psi_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.python.psi` end
