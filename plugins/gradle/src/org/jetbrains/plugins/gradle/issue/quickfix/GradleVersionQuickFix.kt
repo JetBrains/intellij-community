@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix.Companion.showWrapperPropertiesFile
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.DistributionType

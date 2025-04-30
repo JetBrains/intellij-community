@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDownloadSourcesAction : ExternalSystemAction() {

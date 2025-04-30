@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.launchTracked
-import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants

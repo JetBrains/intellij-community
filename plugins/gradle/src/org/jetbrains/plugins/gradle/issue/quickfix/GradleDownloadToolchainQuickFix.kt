@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.GradleCoroutineScopeService.Companion.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteriaDownloadToolchain
 import java.util.concurrent.CompletableFuture
 

@@ -8,10 +8,11 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@Service(Service.Level.PROJECT)
-class GradleCoroutineScopeService(private val coroutineScope: CoroutineScope) {
-  companion object {
-    val Project.gradleCoroutineScope: CoroutineScope
-      get() = service<GradleCoroutineScopeService>().coroutineScope
-  }
+internal object GradleCoroutineScope {
+
+  @Service(Service.Level.PROJECT)
+  private class ProjectService(val coroutineScope: CoroutineScope)
+
+  val Project.gradleCoroutineScope: CoroutineScope
+    get() = service<ProjectService>().coroutineScope
 }
