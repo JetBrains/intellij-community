@@ -360,3 +360,11 @@ final class LookupWithIndentsBuilder {
   ///   - two
   void x() {}
 }
+/// `test<b>`
+/// @param <T> The _M_ type.
+/// @param <B> The B type.
+/// @param <P> The P type.
+/// @param <I> The I type.
+interface Foo<T, B, P, I>
+{
+}

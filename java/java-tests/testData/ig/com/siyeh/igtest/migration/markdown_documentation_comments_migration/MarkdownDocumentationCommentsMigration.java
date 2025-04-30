@@ -381,3 +381,13 @@ final class LookupWithIndentsBuilder {
    */
   void x() {}
 }
+<warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+ * {@code test<b>}
+ * @param <T> The <em>M</em> type.
+ * @param <B> The B type.
+ * @param <P> The P type.
+ * @param <I> The I type.
+ */
+interface Foo<T, B, P, I>
+{
+}
