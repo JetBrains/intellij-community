@@ -58,6 +58,7 @@ class NotebookBelowLastCellPanel(
   }
 
   companion object {
-    @Language("devkit-action-id") private const val ACTION_GROUP_ID = "Jupyter.BelowCellNewPanel"
+    @Language("devkit-action-id")
+    private const val ACTION_GROUP_ID = "Jupyter.CreateNewCellsPanel"
   }
 }

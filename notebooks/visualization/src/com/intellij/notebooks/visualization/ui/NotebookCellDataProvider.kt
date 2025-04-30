@@ -17,6 +17,7 @@ internal data class NotebookCellDataProvider(
   override fun getData(key: String): Any? =
     when (key) {
       NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL.name -> intervalProvider()
+      NotebookDataContext.NOTEBOOK_CELL_INSERT_ABOVE.name -> false
       PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> component
       PlatformDataKeys.EDITOR.name -> editor
       else -> null

@@ -4,7 +4,7 @@ package com.intellij.notebooks.visualization.ui.endInlay.addToolbar
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookBelowLastCellPanel
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
-import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL
+import com.intellij.notebooks.visualization.context.NotebookDataContext
 import com.intellij.notebooks.visualization.ui.addComponentInlay
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
 import com.intellij.notebooks.visualization.ui.endInlay.EditorNotebookEndInlay
@@ -20,7 +20,9 @@ class EditorNotebookEndAddToolbar(val inlayManager: NotebookCellInlayManager) : 
     // PY-77218
     editor.addComponentInlay(
       UiDataProvider.wrapComponent(belowLastCellPanel) { sink ->
-        sink[NOTEBOOK_CELL_LINES_INTERVAL] = inlayManager.notebook.cells.lastOrNull()?.interval
+        sink[NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL] = inlayManager.notebook.cells.lastOrNull()?.interval
+        sink[NotebookDataContext.SHOW_TEXT] = true
+        sink[NotebookDataContext.NOTEBOOK_CELL_INSERT_ABOVE] = false
       },
       isRelatedToPrecedingText = true,
       showAbove = false,

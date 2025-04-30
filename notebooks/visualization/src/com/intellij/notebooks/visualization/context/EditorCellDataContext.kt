@@ -11,6 +11,7 @@ object EditorCellDataContext {
   fun createContextProvider(editorCell: EditorCell, component: JComponent): JComponent {
     return UiDataProvider.wrapComponent(component) { sink ->
       sink[NotebookDataContext.NOTEBOOK_CELL_LINES_INTERVAL] = editorCell.intervalOrNull
+      sink[NotebookDataContext.SHOW_TEXT] = true
       sink[PlatformCoreDataKeys.CONTEXT_COMPONENT] = component
       sink[PlatformDataKeys.EDITOR] = editorCell.editor
     }

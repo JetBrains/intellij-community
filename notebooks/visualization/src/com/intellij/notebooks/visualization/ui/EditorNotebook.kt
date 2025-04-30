@@ -49,6 +49,7 @@ class EditorNotebook(val editor: EditorImpl) : Disposable {
     }, this)
   }
 
+
   @Suppress("UNCHECKED_CAST")
   fun <T : EditorNotebookExtension> getExtension(cls: KClass<T>): T? {
     return extensions[cls] as? T
