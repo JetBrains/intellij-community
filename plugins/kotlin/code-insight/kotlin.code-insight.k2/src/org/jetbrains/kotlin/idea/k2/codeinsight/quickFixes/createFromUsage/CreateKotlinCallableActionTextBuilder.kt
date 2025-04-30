@@ -77,7 +77,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
                 // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
                 val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType, renderer)
-                    ?: receiverType?.render(renderer, Variance.INVARIANT)
+                    ?: receiverType?.render(renderer, Variance.IN_VARIANCE)
                     ?: request.receiverExpression.text
                 receiverTypeText = addedPackage + renderedReceiver
             }
@@ -95,7 +95,7 @@ object CreateKotlinCallableActionTextBuilder {
     private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?, renderer: KaTypeRenderer): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
-                ?.render(renderer, Variance.INVARIANT)
+                ?.render(renderer, Variance.IN_VARIANCE)
 
             is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null

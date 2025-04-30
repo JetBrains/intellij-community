@@ -1953,6 +1953,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnTypeFromAnotherPackage.before.Main.kt");
                     }
 
+                    @TestMetadata("extensionValOnFlexibleType.before.Main.kt")
+                    public void testExtensionValOnFlexibleType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionValOnFlexibleType.before.Main.kt");
+                    }
+
                     @TestMetadata("staticExtensionFunOnJavaClass.before.Main.kt")
                     public void testStaticExtensionFunOnJavaClass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/staticExtensionFunOnJavaClass.before.Main.kt");
