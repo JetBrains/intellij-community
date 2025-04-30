@@ -246,7 +246,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.isResponding.setSuspend(sessionBgtDispatcher) { _, _ ->
+        session.isResponding.setSuspend(sessionBgtDispatcher + NonCancellable) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
