@@ -1,8 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPath.OS
+import org.jetbrains.annotations.ApiStatus
+
+/**
+ * A marker interface that indicates an environment where native file chooser dialogs should be disabled.
+ *
+ * When an [EelDescriptor] implements this interface, the IDE will use its own file chooser dialog
+ * instead of the native operating system dialog when working with projects in this environment.
+ *
+ * This is particularly useful for remote environments like Docker containers where the native
+ * file chooser would not have access to the remote filesystem.
+ *
+ * @see com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory.canUseNativeDialog
+ */
+@ApiStatus.OverrideOnly
+interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 
 /**
  * A descriptor of an environment where [EelApi] may exist.
