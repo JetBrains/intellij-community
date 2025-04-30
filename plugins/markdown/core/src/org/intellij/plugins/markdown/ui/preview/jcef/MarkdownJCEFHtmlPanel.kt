@@ -247,7 +247,11 @@ class MarkdownJCEFHtmlPanel(
   @Suppress("JSUnresolvedReference")
   private suspend fun updateDom(renderClosure: String, initialScrollOffset: Int, firstUpdate: Boolean) {
     previousRenderClosure = renderClosure
-    // TODO: Handle initialScrollOffset, firstUpdate properly.
+    // language=JavaScript
+    val scrollCode = when {
+      firstUpdate -> "window.scrollController?.ensureMarkdownSrcOffsetIsVisible($initialScrollOffset, true);"
+      else -> ""
+    }
     // language=JavaScript
     val code = """
       (function() {
@@ -259,6 +263,7 @@ class MarkdownJCEFHtmlPanel(
             const render = $renderClosure;
             // noinspection JSCheckFunctionSignatures
             IncrementalDOM.patch(document.body, () => render());
+            $scrollCode
             if (IncrementalDOM.notifications.afterPatchListeners) {
               IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
             }
