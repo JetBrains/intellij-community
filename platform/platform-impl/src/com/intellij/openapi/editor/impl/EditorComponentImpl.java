@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CaretStop;
 import com.intellij.openapi.editor.actions.CaretStopPolicy;
+import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -112,6 +113,15 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
 
         float size = Math.max((float)(currentSize * scale), defaultFontSize);
+
+        var strategy = EditorComponentImpl.this.editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
+        if (strategy != null) {
+          strategy.setFontSize(size);
+          var zoomPoint = strategy.preferredZoomPointRelative(EditorComponentImpl.this.editor);
+          var area = EditorComponentImpl.this.editor.getScrollingModel().getVisibleArea();
+          return new Point(area.x + zoomPoint.x, area.y + zoomPoint.y);
+        }
+
         EditorComponentImpl.this.editor.setFontSize(size);
         if (isChangePersistent) {
           EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));

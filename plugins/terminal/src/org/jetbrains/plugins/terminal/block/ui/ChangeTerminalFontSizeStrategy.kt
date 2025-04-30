@@ -3,8 +3,10 @@ package org.jetbrains.plugins.terminal.block.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy
+import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalFontSizeProviderImpl
+import java.awt.Point
 
 @ApiStatus.Internal
 object ChangeTerminalFontSizeStrategy: ChangeEditorFontSizeStrategy {
@@ -24,4 +26,15 @@ object ChangeTerminalFontSizeStrategy: ChangeEditorFontSizeStrategy {
     get() = IdeBundle.message("action.reset.font.size", defaultFontSize)
 
   override val overridesChangeFontSizeActions: Boolean = true
+
+  override fun preferredZoomPointRelative(editor: EditorImpl): Point = editor.bottomLeftCornerOrNull() ?: Point()
 }
+
+
+private fun EditorImpl.bottomLeftCornerOrNull(): Point? =
+  if (component.isShowing) {
+    Point(0, scrollingModel.visibleArea.height)
+  }
+  else {
+    null
+  }
