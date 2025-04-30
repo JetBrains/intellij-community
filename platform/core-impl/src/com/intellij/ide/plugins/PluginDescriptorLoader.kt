@@ -1363,11 +1363,11 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
 }
 
 private fun List<IdeaPluginDescriptorImpl>.filterPerProjectPlugins(isMainProcess: Boolean?): List<IdeaPluginDescriptorImpl> {
-  if (isMainProcess == null) {
-    return this
+  if (isMainProcess == true) {
+    return filter { ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
   }
   else {
-    return filter { !isMainProcess || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
+    return this
   }
 }
 
