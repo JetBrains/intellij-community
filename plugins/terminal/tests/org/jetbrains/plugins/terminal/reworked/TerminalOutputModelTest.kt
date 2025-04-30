@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
@@ -148,7 +149,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
     val startOffsets = mutableListOf<Int>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
         startOffsets.add(startOffset)
       }
     })

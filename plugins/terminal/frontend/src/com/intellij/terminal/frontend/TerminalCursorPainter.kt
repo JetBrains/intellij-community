@@ -100,7 +100,7 @@ internal class TerminalCursorPainter private constructor(
     // 2. An equal amount of text was removed from the beginning, so that the max document size is maintained.
     // 3. As a result, the logical offset of the cursor stayed the same, but we still need to repaint it.
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
         // This listener exists to handle the case when the offset has not changed,
         // but it must also work correctly when the offset has in fact changed.
         // In that case, the offset is updated before this listener is invoked,
