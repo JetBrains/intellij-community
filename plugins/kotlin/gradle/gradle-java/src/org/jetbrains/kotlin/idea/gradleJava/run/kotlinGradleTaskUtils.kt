@@ -172,7 +172,7 @@ fun configureKmpJvmRunConfiguration(
     runTask: KotlinJvmRunTaskData,
     module: Module
 ) {
-    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPDesktopGradleConfigurationName(runTask) }
+    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPGradleConfigurationName(runTask) }
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 
