@@ -56,20 +56,6 @@ public final class Presentation implements Cloneable {
   public static final @NonNls String PROP_ENABLED = "enabled";
   // Do not add Key constants here, especially with PROP_ prefix. Find a better place.
 
-  /** Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SECONDARY_TEXT} instead */
-  @Deprecated(forRemoval = true)
-  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
-
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public static final double DEFAULT_WEIGHT = 0;
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public static final double HIGHER_WEIGHT = 42;
-  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
-  @Deprecated(forRemoval = true)
-  public static final double EVEN_HIGHER_WEIGHT = 239;
-
   private static final int IS_ENABLED = 0x1;
   private static final int IS_VISIBLE = 0x2;
   private static final int IS_KEEP_POPUP_IF_REQUESTED = 0x4;
@@ -684,7 +670,7 @@ public final class Presentation implements Cloneable {
   /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
   @Deprecated(forRemoval = true)
   public double getWeight() {
-    return DEFAULT_WEIGHT;
+    return 0;
   }
 
   /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */

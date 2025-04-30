@@ -62,7 +62,7 @@ public final class ActionGroupUtil {
         return presentation;
       }
     }
-    return actionGroup instanceof CompactActionGroup ? actionGroup : new Compact(actionGroup);
+    return new Compact(actionGroup);
   }
 
   @ApiStatus.Experimental

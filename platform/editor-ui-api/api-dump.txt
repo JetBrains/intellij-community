@@ -1295,9 +1295,6 @@ f:com.intellij.openapi.actionSystem.KeyboardShortcut
 com.intellij.openapi.actionSystem.OverridingAction
 f:com.intellij.openapi.actionSystem.Presentation
 - java.lang.Cloneable
-- sf:DEFAULT_WEIGHT:D
-- sf:EVEN_HIGHER_WEIGHT:D
-- sf:HIGHER_WEIGHT:D
 - sf:NULL_STRING:java.util.function.Supplier
 - sf:NULL_TEXT_WITH_MNEMONIC:java.util.function.Supplier
 - sf:PROP_DESCRIPTION:java.lang.String
@@ -1310,7 +1307,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - sf:PROP_SELECTED_ICON:java.lang.String
 - sf:PROP_TEXT:java.lang.String
 - sf:PROP_TEXT_WITH_SUFFIX:java.lang.String
-- sf:PROP_VALUE:com.intellij.openapi.util.Key
 - sf:PROP_VISIBLE:java.lang.String
 - <init>():V
 - <init>(java.lang.String):V

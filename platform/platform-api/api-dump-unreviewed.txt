@@ -1464,7 +1464,6 @@ f:com.intellij.openapi.actionSystem.ActionWrapperUtil
 - s:getActionUpdateThread(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.AnAction[]
 - s:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):V
-com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup
 com.intellij.openapi.actionSystem.AnActionHolder
 - a:getAction():com.intellij.openapi.actionSystem.AnAction
 c:com.intellij.openapi.actionSystem.AnActionWrapper
@@ -1520,7 +1519,6 @@ f:com.intellij.openapi.actionSystem.CommonShortcuts
 - s:getRename():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getRerun():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getViewSource():com.intellij.openapi.actionSystem.ShortcutSet
-com.intellij.openapi.actionSystem.CompactActionGroup
 f:com.intellij.openapi.actionSystem.CompositeShortcutSet
 - com.intellij.openapi.actionSystem.ShortcutSet
 - <init>(com.intellij.openapi.actionSystem.ShortcutSet[]):V
