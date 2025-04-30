@@ -1,5 +1,4 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <eelProvider implementation="com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler$WslEelProvider" os="windows"/>
   </extensions>
 </idea-plugin>

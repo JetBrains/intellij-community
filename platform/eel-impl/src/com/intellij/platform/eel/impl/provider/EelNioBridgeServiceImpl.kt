@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -21,12 +22,18 @@ import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @VisibleForTesting
-class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScope) : EelNioBridgeService {
+class EelNioBridgeServiceImpl(coroutineScope: CoroutineScope) : EelNioBridgeService {
   private val multiRoutingFileSystemProvider = FileSystems.getDefault().provider()
 
   private val rootRegistry = ConcurrentHashMap<EelDescriptor, MutableSet<Path>>()
   private val fsRegistry = ConcurrentHashMap<String, FileSystem>()
   private val idRegistry = ConcurrentHashMap<EelDescriptor, String>()
+
+  init {
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      idRegistry.keys().asSequence().forEach { unregister(it) }
+    }
+  }
 
   override fun tryGetEelDescriptor(nioPath: Path): EelDescriptor? {
     return rootRegistry.entries.asSequence()
@@ -87,37 +94,5 @@ class EelNioBridgeServiceImpl(private val coroutineScope: CoroutineScope) : EelN
     }
 
     return true
-  }
-
-  @TestOnly
-  fun temporarilyResetState(): Closeable {
-    val oldRootRegistry = HashMap(rootRegistry)
-    val oldFsRegistry = HashMap(fsRegistry)
-    val oldIdRegistry = HashMap(idRegistry)
-
-    for (descriptor in rootRegistry.keys.toList()) {
-      val roots = rootRegistry.remove(descriptor)!!
-
-      for (localRoot in roots) {
-        fsRegistry.compute(localRoot.toString()) { _, existingFileSystem ->
-          MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRoot.toString(), false, false) { underlyingProvider, actualFs ->
-            require(existingFileSystem == actualFs)
-            null
-          }
-          null
-        }
-      }
-    }
-    idRegistry.clear()
-
-    return Closeable {
-      rootRegistry.putAll(oldRootRegistry)
-      fsRegistry.putAll(oldFsRegistry)
-      idRegistry.putAll(oldIdRegistry)
-
-      for ((localRootString, fs) in fsRegistry) {
-        MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRootString, false, false) { _, _ -> fs }
-      }
-    }
   }
 }

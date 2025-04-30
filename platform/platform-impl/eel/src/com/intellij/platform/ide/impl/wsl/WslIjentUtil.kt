@@ -2,7 +2,7 @@
 @file:JvmName("WslIjentUtil")
 @file:Suppress("RAW_RUN_BLOCKING")  // These functions are called by different legacy code, a ProgressIndicator is not always available.
 @file:ApiStatus.Internal
-package com.intellij.platform.ide.impl.wsl.wsl
+package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.CommandLineUtil.posixQuote
 import com.intellij.execution.ijent.IjentChildProcessAdapter

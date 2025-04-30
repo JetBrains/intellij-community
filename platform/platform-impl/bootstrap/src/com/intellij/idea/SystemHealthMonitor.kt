@@ -32,7 +32,6 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.eel.MultiRoutingFileSystemVmOptionsSetter
 import com.intellij.platform.ide.bootstrap.shellEnvDeferred
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
-import com.intellij.platform.ide.impl.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -310,15 +309,12 @@ internal object SystemHealthMonitor {
     }
   }
 
-  private suspend fun checkEelVmOptions() {
+  private fun checkEelVmOptions() {
+    // TODO: remove this check
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
 
     val changedOptions = MultiRoutingFileSystemVmOptionsSetter.ensureInVmOptions()
     when {
-      changedOptions.isEmpty() -> {
-        IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
-      }
-
       PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(
