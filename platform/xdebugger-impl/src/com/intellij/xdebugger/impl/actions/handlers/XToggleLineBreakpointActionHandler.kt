@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
@@ -65,10 +66,12 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
                                                   canRemove, isConditionalBreakpoint, selection)
           .onSuccess { breakpoint ->
             if (breakpoint != null && isConditionalBreakpoint) {
-              // edit breakpoint
-              val position = LogicalPosition(breakpoint.getLine() + 1, 0)
-              val point = Point(inputEvent.getPoint().x, editor.logicalPositionToXY(position).y)
-              DebuggerUIUtil.showXBreakpointEditorBalloon(project, point, (editor as EditorEx).getGutterComponentEx(), false, breakpoint)
+              runInEdt {
+                // edit breakpoint
+                val position = LogicalPosition(breakpoint.getLine() + 1, 0)
+                val point = Point(inputEvent.getPoint().x, editor.logicalPositionToXY(position).y)
+                DebuggerUIUtil.showXBreakpointEditorBalloon(project, point, (editor as EditorEx).getGutterComponentEx(), false, breakpoint)
+              }
             }
           }
       }
