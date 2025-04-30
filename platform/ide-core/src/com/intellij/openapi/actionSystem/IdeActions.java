@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Identifiers for standard actions and action groups.
  */
@@ -287,6 +289,7 @@ public interface IdeActions {
   String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
   String ACTION_GOTO_IMPLEMENTATION = "GotoImplementation";
   String ACTION_GOTO_SUPER = "GotoSuperMethod";
+  String ACTION_GOTO_RELATED = "GotoRelated";
 
   String MODULE_SETTINGS = "ModuleSettings";
 

@@ -1099,6 +1099,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_GOTO_IMPLEMENTATION:java.lang.String
 - sf:ACTION_GOTO_LAST_CHANGE:java.lang.String
 - sf:ACTION_GOTO_NEXT_CHANGE:java.lang.String
+- sf:ACTION_GOTO_RELATED:java.lang.String
 - sf:ACTION_GOTO_SUPER:java.lang.String
 - sf:ACTION_GOTO_TYPE_DECLARATION:java.lang.String
 - sf:ACTION_HIGHLIGHT_USAGES_IN_FILE:java.lang.String

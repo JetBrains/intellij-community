@@ -309,7 +309,7 @@ private fun collectActualMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.actual.declarations"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION
+        IdeActions.ACTION_GOTO_RELATED
     )
     result.add(lineMarkerInfo)
 }
