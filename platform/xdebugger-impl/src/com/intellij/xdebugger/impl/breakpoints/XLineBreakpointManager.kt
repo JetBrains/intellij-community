@@ -101,7 +101,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
             updateBreakpoints(document)
           }
         }
-      }, project)
+      }, cs.asDisposable())
     }
 
     // Update breakpoints colors if global color schema was changed
