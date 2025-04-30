@@ -14,7 +14,7 @@ import javax.swing.border.Border
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class XNextIslandHolder private constructor() : JPanel() {
+class XNextIslandHolder : JPanel() {
   companion object {
     @JvmStatic
     fun createToolWindowIsland(fillColor: (c: JComponent) -> Paint?): JComponent = XNextIslandHolder().apply {

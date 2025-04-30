@@ -16,7 +16,7 @@ import javax.swing.border.AbstractBorder
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class XNextRoundedBorder private constructor(
+open class XNextRoundedBorder protected constructor(
   private val fillColor: (c: JComponent) -> Paint?,
   private val borderColor: (c: JComponent) -> Paint?,
   private val emptyCornersGraphics: (g: Graphics, c: JComponent) -> Graphics?,
@@ -153,7 +153,7 @@ class XNextRoundedBorder private constructor(
     }
   }
 
-  override fun getBorderInsets(c: Component?): Insets? {
+  override fun getBorderInsets(c: Component): Insets? {
     return componentInsets
   }
 }
