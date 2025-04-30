@@ -62,7 +62,7 @@ class PluginSetTestBuilder(private val path: Path) {
     loadingContext.use {
       runBlocking {
         result.initAndAddAll(
-          descriptors = paths.asSequence().mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) },
+          descriptors = paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) },
           overrideUseIfCompatible = false,
           initContext = initContext,
         )

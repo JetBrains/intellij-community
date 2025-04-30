@@ -1362,13 +1362,12 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
   return null
 }
 
-private fun List<IdeaPluginDescriptorImpl>.filterPerProjectPlugins(isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
-  val result = asSequence()
+private fun List<IdeaPluginDescriptorImpl>.filterPerProjectPlugins(isMainProcess: Boolean?): List<IdeaPluginDescriptorImpl> {
   if (isMainProcess == null) {
-    return result
+    return this
   }
   else {
-    return result.filter { !isMainProcess || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
+    return filter { !isMainProcess || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
   }
 }
 

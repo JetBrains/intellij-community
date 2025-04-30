@@ -172,7 +172,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   loadingContext.use {
     result.initAndAddAll(
-      descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) },
+      descriptors = paths.mapNotNull { loadDescriptor(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) },
       overrideUseIfCompatible = false,
       initContext = initContext
     )

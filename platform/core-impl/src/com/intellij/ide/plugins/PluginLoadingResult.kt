@@ -59,7 +59,7 @@ class PluginLoadingResult {
   }
 
   fun initAndAddAll(
-    descriptors: Sequence<IdeaPluginDescriptorImpl>,
+    descriptors: List<IdeaPluginDescriptorImpl>,
     overrideUseIfCompatible: Boolean,
     initContext: PluginInitializationContext,
   ) {

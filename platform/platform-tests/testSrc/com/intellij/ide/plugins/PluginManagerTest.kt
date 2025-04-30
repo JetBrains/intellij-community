@@ -229,7 +229,7 @@ class PluginManagerTest {
     private fun assertPluginPreInstalled(expectedPluginId: PluginId?, vararg descriptors: IdeaPluginDescriptorImpl) {
       val loadingResult = PluginLoadingResult()
       loadingResult.initAndAddAll(
-        descriptors = descriptors.asSequence(),
+        descriptors = descriptors.toList(),
         overrideUseIfCompatible = false,
         initContext = PluginInitializationContext.buildForTest(
           essentialPlugins = emptySet(),
@@ -418,7 +418,7 @@ class PluginManagerTest {
       loadingContext.close()
       val result = PluginLoadingResult()
       result.initAndAddAll(
-        descriptors = list.asSequence(),
+        descriptors = list,
         overrideUseIfCompatible = false,
         initContext = initContext
       )
