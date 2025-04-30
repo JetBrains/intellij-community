@@ -1216,3 +1216,26 @@ private fun setImplicitThreadLocalRhizomeIfEnabled() {
     }
   }
 }
+
+/**
+ * [IdeEventQueue.flushQueue] flushes until the queue is empty,
+ * and it may "hang" if some event results in more events (e.g., animations).
+ * This function flushes only events which already exist in the queue at the moment of invocation.
+ */
+@Internal
+fun IdeEventQueue.flushExistingEvents() {
+  EDT.assertIsEdt()
+  var stop = false
+  EventQueue.invokeLater(ContextAwareRunnable { stop = true })
+  resetThreadContext().use {
+    while (!stop) {
+      peekEvent() ?: return
+      try {
+        dispatchEvent(nextEvent)
+      }
+      catch (e: Exception) {
+        Logs.LOG.error(e)
+      }
+    }
+  }
+}
