@@ -110,6 +110,9 @@ class JvmMethod : ProtoMember, DiffCapable<JvmMethod, JvmMethod.Diff> {
 
     @Suppress("unused")
     fun paramAnnotations(): Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> = paramAnnotationsDiff
+
+    @Suppress("unused")
+    fun exceptions(): Difference.Specifier<TypeRepr.ClassType?, *> = exceptionsDiff
   }
 
   fun getDescriptor(): String = getDescriptor(argTypes, type)
