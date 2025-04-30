@@ -136,7 +136,7 @@ class TerminalHyperlinkHighlighter private constructor(
     fun install(project: Project, model: TerminalOutputModel, editor: Editor, coroutineScope: CoroutineScope): TerminalHyperlinkHighlighter {
       val hyperlinkHighlighter = TerminalHyperlinkHighlighter(project, editor, coroutineScope)
       model.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-        override fun afterContentChanged(startOffset: Int) {
+        override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
           hyperlinkHighlighter.highlightHyperlinks(startOffset)
         }
       })

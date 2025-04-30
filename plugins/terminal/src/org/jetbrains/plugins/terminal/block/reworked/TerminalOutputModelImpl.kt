@@ -140,7 +140,7 @@ class TerminalOutputModelImpl(
    * [block] should return an offset from which document content was changed.
    */
   private fun changeDocumentContent(block: () -> Int) {
-    dispatcher.multicaster.beforeContentChanged()
+    dispatcher.multicaster.beforeContentChanged(this)
 
     contentUpdateInProgress = true
     val changeStartOffset = try {
@@ -150,7 +150,7 @@ class TerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
 
-    dispatcher.multicaster.afterContentChanged(changeStartOffset)
+    dispatcher.multicaster.afterContentChanged(this, changeStartOffset)
   }
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {

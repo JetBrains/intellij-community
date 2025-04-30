@@ -280,11 +280,11 @@ internal class ReworkedTerminalView(
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
     model.addListener(parentDisposable, object : TerminalOutputModelListener {
-      override fun beforeContentChanged() {
+      override fun beforeContentChanged(model: TerminalOutputModel) {
         editor.isTerminalOutputScrollChangingActionInProgress = true
       }
 
-      override fun afterContentChanged(startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
         editor.isTerminalOutputScrollChangingActionInProgress = false
 
         // Also repaint the changed part of the document to ensure that highlightings are properly painted.
