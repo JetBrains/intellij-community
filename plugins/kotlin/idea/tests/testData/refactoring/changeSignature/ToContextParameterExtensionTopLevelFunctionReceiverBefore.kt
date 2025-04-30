@@ -17,7 +17,7 @@ class MyClass {
     }
 }
 
-fun MyClass.doS<caret>omething(param1: String) {
+private fun MyClass.doS<caret>omething(param1: String) {
     println("Value: $value, Param: $param1")
 }
 

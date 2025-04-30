@@ -505,7 +505,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (modifierList != null) {
                 val contextReceiverList = modifierList.contextReceiverList
                 val contextReceivers = if (contextReceiverList == null) {
-                    modifierList.add(newModifierList.contextReceiverList!!)
+                    modifierList.addBefore(newModifierList.contextReceiverList!!, modifierList.firstChild)
                 } else {
                     contextReceiverList.replace(newModifierList.contextReceiverList!!)
                 }
