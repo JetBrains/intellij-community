@@ -535,7 +535,7 @@ private suspend fun loadAndInitDescriptors(
       mainClassLoader = mainClassLoader,
     )
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
-    pluginsDeferred.awaitAll() to pluginsFromPropertyDeferred.awaitAll()
+    pluginsDeferred.awaitAllNotNull() to pluginsFromPropertyDeferred.awaitAllNotNull()
   }
   val loadingResult = PluginLoadingResult()
   val isMainProcess = isMainProcess()
@@ -1130,7 +1130,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           zipPool = pool,
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
-        ).awaitAll()
+        ).awaitAllNotNull()
       }.filterPerProjectPlugins(isMainProcess()),
       overrideUseIfCompatible = false,
       initContext = initContext
@@ -1146,7 +1146,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
     result.initAndAddAll(
       descriptors = coroutineScope {
         loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
-          .awaitAll()
+          .awaitAllNotNull()
       }.filterPerProjectPlugins(isMainProcess = isMainProcess()),
       overrideUseIfCompatible = false,
       initContext = initContext
@@ -1193,7 +1193,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
             libDir = null,
           )
         }
-      }.awaitAll()
+      }.awaitAllNotNull()
     }.filterPerProjectPlugins(isMainProcess()),
     overrideUseIfCompatible = false,
     initContext = initContext
@@ -1362,8 +1362,8 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
   return null
 }
 
-private fun List<IdeaPluginDescriptorImpl?>.filterPerProjectPlugins(isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
-  val result = asSequence().filterNotNull()
+private fun List<IdeaPluginDescriptorImpl>.filterPerProjectPlugins(isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
+  val result = asSequence()
   if (isMainProcess == null) {
     return result
   }
@@ -1379,4 +1379,13 @@ private fun isMainProcess(): Boolean? {
   else {
     return null
   }
+}
+
+/** slightly more optimal than `awaitAll().filterNotNull()` */
+private suspend fun <R> List<Deferred<R>>.awaitAllNotNull(): List<R & Any> {
+  val result = ArrayList<R & Any>(size)
+  for (deferred in this) {
+    deferred.await()?.let { result.add(it) }
+  }
+  return result
 }
