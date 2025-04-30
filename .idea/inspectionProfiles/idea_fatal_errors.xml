@@ -3941,17 +3941,8 @@
           <module name="intellij.ruby.psi" />
         </modules-set>
         <modules-set>
-          <module name="intellij.javascript.debugger" />
-          <module name="intellij.javascript.chrome.connector" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.spring.mvc.impl" />
           <module name="intellij.spring.mvc" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javascript.impl" />
-          <module name="intellij.javascript.psi.impl" />
-          <module name="intellij.javascript.analysis.impl" />
         </modules-set>
         <modules-set>
           <module name="intellij.java.impl" />
