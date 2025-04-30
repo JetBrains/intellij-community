@@ -124,19 +124,23 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        // `myIdToDirCache` could retain alien file systems
+        // idToDirCache could retain alien file systems
         clearIdCache();
-        // remove alien file system references from myRoots
-        for (Iterator<Map.Entry<String, VirtualFileSystemEntry>> iterator = rootsByUrl.entrySet().iterator(); iterator.hasNext(); ) {
-          Map.Entry<String, VirtualFileSystemEntry> entry = iterator.next();
-          VirtualFileSystemEntry root = entry.getValue();
-          if (VirtualFileManager.getInstance().getFileSystem(root.getFileSystem().getProtocol()) == null) {
-            // the file system must have been unregistered
-            iterator.remove();
-            dirByIdCache.remove(root.getId());
-            dirByIdCache.drop(root.getId());
-            //TODO RC: how to push it out of VfsData?
 
+        //Remove unregistered file system references: plugin provides no explicit information about FileSystem(s) it is
+        // registered, so we scan all the FS roots, and check are they still registered in VirtualFileManager
+
+        var rootsByUrlCopy = new HashMap<>(rootsByUrl);//to prevent concurrent mods while removing roots in loop
+        VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+        String requestor = "unloading [" + pluginDescriptor.getPluginId() + "] plugin";
+        for (Map.Entry<String, VirtualFileSystemEntry> entry : rootsByUrlCopy.entrySet()) {
+          VirtualFileSystemEntry root = entry.getValue();
+          String protocol = root.getFileSystem().getProtocol();
+          if (virtualFileManager.getFileSystem(protocol) == null) {// the file system likely have been unregistered
+
+            //We don't use root.delete() since we don't want to delete any actual files (FileSystem could even be read-only),
+            //we want to delete only the VFS structures behind root's subtree:
+            executeDelete(new VFileDeleteEvent(requestor, root));
           }
         }
       }
@@ -2318,18 +2322,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.error("Deleting a file which does not exist: " + ((VirtualFileWithId)file).getId() + " " + file.getPath());
       return;
     }
-    clearIdCache();
 
     int fileIdToDelete = fileId(file);
 
     VirtualFile parent = file.getParent();
     int parentId = parent == null ? 0 : fileId(parent);
 
+    clearIdCache();
     if (parentId == 0) {
       String rootUrl = UriUtil.trimTrailingSlashes(file.getUrl());
       synchronized (rootsByUrl) {
         rootsByUrl.remove(rootUrl);
         dirByIdCache.drop(fileIdToDelete);
+        //TODO RC: deleting root entry from roots catalog, and deleting the root record and it's subtree (deleteRecordRecursively)
+        //         are not atomic!
         vfsPeer.deleteRootRecord(fileIdToDelete);
       }
     }
