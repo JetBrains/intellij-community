@@ -130,7 +130,7 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
             || fqClassName == FqName(GRADLE_KOTLIN_PROJECT_DELEGATE)
             || fqClassName == FqName("Build_gradle")) // Could be resolved instead of ProjectDelegate on Gradle 6.0
 
-fun KtNamedFunction.getKMPDesktopGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
+fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
     "${getConfigurationName()} [${runTask.targetName}]"
 
 fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSourceDirectoryName() ?: name
@@ -149,7 +149,7 @@ fun configureKmpJvmRunConfiguration(
     runTask: KotlinJvmRunTaskData,
     module: Module
 ) {
-    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPDesktopGradleConfigurationName(runTask) }
+    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPGradleConfigurationName(runTask) }
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 
