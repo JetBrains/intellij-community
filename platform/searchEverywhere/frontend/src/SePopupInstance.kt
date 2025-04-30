@@ -63,7 +63,7 @@ class SePopupInstance(private val popupVm: SePopupVm,
   }
 
   private val currentTabSearchEverywhereToggleAction: SearchEverywhereToggleAction?
-    get() = (popupVm.currentTab.filterEditor?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+    get() = (popupVm.currentTab.filterEditor.getValueOrNull()?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
 }

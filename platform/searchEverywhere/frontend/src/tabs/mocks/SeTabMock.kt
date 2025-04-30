@@ -22,7 +22,7 @@ class SeTabMock(override val name: String,
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)
 
-  override fun getFilterEditor(): SeFilterEditor? = null
+  override suspend fun getFilterEditor(): SeFilterEditor? = null
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     println("Item selected: ${item.presentation.text}")
@@ -34,12 +34,13 @@ class SeTabMock(override val name: String,
   }
 
   companion object {
-    suspend fun create(project: Project,
-                       sessionRef: DurableRef<SeSessionEntity>,
-                       name: String,
-                       providerIds: List<SeProviderId>,
-                       forceRemote: Boolean = false): SeTabMock {
-      val delegate = SeTabDelegate.create(project, sessionRef, name, providerIds, DataContext.EMPTY_CONTEXT, forceRemote)
+    fun create(
+      project: Project,
+      sessionRef: DurableRef<SeSessionEntity>,
+      name: String,
+      providerIds: List<SeProviderId>
+    ): SeTabMock {
+      val delegate = SeTabDelegate(project, sessionRef, name, providerIds, DataContext.EMPTY_CONTEXT)
       return SeTabMock(name, delegate)
     }
   }

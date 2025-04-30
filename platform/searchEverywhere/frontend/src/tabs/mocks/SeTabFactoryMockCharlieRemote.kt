@@ -12,10 +12,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockCharlieRemote : SeTabFactory {
-  override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab =
+  override fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab =
     SeTabMock.create(project,
                      sessionRef,
                      "Charlie-Remote",
-                     listOf(SeProviderId("SearchEverywhereItemsProviderMock_MockBackend")),
-                     forceRemote = true)
+                     listOf(SeProviderId("SearchEverywhereItemsProviderMock_MockBackend")))
 }

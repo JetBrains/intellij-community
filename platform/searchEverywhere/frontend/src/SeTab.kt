@@ -25,7 +25,7 @@ interface SeTab: Disposable {
    */
   fun getItems(params: SeParams): Flow<SeResultEvent>
 
-  fun getFilterEditor(): SeFilterEditor?
+  suspend fun getFilterEditor(): SeFilterEditor?
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 }

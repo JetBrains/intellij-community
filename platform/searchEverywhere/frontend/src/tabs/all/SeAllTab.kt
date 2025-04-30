@@ -40,7 +40,8 @@ class SeAllTab(private val delegate: SeTabDelegate): SeTab {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
     return delegate.getItems(params, allTabFilter.disabledProviderIds)
   }
-  override fun getFilterEditor(): SeFilterEditor? = SeAllFilterEditor(delegate.providersIdToName)
+
+  override suspend fun getFilterEditor(): SeFilterEditor? = SeAllFilterEditor(delegate.getProvidersIdToName())
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)

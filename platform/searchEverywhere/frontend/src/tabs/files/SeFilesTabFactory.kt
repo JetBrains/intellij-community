@@ -13,16 +13,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeFilesTabFactory : SeTabFactory {
-  override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
-    val delegate = SeTabDelegate.create(project,
-                                        sessionRef,
-                                        "Files",
-                                        listOf(SeProviderId("com.intellij.FileSearchEverywhereItemProvider")),
-                                        dataContext,
-                                        true)
+  override fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
+    val delegate = SeTabDelegate(project,
+                                 sessionRef,
+                                 "Files",
+                                 listOf(SeProviderId("com.intellij.FileSearchEverywhereItemProvider")),
+                                 dataContext)
 
-    return SeFilesTab(delegate,
-                      delegate.getSearchScopesInfos().firstOrNull(),
-                      delegate.getTypeVisibilityStates())
+    return SeFilesTab(delegate)
   }
 }

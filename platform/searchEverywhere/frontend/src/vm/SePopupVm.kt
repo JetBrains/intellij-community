@@ -34,6 +34,9 @@ class SePopupVm(val coroutineScope: CoroutineScope,
     SeTabVm(project, coroutineScope, it, searchPattern)
   }
 
+  //val tabVmsFlow: StateFlow<List<SeTabVm>>
+
+
   val usageLogger: SeUsageEventsLogger = SeUsageEventsLogger()
 
   var shouldLoadMore: Boolean

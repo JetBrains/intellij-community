@@ -13,13 +13,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeActionsTabFactory : SeTabFactory {
-  override suspend fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
-    val delegate = SeTabDelegate.create(project,
-                                        sessionRef,
-                                        "Actions",
-                                        listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
-                                        dataContext,
-                                        false)
+  override fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
+    val delegate = SeTabDelegate(project,
+                                 sessionRef,
+                                 "Actions",
+                                 listOf(SeProviderId("com.intellij.ActionsItemsProvider")),
+                                 dataContext)
+
     return SeActionsTab(delegate)
   }
 }

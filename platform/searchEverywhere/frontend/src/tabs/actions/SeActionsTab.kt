@@ -26,7 +26,7 @@ class SeActionsTab(private val delegate: SeTabDelegate): SeTab {
   override val id: String get() = "ActionSearchEverywhereContributor"
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
-  override fun getFilterEditor(): SeFilterEditor = SeActionsFilterEditor()
+  override suspend fun getFilterEditor(): SeFilterEditor = SeActionsFilterEditor()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     val presentation = item.presentation
