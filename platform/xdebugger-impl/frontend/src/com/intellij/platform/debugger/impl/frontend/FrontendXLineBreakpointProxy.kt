@@ -80,13 +80,19 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun setLine(line: Int) {
+    return setLine(line, true)
+  }
+
+  fun setLine(line: Int, visualLineMightBeChanged: Boolean) {
     if (getLine() != line) {
       // TODO IJPL-185322 support type.lineShouldBeChanged()
       val oldLine = getLine()
       updateLineBreakpointState { it.copy(line = line) }
       // TODO IJPL-185322 support source position?
       // mySourcePosition = null
-      visualRepresentation.removeHighlighter()
+      if (visualLineMightBeChanged) {
+        visualRepresentation.removeHighlighter()
+      }
 
       // We try to redraw inlays every time,
       // due to lack of synchronization between inlay redrawing and breakpoint changes.
@@ -110,8 +116,7 @@ internal class FrontendXLineBreakpointProxy(
     if (highlighter != null && highlighter.isValid()) {
       // TODO IJPL-185322 support source position?
       //mySourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
-      // TODO IJPL-185322 support passing `visualLineMightBeChanged` to setLine
-      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()))
+      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
     }
   }
 
