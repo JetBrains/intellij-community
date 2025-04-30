@@ -41,9 +41,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this), !useFeLineBreakpointProxy(), (callback) -> {
-      getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdateCallback(this, callback);
-    });
+    myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this), !useFeLineBreakpointProxy(), new XBreakpointManagerProxy.Monolith(breakpointManager));
   }
 
   // TODO IJPL-185322 migrate to backend -> frontend rpc flow notification

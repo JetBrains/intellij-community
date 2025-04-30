@@ -29,6 +29,8 @@ interface XBreakpointManagerProxy {
 
   fun getAllBreakpointItems(): List<BreakpointItem>
 
+  fun getLineBreakpointManager(): XLineBreakpointManager
+
   fun getAllBreakpointTypes(): List<XBreakpointTypeProxy>
   fun getLineBreakpointTypes(): List<XLineBreakpointTypeProxy>
 
@@ -49,7 +51,8 @@ interface XBreakpointManagerProxy {
     override val allGroups: Set<String>
       get() = breakpointManager.allGroups
 
-    override val dependentBreakpointManager: XDependentBreakpointManagerProxy = XDependentBreakpointManagerProxy.Monolith(breakpointManager.dependentBreakpointManager)
+    override val dependentBreakpointManager: XDependentBreakpointManagerProxy
+      get() = XDependentBreakpointManagerProxy.Monolith(breakpointManager.dependentBreakpointManager)
 
     override fun setBreakpointsDialogSettings(settings: XBreakpointsDialogState) {
       breakpointManager.breakpointsDialogSettings = settings
@@ -69,6 +72,10 @@ interface XBreakpointManagerProxy {
       return breakpointManager.allBreakpoints.map {
         XBreakpointItem(it, this)
       }
+    }
+
+    override fun getLineBreakpointManager(): XLineBreakpointManager {
+      return breakpointManager.lineBreakpointManager
     }
 
     override fun getAllBreakpointTypes(): List<XBreakpointTypeProxy> {

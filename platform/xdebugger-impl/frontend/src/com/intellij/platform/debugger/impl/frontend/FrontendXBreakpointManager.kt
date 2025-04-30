@@ -74,7 +74,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     if (type == null) {
       return null
     }
-    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
+    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, onBreakpointChange = {
       breakpointsChanged.tryEmit(Unit)
       if (it is XLineBreakpointProxy) {
         lineBreakpointManager.breakpointChanged(it)
@@ -115,6 +115,10 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     return breakpoints.values.map { proxy ->
       XBreakpointItem(proxy, this)
     }
+  }
+
+  override fun getLineBreakpointManager(): XLineBreakpointManager {
+    return lineBreakpointManager
   }
 
   override fun getAllBreakpointTypes(): List<XBreakpointTypeProxy> {

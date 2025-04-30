@@ -210,11 +210,19 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   @JvmOverloads
   fun queueBreakpointUpdate(slave: XBreakpoint<*>?, callOnUpdate: Runnable? = null) {
     if (slave is XLineBreakpointImpl<*>) {
-      queueBreakpointUpdate(slave, callOnUpdate)
+      queueBreakpointUpdate(slave.asProxy(), callOnUpdate)
     }
   }
 
   fun queueBreakpointUpdateCallback(breakpoint: XLineBreakpointImpl<*>?, callback: Runnable) {
+    breakpointUpdateQueue.queue(object : Update(breakpoint) {
+      override fun run() {
+        callback.run()
+      }
+    })
+  }
+
+  fun queueBreakpointUpdateCallback(breakpoint: XLineBreakpointProxy, callback: Runnable) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         callback.run()

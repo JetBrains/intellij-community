@@ -37,10 +37,6 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-
-import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
 
 @ApiStatus.Internal
 public class XBreakpointVisualRepresentation {
@@ -49,7 +45,7 @@ public class XBreakpointVisualRepresentation {
   static final ExecutorService redrawInlaysExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
   private final Project myProject;
-  private final Consumer<Runnable> myQueueBreakpointUpdateCallback;
+  private final XBreakpointManagerProxy myBreakpointManager;
   private final boolean myIsEnabled;
 
   private @Nullable RangeMarker myRangeMarker;
@@ -58,11 +54,11 @@ public class XBreakpointVisualRepresentation {
   public XBreakpointVisualRepresentation(
     XLineBreakpointProxy xBreakpoint,
     boolean isEnabled,
-    Consumer<Runnable> queueBreakpointUpdateCallback
+    XBreakpointManagerProxy breakpointManagerProxy
   ) {
     myBreakpoint = xBreakpoint;
     myProject = xBreakpoint.getProject();
-    myQueueBreakpointUpdateCallback = queueBreakpointUpdateCallback;
+    myBreakpointManager = breakpointManagerProxy;
     myIsEnabled = isEnabled;
   }
 
@@ -76,7 +72,7 @@ public class XBreakpointVisualRepresentation {
 
   @ApiStatus.Internal
   public void updateUI() {
-    myQueueBreakpointUpdateCallback.accept(() -> {
+    myBreakpointManager.getLineBreakpointManager().queueBreakpointUpdateCallback(myBreakpoint, () -> {
       doUpdateUI(() -> {
       });
     });

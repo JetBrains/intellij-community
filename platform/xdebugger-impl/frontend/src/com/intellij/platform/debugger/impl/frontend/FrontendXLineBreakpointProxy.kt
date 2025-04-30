@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
@@ -19,7 +20,6 @@ import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XLineBreakpointInfo
 import com.intellij.xdebugger.impl.rpc.toTextRange
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,33 +28,14 @@ internal class FrontendXLineBreakpointProxy(
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
   override val type: XLineBreakpointTypeProxy,
+  manager: XBreakpointManagerProxy,
   onBreakpointChange: (XBreakpointProxy) -> Unit,
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(
-    this,
-    useFeLineBreakpointProxy(),
-  ) { callback ->
-    FrontendXLineBreakpointUpdatesManager.getInstance(project).queueBreakpointUpdate(this@FrontendXLineBreakpointProxy) {
-      callback.run()
-    }
-  }
+  private val visualRepresentation = XBreakpointVisualRepresentation(this, useFeLineBreakpointProxy(), manager)
 
   private val lineBreakpointInfo: XLineBreakpointInfo
     get() = _state.value.lineBreakpointInfo!!
-
-  init {
-    cs.launch(Dispatchers.Default) {
-      visualRepresentation.updateUI()
-    }
-  }
-
-  override fun onBreakpointChange() {
-    super.onBreakpointChange()
-    cs.launch(Dispatchers.Default) {
-      visualRepresentation.doUpdateUI {}
-    }
-  }
 
   override fun isTemporary(): Boolean {
     return lineBreakpointInfo.isTemporary

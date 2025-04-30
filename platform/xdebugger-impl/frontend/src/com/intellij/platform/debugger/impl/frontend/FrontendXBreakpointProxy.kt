@@ -17,6 +17,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.BreakpointGutterIconRenderer
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase.calculateIcon
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
@@ -35,10 +36,11 @@ internal fun createXBreakpointProxy(
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
   type: XBreakpointTypeProxy,
+  manager: XBreakpointManagerProxy,
   onBreakpointChange: (XBreakpointProxy) -> Unit,
 ): XBreakpointProxy {
   return if (type is XLineBreakpointTypeProxy) {
-    FrontendXLineBreakpointProxy(project, parentCs, dto, type, onBreakpointChange)
+    FrontendXLineBreakpointProxy(project, parentCs, dto, type, manager, onBreakpointChange)
   }
   else {
     FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange)
@@ -69,7 +71,7 @@ internal open class FrontendXBreakpointProxy(
     }
   }
 
-  protected open fun onBreakpointChange() {
+  protected fun onBreakpointChange() {
     _onBreakpointChange(this)
   }
 
