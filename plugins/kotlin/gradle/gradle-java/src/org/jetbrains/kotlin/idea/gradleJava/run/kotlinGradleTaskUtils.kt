@@ -149,13 +149,13 @@ internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainCla
  */
 private fun Module.getSubprojectNameOfGradleRoot(): String? = name.split(".").getOrNull(1)
 
-fun configureKmpJvmRunConfiguration(
+fun configureKmpJvmRunConfigurationFromMainFunction(
     configuration: GradleRunConfiguration,
     function: KtNamedFunction,
     runTask: KotlinJvmRunTaskData,
     module: Module
 ) {
-    configuration.name = ReadAction.compute<String, Throwable> { function.getKMPGradleConfigurationName(runTask) }
+    configuration.name = function.getKMPGradleConfigurationName(runTask)
     configuration.isDebugAllEnabled = false
     configuration.isDebugServerProcess = false
 

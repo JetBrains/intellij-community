@@ -67,7 +67,7 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
 
-        configureKmpJvmRunConfiguration(configuration, function, runTask, module)
+        configureKmpJvmRunConfigurationFromMainFunction(configuration, function, runTask, module)
 
         return true
     }
