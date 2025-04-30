@@ -255,7 +255,7 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   @Override
-  public int getDropIndexFor(Point point) {
+  public int getDropIndexFor(@NotNull Point point) {
     if (lastSingRowLayout == null) return -1;
 
     int result = -1;
