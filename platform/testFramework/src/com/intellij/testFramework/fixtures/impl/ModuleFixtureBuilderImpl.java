@@ -51,6 +51,11 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     myFixtureBuilder = fixtureBuilder;
   }
 
+  @NotNull 
+  public List<String> getContentRoots() {
+    return myContentRoots;
+  }
+
   @Override
   public @NotNull ModuleFixtureBuilder<T> addContentRoot(final @NotNull String contentRootPath) {
     myContentRoots.add(contentRootPath);
