@@ -3,7 +3,7 @@ package com.intellij.platform.testFramework.junit5.eel.params.api
 
 import org.jetbrains.annotations.TestOnly
 
-const val DEFAULT_EEL_TEST_DOCKER_IMAGE: String = "alpine:3.14"
+const val DEFAULT_EEL_TEST_DOCKER_IMAGE: String = "debian"
 
 /**
  * Tests marked with this annotation require docker and will fail without it.
