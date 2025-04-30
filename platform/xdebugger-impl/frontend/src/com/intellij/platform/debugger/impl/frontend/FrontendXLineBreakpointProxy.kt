@@ -3,7 +3,9 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -70,7 +72,7 @@ internal class FrontendXLineBreakpointProxy(
     return lineBreakpointInfo.file?.virtualFile()
   }
 
-  private fun getFileUrl(): String? {
+  override fun getFileUrl(): String {
     return lineBreakpointInfo.fileUrl
   }
 
@@ -119,6 +121,20 @@ internal class FrontendXLineBreakpointProxy(
 
   override fun getHighlightRange(): TextRange? {
     return lineBreakpointInfo.highlightingRange?.toTextRange()
+  }
+
+  override fun updatePosition() {
+    val highlighter: RangeMarker? = visualRepresentation.rangeMarker
+    if (highlighter != null && highlighter.isValid()) {
+      // TODO IJPL-185322 support source position?
+      //mySourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
+      // TODO IJPL-185322 support passing `visualLineMightBeChanged` to setLine
+      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()))
+    }
+  }
+
+  override fun getHighlighter(): RangeHighlighter? {
+    return visualRepresentation.highlighter
   }
 
   override fun dispose() {

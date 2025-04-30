@@ -52,7 +52,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
         breakpointDtos
       }.collectLatest { breakpointDtos ->
         val breakpointsToRemove = breakpoints.keys - breakpointDtos.map { it.id }.toSet()
-        removeBreakpoints(breakpointsToRemove)
+        removeBreakpointsLocally(breakpointsToRemove)
 
         val newBreakpoints = breakpointDtos.filter { it.id !in breakpoints }
         for (breakpointDto in newBreakpoints) {
@@ -80,7 +80,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     return newBreakpoint
   }
 
-  private fun removeBreakpoints(breakpointsToRemove: Collection<XBreakpointId>) {
+  private fun removeBreakpointsLocally(breakpointsToRemove: Collection<XBreakpointId>) {
     for (breakpointToRemove in breakpointsToRemove) {
       val removedBreakpoint = breakpoints.remove(breakpointToRemove)
       removedBreakpoint?.dispose()
@@ -130,10 +130,16 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   }
 
   override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
-    removeBreakpoints(setOf(breakpoint.id))
+    removeBreakpointsLocally(setOf(breakpoint.id))
     breakpointsChanged.tryEmit(Unit)
     cs.launch {
       XBreakpointApi.getInstance().removeBreakpoint(breakpoint.id)
+    }
+  }
+
+  override fun removeBreakpoints(breakpoints: Collection<XBreakpointProxy>) {
+    for (breakpoint in breakpoints) {
+      removeBreakpoint(breakpoint)
     }
   }
 

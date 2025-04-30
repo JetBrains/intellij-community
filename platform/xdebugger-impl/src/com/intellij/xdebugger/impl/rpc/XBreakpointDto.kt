@@ -68,7 +68,7 @@ data class XBreakpointDtoState(
 data class XLineBreakpointInfo(
   val isTemporary: Boolean,
   val line: Int,
-  val fileUrl: String?,
+  val fileUrl: String,
   val highlightingRange: XLineBreakpointTextRange?,
   val file: VirtualFileId?,
 )

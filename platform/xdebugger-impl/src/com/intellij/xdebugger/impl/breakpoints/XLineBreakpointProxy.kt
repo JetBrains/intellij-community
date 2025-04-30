@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
@@ -19,8 +18,13 @@ interface XLineBreakpointProxy : XBreakpointProxy {
   fun getFile(): VirtualFile?
   fun getLine(): Int
   fun setFileUrl(url: String)
+  fun getFileUrl(): String
   fun setLine(line: Int)
   fun getHighlightRange(): TextRange?
+
+  fun updatePosition()
+
+  fun getHighlighter(): RangeHighlighter?
 
   @RequiresBackgroundThread
   fun doUpdateUI(callOnUpdate: () -> Unit = {})
@@ -48,12 +52,22 @@ interface XLineBreakpointProxy : XBreakpointProxy {
       breakpoint.fileUrl = url
     }
 
+    override fun getFileUrl(): String = breakpoint.fileUrl
+
     override fun setLine(line: Int) {
       breakpoint.line = line
     }
 
     override fun getHighlightRange(): TextRange? {
       return breakpoint.highlightRange
+    }
+
+    override fun updatePosition() {
+      breakpoint.updatePosition()
+    }
+
+    override fun getHighlighter(): RangeHighlighter? {
+      return breakpoint.highlighter
     }
 
     override fun doUpdateUI(callOnUpdate: () -> Unit) {

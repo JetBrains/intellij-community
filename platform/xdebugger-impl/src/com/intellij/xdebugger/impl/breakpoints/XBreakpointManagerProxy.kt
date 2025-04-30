@@ -8,6 +8,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
+import com.sun.tools.javac.jvm.ByteCodes.breakpoint
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<XBreakpointManagerProxy>()
@@ -35,6 +36,8 @@ interface XBreakpointManagerProxy {
   fun getLastRemovedBreakpoint(): XBreakpointProxy?
 
   fun removeBreakpoint(breakpoint: XBreakpointProxy)
+  fun removeBreakpoints(breakpoints: Collection<XBreakpointProxy>)
+
   fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
     findBreakpointsAtLine(type, file, line).firstOrNull()
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
@@ -95,6 +98,14 @@ interface XBreakpointManagerProxy {
         return
       }
       breakpointManager.removeBreakpoint(breakpoint.breakpoint)
+    }
+
+    override fun removeBreakpoints(breakpoints: Collection<XBreakpointProxy>) {
+      val monolithBreakpoints = breakpoints.filterIsInstance<XBreakpointProxy.Monolith>().map { it.breakpoint }
+      if (monolithBreakpoints.isEmpty()) {
+        return
+      }
+      breakpointManager.removeBreakpoints(monolithBreakpoints)
     }
 
     override fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? {
