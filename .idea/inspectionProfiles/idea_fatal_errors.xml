@@ -3970,11 +3970,6 @@
           <module name="intellij.spring.boot.run" />
         </modules-set>
         <modules-set>
-          <module name="intellij.properties" />
-          <module name="intellij.properties.psi.impl" />
-          <module name="intellij.properties.psi" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.xml.dom.impl" />
           <module name="intellij.xml.dom" />
           <module name="intellij.xml.psi" />

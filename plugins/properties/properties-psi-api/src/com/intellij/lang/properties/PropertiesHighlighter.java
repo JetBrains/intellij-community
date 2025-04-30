@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import java.util.Arrays;
@@ -83,7 +84,8 @@ public abstract class PropertiesHighlighter extends SyntaxHighlighterBase {
       return myTokenType;
     }
 
-    static PropertiesComponent getByTokenType(IElementType tokenType) {
+    @ApiStatus.Internal
+    public static PropertiesComponent getByTokenType(IElementType tokenType) {
       return elementTypeToComponent.get(tokenType);
     }
 
