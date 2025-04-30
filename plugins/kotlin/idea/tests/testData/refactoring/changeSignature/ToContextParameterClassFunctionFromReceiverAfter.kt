@@ -3,7 +3,7 @@
 class MyClass {
     val value: Int = 42
 
-    context(string: kotlin.String) fun doSomething() {
+    context(string: String) fun doSomething() {
         println("Value: ${value}, Param: ${string}")
         withContext()
     }

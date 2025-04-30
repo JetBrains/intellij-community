@@ -22,7 +22,7 @@ class MyClass {
     }
 }
 
-context(i: kotlin.Int) fun MyClass.doSomething() {
+context(i: Int) fun MyClass.doSomething() {
     println("Value: $value")
 }
 
