@@ -17,6 +17,7 @@ import com.intellij.platform.debugger.impl.frontend.FrontendViewportDataCache.Vi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import fleet.multiplatform.shims.ConcurrentHashMap
@@ -54,6 +55,24 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
       return getAvailableBreakpointTypesFromServer(project, editor, line)
     }
     return editorMap.getTypesForLine(line)
+  }
+
+  /**
+   * Returns cached breakpoint types for the line, or null if the data is not available yet.
+   * Schedules data fetching if needed, so the next calls will hopefully return cached data.
+   */
+  @RequiresReadLock
+  fun getTypesForLineFast(editor: Editor, line: Int): List<XBreakpointTypeProxy> {
+    val editorMap = editorsMap[editor] ?: return emptyList()
+    val currentEditorStamp = editor.document.modificationStamp
+    val cached = editorMap.getTypesForLineInternal(line, currentEditorStamp)
+    if (cached == null) {
+      cs.launch {
+        getTypesForLine(editor, line)
+      }
+      return emptyList()
+    }
+    return cached
   }
 
   companion object {
@@ -112,13 +131,17 @@ private class EditorBreakpointTypesMap(
   suspend fun getTypesForLine(line: Int): List<XBreakpointTypeProxy> {
     // let's try to find breakpoint types from the current map
     val currentEditorStamp = readAction { editor.document.modificationStamp }
-    val cachedTypes = breakpointsMap.getData(line, currentEditorStamp)
+    val cachedTypes = getTypesForLineInternal(line, currentEditorStamp)
     if (cachedTypes != null) {
       return cachedTypes
     }
 
     // No cached data or document was modified, let's make an rpc call for that, data will be fetched later
     return getAvailableBreakpointTypesFromServer(project, editor, line)
+  }
+
+  fun getTypesForLineInternal(line: Int, currentEditorStamp: Long): List<XBreakpointTypeProxy>? {
+    return breakpointsMap.getData(line, currentEditorStamp)
   }
 
   fun dispose() {
