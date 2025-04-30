@@ -62,20 +62,23 @@ class UsageInfoModel(val project: Project, private val model: FindInFilesResult,
 
   override fun getNavigationOffset(): Int = mergedModel.offset
 
+  //used in tests see ExporterToTextFile; also in FindUsagesDumber
   override fun getPresentation(): UsagePresentation {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    TODO("not implemented")
   }
 
+  //Show usages action
   override fun getLocation(): FileEditorLocation? {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    return null
   }
 
+  //used for navigation by cmd-down from findPopup
   override fun highlightInEditor() {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    TODO("not implemented")
   }
 
+  //used in findUsages not find in files
   override fun selectInEditor() {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
   override fun merge(mergeableUsage: MergeableUsage): Boolean {
