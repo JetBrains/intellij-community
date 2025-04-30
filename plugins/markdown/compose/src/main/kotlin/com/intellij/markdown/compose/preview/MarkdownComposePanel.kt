@@ -39,6 +39,7 @@ import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.create
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.markdown.MarkdownMode
+import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
@@ -85,6 +86,7 @@ internal class MarkdownComposePanel(
         listOf(
           GitHubTableProcessorExtension,
           GitHubStrikethroughProcessorExtension(),
+          AutolinkProcessorExtension,
         ),
         markdownMode,
       )

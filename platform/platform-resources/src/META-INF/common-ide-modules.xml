@@ -15,6 +15,7 @@
     <module name="intellij.platform.jewel.ui"/>
     <module name="intellij.platform.jewel.ideLafBridge"/>
     <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
+    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
     <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
     <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
