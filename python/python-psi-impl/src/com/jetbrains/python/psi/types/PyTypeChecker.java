@@ -562,7 +562,7 @@ public final class PyTypeChecker {
           subclassElementType -> {
             boolean matched = match(protocolElementType, subclassElementType, protocolContext).orElse(true);
             if (!matched) return false;
-            if (!(protocolElementType instanceof PyCallableType callableProtocolElement) || 
+            if (!(protocolElementType instanceof PyCallableType callableProtocolElement) ||
                 !(subclassElementType instanceof PyCallableType callableSubclassElement)) return matched;
             var protocolReturnType = callableProtocolElement.getReturnType(protocolContext.context);
             if (protocolReturnType instanceof PySelfType) {
@@ -720,14 +720,18 @@ public final class PyTypeChecker {
       }
     }
 
-    // TODO Implement proper compatibility check for callable signatures, including positional- and keyword-only arguments, defaults, etc.
-    boolean shouldAcceptUnlimitedPositionalArgs = ContainerUtil.exists(expectedParameters, PyCallableParameter::isPositionalContainer);
-    boolean canAcceptUnlimitedPositionalArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isPositionalContainer);
-    if (shouldAcceptUnlimitedPositionalArgs && !canAcceptUnlimitedPositionalArgs) return false;
+    final var hasParamSpec = ContainerUtil.exists(expectedParameters, it -> (it.getType(context) instanceof PyParamSpecType));
 
-    boolean shouldAcceptArbitraryKeywordArgs = ContainerUtil.exists(expectedParameters, PyCallableParameter::isKeywordContainer);
-    boolean canAcceptArbitraryKeywordArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isKeywordContainer);
-    if (shouldAcceptArbitraryKeywordArgs && !canAcceptArbitraryKeywordArgs) return false;
+    // TODO Implement proper compatibility check for callable signatures, including positional- and keyword-only arguments, defaults, etc.
+    if (!hasParamSpec) {
+      boolean shouldAcceptUnlimitedPositionalArgs = ContainerUtil.exists(expectedParameters, PyCallableParameter::isPositionalContainer);
+      boolean canAcceptUnlimitedPositionalArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isPositionalContainer);
+      if (shouldAcceptUnlimitedPositionalArgs && !canAcceptUnlimitedPositionalArgs) return false;
+
+      boolean shouldAcceptArbitraryKeywordArgs = ContainerUtil.exists(expectedParameters, PyCallableParameter::isKeywordContainer);
+      boolean canAcceptArbitraryKeywordArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isKeywordContainer);
+      if (shouldAcceptArbitraryKeywordArgs && !canAcceptArbitraryKeywordArgs) return false;
+    }
 
     List<PyType> expectedElementTypes = StreamEx.of(expectedParameters)
       .filter(cp -> !(cp.getParameter() instanceof PySlashParameter || cp.getParameter() instanceof PySingleStarParameter))
@@ -739,7 +743,11 @@ public final class PyTypeChecker {
         return argType;
       })
       .toList();
-    PyTypeParameterMapping mapping = PyTypeParameterMapping.mapWithParameterList(ContainerUtil.subList(expectedElementTypes, startIndex),
+
+    // TODO: substitute the param spec
+    final var expectedElementTypes2 = ContainerUtil.filter(expectedElementTypes, it -> !(it instanceof PyParamSpecType));
+
+    PyTypeParameterMapping mapping = PyTypeParameterMapping.mapWithParameterList(ContainerUtil.subList(expectedElementTypes2, startIndex),
                                                                                  ContainerUtil.subList(actualParameters, startIndex),
                                                                                  context);
     if (mapping == null) {
