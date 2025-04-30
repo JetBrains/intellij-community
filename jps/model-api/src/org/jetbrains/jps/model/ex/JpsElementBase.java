@@ -29,7 +29,7 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
   }
 
   @ApiStatus.Internal
-  protected static void setParent(@NotNull JpsElement element, @Nullable JpsElementBase<?> parent) {
+  public static void setParent(@NotNull JpsElement element, @Nullable JpsElementBase<?> parent) {
     ((JpsElementBase<?>)element).setParent(parent);
   }
 
