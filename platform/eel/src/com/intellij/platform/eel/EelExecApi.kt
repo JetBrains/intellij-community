@@ -131,7 +131,11 @@ suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
         "$winRoot\\system32\\cmd.exe"
       }, "/C")
     }
-    is EelPlatform.Posix -> Pair("/bin/sh", "-c")
+    is EelPlatform.Posix -> {
+      // TODO: use `confstr(3)` to get `PATH` with posix tools.
+      val sh = findExeFilesInPath("sh").firstOrNull()?.toString() ?: "/bin/sh"
+      Pair(sh, "-c")
+    }
   }
   return Pair(EelPath.parse(shell, descriptor), cmdArg)
 }
