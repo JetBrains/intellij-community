@@ -8,10 +8,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.APP)
+@ApiStatus.Internal
 class UpdatesInfoProviderManager(coroutineScope: CoroutineScope) {
 
   companion object {
