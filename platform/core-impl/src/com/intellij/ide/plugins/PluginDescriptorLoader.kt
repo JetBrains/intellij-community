@@ -513,9 +513,6 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
   }
 }
 
-/**
- * Returns enabled plugins only.
- */
 private suspend fun loadAndInitDescriptors(
   loadingContext: PluginDescriptorLoadingContext,
   initContext: PluginInitializationContext,
