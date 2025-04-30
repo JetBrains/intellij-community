@@ -18,15 +18,15 @@ import javax.swing.JTabbedPane
 import javax.swing.text.JTextComponent
 
 @Experimental
-fun JTextComponent.bindTextOnShow(textState: MutableStateFlow<String>, shouldSelectAllText: MutableStateFlow<Boolean>, launchDebugName: String) {
+fun JTextComponent.bindTextOnShow(textState: MutableStateFlow<String>, launchDebugName: String) {
   launchOnShow(launchDebugName) {
-    bindTextIn(textState, shouldSelectAllText, this)
+    bindTextIn(textState, this)
   }
 }
 
 @Suppress("DuplicatedCode")
 @Experimental
-fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, shouldSelectAllText: MutableStateFlow<Boolean>, coroutineScope: CoroutineScope) {
+fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, coroutineScope: CoroutineScope) {
   val listener = object : DocumentAdapter() {
     override fun textChanged(e: javax.swing.event.DocumentEvent) {
       textState.update { text }
@@ -37,10 +37,6 @@ fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, shouldSelectA
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         document.removeDocumentListener(listener)
         text = textValue
-        if (shouldSelectAllText.value) {
-          selectAll()
-          shouldSelectAllText.value = false
-        }
         document.addDocumentListener(listener)
       }
     }

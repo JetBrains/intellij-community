@@ -2,14 +2,12 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
@@ -26,6 +24,7 @@ import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEven
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
@@ -56,7 +55,7 @@ import javax.swing.*
 import javax.swing.text.Document
 
 @Internal
-class SePopupContentPane(private val project: Project, private val vm: SePopupVm) : JPanel(), Disposable {
+class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -97,7 +96,7 @@ class SePopupContentPane(private val project: Project, private val vm: SePopupVm
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
 
-    textField.bindTextOnShow(vm.searchPattern, vm.shouldSelectAllSearchPattern, "Search Everywhere text field text binding")
+    textField.bindTextOnShow(vm.searchPattern, "Search Everywhere text field text binding")
     addHistoryExtensionToTextField()
 
     vm.coroutineScope.launch {
@@ -156,6 +155,11 @@ class SePopupContentPane(private val project: Project, private val vm: SePopupVm
     }
 
     WindowMoveListener(this).installTo(headerPane)
+
+    DumbAwareAction.create { vm.getHistoryItem(true)?.let { textField.text = it; textField.selectAll() } }
+      .registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, this)
+    DumbAwareAction.create { vm.getHistoryItem(false)?.let { textField.text = it; textField.selectAll() } }
+      .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, this)
   }
 
   private fun indexToFreezeFromListOffset(): Int =
@@ -415,7 +419,7 @@ class SePopupContentPane(private val project: Project, private val vm: SePopupVm
   }
 
   private fun showHistoryPopup(relativePoint: RelativePoint) {
-    val items = SeFrontendService.getInstance(project).getHistoryItems()
+    val items = vm.getHistoryItems()
 
     if (items.isEmpty()) return
 
