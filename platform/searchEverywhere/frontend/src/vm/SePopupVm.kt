@@ -46,7 +46,14 @@ class SePopupVm(
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(tabVms.indexOfFirst { it.tabId == initialTabIndex }.takeIf { it >= 0 } ?: 0)
   val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
 
-  var historyIterator: HistoryIterator? = null
+  private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
+    get() {
+      val selectedContributorID = currentTab.tabId
+      if (field.getContributorID() != selectedContributorID) {
+        field = historyList.getIterator(selectedContributorID)
+      }
+      return field
+    }
 
   val usageLogger: SeUsageEventsLogger = SeUsageEventsLogger()
 
@@ -70,22 +77,14 @@ class SePopupVm(
     searchResults = currentTabFlow.flatMapLatest { it.searchResults }
     activeTab.setActive(true)
 
-    // Replace empty searchText by the last one in the search history
-    var searchTextToShow = initialSearchPattern
-    historyIterator = historyList.getIterator(currentTab.tabId)
-
-    //history could be suppressed by user for some reasons (creating promo video, conference demo etc.)
-    var suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false)
-    //or could be suppressed just for All tab in registry
-    suppressHistory = suppressHistory ||
-                      (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == currentTab.tabId &&
-                       Registry.`is`("search.everywhere.disable.history.for.all"))
-
-    if (initialSearchPattern == null && !suppressHistory) {
-      searchTextToShow = historyIterator?.next()
+    searchPattern.value = initialSearchPattern ?: run {
+      // History could be suppressed by the user for some reason (creating promo video, conference demo etc.)
+      // or could be suppressed just for All tab in the registry.
+      val suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false) ||
+                            (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == currentTab.tabId &&
+                             Registry.`is`("search.everywhere.disable.history.for.all"))
+      if (!suppressHistory) historyIterator.next() else ""
     }
-
-    searchPattern.value = searchTextToShow ?: ""
   }
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int): Boolean {
@@ -123,7 +122,6 @@ class SePopupVm(
   }
 
   fun saveSearchText() {
-    updateHistoryIterator()
     val searchText = searchPattern.value
     val selectedTabID = currentTab.tabId
     if (searchText.isNotEmpty()) {
@@ -132,21 +130,12 @@ class SePopupVm(
   }
 
   fun getHistoryItem(next: Boolean) : String? {
-    updateHistoryIterator()
-    val searchText = if (next) historyIterator?.next() else historyIterator?.prev()
+    val searchText = if (next) historyIterator.next() else historyIterator.prev()
     return searchText
   }
 
   fun getHistoryItems(): List<String> {
-    updateHistoryIterator()
-    return historyIterator?.getList() ?: emptyList()
-  }
-
-  private fun updateHistoryIterator() {
-    val selectedContributorID = currentTab.tabId
-    if (historyIterator?.getContributorID() != selectedContributorID) {
-      historyIterator = historyList.getIterator(selectedContributorID)
-    }
+    return historyIterator.getList()
   }
 }
 

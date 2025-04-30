@@ -5,16 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
@@ -37,11 +38,12 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.util.bindTextOnShow
+import com.intellij.util.bindTextIn
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -96,7 +98,14 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
 
-    textField.bindTextOnShow(vm.searchPattern, "Search Everywhere text field text binding")
+    textField.launchOnShow("Search Everywhere text field text binding") {
+      withContext(Dispatchers.EDT) {
+        textField.text = vm.searchPattern.value
+        textField.selectAll()
+      }
+      textField.bindTextIn(vm.searchPattern, this)
+    }
+
     addHistoryExtensionToTextField()
 
     vm.coroutineScope.launch {
@@ -395,7 +404,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
     textField.addExtension(
       object : ExtendableTextComponent.Extension {
         override fun getIcon(hovered: Boolean): Icon {
-          return if (SeFrontendService.isExtendedInfoEnabled()) AllIcons.Actions.SearchWithHistory else AllIcons.Actions.Search
+          return if (isExtendedInfoEnabled()) AllIcons.Actions.SearchWithHistory else AllIcons.Actions.Search
         }
 
         override fun isIconBeforeText(): Boolean {
@@ -407,7 +416,7 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
         }
 
         override fun getActionOnClick(): Runnable? {
-          if (!SeFrontendService.isExtendedInfoEnabled()) return null
+          if (!isExtendedInfoEnabled()) return null
 
           val bounds = (textField.getUI() as TextFieldWithPopupHandlerUI).getExtensionIconBounds(this)
           val point = bounds.location
@@ -446,4 +455,11 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
   }
 
   override fun dispose() {}
+
+  companion object {
+    @JvmStatic
+    fun isExtendedInfoEnabled(): Boolean {
+      return Registry.`is`("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal()
+    }
+  }
 }

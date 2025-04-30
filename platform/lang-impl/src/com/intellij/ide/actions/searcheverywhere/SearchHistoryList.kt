@@ -4,10 +4,9 @@ package com.intellij.ide.actions.searcheverywhere
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SearchHistoryList {
+class SearchHistoryList(private val isReversedOrder: Boolean) {
   companion object {
     private const val HISTORY_LIMIT = 50
-    private const val ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All"
   }
 
   private data class HistoryItem(val searchText: String, val contributorID: String)
@@ -24,7 +23,7 @@ class SearchHistoryList {
       historyList.remove(it)
     }
 
-    historyList.add(0, HistoryItem(text, contributorID))
+    historyList.add(if (isReversedOrder) 0 else historyList.size, HistoryItem(text, contributorID))
 
     val list = filteredHistory { it.contributorID == contributorID }
     if (list.size > HISTORY_LIMIT) {
@@ -35,7 +34,7 @@ class SearchHistoryList {
   }
 
   private fun getHistoryForContributor(contributorID: String): List<String> {
-    return if (contributorID == ALL_CONTRIBUTORS_GROUP_ID) {
+    return if (contributorID == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
       val entireHistory = filteredHistory { true }
       val size = entireHistory.size
       if (size > HISTORY_LIMIT) entireHistory.subList(size - HISTORY_LIMIT, size) else entireHistory

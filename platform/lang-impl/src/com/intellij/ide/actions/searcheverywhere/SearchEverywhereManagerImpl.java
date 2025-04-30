@@ -40,8 +40,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
-import java.util.stream.Collector;
 
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED;
@@ -60,7 +58,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
   private SearchEverywhereUI mySearchEverywhereUI;
   private Dimension myBalloonFullSize;
 
-  private final SearchHistoryList myHistoryList = new SearchHistoryList();
+  private final SearchHistoryList myHistoryList = new SearchHistoryList(false);
   private final Map<String, Object> myPrevSelections = new HashMap<>();
   private HistoryIterator myHistoryIterator;
   private boolean myEverywhere;
