@@ -91,6 +91,7 @@ object K2CreateFunctionFromUsageUtil {
                         argument(ktType)
                     }
                 }
+                parent is KtParameter && parent.defaultValue == current -> parent.returnType // KT-77254
                 parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == current && parent.parent is KtValueArgument -> {
                     (parent.expectedType as? KaFunctionType)?.returnType
                 }

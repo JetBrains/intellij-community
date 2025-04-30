@@ -7395,6 +7395,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/callableRef.kt");
                     }
 
+                    @TestMetadata("fromParameterDefaultValue.kt")
+                    public void testFromParameterDefaultValue() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/fromParameterDefaultValue.kt");
+                    }
+
                     @TestMetadata("inBinaryOperation.kt")
                     public void testInBinaryOperation() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/inBinaryOperation.kt");
