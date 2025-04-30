@@ -1193,11 +1193,11 @@ private fun processDependenciesOnPlugin(
       continue
     }
 
-    if (!processOptionalDependenciesInOldFormatOnPlugin(dependencyTargetId = dependencyTarget.pluginId,
-                                                        mainDescriptor = plugin,
-                                                        loadStateFilter = loadStateFilter,
-                                                        onlyOptional = onlyOptional,
-                                                        processor = processor)) {
+    if (!processOptionalPluginDependenciesOnPlugin(dependencyTargetId = dependencyTarget.pluginId,
+                                                   mainDescriptor = plugin,
+                                                   loadStateFilter = loadStateFilter,
+                                                   onlyOptional = onlyOptional,
+                                                   processor = processor)) {
       return
     }
 
@@ -1229,7 +1229,7 @@ private enum class LoadStateFilter {
   LOADED, NOT_LOADED, ANY
 }
 
-private fun processOptionalDependenciesInOldFormatOnPlugin(
+private fun processOptionalPluginDependenciesOnPlugin(
   dependencyTargetId: PluginId,
   mainDescriptor: IdeaPluginDescriptorImpl,
   loadStateFilter: LoadStateFilter,
@@ -1256,7 +1256,7 @@ private fun processOptionalDependenciesInOldFormatOnPlugin(
       return false
     }
 
-    if (!processOptionalDependenciesInOldFormatOnPlugin(
+    if (!processOptionalPluginDependenciesOnPlugin(
         dependencyTargetId = dependencyTargetId,
         mainDescriptor = subDescriptor,
         loadStateFilter = loadStateFilter,
