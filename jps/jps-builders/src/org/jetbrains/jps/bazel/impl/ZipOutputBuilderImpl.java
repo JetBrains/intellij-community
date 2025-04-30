@@ -14,9 +14,11 @@ import java.lang.invoke.MethodHandles;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -43,7 +45,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       .open();
     myDataSwapStore.setVersionsToKeep(0);
     mySwap = myDataSwapStore.openMap("data-swap");
-    myZipFile = new ZipFile(outputZip.toFile());
+    myZipFile = openZipFile(outputZip);
     Enumeration<? extends ZipEntry> entries = myZipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = entries.nextElement();
@@ -54,6 +56,18 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       else {
         myEntries.put(entry.getName(), EntryData.create(myZipFile, entry));
       }
+    }
+  }
+
+  private static @NotNull ZipFile openZipFile(Path zipPath) throws IOException {
+    try {
+      return new ZipFile(zipPath.toFile());
+    }
+    catch (NoSuchFileException e) {
+      try (var zos = new ZipOutputStream(Files.newOutputStream(zipPath))){
+        zos.setLevel(Deflater.BEST_SPEED);
+      }
+      return new ZipFile(zipPath.toFile());
     }
   }
 
