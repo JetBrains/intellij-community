@@ -48,13 +48,12 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateClassWithMembers
+import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.tooling.core.withClosure
 import java.awt.Component
@@ -227,14 +226,34 @@ private class CreateActualForExpectLocalQuickFix(
                 navigateToActual(it, requestFocus = true)
             }
         } else {
-            val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(actualDeclarations)
+
+            val expectedModule = descriptor.psiElement.module ?: return
+
+            val modulesFromDeclarations = actualDeclarations.map { it.module }
+
+            data class ModuleWithLevel(val module: Module, val level: Int)
+
+            fun buildLeveledList(currentModule: Module, level: Int): List<ModuleWithLevel> {
+                val implementing = currentModule.implementingModules.toSet()
+                val children = implementing.filter { module -> module.implementedModules.all { it !in implementing } }.sortedBy { it.name }
+                if (children.isEmpty()) return emptyList()
+                return children.flatMap { listOf(ModuleWithLevel(it, level)).plus(buildLeveledList(it, level + 1)) }
+            }
+
+            val sortedModules = buildLeveledList(expectedModule, 0)
+                .distinctBy { it.module.name }
+                .filter {
+                    it.module in modulesFromDeclarations
+                }
+
+            val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(sortedModules)
                 .setTitle(KotlinBundle.message("choose.actual.module"))
-                .setItemsChosenCallback { declarations ->
+                .setItemsChosenCallback { modules ->
                     val actualDeclarations = WriteCommandAction.writeCommandAction(project).withName(familyName)
                         .compute(ThrowableComputable<List<KtDeclaration>, Throwable> {
-                            val selectedPlatforms = declarations.map { it.module.platform }.toMutableSet()
+                            val selectedPlatforms = modules.map { it.module.platform }.toMutableSet()
                             selectedPlatforms.removeIf { currentPlatform -> selectedPlatforms.any { it != currentPlatform && it.componentPlatforms.containsAll(currentPlatform.componentPlatforms ) } }
-                            declarations.mapNotNull { declaration -> if (declaration.module.platform in selectedPlatforms) doCreateActualFix(project, descriptor, declaration) else null }
+                            modules.mapNotNull { moduleWithLevel -> if (moduleWithLevel.module.platform in selectedPlatforms) doCreateActualFix(project, descriptor, actualDeclarations.find { it.module == moduleWithLevel.module }!!) else null }
                         })
                     val last = actualDeclarations.lastOrNull()
                     for (declaration in actualDeclarations) {
@@ -250,8 +269,11 @@ private class CreateActualForExpectLocalQuickFix(
                         cellHasFocus: Boolean
                     ): Component {
                         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-                        (component as JLabel).text = (value as? ActualDeclaration)?.sourceSet?.name
-                        component.border = JBEmptyBorder(5)
+                        if (value is ModuleWithLevel) {
+                            val (_, _, sourceSet) = actualDeclarations.find { it.module == value.module }!!
+                            (component as JLabel).text = "   ".repeat(value.level) + sourceSet.name
+                            component.border = JBEmptyBorder(5)
+                        }
                         return component
                     }
                 })
