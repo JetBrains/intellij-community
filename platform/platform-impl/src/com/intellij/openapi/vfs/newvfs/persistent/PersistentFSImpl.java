@@ -134,6 +134,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             // the file system must have been unregistered
             iterator.remove();
             dirByIdCache.remove(root.getId());
+            dirByIdCache.drop(root.getId());
             //TODO RC: how to push it out of VfsData?
 
           }
@@ -2328,7 +2329,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       String rootUrl = UriUtil.trimTrailingSlashes(file.getUrl());
       synchronized (rootsByUrl) {
         rootsByUrl.remove(rootUrl);
-        dirByIdCache.remove(fileIdToDelete);
+        dirByIdCache.drop(fileIdToDelete);
         vfsPeer.deleteRootRecord(fileIdToDelete);
       }
     }

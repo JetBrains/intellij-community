@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -9,11 +9,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap;
+
 final class VirtualDirectoryCache {
-  // FS roots only (dirs with .getParent()==null)
+
+  /** FS roots only (dirs with .getParent()==null) */
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToRootCache = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-  // FS inner dirs only (dirs with .getParent()!=null), separated from the root cache to speedup clear
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ConcurrentCollectionFactory.createConcurrentIntObjectSoftValueMap();
+
+  /** FS inner dirs only (dirs with .getParent()!=null), separated from the root cache to speedup clear */
+  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = createConcurrentIntObjectSoftValueMap();
 
   @NotNull
   VirtualFileSystemEntry getOrCacheDir(@NotNull VirtualFileSystemEntry newDir) {
@@ -38,24 +42,15 @@ final class VirtualDirectoryCache {
   }
 
   @Nullable
-  VirtualFileSystemEntry getCachedDir(int id) {
-    VirtualFileSystemEntry dir = myIdToDirCache.get(id);
+  VirtualFileSystemEntry getCachedDir(int dirId) {
+    VirtualFileSystemEntry dir = myIdToDirCache.get(dirId);
     if (dir != null) return dir;
-    return myIdToRootCache.get(id);
+    return myIdToRootCache.get(dirId);
   }
 
   @Nullable
-  VirtualFileSystemEntry getCachedRoot(int id) {
-    return myIdToRootCache.get(id);
-  }
-
-  void dropNonRootCachedDirs() {
-    myIdToDirCache.clear();
-  }
-
-  void remove(int id) {
-    myIdToDirCache.remove(id);
-    myIdToRootCache.remove(id);
+  VirtualFileSystemEntry getCachedRoot(int rootId) {
+    return myIdToRootCache.get(rootId);
   }
 
   @TestOnly
@@ -69,6 +64,17 @@ final class VirtualDirectoryCache {
     return myIdToRootCache.values();
   }
 
+  void dropNonRootCachedDirs() {
+    myIdToDirCache.clear();
+  }
+
+  /** Drops fileId from the cache completely -- from both roots and directories caches */
+  void drop(int fileId) {
+    myIdToDirCache.remove(fileId);
+    myIdToRootCache.remove(fileId);
+  }
+
+  /** Drops all entries from cache completely -- i.e. from both roots and directories caches */
   void clear() {
     myIdToDirCache.clear();
     myIdToRootCache.clear();
