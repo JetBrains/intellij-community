@@ -15680,14 +15680,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorWithoutExplicitTypesOrParameters.kt");
         }
 
-        @TestMetadata("dontFixNonNullableTypeReference.kt")
-        public void testDontFixNonNullableTypeReference() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/dontFixNonNullableTypeReference.kt");
+        @TestMetadata("contextParam.kt")
+        public void testContextParam() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParam.kt");
         }
 
-        @TestMetadata("dontFixNonNullableTypes.kt")
-        public void testDontFixNonNullableTypes() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/dontFixNonNullableTypes.kt");
+        @TestMetadata("contextParamWithAngleBracketsBeforeDot.kt")
+        public void testContextParamWithAngleBracketsBeforeDot() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParamWithAngleBracketsBeforeDot.kt");
+        }
+
+        @TestMetadata("contextParamWithEmptyTypeBeforeDot.kt")
+        public void testContextParamWithEmptyTypeBeforeDot() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/contextParamWithEmptyTypeBeforeDot.kt");
         }
 
         @TestMetadata("generic.kt")
@@ -15698,6 +15703,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("leftAndRight.kt")
         public void testLeftAndRight() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/leftAndRight.kt");
+        }
+
+        @TestMetadata("nonNullableTypeReference.kt")
+        public void testNonNullableTypeReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nonNullableTypeReference.kt");
+        }
+
+        @TestMetadata("nonNullableTypes.kt")
+        public void testNonNullableTypes() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nonNullableTypes.kt");
         }
 
         @TestMetadata("nullableGeneric.kt")

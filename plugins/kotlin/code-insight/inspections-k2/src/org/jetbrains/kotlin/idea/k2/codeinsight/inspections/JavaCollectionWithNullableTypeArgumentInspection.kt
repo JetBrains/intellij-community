@@ -8,6 +8,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.PsiTreeUtil
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -103,6 +104,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
     }
 
     override fun KaSession.prepareContext(element: KtElement): Context? {
+        if (PsiTreeUtil.hasErrorElements(element)) return null // Temporary check until KT-77222 is fixed
         val typeArguments = element.getTypeArguments() ?: return null
 
         val canMakeNonNullable: Boolean
