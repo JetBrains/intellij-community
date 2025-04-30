@@ -38,6 +38,8 @@ interface PluginInitializationContext {
    */
   val disablePluginLoadingCompletely: Boolean
 
+  val pluginsPerProjectConfig: PluginsPerProjectConfig?
+
   @ApiStatus.Internal
   companion object {
     @TestOnly
@@ -62,6 +64,10 @@ interface PluginInitializationContext {
         override val checkEssentialPlugins: Boolean = checkEssentialPlugins
         override val explicitPluginSubsetToLoad: Set<PluginId>? = explicitPluginSubsetToLoad
         override val disablePluginLoadingCompletely: Boolean = disablePluginLoadingCompletely
+        override val pluginsPerProjectConfig: PluginsPerProjectConfig? = null
       }
   }
 }
+
+@ApiStatus.Internal
+data class PluginsPerProjectConfig(val isMainProcess: Boolean)

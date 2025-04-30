@@ -6,7 +6,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -538,10 +537,9 @@ private suspend fun loadAndInitDescriptors(
     pluginsDeferred.awaitAllNotNull() to pluginsFromPropertyDeferred.awaitAllNotNull()
   }
   val loadingResult = PluginLoadingResult()
-  val isMainProcess = isMainProcess()
-  loadingResult.initAndAddAll(descriptors = plugins.filterPerProjectPlugins(isMainProcess), overrideUseIfCompatible = false, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = plugins, overrideUseIfCompatible = false, initContext = initContext)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.initAndAddAll(descriptors = pluginsFromProperty.filterPerProjectPlugins(isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = pluginsFromProperty, overrideUseIfCompatible = true, initContext = initContext)
   return loadingResult
 }
 
@@ -1131,7 +1129,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
         ).awaitAllNotNull()
-      }.filterPerProjectPlugins(isMainProcess()),
+      },
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1147,7 +1145,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
       descriptors = coroutineScope {
         loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
           .awaitAllNotNull()
-      }.filterPerProjectPlugins(isMainProcess = isMainProcess()),
+      },
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1194,7 +1192,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
           )
         }
       }.awaitAllNotNull()
-    }.filterPerProjectPlugins(isMainProcess()),
+    },
     overrideUseIfCompatible = false,
     initContext = initContext
   )
@@ -1360,24 +1358,6 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
     }
   }
   return null
-}
-
-private fun List<IdeaPluginDescriptorImpl>.filterPerProjectPlugins(isMainProcess: Boolean?): List<IdeaPluginDescriptorImpl> {
-  if (isMainProcess == true) {
-    return filter { ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
-  }
-  else {
-    return this
-  }
-}
-
-private fun isMainProcess(): Boolean? {
-  if (java.lang.Boolean.getBoolean("ide.per.project.instance")) {
-    return !PathManager.getPluginsDir().fileName.toString().startsWith("perProject_")
-  }
-  else {
-    return null
-  }
 }
 
 /** slightly more optimal than `awaitAll().filterNotNull()` */

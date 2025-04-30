@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -49,4 +50,13 @@ class ProductPluginInitContext(
 
   override val disablePluginLoadingCompletely: Boolean
     get() = !System.getProperty("idea.load.plugins", "true").toBoolean()
+
+  override val pluginsPerProjectConfig: PluginsPerProjectConfig? by lazy {
+    if (java.lang.Boolean.getBoolean("ide.per.project.instance")) {
+      PluginsPerProjectConfig(
+        isMainProcess = !PathManager.getPluginsDir().fileName.toString().startsWith("perProject_")
+      )
+    }
+    else null
+  }
 }
