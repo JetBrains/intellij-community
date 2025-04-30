@@ -1356,6 +1356,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
              """);
   }
 
+  // PY-80775
+  public void testParamSpecProtocolFull() {
+    doTestByText("""
+             from typing import Protocol
+             
+             class Proto[**P](Protocol):
+                 def f(self, *args: P.args, **kwargs: P.kwargs) -> None: ...
+             
+             class Impl:
+                 def f(self, i: int) -> None: ...
+             
+             p: Proto[[int]] = Impl()
+             """);
+  }
+
   // PY-46661
   public void testTypedDictInReturnType() {
     doTest();
