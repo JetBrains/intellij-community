@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.swing.Icon
@@ -21,10 +22,13 @@ class UpdatesInfoProviderManager(coroutineScope: CoroutineScope) {
   }
 
   fun getUpdateActions(): List<AnAction> {
-    return EP.extensionList.flatMap { it.updatesState.info?.let { info -> listOf(info.action) } ?: emptyList() }
+    return providers.flatMap { it.updatesState.info?.let { info -> listOf(info.action) } ?: emptyList() }
   }
 
   fun getUpdateIcons(): List<Icon> {
-    return EP.extensionList.flatMap { it.updatesState.info?.let { info -> listOf(info.icon) } ?: emptyList() }
+    return providers.flatMap { it.updatesState.info?.let { info -> listOf(info.icon) } ?: emptyList() }
   }
+
+  private val providers: List<ExternalUpdateProvider>
+    get() = if (Registry.`is`("station.use.station.comms.tools.management")) EP.extensionList else emptyList()
 }
