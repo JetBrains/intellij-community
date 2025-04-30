@@ -130,7 +130,7 @@ object K2CreatePropertyFromUsageBuilder {
                 }
                 val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
                 val classId =
-                    (defaultContainerPsi as? KtClassOrObject)?.classIdIfNonLocal ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
+                    (defaultContainerPsi as? KtClassOrObject)?.takeUnless { it is KtEnumEntry }?.classIdIfNonLocal ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
                 if (classId != null) {
                     val targetClassType = buildClassType(if (static) ClassId.fromString(classId.asFqNameString() + ".Companion") else classId)
                     requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, targetClassType, isExtension = true))

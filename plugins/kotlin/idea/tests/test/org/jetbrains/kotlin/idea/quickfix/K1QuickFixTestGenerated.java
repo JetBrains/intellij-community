@@ -7326,6 +7326,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/extension/brokenReceiver.kt");
                     }
 
+                    @TestMetadata("extensionOnEnumEntry.kt")
+                    public void testExtensionOnEnumEntry() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionOnEnumEntry.kt");
+                    }
+
                     @TestMetadata("extensionRefInImport.kt")
                     public void testExtensionRefInImport() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionRefInImport.kt");
