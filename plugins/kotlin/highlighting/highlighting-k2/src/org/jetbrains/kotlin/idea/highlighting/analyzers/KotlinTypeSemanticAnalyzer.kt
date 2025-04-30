@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.analyzers
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
+import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory.highlightName
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -14,6 +16,13 @@ import org.jetbrains.kotlin.psi.*
 internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression)
+    }
+
+    override fun visitIntersectionType(intersectionType: KtIntersectionType) {
+        (intersectionType.parent as? KtTypeReference)?.run {
+            highlight(this, KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER)
+        }
+        super.visitIntersectionType(intersectionType)
     }
 
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = with(session) {
@@ -24,6 +33,12 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
             // Do nothing: 'super' and 'this' are highlighted as a keyword
             return
         }
+
+        if (expression.isVisitIntersectionType()) {
+            // highlighted by visitIntersectionType()
+            return
+        }
+
         if (expression.isConstructorCallReference()) {
             // Do not highlight constructor call as class reference
             return
@@ -32,7 +47,7 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
         val symbol = expression.mainReference.resolveToSymbol() as? KaClassifierSymbol ?: return
 
         if (isAnnotationCall(expression, symbol)) {
-            // higlighted by AnnotationEntryHiglightingVisitor
+            // highlighted by AnnotationEntryHighlightingVisitor
             return
         }
 
@@ -62,7 +77,11 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
             is KaTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
         }
 
-        holder.add(HighlightingFactory.highlightName(expression, color)?.create())
+        highlight(expression, color)
+    }
+
+    private fun highlight(element: PsiElement, color: HighlightInfoType) {
+        holder.add(highlightName(element, color)?.create())
     }
 
     private fun KaSession.isAnnotationCall(expression: KtSimpleNameExpression, target: KaSymbol): Boolean {
@@ -97,4 +116,10 @@ fun KtSimpleNameExpression.isConstructorCallReference(): Boolean {
     val typeReference = type.parent as? KtTypeReference ?: return false
     val constructorCallee = typeReference.parent as? KtConstructorCalleeExpression ?: return false
     return constructorCallee.constructorReferenceExpression == this
+}
+
+fun KtSimpleNameExpression.isVisitIntersectionType(): Boolean {
+    val type = parent as? KtUserType ?: return false
+    val typeReference = type.parent as? KtTypeReference ?: return false
+    return typeReference.parent is KtIntersectionType
 }
