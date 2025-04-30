@@ -519,7 +519,7 @@ class KeywordCompletion() {
             return secondaryConstructor.getContainingClassOrObject() is KtObjectDeclaration
         }
 
-        fun isValOrVar(keywordTokenType: KtKeywordToken) = keywordTokenType == VAL_KEYWORD || keywordTokenType == VAR_KEYWORD
+        fun KtKeywordToken.isValOrVar() = this == VAL_KEYWORD || this == VAR_KEYWORD
 
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
@@ -537,16 +537,19 @@ class KeywordCompletion() {
 
                 !isModifierSupportedAtLanguageLevel(elementAt, keywordTokenType, languageVersionSettings) -> return false
 
-                isValOrVar(keywordTokenType) &&
+                keywordTokenType.isValOrVar() &&
                         parent is KtParameter &&
+                        parent.valOrVarKeyword != null &&
                         elementAt.parentOfTypes(KtNamedFunction::class, KtSecondaryConstructor::class) != null -> return false
 
-                isValOrVar(keywordTokenType) &&
+                keywordTokenType.isValOrVar() &&
                         (parentParent is KtBinaryExpression ||
                                 parentParent is KtUnaryExpression ||
                                 parentParent is KtParenthesizedExpression) -> return false
 
-                keywordTokenType == VAR_KEYWORD && parentParent is KtWhenExpression -> return false
+                keywordTokenType == VAR_KEYWORD &&
+                        parentParent is KtWhenExpression &&
+                        (parent as? KtProperty)?.valOrVarKeyword != null -> return false
 
                 keywordTokenType == CONSTRUCTOR_KEYWORD && elementAt.isSecondaryConstructorInObjectDeclaration() -> return false
 

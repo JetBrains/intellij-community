@@ -1,5 +1,5 @@
 fun test() {
-    val a = -v<caret>
+    val a = 5 + v<caret>
 }
 
 // ABSENT: val
