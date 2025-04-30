@@ -77,13 +77,7 @@ internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, projec
 private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyType<*>, project: Project, forTest: Boolean) {
   when (feedbackSurveyType) {
     is InIdeFeedbackSurveyType -> {
-      val inIdeFeedbackSurveyConfig = feedbackSurveyType.feedbackSurveyConfig as InIdeFeedbackSurveyConfig
-      val dialog = inIdeFeedbackSurveyConfig.createFeedbackDialog(project, forTest)
-      val isOk = dialog.showAndGet()
-      if (isOk && !forTest) {
-        inIdeFeedbackSurveyConfig.updateStateAfterDialogClosedOk(project)
-        updateCommonFeedbackSurveysStateAfterSent(inIdeFeedbackSurveyConfig)
-      }
+      feedbackSurveyType.feedbackSurveyConfig.showFeedbackDialog(project, forTest)
     }
     is ExternalFeedbackSurveyType -> {
       val externalFeedbackSurveyConfig = feedbackSurveyType.feedbackSurveyConfig as ExternalFeedbackSurveyConfig
@@ -96,7 +90,7 @@ private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyTy
   }
 }
 
-private fun updateCommonFeedbackSurveysStateAfterSent(feedbackSurveyConfig: FeedbackSurveyConfig) {
+internal fun updateCommonFeedbackSurveysStateAfterSent(feedbackSurveyConfig: FeedbackSurveyConfig) {
   CommonFeedbackSurveyService.feedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId)
 }
 
