@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.util.DocumentUtil
 import com.intellij.util.SlowOperations
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EDT
@@ -70,9 +71,9 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
 
     if (!project.isDefault) {
       val editorEventMulticaster = EditorFactory.getInstance().eventMulticaster
-      editorEventMulticaster.addDocumentListener(MyDocumentListener(), project)
-      editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), project)
-      editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), project)
+      editorEventMulticaster.addDocumentListener(MyDocumentListener(), cs.asDisposable())
+      editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), cs.asDisposable())
+      editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), cs.asDisposable())
 
       busConnection.subscribe(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
       busConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileUrlChangeAdapter() {
