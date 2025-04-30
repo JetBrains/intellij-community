@@ -17,6 +17,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
+import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.*
@@ -211,17 +212,16 @@ object XBreakpointUtil {
     isConditional: Boolean = false,
     condition: String? = null,
   ): Promise<XLineBreakpointProxy?> {
-    val (typeWinner, lineWinner) = getAvailableLineBreakpointInfo(project, position, selectVariantByPositionColumn, editor)
+    val (typeWinner, lineWinner) = getAvailableLineBreakpointTypesInfo(project, position, selectVariantByPositionColumn, editor)
 
     if (typeWinner.isEmpty()) {
       return rejectedPromise(RuntimeException("Cannot find appropriate type"))
     }
 
     val lineStart = position.line
-    val types = typeWinner.toBreakpointTypes()
     val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
     val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(
-      project, types, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove)
+      project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove)
 
     if (editor != null && lineStart != lineWinner) {
       val offset = editor.document.getLineStartOffset(lineWinner)
@@ -285,23 +285,48 @@ object XBreakpointUtil {
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
     editor: Editor?,
-  ): List<XLineBreakpointType<*>> =
-    getAvailableLineBreakpointInfo(project, position, selectTypeByPositionColumn, editor).first
-      .toBreakpointTypes()
-
-
-  private fun List<XLineBreakpointTypeProxy>.toBreakpointTypes(): List<XLineBreakpointType<*>> {
-    if (isEmpty()) return emptyList()
-    val lineBreakpointTypes = XDebuggerUtil.getInstance().lineBreakpointTypes.associateBy { it.id }
-    return mapNotNull { lineBreakpointTypes[it.id] }
+  ): List<XLineBreakpointType<*>> {
+    return getAvailableLineBreakpointTypesInfo(project, position, selectTypeByPositionColumn, editor).first
   }
 
-  private fun getAvailableLineBreakpointInfo(
+  private fun getAvailableLineBreakpointTypesInfo(
+    project: Project,
+    position: XSourcePosition,
+    selectTypeByPositionColumn: Boolean,
+    editor: Editor?,
+  ): Pair<List<XLineBreakpointType<*>>, Int> {
+    val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
+    return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor,
+                                          XDebuggerUtil.getInstance().lineBreakpointTypes.toList(),
+                                          { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
+                                          { type -> type.priority },
+                                          { type, line -> type.canPutAt(position.file, line, project) }
+    )
+  }
+
+  private fun getAvailableLineBreakpointInfoProxy(
     project: Project,
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
     editor: Editor?,
   ): Pair<List<XLineBreakpointTypeProxy>, Int> {
+    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+    val lineTypes = breakpointManager.getLineBreakpointTypes()
+    return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor, lineTypes,
+                                          { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
+                                          { type -> type.priority },
+                                          { type, line -> type.canPutAt(position.file, line, project) })
+  }
+
+  private fun <T, B> getAvailableLineBreakpointInfo(
+    position: XSourcePosition,
+    selectTypeByPositionColumn: Boolean,
+    editor: Editor?,
+    lineTypes: List<T>,
+    breakpointProvider: (T, Int) -> B?,
+    computePriority: (T) -> Int,
+    canPutAt: (T, Int) -> Boolean,
+  ): Pair<List<T>, Int> {
     val lineStart = position.line
     val file = position.file
 
@@ -318,19 +343,16 @@ object XBreakpointUtil {
         linesEnd = region.document.getLineNumber(region.endOffset)
       }
     }
-
-    val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-    val lineTypes = breakpointManager.getLineBreakpointTypes()
-    val typeWinner = SmartList<XLineBreakpointTypeProxy>()
+    val typeWinner = SmartList<T>()
     var lineWinner = -1
     if (linesEnd != lineStart) { // folding mode
       for (line in lineStart..linesEnd) {
         var maxPriority = 0
         for (type in lineTypes) {
-          maxPriority = max(maxPriority, type.priority)
-          val breakpoint = breakpointManager.findBreakpointAtLine(type, file, line)
-          if ((type.canPutAt(file, line, project) || breakpoint != null) &&
-              (typeWinner.isEmpty() || type.priority > typeWinner[0].priority)
+          maxPriority = max(maxPriority, computePriority(type))
+          val breakpoint = breakpointProvider(type, line)
+          if ((canPutAt(type, line) || breakpoint != null) &&
+              (typeWinner.isEmpty() || computePriority(type) > computePriority(typeWinner[0]))
           ) {
             typeWinner.clear()
             typeWinner.add(type)
@@ -338,21 +360,21 @@ object XBreakpointUtil {
           }
         }
         // already found max priority type - stop
-        if (!typeWinner.isEmpty() && typeWinner[0].priority == maxPriority) {
+        if (!typeWinner.isEmpty() && computePriority(typeWinner[0]) == maxPriority) {
           break
         }
       }
     }
     else {
       for (type in lineTypes) {
-        val breakpoint = breakpointManager.findBreakpointAtLine(type, file, lineStart)
-        if (type.canPutAt(file, lineStart, project) || breakpoint != null) {
+        val breakpoint = breakpointProvider(type, lineStart)
+        if (canPutAt(type, lineStart) || breakpoint != null) {
           typeWinner.add(type)
           lineWinner = lineStart
         }
       }
       // First type is the most important one.
-      typeWinner.sortByDescending { it.priority }
+      typeWinner.sortByDescending { computePriority(it) }
     }
     return Pair.create(typeWinner, lineWinner)
   }
