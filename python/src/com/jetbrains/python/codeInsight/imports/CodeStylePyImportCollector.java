@@ -14,7 +14,7 @@ public class CodeStylePyImportCollector extends PyImportCollector {
   }
 
   @Override
-  PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
+  protected PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
     final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(getNode().getContainingFile(), PyCodeStyleSettings.class);
     return pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS
            ? existingImportFile

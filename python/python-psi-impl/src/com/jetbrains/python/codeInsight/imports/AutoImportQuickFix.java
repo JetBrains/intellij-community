@@ -15,6 +15,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -198,15 +199,17 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     return myUseQualifiedImport;
   }
 
-  static boolean isResolved(@NotNull PsiReference reference) {
+  @ApiStatus.Internal
+  public static boolean isResolved(@NotNull PsiReference reference) {
     if (reference instanceof PsiPolyVariantReference) {
       return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
     }
     return reference.resolve() != null;
   }
 
+  @ApiStatus.Internal
   @Nullable
-  PsiReference findOriginalReference(@NotNull PsiElement element) {
+  public PsiReference findOriginalReference(@NotNull PsiElement element) {
     return ContainerUtil.findInstance(element.getReferences(), myReferenceType);
   }
 

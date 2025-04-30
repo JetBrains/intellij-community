@@ -4077,13 +4077,6 @@
           <module name="intellij.gradle.common" />
         </modules-set>
         <modules-set>
-          <module name="intellij.python.community.impl" />
-          <module name="intellij.python.psi" />
-          <module name="intellij.pycharm.community" />
-          <module name="intellij.python.psi.impl" />
-          <module name="intellij.python.syntax.core" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.appcode" />
           <module name="intellij.cidr.common" />
           <module name="intellij.cidr.cocoaCommon" />

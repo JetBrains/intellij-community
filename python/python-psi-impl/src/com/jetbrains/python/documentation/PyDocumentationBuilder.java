@@ -812,7 +812,8 @@ public final class PyDocumentationBuilder {
       fragments = Collections.emptyList();
     }
 
-    DocstringFormatterRequest(@NotNull String body) {
+    @ApiStatus.Internal
+    public DocstringFormatterRequest(@NotNull String body) {
       this.body = body;
       fragments = Collections.emptyList();
     }

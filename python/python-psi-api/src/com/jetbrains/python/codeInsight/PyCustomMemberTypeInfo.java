@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -32,7 +33,8 @@ public class PyCustomMemberTypeInfo<K> {
     myCustomInfo.putAll(customInfo);
   }
 
-  void fill(final @NotNull UserDataHolder typeToFill) {
+  @ApiStatus.Internal
+  public void fill(final @NotNull UserDataHolder typeToFill) {
     for (final Map.Entry<Key<K>, K> entry : myCustomInfo.entrySet()) {
       typeToFill.putUserData(entry.getKey(), entry.getValue());
     }

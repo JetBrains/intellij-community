@@ -52,6 +52,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUiService;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,8 @@ public abstract class IntroduceHandler implements RefactoringActionHandler {
     }
   }
 
-  protected static @Nullable PsiElement findOccurrenceUnderCaret(List<? extends PsiElement> occurrences, Editor editor) {
+  @ApiStatus.Internal
+  public static @Nullable PsiElement findOccurrenceUnderCaret(List<? extends PsiElement> occurrences, Editor editor) {
     if (occurrences.isEmpty()) {
       return null;
     }
