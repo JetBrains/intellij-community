@@ -35,6 +35,7 @@ open class FindInProjectExecutorImpl(val coroutineScope: CoroutineScope) : FindI
     onFinish: () -> Unit?
   ) {
     if (findModel.stringToFind.isBlank()) {
+      onFinish()
       return
     }
 

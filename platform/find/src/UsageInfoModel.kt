@@ -16,9 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.CompletableFuture
 
 private val LOG = logger<UsageInfoModel>()
-class UsageInfoModel(val project: Project, private val model: FindInProjectResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter {
+class UsageInfoModel(val project: Project, private val model: FindInFilesResult, val coroutineScope: CoroutineScope) : UsageInfoAdapter {
   private val mergedUsages = mutableListOf(model)
-  val mergedModel: FindInProjectResult
+  val mergedModel: FindInFilesResult
     get() = mergedUsages.last()
   override fun isValid(): Boolean = true
 

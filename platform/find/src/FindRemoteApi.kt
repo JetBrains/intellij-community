@@ -22,7 +22,7 @@ import java.awt.Color
 @Rpc
 interface FindRemoteApi : RemoteApi<Unit> {
 
-  suspend fun findByModel(model: FindInProjectModel): Flow<FindInProjectResult>
+  suspend fun findByModel(model: FindInProjectModel): Flow<FindInFilesResult>
 
   companion object {
     @JvmStatic
@@ -56,7 +56,7 @@ data class FindInProjectModel (
 )
 
 @Serializable
-data class FindInProjectResult(
+data class FindInFilesResult(
   val presentation: List<RdTextChunk>,
   val line: Int,
   val offset: Int,

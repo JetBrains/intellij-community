@@ -11,7 +11,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInProjectModel
-import com.intellij.platform.find.FindInProjectResult
+import com.intellij.platform.find.FindInFilesResult
 import com.intellij.platform.find.FindRemoteApi
 import com.intellij.platform.find.RdSimpleTextAttributes
 import com.intellij.platform.find.RdTextChunk
@@ -27,13 +27,14 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NotNull
 import java.awt.Font
 import java.util.concurrent.atomic.AtomicInteger
 
 class FindRemoteApiImpl : FindRemoteApi {
-  override suspend fun findByModel(model: FindInProjectModel): Flow<FindInProjectResult> {
+  override suspend fun findByModel(model: FindInProjectModel): Flow<FindInFilesResult> {
     return channelFlow {
       coroutineScope {
         //TODO rewrite find function without using progress indicator and presentation
@@ -85,9 +86,9 @@ class FindRemoteApiImpl : FindRemoteApi {
           val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
           val presentablePath = getPresentableFilePath(project, scope, virtualFile)
 
-          val result = FindInProjectResult(
+          val result = FindInFilesResult(
             presentation = textChunks,
-            line = adapter.line + 1,
+            line = adapter.line,
             offset = adapter.navigationOffset,
             length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
             fileId = virtualFile.rpcId(),
@@ -105,7 +106,7 @@ class FindRemoteApiImpl : FindRemoteApi {
           usagesCount.get() < maxUsages
         }
       }
-    }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)
+    }
   }
 }
 
