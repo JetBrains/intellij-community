@@ -168,8 +168,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     ProcessBuilder("rm", "-f", "$basePath/$runFileName").start().waitFor()
   }
 
-  override fun removeEnvironment(project: Project) {
-    // Remove the setup and run scripts
-    removeScriptFiles(project.basePath ?: return)
+  override fun removeEnvironment(basePath: String) {
+    removeScriptFiles(basePath)
   }
 }
