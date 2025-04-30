@@ -11,7 +11,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
@@ -22,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-class LocalPluginManagerController(private val localPluginModel: MyPluginModel) : PluginManagerController {
+class LocalPluginModelController(private val localPluginModel: MyPluginModel) : PluginModelController {
   private val marketplaceRequests = MarketplaceRequests.getInstance()
 
   override fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {

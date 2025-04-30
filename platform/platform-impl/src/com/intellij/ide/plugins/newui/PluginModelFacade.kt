@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class PluginModelFacade(private val pluginModel: MyPluginModel) {
-  private val localController = LocalPluginManagerController(pluginModel)
+  private val localController = LocalPluginModelController(pluginModel)
 
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {
     return getController(model).isPluginInstallingOrUpdating(model)
@@ -148,11 +148,11 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
     return getController(model).isLoaded(model)
   }
 
-  private fun getController(model: PluginUiModel): PluginManagerController {
+  private fun getController(model: PluginUiModel): PluginModelController {
     return getController(model.source)
   }
 
-  private fun getController(source: PluginSource): PluginManagerController{
+  private fun getController(source: PluginSource): PluginModelController{
     return when (source) {
       PluginSource.LOCAL -> localController
       PluginSource.REMOTE -> TODO()

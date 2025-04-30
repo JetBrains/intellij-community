@@ -13,7 +13,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-interface PluginManagerController {
+interface PluginModelController {
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean
   fun getState(model: PluginUiModel): PluginEnabledState
   fun disable(model: PluginUiModel)
