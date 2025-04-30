@@ -125,6 +125,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ConstructorVarVarargParameter.kt");
     }
 
+    @TestMetadata("ContextParameter.kt")
+    public void testContextParameter() throws Exception {
+        runTest("testData/editor/quickDoc/ContextParameter.kt");
+    }
+
     @TestMetadata("DataClass.kt")
     public void testDataClass() throws Exception {
         runTest("testData/editor/quickDoc/DataClass.kt");

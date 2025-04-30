@@ -416,7 +416,7 @@ object ContextParametersListRenderer: KaContextReceiverListRenderer {
                 append("context(")
                 printCollection(owner.contextParameters) { contextParameter ->
 
-                    append(contextParameter.name.render())
+                    append((contextParameter.psi as? KtParameter)?.name ?: contextParameter.name.render())
                     append(": ")
 
                     typeRenderer.renderType(analysisSession, contextParameter.returnType, printer)
