@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -63,9 +62,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     toolWindow.component.putClientProperty(IS_CONTENT_CREATED, true)
 
     val contentManager = toolWindow.contentManager
-    contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
+    contentManager.addUiDataProvider { sink ->
       sink[ChangesViewContentManager.CONTENT_TAB_NAME_KEY] = contentManager.selectedContent?.tabName
-    })
+    }
   }
 
   protected open fun updateState(toolWindow: ToolWindow) {

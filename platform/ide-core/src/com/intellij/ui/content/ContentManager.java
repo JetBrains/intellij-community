@@ -4,7 +4,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -141,11 +141,14 @@ public interface ContentManager extends Disposable, BusyObject {
   ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
   /**
-   * Implement {@link com.intellij.openapi.actionSystem.UiDataProvider#uiDataSnapshot(DataSink)}
-   * in some component instead, or use separate {@link com.intellij.openapi.actionSystem.UiDataRule}.
+   * @deprecated use {@link #addUiDataProvider(UiDataProvider)} instead
    */
-  @ApiStatus.Obsolete
-  void addDataProvider(@NotNull DataProvider provider);
+  @Deprecated(forRemoval = true)
+  default void addDataProvider(@NotNull DataProvider provider) {
+  }
+
+  default void addUiDataProvider(@NotNull UiDataProvider provider) {
+  }
 
   @NotNull
   ContentFactory getFactory();

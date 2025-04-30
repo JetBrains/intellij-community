@@ -90,7 +90,7 @@ public abstract class RunTab implements Disposable {
     mySearchScope = searchScope;
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerType, runnerTitle, sessionName, this);
-    myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
+    myUi.getContentManager().addUiDataProvider(sink -> {
       sink.set(KEY, RunTab.this);
       sink.set(LangDataKeys.RUN_CONTENT_DESCRIPTOR, myRunContentDescriptor);
       sink.set(SingleContentSupplier.KEY, getSupplier());

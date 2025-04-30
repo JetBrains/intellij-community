@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -2659,9 +2660,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void setDataProvider(@NotNull DataProvider dataProvider) {
-    if (myContent != null) {
-      myContent.setDataProvider((UiCompatibleDataProvider)sink -> DataSink.uiDataSnapshot(sink, dataProvider));
-    }
+    setUiDataProvider(Utils.wrapToUiDataProvider(dataProvider));
   }
 
   @Override

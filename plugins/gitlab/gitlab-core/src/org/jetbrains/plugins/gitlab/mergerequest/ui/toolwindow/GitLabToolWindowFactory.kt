@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -82,10 +81,10 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
     cs.launch {
       val vm = project.serviceAsync<GitLabProjectViewModel>()
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
-      toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
+      toolWindow.contentManager.addUiDataProvider { sink ->
         sink[GitLabMergeRequestsActionKeys.PROJECT_VM] = vm
         sink[GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM] = vm.connectedProjectVm.value
-      })
+      }
 
       val reviewToolWindowVm = object : ReviewToolwindowViewModel<GitLabToolWindowConnectedProjectViewModel> {
         override val projectVm: StateFlow<GitLabToolWindowConnectedProjectViewModel?> = vm.connectedProjectVm.mapStateIn(cs, SharingStarted.Eagerly) {

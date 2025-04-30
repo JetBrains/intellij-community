@@ -14814,6 +14814,7 @@ c:com.intellij.ui.content.impl.ContentManagerImpl
 - addDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - addNestedManager(com.intellij.ui.content.impl.ContentManagerImpl):V
 - addSelectedContent(com.intellij.ui.content.Content):V
+- addUiDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - beforeTreeDispose():V
 - canCloseAllContents():Z
 - canCloseContents():Z

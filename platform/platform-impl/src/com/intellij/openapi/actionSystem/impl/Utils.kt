@@ -11,6 +11,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.impl.DataValidators
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionGroupExpanded
@@ -65,6 +66,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
@@ -197,14 +199,13 @@ object Utils {
       "Use DataManager.getDataContext, CustomizedDataContext, or SimpleDataContext", null, dataContext.javaClass))
   }
 
+  @Deprecated("Use [UiDataProvider] API instead]")
   @JvmStatic
-  @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
-  fun wrapDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
-
-  @JvmStatic
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use `createAsyncDataContext` instead", ReplaceWith("createAsyncDataContext(dataContext)"), DeprecationLevel.ERROR)
-  fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
+  fun wrapToUiDataProvider(dataProvider: DataProvider): UiDataProvider = object : UiCompatibleDataProvider, DataValidators.SourceWrapper {
+    override fun uiDataSnapshot(sink: DataSink) = Unit
+    override fun getData(dataId: @NonNls String): Any? = dataProvider.getData(dataId)
+    override fun unwrapSource(): Any = dataProvider
+  }
 
   @JvmStatic
   fun isAsyncDataContext(dataContext: DataContext): Boolean {

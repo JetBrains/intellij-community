@@ -2686,8 +2686,9 @@ com.intellij.ui.content.ContentManager
 - a:addContent(com.intellij.ui.content.Content):V
 - a:addContent(com.intellij.ui.content.Content,I):V
 - a:addContentManagerListener(com.intellij.ui.content.ContentManagerListener):V
-- a:addDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+- addDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - a:addSelectedContent(com.intellij.ui.content.Content):V
+- addUiDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - a:canCloseAllContents():Z
 - a:canCloseContents():Z
 - a:findContent(java.lang.String):com.intellij.ui.content.Content

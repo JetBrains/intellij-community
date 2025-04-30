@@ -4,7 +4,6 @@ package com.intellij.toolWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
@@ -30,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 // not final for android
@@ -451,10 +450,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
         return;
       }
       myDispatcher.getListeners().add(0, l);
-    }
-
-    @Override
-    public void addDataProvider(final @NotNull DataProvider provider) {
     }
 
     @Override

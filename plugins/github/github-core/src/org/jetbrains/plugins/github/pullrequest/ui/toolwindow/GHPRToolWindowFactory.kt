@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -24,7 +23,10 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -105,10 +107,10 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
       val reviewTwVm = GHPRToolWindowViewModel(this, vm)
 
       coroutineScope {
-        toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
+        toolWindow.contentManager.addUiDataProvider { sink ->
           sink[GHPRActionKeys.PULL_REQUESTS_PROJECT_VM] = vm
           sink[GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM] = vm.connectedProjectVm.value
-        })
+        }
 
         // so it's not closed when all content is removed
         toolWindow.dontHideOnEmptyContent()
