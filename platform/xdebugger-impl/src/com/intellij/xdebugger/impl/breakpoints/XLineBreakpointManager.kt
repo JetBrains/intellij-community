@@ -55,7 +55,62 @@ import java.awt.event.MouseEvent
 @Internal
 class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope) {
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointImpl<*>>()
-  private val breakpointUpdateQueue: MergingUpdateQueue
+  private val breakpointUpdateQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
+    name = "XLine breakpoints",
+    mergingTimeSpan = 300,
+    coroutineScope = coroutineScope,
+  )
+
+  private var myDragDetected = false
+
+  init {
+    val busConnection = project.messageBus.connect(coroutineScope)
+
+    if (!project.isDefault) {
+      val editorEventMulticaster = EditorFactory.getInstance().eventMulticaster
+      editorEventMulticaster.addDocumentListener(MyDocumentListener(), project)
+      editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), project)
+      editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), project)
+
+      busConnection.subscribe(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
+      busConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileUrlChangeAdapter() {
+        override fun fileUrlChanged(oldUrl: String, newUrl: String) {
+          myBreakpoints.values().forEach { breakpoint ->
+            val url = breakpoint.fileUrl
+            if (FileUtil.startsWith(url, oldUrl)) {
+              breakpoint.fileUrl = newUrl + url.substring(oldUrl.length)
+            }
+          }
+        }
+
+        override fun fileDeleted(event: VirtualFileEvent) {
+          removeBreakpoints(myBreakpoints[event.file.url])
+        }
+      }))
+
+      Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          for (fileUrl in myBreakpoints.keySet()) {
+            val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: continue
+            if (XDebuggerUtil.areInlineBreakpointsEnabled(file)) continue
+            val document = FileDocumentManager.getInstance().getDocument(file) ?: continue
+            // Multiple breakpoints on the single line should be joined in this case.
+            updateBreakpoints(document)
+          }
+        }
+      }, project)
+    }
+
+    // Update breakpoints colors if global color schema was changed
+    busConnection.subscribe(EditorColorsManager.TOPIC, MyEditorColorsListener())
+    busConnection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
+      override fun fileContentLoaded(file: VirtualFile, document: Document) {
+        myBreakpoints[file.url].asSequence()
+          .filter { it.highlighter == null }
+          .forEach { queueBreakpointUpdate(it) }
+      }
+    })
+  }
 
   fun updateBreakpointsUI() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -190,62 +245,6 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
         getInstance(project).redrawDocument(e)
       }
     }
-  }
-
-  private var myDragDetected = false
-
-  init {
-    val busConnection = project.messageBus.connect(coroutineScope)
-
-    if (!project.isDefault) {
-      val editorEventMulticaster = EditorFactory.getInstance().eventMulticaster
-      editorEventMulticaster.addDocumentListener(MyDocumentListener(), project)
-      editorEventMulticaster.addEditorMouseListener(MyEditorMouseListener(), project)
-      editorEventMulticaster.addEditorMouseMotionListener(MyEditorMouseMotionListener(), project)
-
-      busConnection.subscribe(XDependentBreakpointListener.TOPIC, MyDependentBreakpointListener())
-      busConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileUrlChangeAdapter() {
-        override fun fileUrlChanged(oldUrl: String, newUrl: String) {
-          myBreakpoints.values().forEach { breakpoint ->
-            val url = breakpoint.fileUrl
-            if (FileUtil.startsWith(url, oldUrl)) {
-              breakpoint.fileUrl = newUrl + url.substring(oldUrl.length)
-            }
-          }
-        }
-
-        override fun fileDeleted(event: VirtualFileEvent) {
-          removeBreakpoints(myBreakpoints[event.file.url])
-        }
-      }))
-
-      Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          for (fileUrl in myBreakpoints.keySet()) {
-            val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: continue
-            if (XDebuggerUtil.areInlineBreakpointsEnabled(file)) continue
-            val document = FileDocumentManager.getInstance().getDocument(file) ?: continue
-            // Multiple breakpoints on the single line should be joined in this case.
-            updateBreakpoints(document)
-          }
-        }
-      }, project)
-    }
-    breakpointUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
-      name = "XLine breakpoints",
-      mergingTimeSpan = 300,
-      coroutineScope = coroutineScope,
-    )
-
-    // Update breakpoints colors if global color schema was changed
-    busConnection.subscribe(EditorColorsManager.TOPIC, MyEditorColorsListener())
-    busConnection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
-      override fun fileContentLoaded(file: VirtualFile, document: Document) {
-        myBreakpoints[file.url].asSequence()
-          .filter { it.highlighter == null }
-          .forEach { queueBreakpointUpdate(it) }
-      }
-    })
   }
 
   private inner class MyEditorMouseMotionListener : EditorMouseMotionListener {
