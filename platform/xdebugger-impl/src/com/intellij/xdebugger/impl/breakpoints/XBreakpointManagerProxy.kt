@@ -1,14 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
-import com.sun.tools.javac.jvm.ByteCodes.breakpoint
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<XBreakpointManagerProxy>()
@@ -63,8 +64,15 @@ interface XBreakpointManagerProxy {
     }
 
     override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
-      LOG.error("addBreakpoint with Dto should not be called for monolith")
-      return null
+      val type = XBreakpointUtil.breakpointTypes().firstOrNull { it.id == breakpointDto.typeId.id } ?: return null
+      if (type !is XLineBreakpointType<*>) {
+        LOG.error("Unsupported breakpoint type: ${type::class.java}")
+        return null
+      }
+      val sourcePosition = breakpointDto.initialState.sourcePosition ?: return null
+      val file = sourcePosition.fileId.virtualFile() ?: return null
+      val line = sourcePosition.line
+      return findBreakpointAtLine(type.asProxy(breakpointManager.project), file, line)
     }
 
     override fun getAllBreakpointItems(): List<BreakpointItem> {

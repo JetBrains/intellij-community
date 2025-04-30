@@ -212,7 +212,7 @@ object XBreakpointUtil {
     isConditional: Boolean = false,
     condition: String? = null,
   ): Promise<XLineBreakpointProxy?> {
-    val (typeWinner, lineWinner) = getAvailableLineBreakpointTypesInfo(project, position, selectVariantByPositionColumn, editor)
+    val (typeWinner, lineWinner) = getAvailableLineBreakpointInfoProxy(project, position, selectVariantByPositionColumn, editor)
 
     if (typeWinner.isEmpty()) {
       return rejectedPromise(RuntimeException("Cannot find appropriate type"))
@@ -220,8 +220,8 @@ object XBreakpointUtil {
 
     val lineStart = position.line
     val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
-    val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(
-      project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove)
+    val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy(
+      project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isConditional, condition)
 
     if (editor != null && lineStart != lineWinner) {
       val offset = editor.document.getLineStartOffset(lineWinner)
@@ -230,18 +230,7 @@ object XBreakpointUtil {
         editor.caretModel.moveToOffset(offset)
       }
     }
-    return res.then { breakpoint ->
-      if (breakpoint != null && isConditional) {
-        breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
-        if (condition != null) {
-          breakpoint.setLogExpression(condition)
-        }
-        else {
-          breakpoint.setLogMessage(true)
-        }
-      }
-      if (breakpoint is XLineBreakpointImpl<*>) breakpoint.asProxy() else null
-    }
+    return res
   }
 
   @ApiStatus.Internal

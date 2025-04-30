@@ -19,6 +19,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
@@ -100,25 +101,35 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
   }
 
-  override suspend fun getLineBreakpointVariants(projectId: ProjectId, types: List<XBreakpointTypeId>, position: XSourcePositionDto): XLineBreakpointVariantResponse? {
+  override suspend fun getLineBreakpointVariants(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XLineBreakpointVariantResponse? {
     val project = projectId.findProjectOrNull() ?: return null
-    val position = position.sourcePosition()
-    val lineTypes = types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
+    val position = request.position.sourcePosition()
+    val lineTypes = request.types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
     val variants = withContext(Dispatchers.EDT) {
       XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position).await()
     }
-    val variantDtos = variants.map {
-      XLineBreakpointVariantDto(it.text, it.icon?.rpcId(), it.highlightRange?.toRpc(),
-                                it.getPriority(project), it.shouldUseAsInlineVariant())
+    val variantDtos = readAction {
+      variants.map {
+        XLineBreakpointVariantDto(it.text, it.icon?.rpcId(), it.highlightRange?.toRpc(),
+                                  it.getPriority(project), it.shouldUseAsInlineVariant())
+      }
     }
     val selectionCallback = Channel<VariantSelectedResponse>()
     project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
-      val (selectedVariantIndex, isTemporary, breakpointCallback) = selectionCallback.receive()
+      val (selectedVariantIndex, breakpointCallback) = selectionCallback.receive()
       breakpointCallback.use {
         val variant = variants[selectedVariantIndex]
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-        val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant,
-                                                             position.file, position.line, isTemporary)
+        val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, position.line, request.isTemporary)
+        if (breakpoint != null && request.isConditional) {
+          breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
+          if (request.condition != null) {
+            breakpoint.setLogExpression(request.condition)
+          }
+          else {
+            breakpoint.setLogMessage(true)
+          }
+        }
         it.send((breakpoint as? XBreakpointBase<*, *, *>)?.toRpc())
       }
     }
