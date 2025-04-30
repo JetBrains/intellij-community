@@ -33,7 +33,7 @@ internal class RecentFilesVfsListener : AsyncFileListener {
 
           val projectFilesToUpdate = (projectFilesToMove + projectFilesToRename + projectFilesWithChangedContents).distinct()
           if (projectFilesToUpdate.isNotEmpty()) {
-            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.UPDATED, project)
+            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.ADDED, project)
           }
         }
       }
