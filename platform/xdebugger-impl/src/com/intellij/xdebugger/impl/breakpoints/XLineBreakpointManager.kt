@@ -78,7 +78,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       busConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileUrlChangeAdapter() {
         override fun fileUrlChanged(oldUrl: String, newUrl: String) {
           myBreakpoints.values().forEach { breakpoint ->
-            val url = breakpoint.getFileUrl()
+            val url = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
             if (FileUtil.startsWith(url, oldUrl)) {
               breakpoint.setFileUrl(newUrl + url.substring(oldUrl.length))
             }
@@ -135,11 +135,11 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     if (initUI) {
       updateBreakpointNow(breakpoint)
     }
-    myBreakpoints.putValue(breakpoint.getFileUrl(), breakpoint)
+    myBreakpoints.putValue(breakpoint.getFile()?.url ?: breakpoint.getFileUrl(), breakpoint)
   }
 
   fun unregisterBreakpoint(breakpoint: XLineBreakpointProxy) {
-    myBreakpoints.remove(breakpoint.getFileUrl(), breakpoint)
+    myBreakpoints.remove(breakpoint.getFile()?.url ?: breakpoint.getFileUrl(), breakpoint)
   }
 
   fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {

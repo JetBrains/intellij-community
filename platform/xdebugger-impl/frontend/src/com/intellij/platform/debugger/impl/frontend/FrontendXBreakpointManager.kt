@@ -11,6 +11,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
@@ -30,6 +31,8 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   private val breakpoints: ConcurrentMap<XBreakpointId, XBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
+
+  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = useFeLineBreakpointProxy())
 
   // TODO[IJPL-160384]: support persistance between sessions
   override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -73,8 +76,14 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     }
     val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, onBreakpointChange = {
       breakpointsChanged.tryEmit(Unit)
+      if (it is XLineBreakpointProxy) {
+        lineBreakpointManager.breakpointChanged(it)
+      }
     })
     val previousBreakpoint = breakpoints.put(breakpointDto.id, newBreakpoint)
+    if (newBreakpoint is XLineBreakpointProxy) {
+      lineBreakpointManager.registerBreakpoint(newBreakpoint, true)
+    }
     previousBreakpoint?.dispose()
     breakpointsChanged.tryEmit(Unit)
     return newBreakpoint
@@ -84,6 +93,9 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     for (breakpointToRemove in breakpointsToRemove) {
       val removedBreakpoint = breakpoints.remove(breakpointToRemove)
       removedBreakpoint?.dispose()
+      if (removedBreakpoint is XLineBreakpointProxy) {
+        lineBreakpointManager.unregisterBreakpoint(removedBreakpoint)
+      }
     }
   }
 

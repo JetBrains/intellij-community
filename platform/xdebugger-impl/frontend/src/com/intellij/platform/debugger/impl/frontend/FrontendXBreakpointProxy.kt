@@ -35,7 +35,7 @@ internal fun createXBreakpointProxy(
   parentCs: CoroutineScope,
   dto: XBreakpointDto,
   type: XBreakpointTypeProxy,
-  onBreakpointChange: () -> Unit,
+  onBreakpointChange: (XBreakpointProxy) -> Unit,
 ): XBreakpointProxy {
   return if (type is XLineBreakpointTypeProxy) {
     FrontendXLineBreakpointProxy(project, parentCs, dto, type, onBreakpointChange)
@@ -50,7 +50,7 @@ internal open class FrontendXBreakpointProxy(
   parentCs: CoroutineScope,
   private val dto: XBreakpointDto,
   override val type: XBreakpointTypeProxy,
-  private val _onBreakpointChange: () -> Unit,
+  private val _onBreakpointChange: (XBreakpointProxy) -> Unit,
 ) : XBreakpointProxy {
   override val id: XBreakpointId = dto.id
 
@@ -70,7 +70,7 @@ internal open class FrontendXBreakpointProxy(
   }
 
   protected open fun onBreakpointChange() {
-    _onBreakpointChange()
+    _onBreakpointChange(this)
   }
 
   private fun createFrontendEditorsProvider(): FrontendXDebuggerEditorsProvider? {
@@ -263,7 +263,7 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun updateIcon() {
-    onBreakpointChange()
+    // TODO IJPL-185322 should we cache icon like in Monolith?
   }
 
   override fun createGutterIconRenderer(): GutterIconRenderer? {
