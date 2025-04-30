@@ -8,17 +8,16 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.impl.StartBuildEventImpl
 import com.intellij.debugger.impl.GenericDebuggerRunner
-import com.intellij.execution.DefaultExecutionResult
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.ExecutionResult
-import com.intellij.execution.Executor
+import com.intellij.execution.*
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.configurations.RemoteConnectionCreator
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction
@@ -27,8 +26,10 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.execute
@@ -49,6 +50,8 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.File
+import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Function
 import kotlin.io.path.Path
@@ -69,26 +72,98 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
       val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
       val args = getArgs(eelApi)
-      val processOptions = eelApi.exec.execute(exe)
-        .env(env)
-        .workingDirectory(workingDir)
-        .args(args).let {
-          if (!isWindows()) {
-            it.ptyOrStdErrSettings(Pty(-1, -1, true))
+
+      return@runWithModalProgressBlocking runProcessInEel(eelApi, exe, env, args)
+    }
+  }
+
+  private suspend fun runProcessInEel(
+    eelApi: EelApi,
+    exe: String,
+    env: Map<String, String>,
+    params: ParametersList,
+  ): KillableColoredProcessHandler.Silent {
+
+
+    return if (isWindows()) {
+      val cmdArgs = listOf("/c",
+                           params.parameters
+                             .joinToString(separator = " ", prefix = "\"", postfix = "\"") {
+                               CommandLineUtil.escapeParameterOnWindows(it, true)
+                             }
+      )
+      val pair = writeParamsToBatBecauseCmdIsReallyReallyBad(exe, cmdArgs)
+      var pathForCmd: String = pair.first
+      val tmpBat: File = pair.second
+
+      val commandLineForUser = if (Registry.`is`("maven.spy.events.debug")) {
+        "cmd.exe /c $pathForCmd"
+      }
+      else {
+        "$exe ${cmdArgs.joinToString(" ")}"
+      }
+
+      doRunProcessInEel(eelApi, exe, env, listOf("/c", pathForCmd), commandLineForUser) {
+        try {
+          tmpBat.delete()
+        }
+        catch (ignore: IOException) {
+        }
+      }
+    }
+    else {
+      doRunProcessInEel(eelApi, exe, env, params.list, "$exe ${params.list.joinToString(" ")}", null)
+    }
+  }
+
+  private fun writeParamsToBatBecauseCmdIsReallyReallyBad(exe: String, cmdArgs: List<String>): Pair<String, File> {
+    val tempDirectory = FileUtilRt.getTempDirectory()
+    var pathForCmd: String
+    val tmpBat: File
+    if (!tempDirectory.contains(" ")) {
+      @SuppressWarnings("IO_FILE_USAGE") // Here should be java.io.File
+      tmpBat = FileUtil.createTempFile(File(tempDirectory), "mvn-idea-exec", ".bat", false, true)
+      pathForCmd = tmpBat.absolutePath
+    }
+    else {
+      @SuppressWarnings("IO_FILE_USAGE") // Here should be java.io.File
+      tmpBat = FileUtil.createTempFile(File(myConfiguration.runnerParameters.workingDirPath), "mvn-idea-exec", ".bat", false, true)
+      pathForCmd = tmpBat.name
+    }
+    tmpBat.writeText("@$exe ${cmdArgs.joinToString(" ")}")
+    return Pair(pathForCmd, tmpBat)
+  }
+
+
+  private suspend fun doRunProcessInEel(
+    eelApi: EelApi,
+    exe: String,
+    env: Map<String, String>,
+    args: List<String>,
+    commandLineToShowUser: String,
+    onTerminate: (() -> Unit)?,
+  ): KillableColoredProcessHandler.Silent {
+    val processOptions = eelApi.exec.execute(exe)
+      .env(env)
+      .workingDirectory(workingDir)
+      .args(args)
+
+    val result = processOptions.eelIt()
+
+    return when (result) {
+      is EelResult.Error -> {
+        MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${result.error.errno}, message:  ${result.error.message}")
+        throw ExecutionException(result.error.message)
+      }
+      is EelResult.Ok -> {
+        KillableColoredProcessHandler.Silent(result.value.convertToJavaProcess(), commandLineToShowUser, Charsets.UTF_8, emptySet())
+          .also {
+            it.addProcessListener(object : ProcessListener {
+              override fun processTerminated(event: ProcessEvent) {
+                onTerminate?.invoke()
+              }
+            })
           }
-          else it
-        }
-
-      val result = processOptions.eelIt()
-
-      return@runWithModalProgressBlocking when (result) {
-        is EelResult.Error -> {
-          MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${result.error.errno}, message:  ${result.error.message}")
-          throw ExecutionException(result.error.message)
-        }
-        is EelResult.Ok -> {
-          KillableColoredProcessHandler.Silent(result.value.convertToJavaProcess(), "$exe ${args.joinToString(" ")}", Charsets.UTF_8, emptySet())
-        }
       }
     }
   }
@@ -180,17 +255,14 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
 
-  private fun getArgs(eel: EelApi): List<String> {
+  private fun getArgs(eel: EelApi): ParametersList {
     val args = ParametersList()
     args.add(getScriptPath(eel))
     addIdeaParameters(args, eel)
     addSettingParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
-    if (isWindows()) {
-      return listOf("/c", args.parametersString)
-    }
-    return args.list
+    return args
   }
 
   private fun addSettingParameters(args: ParametersList) {
@@ -245,6 +317,8 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
         target = TransferTarget.Temporary(eel.descriptor)
       ).asEelPath().toString()
     )
+    args.addProperty("jansi.passthrough", "true")
+    args.addProperty("style.color", "always")
   }
 
   private fun getEnv(existingEnv: Map<String, String>, debug: Boolean): Map<String, String> {
