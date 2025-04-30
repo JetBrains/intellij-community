@@ -27,7 +27,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gradle.GradleJavaCoroutineScopeService.Companion.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.execution.loadLegacyDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager

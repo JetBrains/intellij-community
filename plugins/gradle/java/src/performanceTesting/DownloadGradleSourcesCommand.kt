@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gradle.GradleJavaCoroutineScopeService.Companion.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.GradleJavaCoroutineScope.gradleCoroutineScope
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
