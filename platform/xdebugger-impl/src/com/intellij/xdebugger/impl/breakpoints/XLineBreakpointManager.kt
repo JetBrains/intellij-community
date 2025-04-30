@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.util.DocumentUtil
@@ -43,29 +43,30 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
 
 @Internal
-class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope) {
+class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope, private val isEnabled: Boolean) {
+  private val cs = coroutineScope.childScope("XLineBreakpointManager")
+
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointProxy>()
   private val breakpointUpdateQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
     name = "XLine breakpoints",
     mergingTimeSpan = 300,
-    coroutineScope = coroutineScope,
+    coroutineScope = cs,
   )
 
   private var myDragDetected = false
 
   init {
-    val busConnection = project.messageBus.connect(coroutineScope)
+    val busConnection = project.messageBus.connect(cs)
 
     if (!project.isDefault) {
       val editorEventMulticaster = EditorFactory.getInstance().eventMulticaster
@@ -111,6 +112,10 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
           .forEach { queueBreakpointUpdate(it) }
       }
     })
+
+    if (!isEnabled) {
+      cs.cancel()
+    }
   }
 
   fun updateBreakpointsUI() {
@@ -148,6 +153,9 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
 
   @RequiresEdt
   private fun updateBreakpoints(document: Document) {
+    if (!isEnabled) {
+      return
+    }
     val breakpoints = getDocumentBreakpointProxies(document)
 
     if (breakpoints.isEmpty() || ApplicationManager.getApplication().isUnitTestMode) {
