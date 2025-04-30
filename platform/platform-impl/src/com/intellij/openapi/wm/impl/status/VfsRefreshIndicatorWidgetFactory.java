@@ -104,11 +104,12 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
     }
 
     private static class VfsRefreshWidgetComponent extends JLabel {
-      private static final Icon INACTIVE_ICON = EmptyIcon.ICON_16;
-      private static final Icon PROGRESS_ICON = new AnimatedIcon.FS();
+      private final Icon INACTIVE_ICON = EmptyIcon.ICON_16;
+      private final Icon PROGRESS_ICON = new AnimatedIcon.FS();
 
       VfsRefreshWidgetComponent() {
-        super(INACTIVE_ICON);
+        super();
+        setIcon(INACTIVE_ICON);
         setEnabled(false);
       }
 
