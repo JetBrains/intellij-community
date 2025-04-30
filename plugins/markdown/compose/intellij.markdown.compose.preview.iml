@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
   </component>
 </module>
