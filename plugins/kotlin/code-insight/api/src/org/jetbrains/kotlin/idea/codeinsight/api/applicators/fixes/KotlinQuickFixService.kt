@@ -42,6 +42,10 @@ class KotlinQuickFixService {
     fun KaSession.getLazyQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> =
         with(lazyList) { getQuickFixesFor(diagnostic) }
 
+    @ApiStatus.Experimental
+    fun KaSession.getLazyQuickFixesWithCatchingFor(diagnostic: KaDiagnosticWithPsi<*>): Sequence<Result<IntentionAction>> =
+        with(lazyList) { getQuickFixesWithCatchingFor(diagnostic) }
+
     fun KaSession.getImportQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<KotlinImportQuickFixAction<*>> =
         with(importOnTheFlyList) { getQuickFixesFor(diagnostic).filterIsInstance<KotlinImportQuickFixAction<*>>() }
 }
