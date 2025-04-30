@@ -56,6 +56,10 @@ public class SchedulingWrapper implements ScheduledExecutorService {
     this.backendExecutorService = backendExecutorService;
   }
 
+  public @NotNull AppDelayQueue getDelayQueue() {
+    return delayQueue;
+  }
+  
   @Override
   public @Unmodifiable @NotNull List<Runnable> shutdownNow() {
     List<Runnable> canceled = doShutdown();

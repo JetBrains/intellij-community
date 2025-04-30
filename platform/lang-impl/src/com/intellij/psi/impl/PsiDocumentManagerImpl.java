@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,14 +193,15 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     }
   }
 
+  @ApiStatus.Internal
   @NotNull
   @Override
-  protected List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                                  @NotNull PsiFile hostPsiFile,
-                                                                  @NotNull TextRange hostChangedRange,
-                                                                  @NotNull ProgressIndicator indicator,
-                                                                  @NotNull ASTNode oldRoot,
-                                                                  @NotNull ASTNode newRoot) {
+  public List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                               @NotNull PsiFile hostPsiFile,
+                                                               @NotNull TextRange hostChangedRange,
+                                                               @NotNull ProgressIndicator indicator,
+                                                               @NotNull ASTNode oldRoot,
+                                                               @NotNull ASTNode newRoot) {
     List<DocumentWindow> changedInjected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostPsiFile, hostChangedRange);
     if (changedInjected.isEmpty()) return Collections.emptyList();
     FileViewProvider hostViewProvider = hostPsiFile.getViewProvider();

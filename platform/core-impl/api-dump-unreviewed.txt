@@ -3833,7 +3833,6 @@ a:com.intellij.psi.stubs.StubTreeLoader
 - a:build(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.PsiFile):com.intellij.psi.stubs.ObjectStubTree
 - a:canHaveStub(com.intellij.openapi.vfs.VirtualFile):Z
 - s:getFileViewProviderMismatchDiagnostics(com.intellij.psi.FileViewProvider):java.lang.String
-- p:getIndexingStampInfo(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.stubs.IndexingStampInfo
 - s:getInstance():com.intellij.psi.stubs.StubTreeLoader
 - p:hasPsiInManyProjects(com.intellij.openapi.vfs.VirtualFile):Z
 - p:isTooLarge(com.intellij.openapi.vfs.VirtualFile):Z

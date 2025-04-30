@@ -121,5 +121,5 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
 
   @ApiStatus.Internal
-  protected abstract ModuleRootManager getModuleRootManager(@NotNull Module module);
+  public abstract ModuleRootManager getModuleRootManager(@NotNull Module module);
 }

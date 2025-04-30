@@ -3941,49 +3941,6 @@
           <module name="intellij.android.profilers" />
         </modules-set>
         <modules-set>
-          <module name="intellij.java.testFramework" />
-          <module name="intellij.platform.testFramework" />
-          <module name="intellij.platform.execution.impl" />
-          <module name="intellij.platform.lang.impl" />
-          <module name="intellij.platform.util" />
-          <module name="intellij.platform.indexing" />
-          <module name="intellij.platform.editor.ex" />
-          <module name="intellij.platform.core.impl" />
-          <module name="intellij.platform.lang" />
-          <module name="intellij.platform.jps.model.impl" />
-          <module name="intellij.platform.ide.impl" />
-          <module name="intellij.platform.ide" />
-          <module name="intellij.platform.core" />
-          <module name="intellij.platform.projectModel.impl" />
-          <module name="intellij.platform.analysis" />
-          <module name="intellij.platform.analysis.impl" />
-          <module name="intellij.platform.editor" />
-          <module name="intellij.platform.util.rt" />
-          <module name="intellij.treeProjectModel.ide" />
-          <module name="intellij.platform.commercial" />
-          <module name="intellij.platform.projectModel" />
-          <module name="intellij.platform.indexing.impl" />
-          <module name="intellij.javaee.testFramework" />
-          <module name="intellij.platform.jps.model" />
-          <module name="intellij.platform.main" />
-          <module name="intellij.platform.diff.impl" />
-          <module name="intellij.platform.testFramework.core" />
-          <module name="intellij.platform.concurrency" />
-          <module name="intellij.platform.core.ui" />
-          <module name="intellij.platform.util.ui" />
-          <module name="intellij.platform.ide.util.io" />
-          <module name="intellij.platform.configurationStore.impl" />
-          <module name="intellij.platform.codeStyle" />
-          <module name="intellij.platform.codeStyle.impl" />
-          <module name="intellij.platform.lang.core" />
-          <module name="intellij.platform.ide.core" />
-          <module name="intellij.platform.ide.core.impl" />
-          <module name="intellij.codeServer.db.connectivity" />
-          <module name="intellij.codeServer.core" />
-          <module name="intellij.platform.refactoring" />
-          <module name="intellij.platform.util.jdom" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.android.wizard" />
           <module name="intellij.android.wizard.model" />
         </modules-set>
@@ -3996,33 +3953,8 @@
           <module name="intellij.java.compiler.instrumentationUtil" />
         </modules-set>
         <modules-set>
-          <module name="intellij.platform.duplicates" />
-          <module name="intellij.platform.duplicates.analysis" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.marketplace.core" />
-          <module name="intellij.platform.commercial.license" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.graph.impl" />
-          <module name="intellij.platform.graph" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.util.ex" />
-          <module name="intellij.platform.util.zip" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.bootstrap" />
-          <module name="intellij.platform.util.classLoader" />
-          <module name="intellij.platform.boot" />
-          <module name="intellij.platform.util.ex" />
-          <module name="intellij.platform.util.zip" />
-          <module name="intellij.platform.util.rt.java8" />
-          <module name="intellij.platform.util.immutableKeyValueStore" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.diagnostic" />
-          <module name="intellij.platform.util.base" />
+          <module name="intellij.platform.util" />
+          <module name="intellij.platform.util.jdom" />
         </modules-set>
       </option>
     </inspection_tool>

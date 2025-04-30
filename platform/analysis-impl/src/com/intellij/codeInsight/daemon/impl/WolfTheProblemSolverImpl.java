@@ -112,7 +112,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress, @NotNull ProgressableTextEditorHighlightingPass pass)
+  public void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress,
+                                                      @NotNull ProgressableTextEditorHighlightingPass pass)
     throws ProcessCanceledException {
     if (!myProject.isOpen()) return;
 
@@ -407,7 +408,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   @TestOnly
-  void waitForFilesQueuedForInvalidationAreProcessed() {
+  public void waitForFilesQueuedForInvalidationAreProcessed() {
     myWolfListeners.waitForFilesQueuedForInvalidationAreProcessed();
   }
   @TestOnly

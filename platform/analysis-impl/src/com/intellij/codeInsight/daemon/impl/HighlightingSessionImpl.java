@@ -123,11 +123,12 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return ContainerUtil.getLastItem(sessions);
   }
 
-  static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
-                                             @NotNull CodeInsightContext codeInsightContext,
-                                             @NotNull DaemonProgressIndicator progressIndicator,
-                                             @NotNull ProperTextRange visibleRange,
-                                             @NotNull TextRange compositeDocumentDirtyRange) {
+  @ApiStatus.Internal
+  public static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+                                                    @NotNull CodeInsightContext codeInsightContext,
+                                                    @NotNull DaemonProgressIndicator progressIndicator,
+                                                    @NotNull ProperTextRange visibleRange,
+                                                    @NotNull TextRange compositeDocumentDirtyRange) {
     Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
     if (sessions == null) {

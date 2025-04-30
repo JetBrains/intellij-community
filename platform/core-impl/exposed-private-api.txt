@@ -6,7 +6,6 @@ com/intellij/openapi/command/impl/CoreCommandProcessor$CommandDescriptor
 com/intellij/openapi/extensions/impl/ExtensionsAreaImpl
 com/intellij/psi/impl/DiffLog
 com/intellij/psi/search/ProjectScopeBuilder
-com/intellij/psi/stubs/IndexingStampInfo
 com/intellij/psi/stubs/StubBuilderType
 com/intellij/psi/stubs/StubInconsistencyReporter$EnforcedInconsistencyType
 com/intellij/psi/stubs/StubInconsistencyReporter$SourceOfCheck

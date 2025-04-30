@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,11 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
 
   protected abstract @NotNull JComponent createEditor();
+  
+  @ApiStatus.Internal
+  public static @NotNull JComponent createEditorComponent(@NotNull SettingsEditor<?> editor) {
+    return editor.createEditor();
+  }
 
   protected void disposeEditor() {
   }

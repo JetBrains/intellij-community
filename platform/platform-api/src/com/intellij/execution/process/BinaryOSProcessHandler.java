@@ -33,10 +33,14 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
     return new SimpleBinaryReader(myProcess.getInputStream(), readerOptions().policy());
   }
 
+  private String getPresentableName() {
+    return myPresentableName;
+  }
+  
   private final class SimpleBinaryReader extends BinaryOutputReader {
     private SimpleBinaryReader(InputStream stream, SleepingPolicy policy) {
       super(stream, policy);
-      start("output stream of " + myPresentableName);
+      start("output stream of " + getPresentableName());
     }
 
     @Override

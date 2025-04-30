@@ -463,7 +463,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     mySegments = tempSegments;
     processor.finish();
 
-    if (textLength > 0 && (mySegments.mySegmentCount == 0 || mySegments.myEnds[mySegments.mySegmentCount - 1] != textLength)) {
+    if (textLength > 0 && (mySegments.getSegmentCount() == 0 || mySegments.getSegmentEnd(mySegments.getSegmentCount() - 1) != textLength)) {
       throw new IllegalStateException("Unexpected termination offset for lexer " + myLexer);
     }
 

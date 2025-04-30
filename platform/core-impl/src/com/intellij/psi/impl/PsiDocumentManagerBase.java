@@ -1239,12 +1239,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @NotNull
   @ApiStatus.Internal
-  protected List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                        @NotNull PsiFile hostPsiFile,
-                                                        @NotNull TextRange range,
-                                                        @NotNull ProgressIndicator indicator,
-                                                        @NotNull ASTNode oldRoot,
-                                                        @NotNull ASTNode newRoot) {
+  public List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                               @NotNull PsiFile hostPsiFile,
+                                                               @NotNull TextRange range,
+                                                               @NotNull ProgressIndicator indicator,
+                                                               @NotNull ASTNode oldRoot,
+                                                               @NotNull ASTNode newRoot) {
     return Collections.emptyList();
   }
 

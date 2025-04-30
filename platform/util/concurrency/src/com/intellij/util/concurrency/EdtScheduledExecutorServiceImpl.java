@@ -21,7 +21,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();
 
   private EdtScheduledExecutorServiceImpl() {
-    super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
+    super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).getDelayQueue());
   }
 
   @Override
