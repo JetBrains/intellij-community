@@ -18,5 +18,5 @@ interface ExternalUserDataStorage {
 
   fun setUserMap(obj: UserDataHolder, userMap: KeyFMap)
 
-  fun <T : Any> putUserDataIfAbsent(obj: UserDataHolder, key: Key<T>, value: T): T?
+  fun <T : Any> putUserDataIfAbsent(obj: UserDataHolder, key: Key<T>, value: T): T
 }
