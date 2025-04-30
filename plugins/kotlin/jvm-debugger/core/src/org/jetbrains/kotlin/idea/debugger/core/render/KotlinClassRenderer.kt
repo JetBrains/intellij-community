@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -29,11 +29,11 @@ import org.jetbrains.kotlin.idea.debugger.core.KotlinMetadataCacheService
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
-import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import kotlin.metadata.KmProperty
 import kotlin.metadata.isNotDefault
+import kotlin.metadata.jvm.JvmMethodSignature
 import kotlin.metadata.jvm.KotlinClassMetadata
 import kotlin.metadata.jvm.getterSignature
 
@@ -93,14 +93,14 @@ class KotlinClassRenderer : ClassRenderer() {
     ): List<Method>? {
         val gettersToShow = calculateGettersToShowUsingMetadata(methods, context) ?: return null
         return methods
-            .filter { it.name() in gettersToShow }
+            .filter { method -> gettersToShow.any { it.name == method.name() && it.descriptor == method.signature() } }
             .distinctBy { it.name() }
     }
 
     private fun calculateGettersToShowUsingMetadata(
         methods: List<Method>,
         context: EvaluationContext
-    ): Set<String>? {
+    ): Set<JvmMethodSignature>? {
         val uniqueKotlinDeclaringTypes = methods
             .map { it.declaringType() }
             .filter { it.isInKotlinSources() }
@@ -108,17 +108,17 @@ class KotlinClassRenderer : ClassRenderer() {
         val metadataList = KotlinMetadataCacheService.getKotlinMetadataList(
             uniqueKotlinDeclaringTypes, context
         ) ?: return null
-        val gettersToShow = mutableSetOf<String>()
+        val gettersToShow = mutableSetOf<JvmMethodSignature>()
         for (metadata in metadataList) {
             if (metadata !is KotlinClassMetadata.Class) {
                 continue
             }
 
-            for (property in metadata.kmClass.properties) {
-                if (property.shouldBeVisibleInVariablesView()) {
-                    gettersToShow.addIfNotNull(property.getterSignature?.name)
-                }
-            }
+            metadata.kmClass.properties
+                .asSequence()
+                .filter { it.shouldBeVisibleInVariablesView() }
+                .mapNotNull { it.getterSignature }
+                .toCollection(gettersToShow)
         }
         return gettersToShow
     }
