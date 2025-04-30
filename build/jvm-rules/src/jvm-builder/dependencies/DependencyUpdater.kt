@@ -45,6 +45,7 @@ import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.coroutineContext
 
 internal data class NodeUpdateItem(
@@ -158,26 +159,32 @@ internal suspend fun checkDependencies(
 
   coroutineContext.ensureActive()
 
-  withContext(NonCancellable) {
-    try {
-      withContext(Dispatchers.IO) {
+  try {
+    withContext(NonCancellable) {
+      launch(Dispatchers.IO) {
         Files.createDirectories(usedAbiDir)
         filesToCopy.forEach { (newFile, oldFile) ->
           launch {
-            Files.deleteIfExists(oldFile)
+            if (!isRebuild) {
+              Files.deleteIfExists(oldFile)
+            }
             Files.createLink(oldFile, newFile)
           }
         }
       }
+
       graph.integrateDeltaWithExternalStorage(deletedNodes = diffResult.deletedNodes, updatedNodes = sequence {
         changedOrAddedNodes.forEachValue {
           yield(it.oldNode ?: return@forEachValue)
         }
       }.asIterable(), delta = delta)
     }
-    catch (e: Throwable) {
-      throw RebuildRequestedException(RuntimeException("cannot integrate ABI", e))
-    }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    throw RebuildRequestedException(RuntimeException("cannot integrate ABI", e))
   }
 }
 
