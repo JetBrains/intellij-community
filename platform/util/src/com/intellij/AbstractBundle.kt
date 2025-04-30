@@ -76,6 +76,7 @@ open class AbstractBundle {
       loader: ClassLoader,
       pathToBundle: String,
       firstTry: () -> ResourceBundle,
+      errorReporter: (MissingResourceException) -> Unit,
     ): ResourceBundle {
       try {
         return firstTry()
@@ -87,7 +88,7 @@ open class AbstractBundle {
           return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
         }
         catch (e: MissingResourceException) {
-          logger<AbstractBundle>().error(e)
+          errorReporter(e)
           return MissingResourceBundle(pathToBundle)
         }
       }
@@ -146,9 +147,11 @@ open class AbstractBundle {
     val isDefault = DefaultBundleService.isDefaultBundle()
     var bundle = getBundle(isDefault, classLoader)
     if (bundle == null) {
-      bundle = resolveResourceBundleWithFallback(loader = classLoader, pathToBundle = pathToBundle) {
+      bundle = resolveResourceBundleWithFallback(loader = classLoader, pathToBundle = pathToBundle, firstTry = {
         findBundle(pathToBundle = pathToBundle, loader = classLoader, control = IntelliJResourceControl)
-      }
+      }, errorReporter = { e ->
+        logger<AbstractBundle>().error(e)
+      })
       val ref = SoftReference(bundle)
       if (isDefault) {
         defaultBundle = ref

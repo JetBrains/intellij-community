@@ -348,13 +348,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
       val bundleSupplier = {
         bundleName?.let {
-          try {
-            DynamicBundle.getResourceBundle(module.classLoader, bundleName)
-          }
-          catch (e: MissingResourceException) {
-            LOG.error(PluginException("Cannot resolve resource bundle $bundleName for action $element", e, module.pluginId))
-            null
-          }
+          DynamicBundle.getResourceBundle(module.classLoader, bundleName)
         }
       }
 
