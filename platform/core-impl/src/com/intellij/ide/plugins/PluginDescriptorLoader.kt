@@ -539,29 +539,10 @@ private suspend fun loadAndInitDescriptors(
   }
   val loadingResult = PluginLoadingResult()
   val isMainProcess = isMainProcess()
-  loadingResult.initAndAddAll(descriptors = toSequence(plugins, isMainProcess), overrideUseIfCompatible = false, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = plugins.filterPerProjectPlugins(isMainProcess), overrideUseIfCompatible = false, initContext = initContext)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.initAndAddAll(descriptors = toSequence(pluginsFromProperty, isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = pluginsFromProperty.filterPerProjectPlugins(isMainProcess), overrideUseIfCompatible = true, initContext = initContext)
   return loadingResult
-}
-
-private fun toSequence(list: List<IdeaPluginDescriptorImpl?>, isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
-  val result = list.asSequence().filterNotNull()
-  if (isMainProcess == null) {
-    return result
-  }
-  else {
-    return result.filter { !isMainProcess || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
-  }
-}
-
-private fun isMainProcess(): Boolean? {
-  if (java.lang.Boolean.getBoolean("ide.per.project.instance")) {
-    return !PathManager.getPluginsDir().fileName.toString().startsWith("perProject_")
-  }
-  else {
-    return null
-  }
 }
 
 internal fun CoroutineScope.loadPluginDescriptorsImpl(
@@ -1140,7 +1121,7 @@ fun loadAndInitDescriptorsFromOtherIde(
     val result = PluginLoadingResult()
     @Suppress("RAW_RUN_BLOCKING")
     result.initAndAddAll(
-      descriptors = toSequence(runBlocking {
+      descriptors = runBlocking {
         val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
         val pool = NonShareableJavaZipFilePool()
         loadPluginDescriptorsImpl(
@@ -1152,7 +1133,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
         ).awaitAll()
-      }, isMainProcess()),
+      }.filterPerProjectPlugins(isMainProcess()),
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1165,13 +1146,10 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
   return PluginDescriptorLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { loadingContext ->
     val result = PluginLoadingResult()
     result.initAndAddAll(
-      descriptors = toSequence(
-        list = coroutineScope {
-          loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
-            .awaitAll()
-        },
-        isMainProcess = isMainProcess(),
-      ),
+      descriptors = coroutineScope {
+        loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
+          .awaitAll()
+      }.filterPerProjectPlugins(isMainProcess = isMainProcess()),
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1204,24 +1182,21 @@ fun loadAndInitDescriptorsFromClassPathInTest(
   )
   val result = PluginLoadingResult()
   result.initAndAddAll(
-    descriptors = toSequence(
-      list = @Suppress("RAW_RUN_BLOCKING") runBlocking {
-        urlToFilename.map { (url, filename) ->
-          async(Dispatchers.IO) {
-            loadDescriptorFromResource(
-              resource = url,
-              filename = filename,
-              loadingContext = loadingContext,
-              pathResolver = ClassPathXmlPathResolver(classLoader = loader, isRunningFromSources = false),
-              useCoreClassLoader = true,
-              pool = zipPool,
-              libDir = null,
-            )
-          }
-        }.awaitAll()
-      },
-      isMainProcess = isMainProcess(),
-    ),
+    descriptors = @Suppress("RAW_RUN_BLOCKING") runBlocking {
+      urlToFilename.map { (url, filename) ->
+        async(Dispatchers.IO) {
+          loadDescriptorFromResource(
+            resource = url,
+            filename = filename,
+            loadingContext = loadingContext,
+            pathResolver = ClassPathXmlPathResolver(classLoader = loader, isRunningFromSources = false),
+            useCoreClassLoader = true,
+            pool = zipPool,
+            libDir = null,
+          )
+        }
+      }.awaitAll()
+    }.filterPerProjectPlugins(isMainProcess()),
     overrideUseIfCompatible = false,
     initContext = initContext
   )
@@ -1387,4 +1362,23 @@ private fun readDescriptorFromJarStream(input: InputStream, path: Path): IdeaPlu
     }
   }
   return null
+}
+
+private fun List<IdeaPluginDescriptorImpl?>.filterPerProjectPlugins(isMainProcess: Boolean?): Sequence<IdeaPluginDescriptorImpl> {
+  val result = asSequence().filterNotNull()
+  if (isMainProcess == null) {
+    return result
+  }
+  else {
+    return result.filter { !isMainProcess || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(it.pluginId) }
+  }
+}
+
+private fun isMainProcess(): Boolean? {
+  if (java.lang.Boolean.getBoolean("ide.per.project.instance")) {
+    return !PathManager.getPluginsDir().fileName.toString().startsWith("perProject_")
+  }
+  else {
+    return null
+  }
 }
