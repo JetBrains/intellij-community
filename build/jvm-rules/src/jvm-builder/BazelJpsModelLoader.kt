@@ -46,6 +46,7 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 import org.jetbrains.jps.model.module.JpsDependenciesList
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl
+import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExtensionImpl
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettings
@@ -62,7 +63,7 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-private const val TOOL_VERSION: Long = 48
+private const val TOOL_VERSION: Long = 52
 
 internal fun loadJpsModel(
   sources: List<Path>,
@@ -103,7 +104,7 @@ internal fun loadJpsModel(
   val dependencyList = module.dependenciesList
   dependencyList.clear()
   configureJdk(model = model, module = module, dependencyList = dependencyList)
-  // must be after configureJdk; otherwise, for some reason, module output dir is not included in classpath
+  // must be after configureJdk; otherwise, for some reason, the module output dir is not included in the classpath
   dependencyList.addModuleSourceDependency()
 
   // no classpath if no source file (jvm_test without own sources)
@@ -134,6 +135,7 @@ internal fun loadJpsModel(
 
   val project = model.project
   project.addModule(module)
+  project.container.setChild(JpsProjectSerializationDataExtensionImpl.ROLE, JpsProjectSerializationDataExtensionImpl(classPathRootDir.parent))
 
   configureJavac(project, args)
 
@@ -341,8 +343,6 @@ private class BazelJpsLibrary(
   override fun getPaths(rootType: JpsOrderRootType): List<Path> = files
 
   override fun getRootUrls(rootType: JpsOrderRootType): List<String> {
-    // kotlin uses this API
-    //return files.map { "jar://" + it.invariantSeparatorsPathString + "!/" }
     throw UnsupportedOperationException()
   }
 

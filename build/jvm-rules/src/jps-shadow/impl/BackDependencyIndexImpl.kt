@@ -7,8 +7,8 @@ import androidx.collection.MutableLongObjectMap
 import androidx.collection.MutableScatterSet
 import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
-import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringSetValueDataType
 import org.jetbrains.bazel.jvm.mvStore.LongDataType
+import org.jetbrains.bazel.jvm.mvStore.enumeratedStringSetValueDataType
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.ReferenceID
@@ -30,7 +30,7 @@ abstract class BackDependencyIndexImpl protected constructor(
     else {
       val mapBuilder = MVMap.Builder<Long, PersistentSet<JvmNodeReferenceID>>()
         .keyType(LongDataType)
-        .valueType(EnumeratedStringSetValueDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
+        .valueType(enumeratedStringSetValueDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
       @Suppress("UNCHECKED_CAST")
       map = mapletFactory.openMap(name, mapBuilder) as MultiMapletEx<Long, ReferenceID>
     }

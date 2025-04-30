@@ -10,6 +10,8 @@ import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.collections.immutable.plus
 import kotlinx.collections.immutable.toPersistentHashSet
 import org.h2.mvstore.MVMap
+import org.jetbrains.bazel.jvm.mvStore.AddValueToSetDecisionMaker
+import org.jetbrains.bazel.jvm.mvStore.AddValuesToSetDecisionMaker
 import org.jetbrains.bazel.jvm.util.removeAll
 import org.jetbrains.bazel.jvm.util.toPersistentHashSet
 import org.jetbrains.jps.dependency.diff.Difference
@@ -88,56 +90,6 @@ internal class MvStoreMultiMaplet<K : Any, V : Any>(
   }
 
   override fun flush() {
-  }
-}
-
-private class AddValueToSetDecisionMaker<V>(private val toAdd: V) : MVMap.DecisionMaker<Set<V>>() {
-  override fun decide(existingValue: Set<V>?, providedValue: Set<V>?): MVMap.Decision {
-    if (existingValue.isNullOrEmpty() || !existingValue.contains(toAdd)) {
-      return MVMap.Decision.PUT
-    }
-    else {
-      return MVMap.Decision.ABORT
-    }
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun <T : Set<V>> selectValue(existingValue: T?, providedValue: T?): T? {
-    return when {
-      existingValue.isNullOrEmpty() -> persistentHashSetOf(toAdd)
-      existingValue is PersistentSet<*> -> (existingValue as PersistentSet<V>).add(toAdd)
-      else -> {
-        persistentHashSetOf<V>().mutate {
-          it.addAll(existingValue as Collection<V>)
-          it.add(toAdd)
-        }
-      }
-    } as T
-  }
-}
-
-private class AddValuesToSetDecisionMaker<V>(private val toAdd: Iterable<V>) : MVMap.DecisionMaker<Set<V>>() {
-  override fun decide(existingValue: Set<V>?, providedValue: Set<V>?): MVMap.Decision {
-    if (existingValue.isNullOrEmpty() || toAdd.any { !existingValue.contains(it) }) {
-      return MVMap.Decision.PUT
-    }
-    else {
-      return MVMap.Decision.ABORT
-    }
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun <T : Set<V>> selectValue(existingValue: T?, providedValue: T?): T? {
-    return when {
-      existingValue.isNullOrEmpty() -> toAdd.toPersistentHashSet() as T
-      existingValue is PersistentSet<*> -> (existingValue as PersistentSet<V>).plus(toAdd) as T
-      else -> {
-        return persistentHashSetOf<V>().mutate {
-          it.addAll(existingValue as Collection<V>)
-          it.addAll(toAdd)
-        } as T
-      }
-    }
   }
 }
 

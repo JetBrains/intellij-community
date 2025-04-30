@@ -19,6 +19,18 @@ interface StringEnumerator {
   fun valueOf(id: Int): String
 }
 
+private val emptyStringArray = emptyArray<String?>()
+
+object StringEnumeratedStringExternalizer : EnumeratedStringDataTypeExternalizer<String> {
+  override fun createStorage(size: Int): Array<String?> {
+    return if (size == 0) emptyStringArray else arrayOfNulls(size)
+  }
+
+  override fun create(id: String): String = id
+
+  override fun getStringId(obj: String): String = obj
+}
+
 class EnumeratedStringDataType<T : Any>(
   private val stringEnumerator: StringEnumerator,
   private val externalizer: EnumeratedStringDataTypeExternalizer<T>,
@@ -27,27 +39,23 @@ class EnumeratedStringDataType<T : Any>(
 
   override fun isMemoryEstimationAllowed(): Boolean = true
 
-  override fun write(buff: WriteBuffer, data: T) {
-    buff.putVarInt(stringEnumerator.enumerate(externalizer.getStringId(data)))
-  }
+  override fun write(buff: WriteBuffer, data: T) = throw UnsupportedOperationException()
 
   override fun write(buff: WriteBuffer, storage: Any, len: Int) {
     @Suppress("UNCHECKED_CAST")
     storage as Array<T>
     for (i in 0..<len) {
-      write(buff, storage[i])
+      buff.putVarInt(stringEnumerator.enumerate(externalizer.getStringId(storage[i])))
     }
   }
 
-  override fun read(buff: ByteBuffer): T {
-    return externalizer.create(stringEnumerator.valueOf(DataUtils.readVarInt(buff)))
-  }
+  override fun read(buff: ByteBuffer): T = throw UnsupportedOperationException()
 
   override fun read(buff: ByteBuffer, storage: Any, len: Int) {
     @Suppress("UNCHECKED_CAST")
     storage as Array<T>
     for (i in 0..<len) {
-      storage[i] = read(buff)
+      storage[i] = externalizer.create(stringEnumerator.valueOf(DataUtils.readVarInt(buff)))
     }
   }
 

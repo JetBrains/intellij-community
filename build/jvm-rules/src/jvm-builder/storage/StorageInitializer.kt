@@ -40,7 +40,7 @@ internal class StorageInitializer(private val dataDir: Path, private val dbFile:
       try {
         val containerManager = withContext(Dispatchers.IO) {
           Files.createDirectories(dataDir)
-          BazelPersistentMapletFactory.open(dbFile = dbFile, span = span)
+          BazelPersistentMapletFactory.open(dbFile = dbFile, pathRelativizer = relativizer.typeAwareRelativizer!!, span = span)
         }
 
         return executeOrCloseStorage(containerManager) {

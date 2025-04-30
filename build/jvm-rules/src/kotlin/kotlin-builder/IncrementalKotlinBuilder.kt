@@ -21,10 +21,6 @@ import org.jetbrains.bazel.jvm.worker.core.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.worker.core.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.worker.core.output.OutputSink
-import org.jetbrains.bazel.jvm.kotlin.configureModule
-import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
-import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
-import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.bazel.jvm.util.linkedSet
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.worker.core.BazelTargetBuilder
@@ -337,8 +333,7 @@ class IncrementalKotlinBuilder(
       )
     }
 
-    // we do not save cache version - TargetConfigurationDigestProperty.KOTLIN_VERSION is used to rebuild in case of kotlinc update
-
+    // we do not save a cache version - TargetConfigurationDigestProperty.KOTLIN_VERSION is used to rebuild in case of kotlinc update
     if (kotlinContext.hasKotlinMarker.get(target) == null) {
       fsOperations.markChunk(context = context, excludeFiles = dirtyByTarget.dirty.keys, dataManager = dataManager)
     }
@@ -746,7 +741,7 @@ private fun doProcessChangesUsingLookups(
     lookupStorageManager = lookupStorageManager,
     reporter = reporter,
   )
-  // If a list of inheritors of sealed class has changed, it should be recompiled with all the inheritors
+  // If a list of inheritors of a sealed class has changed, it should be recompiled with all the inheritors
   // Here we have a small optimization. Do not recompile the bunch if ALL these files were recompiled during the previous round.
   val forceRecompileTogether = dirtyFiles.forceRecompileTogether
   val excludeFiles = if (forceRecompileTogether.isEmpty() || forceRecompileTogether.all { compiledFiles.contains(it.toPath()) }) {
@@ -784,9 +779,16 @@ private fun getDirtyFiles(
   val dirtyFilesFromLookups = lookupStorageManager.withLookupStorage {
     mapLookupSymbolsToFiles(lookupStorage = it, lookupSymbols = dirtyLookupSymbols, reporter = reporter)
   }
+
+  val classesFqNamesToFiles = mapClassesFqNamesToFiles(caches, dirtyClassFqNames, reporter)
   return FilesToRecompile(
-    dirtyFiles = dirtyFilesFromLookups + mapClassesFqNamesToFiles(caches, dirtyClassFqNames, reporter),
-    forceRecompileTogether = mapClassesFqNamesToFiles(caches, forceRecompile, reporter),
+    dirtyFiles = (if (dirtyFilesFromLookups.isEmpty()) {
+      classesFqNamesToFiles
+    }
+    else {
+      dirtyFilesFromLookups + classesFqNamesToFiles
+    }).ifEmpty { emptySet() },
+    forceRecompileTogether = mapClassesFqNamesToFiles(caches, forceRecompile, reporter).ifEmpty { emptySet() },
   )
 }
 

@@ -62,8 +62,8 @@ http_file(
 http_archive(
     name = "kotlin-compiler_http",
     build_file = "//:BUILD.kotlinc.bazel",
-    sha256 = "221269adce1d6bbfe9281e15a3226718742a6634dec89f96bff8ba17def51bdc",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/kotlin-compiler-2.1.20-jb.1.tar.zst",
+    sha256 = "101b71e21459f29906836370982bf2bf0b20eac9f206f6b13b176131156d0be1",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/kotlin-compiler-30.04.25.tar.zst",
 )
 
 http_file(

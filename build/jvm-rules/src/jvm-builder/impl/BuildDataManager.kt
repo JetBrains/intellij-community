@@ -16,6 +16,7 @@ import org.jetbrains.jps.dependency.NodeSourcePathMapper
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl
 import org.jetbrains.jps.dependency.impl.PathSourceMapper
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.bazel.jvm.mvStore.mvStoreMapFactoryExposer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.function.Consumer
@@ -108,7 +109,13 @@ internal class BuildDataManager private constructor(
   fun <S : StorageOwner> getStorage(target: BuildTarget<*>, provider: StorageProvider<S>): S {
     @Suppress("UNCHECKED_CAST")
     return targetToStorages.computeIfAbsent(target to provider as StorageProvider<StorageOwner>) {
-      it.second.createStorage(dataPaths.getTargetDataRootDir(it.first), relativizer)
+      mvStoreMapFactoryExposer.set(containerFactory.mvstoreMapFactory)
+      try {
+        it.second.createStorage(dataPaths.getTargetDataRootDir(it.first), relativizer)
+      }
+      finally {
+        mvStoreMapFactoryExposer.remove()
+      }
     } as S
   }
 

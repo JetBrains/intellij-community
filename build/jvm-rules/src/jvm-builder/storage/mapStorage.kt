@@ -17,7 +17,9 @@ import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.mvStore.HashValue128KeyDataType
 import org.jetbrains.bazel.jvm.mvStore.ModernStringDataType
+import org.jetbrains.bazel.jvm.mvStore.MvStoreMapFactory
 import org.jetbrains.bazel.jvm.mvStore.StringEnumerator
+import org.jetbrains.bazel.jvm.mvStore.VarIntDataType
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.Externalizer
 import org.jetbrains.jps.dependency.Maplet
@@ -30,7 +32,10 @@ import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 import org.jetbrains.jps.dependency.storage.createImmutableIndexToStringMap
 import org.jetbrains.jps.dependency.storage.createImmutableStringMap
 import org.jetbrains.jps.incremental.RebuildRequestedException
+import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
+import org.jetbrains.jps.incremental.storage.RelativePathType
 import java.io.Closeable
+import java.io.File
 import java.io.IOException
 import java.lang.AutoCloseable
 import java.nio.file.Path
@@ -55,6 +60,8 @@ private fun tryOpenMvStore(dbFile: Path, span: Span): MVStore {
     .autoCommitDisabled()
     // default cache size is 16MB
     .cacheSize(128)
+    // compilation is most single-threaded (we compute targets in parallel), reduce 16 to 8
+    .cacheConcurrency(8)
     // disable auto-commit based on the size of unsaved data and save once in 1 minute
     .autoCommitBufferSize(0)
     .open()
@@ -72,9 +79,10 @@ internal class BazelPersistentMapletFactory private constructor(
   private val store: MVStore,
   stringHashToIndexMap: MVMap<HashValue128, Int>,
   indexToStringMap: MVMap<Int, String>,
+  private val pathRelativizer: PathTypeAwareRelativizer,
 ) : MapletFactory, Closeable, MvStoreContainerFactory {
   companion object {
-    internal fun open(dbFile: Path, span: Span): BazelPersistentMapletFactory {
+    internal fun open(dbFile: Path, pathRelativizer: PathTypeAwareRelativizer, span: Span): BazelPersistentMapletFactory {
       val store = tryOpenMvStore(dbFile = dbFile, span = span)
       val storageCloser = AutoCloseable(store::closeImmediately)
 
@@ -92,9 +100,30 @@ internal class BazelPersistentMapletFactory private constructor(
       }
 
       executeOrCloseStorage(storageCloser) {
-        return BazelPersistentMapletFactory(store, stringHashToIndexMap, indexToStringMap)
+        return BazelPersistentMapletFactory(store, stringHashToIndexMap, indexToStringMap, pathRelativizer)
       }
     }
+  }
+
+  @JvmField
+  val mvstoreMapFactory: MvStoreMapFactory = object : MvStoreMapFactory {
+    private val kotlinPathRelativizer = object : MvStoreMapFactory.LegacyKotlinPathRelativizer {
+      override fun toRelative(file: File): String {
+        return pathRelativizer.toRelative(file.path, RelativePathType.SOURCE)
+      }
+
+      override fun toAbsoluteFile(path: String): File {
+        return File(pathRelativizer.toAbsolute(path, RelativePathType.SOURCE).replace('/', File.separatorChar))
+      }
+    }
+
+    override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, V>): MVMap<K, V> {
+      return store.openMap(mapName, mapBuilder)
+    }
+
+    override fun getStringEnumerator(): StringEnumerator = stringEnumerator
+
+    override fun getOldPathRelativizer(): MvStoreMapFactory.LegacyKotlinPathRelativizer = kotlinPathRelativizer
   }
 
   override fun getStringEnumerator(): StringEnumerator = stringEnumerator

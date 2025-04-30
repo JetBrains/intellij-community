@@ -6,10 +6,10 @@ import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringDataType
 import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringDataTypeExternalizer
-import org.jetbrains.bazel.jvm.mvStore.EnumeratedStringSetValueDataType
 import org.jetbrains.bazel.jvm.mvStore.IntLong
 import org.jetbrains.bazel.jvm.mvStore.IntLongPairKeyDataType
 import org.jetbrains.bazel.jvm.mvStore.StringEnumerator
+import org.jetbrains.bazel.jvm.mvStore.enumeratedStringSetValueDataType
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Graph
 import org.jetbrains.jps.dependency.Node
@@ -91,7 +91,7 @@ private fun createNodeIdToSourcesMap(
 ): MultiMapletEx<ReferenceID, NodeSource> {
   val builder = MVMap.Builder<JvmNodeReferenceID, PersistentSet<PathSource>>()
   builder.keyType(EnumeratedStringDataType(stringEnumerator, JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
-  builder.valueType(EnumeratedStringSetValueDataType(stringEnumerator, PathSourceEnumeratedStringDataTypeExternalizer))
+  builder.valueType(enumeratedStringSetValueDataType(stringEnumerator, PathSourceEnumeratedStringDataTypeExternalizer))
   @Suppress("UNCHECKED_CAST")
   return containerFactory.openMap("node-id-to-sources", builder) as MultiMapletEx<ReferenceID, NodeSource>
 }

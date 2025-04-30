@@ -1,8 +1,8 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
-load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options", "jvm_provided_library")
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_kotlinc_options")
 
 label_flag(
     name = "default-kotlinc-opts",
@@ -27,11 +27,13 @@ bool_flag(
     name = "kt_trace",
     build_setting_default = False,
 )
+
 # --@rules_jvm//:koltin_inc_threshold=100
 int_flag(
     name = "koltin_inc_threshold",
     build_setting_default = -1,
 )
+
 int_flag(
     name = "java_inc_threshold",
     build_setting_default = -1,
@@ -40,7 +42,10 @@ int_flag(
 _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
-    visibility = ["//src:__subpackages__", "//zip:__pkg__"],
+    visibility = [
+        "//src:__subpackages__",
+        "//zip:__pkg__",
+    ],
 )
 
 # java_import(
@@ -56,10 +61,10 @@ jvm_import(
     jar = "@jps-standalone_http//file",
     source_jar = "@jps-standalone_http//file",
     visibility = [
-      "//src/jvm-builder:__subpackages__",
-      "//src/jvm-builder-core:__subpackages__",
-      "//src/jps-shadow:__subpackages__",
-      "//src/kotlin/kotlin-builder:__subpackages__",
+        "//src/jps-shadow:__subpackages__",
+        "//src/jvm-builder:__subpackages__",
+        "//src/jvm-builder-core:__subpackages__",
+        "//src/kotlin/kotlin-builder:__subpackages__",
     ],
 )
 
@@ -90,16 +95,12 @@ alias(
 #     jars = ["kotlin-compiler.jar"],
 #     srcjar = "@kotlin-compiler-sources//file",
 #     visibility = ["//visibility:public"],
-#     runtime_deps = [
-#         "@lib//:jetbrains-annotations",
-#         "@lib//:kotlinx-coroutines-core"
-#     ],
 # )
 
 jvm_provided_library(
-  name = "kotlin-compiler-provided",
-  lib = "//:kotlin-compiler",
-  visibility = ["//visibility:public"],
+    name = "kotlin-compiler-provided",
+    lib = "//:kotlin-compiler",
+    visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `libraries` start
@@ -193,7 +194,7 @@ jvm_import(
     source_jar = "@jackson-databind-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":jackson-annotations"
+        ":jackson-annotations",
     ],
 )
 
@@ -238,8 +239,8 @@ jvm_import(
     source_jar = "@arrow-vector-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
+        ":arrow-format",
         ":flatbuffers-java",
-        ":arrow-format"
     ],
 )
 
@@ -256,7 +257,7 @@ jvm_import(
     source_jar = "@arrow-memory-netty-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":arrow-memory-netty-buffer-patch"
+        ":arrow-memory-netty-buffer-patch",
     ],
 )
 
@@ -315,13 +316,13 @@ jvm_import(
     source_jar = "@opentelemetry-api-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
+        ":opentelemetry-context",
         ":opentelemetry-sdk",
         ":opentelemetry-sdk-common",
-        ":opentelemetry-context",
-        ":opentelemetry-sdk-trace",
-        ":opentelemetry-sdk-metrics",
+        ":opentelemetry-sdk-extension-autoconfigure-spi",
         ":opentelemetry-sdk-logs",
-        ":opentelemetry-sdk-extension-autoconfigure-spi"
+        ":opentelemetry-sdk-metrics",
+        ":opentelemetry-sdk-trace",
     ],
 )
 
@@ -408,10 +409,10 @@ jvm_import(
     source_jar = "@opentelemetry-exporter-otlp-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":opentelemetry-exporter-sender-jdk",
         ":opentelemetry-exporter-common",
         ":opentelemetry-exporter-otlp-common",
-        ":opentelemetry-sdk-extension-autoconfigure-spi"
+        ":opentelemetry-exporter-sender-jdk",
+        ":opentelemetry-sdk-extension-autoconfigure-spi",
     ],
 )
 
@@ -435,7 +436,7 @@ jvm_import(
     source_jar = "@netty-buffer-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        ":netty-common"
+        ":netty-common",
     ],
 )
 

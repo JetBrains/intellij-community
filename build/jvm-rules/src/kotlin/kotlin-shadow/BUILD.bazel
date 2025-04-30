@@ -2,11 +2,14 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "kotlin-shadow",
-    srcs = glob(["org/jetbrains/kotlin/**/*.kt"]),
+    srcs = glob(["org/jetbrains/**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-    deps = [
-      "//:kotlin-stdlib",
-      "//:kotlin-compiler",
-    ],
     visibility = ["//visibility:public"],
+    # buildifier: leave-alone
+    deps = [
+        "//:kotlin-stdlib",
+        "//:kotlin-compiler",
+        "//:h2-mvstore",
+        "//src/mvstore-data-types",
+    ],
 )
