@@ -6686,6 +6686,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertLambdaToReference/receiverParameterReversed.kt");
             }
 
+            @TestMetadata("redundantTypeArgument.kt")
+            public void testRedundantTypeArgument() throws Exception {
+                runTest("testData/intentions/convertLambdaToReference/redundantTypeArgument.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/simple.kt");
