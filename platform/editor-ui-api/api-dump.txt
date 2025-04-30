@@ -1222,6 +1222,7 @@ c:com.intellij.openapi.actionSystem.AnActionEventVisitor
 - visitGestureInitEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
 - visitGesturePerformedEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.AnActionResult
+- isFailed():Z
 - isIgnored():Z
 - isPerformed():Z
 c:com.intellij.openapi.actionSystem.CommonDataKeys

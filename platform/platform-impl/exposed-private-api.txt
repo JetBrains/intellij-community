@@ -8,7 +8,6 @@ com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/ide/plugins/marketplace/MarketplacePluginDownloadService
 com/intellij/ide/ui/LafReference
 com/intellij/ide/ui/laf/UIThemeExportableBean
-com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/actionSystem/impl/SuspendingUpdateSession
 com/intellij/openapi/client/ClientAppSession
 com/intellij/openapi/editor/colors/Groups

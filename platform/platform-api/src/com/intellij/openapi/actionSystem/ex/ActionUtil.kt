@@ -8,6 +8,9 @@ import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
+import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -49,6 +52,13 @@ import javax.swing.KeyStroke
 private val LOG = logger<ActionUtil>()
 private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, true)
 
+/**
+ * Public Action System utility class.
+ *
+ * 1. Always use [updateAction] and [performAction] instead of [ApiStatus.OverrideOnly] [AnAction] methods
+ * 2. Use presentation key constants like [SHOW_TEXT_IN_TOOLBAR] to further tweak an action presentations
+ * 3. Avoid using deprecated methods
+ */
 object ActionUtil {
 
   @JvmField
@@ -91,11 +101,11 @@ object ActionUtil {
   @JvmField
   val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
 
-  /** Same as [CompactActionGroup] */
+  /** Hide disabled child actions */
   @JvmField
   val HIDE_DISABLED_CHILDREN: Key<Boolean> = Key.create("HIDE_DISABLED_CHILDREN")
 
-  /** Same as [AlwaysVisibleActionGroup] */
+  /** Avoid updating child actions to check if the group is non-empty */
   @JvmField
   val ALWAYS_VISIBLE_GROUP: Key<Boolean> = Key.create("ALWAYS_VISIBLE_GROUP")
 
@@ -110,8 +120,7 @@ object ActionUtil {
   val ALLOW_ACTION_PERFORM_WHEN_HIDDEN: Key<Boolean> = Key.create("ALLOW_ACTION_PERFORM_WHEN_HIDDEN")
 
   @JvmField
-  @Suppress("DEPRECATION", "removal")
-  val SECONDARY_TEXT: Key<@Nls String> = Presentation.PROP_VALUE
+  val SECONDARY_TEXT: Key<@Nls String> = Key.create("SECONDARY_TEXT")
 
   @JvmField
   val SEARCH_TAG: Key<@NonNls String> = Key.create("SEARCH_TAG")
@@ -151,6 +160,7 @@ object ActionUtil {
   @JvmStatic
   private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 
+  @ApiStatus.Internal
   @JvmStatic
   fun showDumbModeWarning(
     project: Project?,
@@ -167,6 +177,7 @@ object ActionUtil {
       getActionsUnavailableMessage(actionNames), ActionManager.getInstance().getId(action))
   }
 
+  @ApiStatus.Internal
   @Deprecated("Use getActionUnavailableMessage(@ActionText String?) or getActionsUnavailableMessage(actionNames: List<@ActionText String>)")
   @JvmStatic
   fun getUnavailableMessage(action: String, plural: Boolean): @NlsContexts.PopupContent String {
@@ -178,6 +189,7 @@ object ActionUtil {
                              ApplicationNamesInfo.getInstance().productName)
   }
 
+  @ApiStatus.Internal
   @JvmStatic
   fun getActionUnavailableMessage(@ActionText action: String?): @NlsContexts.PopupContent String {
     val productName = ApplicationNamesInfo.getInstance().productName
@@ -186,7 +198,7 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun getActionsUnavailableMessage(actionNames: List<@ActionText String>): @NlsContexts.PopupContent String {
+  private fun getActionsUnavailableMessage(actionNames: List<@ActionText String>): @NlsContexts.PopupContent String {
     return when {
       actionNames.isEmpty() -> getActionUnavailableMessage(null)
       actionNames.size == 1 -> getActionUnavailableMessage(actionNames[0])
@@ -202,38 +214,41 @@ object ActionUtil {
    *
    * @return true if update tried to access indices in dumb mode
    */
-  @Deprecated("Use performDumbAwareUpdate(action, event) instead")
+  @Deprecated("Use updateAction(action, event) instead")
   @JvmStatic
   fun performDumbAwareUpdate(action: AnAction, e: AnActionEvent, beforeActionPerformed: Boolean): Boolean {
     if (beforeActionPerformed) {
       return false
     }
-    return performDumbAwareUpdate(action, e)
+    val result = updateAction(action, e)
+    return if (result.isFailed) result.failureCause is IndexNotReadyException else false
   }
 
   /**
    * Calls [AnAction.update] with proper context, checks and notifications.
-   *
-   * @return true if update tried to access indices in dumb mode
    */
   @JvmStatic
-  fun performDumbAwareUpdate(action: AnAction, e: AnActionEvent): Boolean {
+  fun updateAction(action: AnAction, e: AnActionEvent): AnActionResult {
+    val checkDumb = Registry.`is`("actionSystem.update.dumb.mode.check.awareness")
     val presentation = e.presentation
     if (LightEdit.owns(e.project) && !isActionLightEditCompatible(action)) {
       presentation.isEnabledAndVisible = false
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
-      return false
+      return AnActionResult.IGNORED
     }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
     val dumbMode = isDumbMode(e.project)
-    if (wasEnabledBefore != null && !dumbMode) {
-      presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null)
-      presentation.isEnabled = wasEnabledBefore
-      presentation.isVisible = true
+    if (checkDumb) {
+      if (wasEnabledBefore != null && !dumbMode) {
+        presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null)
+        presentation.isEnabled = wasEnabledBefore
+        presentation.isVisible = true
+      }
     }
     val enabledBeforeUpdate = presentation.isEnabled
     val allowed = !dumbMode || action.isDumbAware
+    var isPerformed = false
     action.applyTextOverride(e)
     try {
       val runnable = {
@@ -250,40 +265,41 @@ object ActionUtil {
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)
         ActionsCollector.getInstance().recordUpdate(action, e, duration)
       }
-      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
-      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
-
+      isPerformed = true
+      if (checkDumb) {
+        presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
+        presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
+      }
       if (presentation.isEnabled && action is RequiresPermissions) {
         checkPermissionsGranted(*action.getRequiredPermissions().toTypedArray())
       }
     }
-    catch (_: SlowOperationCanceledException) {
-      return false
+    catch (@Suppress("IncorrectCancellationExceptionHandling") ex: SlowOperationCanceledException) {
+      return AnActionResult.failed(ex)
     }
     catch (ex: IndexNotReadyException) {
-      if (!allowed) {
-        return true
+      if (checkDumb && !allowed && wasEnabledBefore == null) {
+        presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate)
+      }
+      if (!checkDumb || !allowed) {
+        return AnActionResult.failed(ex)
       }
       throw ex
     }
     catch (pde: PermissionDeniedException) {
       if (Registry.`is`("ide.permissions.api.enabled")) {
-        presentation.isEnabled = false
         presentation.putClientProperty(UNSATISFIED_PERMISSIONS, pde.permissions)
       }
       else {
-        LOG.error("Was thrown despite `ide.permissions.api.enabled` being false :$pde")
+        LOG.error(Throwable("PDE must not be thrown when `ide.permissions.api.enabled=false`", pde))
       }
     }
     finally {
-      if (!allowed) {
-        if (wasEnabledBefore == null) {
-          presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate)
-        }
+      if (!isPerformed) {
         presentation.isEnabled = false
       }
     }
-    return false
+    return AnActionResult.PERFORMED
   }
 
   @JvmStatic
@@ -334,6 +350,7 @@ object ActionUtil {
     return false
   }
 
+  @Deprecated("Not needed. Use [performAction] only")
   @JvmStatic
   fun lastUpdateAndCheckDumb(action: AnAction, e: AnActionEvent, visibilityMatters: Boolean): Boolean {
     val project = e.project
@@ -355,11 +372,26 @@ object ActionUtil {
     return !visibilityMatters || e.presentation.isVisible
   }
 
+  /**
+   * Calls [AnAction.actionPerformed] with proper context, checks and notifications.
+   */
   @JvmStatic
-  fun performActionDumbAwareWithCallbacks(action: AnAction, event: AnActionEvent) {
-    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action, event) {
+  fun performAction(action: AnAction, event: AnActionEvent): AnActionResult {
+    val result = (event.actionManager as ActionManagerEx).performWithActionCallbacks(action, event) {
       doPerformActionOrShowPopup(action, event, null)
     }
+    if (result.isIgnored && event.project.let { it != null && DumbService.getInstance(it).isDumb && !action.isDumbAware }) {
+      if (event.presentation.getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
+        showDumbModeWarning(event.project, action, event)
+      }
+    }
+    return result
+  }
+
+  @Deprecated("Use [performAction] instead")
+  @JvmStatic
+  fun performActionDumbAwareWithCallbacks(action: AnAction, event: AnActionEvent) {
+    performAction(action, event)
   }
 
   @ApiStatus.Internal
@@ -395,6 +427,8 @@ object ActionUtil {
     }
   }
 
+  /** Prefer regular [performAction] */
+  @ApiStatus.Internal
   @JvmStatic
   fun performInputEventHandlerWithCallbacks(uiKind: ActionUiKind, place: String?, inputEvent: InputEvent, runnable: Runnable) {
     val place = place ?: when (inputEvent) {
@@ -407,6 +441,8 @@ object ActionUtil {
     (event.actionManager as ActionManagerEx).performWithActionCallbacks(InputEventDummyAction, event, runnable)
   }
 
+  /** Prefer regular [performAction] */
+  @ApiStatus.Internal
   @JvmStatic
   fun performDumbAwareWithCallbacks(
     action: AnAction,
@@ -514,7 +550,7 @@ object ActionUtil {
     invokeAction(action, event, onDone)
   }
 
-  @Deprecated("Use [invokeAction(action, event, onDone)] instead")
+  @Deprecated("Use [performAction(action, event)] instead")
   @JvmStatic
   fun invokeAction(
     action: AnAction,
@@ -528,16 +564,11 @@ object ActionUtil {
     invokeAction(action, event, onDone)
   }
 
+  @Deprecated("Use [performAction(action, event)] instead")
   @JvmStatic
   fun invokeAction(action: AnAction, event: AnActionEvent, onDone: Runnable?) {
-    if (lastUpdateAndCheckDumb(action, event, false)) {
-      try {
-        performActionDumbAwareWithCallbacks(action, event)
-      }
-      finally {
-        onDone?.run()
-      }
-    }
+    val result = performAction(action, event)
+    if (!result.isIgnored) onDone?.run()
   }
 
   @JvmStatic

@@ -1749,7 +1749,7 @@ a:com.intellij.openapi.actionSystem.ex.ActionManagerEx
 - a:getPrevPreformedActionId():java.lang.String
 - a:getRegistrationOrderComparator():java.util.Comparator
 - a:isActionPopupStackEmpty():Z
-- a:performWithActionCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.Runnable):V
+- a:performWithActionCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.Runnable):com.intellij.openapi.actionSystem.AnActionResult
 f:com.intellij.openapi.actionSystem.ex.ActionManagerEx$Companion
 - f:getInstanceEx():com.intellij.openapi.actionSystem.ex.ActionManagerEx
 - f:getKeyStroke(java.lang.String):javax.swing.KeyStroke
@@ -1781,27 +1781,22 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - bs:createActionFromSwingAction$default(javax.swing.Action,Z,I,java.lang.Object):com.intellij.openapi.actionSystem.AnAction
 - sf:createActionListener(java.lang.String,java.awt.Component,java.lang.String):java.awt.event.ActionListener
 - sf:createEmptyEvent():com.intellij.openapi.actionSystem.AnActionEvent
-- sf:getActionUnavailableMessage(java.lang.String):java.lang.String
 - sf:getActions(javax.swing.JComponent):java.util.List
-- sf:getActionsUnavailableMessage(java.util.List):java.lang.String
 - sf:getDelegateChainRoot(com.intellij.openapi.actionSystem.AnAction):java.lang.Object
 - sf:getDelegateChainRootAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.AnAction
 - sf:getMnemonicAsShortcut(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ShortcutSet
-- sf:getUnavailableMessage(java.lang.String,Z):java.lang.String
 - sf:invokeAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.Runnable):V
 - sf:invokeAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.awt.event.InputEvent,java.lang.Runnable):V
 - sf:invokeAction(com.intellij.openapi.actionSystem.AnAction,java.awt.Component,java.lang.String,java.awt.event.InputEvent,java.lang.Runnable):V
 - sf:isDumbMode(com.intellij.openapi.project.Project):Z
 - sf:lastUpdateAndCheckDumb(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,Z):Z
 - sf:mergeFrom(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.openapi.actionSystem.AnAction
+- sf:performAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnActionResult
 - sf:performActionDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
-- sf:performDumbAwareUpdate(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - sf:performDumbAwareUpdate(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,Z):Z
-- sf:performDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.Runnable):V
-- sf:performInputEventHandlerWithCallbacks(com.intellij.openapi.actionSystem.ActionUiKind,java.lang.String,java.awt.event.InputEvent,java.lang.Runnable):V
 - sf:registerForEveryKeyboardShortcut(javax.swing.JComponent,java.awt.event.ActionListener,com.intellij.openapi.actionSystem.ShortcutSet):V
-- sf:showDumbModeWarning(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent[]):V
 - sf:underModalProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.util.Computable):java.lang.Object
+- sf:updateAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnActionResult
 - sf:wrap(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.AnAction
 - sf:wrap(java.lang.String):com.intellij.openapi.actionSystem.AnAction
 a:com.intellij.openapi.actionSystem.ex.CheckboxAction

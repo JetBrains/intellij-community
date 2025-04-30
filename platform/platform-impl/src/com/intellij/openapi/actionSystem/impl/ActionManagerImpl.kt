@@ -79,6 +79,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -101,6 +102,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.name
 
+@ApiStatus.Internal
 open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx() {
   private val notRegisteredInternalActionIds = ArrayList<String>()
   private val actionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
@@ -1118,9 +1120,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  override fun performWithActionCallbacks(action: AnAction,
-                                          event: AnActionEvent,
-                                          runnable: Runnable) {
+  override fun performWithActionCallbacks(
+    action: AnAction,
+    event: AnActionEvent,
+    runnable: Runnable,
+  ): AnActionResult {
     val project = event.project
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event)
     fireBeforeActionPerformed(action, event)
@@ -1133,14 +1137,14 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       LOG.warn("Action is not performed because target component is not showing: " +
                "action=$actionId, component=${component.javaClass.name}")
       fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
-      return
+      return AnActionResult.IGNORED
     }
     val container =
       if (!event.presentation.isApplicationScope && project is ComponentManagerEx) project
       else ApplicationManager.getApplication() as ComponentManagerEx
     val cs = container.pluginCoroutineScope(action.javaClass.classLoader)
     val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")
-    // save stack frames using an explicit continuation trick & inline blockingContext
+    // save stack frames using an explicit continuation trick and inline blockingContext
     lateinit var continuation: CancellableContinuation<Unit>
     cs.launch(Dispatchers.Unconfined + coroutineName, CoroutineStart.UNDISPATCHED) {
       suspendCancellableCoroutine { continuation = it }
@@ -1181,6 +1185,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
       else -> throw result.failureCause
     }
+    return result
   }
 
   @TestOnly
