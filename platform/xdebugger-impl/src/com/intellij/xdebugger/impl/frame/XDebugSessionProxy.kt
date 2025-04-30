@@ -102,7 +102,7 @@ interface XDebugSessionProxy {
     fun useFeProxy(): Boolean = Registry.`is`("xdebugger.toolwindow.split")
 
     @JvmStatic
-    fun useFeLineBreakpointProxy(): Boolean = useFeProxy() && Registry.`is`("xdebugger.line.breakpoints.split")
+    fun useFeLineBreakpointProxy(): Boolean = useFeProxy()
 
     fun showFeWarnings(): Boolean = Registry.`is`("xdebugger.toolwindow.split.warnings")
   }
