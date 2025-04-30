@@ -124,9 +124,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     DURATION_FIELD,
   )
 
-  /** The time until the shell process is started, and we can send user's input to it */
-  private val startupTypingAbilityLatency = GROUP.registerVarargEvent(
-    "startup.typing.ability.latency",
+  private val startupShellStartingLatency = GROUP.registerVarargEvent(
+    "startup.shell.starting.latency",
     TERMINAL_OPENING_WAY,
     DURATION_FIELD,
   )
@@ -242,8 +241,8 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     )
   }
 
-  fun logStartupTypingAbilityLatency(openingWay: TerminalOpeningWay, duration: Duration) {
-    startupTypingAbilityLatency.log(
+  fun logStartupShellStartingLatency(openingWay: TerminalOpeningWay, duration: Duration) {
+    startupShellStartingLatency.log(
       TERMINAL_OPENING_WAY with openingWay,
       DURATION_FIELD with duration,
     )

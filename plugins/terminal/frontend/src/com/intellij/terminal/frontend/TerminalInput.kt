@@ -51,7 +51,9 @@ class TerminalInput(
       val targetChannel = inputChannelDeferred.await()
 
       if (startupFusInfo != null) {
-        reportTypingAbilityLatency(startupFusInfo)
+        // Report it only after receiving the input channel.
+        // Only now we can consider that the shell is fully started, se we can send the input to it.
+        reportShellStartingLatency(startupFusInfo)
       }
 
       try {
@@ -136,10 +138,10 @@ class TerminalInput(
     }
   }
 
-  private fun reportTypingAbilityLatency(startupFusInfo: TerminalStartupFusInfo) {
+  private fun reportShellStartingLatency(startupFusInfo: TerminalStartupFusInfo) {
     val latency = startupFusInfo.triggerTime.elapsedNow()
-    ReworkedTerminalUsageCollector.logStartupTypingAbilityLatency(startupFusInfo.way, latency)
-    LOG.info("Reworked terminal startup typing ability latency: ${latency.inWholeMilliseconds} ms")
+    ReworkedTerminalUsageCollector.logStartupShellStartingLatency(startupFusInfo.way, latency)
+    LOG.info("Reworked terminal startup shell starting latency: ${latency.inWholeMilliseconds} ms")
   }
 
   private data class InputEventSubmission(
