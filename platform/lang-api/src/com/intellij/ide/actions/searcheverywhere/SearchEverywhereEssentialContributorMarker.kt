@@ -45,4 +45,10 @@ interface SearchEverywhereEssentialContributorMarker {
    * If the marker cannot compute the essentialness, null will be returned.
    */
   fun isContributorEssential(contributor: SearchEverywhereContributor<*>): Boolean?
+
+  /**
+   * Returns the raw prediction value for the contributor's essentialness.
+   * If the marker cannot compute the prediction, null will be returned.
+   */
+  fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float?
 }

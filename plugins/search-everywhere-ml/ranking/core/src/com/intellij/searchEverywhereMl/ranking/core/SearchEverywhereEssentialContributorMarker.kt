@@ -55,6 +55,11 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     return model.predictTrue(features)
   }
 
+  override fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float? {
+    val features = getFeatures(contributor).associate { it.field.name to it.data }
+    return model.predict(features).toFloat()
+  }
+
   private fun getFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val rankingService = checkNotNull(searchEverywhereMlRankingService)
     val searchSession = checkNotNull(rankingService.getCurrentSession())
