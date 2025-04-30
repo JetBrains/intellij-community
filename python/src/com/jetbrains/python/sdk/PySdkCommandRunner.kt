@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.WhatToExec
-import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.PyExecResult
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
@@ -17,5 +17,5 @@ import java.nio.file.Path
  * @return A [Result] object containing the output of the command execution.
  */
 @Internal
-suspend fun runExecutable(executable: Path, projectPath: Path?, vararg args: String): PyResult<String> =
+suspend fun runExecutable(executable: Path, projectPath: Path?, vararg args: String): PyExecResult<String> =
   ExecService().execGetStdout(WhatToExec.Binary(executable), args.toList(), ExecOptions(workingDirectory = projectPath))
