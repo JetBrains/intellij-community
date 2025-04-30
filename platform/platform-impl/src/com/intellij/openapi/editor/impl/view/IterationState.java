@@ -616,7 +616,7 @@ public final class IterationState {
     if (back == null) back = myDefaultBackground;
     if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
-    attributes.setAttributes(fore, back, null, null, null, fontType);
+    attributes.setAttributesNoCache(fore, back, null, null, null, fontType);
     if (effectsBuilder != null) {
       effectsBuilder.applyTo(attributes);
     }

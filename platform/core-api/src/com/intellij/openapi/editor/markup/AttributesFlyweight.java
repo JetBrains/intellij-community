@@ -95,6 +95,27 @@ public final class AttributesFlyweight {
     }
   }
 
+  private static @NotNull FlyweightKey createKey(@Nullable Color foreground,
+                                                 @Nullable Color background,
+                                                 @JdkConstants.FontStyle int fontType,
+                                                 @Nullable Color effectColor,
+                                                 @Nullable EffectType effectType,
+                                                 @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+                                                 @Nullable Color errorStripeColor) {
+    FlyweightKey key = ourKey.get();
+    if (key == null) {
+      ourKey.set(key = new FlyweightKey());
+    }
+    key.foreground = foreground;
+    key.background = background;
+    key.fontType = fontType;
+    key.effectColor = effectColor;
+    key.effectType = effectType;
+    key.myAdditionalEffects = additionalEffects.isEmpty() ? Collections.emptyMap() : new EnumMap<>(additionalEffects);
+    key.errorStripeColor = errorStripeColor;
+    return key;
+  }
+
   public static @NotNull AttributesFlyweight create(Color foreground,
                                                     Color background,
                                                     @JdkConstants.FontStyle int fontType,
@@ -112,17 +133,7 @@ public final class AttributesFlyweight {
                                                     EffectType effectType,
                                                     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
                                                     Color errorStripeColor) {
-    FlyweightKey key = ourKey.get();
-    if (key == null) {
-      ourKey.set(key = new FlyweightKey());
-    }
-    key.foreground = foreground;
-    key.background = background;
-    key.fontType = fontType;
-    key.effectColor = effectColor;
-    key.effectType = effectType;
-    key.myAdditionalEffects = additionalEffects.isEmpty() ? Collections.emptyMap() : new EnumMap<>(additionalEffects);
-    key.errorStripeColor = errorStripeColor;
+    FlyweightKey key = createKey(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
 
     AttributesFlyweight flyweight = entries.get(key);
     if (flyweight != null) {
@@ -130,6 +141,18 @@ public final class AttributesFlyweight {
     }
 
     return ConcurrencyUtil.cacheOrGet(entries, key.clone(), new AttributesFlyweight(key));
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull AttributesFlyweight createNoCache(Color foreground,
+                                                           Color background,
+                                                           @JdkConstants.FontStyle int fontType,
+                                                           Color effectColor,
+                                                           EffectType effectType,
+                                                           @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+                                                           Color errorStripeColor) {
+    FlyweightKey key = createKey(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
+    return new AttributesFlyweight(key);
   }
 
   private AttributesFlyweight(@NotNull FlyweightKey key) {

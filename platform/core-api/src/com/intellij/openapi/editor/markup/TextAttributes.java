@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -101,6 +100,17 @@ public class TextAttributes implements Cloneable {
                             @JdkConstants.FontStyle int fontType) {
     attrs = AttributesFlyweight
       .create(foregroundColor, backgroundColor, fontType, effectColor, effectType, Collections.emptyMap(), errorStripeColor);
+  }
+
+  @ApiStatus.Internal
+  public void setAttributesNoCache(Color foregroundColor,
+                                   Color backgroundColor,
+                                   Color effectColor,
+                                   Color errorStripeColor,
+                                   EffectType effectType,
+                                   @JdkConstants.FontStyle int fontType) {
+    attrs = AttributesFlyweight
+      .createNoCache(foregroundColor, backgroundColor, fontType, effectColor, effectType, Collections.emptyMap(), errorStripeColor);
   }
 
   public boolean isEmpty(){
