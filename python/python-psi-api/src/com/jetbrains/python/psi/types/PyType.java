@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
@@ -64,8 +65,7 @@ public interface PyType {
    * TODO rename it to something like getPresentableName(), because it's not clear that these names are actually visible to end-user
    * @return name of the type
    */
-  @Nullable
-  String getName();
+  @Nullable @NlsSafe String getName();
 
   /**
    * @return true if the type is a known built-in type.
