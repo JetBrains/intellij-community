@@ -4357,7 +4357,6 @@ f:com.intellij.ide.ui.customization.CustomisedActionGroup
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.ide.ui.customization.CustomActionsSchema,java.lang.String,java.lang.String):V
 - equals(java.lang.Object):Z
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- getFirstAction():com.intellij.openapi.actionSystem.AnAction
 - getOrigin():com.intellij.openapi.actionSystem.ActionGroup
 - hashCode():I
 - resetChildren():V
