@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.newProjectWizard.impl
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
@@ -8,11 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.newProject.steps.PythonGenerateProjectCallback
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject.PyV3EmptyProjectGenerator
-import com.jetbrains.python.newProject.PyNewProjectSettings
-import com.jetbrains.python.newProject.PythonProjectGenerator
-import com.jetbrains.python.newProject.steps.PythonProjectSpecificSettingsStep
 import com.jetbrains.python.newProjectWizard.PyV3BaseProjectSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectBaseGenerator
 import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
@@ -32,8 +28,6 @@ internal class PyV3NewProjectStepAction : AbstractNewProjectStep<PyV3BaseProject
         is PyV3ProjectBaseGenerator<*> -> PyV3ProjectSpecificStep(projectGenerator, callback)
         // No "create" button, no any other setting: just promotion
         is PromoProjectGenerator -> PromoStep(projectGenerator)
-        // Legacy for backward compatibility
-        is PythonProjectGenerator -> createLegacyStep(projectGenerator)
         // Some other generator like node
         else -> ProjectSettingsStepBase(projectGenerator, callback)
       }
@@ -51,17 +45,6 @@ internal class PyV3NewProjectStepAction : AbstractNewProjectStep<PyV3BaseProject
         DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.python.group.name"), pythonActions),
         CollapsedActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.other.group.name"), nonPythonActions)
       )
-    }
-  }
-
-  private companion object {
-    /**
-     * Remove as soon all usages of [PythonProjectGenerator] are dropped
-     */
-    @Suppress("UNCHECKED_CAST", "DEPRECATION")
-    private fun createLegacyStep(projectGenerator: PythonProjectGenerator<*>): ProjectSettingsStepBase<PyV3BaseProjectSettings> {
-      return PythonProjectSpecificSettingsStep(projectGenerator as PythonProjectGenerator<PyNewProjectSettings>,
-                                               PythonGenerateProjectCallback()) as ProjectSettingsStepBase<PyV3BaseProjectSettings>
     }
   }
 }
