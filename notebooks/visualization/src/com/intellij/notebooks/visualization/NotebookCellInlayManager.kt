@@ -53,6 +53,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   override fun dispose() {
+    views.clear()
     editor.removeUserData(CELL_INLAY_MANAGER_KEY)
   }
 
