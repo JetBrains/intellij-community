@@ -16,10 +16,10 @@ import javax.swing.JComponent
 interface PluginModelController {
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean
   fun getState(model: PluginUiModel): PluginEnabledState
-  fun disable(model: PluginUiModel)
+  fun disable(models: List<PluginUiModel>)
   fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?, modalityState: ModalityState)
   fun addUninstalled(model: PluginUiModel)
-  fun enable(model: PluginUiModel)
+  fun enable(models: List<PluginUiModel>)
   fun getIcon(model: PluginUiModel, big: Boolean, error: Boolean, disabled: Boolean): Icon
   fun enableRequiredPlugins(model: PluginUiModel)
   fun isEnabled(model: PluginUiModel): Boolean

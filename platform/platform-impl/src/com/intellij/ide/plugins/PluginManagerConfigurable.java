@@ -1414,7 +1414,7 @@ public final class PluginManagerConfigurable
     }
 
     private void setEnabledState() {
-      setState(myPluginModelFacade.getModel(), getDescriptors(), myIsEnable);
+      setState(myPluginModelFacade, getModels(), myIsEnable);
     }
 
     /** Returns true, if in descriptors list not only Ultimate plugins while we are on Core license.
@@ -1426,20 +1426,20 @@ public final class PluginManagerConfigurable
   }
 
   /** Modifies the state of the plugin list, excluding Ultimate plugins when the Ultimate license is not active. */
-  private static void setState(MyPluginModel pluginModel, Collection<IdeaPluginDescriptor> descriptors, boolean isEnable) {
-    if (descriptors.isEmpty()) return;
+  private static void setState(PluginModelFacade pluginModelFacade, Collection<PluginUiModel> models, boolean isEnable) {
+    if (models.isEmpty()) return;
 
     var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-    var suitableDescriptors = descriptors.stream().
+    var suitableDescriptors = models.stream().
       filter(descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap)).toList();
 
     if (suitableDescriptors.isEmpty()) return;
 
     if (isEnable) {
-      pluginModel.enable(suitableDescriptors);
+      pluginModelFacade.enable(suitableDescriptors);
     }
     else {
-      pluginModel.disable(suitableDescriptors);
+      pluginModelFacade.disable(suitableDescriptors);
     }
   }
 
@@ -1563,8 +1563,8 @@ public final class PluginManagerConfigurable
       public void performCopy(@NotNull DataContext dataContext) {
         String text = StringUtil.join(component.getSelection(),
                                       pluginComponent -> {
-                                        IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
-                                        return String.format("%s (%s)", descriptor.getName(), descriptor.getVersion());
+                                        PluginUiModel model = pluginComponent.getPluginModel();
+                                        return String.format("%s (%s)", model.getName(), model.getVersion());
                                       }, "\n");
         CopyPasteManager.getInstance().setContents(new TextTransferable(text));
       }
@@ -1836,29 +1836,29 @@ public final class PluginManagerConfigurable
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Set<IdeaPluginDescriptor> descriptors = new HashSet<>();
+      Set<PluginUiModel> models = new HashSet<>();
       PluginsGroup group = myPluginModelFacade.getModel().getDownloadedGroup();
 
       if (group == null || group.ui == null) {
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
-        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+        for (PluginUiModel descriptor : UiPluginManager.getInstance().getPlugins()) {
           if (!appInfo.isEssentialPlugin(descriptor.getPluginId()) &&
               !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
-            descriptors.add(descriptor);
+            models.add(descriptor);
           }
         }
       }
       else {
         for (ListPluginComponent component : group.ui.plugins) {
-          IdeaPluginDescriptor plugin = component.getPluginDescriptor();
-          if (myPluginModelFacade.getModel().isEnabled(plugin) != myEnable) {
-            descriptors.add(plugin);
+          PluginUiModel plugin = component.getPluginModel();
+          if (myPluginModelFacade.isEnabled(plugin) != myEnable) {
+            models.add(plugin);
           }
         }
       }
 
-      setState(myPluginModelFacade.getModel(), descriptors, myEnable);
+      setState(myPluginModelFacade, models, myEnable);
     }
   }
 

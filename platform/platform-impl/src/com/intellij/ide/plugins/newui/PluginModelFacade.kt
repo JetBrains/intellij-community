@@ -28,11 +28,19 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun enable(model: PluginUiModel) {
-    getController(model).enable(model)
+    getController(model).enable(listOf(model))
+  }
+
+  fun enable(models: Collection<PluginUiModel>) {
+    models.groupBy { it.source }.forEach {  getController(it.key).enable(it.value)}
   }
 
   fun disable(model: PluginUiModel) {
-    getController(model).disable(model)
+    getController(model).disable(listOf(model))
+  }
+
+  fun disable(models: Collection<PluginUiModel>) {
+    models.groupBy { it.source }.forEach {  getController(it.key).disable(it.value)}
   }
 
   fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState) {

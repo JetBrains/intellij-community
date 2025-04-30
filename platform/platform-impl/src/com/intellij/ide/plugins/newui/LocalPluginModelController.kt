@@ -32,12 +32,12 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
     return localPluginModel.getState(model.pluginId)
   }
 
-  override fun enable(model: PluginUiModel) {
-    localPluginModel.enable(listOf(model.getDescriptor()))
+  override fun enable(models: List<PluginUiModel>) {
+    localPluginModel.enable(models.map { it.getDescriptor() })
   }
 
-  override fun disable(model: PluginUiModel) {
-    localPluginModel.disable(listOf(model.getDescriptor()))
+  override fun disable(models: List<PluginUiModel>) {
+    localPluginModel.disable(models.map { it.getDescriptor() })
   }
 
   override fun installOrUpdatePlugin(component: JComponent, model: PluginUiModel, updateDescriptor: IdeaPluginDescriptor?, modalityState: ModalityState) {
