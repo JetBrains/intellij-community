@@ -1968,6 +1968,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                           @Nullable AnAction nextErrorAction,
                                           @Nullable AnAction prevErrorAction) {
       super(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true);
+      putClientProperty(SUPPRESS_FAST_TRACK, true);
       myEditor = editor;
       myEditorButtonLook = editorButtonLook;
       myNextErrorAction = nextErrorAction;
