@@ -190,7 +190,7 @@ public final class PyPackageManagerUI {
             if (e instanceof PyExecutionException pyExecutionException) {
               PyError pyError = pyExecutionException.getPyError();
               if (pyError instanceof ExecError execError) {
-                return Arrays.stream(execError.getExeAndArgs().getSecond());
+                return Arrays.stream(execError.getArgs());
               }
             }
             return null;

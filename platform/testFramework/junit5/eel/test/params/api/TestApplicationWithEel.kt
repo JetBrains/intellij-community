@@ -23,7 +23,10 @@ import org.junit.jupiter.api.extension.ExtendWith
  * ```
  * -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
  * ```
- * Run a test, and failure will report an option name
+ * Run a test, and failure will report an option name.
+ *
+ * You either need to have providers (i.e. `intellij.platform.ijent.testFramework` in a classpath),
+ * or disable [atLeastOneRemoteEelRequired]
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)

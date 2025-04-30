@@ -3,7 +3,11 @@ package com.intellij.python.community.execService.impl
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.execute
+import com.intellij.platform.eel.getOr
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.*
@@ -75,8 +79,7 @@ internal object ExecServiceImpl : ExecService {
 }
 
 private data class EelExecutableProcess(
-  val eel: EelApi,
-  val exe: String,
+  val exe: EelPath,
   val args: List<String>,
   val env: Map<String, String>,
   val workingDirectory: Path?,
@@ -84,8 +87,8 @@ private data class EelExecutableProcess(
 )
 
 private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, options: ExecOptions): EelExecutableProcess {
-  val (eel, exe, args) = when (this) {
-    is WhatToExec.Binary -> Triple(binary.getEelDescriptor().upgrade(), binary.asEelPath().toString(), args)
+  val (exe, args) = when (this) {
+    is WhatToExec.Binary -> Pair(binary, args)
     is WhatToExec.Helper -> {
       val eel = python.getEelDescriptor().upgrade()
       val localHelper = PythonHelpersLocator.findPathInHelpers(helper)
@@ -94,24 +97,22 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
         source = localHelper,
         target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
       ).asEelPath().toString()
-      Triple(eel, python.asEelPath().toString(), listOf(remoteHelper) + args)
+      Pair(python, listOf(remoteHelper) + args)
     }
-    is WhatToExec.Command -> Triple(eel, command, args)
   }
 
   val description = options.processDescription ?: when (this) {
     is WhatToExec.Binary -> PyExecBundle.message("py.exec.defaultName.process")
     is WhatToExec.Helper -> PyExecBundle.message("py.exec.defaultName.helper")
-    is WhatToExec.Command -> PyExecBundle.message("py.exec.defaultName.command")
   }
 
-  return EelExecutableProcess(eel, exe, args, options.env, options.workingDirectory, description)
+  return EelExecutableProcess(exe.asEelPath(), args, options.env, options.workingDirectory, description)
 }
 
 @CheckReturnValue
 private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecError> {
   val workingDirectory = if (workingDirectory != null && !workingDirectory.isAbsolute) workingDirectory.toRealPath() else workingDirectory
-  val executionResult = eel.exec.execute(exe)
+  val executionResult = exe.descriptor.upgrade().exec.execute(exe.toString())
     .args(args)
     .env(env)
     .workingDirectory(workingDirectory?.asEelPath()).eelIt()
@@ -124,7 +125,8 @@ private suspend fun EelExecutableProcess.run(): Result<EelProcess, ExecError> {
 
 private fun EelExecutableProcess.failAsCantStart(executeProcessError: EelExecApi.ExecuteProcessError): Result.Failure<ExecError> {
   return ExecError(
-    command = arrayOf(exe) + args.toTypedArray(),
+    exe = exe,
+    args = args.toTypedArray(),
     additionalMessageToUser = PyExecBundle.message("py.exec.start.error", description, executeProcessError.message, executeProcessError.errno),
     errorReason = ExecErrorReason.CantStart(executeProcessError.errno, executeProcessError.message)
   ).logAndFail()
@@ -134,7 +136,8 @@ private suspend fun EelExecutableProcess.killProcessAndFailAsTimeout(eelProcess:
   eelProcess.kill()
 
   return ExecError(
-    command = arrayOf(exe) + args.toTypedArray(),
+    exe = exe,
+    args = args.toTypedArray(),
     additionalMessageToUser = PyExecBundle.message("py.exec.timeout.error", description, timeout),
     errorReason = ExecErrorReason.Timeout
   ).logAndFail()
@@ -146,7 +149,8 @@ private fun EelExecutableProcess.failAsExecutionFailed(processOutput: ProcessOut
   }
 
   return ExecError(
-    command = arrayOf(exe) + args.toTypedArray(),
+    exe = exe,
+    args = args.toTypedArray(),
     additionalMessageToUser = additionalMessage,
     errorReason = processOutput.asExecutionFailed()
   ).logAndFail()

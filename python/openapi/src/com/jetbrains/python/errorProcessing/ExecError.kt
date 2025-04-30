@@ -3,6 +3,7 @@ package com.jetbrains.python.errorProcessing
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.eel.path.EelPath
 import com.jetbrains.python.PyCommunityBundle
 import org.jetbrains.annotations.Nls
 
@@ -10,22 +11,19 @@ import org.jetbrains.annotations.Nls
  * External process error.
  */
 class ExecError(
+  val exe: EelPath,
   /**
-   * I.e ['python', '-v']
+   * I.e ['-v']
    */
-  val command: Array<String>,
+  val args: Array<String>,
 
   val errorReason: ExecErrorReason,
   /**
    * optional message to be displayed to the user: Why did we run this process. I.e "running pip to install package".
    */
   val additionalMessageToUser: @NlsContexts.DialogTitle String? = null,
-) : PyError(getExecErrorMessage(command, additionalMessageToUser, errorReason)) {
-  val exeAndArgs: Pair<String, Array<String>> = Pair(command[0], command.drop(1).toTypedArray())
-
-  init {
-    assert(command.isNotEmpty()) { "Command can't be empty" }
-  }
+) : PyError(getExecErrorMessage(exe.toString(), args, additionalMessageToUser, errorReason)) {
+  val asCommand: String get() = (arrayOf(exe.toString()) + args).joinToString(" ")
 }
 
 
@@ -51,12 +49,13 @@ sealed interface ExecErrorReason {
 fun ProcessOutput.asExecutionFailed(): ExecErrorReason.UnexpectedProcessTermination =
   ExecErrorReason.UnexpectedProcessTermination(exitCode, stdout, stderr)
 
-internal fun getExecErrorMessage(
-  command: Array<String>,
+private fun getExecErrorMessage(
+  exec: String,
+  args: Array<String>,
   additionalMessage: @NlsContexts.DialogTitle String?,
   execErrorReason: ExecErrorReason,
 ): @Nls String {
-  val commandLine = command.joinToString(" ")
+  val commandLine = exec + args.joinToString(" ")
   return when (val r = execErrorReason) {
     is ExecErrorReason.CantStart -> {
       PyCommunityBundle.message("python.execution.cant.start.error",

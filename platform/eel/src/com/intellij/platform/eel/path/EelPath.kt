@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
@@ -145,6 +145,9 @@ sealed interface EelPath {
 
   fun toDebugString(): String
 
+  /**
+   * @return path in the particular eel, i.e.: `/foo` or `c:\bar`
+   */
   override fun toString(): String
 
   @Deprecated("Use EelPlatform instead, will be removed soon")

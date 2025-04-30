@@ -58,7 +58,7 @@ internal sealed class HatchUIError(message: String) : MessageError(message) {
 
   class HatchExecutionFailure(execError: ExecError) : HatchUIError(
     message("sdk.create.custom.hatch.error.execution.failed",
-            execError.command.joinToString(" ")
+            execError.asCommand
     )
   )
 }

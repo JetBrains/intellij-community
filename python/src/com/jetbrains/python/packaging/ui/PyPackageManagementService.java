@@ -329,7 +329,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       final String stderrCause = findErrorCause(execFailed.getStderr());
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
       final String message = cause != null ? cause : pyExecEx.getMessage();
-      final String command = StringUtil.join(execError.getCommand(), " ");
+      final String command = execError.getAsCommand();
       return new PyPackageInstallationErrorDescription(message, command,
                                                        stdout.isEmpty() ? execFailed.getStderr() : stdout + "\n" + execFailed.getStderr(),
                                                        findErrorSolution(pyExecEx, cause, sdk), packageName, sdk);
@@ -358,7 +358,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
         }
       }
 
-      if ("pip".equals(e.getCommand()[0]) && sdk != null) {
+      var fileName = e.getExe().getFileName();
+      if (fileName.startsWith("pip") && sdk != null) {
         return PySdkBundle.message("python.sdk.try.to.run.command.from.system.terminal", sdk.getHomePath());
       }
     }

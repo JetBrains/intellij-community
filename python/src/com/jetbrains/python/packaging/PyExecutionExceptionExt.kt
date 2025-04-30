@@ -2,10 +2,12 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.platform.eel.provider.asEelPath
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.MessageError
 import java.io.IOException
+import kotlin.io.path.Path
 
 /**
  * A temporary hack for some outdated code (see usages), do not use in a new code. Stay away from [PyExecutionException]
@@ -18,8 +20,7 @@ internal fun PyExecutionException.copyWith(newCommand: String, newArgs: List<Str
           PyExecutionException(IOException(reason.cantExecProcessError), err.additionalMessageToUser, newCommand, newArgs, fixes)
         }
         ExecErrorReason.Timeout -> {
-          val command = arrayOf(newCommand) + newArgs.toTypedArray()
-          PyExecutionException(ExecError(command, ExecErrorReason.Timeout, err.additionalMessageToUser))
+          PyExecutionException(ExecError(Path(newCommand).asEelPath(), newArgs.toTypedArray(), ExecErrorReason.Timeout, err.additionalMessageToUser))
         }
         is ExecErrorReason.UnexpectedProcessTermination -> {
           val output = ProcessOutput(reason.stdout, reason.stderr, reason.exitCode, false, false)

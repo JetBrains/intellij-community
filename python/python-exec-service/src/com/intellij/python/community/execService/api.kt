@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -89,18 +90,21 @@ sealed interface WhatToExec {
   /**
    * [binary] (can reside on local or remote Eel, [EelApi] is calculated out of it)
    */
-  data class Binary(val binary: Path) : WhatToExec
+  data class Binary(val binary: Path) : WhatToExec {
+    companion object {
+      /**
+       * Resolves relative name to the full name or `null` if [relativeBinName] can't be found in the path.
+       */
+      suspend fun fromRelativeName(eel: EelApi, relativeBinName: String): Binary? =
+        eel.exec.findExeFilesInPath(relativeBinName).firstOrNull()?.let { Binary(it.asNioPath()) }
+    }
+  }
 
   /**
    * Execute [helper] on [python]. If [python] resides on remote Eel -- helper is copied there.
    * Note, that only **one** helper file is copied, not all helpers.
    */
   data class Helper(val python: PythonBinary, val helper: HelperName) : WhatToExec
-
-  /**
-   * Random command on [eel]. [EelApi] will look for it in the path
-   */
-  data class Command(val eel: EelApi, val command: String) : WhatToExec
 }
 
 /**

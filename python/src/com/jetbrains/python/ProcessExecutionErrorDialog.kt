@@ -60,7 +60,7 @@ fun showProcessExecutionErrorDialog(
   val errorMessageLabel = JBLabel(UIUtil.toHtml(errorMessageText), Messages.getErrorIcon(), SwingConstants.LEFT)
 
   val commandOutputTextPane = JTextPane().apply {
-    val command = execError.command.joinToString(" ")
+    val command = execError.asCommand
     when (val err = execError.errorReason) {
       is ExecErrorReason.CantStart -> {
         appendProcessOutput(command, err.cantExecProcessError, execError.message, null)
