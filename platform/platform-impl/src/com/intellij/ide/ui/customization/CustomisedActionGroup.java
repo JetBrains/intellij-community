@@ -60,11 +60,6 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
       delegate, g.getChildActionsOrStubs(), mySchema, myDefaultGroupName, myRootGroupName);
   }
 
-  public @Nullable AnAction getFirstAction() {
-    AnAction[] children = getChildren(null);
-    return children.length > 0 ? children[0] : null;
-  }
-
   /** @deprecated Use {@link #getDelegate()} instead */
   @Deprecated(forRemoval = true)
   public @NotNull ActionGroup getOrigin() { return getDelegate(); }
