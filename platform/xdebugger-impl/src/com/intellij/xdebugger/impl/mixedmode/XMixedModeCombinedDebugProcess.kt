@@ -308,4 +308,9 @@ class XMixedModeCombinedDebugProcess(
     val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
     this.stateMachine.set(state)
   }
+
+  fun setNextStatement(position: XSourcePosition) {
+    assert(highExtension.belongsToMe(position.file)) // this operation isn't implemented for a low-level debug process
+    stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelSetNextStatementRequested(position))
+  }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.mixedMode
 
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XSuspendContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,4 +31,6 @@ interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExten
   fun stoppedInHighLevelSuspendContext(suspendContext: XSuspendContext): Boolean
 
   suspend fun abortHighLevelStepping()
+
+  fun setNextStatement(suspendContext: XSuspendContext, position: XSourcePosition)
 }

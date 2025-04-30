@@ -47,6 +47,8 @@ internal class MixedModeProcessTransitionStateMachine(
   class LowLevelRunToAddressStarted(high: XSuspendContext) : WithHighLevelDebugSuspendContextState(high)
   class HighLevelRunToAddressStarted(val sourcePosition: XSourcePosition, val high: XSuspendContext) : State
   class HighLevelRunToAddressStartedLowRun : State
+  class HighLevelSetStatementStarted(val low : XSuspendContext) : State
+  class HighLevelSetStatementHighRunning(val low : XSuspendContext) : State
   object Exited : State
 
   interface Event
@@ -63,6 +65,7 @@ internal class MixedModeProcessTransitionStateMachine(
   class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
   class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
   class LowLevelStepRequested(val mixedSuspendContext: XMixedModeSuspendContext, val stepType: StepType) : Event
+  class HighLevelSetNextStatementRequested(val position: XSourcePosition) : Event
   enum class StepType {
     Over, Into, Out
   }
@@ -126,6 +129,9 @@ internal class MixedModeProcessTransitionStateMachine(
 
             logger.info("Low level process has been stopped")
             changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
+          }
+          is HighLevelSetStatementHighRunning -> {
+            changeState(BothStopped(currentState.low, event.suspendContext))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -334,6 +340,11 @@ internal class MixedModeProcessTransitionStateMachine(
               changeState(LeaveHighRunningWaitingForLowStop)
             }
           }
+          is HighLevelSetStatementStarted -> {
+            // Technically thread may not run (it's not necessary for this operation),
+            // but the state machine will be notified as if it became running
+            changeState(HighLevelSetStatementHighRunning(currentState.low))
+          }
           else -> throwTransitionIsNotImplemented(event)
         }
       }
@@ -353,6 +364,15 @@ internal class MixedModeProcessTransitionStateMachine(
             changeState(HighLevelRunToAddressStarted(event.sourcePosition, event.high))
             lowExtension.continueAllThreads(emptySet(), silent = false)
           }
+        }
+      }
+      is HighLevelSetNextStatementRequested -> {
+        when(currentState) {
+          is BothStopped -> {
+            changeState(HighLevelSetStatementStarted(currentState.low))
+            highExtension.setNextStatement(currentState.high, event.position)
+          }
+          else -> throwTransitionIsNotImplemented(event)
         }
       }
       is Stop -> {
