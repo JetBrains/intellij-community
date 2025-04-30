@@ -133,7 +133,7 @@ private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
 fun KtNamedFunction.getKMPGradleConfigurationName(runTask: KotlinJvmRunTaskData): String =
     "${getConfigurationName()} [${runTask.targetName}]"
 
-fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSourceDirectoryName() ?: name
+fun KtNamedFunction.getConfigurationName(): String? = ReadAction.compute<Module, Throwable> { module }?.getSubprojectNameOfGradleRoot() ?: name
 
 @RequiresReadLock
 fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClassScriptParameter(function)} $quietParameter"
@@ -141,7 +141,13 @@ fun kmpJvmGradleTaskParameters(function: KtNamedFunction): String = "${mainClass
 @RequiresReadLock
 internal fun mainClassScriptParameter(function: KtFunction): String = "-DmainClass=${function.containingKtFile.javaFileFacadeFqName}"
 
-private fun Module.getSourceDirectoryName(): String? = name.split(".").getOrNull(1)
+/**
+ * Returns the name of the direct subproject of the Gradle root project in which this module is located in.
+ *
+ * For example, for both modules "SomeKMPProject.composeApp.desktopMain" and "SomeKMPProject.composeApp.wasmJsMain"
+ * the return value would be "composeApp".
+ */
+private fun Module.getSubprojectNameOfGradleRoot(): String? = name.split(".").getOrNull(1)
 
 fun configureKmpJvmRunConfiguration(
     configuration: GradleRunConfiguration,
