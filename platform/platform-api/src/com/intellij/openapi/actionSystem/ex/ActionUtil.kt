@@ -380,7 +380,8 @@ object ActionUtil {
    */
   @JvmStatic
   fun performAction(action: AnAction, event: AnActionEvent): AnActionResult {
-    val result = (event.actionManager as ActionManagerEx).performWithActionCallbacks(action, event) {
+    val actionManager = event.actionManager as ActionManagerEx
+    val result = actionManager.performWithActionCallbacks(action, event) {
       doPerformActionOrShowPopup(action, event, null)
     }
     if (result.isIgnored && event.project.let { it != null && DumbService.getInstance(it).isDumb && !action.isDumbAware }) {
@@ -441,11 +442,13 @@ object ActionUtil {
     }
     val context = DataManager.getInstance().getDataContext(inputEvent.component)
     val event = AnActionEvent.createEvent(InputEventDummyAction, context, null, place, uiKind, inputEvent)
-    (event.actionManager as ActionManagerEx).performWithActionCallbacks(InputEventDummyAction, event, runnable)
+    val actionManager = event.actionManager as ActionManagerEx
+    actionManager.performWithActionCallbacks(InputEventDummyAction, event, runnable)
   }
 
   /** Prefer regular [performAction] */
   @ApiStatus.Internal
+  @Deprecated("Use [performAction] or [ActionManagerEx.performWithActionCallbacks] instead")
   @JvmStatic
   fun performDumbAwareWithCallbacks(
     action: AnAction,

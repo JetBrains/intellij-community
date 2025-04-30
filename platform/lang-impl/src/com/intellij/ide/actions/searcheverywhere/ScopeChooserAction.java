@@ -7,7 +7,7 @@ import com.intellij.ide.util.scopeChooser.ScopeSeparator;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -116,7 +116,8 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
           KeyEvent.getExtendedKeyCodeForChar(TOGGLE), TOGGLE);
         AnActionEvent event = AnActionEvent.createFromAnAction(
           ScopeChooserAction.this, inputEvent, ActionPlaces.TOOLBAR, dataContext);
-        ActionUtil.performDumbAwareWithCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
+        ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
+        actionManager.performWithActionCallbacks(ScopeChooserAction.this, event, ScopeChooserAction.this::onProjectScopeToggled);
       }
     });
     if (ExperimentalUI.isNewUI()) {

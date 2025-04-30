@@ -11,6 +11,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionMenu
@@ -566,10 +567,10 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     }
 
     if (doPerform && chosen != null) {
-      doPerformActionInner(e = e, processor = processor, context = context, action = chosen.action, actionEvent = chosen.event)
+      doPerformActionInner(e = e, processor = processor, action = chosen.action, actionEvent = chosen.event)
       logTimeMillis(chosen.startedAt, chosen.action)
     }
-    else if (hasSecondStroke && chosen != null) {
+    else if (hasSecondStroke) {
       waitSecondStroke(chosen.action, chosen.event.presentation)
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
@@ -828,15 +829,16 @@ private suspend fun doUpdateActionsInner(actions: List<AnAction>,
 
 private fun doPerformActionInner(e: InputEvent,
                                  processor: ActionProcessor,
-                                 context: DataContext,
                                  action: AnAction,
                                  actionEvent: AnActionEvent) {
   processor.onUpdatePassed(e, action, actionEvent)
   val eventCount = IdeEventQueue.getInstance().eventCount
-
-  ActionUtil.performDumbAwareWithCallbacks(action, actionEvent) {
+  val actionManager = actionEvent.actionManager as ActionManagerEx
+  actionManager.performWithActionCallbacks(action, actionEvent) {
     LOG.assertTrue(eventCount == IdeEventQueue.getInstance().eventCount, "Event counts do not match: $eventCount != ${IdeEventQueue.getInstance().eventCount}")
-    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity { processor.performAction(e, action, actionEvent) }
+    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+      processor.performAction(e, action, actionEvent)
+    }
   }
 }
 

@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -64,11 +63,10 @@ public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
         TraceKt.use(PerformanceTestSpan.TRACER.spanBuilder(DelayTypeCommand.SPAN_NAME), span -> {
           AnAction action = ActionManagerEx.getInstanceEx().getAction(actionID);
           AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, "", EditorUtils.createEditorContext(editor));
-          ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
-            CommandProcessor.getInstance().executeCommand(project, () -> {
-              action.actionPerformed(actionEvent);
-            }, "", null, editor.getDocument());
-          });
+          ActionManagerEx actionManager = (ActionManagerEx)actionEvent.getActionManager();
+          actionManager.performWithActionCallbacks(action, actionEvent, () ->
+            CommandProcessor.getInstance().executeCommand(project, () ->
+              action.actionPerformed(actionEvent), "", null, editor.getDocument()));
           span.addEvent("Typing " + actionID);
           return null;
         });

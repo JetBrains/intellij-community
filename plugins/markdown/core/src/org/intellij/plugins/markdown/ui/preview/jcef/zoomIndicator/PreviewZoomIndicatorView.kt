@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.DumbAwareAction
@@ -42,7 +42,8 @@ class PreviewZoomIndicatorView(private val preview: MarkdownJCEFHtmlPanel) : JPa
   internal class SettingsButton(settingsAction: SettingsAction) : ActionButton(settingsAction, settingsAction.templatePresentation.clone(), ActionPlaces.POPUP, JBUI.size(22, 22)) {
     override fun performAction(e: MouseEvent?) {
       val event = AnActionEvent.createEvent(dataContext, myPresentation, myPlace, ActionUiKind.TOOLBAR, e)
-      ActionUtil.performDumbAwareWithCallbacks(myAction, event) { actionPerformed(event) }
+      val actionManager = event.actionManager as ActionManagerEx
+      actionManager.performWithActionCallbacks(myAction, event) { actionPerformed(event) }
     }
     override fun isShowing() = true
   }

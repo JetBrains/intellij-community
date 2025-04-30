@@ -7,6 +7,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorActionUtil;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.actionSystem.impl.*;
@@ -362,9 +363,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (step != null && item != null && step.isSelectable(item) &&
           item.getKeepPopupOnPerform() != KeepPopupOnPerform.Never && item.getAction() instanceof ToggleAction toggle) {
         AnActionEvent event = step.createAnActionEvent(item, keyEvent);
-        ActionUtil.performDumbAwareWithCallbacks(toggle, event, () -> {
-          toggle.setSelected(event, isRightKey);
-        });
+        ActionManagerEx actionManager = (ActionManagerEx)event.getActionManager();
+        actionManager.performWithActionCallbacks(toggle, event, () ->
+          toggle.setSelected(event, isRightKey));
         step.updateStepItems(getList());
         return true;
       }

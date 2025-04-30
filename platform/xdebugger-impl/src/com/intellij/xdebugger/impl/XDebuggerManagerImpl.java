@@ -17,7 +17,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -25,13 +25,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -42,7 +42,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -58,7 +57,6 @@ import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
-import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
@@ -72,8 +70,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
@@ -473,11 +473,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
           XSourcePositionImpl position = XSourcePositionImpl.create(e.getEditor().getVirtualFile(), lineNumber);
           if (position != null) {
             e.consume();
-            AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR);
+            ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+            AnAction action = actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR);
             if (action == null) throw new AssertionError("'" + IdeActions.ACTION_RUN_TO_CURSOR + "' action not found");
             DataContext dataContext = DataManager.getInstance().getDataContext(e.getMouseEvent().getComponent());
             AnActionEvent event = AnActionEvent.createFromAnAction(action, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER, dataContext);
-            ActionUtil.performDumbAwareWithCallbacks(action, event, () -> session.runToPosition(position, false));
+            actionManager.performWithActionCallbacks(action, event, () -> session.runToPosition(position, false));
           }
         }
       }
