@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
+import com.intellij.platform.feedback.isSuitableToShowByExplicitUserAction
+import com.intellij.platform.feedback.showFeedbackDialog
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
@@ -17,17 +19,11 @@ class TerminalFeedbackAction : DumbAwareAction(), ActionRemoteBehaviorSpecificat
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible =
-      project != null &&
-      TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.REWORKED &&
-      ReworkedTerminalSurveyConfig.checkIdeIsSuitable()
+    e.presentation.isEnabledAndVisible = project != null && ReworkedTerminalSurveyConfig.isSuitableToShowByExplicitUserAction(project)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val dialog = ReworkedTerminalSurveyConfig.createFeedbackDialog(project, forTest = false)
-    if (dialog.showAndGet()) {
-      CommonFeedbackSurveyService.feedbackSurveyAnswerSent(ReworkedTerminalSurveyConfig.surveyId)
-    }
+    ReworkedTerminalSurveyConfig.showFeedbackDialog(project, forTest = false)
   }
 }
