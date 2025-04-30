@@ -60,7 +60,7 @@ class ActionsInterpretationHandler(
           break
         }
 
-        val iterationLabel = if (interpretationConfig.iterationCount != null) "Iteration $iteration" else ""
+        val iterationLabel = if ((interpretationConfig.iterationCount ?: 0) > 1) "Iteration $iteration" else ""
         val chunkName = if (iterationLabel.isNotEmpty()) "${chunk.name} - $iterationLabel" else chunk.name
 
         workspace.fullLineLogsStorage.enableLogging(chunkName)
