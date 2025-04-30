@@ -242,12 +242,10 @@ object ActionUtil {
     }
     val wasEnabledBefore = presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB)
     val dumbMode = isDumbMode(e.project)
-    if (checkDumb) {
-      if (wasEnabledBefore != null && !dumbMode) {
-        presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null)
-        presentation.isEnabled = wasEnabledBefore
-        presentation.isVisible = true
-      }
+    if (wasEnabledBefore != null && !dumbMode) {
+      presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null)
+      presentation.isEnabled = wasEnabledBefore
+      presentation.isVisible = true
     }
     val enabledBeforeUpdate = presentation.isEnabled
     val allowed = !dumbMode || action.isDumbAware
@@ -265,14 +263,12 @@ object ActionUtil {
       SlowOperations.startSection(SlowOperations.ACTION_UPDATE).use {
         val startTime = System.nanoTime()
         runnable()
+        isPerformed = true
         val duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)
         ActionsCollector.getInstance().recordUpdate(action, e, duration)
       }
-      isPerformed = true
-      if (checkDumb) {
-        presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
-        presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
-      }
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled)
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible)
       if (presentation.isEnabled && action is RequiresPermissions) {
         checkPermissionsGranted(*action.getRequiredPermissions().toTypedArray())
       }
@@ -281,7 +277,7 @@ object ActionUtil {
       return AnActionResult.failed(ex)
     }
     catch (ex: IndexNotReadyException) {
-      if (checkDumb && !allowed && wasEnabledBefore == null) {
+      if (!allowed && wasEnabledBefore == null) {
         presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate)
       }
       if (!checkDumb || !allowed) {
