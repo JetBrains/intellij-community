@@ -25,6 +25,7 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +66,20 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     myModificationTracker = PsiModificationTracker.getInstance(project);
 
     myFileManager = new FileManagerImpl(this, myFileIndex);
+
+    myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)myModificationTracker);
+  }
+  
+  @NonInjectable
+  public PsiManagerImpl(@NotNull Project project, FileManagerEx fileManager) {
+    // we need to initialize PsiBuilderFactory service, so it won't initialize under PsiLock from ChameleonTransform
+    PsiBuilderFactory.getInstance();
+
+    myProject = project;
+    myFileIndex = NotNullLazyValue.createValue(() -> FileIndexFacade.getInstance(project));
+    myModificationTracker = PsiModificationTracker.getInstance(project);
+
+    myFileManager = fileManager;
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)myModificationTracker);
   }
