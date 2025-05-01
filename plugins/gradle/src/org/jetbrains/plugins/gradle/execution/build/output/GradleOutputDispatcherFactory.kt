@@ -83,6 +83,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           }
           else if (cleanLine.startsWith("> Configure") ||
                    cleanLine.startsWith("FAILURE: Build failed") ||
+                   cleanLine.startsWith("FAILURE: Build completed") ||
+                   cleanLine.startsWith("[Incubating] Problems report is available at:") ||
                    cleanLine.startsWith("CONFIGURE SUCCESSFUL") ||
                    cleanLine.startsWith("BUILD SUCCESSFUL")) {
             myCurrentReader = myRootReader
