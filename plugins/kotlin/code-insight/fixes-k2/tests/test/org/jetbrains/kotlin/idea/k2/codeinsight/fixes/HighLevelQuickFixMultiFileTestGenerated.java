@@ -656,6 +656,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
             }
 
+            @TestMetadata("extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_companionReceiver.test")
+            public void testExtensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_companionReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_companionReceiver.test");
+            }
+
+            @TestMetadata("extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver.test")
+            public void testExtensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/extensionFunctionImport_atPrimaryConstructorPropertyDefaultValuePosition_outerClassReceiver.test");
+            }
+
             @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
             public void testExtensionFunctionWithGenericImport() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
