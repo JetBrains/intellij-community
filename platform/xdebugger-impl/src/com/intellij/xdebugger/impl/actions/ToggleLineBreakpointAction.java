@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,7 +34,7 @@ import java.util.List;
 import static com.intellij.xdebugger.impl.XEditorSourcePositionKt.withEditor;
 
 @ApiStatus.Internal
-public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable {
+public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   private static final XToggleLineBreakpointActionHandler ourHandler = new XToggleLineBreakpointActionHandler(false);
 
   public ToggleLineBreakpointAction() {
