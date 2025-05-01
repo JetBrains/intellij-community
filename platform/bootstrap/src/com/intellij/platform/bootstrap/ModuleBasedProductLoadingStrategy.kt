@@ -22,10 +22,7 @@ import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepos
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipEntryResolverPool
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -77,32 +74,36 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
-  ): Deferred<List<IdeaPluginDescriptorImpl>> = scope.async {
+  ): Deferred<List<IdeaPluginDescriptorImpl>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
     val isInDevServerMode = AppMode.isDevServer()
     val pathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
     val useCoreClassLoader = pathResolver.isRunningFromSources ||
                              platformPrefix.startsWith("CodeServer") ||
                              java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
-    val result = java.util.ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
     val (corePlugin, _) = scope.loadCorePlugin(platformPrefix, isInDevServerMode, isUnitTestMode, isRunningFromSources, loadingContext, pathResolver, useCoreClassLoader, mainClassLoader)
-    result.add(corePlugin)
-    result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool))
-    result.addAll(loadBundledPluginDescriptors(scope, loadingContext, zipPool))
-    result.awaitAll().filterNotNull()
+    val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
+    val bundled = loadBundledPluginDescriptors(scope, loadingContext, zipPool)
+    return scope.async {
+      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().plugins.size + bundled.await().plugins.size).apply {
+        corePlugin.await()?.let { add(it) }
+        addAll(custom.await().plugins)
+        addAll(bundled.await().plugins)
+      }
+    }
   }
 
   private fun loadBundledPluginDescriptors(
     scope: CoroutineScope,
     context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
-  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  ): Deferred<BundledPluginsList> {
     val mainGroupModulesSet = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor.moduleId }
     val mainGroupResourceRootSet = productModules.mainModuleGroup.includedModules.flatMapTo(HashSet()) { it.moduleDescriptor.resourceRootPaths }
     val serviceModuleMappingDeferred = scope.async { 
       ServiceModuleMapping.buildMapping(productModules)
     }
-    return productModules.bundledPluginModuleGroups.map { moduleGroup ->
+    val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
         if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet }) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
@@ -118,6 +119,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         }
       }
     }
+    return scope.async { BundledPluginsList(bundled.awaitAll().filterNotNull()) }
   }
 
   private fun loadCustomPluginDescriptors(
@@ -125,13 +127,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     customPluginDir: Path,
     context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
-  ): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+  ): Deferred<CustomPluginsList> {
     if (!Files.isDirectory(customPluginDir)) {
-      return emptyList()
+      return CompletableDeferred(CustomPluginsList(customPluginDir, emptyList()))
     }
-
-    return Files.newDirectoryStream(customPluginDir).use { dirStream ->
-      val deferredDescriptors = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
+    val deferredDescriptors = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
+    Files.newDirectoryStream(customPluginDir).use { dirStream ->
       val additionalRepositoryPaths = ArrayList<Path>()
       dirStream.forEach { file ->
         val moduleRepository = file.resolve("module-descriptors.jar")
@@ -149,8 +150,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         }
       }
       deferredDescriptors.addAll(loadPluginDescriptorsFromAdditionalRepositories(scope, additionalRepositoryPaths, context, zipFilePool))
-      deferredDescriptors
     }
+    return scope.async { CustomPluginsList(customPluginDir, deferredDescriptors.awaitAll().filterNotNull()) }
   }
 
   private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,
