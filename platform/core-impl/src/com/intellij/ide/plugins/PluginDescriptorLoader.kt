@@ -623,20 +623,18 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       loadingContext = loadingContext,
       zipPool = zipPool,
       bundledPluginDir = effectiveBundledPluginDir,
-      scope = this,
       result = result,
     )
   }
   return@async result.awaitAllNotNull()
 }
 
-private fun loadFromPluginClasspathDescriptor(
+private fun CoroutineScope.loadFromPluginClasspathDescriptor(
   input: DataInputStream,
   jarOnly: Boolean,
   loadingContext: PluginDescriptorLoadingContext,
   zipPool: ZipEntryResolverPool,
   bundledPluginDir: Path,
-  scope: CoroutineScope,
   result: ArrayList<Deferred<IdeaPluginDescriptorImpl?>>,
 ) {
   val pluginCount = input.readUnsignedShort()
@@ -656,7 +654,7 @@ private fun loadFromPluginClasspathDescriptor(
       FileItem(file = file, path = path)
     }
 
-    result.add(scope.async {
+    result.add(async {
       try {
         loadPluginDescriptor(
           fileItems = fileItems,
