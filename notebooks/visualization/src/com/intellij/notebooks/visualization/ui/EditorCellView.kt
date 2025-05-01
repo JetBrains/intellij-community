@@ -1,28 +1,23 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.visualization.EditorCellInputFactory
-import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
 
-class EditorCellView(
-  val editor: EditorImpl,
-  val cell: EditorCell,
-  private val cellInlayManager: NotebookCellInlayManager,
-) : EditorCellViewComponent(), Disposable {
-  val input: EditorCellInput = createEditorCellInput()
+class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
+  private val editor = cell.editor
 
+  val input: EditorCellInput = EditorCellInput(cell).also {
+    add(it)
+  }
   var outputs: EditorCellOutputsView? = null
     private set
 
@@ -40,63 +35,36 @@ class EditorCellView(
     SelfManagedControllerFactory.createControllers(this)
   }
 
-
-  // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on the same lines.
-  private var lastHighLightersLines: IntRange? = null
-
-
   init {
     cell.source.bind(this) {
       updateInput()
     }
     cell.isSelected.bind(this) { selected ->
-      updateSelected()
+      updateFolding()
     }
     cell.isHovered.bind(this) {
       updateHovered()
     }
 
-    updateSelfManaged()
     updateOutputs()
-  }
-
-  private fun updateSelected() {
-    updateFolding()
-    updateCellHighlight()
-  }
-
-  override fun dispose() {
-    super.dispose()
-  }
-
-  private fun createEditorCellInput(): EditorCellInput {
-    val inputFactory = getInputFactories().firstOrNull { it.supports(editor, cell) } ?: TextEditorCellInputFactory()
-    return EditorCellInput(inputFactory, cell).also {
-      add(it)
-    }
+    checkAndRebuildInlays()
   }
 
   fun update(updateContext: UpdateContext) {
     input.updateInput()
-    updateSelfManaged()
     updateOutputs()
     updateCellFolding(updateContext)
   }
 
-  private fun updateSelfManaged() {
-    controllers.forEach {
-      it.selfUpdate()
-    }
-  }
-
-  private fun updateInput() = runInEdt {
-    updateCellHighlight()
+  private fun updateInput() {
     input.updateInput()
-    checkAndRebuildInlays()
   }
 
   override fun doCheckAndRebuildInlays() {
-    updateSelfManaged()
+    controllers.forEach {
+      it.checkAndRebuildInlays()
+    }
+    cell.cellFrameManager?.updateCellFrameShow()
   }
 
   private fun updateOutputs() = runInEdt {
@@ -105,7 +73,6 @@ class EditorCellView(
         outputs = EditorCellOutputsView(editor, cell).also {
           add(it)
         }
-        updateCellHighlight()
         updateFolding()
       }
       else {
@@ -123,8 +90,6 @@ class EditorCellView(
   private fun hasOutputs() = cell.interval.type == NotebookCellLines.CellType.CODE
                              && (editor.editorKind != EditorKind.DIFF || Registry.`is`("jupyter.diff.viewer.output"))
 
-  private fun getInputFactories(): Sequence<EditorCellInputFactory> = cellInlayManager.getInputFactories()
-
   fun onViewportChanges() {
     input.onViewportChange()
     outputs?.onViewportChange()
@@ -133,18 +98,6 @@ class EditorCellView(
   fun updateHovered() {
     updateFolding()
   }
-
-  private fun updateCellHighlight(force: Boolean = false) {
-    val interval = cell.interval
-
-    if (!force && interval.lines == lastHighLightersLines) {
-      return
-    }
-    lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
-    updateSelfManaged()
-
-  }
-
 
   private fun updateFolding() {
     input.folding.visible = isHovered || isSelected

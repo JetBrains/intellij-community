@@ -100,7 +100,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     return line2DDouble
   }
 
-  private fun updateCellFrameShow() {
+  fun updateCellFrameShow() {
     if (cellType == CellType.MARKDOWN) {
       updateCellFrameShowMarkdown()
     }

@@ -2,9 +2,8 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.EditorCellInputFactory
-import com.intellij.openapi.editor.impl.EditorImpl
 
 class TextEditorCellInputFactory : EditorCellInputFactory {
-  override fun createComponent(editor: EditorImpl, cell: EditorCell): TextEditorCellViewComponent = TextEditorCellViewComponent(cell)
-  override fun supports(editor: EditorImpl, cell: EditorCell): Boolean = true
+  override fun createComponent(cell: EditorCell): TextEditorCellViewComponent = TextEditorCellViewComponent(cell)
+  override fun supports(cell: EditorCell): Boolean = true
 }

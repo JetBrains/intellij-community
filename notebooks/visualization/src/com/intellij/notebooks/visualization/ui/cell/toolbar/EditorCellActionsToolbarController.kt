@@ -65,7 +65,7 @@ internal class EditorCellActionsToolbarController(
     updateToolbarVisibility()
   }
 
-  override fun selfUpdate() {
+  override fun checkAndRebuildInlays() {
     val component = targetComponent ?: return
     updateToolbarPosition(component)
   }

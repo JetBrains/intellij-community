@@ -179,7 +179,7 @@ class NotebookCellInlayManager private constructor(
     cell: EditorCell,
     ctx: UpdateContext,
   ) {
-    val view = EditorCellView(editor, cell, this)
+    val view = EditorCellView(cell)
     Disposer.register(cell, view)
     view.updateCellFolding(ctx)
     views[cell] = view
@@ -348,6 +348,11 @@ class NotebookCellInlayManager private constructor(
             change.subsequentPointers.forEach {
               addCell(it.pointer)
             }
+            //After insert we need fix ranges of previous cell
+            change.subsequentPointers.forEach {
+              val prevCell = getCellOrNull(it.interval.ordinal - 1)
+              prevCell?.checkAndRebuildInlays()
+            }
           }
           is NotebookIntervalPointersEvent.OnRemoved -> {
             change.subsequentPointers.reversed().forEach {
@@ -363,6 +368,10 @@ class NotebookCellInlayManager private constructor(
             secondCell.intervalPointer = first
             firstCell.update(ctx)
             secondCell.update(ctx)
+            firstCell.checkAndRebuildInlays()
+            secondCell.checkAndRebuildInlays()
+            getCellOrNull(firstCell.interval.ordinal - 1)?.checkAndRebuildInlays()
+            getCellOrNull(secondCell.interval.ordinal - 1)?.checkAndRebuildInlays()
           }
         }
       }
@@ -423,9 +432,5 @@ class NotebookCellInlayManager private constructor(
 
   fun getCell(pointer: NotebookIntervalPointer): EditorCell {
     return getCell(pointer.get()!!)
-  }
-
-  internal fun getInputFactories(): Sequence<EditorCellInputFactory> {
-    return EditorCellInputFactory.EP_NAME.extensionList.asSequence()
   }
 }
