@@ -222,14 +222,14 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
 
       val opts = setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)
       val html = Regex("""(<script[^>]*>)(.*?)(</\s*script\s*>)""", opts).replace(content) { match ->
-        if ((match.groups.get(2)?.value ?: "").trim() == "")
-          match.groups.get(0)!!.value
+        if ((match.groups[2]?.value ?: "").trim() == "")
+          match.groups[0]!!.value
         else {
           val key = "$•••${++scriptIndex}•${Random.nextInt(0, Int.MAX_VALUE)}•••$"
-          val js = match.groups.get(2)!!.value
+          val js = match.groups[2]!!.value
 
           javaScript[key] = parseSegment("javascript", js) ?: "<span>${encodeEntities(js)}</span>"
-          match.groups.get(1)!!.value + key + match.groups.get(3)!!.value
+          match.groups[1]!!.value + key + match.groups[3]!!.value
         }
       }
       var markedUpHtml = parseSegment("html", html) ?: return null
