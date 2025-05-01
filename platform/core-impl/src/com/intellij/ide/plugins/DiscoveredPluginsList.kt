@@ -30,6 +30,11 @@ class CustomPluginsList(
 ) : DiscoveredPluginsList
 
 @ApiStatus.Internal
+class ClassPathProvidedPluginsList(
+  override val plugins: List<IdeaPluginDescriptorImpl>,
+) : DiscoveredPluginsList
+
+@ApiStatus.Internal
 class SystemPropertyProvidedPluginsList(
   override val plugins: List<IdeaPluginDescriptorImpl>,
 ) : DiscoveredPluginsList
