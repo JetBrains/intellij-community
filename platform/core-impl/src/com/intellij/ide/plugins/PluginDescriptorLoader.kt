@@ -1142,10 +1142,8 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
 }
 
 @TestOnly
-@JvmOverloads
 fun loadAndInitDescriptorsFromClassPathInTest(
-  loader: ClassLoader,
-  zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool(),
+  loader: ClassLoader
 ): List<IdeaPluginDescriptor> {
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(loader)
@@ -1166,21 +1164,24 @@ fun loadAndInitDescriptorsFromClassPathInTest(
   )
   val result = PluginLoadingResult()
   val pluginsList = @Suppress("RAW_RUN_BLOCKING") runBlocking {
-    ClassPathProvidedPluginsList(
-      urlToFilename.map { (url, filename) ->
-        async(Dispatchers.IO) {
-          loadDescriptorFromResource(
-            resource = url,
-            filename = filename,
-            loadingContext = loadingContext,
-            pathResolver = ClassPathXmlPathResolver(classLoader = loader, isRunningFromSources = false),
-            useCoreClassLoader = true,
-            pool = zipPool,
-            libDir = null,
-          )
-        }
-      }.awaitAllNotNull()
-    )
+    val zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool()
+    zipPool.use {
+      ClassPathProvidedPluginsList(
+        urlToFilename.map { (url, filename) ->
+          async(Dispatchers.IO) {
+            loadDescriptorFromResource(
+              resource = url,
+              filename = filename,
+              loadingContext = loadingContext,
+              pathResolver = ClassPathXmlPathResolver(classLoader = loader, isRunningFromSources = false),
+              useCoreClassLoader = true,
+              pool = zipPool,
+              libDir = null,
+            )
+          }
+        }.awaitAllNotNull()
+      )
+    }
   }
   result.initAndAddAll(
     pluginLists = listOf(pluginsList),
