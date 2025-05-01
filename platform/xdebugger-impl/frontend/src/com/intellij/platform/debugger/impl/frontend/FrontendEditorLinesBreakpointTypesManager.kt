@@ -47,6 +47,22 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
         editorsMap.remove(editor)?.dispose()
       }
     }, cs.asDisposable())
+
+    cs.launch {
+      readAction {
+        for (editor in EditorFactory.getInstance().allEditors) {
+          editorsMap.putIfAbsent(editor, EditorBreakpointTypesMap(cs, editor, project))
+        }
+      }
+      // dispose editors that were disposed during map initialization to prevent races with the listener
+      readAction {
+        for (editor in editorsMap.keys) {
+          if (editor.isDisposed) {
+            editorsMap.remove(editor)?.dispose()
+          }
+        }
+      }
+    }
   }
 
   suspend fun getTypesForLine(editor: Editor, line: Int): List<XBreakpointTypeProxy> {
