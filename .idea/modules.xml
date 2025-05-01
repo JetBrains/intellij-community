@@ -369,8 +369,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-kotlin-fir-tests/intellij.devkit.kotlin.fir.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-kotlin-fir-tests/intellij.devkit.kotlin.fir.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-kotlin-tests/intellij.devkit.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-kotlin-tests/intellij.devkit.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.modules/intellij.devkit.modules.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.modules/intellij.devkit.modules.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin/intellij.devkit.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin/intellij.devkit.plugin.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin/noKotlin/intellij.devkit.plugin.main.noKotlin.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin/noKotlin/intellij.devkit.plugin.main.noKotlin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.noKotlin.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.plugin.main.noKotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/runtimeModuleRepository/jps/intellij.devkit.runtimeModuleRepository.jps.iml" filepath="$PROJECT_DIR$/plugins/devkit/runtimeModuleRepository/jps/intellij.devkit.runtimeModuleRepository.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.scaffolding/intellij.devkit.scaffolding.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.scaffolding/intellij.devkit.scaffolding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.devkit.smartupdate/intellij.devkit.smartupdate.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.devkit.smartupdate/intellij.devkit.smartupdate.iml" />
