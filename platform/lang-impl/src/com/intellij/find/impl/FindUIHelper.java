@@ -27,7 +27,8 @@ public final class FindUIHelper implements Disposable {
 
   FindUI myUI;
 
-  FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
+  @ApiStatus.Internal
+  public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
     myModel = model;
     myOkHandler = okHandler;

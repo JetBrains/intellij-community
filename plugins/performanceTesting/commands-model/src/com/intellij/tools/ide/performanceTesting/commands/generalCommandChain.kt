@@ -1275,6 +1275,12 @@ fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
   addCommand("${CMD_PREFIX}waitForVfsRefreshSelectedEditor")
 }
 
+/** @see com.jetbrains.performancePlugin.commands.FindInFilesCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.findInFiles(queries: List<String> = listOf()): T = apply {
+  addCommand("${CMD_PREFIX}findInFiles ${queries.joinToString(";")}")
+}
+
 fun <T : CommandChain> T.closeLookup(): T = apply {
   addCommand("${CMD_PREFIX}closeLookup")
 }
