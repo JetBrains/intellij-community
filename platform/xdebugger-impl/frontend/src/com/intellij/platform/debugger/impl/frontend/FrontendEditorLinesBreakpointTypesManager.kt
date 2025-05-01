@@ -68,6 +68,9 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
   private fun putNewTypesMap(editor: Editor): EditorBreakpointTypesMap {
     val newMap = EditorBreakpointTypesMap(cs, editor, project)
     val oldMap = editorsMap.putIfAbsent(editor, newMap)
+    if (oldMap != null) {
+      newMap.dispose()
+    }
     return oldMap ?: newMap
   }
 
