@@ -1,204 +1,172 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.openapi.actionSystem.impl
 
-import com.intellij.openapi.actionSystem.TimerListener;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
+import com.intellij.openapi.actionSystem.TimerListener
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManagerListener
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.awt.Dialog
+import java.awt.KeyboardFocusManager
+import java.lang.ref.WeakReference
+import javax.swing.JComponent
+import javax.swing.MenuSelectionManager
+import javax.swing.SwingUtilities
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ToolbarUpdater implements Activatable {
-  private final JComponent myComponent;
+@ApiStatus.Internal
+abstract class ToolbarUpdater
+@JvmOverloads constructor(
+  private val component: JComponent,
+  debugName: @NonNls String? = null
+) : Activatable {
+  private val myKeymapManagerListener = MyKeymapManagerListener()
+  private val myTimerListener = MyTimerListener(this, debugName)
 
-  private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
-  private final TimerListener myTimerListener;
+  private var myListenersArmed = false
+  private var myInUpdate = false
 
-  private boolean myListenersArmed;
-  private boolean myInUpdate;
-
-  public ToolbarUpdater(@NotNull JComponent component) {
-    this(component, null);
+  init {
+    installOn(component, this)
   }
 
-  /**
-   * @param internalDescription used for debugging
-   */
-  public ToolbarUpdater(@NotNull JComponent component, @Nullable @NonNls String internalDescription) {
-    myComponent = component;
-    myTimerListener = new MyTimerListener(this, internalDescription);
-    UiNotifyConnector.installOn(component, this);
-  }
-
-  @Override
-  public void showNotify() {
+  override fun showNotify() {
     if (myListenersArmed) {
-      return;
+      return
     }
 
-    myListenersArmed = true;
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(myTimerListener);
-    KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
-    updateActionTooltips();
+    myListenersArmed = true
+    val actionManager = getInstanceEx()
+    actionManager.addTimerListener(myTimerListener)
+    KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener)
+    updateActionTooltips()
   }
 
-  @Override
-  public void hideNotify() {
+  override fun hideNotify() {
     if (!myListenersArmed) {
-      return;
+      return
     }
 
-    myListenersArmed = false;
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.removeTimerListener(myTimerListener);
-    KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
+    myListenersArmed = false
+    val actionManager = getInstanceEx()
+    actionManager.removeTimerListener(myTimerListener)
+    KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener)
   }
 
-  public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
-    if (myInUpdate) return;
-    Runnable updateRunnable = new MyUpdateRunnable(this, forced, includeInvisible);
-    Application application = ApplicationManager.getApplication();
+  fun updateActions(now: Boolean, forced: Boolean, includeInvisible: Boolean) {
+    if (myInUpdate) return
+    val updateRunnable: Runnable = MyUpdateRunnable(this, forced, includeInvisible)
+    val application = ApplicationManager.getApplication()
     if (now || application.isUnitTestMode() && application.isDispatchThread()) {
-      updateRunnable.run();
+      updateRunnable.run()
     }
     else if (!application.isHeadlessEnvironment()) {
-      IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
       if (application.isDispatchThread()) {
-        application.runWriteIntentReadAction(() -> {
-          focusManager.doWhenFocusSettlesDown(updateRunnable);
-          return null;
-        });
+        updateRunnable.run()
       }
       else {
-        UiNotifyConnector.doWhenFirstShown(myComponent, () -> focusManager.doWhenFocusSettlesDown(updateRunnable));
+        UiNotifyConnector.doWhenFirstShown(component, updateRunnable)
       }
     }
   }
 
-  protected abstract void updateActionsImpl(boolean forced);
+  protected abstract fun updateActionsImpl(forced: Boolean)
 
-  protected void updateActionTooltips() {
-    for (ActionButton actionButton : UIUtil.uiTraverser(myComponent).preOrderDfsTraversal().filter(ActionButton.class)) {
-      actionButton.updateToolTipText();
+  protected fun updateActionTooltips() {
+    UIUtil.uiTraverser(component)
+      .preOrderDfsTraversal()
+      .filter(ActionButton::class.java)
+      .forEach { it.updateToolTipText() }
+  }
+
+  private inner class MyKeymapManagerListener : KeymapManagerListener {
+    override fun activeKeymapChanged(keymap: Keymap?) {
+      updateActionTooltips()
     }
   }
 
-  private final class MyKeymapManagerListener implements KeymapManagerListener {
-    @Override
-    public void activeKeymapChanged(Keymap keymap) {
-      updateActionTooltips();
+  private class MyTimerListener(
+    updater: ToolbarUpdater,
+    // input for curiosity
+    @field:Suppress("unused") private val description: @NonNls String?
+  ) : TimerListener {
+    private val myReference = WeakReference(updater)
+
+    override fun getModalityState(): ModalityState? {
+      val updater = myReference.get() ?: return null
+      return ModalityState.stateForComponent(updater.component)
+    }
+
+    override fun run() {
+      val updater = myReference.get() ?: return
+
+      if (!updater.component.isShowing()) {
+        return
+      }
+
+      // do not update when a popup menu is shown
+      // if the popup menu contains an action which is also in the toolbar, it should not be enabled/disabled
+      val menuSelectionManager = MenuSelectionManager.defaultManager()
+      val selectedPath = menuSelectionManager.getSelectedPath()
+      if (selectedPath.size > 0) {
+        return
+      }
+
+      // don't update the toolbar if there is currently active modal dialog
+      val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
+      if (window is Dialog && window.isModal && !SwingUtilities.isDescendingFrom(updater.component, window)) {
+        return
+      }
+
+      updater.updateActions(now = false, forced = false, includeInvisible = false)
     }
   }
 
-  private static final class MyTimerListener implements TimerListener {
-    private final Reference<ToolbarUpdater> myReference;
-    @SuppressWarnings({"unused", "FieldCanBeLocal"}) private final @Nullable @NonNls String myDescription; // input for curiosity
+  private class MyUpdateRunnable(
+    updater: ToolbarUpdater,
+    private val myForced: Boolean,
+    private val myIncludeInvisible: Boolean
+  ) : Runnable {
+    private val myUpdaterRef = WeakReference(updater)
+    private val myHash = updater.hashCode()
 
-    private MyTimerListener(@NotNull ToolbarUpdater updater,
-                            @Nullable @NonNls String internalDescription) {
-      myReference = new WeakReference<>(updater);
-      myDescription = internalDescription;
-    }
-
-    @Override
-    public ModalityState getModalityState() {
-      ToolbarUpdater updater = myReference.get();
-      if (updater == null) return null;
-      return ModalityState.stateForComponent(updater.myComponent);
-    }
-
-    @Override
-    public void run() {
-      ToolbarUpdater updater = myReference.get();
-      if (updater == null) return;
-
-      if (!updater.myComponent.isShowing()) {
-        return;
-      }
-
-      // do not update when a popup menu is shown (if popup menu contains action which is also in the toolbar, it should not be enabled/disabled)
-      MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-      MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-      if (selectedPath.length > 0) {
-        return;
-      }
-
-      // don't update toolbar if there is currently active modal dialog
-      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(updater.myComponent, window)) {
-        return;
-      }
-
-      updater.updateActions(false, false, false);
-    }
-  }
-
-  private static final class MyUpdateRunnable implements Runnable {
-    private final boolean myForced;
-
-    private final @NotNull WeakReference<ToolbarUpdater> myUpdaterRef;
-    private final boolean myIncludeInvisible;
-    private final int myHash;
-
-    MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean forced, boolean includeInvisible) {
-      myForced = forced;
-      myIncludeInvisible = includeInvisible;
-      myHash = updater.hashCode();
-
-      myUpdaterRef = new WeakReference<>(updater);
-    }
-
-    @Override
-    public void run() {
-      ToolbarUpdater updater = myUpdaterRef.get();
-      JComponent component = updater == null ? null : updater.myComponent;
-      if (component == null ||
-          !ApplicationManager.getApplication().isUnitTestMode() &&
-          !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
-        return;
+    override fun run() {
+      val updater = myUpdaterRef.get() ?: return
+      val component = updater.component
+      if (!ApplicationManager.getApplication().isUnitTestMode() &&
+          !UIUtil.isShowing(component) &&
+          (!component.isDisplayable || !myIncludeInvisible)) {
+        return
       }
       try {
-        updater.myInUpdate = true;
-        updater.updateActionsImpl(myForced);
+        updater.myInUpdate = true
+        updater.updateActionsImpl(myForced)
       }
       finally {
-        updater.myInUpdate = false;
+        updater.myInUpdate = false
       }
     }
 
-    @Override
-    public boolean equals(Object obj) {
-      if (!(obj instanceof MyUpdateRunnable that)) return false;
+    override fun equals(other: Any?): Boolean {
+      if (other !is MyUpdateRunnable) return false
 
-      if (myHash != that.myHash) return false;
+      if (myHash != other.myHash) return false
 
-      ToolbarUpdater updater1 = myUpdaterRef.get();
-      ToolbarUpdater updater2 = that.myUpdaterRef.get();
-      return Comparing.equal(updater1, updater2);
+      val updater1 = myUpdaterRef.get()
+      val updater2 = other.myUpdaterRef.get()
+      return updater1 == updater2
     }
 
-    @Override
-    public int hashCode() {
-      return myHash;
-    }
+    override fun hashCode(): Int = myHash
   }
 }

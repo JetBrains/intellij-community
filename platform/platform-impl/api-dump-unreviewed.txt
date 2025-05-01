@@ -6041,15 +6041,6 @@ f:com.intellij.openapi.actionSystem.impl.SkipOperation
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
 - fillInStackTrace():java.lang.Throwable
-a:com.intellij.openapi.actionSystem.impl.ToolbarUpdater
-- com.intellij.util.ui.update.Activatable
-- <init>(javax.swing.JComponent):V
-- <init>(javax.swing.JComponent,java.lang.String):V
-- hideNotify():V
-- showNotify():V
-- p:updateActionTooltips():V
-- updateActions(Z,Z,Z):V
-- pa:updateActionsImpl(Z):V
 f:com.intellij.openapi.actionSystem.impl.UtilsKt
 - sf:rearrangeByPromotersImpl(java.util.List,com.intellij.openapi.actionSystem.DataContext,java.util.List):java.util.List
 - sf:runEdtLoop(kotlinx.coroutines.Job,kotlin.jvm.functions.Function0,java.awt.Component,java.awt.Component,kotlin.coroutines.Continuation):java.lang.Object
