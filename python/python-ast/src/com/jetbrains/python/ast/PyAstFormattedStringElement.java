@@ -3,6 +3,7 @@ package com.jetbrains.python.ast;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,7 +105,12 @@ public interface PyAstFormattedStringElement extends PyAstStringElement, PyAstEl
 
   @Override
   default boolean isFormatted() {
-    return true;
+    return StringUtil.containsIgnoreCase(getPrefix(), "f");
+  }
+
+  @Override
+  default boolean isTemplate() {
+    return StringUtil.containsIgnoreCase(getPrefix(), "t");
   }
 
   @Override
