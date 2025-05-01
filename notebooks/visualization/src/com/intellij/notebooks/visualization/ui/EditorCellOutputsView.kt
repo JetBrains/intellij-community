@@ -298,10 +298,6 @@ class EditorCellOutputsView(
     override fun next(): Pair<A, B> = this@zip.next() to other.next()
   }
 
-  override fun doGetInlays(): Sequence<Inlay<*>> {
-    return inlay?.let { sequenceOf(it) } ?: emptySequence()
-  }
-
   override fun doCheckAndRebuildInlays() {
     val offset = computeInlayOffset(editor.document, cell.interval.lines)
     inlay?.let { currentInlay ->

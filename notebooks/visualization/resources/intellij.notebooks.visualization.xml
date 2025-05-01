@@ -21,10 +21,6 @@
       <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookIntervalPointerFactoryProvider"/>
     </extensionPoint>
 
-    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
-                    interface="com.intellij.notebooks.visualization.NotebookCellInlayController$Factory"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelfManagedController"
                     interface="com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedControllerFactory"
                     dynamic="true"/>
@@ -35,7 +31,7 @@
 
 
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.inputFactory"
-                    interface="com.intellij.notebooks.visualization.NotebookCellInlayController$InputFactory"
+                    interface="com.intellij.notebooks.visualization.EditorCellInputFactory"
                     dynamic="true"/>
   </extensionPoints>
 

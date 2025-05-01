@@ -3,7 +3,6 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
 import java.awt.Rectangle
 import java.util.*
@@ -35,7 +34,7 @@ abstract class EditorCellViewComponent : Disposable.Default {
     doViewportChange()
   }
 
-  open fun doViewportChange() = Unit
+  open fun doViewportChange(): Unit = Unit
 
   abstract fun calculateBounds(): Rectangle
 
@@ -43,14 +42,6 @@ abstract class EditorCellViewComponent : Disposable.Default {
     _children.forEach {
       it.updateCellFolding(updateContext)
     }
-  }
-
-  fun getInlays(): Sequence<Inlay<*>> {
-    return doGetInlays() + _children.asSequence().flatMap { it.getInlays() }
-  }
-
-  open fun doGetInlays(): Sequence<Inlay<*>> {
-    return emptySequence()
   }
 
   open fun addInlayBelow(presentation: InlayPresentation) {
