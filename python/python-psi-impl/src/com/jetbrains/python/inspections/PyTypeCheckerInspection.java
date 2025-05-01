@@ -73,8 +73,6 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
-      // TODO: Support slice PySliceExpressions
-
       PyType operandType = myTypeEvalContext.getType(node.getOperand());
       if (operandType instanceof PyTupleType tupleType && !tupleType.isHomogeneous()) {
         PyExpression indexExpression = node.getIndexExpression();

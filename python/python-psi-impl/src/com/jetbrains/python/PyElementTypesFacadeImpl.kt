@@ -124,8 +124,6 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
     get() = F { node -> PyParenthesizedExpressionImpl(node) }
   override val subscriptionExpressionConstructor: F
     get() = F { node -> PySubscriptionExpressionImpl(node) }
-  override val sliceExpressionConstructor: F
-    get() = F { node -> PySliceExpressionImpl(node) }
   override val sliceItemConstructor: F
     get() = F { node -> PySliceItemImpl(node) }
   override val binaryExpressionConstructor: F

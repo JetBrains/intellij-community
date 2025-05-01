@@ -247,8 +247,7 @@ private fun getCallInnerReferenceExpression(parameters: CompletionParameters): P
 }
 
 private fun getSliceSubscriptionReferenceExpression(parameters: CompletionParameters): PyExpression? {
-  val expression = PsiTreeUtil.getParentOfType(parameters.position, PySubscriptionExpression::class.java) ?: PsiTreeUtil.getParentOfType(
-    parameters.position, PySliceExpression::class.java)
+  val expression = PsiTreeUtil.getParentOfType(parameters.position, PySubscriptionExpression::class.java)
   val result = PsiTreeUtil.getChildOfType(expression, PyReferenceExpression::class.java)
   if (result != null) {
     return PyPsiUtils.getFirstQualifier(result)

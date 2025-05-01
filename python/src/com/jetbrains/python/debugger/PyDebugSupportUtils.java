@@ -60,7 +60,6 @@ public final class PyDebugSupportUtils {
   private static boolean isSimpleEnough(final PsiElement element) {
     return element instanceof PyLiteralExpression ||
            element instanceof PyQualifiedExpression ||
-           element instanceof PySliceExpression ||
            element instanceof PyNamedParameter ||
            element instanceof PyCallExpression;
   }

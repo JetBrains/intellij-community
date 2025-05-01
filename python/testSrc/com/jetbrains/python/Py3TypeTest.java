@@ -135,13 +135,13 @@ public class Py3TypeTest extends PyTestCase {
   //  doTest("int | Any",
   //         """
   //           from typing import Any, TypeGuard
-  //           
+  //
   //           def is_positive_integer(value: Any) -> TypeGuard[int]:
   //               return isinstance(value, int) and value > 0
   //
   //           def bar() -> object:
   //               return 321
-  //           
+  //
   //           def foo():
   //               for i in range(1, 100):
   //                   if i > 1:
@@ -168,12 +168,12 @@ public class Py3TypeTest extends PyTestCase {
   //           class D:
   //               def bar() -> A:
   //                   return A()
-  //           
+  //
   //           def foo(b):
   //               x = A()
   //               while b:
   //                   x = x.bar()
-  //           
+  //
   //               expr = x""");
   //}
 
@@ -3694,6 +3694,23 @@ public class Py3TypeTest extends PyTestCase {
         expr = t"Hello, {name}!".interpolations[0].expression
         """);
     });
+  }
+
+  public void testSliceExpression() {
+    doTest("int", """
+      from typing import overload
+      
+      class A[T]:
+          @overload
+          def __getitem__(self, s: str) -> str: ...
+      
+          @overload
+          def __getitem__(self, s: slice) -> T: ...
+      
+          def __getitem__(self, s: str | slice) -> str | T: ...
+      
+      expr = A[int]()[0:2]
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

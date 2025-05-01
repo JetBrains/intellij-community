@@ -38,7 +38,6 @@ public class PyMissingBracesFixer extends PyFixer<PyElement> {
       }
     }
     else if (psiElement instanceof PyListLiteralExpression ||
-             psiElement instanceof PySliceExpression ||
              psiElement instanceof PySubscriptionExpression) {
       final PsiElement lastChild = PyPsiUtils.getPrevNonCommentSibling(psiElement.getLastChild(), false);
       if (lastChild != null && !"]".equals(lastChild.getText())) {

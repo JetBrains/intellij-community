@@ -50,7 +50,6 @@ namedtuples_define_class.py
 namedtuples_type_compat.py
 namedtuples_usage.py
 narrowing_typeis.py
-overloads_basic.py
 overloads_consistency.py
 overloads_definitions.py
 overloads_definitions_stub.pyi

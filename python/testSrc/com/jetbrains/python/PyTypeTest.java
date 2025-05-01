@@ -3122,7 +3122,7 @@ public class PyTypeTest extends PyTestCase {
   public void testSliceOnUnion() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
-      () -> doTest("Union[str, Any]",
+      () -> doTest("str",
                    """
                      from typing import Union
                      myvar: Union[str, int]

@@ -601,7 +601,7 @@ public class ExpressionParsing extends Parsing {
       sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
       sliceItemStart.done(PyElementTypes.SLICE_ITEM);
       nextToken();
-      exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+      exprStart.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
       return;
     }
     else {
@@ -653,7 +653,7 @@ public class ExpressionParsing extends Parsing {
       if (sliceOrTupleStart != null) {
         sliceOrTupleStart.drop();
       }
-      exprStart.done(PyElementTypes.SLICE_EXPRESSION);
+      exprStart.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
     }
     return inSlice;
   }

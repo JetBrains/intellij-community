@@ -1,6 +1,6 @@
 PyFile:ExtendedSlices.py
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
@@ -14,7 +14,7 @@ PyFile:ExtendedSlices.py
       PsiElement(Py:RBRACKET)(']')
   PsiWhiteSpace('\n')
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
@@ -30,7 +30,7 @@ PyFile:ExtendedSlices.py
       PsiElement(Py:RBRACKET)(']')
   PsiWhiteSpace('\n')
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
@@ -44,7 +44,7 @@ PyFile:ExtendedSlices.py
       PsiElement(Py:RBRACKET)(']')
   PsiWhiteSpace('\n')
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
@@ -57,7 +57,7 @@ PyFile:ExtendedSlices.py
       PsiElement(Py:RBRACKET)(']')
   PsiWhiteSpace('\n')
   PyAssignmentStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
@@ -89,7 +89,7 @@ PyFile:ExtendedSlices.py
       PsiElement(Py:INTEGER_LITERAL)('1')
   PsiWhiteSpace('\n')
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')

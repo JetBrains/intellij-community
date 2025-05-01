@@ -1,6 +1,6 @@
 PyFile:SliceList.py
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: a
         PsiElement(Py:IDENTIFIER)('a')
       PsiElement(Py:LBRACKET)('[')

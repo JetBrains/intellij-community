@@ -45,7 +45,7 @@ import org.jetbrains.annotations.NonNls
 class PyBuiltinCache(
   val builtinsFile: PyFile? = null,
   private val myTypeshedFile: PyFile? = null,
-  private val myExceptionsFile: PyFile? = null
+  private val myExceptionsFile: PyFile? = null,
 ) {
   /**
    * Stores the most often used types, returned by nNNType.
@@ -199,6 +199,8 @@ class PyBuiltinCache(
   val typeType: PyClassType?
     get() = getObjectType("type")
 
+  val sliceType: PyClassType?
+    get() = getObjectType("slice")
 
   val noneType: PyClassType?
     get() {
