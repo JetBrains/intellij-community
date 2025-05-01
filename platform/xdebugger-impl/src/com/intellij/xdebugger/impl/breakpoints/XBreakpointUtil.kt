@@ -5,7 +5,14 @@ import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction
 import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.concurrency.awaitPromise
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -17,7 +24,6 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
-import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
@@ -26,12 +32,22 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.launch
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asPromise
+import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.rejectedPromise
+import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
 object XBreakpointUtil {
@@ -213,25 +229,34 @@ object XBreakpointUtil {
     isConditional: Boolean = false,
     condition: String? = null,
   ): Promise<XLineBreakpointProxy?> {
-    val (typeWinner, lineWinner) = getAvailableLineBreakpointInfoProxy(project, position, selectVariantByPositionColumn, editor)
+    // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
+    val future = CompletableFuture<XLineBreakpointProxy?>()
+    project.service<XBreakpointUtilProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
+      try {
+        val (typeWinner, lineWinner) = getAvailableLineBreakpointInfoProxy(project, position, selectVariantByPositionColumn, editor)
+        if (typeWinner.isEmpty()) {
+          future.completeExceptionally(RuntimeException("Cannot find appropriate type"))
+        }
+        val lineStart = position.line
+        val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
 
-    if (typeWinner.isEmpty()) {
-      return rejectedPromise(RuntimeException("Cannot find appropriate type"))
-    }
-
-    val lineStart = position.line
-    val winPosition = if (lineStart == lineWinner) position else XSourcePositionImpl.create(position.file, lineWinner)
-    val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy(
-      project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isConditional, condition)
-
-    if (lineStart != lineWinner) {
-      val offset = editor.document.getLineStartOffset(lineWinner)
-      ExpandRegionAction.expandRegionAtOffset(editor, offset)
-      if (moveCaret) {
-        editor.caretModel.moveToOffset(offset)
+        val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy(
+          project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isConditional, condition)
+        if (lineStart != lineWinner) {
+          val offset = editor.document.getLineStartOffset(lineWinner)
+          ExpandRegionAction.expandRegionAtOffset(editor, offset)
+          if (moveCaret) {
+            editor.caretModel.moveToOffset(offset)
+          }
+        }
+        future.complete(res.await())
+      }
+      catch (e: Throwable) {
+        future.completeExceptionally(e)
       }
     }
-    return res
+
+    return future.asPromise()
   }
 
   @ApiStatus.Internal
@@ -290,11 +315,12 @@ object XBreakpointUtil {
                                           XDebuggerUtil.getInstance().lineBreakpointTypes.toList(),
                                           { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
                                           { type -> type.priority },
+                                          { callback -> callback() },
                                           { type, line -> type.canPutAt(position.file, line, project) }
     )
   }
 
-  private fun getAvailableLineBreakpointInfoProxy(
+  private suspend fun getAvailableLineBreakpointInfoProxy(
     project: Project,
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
@@ -305,16 +331,18 @@ object XBreakpointUtil {
     return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor, lineTypes,
                                           { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
                                           { type -> type.priority },
-                                          { type, line -> type.canPutAtFast(editor, line, project).isAtLeast(ThreeState.UNSURE) })
+                                          { callback -> readAction { callback() } },
+                                          { type, line -> type.canPutAt(editor, line, project) })
   }
 
-  private fun <T, B> getAvailableLineBreakpointInfo(
+  private inline fun <T, B> getAvailableLineBreakpointInfo(
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
     editor: Editor?,
     lineTypes: List<T>,
     breakpointProvider: (T, Int) -> B?,
-    computePriority: (T) -> Int,
+    crossinline computePriority: (T) -> Int,
+    runReadAction: (callback: () -> Unit) -> Unit,
     canPutAt: (T, Int) -> Boolean,
   ): Pair<List<T>, Int> {
     val lineStart = position.line
@@ -328,9 +356,11 @@ object XBreakpointUtil {
     // do it unless we were asked to select type strictly by caret position
     var linesEnd = lineStart
     if (editor != null && !selectTypeByPositionColumn) {
-      val region = FoldingUtil.findFoldRegionStartingAtLine(editor, lineStart)
-      if (region != null && !region.isExpanded) {
-        linesEnd = region.document.getLineNumber(region.endOffset)
+      runReadAction {
+        val region = FoldingUtil.findFoldRegionStartingAtLine(editor, lineStart)
+        if (region != null && !region.isExpanded) {
+          linesEnd = region.document.getLineNumber(region.endOffset)
+        }
       }
     }
     val typeWinner = SmartList<T>()
@@ -397,3 +427,6 @@ val XBreakpoint<*>.propertyXMLDescriptions: List<@Nls String>
 val <P : XBreakpointProperties<*>> XLineBreakpoint<P>.highlightRange: TextRange?
   get() =
     type.getHighlightRange(this)
+
+@Service(Service.Level.PROJECT)
+private class XBreakpointUtilProjectCoroutineScope(val cs: CoroutineScope)
