@@ -24,12 +24,7 @@ internal class RenameSyntheticDeclarationByReferenceHandler : AbstractForbidRena
             val targetElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) as? KtLightElement<*, *>
                 ?: return false
 
-            val kotlinOrigin = targetElement.kotlinOrigin
-            return when (targetElement) {
-                is KtLightClass -> kotlinOrigin !is KtClassOrObject
-                is KtLightMember<*> -> kotlinOrigin is KtPrimaryConstructor || kotlinOrigin !is KtCallableDeclaration
-                else -> false
-            }
+            return shouldForbidRenamingFromJava(targetElement)
         }
         return false
     }
@@ -41,5 +36,14 @@ internal class RenameSyntheticDeclarationByReferenceHandler : AbstractForbidRena
 
     override fun getErrorMessage(): @DialogMessage String {
         return KotlinBundle.message("text.rename.is.not.applicable.to.synthetic.declarations")
+    }
+}
+
+fun shouldForbidRenamingFromJava(targetElement: KtLightElement<*, *>): Boolean {
+    val kotlinOrigin = targetElement.kotlinOrigin
+    return when (targetElement) {
+        is KtLightClass -> kotlinOrigin !is KtClassOrObject
+        is KtLightMember<*> -> kotlinOrigin is KtPrimaryConstructor || kotlinOrigin !is KtCallableDeclaration
+        else -> false
     }
 }

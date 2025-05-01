@@ -6,8 +6,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.PsiMethodImpl
+import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
@@ -112,7 +113,7 @@ class KotlinFirChangeSignatureTest :
         val element = findTargetElement() as KtElement
         try {
             KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor)
-        } catch (e: RefactoringErrorHintException) {
+        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
             assertEquals(conflict, e.message)
             return
         }
@@ -129,6 +130,25 @@ class KotlinFirChangeSignatureTest :
 
     fun testLocalVariable() {
         doTestConflict("fun main() { val <caret>x = 42 }", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+    }
+
+    fun testEnumGetEntriesFromJava() {
+        myFixture.addFileToProject("A.kt", "enum class A { A1, A2 }")
+        myFixture.configureByText("B.java", "class B { void m() { A.get<caret>Entries(); } }")
+
+        try {
+            val elementAtCaret = myFixture.elementAtCaret
+            KotlinChangeSignatureHandler.invoke(myFixture.project, arrayOf(elementAtCaret), null)
+            fail("No conflicts found")
+        } catch (e: Throwable) {
+            val message = when {
+                e is BaseRefactoringProcessor.ConflictsInTestsException -> e.messages.sorted().joinToString(separator = "\n")
+                e is CommonRefactoringUtil.RefactoringErrorHintException -> e.message
+                e is RuntimeException && e.message!!.startsWith("Refactoring cannot be performed") -> e.message
+                else -> throw e
+            }
+            assertEquals(message, "Cannot refactor synthesized function")
+        }
     }
 
     @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
