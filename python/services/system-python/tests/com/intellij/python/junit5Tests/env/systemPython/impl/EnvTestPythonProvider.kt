@@ -21,6 +21,7 @@ internal class EnvTestPythonProvider : SystemPythonProvider {
     var pythons = emptySet<PythonBinary>()
     if (eelApi == localEel) {
       // Add Py27 temporary to test Py27
+      // It is perfectly valid not to find any python because some tests might run without a python and still have this module on a class-path
       pythons = merge(TypeVanillaPython3.getTestEnvironments(), TypeVanillaPython2.getTestEnvironments())
         .map { (python, closeable) ->
           Disposer.register(ApplicationManager.getApplication()) {

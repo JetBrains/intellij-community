@@ -3,8 +3,10 @@ package com.intellij.python.junit5Tests.framework.env.impl
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.community.testFramework.testEnv.PythonType
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
@@ -31,7 +33,20 @@ internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, 
   override fun onEnvFound(env: PythonBinary) {
     val poetry = env.resolvePythonHome().resolvePythonTool("poetry")
     if (poetry !in checkedPoetries) {
-      val output = CapturingProcessHandler(GeneralCommandLine(poetry.toString(), "--version")).runProcess(60_000, true)
+      val output = try {
+        CapturingProcessHandler(GeneralCommandLine(poetry.toString(), "--version")).runProcess(60_000, true)
+      }
+      catch (e: ProcessNotCreatedException) {
+        val customPythonMessage = buildString {
+          PythonType.customPythonMessage?.let {
+            append(it)
+            append(" install poetry there, i.e: 'python -m pip install poetry' ")
+          }
+          append(" or run/rerun ")
+          append(PythonType.BUILD_KTS_MESSAGE)
+        }
+        throw AssertionError(customPythonMessage, e)
+      }
       assert(output.exitCode == 0) { "$poetry seems to be broken, output: $output. For Windows check `fix_path.cmd`" }
       LOG.info("Poetry found at $poetry")
       checkedPoetries[poetry] = Unit
