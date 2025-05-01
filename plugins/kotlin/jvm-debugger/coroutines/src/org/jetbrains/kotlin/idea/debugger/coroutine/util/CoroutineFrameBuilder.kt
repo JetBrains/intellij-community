@@ -41,7 +41,7 @@ class CoroutineFrameBuilder {
                         coroutineStackFrameList.add(it)
                     }
 
-                    val coroutineFrameLists = build(preflightStackFrame, suspendContext)
+                    val coroutineFrameLists = build(preflightStackFrame)
                     coroutineStackFrameList.addAll(coroutineFrameLists.frames)
                     return CoroutineFrameItemLists(coroutineStackFrameList, coroutine.creationStackFrames)
                 } else {
@@ -58,7 +58,6 @@ class CoroutineFrameBuilder {
          */
         internal fun build(
             preflightFrame: CoroutinePreflightFrame,
-            suspendContext: SuspendContextImpl,
             withPreFrames: Boolean = true
         ): CoroutineFrameItemLists {
             val stackFrames = mutableListOf<CoroutineStackFrameItem>()

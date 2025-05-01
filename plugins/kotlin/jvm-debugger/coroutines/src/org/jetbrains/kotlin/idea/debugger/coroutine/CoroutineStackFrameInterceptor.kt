@@ -66,7 +66,7 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {
             return listOf(stackFrame)
         }
-        val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContext, withPreFrames = false)
+        val frameItemLists = CoroutineFrameBuilder.build(stackFrame, withPreFrames = false)
         return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
     }
 
