@@ -203,4 +203,102 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
       }      
       """)
   }
+
+  fun testPathToString() {
+    doTest("""
+      @file:Suppress("UNUSED_VARIABLE")
+
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+      import com.intellij.platform.eel.annotations.NativePath
+      import java.nio.file.Path
+      import java.nio.file.FileSystems
+
+      class PathToStringTest {
+          fun testMethod() {
+              // Test Path.toString() used in Path.of()
+              val basePath = Path.of("somepath") // no warning
+              val childPath = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">basePath.toString()</warning>, "child") // warning, Path.toString() is not recognized as special
+
+              // Test storing Path.toString() in a variable and then using it
+              val basePathString = basePath.toString()
+              val anotherChildPath = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">basePathString</warning>, "anotherChild") // warning, variable with Path.toString() is not recognized as special
+
+              // Test with annotated path
+              @MultiRoutingFileSystemPath val annotatedPath = "/some/path"
+              val path = Path.of(annotatedPath)
+              val pathString = path.toString()
+              val newPath = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">pathString</warning>, "subdir") // warning, variable with Path.toString() is not recognized as special
+
+              // Test with multiple toString() calls
+              val nestedPath = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">Path.of("root").toString()</warning>, <warning descr="${
+      DevKitBundle.message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")
+    }">Path.of("nested").toString()</warning>) // warnings, Path.toString() is not recognized as special
+          }
+      }      
+      """)
+  }
+
+  fun testPathToStringAdditionalCases() {
+    doTest("""
+      @file:Suppress("UNUSED_VARIABLE")
+
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+      import com.intellij.platform.eel.annotations.NativePath
+      import java.nio.file.Path
+      import java.nio.file.FileSystems
+
+      class PathToStringAdditionalCasesTest {
+          fun testMethod() {
+              // Test Path.toString() with Path.resolve()
+              val basePath = Path.of("base")
+              val resolvedPath = basePath.resolve(<weak_warning descr="${
+      DevKitBundle.message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")
+    }">Path.of("child").toString()</weak_warning>) // warning, Path.toString() is not recognized as special
+
+              // Test Path.toString() with FileSystem.getPath()
+              val fs = FileSystems.getDefault()
+              @NativePath val nativePath = "/usr/local/bin"
+              val fsPath = fs.getPath(nativePath, <warning descr="${
+      DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")
+    }">Path.of("file.txt").toString()</warning>) // warning, Path.toString() is not recognized as special
+
+              // Test Path.toString() with string concatenation
+              val concatPath = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">basePath.toString() + "/concat"</warning>) // warning, string concatenation with Path.toString() is not recognized as special
+
+              // Test Path.toString() with string templates
+              val templatePath = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">"${'$'}{basePath.toString()}/template"</warning>) // warning, string template with Path.toString() is not recognized as special
+
+              // Test Path.toString() with substring operations
+              val subPath = basePath.toString().substring(0, 2)
+              val subPathResult = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">subPath</warning>, "sub") // warning, substring of Path.toString() is not recognized as special
+
+              // Test Path.toString() with replace operations
+              val replacedPath = basePath.toString().replace("base", "replaced")
+              val replacedPathResult = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">replacedPath</warning>) // warning, replaced Path.toString() is not recognized as special
+
+              // Test Path.toString() with trim operations
+              val trimmedPath = basePath.toString().trim()
+              val trimmedPathResult = Path.of(<warning descr="${
+      DevKitBundle.message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
+    }">trimmedPath</warning>) // warning, trimmed Path.toString() is not recognized as special
+          }
+      }      
+      """)
+  }
 }
