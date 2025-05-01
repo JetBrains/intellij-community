@@ -19,7 +19,6 @@ class ProductPluginsList(
 
 @ApiStatus.Internal
 class BundledPluginsList(
-  val location: Path,
   override val plugins: List<IdeaPluginDescriptorImpl>,
 ) : DiscoveredPluginsList
 

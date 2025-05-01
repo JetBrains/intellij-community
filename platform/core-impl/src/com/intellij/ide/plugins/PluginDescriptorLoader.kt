@@ -1229,9 +1229,16 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
   isBundled: Boolean,
   pool: ZipEntryResolverPool,
 ): Deferred<DiscoveredPluginsList> {
-  val kind = if (isBundled) ::BundledPluginsList else ::CustomPluginsList
+  fun buildResult(descriptors: List<IdeaPluginDescriptorImpl>): DiscoveredPluginsList {
+    if (isBundled) {
+      return BundledPluginsList(descriptors)
+    }
+    else {
+      return CustomPluginsList(dir, descriptors)
+    }
+  }
   if (!Files.isDirectory(dir)) {
-    return CompletableDeferred(kind(dir, Collections.emptyList()))
+    return CompletableDeferred(buildResult(Collections.emptyList()))
   }
   else {
     val descriptorsDeferred = Files.newDirectoryStream(dir).use { dirStream ->
@@ -1241,7 +1248,7 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
         }
       }
     }
-    return async { kind(dir, descriptorsDeferred.awaitAllNotNull()) }
+    return async { buildResult(descriptorsDeferred.awaitAllNotNull()) }
   }
 }
 
