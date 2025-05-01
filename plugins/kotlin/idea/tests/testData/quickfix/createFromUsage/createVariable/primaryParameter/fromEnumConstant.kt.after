@@ -1,0 +1,21 @@
+// "Create property 'foo' as constructor parameter" "true"
+// ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: No value passed for parameter 'foo'.
+// K2_AFTER_ERROR: No value passed for parameter 'foo'.
+
+enum class EnumProp(val foo: Int) {
+    ONE() {
+        override fun implementMe(): Int {
+            return fo<caret>o
+        }
+    },
+    TWO() {
+        override fun implementMe(): Int {
+            return 2
+        }
+    };
+    abstract fun implementMe(): Int
+}
+// IGNORE_K1
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory$CreateLocalFromUsageAction
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction
