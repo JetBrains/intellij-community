@@ -6,7 +6,7 @@ import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
-import com.intellij.notebooks.visualization.ui.cell.frame.EditorCellFrameManager
+import com.intellij.notebooks.visualization.ui.providers.frame.EditorCellFrameManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.impl.EditorImpl
