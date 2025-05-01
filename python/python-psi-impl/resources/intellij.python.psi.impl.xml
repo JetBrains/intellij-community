@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
   <dependencies>
     <module name="intellij.python.psi"/>
   </dependencies>
@@ -383,6 +383,12 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyQuotedStringIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyFStringToTStringIntention</className>
       <bundleName>messages.PyPsiBundle</bundleName>
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
