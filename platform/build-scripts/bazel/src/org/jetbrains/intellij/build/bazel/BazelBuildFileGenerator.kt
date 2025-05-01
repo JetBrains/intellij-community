@@ -325,6 +325,7 @@ internal class BazelBuildFileGenerator(
 
     val resourceTargets = mutableListOf<String>()
     val productionCompileTargets = mutableListOf<String>()
+    val productionCompileJars = mutableListOf<String>()
     val testCompileTargets = mutableListOf<String>()
 
     val sources = moduleDescriptor.sources
@@ -332,6 +333,7 @@ internal class BazelBuildFileGenerator(
       val result = generateResources(module = moduleDescriptor, forTests = false)
       resourceTargets.addAll(result.resourceTargets)
       productionCompileTargets.addAll(result.resourceTargets)
+      productionCompileJars.addAll(result.resourceTargets)
     }
     if (moduleDescriptor.testResources.isNotEmpty()) {
       val result = generateResources(module = moduleDescriptor, forTests = true)
@@ -348,6 +350,7 @@ internal class BazelBuildFileGenerator(
       target("jvm_library") {
         option("name", moduleDescriptor.targetName)
         productionCompileTargets.add(moduleDescriptor.targetName)
+        productionCompileJars.add(moduleDescriptor.targetName)
 
         option("module_name", module.name)
         visibility(arrayOf("//visibility:public"))
@@ -418,6 +421,8 @@ internal class BazelBuildFileGenerator(
       }) {
         option("name", moduleDescriptor.targetName)
         productionCompileTargets.add(moduleDescriptor.targetName)
+        // https://bazel.build/reference/be/java#java_library -> lib${name}.jar
+        productionCompileJars.add("lib" + moduleDescriptor.targetName)
 
         visibility(arrayOf("//visibility:public"))
 
@@ -474,7 +479,7 @@ internal class BazelBuildFileGenerator(
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
       productionTargets = productionCompileTargets.map { "$packagePrefix:$it" },
-      productionJars = productionCompileTargets.map { "$jarOutputDirectory/$it.jar" },
+      productionJars = productionCompileJars.map { "$jarOutputDirectory/$it.jar" },
       testTargets = testCompileTargets.map { "$packagePrefix:$it" },
       testJars = testCompileTargets.map { "$jarOutputDirectory/$it.jar" },
     )
