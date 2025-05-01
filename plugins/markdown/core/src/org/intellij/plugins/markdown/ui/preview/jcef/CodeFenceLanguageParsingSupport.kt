@@ -147,6 +147,7 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
       val chunks = html.split(Regex("""(?<=(>|\r\n|\r|\n))|(?=(<|\r\n|\r|\n))""")).toTypedArray()
       val nesting = ArrayDeque<TagInfo>()
       var offset = startOffset
+      var justStartedTag = false
 
       for (i in chunks.indices) {
         val chunk = chunks[i]
@@ -157,16 +158,23 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
           if (match != null) {
             chunks[match.line] = addSourceRange(chunks[match.line], match.offset, offset)
           }
+
+          justStartedTag = false
         }
         else if (chunk.startsWith("<")) {
           nesting.addLast(TagInfo(i, offset))
+          justStartedTag = true
         }
         else if (chunk.isNotEmpty()) {
-          // highlight.js doesn't wrap all text in span tags, but the preview display expects that.
           val decodedChunk = decodeEntities(chunk)
 
-          chunks[i] = addSourceRange("<span>$chunk</span>", offset, offset + decodedChunk.length)
+          if (!justStartedTag) {
+            // highlight.js doesn't wrap all text in span tags, but the preview display works better that way.
+            chunks[i] = addSourceRange("<span>$chunk</span>", offset, offset + decodedChunk.length)
+          }
+
           offset += decodedChunk.length
+          justStartedTag = false
         }
       }
 
