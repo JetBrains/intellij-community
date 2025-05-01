@@ -51,7 +51,7 @@ abstract class ProductLoadingStrategy {
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
-  ): List<Deferred<IdeaPluginDescriptorImpl?>>
+  ): Deferred<List<IdeaPluginDescriptorImpl>>
   
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 

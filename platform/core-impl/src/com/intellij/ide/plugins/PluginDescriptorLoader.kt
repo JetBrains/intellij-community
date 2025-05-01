@@ -534,7 +534,7 @@ private suspend fun loadAndInitDescriptors(
       mainClassLoader = mainClassLoader,
     )
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
-    pluginsDeferred.awaitAllNotNull() to pluginsFromPropertyDeferred.awaitAllNotNull()
+    pluginsDeferred.await() to pluginsFromPropertyDeferred.awaitAllNotNull()
   }
   val loadingResult = PluginLoadingResult()
   loadingResult.initAndAddAll(descriptors = plugins, overrideUseIfCompatible = false, initContext = initContext)
@@ -551,7 +551,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   zipPool: ZipEntryResolverPool,
   customPluginDir: Path,
   bundledPluginDir: Path?,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
+): Deferred<List<IdeaPluginDescriptorImpl>> = async {
   val platformPrefix = PlatformUtils.getPlatformPrefix()
 
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
@@ -569,7 +569,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     if (bundledPluginDir != null) {
       result.addAll(loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool))
     }
-    return result
+    return@async result.awaitAllNotNull()
   }
 
   val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
@@ -627,7 +627,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       result = result,
     )
   }
-  return result
+  return@async result.awaitAllNotNull()
 }
 
 private fun loadFromPluginClasspathDescriptor(
@@ -1128,7 +1128,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           zipPool = pool,
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
-        ).awaitAllNotNull()
+        ).await()
       },
       overrideUseIfCompatible = false,
       initContext = initContext

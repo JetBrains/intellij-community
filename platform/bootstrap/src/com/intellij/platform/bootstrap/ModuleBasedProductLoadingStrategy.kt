@@ -25,6 +25,7 @@ import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -76,7 +77,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
-  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  ): Deferred<List<IdeaPluginDescriptorImpl>> = scope.async {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
     val isInDevServerMode = AppMode.isDevServer()
     val pathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
@@ -88,7 +89,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     result.add(corePlugin)
     result.addAll(loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool))
     result.addAll(loadBundledPluginDescriptors(scope, loadingContext, zipPool))
-    return result
+    result.awaitAll().filterNotNull()
   }
 
   private fun loadBundledPluginDescriptors(

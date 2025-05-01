@@ -29,7 +29,7 @@ internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
-  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  ): Deferred<List<IdeaPluginDescriptorImpl>> {
     return scope.loadPluginDescriptorsImpl(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
