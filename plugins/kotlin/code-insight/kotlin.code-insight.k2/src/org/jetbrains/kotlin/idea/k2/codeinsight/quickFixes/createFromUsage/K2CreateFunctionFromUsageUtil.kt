@@ -230,7 +230,7 @@ object K2CreateFunctionFromUsageUtil {
                 /* element = */ this,
                 /* aClass = */ KtClassOrObject::class.java,
                 /* strict = */ false,
-                /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java
+                /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
             )
         }
     }
@@ -248,7 +248,7 @@ object K2CreateFunctionFromUsageUtil {
             /* element = */ this,
             /* aClass = */ KtClassOrObject::class.java,
             /* strict = */ false,
-            /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java
+            /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
         )
         return containingClass?.toLightClass() ?: getContainingFileAsJvmClass()
     }

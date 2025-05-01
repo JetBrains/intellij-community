@@ -125,7 +125,7 @@ internal class CreateKotlinCallableAction(
         val passedContainerElement = pointerToContainer.element ?: return
         val anchor = call ?: passedContainerElement
         val shouldComputeContainerFromAnchor = if (call == null) false
-        else if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
+        else if (passedContainerElement is PsiFile) !passedContainerElement.isWritable
             else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             anchor.getExtractionContainers().firstOrNull() ?:return

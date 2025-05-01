@@ -102,7 +102,7 @@ object K2CreatePropertyFromUsageBuilder {
                     /* element = */ ref,
                     /* aClass = */ KtClassOrObject::class.java,
                     /* strict = */ true,
-                    /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java
+                    /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
                 ) to null
             }
           qualifiedElement is KtQualifiedExpression && qualifiedElement.selectorExpression == ref -> {

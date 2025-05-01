@@ -5963,6 +5963,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunFromConstructorDefaultParameterValue.kt");
                     }
 
+                    @TestMetadata("topLevelFunFromConstructorDelegation.kt")
+                    public void testTopLevelFunFromConstructorDelegation() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunFromConstructorDelegation.kt");
+                    }
+
                     @TestMetadata("topLevelFunFromDelegate.kt")
                     public void testTopLevelFunFromDelegate() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunFromDelegate.kt");
@@ -7543,6 +7548,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("topLevelPropertyFromConstructorDefaultParameterValue.kt")
                     public void testTopLevelPropertyFromConstructorDefaultParameterValue() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/topLevelPropertyFromConstructorDefaultParameterValue.kt");
+                    }
+
+                    @TestMetadata("topLevelPropertyFromConstructorDelegation.kt")
+                    public void testTopLevelPropertyFromConstructorDelegation() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/topLevelPropertyFromConstructorDelegation.kt");
                     }
 
                     @TestMetadata("topLevelPropertyFromDelegate.kt")
