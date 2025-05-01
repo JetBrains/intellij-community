@@ -2,19 +2,18 @@
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool;
+import com.intellij.codeInspection.IntentionWrapper;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor;
-import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,15 +31,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.uast.*;
 
 import java.util.*;
-
-import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
   @XCollection
@@ -68,7 +63,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     );
   }
 
-  private final class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
+  private static final class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
 
     private final ProblemsHolder myProblemsHolder;
     private final Map<String, ModulesSet> myModuleNameToModulesSet;
@@ -148,11 +143,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
           LocalQuickFix[] quickFixes =
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-          myProblemsHolder.registerProblem(sourcePsi, InspectionGadgetsBundle
-                                             .message("inspection.suspicious.package.private.access.description", elementDescription, accessType, targetModule.getName()),
-                                           ArrayUtil.append(quickFixes,
-                                                            new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
-                                                                                               targetModule.getName())));
+          myProblemsHolder.registerProblem(sourcePsi, InspectionGadgetsBundle.message("inspection.suspicious.package.private.access.description", elementDescription, accessType, targetModule.getName()),
+                                           quickFixes);
         }
       }
     }
@@ -174,10 +166,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
           String problem = InspectionGadgetsBundle
             .message("inspection.suspicious.package.private.access.problem", elementDescription, classDescription, targetModule.getName());
-          myProblemsHolder.registerProblem(nameIdentifier, problem,
-                                           ArrayUtil.append(quickFixes,
-                                                            new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
-                                                                                               targetModule.getName())));
+          myProblemsHolder.registerProblem(nameIdentifier, problem, quickFixes);
         }
       }
     }
@@ -256,14 +245,6 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   }
 
   @Override
-  public @NotNull OptPane getOptionsPane() {
-    return pane(
-      OptPane.stringList("MODULES_SETS_LOADED_TOGETHER", InspectionGadgetsBundle.message("groups.of.modules.loaded.together.label"))
-        .description(InspectionGadgetsBundle.message("groups.of.modules.loaded.together.description"))
-    );
-  }
-
-  @Override
   public @NotNull OptionController getOptionController() {
     return super.getOptionController()
       .onValue("MODULES_SETS_LOADED_TOGETHER",
@@ -283,54 +264,5 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   public void readSettings(@NotNull Element node) {
     super.readSettings(node);
     myModuleSetByModuleName.drop();
-  }
-
-  private final class MarkModulesAsLoadedTogetherFix extends ModCommandQuickFix {
-    private final String myModule1;
-    private final String myModule2;
-
-    private MarkModulesAsLoadedTogetherFix(String module1, String module2) {
-      myModule1 = module1;
-      myModule2 = module2;
-    }
-
-    @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
-      return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.text", myModule1, myModule2);
-    }
-
-    @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.family.name");
-    }
-
-    @Override
-    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement psiElement = descriptor.getPsiElement();
-      return ModCommand.updateInspectionOption(psiElement, SuspiciousPackagePrivateAccessInspection.this, inspection -> {
-          Map<String, ModulesSet> moduleSetByModule = inspection.myModuleSetByModuleName.getValue();
-          ModulesSet module1Set = moduleSetByModule.get(myModule1);
-          ModulesSet module2Set = moduleSetByModule.get(myModule2);
-          if (module1Set == null) {
-            if (module2Set == null) {
-              ModulesSet modulesSet = new ModulesSet();
-              modulesSet.modules.add(myModule1);
-              modulesSet.modules.add(myModule2);
-              inspection.MODULES_SETS_LOADED_TOGETHER.add(modulesSet);
-            }
-            else {
-              module2Set.modules.add(myModule1);
-            }
-          }
-          else if (module2Set == null) {
-            module1Set.modules.add(myModule2);
-          }
-          else if (module1Set != module2Set) {
-            module1Set.modules.addAll(module2Set.modules);
-            inspection.MODULES_SETS_LOADED_TOGETHER.remove(module2Set);
-          }
-          inspection.myModuleSetByModuleName.drop();
-        });
-    }
   }
 }
