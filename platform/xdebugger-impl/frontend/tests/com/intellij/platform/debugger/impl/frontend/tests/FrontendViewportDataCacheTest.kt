@@ -121,4 +121,56 @@ internal class FrontendViewportDataCacheTest {
       assertNull(cache.getData(i, stamp))
     }
   }
+
+  @Test
+  fun `test line out of viewport cache request`() = runBlocking {
+    val cache = createSimpleDataIdentityCache()
+    val stamp = 0L
+    val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 100)
+    cache.update(viewportStartList, 500, stamp)
+    val initialData = cache.getData(400, stamp)
+    assertNull(initialData)
+
+    cache.cacheLine(400, stamp)
+    val dataAfterCache = cache.getData(400, stamp)
+    assertEquals(400, dataAfterCache)
+  }
+
+  @Test
+  fun `test line out getData after getDataWithCaching is not null`() = runBlocking {
+    val cache = createSimpleDataIdentityCache()
+    val stamp = 0L
+    val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 100)
+    cache.update(viewportStartList, 500, stamp)
+    val initialData = cache.getDataWithCaching(400, stamp)
+    assertEquals(400, initialData)
+
+    val dataAfterCache = cache.getData(400, stamp)
+    assertEquals(400, dataAfterCache)
+  }
+
+  @Test
+  fun `test line out getData after getDataWithCaching is not null without update`() = runBlocking {
+    val cache = createSimpleDataIdentityCache()
+    val stamp = 0L
+
+    val initialData = cache.getDataWithCaching(400, stamp)
+    assertEquals(400, initialData)
+
+    val dataAfterCache = cache.getData(400, stamp)
+    assertEquals(400, dataAfterCache)
+  }
+
+  @Test
+  fun `test line out getData after getData after line cache return null if timestamp is updated`() = runBlocking {
+    val cache = createSimpleDataIdentityCache()
+    val stamp = 0L
+
+    cache.cacheLine(400, stamp)
+
+    val newStamp = 100L
+
+    val dataAfterCacheWithNewStamp = cache.getData(400, newStamp)
+    assertNull(dataAfterCacheWithNewStamp)
+  }
 }

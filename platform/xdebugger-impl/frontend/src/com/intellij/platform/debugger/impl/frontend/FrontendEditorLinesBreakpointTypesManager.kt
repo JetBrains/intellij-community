@@ -20,12 +20,12 @@ import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 private val DOCUMENTS_UPDATE_DEBOUNCE = 600.milliseconds
@@ -39,7 +39,7 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
         val editor = event.editor
-        editorsMap.putIfAbsent(editor, EditorBreakpointTypesMap(cs, editor, project))
+        putNewTypesMap(editor)
       }
 
       override fun editorReleased(event: EditorFactoryEvent) {
@@ -51,7 +51,7 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
     cs.launch {
       readAction {
         for (editor in EditorFactory.getInstance().allEditors) {
-          editorsMap.putIfAbsent(editor, EditorBreakpointTypesMap(cs, editor, project))
+          putNewTypesMap(editor)
         }
       }
       // dispose editors that were disposed during map initialization to prevent races with the listener
@@ -65,10 +65,16 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
     }
   }
 
+  private fun putNewTypesMap(editor: Editor): EditorBreakpointTypesMap {
+    val newMap = EditorBreakpointTypesMap(cs, editor, project)
+    val oldMap = editorsMap.putIfAbsent(editor, newMap)
+    return oldMap ?: newMap
+  }
+
   suspend fun getTypesForLine(editor: Editor, line: Int): List<XBreakpointTypeProxy> {
     val editorMap = editorsMap[editor]
     if (editorMap == null) {
-      return getAvailableBreakpointTypesFromServer(project, editor, line)
+      return putNewTypesMap(editor).getTypesForLine(line)
     }
     return editorMap.getTypesForLine(line)
   }
@@ -147,13 +153,7 @@ private class EditorBreakpointTypesMap(
   suspend fun getTypesForLine(line: Int): List<XBreakpointTypeProxy> {
     // let's try to find breakpoint types from the current map
     val currentEditorStamp = readAction { editor.document.modificationStamp }
-    val cachedTypes = getTypesForLineInternal(line, currentEditorStamp)
-    if (cachedTypes != null) {
-      return cachedTypes
-    }
-
-    // No cached data or document was modified, let's make an rpc call for that, data will be fetched later
-    return getAvailableBreakpointTypesFromServer(project, editor, line)
+    return breakpointsMap.getDataWithCaching(line, currentEditorStamp) ?: listOf()
   }
 
   fun getTypesForLineInternal(line: Int, currentEditorStamp: Long): List<XBreakpointTypeProxy>? {
