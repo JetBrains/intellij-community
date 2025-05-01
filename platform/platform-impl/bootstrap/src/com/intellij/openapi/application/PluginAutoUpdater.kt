@@ -71,12 +71,13 @@ object PluginAutoUpdater {
 
     val currentDescriptors = span("loading existing descriptors") {
       ZipFilePoolImpl().use { pool ->
-        val result = loadAndInitDescriptors(
+        val discoveredPlugins = loadDescriptors(
           CompletableDeferred(pool),
           CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader),
-          ProductPluginInitContext()
-        )
-        result.second
+        ).second
+        val loadingResult = PluginLoadingResult()
+        loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = ProductPluginInitContext())
+        loadingResult
       }
     }
     // shadowing intended

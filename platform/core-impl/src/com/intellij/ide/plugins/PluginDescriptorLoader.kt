@@ -401,11 +401,10 @@ private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDes
   return async { SystemPropertyProvidedPluginsList(list.awaitAllNotNull()) }
 }
 
-suspend fun loadAndInitDescriptors(
+suspend fun loadDescriptors(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-  initContext: PluginInitializationContext,
-): Pair<PluginDescriptorLoadingContext, PluginLoadingResult> {
+): Pair<PluginDescriptorLoadingContext, PluginDescriptorLoadingResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
   val loadingContext = PluginDescriptorLoadingContext(
@@ -424,9 +423,7 @@ suspend fun loadAndInitDescriptors(
   } finally {
     loadingContext.close()
   }
-  val loadingResult = PluginLoadingResult()
-  loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
-  return loadingContext to loadingResult
+  return loadingContext to discoveredPlugins
 }
 
 internal fun CoroutineScope.scheduleLoading(
@@ -436,20 +433,21 @@ internal fun CoroutineScope.scheduleLoading(
 ): Deferred<PluginSet> {
   val initContext = ProductPluginInitContext()
   val resultDeferred = async(CoroutineName("plugin descriptor loading")) {
-    loadAndInitDescriptors(zipPoolDeferred, mainClassLoaderDeferred, initContext)
+    loadDescriptors(zipPoolDeferred, mainClassLoaderDeferred)
   }
   val pluginSetDeferred = async {
-    val (loadingContext, loadingResult) = resultDeferred.await()
-    PluginManagerCore.initializeAndSetPlugins(loadingContext.copyDescriptorLoadingErrors(), initContext, loadingResult)
-  }
-  // logging is not as a part of plugin set job for performance reasons
-  launch {
-    val (_, loadingResult) = resultDeferred.await()
-    logPlugins(pluginSetDeferred.await().allPlugins, initContext, loadingResult, logSupplier = {
-      // make sure that logger is ready to use (not a console logger)
-      logDeferred?.await()
-      LOG
-    })
+    val (loadingContext, discoveredPlugins) = resultDeferred.await()
+    val loadingResult = PluginLoadingResult()
+    loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
+    val pluginSet = PluginManagerCore.initializeAndSetPlugins(loadingContext.copyDescriptorLoadingErrors(), initContext, loadingResult)
+    this@scheduleLoading.launch { // logging is not as a part of plugin set job for performance reasons
+      logPlugins(pluginSet.allPlugins, initContext, loadingResult, logSupplier = {
+        // make sure that logger is ready to use (not a console logger)
+        logDeferred?.await()
+        LOG
+      })
+    }
+    pluginSet
   }
   return pluginSetDeferred
 }
