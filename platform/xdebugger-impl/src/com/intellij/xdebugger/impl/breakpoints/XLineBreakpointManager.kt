@@ -4,8 +4,8 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings.Companion.getInstance
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diff.impl.DiffUtil
@@ -46,6 +46,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import kotlinx.coroutines.CoroutineScope
@@ -310,7 +311,13 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
         val dataContext = SimpleDataContext.getSimpleContext(BREAKPOINT_LINE_KEY, line,
                                                              DataManager.getInstance().getDataContext(mouseEvent.component))
         val event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext)
-        ActionUtil.performAction(action, event)
+        // Call handler directly so that it will be called on frontend
+        val handler = ToggleLineBreakpointAction.ourHandler
+        if (handler.isEnabled(project, event)) {
+          handler.perform(project, event)
+          // statistics reporting
+          ActionsCollectorImpl.onAfterActionInvoked(action, event, AnActionResult.PERFORMED)
+        }
       }
     }
 

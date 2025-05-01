@@ -35,7 +35,7 @@ import static com.intellij.xdebugger.impl.XEditorSourcePositionKt.withEditor;
 
 @ApiStatus.Internal
 public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
-  private static final XToggleLineBreakpointActionHandler ourHandler = new XToggleLineBreakpointActionHandler(false);
+  public static final XToggleLineBreakpointActionHandler ourHandler = new XToggleLineBreakpointActionHandler(false);
 
   public ToggleLineBreakpointAction() {
     super(true);
