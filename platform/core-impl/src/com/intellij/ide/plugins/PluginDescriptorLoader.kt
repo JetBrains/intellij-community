@@ -635,10 +635,10 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       bundledPluginDir = effectiveBundledPluginDir,
     )
     return async {
-      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().size + fromClasspath.size).apply {
+      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().size + fromClasspath.await().size).apply {
         add(core.await())
         addAll(custom.await()) // TODO check order
-        addAll(fromClasspath.awaitAllNotNull())
+        addAll(fromClasspath.await())
       }
     }
   }
@@ -650,7 +650,7 @@ private fun CoroutineScope.loadFromPluginClasspathDescriptor(
   loadingContext: PluginDescriptorLoadingContext,
   zipPool: ZipEntryResolverPool,
   bundledPluginDir: Path,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
+): Deferred<List<IdeaPluginDescriptorImpl>> {
   val pluginCount = input.readUnsignedShort()
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>(pluginCount)
   repeat(pluginCount) {
@@ -687,7 +687,7 @@ private fun CoroutineScope.loadFromPluginClasspathDescriptor(
       }
     })
   }
-  return result
+  return async { result.awaitAllNotNull() }
 }
 
 private data class FileItem(@JvmField val file: Path, @JvmField val path: String)
