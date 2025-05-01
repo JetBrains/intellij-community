@@ -25,7 +25,8 @@ public final class CompletionElement{
     this(element, substitutor, "", null);
   }
 
-  CompletionElement(Object element, PsiSubstitutor substitutor, @NotNull String qualifierText, @Nullable PsiType methodRefType) {
+  @ApiStatus.Internal
+  public CompletionElement(Object element, PsiSubstitutor substitutor, @NotNull String qualifierText, @Nullable PsiType methodRefType) {
     myElement = element;
     mySubstitutor = substitutor;
     myQualifierText = qualifierText;

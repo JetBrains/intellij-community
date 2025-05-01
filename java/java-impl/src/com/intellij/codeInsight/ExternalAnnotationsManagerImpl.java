@@ -132,7 +132,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
 
           if (event.isFromRefresh() && ANNOTATIONS_XML.equals(name)) {
             dropAnnotationsCache();
-            myPsiManager.dropPsiCaches();
+            getPsiManager().dropPsiCaches();
           }
         }
       }
@@ -161,6 +161,10 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new MyDocumentListener(), this);
   }
 
+  private @NotNull PsiManager getPsiManager() {
+    return myPsiManager;
+  }
+  
   @Override
   public void dispose() {
   }

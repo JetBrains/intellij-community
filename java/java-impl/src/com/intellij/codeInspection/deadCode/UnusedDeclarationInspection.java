@@ -15,6 +15,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
@@ -37,6 +38,7 @@ import static com.intellij.codeInsight.options.JavaInspectionControls.button;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
+  private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspection.class);
   private final UnusedParametersInspection myUnusedParameters = new UnusedParametersInspection();
 
   public UnusedDeclarationInspection() { }

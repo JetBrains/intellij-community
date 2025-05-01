@@ -105,7 +105,7 @@ public final class EntryPointsManagerImpl extends EntryPointsManagerBase impleme
           list.add(new ClassPattern(pattern));
         }
         ClassPatternsPanel panel = new ClassPatternsPanel(list);
-        new DialogWrapper(entryPointsManagerBase.myProject) {
+        new DialogWrapper(project) {
 
           {
             init();
@@ -127,7 +127,7 @@ public final class EntryPointsManagerImpl extends EntryPointsManagerBase impleme
             Set<ClassPattern> patterns = entryPointsManagerBase.getPatterns();
             patterns.clear();
             patterns.addAll(list);
-            DaemonCodeAnalyzerEx.getInstanceEx(entryPointsManagerBase.myProject).restart("EntryPointsManagerImpl.createConfigureClassPatternsButton");
+            DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EntryPointsManagerImpl.createConfigureClassPatternsButton");
             super.doOKAction();
           }
         }.show();

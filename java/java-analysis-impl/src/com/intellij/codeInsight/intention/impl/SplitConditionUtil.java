@@ -12,6 +12,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,12 +83,13 @@ public final class SplitConditionUtil {
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
 
-  static @Nullable PsiIfStatement create(@NotNull PsiElementFactory factory,
-                                         @NotNull PsiIfStatement ifStatement,
-                                         @NotNull PsiExpression extract,
-                                         @NotNull PsiExpression leave,
-                                         @NotNull IElementType operation,
-                                         CommentTracker tracker) {
+  @ApiStatus.Internal
+  public static @Nullable PsiIfStatement create(@NotNull PsiElementFactory factory,
+                                                @NotNull PsiIfStatement ifStatement,
+                                                @NotNull PsiExpression extract,
+                                                @NotNull PsiExpression leave,
+                                                @NotNull IElementType operation,
+                                                CommentTracker tracker) {
     PsiStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch == null) {
       return null;

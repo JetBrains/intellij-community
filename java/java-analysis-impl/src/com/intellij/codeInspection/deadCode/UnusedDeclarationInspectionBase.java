@@ -144,7 +144,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  protected void writeUnusedDeclarationSettings(@NotNull Element node) throws WriteExternalException {
+  @ApiStatus.Internal
+  public void writeUnusedDeclarationSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
     for (EntryPoint extension : getExtensions()) {
       extension.writeExternal(node);

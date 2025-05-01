@@ -16,10 +16,11 @@ public class MavenCentralSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(MavenCentralSourceSearcher.class);
 
   @Override
-  protected @Nullable String findSourceJar(@NotNull ProgressIndicator indicator,
-                                           @NotNull String artifactId,
-                                           @NotNull String version,
-                                           @NotNull VirtualFile classesJar) throws SourceSearchException {
+  @Nullable
+  public String findSourceJar(@NotNull ProgressIndicator indicator,
+                              @NotNull String artifactId,
+                              @NotNull String version,
+                              @NotNull VirtualFile classesJar) throws SourceSearchException {
     try {
       indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://search.maven.org"));
 

@@ -41,10 +41,11 @@ public abstract class SourceSearcher {
    * @param classesJar classes jar
    * @return url of found artifact
    */
-  protected @Nullable String findSourceJar(final @NotNull ProgressIndicator indicator,
-                                 @NotNull String artifactId,
-                                 @NotNull String version,
-                                 @NotNull VirtualFile classesJar) throws SourceSearchException {
+  @Nullable
+  public String findSourceJar(final @NotNull ProgressIndicator indicator,
+                              @NotNull String artifactId,
+                              @NotNull String version,
+                              @NotNull VirtualFile classesJar) throws SourceSearchException {
     return findSourceJar(indicator, artifactId, version);
   }
 

@@ -25,6 +25,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,7 +352,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     };
   }
 
-  static @NlsContexts.DialogTitle String getRefactoringName() {
+  @ApiStatus.Internal
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("changeClassSignature.refactoring.name");
   }
 }

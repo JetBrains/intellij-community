@@ -88,7 +88,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     this(project, new JavaMethodDescriptor(method), allowDelegation, context);
   }
 
-  protected JavaChangeSignatureDialog(@NotNull Project project, @NotNull JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
+  public JavaChangeSignatureDialog(@NotNull Project project,
+                                   @NotNull JavaMethodDescriptor descriptor,
+                                   boolean allowDelegation,
+                                   PsiElement context) {
     super(project, descriptor, allowDelegation, context);
   }
 

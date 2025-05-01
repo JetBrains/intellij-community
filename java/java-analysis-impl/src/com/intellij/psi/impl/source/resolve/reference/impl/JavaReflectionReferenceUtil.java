@@ -28,6 +28,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -333,16 +334,19 @@ public final class JavaReflectionReferenceUtil {
     return aClass != null && name.equals(aClass.getQualifiedName());
   }
 
+  @ApiStatus.Internal
   @Contract("null -> false")
-  static boolean isRegularMethod(@Nullable PsiMethod method) {
+  public static boolean isRegularMethod(@Nullable PsiMethod method) {
     return method != null && !method.isConstructor();
   }
 
-  static boolean isPublic(@NotNull PsiMember member) {
+  @ApiStatus.Internal
+  public static boolean isPublic(@NotNull PsiMember member) {
     return member.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
-  static boolean isAtomicallyUpdateable(@NotNull PsiField field) {
+  @ApiStatus.Internal
+  public static boolean isAtomicallyUpdateable(@NotNull PsiField field) {
     if (field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.VOLATILE)) {
       return false;
     }
@@ -350,7 +354,8 @@ public final class JavaReflectionReferenceUtil {
     return !(type instanceof PsiPrimitiveType) || PsiTypes.intType().equals(type) || PsiTypes.longType().equals(type);
   }
 
-  static @Nullable String getParameterTypesText(@NotNull PsiMethod method) {
+  @ApiStatus.Internal
+  public static @Nullable String getParameterTypesText(@NotNull PsiMethod method) {
     final StringJoiner joiner = new StringJoiner(", ");
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       final String typeText = getTypeText(parameter.getType());
@@ -359,7 +364,8 @@ public final class JavaReflectionReferenceUtil {
     return joiner.toString();
   }
 
-  static void shortenArgumentsClassReferences(@NotNull InsertionContext context) {
+  @ApiStatus.Internal
+  public static void shortenArgumentsClassReferences(@NotNull InsertionContext context) {
     final PsiElement parameter = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
     final PsiExpressionList parameterList = PsiTreeUtil.getParentOfType(parameter, PsiExpressionList.class);
     if (parameterList != null && parameterList.getParent() instanceof PsiMethodCallExpression) {
@@ -367,24 +373,29 @@ public final class JavaReflectionReferenceUtil {
     }
   }
 
-  static @NotNull LookupElement withPriority(@NotNull LookupElement lookupElement, boolean hasPriority) {
+  @ApiStatus.Internal
+  public static @NotNull LookupElement withPriority(@NotNull LookupElement lookupElement, boolean hasPriority) {
     return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
   }
 
-  static @Nullable LookupElement withPriority(@Nullable LookupElement lookupElement, int priority) {
+  @ApiStatus.Internal
+  public static @Nullable LookupElement withPriority(@Nullable LookupElement lookupElement, int priority) {
     return priority == 0 || lookupElement == null ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
   }
 
-  static int getMethodSortOrder(@NotNull PsiMethod method) {
+  @ApiStatus.Internal
+  public static int getMethodSortOrder(@NotNull PsiMethod method) {
     return isJavaLangObject(method.getContainingClass()) ? 1 : isPublic(method) ? -1 : 0;
   }
 
-  static @Nullable String getMemberType(@Nullable PsiElement element) {
+  @ApiStatus.Internal
+  public static @Nullable String getMemberType(@Nullable PsiElement element) {
     final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
   }
 
-  static @Nullable LookupElement lookupMethod(@NotNull PsiMethod method, @Nullable InsertHandler<LookupElement> insertHandler) {
+  @ApiStatus.Internal
+  public static @Nullable LookupElement lookupMethod(@NotNull PsiMethod method, @Nullable InsertHandler<LookupElement> insertHandler) {
     final ReflectiveSignature signature = getMethodSignature(method);
     return signature != null
            ? LookupElementBuilder.create(signature, method.getName())
@@ -394,7 +405,8 @@ public final class JavaReflectionReferenceUtil {
            : null;
   }
 
-  static void replaceText(@NotNull InsertionContext context, @NotNull String text) {
+  @ApiStatus.Internal
+  public static void replaceText(@NotNull InsertionContext context, @NotNull String text) {
     final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
     final PsiElement params = newElement.getParent().getParent();
     final int end = params.getTextRange().getEndOffset() - 1;

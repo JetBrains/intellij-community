@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class Match {
   private static final Logger LOG = Logger.getInstance(Match.class);
   private final PsiElement myMatchStart;
@@ -323,7 +324,7 @@ public final class Match {
     return JavaCodeStyleManager.getInstance(matchStart.getProject()).shortenClassReferences(matchStart.replace(psiExpression));
   }
 
-  TextRange getTextRange() {
+  public TextRange getTextRange() {
     final TextRange startRange = checkRange(getMatchStart());
     final TextRange endRange = checkRange(getMatchEnd());
     return new TextRange(startRange.getStartOffset(), endRange.getEndOffset());

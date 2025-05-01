@@ -130,13 +130,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   @NotNull
-  List<String> getDefaultNullables() {
+  public List<String> getDefaultNullables() {
     return new ArrayList<>(myDefaultNullables.keySet());
   }
 
   @Override
   @NotNull
-  List<String> getDefaultNotNulls() {
+  public List<String> getDefaultNotNulls() {
     return new ArrayList<>(myDefaultNotNulls.keySet());
   }
 
@@ -300,9 +300,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   @Nullable
-  NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                              PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                              @NotNull PsiElement context, boolean superPackage) {
+  protected NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
+                                                        PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                        @NotNull PsiElement context, boolean superPackage) {
     PsiModifierList modifierList = container.getModifierList();
     if (modifierList == null) return null;
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
@@ -344,14 +344,16 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  protected @NotNull List<String> getNullablesWithNickNames() {
+  @NotNull
+  public List<String> getNullablesWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       Result.create(StreamEx.of(getNullables(), filterNickNames(Nullability.NULLABLE)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override
-  protected @NotNull List<String> getNotNullsWithNickNames() {
+  @NotNull
+  public List<String> getNotNullsWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
       Result.create(StreamEx.of(getNotNulls(), filterNickNames(Nullability.NOT_NULL)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));

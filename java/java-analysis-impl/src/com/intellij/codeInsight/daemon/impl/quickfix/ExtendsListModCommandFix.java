@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -29,10 +30,11 @@ public class ExtendsListModCommandFix extends PsiUpdateModCommandAction<PsiClass
     this(aClass, classToExtendFrom, JavaPsiFacade.getElementFactory(aClass.getProject()).createType(classToExtendFrom), toAdd);
   }
 
-  ExtendsListModCommandFix(@NotNull PsiClass aClass,
-                           @Nullable PsiClass classToExtendFrom,
-                           @NotNull PsiClassType typeToExtendFrom,
-                           boolean toAdd) {
+  @ApiStatus.Internal
+  public ExtendsListModCommandFix(@NotNull PsiClass aClass,
+                                  @Nullable PsiClass classToExtendFrom,
+                                  @NotNull PsiClassType typeToExtendFrom,
+                                  boolean toAdd) {
     super(aClass);
     myClassToExtendFromPointer = classToExtendFrom == null ? null : SmartPointerManager.createPointer(classToExtendFrom);
     myToAdd = toAdd;
@@ -78,7 +80,8 @@ public class ExtendsListModCommandFix extends PsiUpdateModCommandAction<PsiClass
     invokeImpl(myClass);
   }
 
-  void invokeImpl(@NotNull PsiClass myClass) {
+  @ApiStatus.Internal
+  public void invokeImpl(@NotNull PsiClass myClass) {
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
 
     PsiReferenceList extendsList =
@@ -97,7 +100,8 @@ public class ExtendsListModCommandFix extends PsiUpdateModCommandAction<PsiClass
   /**
    * @param position to add new class to or -1 if add to the end
    */
-  static void modifyList(@NotNull PsiReferenceList extendsList, boolean add, int position, @NotNull PsiClassType myTypeToExtendFrom) {
+  @ApiStatus.Internal
+  public static void modifyList(@NotNull PsiReferenceList extendsList, boolean add, int position, @NotNull PsiClassType myTypeToExtendFrom) {
     PsiClass classToExtendFrom = myTypeToExtendFrom.resolve();
     if (classToExtendFrom == null) return;
 
