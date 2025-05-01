@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.ReadModuleContext
@@ -327,60 +326,8 @@ class PluginManagerTest {
       )
       val root = readXmlAsModel(Files.newInputStream(file))
       val autoGenerateModuleDescriptor = Ref<Boolean>(false)
-      val moduleMap = HashMap<String?, XmlElement?>()
-      val pathResolver: PathResolver? = object : PathResolver {
-        override val isFlat: Boolean
-          get() = false
-
-        override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? {
-          throw UnsupportedOperationException()
-        }
-
-        override fun resolvePath(
-          readContext: ReadModuleContext,
-          dataLoader: DataLoader,
-          relativePath: String
-        ): PluginDescriptorBuilder {
-          for (child in root.children) {
-            if (child.name == "config-file-idea-plugin") {
-              val url = child.getAttributeValue("url")!!
-              if (url.endsWith("/$relativePath")) {
-                try {
-                  val reader = PluginDescriptorFromXmlStreamConsumer(readContext, this.toXIncludeLoader(dataLoader))
-                  reader.consume(elementAsBytes(child), null)
-                  return reader.getBuilder()
-                }
-                catch (e: XMLStreamException) {
-                  throw RuntimeException(e)
-                }
-              }
-            }
-          }
-          throw AssertionError("Unexpected: $relativePath")
-        }
-
-        override fun resolveModuleFile(
-          readContext: ReadModuleContext,
-          dataLoader: DataLoader,
-          path: String
-        ): PluginDescriptorBuilder {
-          if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
-            val element = moduleMap.get(path)
-            if (element != null) {
-              try {
-                return readModuleDescriptorForTest(elementAsBytes(element))
-              }
-              catch (e: XMLStreamException) {
-                throw RuntimeException(e)
-              }
-            }
-            // auto-generate empty descriptor
-            return readModuleDescriptorForTest(("<idea-plugin package=\"$path\"></idea-plugin>").toByteArray(
-              StandardCharsets.UTF_8))
-          }
-          return resolvePath(readContext, dataLoader, path)
-        }
-      }
+      val moduleMap = HashMap<String, XmlElement>()
+      val pathResolver: PathResolver = createPathResolverForTest(root, autoGenerateModuleDescriptor, moduleMap)
 
       for (element in root.children) {
         val moduleFile = element.attributes["moduleFile"]
@@ -394,7 +341,6 @@ class PluginManagerTest {
         if (element.name != "idea-plugin") {
           continue
         }
-
         val url = element.getAttributeValue("url")
         val pluginPath: Path?
         if (url == null) {
@@ -403,17 +349,23 @@ class PluginManagerTest {
             assert(element.attributes.containsKey("moduleFile"))
             continue
           }
-
           pluginPath = Path.of(id.content!!.replace('.', '_') + ".xml")
           autoGenerateModuleDescriptor.set(true)
         }
         else {
-          pluginPath = Path.of(Strings.trimStart(url, "file://"))
+          pluginPath = Path.of(url.removePrefix("file://"))
         }
         val descriptor = readAndInitDescriptorFromBytesForTest(
-          pluginPath, isBundled, elementAsBytes(element), loadingContext, initContext, pathResolver!!, LocalFsDataLoader(pluginPath))
+          path = pluginPath,
+          isBundled = isBundled,
+          data = elementAsBytes(element),
+          loadingContext = loadingContext,
+          initContext = initContext,
+          pathResolver = pathResolver,
+          dataLoader = LocalFsDataLoader(pluginPath)
+        )
         list.add(descriptor)
-        descriptor.jarFiles = mutableListOf<Path>()
+        descriptor.jarFiles = emptyList()
       }
       loadingContext.close()
       val result = PluginLoadingResult()
@@ -429,6 +381,60 @@ class PluginManagerTest {
         coreLoader = PluginManagerTest::class.java.getClassLoader(),
         parentActivity = null
       )
+    }
+
+    private fun createPathResolverForTest(
+      root: XmlElement,
+      autoGenerateModuleDescriptor: Ref<Boolean>,
+      moduleMap: HashMap<String, XmlElement>,
+    ): PathResolver = object : PathResolver {
+      override val isFlat: Boolean = false
+      override fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference? = throw UnsupportedOperationException()
+
+      override fun resolvePath(
+        readContext: ReadModuleContext,
+        dataLoader: DataLoader,
+        relativePath: String,
+      ): PluginDescriptorBuilder {
+        for (child in root.children) {
+          if (child.name == "config-file-idea-plugin") {
+            val url = child.getAttributeValue("url")!!
+            if (url.endsWith("/$relativePath")) {
+              try {
+                val reader = PluginDescriptorFromXmlStreamConsumer(readContext, this.toXIncludeLoader(dataLoader))
+                reader.consume(elementAsBytes(child), null)
+                return reader.getBuilder()
+              }
+              catch (e: XMLStreamException) {
+                throw RuntimeException(e)
+              }
+            }
+          }
+        }
+        throw AssertionError("Unexpected: $relativePath")
+      }
+
+      override fun resolveModuleFile(
+        readContext: ReadModuleContext,
+        dataLoader: DataLoader,
+        path: String,
+      ): PluginDescriptorBuilder {
+        if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
+          val element = moduleMap.get(path)
+          if (element != null) {
+            try {
+              return readModuleDescriptorForTest(elementAsBytes(element))
+            }
+            catch (e: XMLStreamException) {
+              throw RuntimeException(e)
+            }
+          }
+          // auto-generate empty descriptor
+          return readModuleDescriptorForTest(("<idea-plugin package=\"$path\"></idea-plugin>").toByteArray(
+            StandardCharsets.UTF_8))
+        }
+        return resolvePath(readContext, dataLoader, path)
+      }
     }
 
     @Throws(XMLStreamException::class)
