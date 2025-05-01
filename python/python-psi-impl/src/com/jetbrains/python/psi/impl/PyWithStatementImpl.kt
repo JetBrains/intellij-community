@@ -1,42 +1,34 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiListLikeElement;
-import com.intellij.psi.PsiNamedElement;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.PyWithItem;
-import com.jetbrains.python.psi.PyWithStatement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiListLikeElement
+import com.intellij.psi.PsiNamedElement
+import com.jetbrains.python.ast.PyAstWithStatement
+import com.jetbrains.python.psi.PyElementVisitor
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.PyWithItem
+import com.jetbrains.python.psi.PyWithStatement
+import com.jetbrains.python.psi.types.TypeEvalContext
 
-import java.util.Arrays;
-import java.util.List;
-
-
-public class PyWithStatementImpl extends PyElementImpl implements PyWithStatement, PsiListLikeElement {
-  public PyWithStatementImpl(ASTNode astNode) {
-    super(astNode);
+class PyWithStatementImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyWithStatement, PsiListLikeElement {
+  override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
+    pyVisitor.visitPyWithStatement(this)
   }
 
-  @Override
-  protected void acceptPyVisitor(final PyElementVisitor pyVisitor) {
-    pyVisitor.visitPyWithStatement(this);
+  fun getNamedElement(the_name: String): PsiNamedElement? {
+    return PyUtil.IterHelper.findName(getNamedElements(), the_name)
   }
 
-  public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {
-    return PyUtil.IterHelper.findName(getNamedElements(), the_name);
+  override fun getWithItems(): Array<PyWithItem> {
+    return childrenToPsi(PyAstWithStatement.WITH_ITEM, PyWithItem.EMPTY_ARRAY)
   }
 
-  @Override
-  public PyWithItem[] getWithItems() {
-    return childrenToPsi(WITH_ITEM, PyWithItem.EMPTY_ARRAY);
+  override fun getComponents(): List<PyWithItem> {
+    return withItems.toList()
   }
 
-  @Override
-  public @NotNull List<? extends PsiElement> getComponents() {
-    return Arrays.asList(getWithItems());
+  override fun isSuppressingExceptions(context: TypeEvalContext): Boolean {
+    return withItems.any { it.isSuppressingExceptions(context) }
   }
 }
