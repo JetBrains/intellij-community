@@ -29,7 +29,7 @@ object NotebookUtil {
     val gutterWidth = editor.gutterComponentEx.width
 
     val (fillX, fillWidth, fillColor) = if (!presentationModeMasking)
-      Triple(r.width - borderWidth + 1, borderWidth, customColor ?: appearance.codeCellBackgroundColor.get())
+      Triple(r.width - borderWidth, borderWidth, customColor ?: appearance.codeCellBackgroundColor.get())
     else
       Triple(r.width - borderWidth - gutterWidth, gutterWidth, editor.colorsScheme.defaultBackground)
 
