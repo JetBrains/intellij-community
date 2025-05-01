@@ -231,7 +231,7 @@ class PluginManagerTest {
     private fun assertPluginPreInstalled(expectedPluginId: PluginId?, pluginLists: List<DiscoveredPluginsList>) {
       val loadingResult = PluginLoadingResult()
       loadingResult.initAndAddAll(
-        pluginLists = pluginLists,
+        descriptorLoadingResult = PluginDescriptorLoadingResult.build(pluginLists),
         initContext = PluginInitializationContext.buildForTest(
           essentialPlugins = emptySet(),
           disabledPlugins = emptySet(), // TODO refactor the test
@@ -377,7 +377,7 @@ class PluginManagerTest {
         CustomPluginsList(Path.of(""), list)
       }
       result.initAndAddAll(
-        pluginLists = listOf(pluginList),
+        descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
         initContext = initContext
       )
       return PluginManagerCore.initializePlugins(

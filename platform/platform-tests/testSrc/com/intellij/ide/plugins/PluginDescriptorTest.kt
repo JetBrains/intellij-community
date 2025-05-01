@@ -447,7 +447,7 @@ class PluginDescriptorTest {
     )
     val result = PluginLoadingResult()
     result.initAndAddAll(
-      pluginLists = listOf(pluginList),
+      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
       initContext = initContext
     )
     assertThat(result.enabledPlugins).hasSize(1)

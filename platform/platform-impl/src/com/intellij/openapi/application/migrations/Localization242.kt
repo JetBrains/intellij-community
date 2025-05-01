@@ -25,7 +25,10 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
   val loadedDescriptors = runBlocking {
     val pluginList = loadDescriptorsFromCustomPluginDir(oldPluginsDir, true)
     val loadingResult = PluginLoadingResult()
-    loadingResult.initAndAddAll(pluginLists = listOf(pluginList), initContext = ProductPluginInitContext())
+    loadingResult.initAndAddAll(
+      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
+      initContext = ProductPluginInitContext()
+    )
     loadingResult
   }.enabledPluginsById.values
 

@@ -413,7 +413,7 @@ suspend fun loadAndInitDescriptors(
     isMissingSubDescriptorIgnored = true,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
   )
-  val pluginLists = try {
+  val discoveredPlugins = try {
     loadDescriptors(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
@@ -425,7 +425,7 @@ suspend fun loadAndInitDescriptors(
     loadingContext.close()
   }
   val loadingResult = PluginLoadingResult()
-  loadingResult.initAndAddAll(pluginLists = pluginLists, initContext = initContext)
+  loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = initContext)
   return loadingContext to loadingResult
 }
 
@@ -522,7 +522,7 @@ private suspend fun loadDescriptors(
   isRunningFromSources: Boolean,
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
-): List<DiscoveredPluginsList> {
+): PluginDescriptorLoadingResult {
   val zipPool = zipPoolDeferred.await()
   val mainClassLoader = mainClassLoaderDeferred?.await() ?: PluginManagerCore::class.java.classLoader
   val (plugins, pluginsFromProperty) = coroutineScope {
@@ -539,8 +539,8 @@ private suspend fun loadDescriptors(
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
     pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
   }
-  val pluginLists = if (pluginsFromProperty != null) { plugins + pluginsFromProperty } else { plugins }
-  return pluginLists
+  val discoveredPlugins = if (pluginsFromProperty != null) { plugins + pluginsFromProperty } else { plugins }
+  return PluginDescriptorLoadingResult.build(discoveredPlugins)
 }
 
 internal fun CoroutineScope.loadPluginDescriptorsImpl(
@@ -1095,7 +1095,7 @@ fun loadDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
   productBuildNumber: BuildNumber?,
-): List<DiscoveredPluginsList> {
+): PluginDescriptorLoadingResult {
   val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
   val pool = NonShareableJavaZipFilePool()
   val loadingContext = PluginDescriptorLoadingContext(
@@ -1103,7 +1103,7 @@ fun loadDescriptorsFromOtherIde(
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
   )
-  val pluginLists = try {
+  val discoveredPlugins = try {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       loadPluginDescriptorsImpl(
@@ -1120,7 +1120,7 @@ fun loadDescriptorsFromOtherIde(
     loadingContext.close()
     pool.close()
   }
-  return pluginLists
+  return PluginDescriptorLoadingResult.build(discoveredPlugins)
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {
