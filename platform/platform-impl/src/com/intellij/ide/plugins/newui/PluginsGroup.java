@@ -59,11 +59,11 @@ public class PluginsGroup {
     updateTitle();
   }
 
-  public void titleWithEnabled(@NotNull PluginModelFacade pluginModel) {
+  public void titleWithEnabled(@NotNull PluginModelFacade pluginModelFacade) {
     int enabled = 0;
     for (PluginUiModel descriptor : models) {
-      if (pluginModel.isLoaded(descriptor) &&
-          pluginModel.isEnabled(descriptor) &&
+      if (pluginModelFacade.isLoaded(descriptor) &&
+          pluginModelFacade.isEnabled(descriptor) &&
           !descriptor.isIncompatible()) {
         enabled++;
       }
