@@ -1,7 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.bind
-import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.EditorCellInputFactory
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookCellLines
@@ -13,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
@@ -42,7 +40,6 @@ class EditorCellView(
     SelfManagedControllerFactory.createControllers(this)
   }
 
-  private val cellHighlighters = mutableListOf<RangeHighlighter>()
 
   // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on the same lines.
   private var lastHighLightersLines: IntRange? = null
@@ -54,11 +51,6 @@ class EditorCellView(
     }
     cell.isSelected.bind(this) { selected ->
       updateSelected()
-    }
-    editor.notebookAppearance.codeCellBackgroundColor.bind(this) { backgroundColor ->
-      updateCellHighlight(force = true)
-    }
-    cell.notebook.showCellToolbar.bind(this) {
     }
     cell.isHovered.bind(this) {
       updateHovered()
@@ -75,7 +67,6 @@ class EditorCellView(
 
   override fun dispose() {
     super.dispose()
-    removeCellHighlight()
   }
 
   private fun createEditorCellInput(): EditorCellInput {
@@ -143,18 +134,6 @@ class EditorCellView(
     updateFolding()
   }
 
-  fun addCellHighlighter(provider: () -> RangeHighlighter) {
-    val highlighter = provider()
-    cellHighlighters.add(highlighter)
-  }
-
-  private fun removeCellHighlight() {
-    cellHighlighters.forEach {
-      it.dispose()
-    }
-    cellHighlighters.clear()
-  }
-
   private fun updateCellHighlight(force: Boolean = false) {
     val interval = cell.interval
 
@@ -164,7 +143,6 @@ class EditorCellView(
     lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
     updateSelfManaged()
 
-    removeCellHighlight()
   }
 
 
