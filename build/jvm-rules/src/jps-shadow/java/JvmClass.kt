@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.jps.dependency.java
@@ -15,19 +16,9 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   val outerFqName: String?
   val superFqName: String
   val interfaces: Collection<String>
-  val fields: Collection<JvmField>
+  private val fields: Collection<JvmField>
   private val methods: Collection<JvmMethod>
   val annotationTargets: Collection<ElemType>
-
-  companion object {
-    const val OBJECT_CLASS_NAME: String = "java/lang/Object"
-
-    @JvmStatic
-    fun getPackageName(jvmClassName: String): String {
-      val index = jvmClassName.lastIndexOf('/')
-      return if (index >= 0) jvmClassName.substring(0, index) else ""
-    }
-  }
 
   private val retentionPolicy: RetentionPolicy?
 
@@ -77,8 +68,21 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
     retentionPolicy = if (policyOrdinal == -1) null else RetentionPolicy.entries.getOrNull(policyOrdinal)
   }
 
+  companion object {
+    const val OBJECT_CLASS_NAME: String = "java/lang/Object"
+
+    @JvmStatic
+    fun getPackageName(jvmClassName: String): String {
+      val index = jvmClassName.lastIndexOf('/')
+      return if (index >= 0) jvmClassName.take(index) else ""
+    }
+  }
+
   @Suppress("unused")
   fun getMethods(): Iterable<JvmMethod> = methods
+
+  @Suppress("unused")
+  fun getFields(): Iterable<JvmField> = fields
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
@@ -133,7 +137,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
   fun superTypes(): Sequence<String> {
     if (superFqName.isEmpty() || OBJECT_CLASS_NAME == superFqName) {
-      return interfaces.asSequence()
+      return if (interfaces.isEmpty()) emptySequence() else interfaces.asSequence()
     }
     else {
       return (sequenceOf(superFqName) + interfaces)
@@ -171,7 +175,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
         methodsDiff.value.unchanged() &&
         fieldsDiff.value.unchanged() &&
         !retentionPolicyChanged() &&
-        annotationTargets().unchanged()
+        annotationTargetsDiff.value.unchanged()
     }
 
     fun superClassChanged(): Boolean = myPast.superFqName != superFqName
@@ -200,6 +204,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
     fun retentionPolicyChanged(): Boolean = myPast.retentionPolicy != retentionPolicy
 
+    @Suppress("unused")
     fun annotationTargets(): Difference.Specifier<ElemType, *> = annotationTargetsDiff.value
 
     @Suppress("unused")
