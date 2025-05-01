@@ -12,6 +12,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Dennis.Ushakov
  */
@@ -30,6 +33,15 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
 
   @Override
   public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    List<Caret> adjusted = null;
+    for (Caret c : editor.getCaretModel().getAllCarets()) {
+      if (c != caret && c.getLogicalPosition().column == 0) {
+        if (adjusted == null) adjusted = new ArrayList<>();
+        c.moveToOffset(c.getOffset() + 1);
+        adjusted.add(c);
+      }
+    }
+
     final Project project = editor.getProject();
     assert project != null;
     final Document document = editor.getDocument();
@@ -40,6 +52,12 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
       LineRange range = mover.getInfo().toMove;
       if ((range.startLine > 0 || isDown) && (range.endLine < document.getLineCount() || !isDown)) {
         mover.move(editor, file);
+      }
+    }
+
+    if (adjusted != null) {
+      for (Caret c : adjusted) {
+        c.moveToOffset(c.getOffset() - 1);
       }
     }
   }
