@@ -10,6 +10,6 @@ class Test {
   }
 
   static void test() {
-    I i = A::<error descr="Reference to 'foo' is ambiguous, both 'foo(A, A...)' and 'foo()' match">foo</error>;
+    I i = A::<error descr="Reference to 'foo' is ambiguous, both 'foo()' and 'foo(A, A...)' match">foo</error>;
   }
 }

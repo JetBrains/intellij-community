@@ -12,7 +12,6 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.block.TerminalContentView
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
@@ -22,7 +21,7 @@ internal class ReworkedTerminalWidget(
   parentDisposable: Disposable,
 ) : TerminalWidget {
   private val sessionFuture = CompletableFuture<TerminalSession>()
-  private val view: TerminalContentView = ReworkedTerminalView(project, settings, sessionFuture)
+  private val view = ReworkedTerminalView(project, settings, sessionFuture)
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
@@ -75,15 +74,15 @@ internal class ReworkedTerminalWidget(
     view.addTerminationCallback(onTerminated, parentDisposable)
   }
 
+  override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
+    view.setTopComponent(notificationComponent, disposable)
+  }
+
   override fun writePlainMessage(message: @Nls String) {
     // TODO: implement
   }
 
   override fun setCursorVisible(visible: Boolean) {
-    // TODO: implement
-  }
-
-  override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
     // TODO: implement
   }
 

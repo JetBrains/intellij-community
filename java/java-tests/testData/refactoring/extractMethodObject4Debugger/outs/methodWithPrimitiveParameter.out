@@ -7,7 +7,7 @@ public class GeneratedEvaluationClass {
         this.instance = instance;
     }
 
-    public static int callMethod1(Object object, int arg) {
+    public static int callMethod1(Object object, int p0) {
         try {
             Class<?> klass = Class.forName("WithReflectionAccess");
             java.lang.reflect.Method member = null;
@@ -32,7 +32,7 @@ public class GeneratedEvaluationClass {
                 }
             }
             member.setAccessible(true);
-            return (int) member.invoke(object, arg);
+            return (int) member.invoke(object, p0);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

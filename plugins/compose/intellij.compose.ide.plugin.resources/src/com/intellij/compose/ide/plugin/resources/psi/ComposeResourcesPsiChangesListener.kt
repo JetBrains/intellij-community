@@ -3,6 +3,7 @@ package com.intellij.compose.ide.plugin.resources.psi
 
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
+import com.intellij.compose.ide.plugin.resources.isValidInnerComposeResourcesDirName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -17,7 +18,7 @@ private val PsiTreeChangeEvent.isIgnorable: Boolean
   get() {
     if (file?.language == KotlinLanguage.INSTANCE) return true
     val parentName = file?.parent?.name /* for string values */ ?: parent?.namedUnwrappedElement?.name // for files
-    if (!listOf("drawable", "values", "font").any { parentName?.startsWith(it) == true }) return true
+    if (parentName?.isValidInnerComposeResourcesDirName != true) return true
 
     // We can ignore edits in whitespace, XML error nodes, and modification in comments.
     // (Note that editing text in an attribute value, including whitespace characters,

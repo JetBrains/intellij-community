@@ -112,6 +112,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON26);
   }
 
+  public void testPySimplifyBooleanCheckInspectionAnnotations() {
+    doHighlightingTest(PySimplifyBooleanCheckInspection.class, LanguageLevel.PYTHON313);
+  }
+
   public void testPyFromFutureImportInspection() {
     doHighlightingTest(PyFromFutureImportInspection.class, LanguageLevel.PYTHON26);
   }

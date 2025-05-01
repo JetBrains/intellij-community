@@ -31,5 +31,9 @@
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" />
     <orderEntry type="module" module-name="intellij.xml.parser" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="kotlin.base.indices" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

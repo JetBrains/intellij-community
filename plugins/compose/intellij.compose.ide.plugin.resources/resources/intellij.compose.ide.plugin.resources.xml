@@ -10,13 +10,23 @@
     <renamePsiElementProcessor id="ComposeResources"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesRenameProcessor"
                                order="first, before KotlinProperty"/>
+    <renamePsiElementProcessor id="ComposeResourcesFile"
+                               implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesFileRenameProcessor"
+                               order="first"/>
     <renamePsiElementProcessor id="ComposeResourcesXml"
                                implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesXmlRenameProcessor"
                                order="first, before ResourceReference"/>
+    <renameHandler implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesXmlRenameHandler"/>
     <postStartupActivity
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService$ComposeResourcesWatcherActivity"/>
     <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataService"/>
     <usageTypeProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageTypeProvider" order="first"/>
+    <!-- find usages -->
+    <findUsagesHandlerFactory
+      implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesFileFindUsagesHandlerFactory"/>
+    <findUsagesHandlerFactory
+      implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesXmlFindUsagesHandlerFactory"/>
+    <usageTargetProvider implementation="com.intellij.compose.ide.plugin.resources.findUsages.ComposeResourcesUsagesTargetProvider"/>
   </extensions>
 
   <projectListeners>

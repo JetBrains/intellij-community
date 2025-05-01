@@ -139,7 +139,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       launch {
         while (true) {
           @Suppress("TestOnlyProblems")
-          if (!service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
+          if (!ApplicationManagerEx.getApplication().isHeadlessEnvironment && !service<FUSProjectHotStartUpMeasurerService>().isHandlingFinished() && !future.isDone) {
             delay(500)
           }
           else {
@@ -169,12 +169,12 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     catch (e: CancellationException) {
       throw e
     }
-    catch (_: CompletionException) {
+    catch (e: CompletionException) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
       printStatistic()
 
       if (logsError) {
-        LOG.error(errorText)
+        LOG.error(errorText, e)
       }
       if (throws) {
         throw TimeoutException(errorText)

@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -199,6 +200,10 @@ public final class PsiDiamondTypeUtil {
             }
           }
         }
+      }
+
+      if (copy != null && copy.getContainingFile() != null) {
+        GlobalSearchScope.markFileForWeakScope(copy.getContainingFile().getViewProvider().getVirtualFile());
       }
       final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
       if (context instanceof PsiMethodReferenceExpression) {

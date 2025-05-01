@@ -2,13 +2,17 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
+import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -30,14 +34,26 @@ internal class TerminalSessionsManager {
     project: Project,
     scope: CoroutineScope,
   ): TerminalSessionStartResult {
-    val (session, configuredOptions) = startTerminalSession(project, options, JBTerminalSystemSettingsProvider(), scope)
+    val termSize = options.initialTermSize ?: run {
+      thisLogger().warn("No initial terminal size provided, using default 80x24. $options")
+      TermSize(80, 24)
+    }
+    val optionsWithSize = options.builder().initialTermSize(termSize).build()
+
+    val (ttyConnector, configuredOptions) = startTerminalProcess(project, optionsWithSize)
+    val observableTtyConnector = ObservableTtyConnector(ttyConnector)
+    val session = createTerminalSession(project, observableTtyConnector, termSize, JBTerminalSystemSettingsProvider(), scope)
     val stateAwareSession = StateAwareTerminalSession(session)
 
     val sessionId = storeSession(stateAwareSession, scope)
 
+    val portForwardingScope = scope.childScope("PortForwarding")
+    val portForwardingId = TerminalPortForwardingManager.getInstance(project).setupPortForwarding(observableTtyConnector, portForwardingScope)
+
     return TerminalSessionStartResult(
       configuredOptions,
       sessionId,
+      portForwardingId,
     )
   }
 
@@ -65,4 +81,5 @@ internal class TerminalSessionsManager {
 internal data class TerminalSessionStartResult(
   val configuredOptions: ShellStartupOptions,
   val sessionId: TerminalSessionId,
+  val portForwardingId: TerminalPortForwardingId?,
 )
