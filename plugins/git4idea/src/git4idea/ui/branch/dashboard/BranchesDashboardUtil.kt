@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
@@ -14,7 +15,6 @@ import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType
-import git4idea.branch.IncomingOutgoingState
 import git4idea.repo.GitRefUtil.getCurrentTag
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
@@ -56,7 +56,7 @@ internal object BranchesDashboardUtil {
     return remoteMap.map { (branch, repos) ->
       BranchInfo(branch, false,
                  isFavoriteInAnyRepo(repos, gitBranchManager, branch),
-                 IncomingOutgoingState.EMPTY,
+                 GitInOutCountersInProject.EMPTY,
                  repos)
     }.toHashSet()
   }

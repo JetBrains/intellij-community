@@ -14,9 +14,14 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.shared.branch.GitIncomingOutgoingColors
+import com.intellij.vcs.git.shared.branch.calcTooltip
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.branch.*
+import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.branch.GitBranchUtil
+import git4idea.branch.GitTagType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel
@@ -61,7 +66,7 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
   ) {
     val incomingOutgoingState = getIncomingOutgoingState(userObject)
 
-    if (incomingOutgoingState != IncomingOutgoingState.EMPTY) {
+    if (incomingOutgoingState != GitInOutCountersInProject.EMPTY) {
       updateIncomingCommitLabel(incomingLabel, incomingOutgoingState)
       updateOutgoingCommitLabel(outgoingLabel, incomingOutgoingState)
       tree.toolTipText = incomingOutgoingState.calcTooltip()
@@ -127,17 +132,17 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
     return commonTrackedBranch
   }
 
-  private fun getIncomingOutgoingState(treeNode: Any?): IncomingOutgoingState {
-    treeNode ?: return IncomingOutgoingState.EMPTY
+  private fun getIncomingOutgoingState(treeNode: Any?): GitInOutCountersInProject {
+    treeNode ?: return GitInOutCountersInProject.EMPTY
 
     return when (treeNode) {
       is GitLocalBranch -> getIncomingOutgoingState(treeNode)
       is GitBranchesTreeModel.RefUnderRepository -> getIncomingOutgoingState(treeNode.ref)
-      else -> IncomingOutgoingState.EMPTY
+      else -> GitInOutCountersInProject.EMPTY
     }
   }
 
-  private fun getIncomingOutgoingState(branch: GitLocalBranch): IncomingOutgoingState {
+  private fun getIncomingOutgoingState(branch: GitLocalBranch): GitInOutCountersInProject {
     val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(treePopupStep.project)
     return incomingOutgoingManager.getIncomingOutgoingState(treePopupStep.affectedRepositories, branch)
   }
@@ -203,8 +208,8 @@ internal fun createOutgoingLabel(): JLabel = JBLabel().apply {
 private val ICON_TEXT_GAP
   get() = JBUI.scale(1)
 
-internal fun updateIncomingCommitLabel(label: JLabel, incomingOutgoingState: IncomingOutgoingState) {
-  val isEmpty = incomingOutgoingState == IncomingOutgoingState.EMPTY
+internal fun updateIncomingCommitLabel(label: JLabel, incomingOutgoingState: GitInOutCountersInProject) {
+  val isEmpty = incomingOutgoingState == GitInOutCountersInProject.EMPTY
   val totalIncoming = incomingOutgoingState.totalIncoming()
 
   label.isVisible = !isEmpty && (totalIncoming > 0 || incomingOutgoingState.hasUnfetched())
@@ -213,8 +218,8 @@ internal fun updateIncomingCommitLabel(label: JLabel, incomingOutgoingState: Inc
   label.text = if (totalIncoming > 0) shrinkTo99(totalIncoming) else ""
 }
 
-internal fun updateOutgoingCommitLabel(label: JLabel, state: IncomingOutgoingState) {
-  val isEmpty = state == IncomingOutgoingState.EMPTY
+internal fun updateOutgoingCommitLabel(label: JLabel, state: GitInOutCountersInProject) {
+  val isEmpty = state == GitInOutCountersInProject.EMPTY
   val totalOutgoing = state.totalOutgoing()
 
   label.isVisible = !isEmpty && totalOutgoing > 0

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -20,13 +20,13 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.vcs.git.shared.branch.calcTooltip
 import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
-import git4idea.branch.calcTooltip
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository

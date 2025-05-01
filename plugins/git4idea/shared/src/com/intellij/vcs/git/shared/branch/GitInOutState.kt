@@ -1,17 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.branch
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.git.shared.branch
 
-import com.intellij.dvcs.ui.BranchActionGroup
+import com.intellij.dvcs.DvcsImplIconsExt
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import git4idea.i18n.GitBundle.message
-import git4idea.repo.GitRepository
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-internal data class IncomingOutgoingState(private val inOutRepoState: Map<GitRepository, InOutRepoState>) {
+@ApiStatus.Internal
+data class GitInOutCountersInProject(private val inOutRepoState: Map<RepositoryId, GitInOutCountersInRepo>) {
   fun hasOutgoing(): Boolean = inOutRepoState.values.any { it.hasOutgoing() }
   fun hasIncoming(): Boolean = inOutRepoState.values.any { it.hasIncoming() }
   fun hasUnfetched(): Boolean = inOutRepoState.values.any { it.hasUnfetched() }
@@ -23,15 +25,16 @@ internal data class IncomingOutgoingState(private val inOutRepoState: Map<GitRep
   fun reposWithOutgoing(): Int = inOutRepoState.values.count { it.hasOutgoing() }
   fun reposWithUnfetched(): Int = inOutRepoState.values.count { it.hasUnfetched() }
 
-  fun repositories() = inOutRepoState.keys
+  fun repositories(): Set<RepositoryId> = inOutRepoState.keys
 
   companion object {
     @JvmField
-    val EMPTY = IncomingOutgoingState(emptyMap())
+    val EMPTY: GitInOutCountersInProject = GitInOutCountersInProject(emptyMap())
   }
 }
 
-internal data class InOutRepoState(
+@ApiStatus.Internal
+data class GitInOutCountersInRepo(
   val incoming: Int? = null,
   val outgoing: Int? = null,
 ) {
@@ -40,20 +43,22 @@ internal data class InOutRepoState(
   fun hasUnfetched(): Boolean = incoming == 0
 }
 
-internal fun IncomingOutgoingState.getIcon() : Icon? {
+@ApiStatus.Internal
+fun GitInOutCountersInProject.getIcon(): Icon? {
   val hasIncomingIcon = hasIncoming() || hasUnfetched()
   val hasOutgoingIcon = hasOutgoing()
 
   return when {
-    hasIncomingIcon && hasOutgoingIcon -> BranchActionGroup.getIncomingOutgoingIcon()
+    hasIncomingIcon && hasOutgoingIcon -> DvcsImplIconsExt.incomingOutgoingIcon
     hasIncomingIcon -> DvcsImplIcons.Incoming
     hasOutgoingIcon -> DvcsImplIcons.Outgoing
     else -> null
   }
 }
 
-internal fun IncomingOutgoingState.calcTooltip(): @NlsContexts.Tooltip String? {
-  if (this == IncomingOutgoingState.EMPTY) return null
+@ApiStatus.Internal
+fun GitInOutCountersInProject.calcTooltip(): @NlsContexts.Tooltip String? {
+  if (this == GitInOutCountersInProject.EMPTY) return null
 
   val repositories = repositories()
 
@@ -73,7 +78,8 @@ internal fun IncomingOutgoingState.calcTooltip(): @NlsContexts.Tooltip String? {
     if (totalOutgoing != 0) {
       html.append(message("branches.tooltip.number.outgoing.commits", totalOutgoing)).br()
     }
-  } else {
+  }
+  else {
     if (totalIncoming != 0) {
       html.append(message("branches.tooltip.number.incoming.commits.in.repositories", totalIncoming(), reposWithIncoming())).br()
     }
@@ -88,10 +94,11 @@ internal fun IncomingOutgoingState.calcTooltip(): @NlsContexts.Tooltip String? {
   return html.toString()
 }
 
+@ApiStatus.Internal
 object GitIncomingOutgoingColors {
-  internal val INCOMING_FOREGROUND
+  val INCOMING_FOREGROUND: JBColor
     get() = JBColor(ColorUtil.fromHex("#3574F0"), ColorUtil.fromHex("#548AF7"))
 
-  internal val OUTGOING_FOREGROUND
+  val OUTGOING_FOREGROUND: JBColor
     get() = JBColor(ColorUtil.fromHex("#369650"), ColorUtil.fromHex("#57965C"))
 }

@@ -475,7 +475,6 @@ a:com.intellij.dvcs.ui.BranchActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
-- s:getIncomingOutgoingIcon():javax.swing.Icon
 - getRightIcon():javax.swing.Icon
 - hasIncomingCommits():Z
 - hasOutgoingCommits():Z

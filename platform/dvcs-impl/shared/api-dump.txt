@@ -1,3 +1,6 @@
+f:com.intellij.dvcs.DvcsImplIconsExt
+- sf:INSTANCE:com.intellij.dvcs.DvcsImplIconsExt
+- sf:getIncomingOutgoingIcon():javax.swing.Icon
 com.intellij.dvcs.branch.BranchType
 - a:getName():java.lang.String
 c:com.intellij.dvcs.branch.DvcsBranchInfo
