@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.codeWithMe.ClientId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings.Companion.setupComponentAntialiasing
@@ -17,15 +18,16 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.Utils.clearAllCachesAndUpdates
-import com.intellij.openapi.actionSystem.impl.Utils.expandActionGroupAsync
 import com.intellij.openapi.actionSystem.impl.Utils.operationName
 import com.intellij.openapi.actionSystem.toolbarLayout.RIGHT_ALIGN_KEY
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.autoLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -38,6 +40,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -56,13 +59,11 @@ import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.CancellablePromise
 import sun.swing.SwingUtilities2
 import java.awt.*
 import java.awt.event.*
@@ -70,8 +71,6 @@ import java.awt.image.BufferedImage
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -112,7 +111,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   private val myDecorateButtons: Boolean
 
   private val myUpdater: ToolbarUpdater
-  private var myLastUpdate: CancellablePromise<List<AnAction>>? = null
+  private var myLastUpdate: Job? = null
   private var myForcedUpdateRequested = true
   private var myUpdateOnFirstShowJob: Job? = null
 
@@ -908,7 +907,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   override fun updateActionsAsync(): Future<*> {
     updateActionsImmediately(false)
     val update = myLastUpdate
-    return update ?: CompletableFuture.completedFuture(null)
+    return update?.asCompletableFuture() ?: CompletableFuture.completedFuture(null)
   }
 
 
@@ -931,6 +930,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     myUpdater.updateActions(true, false, includeInvisible)
   }
 
+  @OptIn(InternalCoroutinesApi::class)
   private fun updateActionsImpl(forced: Boolean) {
     if (forced) myForcedUpdateRequested = true
     val forcedActual = forced || myForcedUpdateRequested
@@ -943,36 +943,30 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     val firstTimeFastTrack = !hasVisibleActions() && componentCount == 1 && getClientProperty(SUPPRESS_FAST_TRACK) == null
     if (firstTimeFastTrack) putClientProperty(SUPPRESS_FAST_TRACK, true)
 
-    val promise = expandActionGroupAsync(
-      myActionGroup, presentationFactory, dataContext, myPlace, ActualActionUiKind.Toolbar(this),
-      firstTimeFastTrack || isUnitTestMode)
-    myLastUpdate = promise
-
-    val consumer = Consumer { actions: List<AnAction> ->
-      if (myLastUpdate === promise) myLastUpdate = null
-      myLastNewButtonActionClass = null
-      actionsUpdated(forcedActual, actions)
-      reportActionButtonChangedEveryTimeIfNeeded()
-    }
-
-    if (promise.isSucceeded) {
-      val fastActions: List<AnAction>
+    val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
+    val job = cs.launch(
+      Dispatchers.EDT + ModalityState.any().asContextElement() +
+      ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
       try {
-        fastActions = promise.get(0, TimeUnit.MILLISECONDS)
+        val actions = Utils.expandActionGroupSuspend(
+          myActionGroup, presentationFactory, dataContext,
+          myPlace, ActualActionUiKind.Toolbar(this@ActionToolbarImpl),
+          firstTimeFastTrack || isUnitTestMode)
+        myLastNewButtonActionClass = null
+        actionsUpdated(forcedActual, actions)
+        reportActionButtonChangedEveryTimeIfNeeded()
       }
-      catch (th: Throwable) {
-        throw AssertionError(th)
+      catch (ex: CancellationException) {
+        throw ex
       }
-      consumer.accept(fastActions)
+      catch (ex: Throwable) {
+        LOG.error(ex)
+      }
     }
-    else {
-      promise
-        .onSuccess(consumer)
-        .onError(Consumer { ex ->
-          if (!(ex is ControlFlowException || ex is CancellationException)) {
-            LOG.error(ex)
-          }
-        })
+    job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { ex ->
+      if (myLastUpdate === job) {
+        myLastUpdate = null
+      }
     }
     mySecondaryActionsButton?.run {
       update()
@@ -1533,9 +1527,8 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   }
 
   private fun cancelCurrentUpdate() {
-    val lastUpdate = myLastUpdate
+    myLastUpdate?.cancel()
     myLastUpdate = null
-    lastUpdate?.cancel()
   }
 
   interface SecondaryGroupUpdater {
