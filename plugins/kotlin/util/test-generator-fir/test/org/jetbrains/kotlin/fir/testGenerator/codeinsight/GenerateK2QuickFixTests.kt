@@ -120,7 +120,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/convertPropertyInitializerToGetter", pattern = pattern)
             model("$idea/quickfix/convertToAnonymousObject", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/convertToIsArrayOfCall", pattern = pattern)
-            model("$idea/quickfix/createFromUsage", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/createFromUsage/createClass", pattern = pattern, excludedDirectories = listOf("importDirective/kt21515", "callExpression/typeArguments"))
+            model("$idea/quickfix/createFromUsage/createVariable", pattern = pattern)
+            model("$idea/quickfix/createFromUsage/createFunction/call", pattern = pattern,
+                  excludedDirectories = listOf("extensionByExtensionReceiver", "typeArguments"))
+            // binaryOperations, callableReferences, component, delegateAccessors, get, hasNext, invoke, iterator, next, set, unaryOperations
             model("$idea/quickfix/createLabel", pattern = pattern)
             model("$idea/quickfix/declarationCantBeInlined", pattern = pattern)
             model("$idea/quickfix/declaringJavaClass", pattern = pattern, isIgnored = true)
@@ -147,7 +151,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/makePrivateAndOverrideMember", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/makeTypeParameterReified", pattern = pattern)
             model("$idea/quickfix/makeUpperBoundNonNullable", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/memberVisibilityCanBePrivate", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/memberVisibilityCanBePrivate", pattern = pattern)
             model("$idea/quickfix/migration/commasInWhenWithoutArgument", pattern = pattern)
             model("$idea/quickfix/migration/missingConstructorKeyword", pattern = pattern)
             model("$idea/quickfix/migration/removeNameFromFunctionExpression", pattern = pattern)
@@ -270,6 +274,17 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 pattern = pattern,
                 isRecursive = false,
                 testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/createFromUsage/createFunction",
+                pattern = pattern,
+                testMethodName = testMethodName,
+                excludedDirectories = listOf("typeArguments")
+            )
+            model(
+                "$idea/quickfix/memberVisibilityCanBePrivate",
+                pattern = pattern,
+                testMethodName = testMethodName
             )
         }
 

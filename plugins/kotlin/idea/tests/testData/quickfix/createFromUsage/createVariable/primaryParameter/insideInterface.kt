@@ -1,5 +1,6 @@
 // "Create property 'v2' as constructor parameter" "false"
 // ERROR: Unresolved reference: v2
+// K2_AFTER_ERROR: Unresolved reference 'v2'.
 
 interface A
 
