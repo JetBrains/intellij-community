@@ -43,23 +43,21 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-autolink/0.24.0/commonmark-ext-autolink-0.24.0.jar">
               <sha256sum>013ba4f3ba4850a1de35935d1501587c518f764331d279805da33473e79f5f33</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar">
-              <sha256sum>679338e0b7fc15c02d275d598654b01a149893bc28a87992e90123c8d06af25b</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.11.0/autolink-0.11.0.jar">
               <sha256sum>39c6588948ab31b98ab1fea4a6abab37243f387cb48cb50ae599410effb70038</sha256sum>
             </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="org.commonmark:commonmark" />
+          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-autolink/0.24.0/commonmark-ext-autolink-0.24.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.11.0/autolink-0.11.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-autolink/0.24.0/commonmark-ext-autolink-0.24.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.11.0/autolink-0.11.0-sources.jar!/" />
         </SOURCES>
       </library>
