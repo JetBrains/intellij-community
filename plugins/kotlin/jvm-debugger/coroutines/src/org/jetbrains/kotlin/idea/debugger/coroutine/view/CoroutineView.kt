@@ -183,16 +183,7 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
                 if (isHierarchyBuilt) {
                     val parentJobToChildCoroutineInfos = cache.groupBy { it.parentJob }
                     val jobToCoroutineInfo = cache.associateBy { it.job }
-                    val parentJobs = parentJobToChildCoroutineInfos.keys
-                    val rootJobs = parentJobs.mapNotNull {
-                        // The root job's coroutine is either not present in the dump (and in jobToCoroutineInfo map)
-                        // (e.g. if it's a BlockingCoroutine, which was not captured in the coroutine dump, because it's already completing).
-                        // or it has no parent.
-                        val parentCoroutineInfo = jobToCoroutineInfo[it]
-                        if (parentCoroutineInfo == null || parentCoroutineInfo.parentJob == null) {
-                            it
-                        } else null
-                    }
+                    val rootJobs = cache.filter { it.parentJob == null }.mapNotNull { it.job }
                     for (rootJob in rootJobs) {
                         val rootCoroutine = jobToCoroutineInfo[rootJob]
                         coroutines.add(

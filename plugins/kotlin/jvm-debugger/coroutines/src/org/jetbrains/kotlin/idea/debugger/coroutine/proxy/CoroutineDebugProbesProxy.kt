@@ -46,6 +46,9 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
      * array[2 * i] = info.job
      * array[2 * i + 1] = info.parent
      *
+     * NOTE: only coroutines which are captured in the coroutine dump will be shown in the Coroutine View,
+     * jobs which do not correspond to any captured coroutine will not be shown (e.g., jobs of completing coroutines or scope coroutines).
+     *
      * The corresponding properties [CoroutineInfoData.job] and [CoroutineInfoData.parentJob] are set to the obtained values.
      */
     internal fun fetchAndSetJobsAndParentsForCoroutines(infos: List<CoroutineInfoData>): Boolean {
