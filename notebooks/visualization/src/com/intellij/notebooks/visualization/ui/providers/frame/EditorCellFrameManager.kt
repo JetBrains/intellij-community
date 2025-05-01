@@ -54,13 +54,31 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       updateCellFrameShow()
     }
 
-    updateCellFrameShow()
+
+    editor.notebookAppearance.cellFrameSelectedColor.afterChange(this) {
+      updateCellFrameShow()
+    }
+
+    editor.notebookAppearance.cellFrameHoveredColor.afterChange(this) {
+      updateCellFrameShow()
+    }
+
+    editor.notebookAppearance.editorBackgroundColor.afterChange(this) {
+      updateCellFrameShow()
+    }
+
+    editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) {
+      updateCellFrameShow()
+    }
+
 
     scope.launch {
       JupyterBoundsChangeHandler.get(editor).eventFlow.collect {
         cachedRightLine = null
       }
     }.cancelOnDispose(this)
+
+    updateCellFrameShow()
   }
 
   override fun dispose() {
