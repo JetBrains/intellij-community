@@ -1142,30 +1142,19 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
 }
 
 @TestOnly
-fun loadAndInitDescriptorsFromClassPathInTest(
-  loader: ClassLoader
-): List<IdeaPluginDescriptor> {
+@JvmOverloads
+fun loadDescriptorsFromClassPathInTest(
+  loader: ClassLoader,
+  buildNumber: BuildNumber = BuildNumber.fromString("2042.42")!!
+): ClassPathProvidedPluginsList {
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(loader)
-  val buildNumber = BuildNumber.fromString("2042.42")!!
-  val initContext = PluginInitializationContext.buildForTest(
-    essentialPlugins = emptySet(),
-    disabledPlugins = emptySet(),
-    expiredPlugins = emptySet(),
-    brokenPluginVersions = emptyMap(),
-    getProductBuildNumber = { buildNumber },
-    requirePlatformAliasDependencyForLegacyPlugins = false,
-    checkEssentialPlugins = false,
-    explicitPluginSubsetToLoad = null,
-    disablePluginLoadingCompletely = false,
-  )
+  val zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool()
   val loadingContext = PluginDescriptorLoadingContext(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber },
   )
-  val result = PluginLoadingResult()
-  val pluginsList = @Suppress("RAW_RUN_BLOCKING") runBlocking {
-    val zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool()
-    zipPool.use {
+  try {
+    val pluginsList = @Suppress("RAW_RUN_BLOCKING") runBlocking {
       ClassPathProvidedPluginsList(
         urlToFilename.map { (url, filename) ->
           async(Dispatchers.IO) {
@@ -1182,12 +1171,11 @@ fun loadAndInitDescriptorsFromClassPathInTest(
         }.awaitAllNotNull()
       )
     }
+    return pluginsList
+  } finally {
+    zipPool.close()
+    loadingContext.close()
   }
-  result.initAndAddAll(
-    pluginLists = listOf(pluginsList),
-    initContext = initContext
-  )
-  return result.enabledPlugins
 }
 
 // do not use it

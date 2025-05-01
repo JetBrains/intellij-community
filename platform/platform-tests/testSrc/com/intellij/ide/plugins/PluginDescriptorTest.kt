@@ -3,6 +3,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -20,9 +21,7 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Path
 import java.text.SimpleDateFormat
-import java.util.Collections
-import java.util.Enumeration
-import java.util.Locale
+import java.util.*
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
@@ -432,7 +431,26 @@ class PluginDescriptorTest {
       Path.of(testDataPath, "duplicate1.jar").toUri().toURL(),
       Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
     )
-    assertThat(loadAndInitDescriptorsFromClassPathInTest(URLClassLoader(urls, null))).hasSize(1)
+    val loader = URLClassLoader(urls, null)
+    val pluginList = loadDescriptorsFromClassPathInTest(loader)
+    val buildNumber = BuildNumber.fromString("2042.42")!!
+    val initContext = PluginInitializationContext.buildForTest(
+      essentialPlugins = emptySet(),
+      disabledPlugins = emptySet(),
+      expiredPlugins = emptySet(),
+      brokenPluginVersions = emptyMap(),
+      getProductBuildNumber = { buildNumber },
+      requirePlatformAliasDependencyForLegacyPlugins = false,
+      checkEssentialPlugins = false,
+      explicitPluginSubsetToLoad = null,
+      disablePluginLoadingCompletely = false,
+    )
+    val result = PluginLoadingResult()
+    result.initAndAddAll(
+      pluginLists = listOf(pluginList),
+      initContext = initContext
+    )
+    assertThat(result.enabledPlugins).hasSize(1)
   }
 
   // todo this is rather about plugin set loading, probably needs to be moved out
@@ -448,10 +466,10 @@ class PluginDescriptorTest {
       override fun getResource(name: String) = null
       override fun getResources(name: String) = EnumerationAdapter(listOf(url))
     }
-    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("", "/spaces%20spaces/"))).hasSize(1)
-    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("", "/spaces spaces/"))).hasSize(1)
-    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar%20spaces.jar!/"))).hasSize(1)
-    assertThat(loadAndInitDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar spaces.jar!/"))).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("", "/spaces%20spaces/")).plugins).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("", "/spaces spaces/")).plugins).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar%20spaces.jar!/")).plugins).hasSize(1)
+    assertThat(loadDescriptorsFromClassPathInTest(TestLoader("jar:", "/jar spaces.jar!/")).plugins).hasSize(1)
   }
 
   // todo equals of IdeaPluginDescriptorImpl is also dependent on sub-descriptor location (depends optional)
