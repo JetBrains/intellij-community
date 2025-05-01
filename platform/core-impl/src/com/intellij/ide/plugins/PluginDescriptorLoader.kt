@@ -551,12 +551,11 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   zipPool: ZipEntryResolverPool,
   customPluginDir: Path,
   bundledPluginDir: Path?,
-): Deferred<List<IdeaPluginDescriptorImpl>> = async {
+): Deferred<List<IdeaPluginDescriptorImpl>> {
   val platformPrefix = PlatformUtils.getPlatformPrefix()
 
-  val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
   if (isUnitTestMode) {
-    result.addAll(loadCoreModules(
+    val core = loadCoreModules(
       loadingContext = loadingContext,
       platformPrefix = platformPrefix,
       isUnitTestMode = true,
@@ -564,12 +563,18 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       isRunningFromSources = true,
       classLoader = mainClassLoader,
       pool = zipPool,
-    ))
-    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool))
-    if (bundledPluginDir != null) {
-      result.addAll(loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool))
+    )
+    val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
+    val bundled = if (bundledPluginDir != null) {
+      loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
+    } else Collections.emptyList()
+    return async {
+      ArrayList<IdeaPluginDescriptorImpl>(core.size + custom.size + bundled.size).apply {
+        addAll(core.awaitAllNotNull())
+        addAll(custom.awaitAllNotNull()) // TODO check order
+        addAll(bundled.awaitAllNotNull())
+      }
     }
-    return@async result.awaitAllNotNull()
   }
 
   val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
@@ -582,7 +587,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   }
 
   if (bundledPluginClasspathBytes == null) {
-    result.addAll(loadCoreModules(
+    val core = loadCoreModules(
       loadingContext = loadingContext,
       platformPrefix = platformPrefix,
       isUnitTestMode = false,
@@ -590,9 +595,16 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       isRunningFromSources = isRunningFromSources,
       pool = zipPool,
       classLoader = mainClassLoader,
-    ))
-    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool))
-    result.addAll(loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool))
+    )
+    val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
+    val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
+    return async {
+      ArrayList<IdeaPluginDescriptorImpl>(core.size + custom.size + bundled.size).apply {
+        addAll(core.awaitAllNotNull())
+        addAll(custom.awaitAllNotNull()) // TODO check order
+        addAll(bundled.awaitAllNotNull())
+      }
+    }
   }
   else {
     val byteInput = ByteArrayInputStream(bundledPluginClasspathBytes, 2, bundledPluginClasspathBytes.size)
@@ -601,7 +613,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     val descriptorStart = bundledPluginClasspathBytes.size - byteInput.available()
     input.skipBytes(descriptorSize)
     // Gateway will be removed soon
-    result.add(async {
+    val core = async {
       loadCoreProductPlugin(
         loadingContext = loadingContext,
         pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
@@ -613,19 +625,23 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
           createXmlStreamReader(bundledPluginClasspathBytes, descriptorStart, descriptorSize)
         },
       )
-    })
-
-    result.addAll(loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool))
-
-    result.addAll(loadFromPluginClasspathDescriptor(
+    }
+    val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
+    val fromClasspath = loadFromPluginClasspathDescriptor(
       input = input,
       jarOnly = bundledPluginClasspathBytes[1] == 1.toByte(),
       loadingContext = loadingContext,
       zipPool = zipPool,
       bundledPluginDir = effectiveBundledPluginDir,
-    ))
+    )
+    return async {
+      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.size + fromClasspath.size).apply {
+        add(core.await())
+        addAll(custom.awaitAllNotNull()) // TODO check order
+        addAll(fromClasspath.awaitAllNotNull())
+      }
+    }
   }
-  return@async result.awaitAllNotNull()
 }
 
 private fun CoroutineScope.loadFromPluginClasspathDescriptor(
