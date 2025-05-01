@@ -193,6 +193,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return false;
   }
 
+  public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
+    return isFiltered(qName, Arrays.stream(classFilters));
+  }
+
   public static boolean isFiltered(@NotNull String qName, Stream<? extends ClassFilter> classFilters) {
     if (qName.indexOf('[') != -1) {
       return false; //is array

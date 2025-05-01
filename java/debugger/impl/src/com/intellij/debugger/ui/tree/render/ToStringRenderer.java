@@ -25,7 +25,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -206,7 +205,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
         }
       }
     }
-    return DebuggerUtilsEx.isFiltered(t.name(), Arrays.stream(myClassFilters));
+    return DebuggerUtilsEx.isFiltered(t.name(), myClassFilters);
   }
 
   public boolean isOnDemand() {

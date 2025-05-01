@@ -1,18 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("DebuggerUtil")
 
 package org.jetbrains.kotlin.idea.debugger.core
 
+import com.intellij.debugger.PositionManager
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
@@ -590,3 +593,15 @@ val String.isInlineFunctionMarkerVariableName: Boolean
 
 val String.isInlineLambdaMarkerVariableName: Boolean
     get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)
+
+fun isLocationFiltered(location: Location, positionManager: PositionManager): Boolean {
+    val sourcePosition = positionManager.safeGetSourcePosition(location) ?: return false
+    val settings = DebuggerSettings.getInstance()
+    if (!settings.TRACING_FILTERS_ENABLED) return false
+
+    val classNames = runReadAction {
+        ClassNameProvider().getCandidates(sourcePosition).map { it.internalNameToFqn() }
+    }
+
+    return classNames.any { DebuggerUtilsEx.isFiltered(it, settings.steppingFilters) }
+}
