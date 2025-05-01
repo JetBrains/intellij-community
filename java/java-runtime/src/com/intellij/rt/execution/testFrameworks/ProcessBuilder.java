@@ -24,7 +24,7 @@ public class ProcessBuilder {
 
   private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
 
-  private final List<String> myParameters = new ArrayList<>();
+  protected final List<String> myParameters = new ArrayList<>();
   private File myWorkingDir = null;
 
   public void add(final String parameter) {

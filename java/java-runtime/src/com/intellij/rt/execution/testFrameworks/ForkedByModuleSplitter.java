@@ -50,6 +50,10 @@ public abstract class ForkedByModuleSplitter {
     return result;
   }
 
+  protected ProcessBuilder initProcessBuilder() {
+    return new ProcessBuilder();
+  }
+
   //read output from wrappers
   protected int startChildFork(final List<String> args,
                                File workingDir,
@@ -59,7 +63,7 @@ public abstract class ForkedByModuleSplitter {
     List<String> vmParameters = new ArrayList<>(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
-    final ProcessBuilder builder = new ProcessBuilder();
+    final ProcessBuilder builder = initProcessBuilder();
     builder.add(vmParameters);
 
     //copy encoding from first VM, as encoding is added into command line explicitly and vm options do not contain it
