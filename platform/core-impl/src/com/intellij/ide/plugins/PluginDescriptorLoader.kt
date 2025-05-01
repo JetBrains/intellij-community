@@ -571,7 +571,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     return async {
       ArrayList<IdeaPluginDescriptorImpl>(core.await().size + custom.await().size + bundled.await().size).apply {
         addAll(core.await())
-        addAll(custom.await()) // TODO check order
+        addAll(custom.await())
         addAll(bundled.await())
       }
     }
@@ -601,7 +601,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     return async {
       ArrayList<IdeaPluginDescriptorImpl>(core.await().size + custom.await().size + bundled.await().size).apply {
         addAll(core.await())
-        addAll(custom.await()) // TODO check order
+        addAll(custom.await())
         addAll(bundled.await())
       }
     }
@@ -637,7 +637,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     return async {
       ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().size + fromClasspath.await().size).apply {
         add(core.await())
-        addAll(custom.await()) // TODO check order
+        addAll(custom.await())
         addAll(fromClasspath.await())
       }
     }
