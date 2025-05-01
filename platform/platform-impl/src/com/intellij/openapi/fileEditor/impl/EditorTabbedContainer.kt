@@ -234,14 +234,14 @@ class EditorTabbedContainer internal constructor(
 
     coroutineScope.launch {
       val title = EditorTabPresentationUtil.getCustomEditorTabTitleAsync(window.manager.project, file) ?: return@launch
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
         tab.setText(title)
       }
     }
     val project = window.manager.project
     coroutineScope.launch {
       val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
         tab.setTabColor(color)
       }
     }

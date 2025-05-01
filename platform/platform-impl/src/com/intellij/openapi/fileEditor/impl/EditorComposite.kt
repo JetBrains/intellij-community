@@ -58,7 +58,6 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.*
-import kotlin.collections.firstOrNull
 
 private val LOG = logger<EditorComposite>()
 
@@ -188,7 +187,7 @@ open class EditorComposite internal constructor(
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
         compositePanel.removeAll()
         setFileEditors(fileEditors = emptyList(), selectedEditor = null)
       }
@@ -246,7 +245,7 @@ open class EditorComposite internal constructor(
       )
 
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
-      span("fileOpened event executing", Dispatchers.EDT) {
+      span("fileOpened event executing", Dispatchers.ui(UiDispatcherKind.RELAX)) {
         writeIntentReadAction {
           publisher.fileOpened(fileEditorManager, file)
         }
@@ -862,7 +861,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        composite.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        composite.coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
           if (!hasFocus()) {
             return@launch
           }
