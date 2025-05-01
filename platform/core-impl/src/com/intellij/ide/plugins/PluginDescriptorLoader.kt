@@ -408,23 +408,25 @@ suspend fun loadAndInitDescriptors(
 ): Pair<PluginDescriptorLoadingContext, PluginLoadingResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
-  val result = PluginDescriptorLoadingContext(
+  val loadingContext = PluginDescriptorLoadingContext(
     isMissingIncludeIgnored = isUnitTestMode,
     isMissingSubDescriptorIgnored = true,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-  ).use { loadingContext ->
-    val pluginLists = loadDescriptors(
+  )
+  val pluginLists = try {
+    loadDescriptors(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,
       zipPoolDeferred = zipPoolDeferred,
       mainClassLoaderDeferred = mainClassLoaderDeferred,
     )
-    val loadingResult = PluginLoadingResult()
-    loadingResult.initAndAddAll(pluginLists = pluginLists, initContext = initContext)
-    loadingContext to loadingResult
+  } finally {
+    loadingContext.close()
   }
-  return result
+  val loadingResult = PluginLoadingResult()
+  loadingResult.initAndAddAll(pluginLists = pluginLists, initContext = initContext)
+  return loadingContext to loadingResult
 }
 
 @Suppress("DeferredIsResult")
