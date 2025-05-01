@@ -60,7 +60,7 @@ internal data class JbProductInfo(
 ) : Product {
   override val origin = SettingsImportOrigin.JetBrainsProduct
   private val descriptorsMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
-  private val descriptors2ProcessCnt = AtomicInteger()
+  private val descriptorsPrefetchTask = AtomicReference<Deferred<Unit>>()
   private var keymapRef: AtomicReference<String> = AtomicReference()
   val activeKeymap: String?
     get() = keymapRef.get()
@@ -69,11 +69,12 @@ internal data class JbProductInfo(
 
   internal fun prefetchData(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext) {
     prefetchPluginDescriptors(coroutineScope, context)
+      .let { descriptorsPrefetchTask.set(it) }
     prefetchKeymap(coroutineScope)
   }
 
   private fun prefetchKeymap(coroutineScope: CoroutineScope) {
-    coroutineScope.async {
+    coroutineScope.async(CoroutineName("Keymap prefetch")) {
       val keymapFilePath = configDir.resolve("${PathManager.OPTIONS_DIRECTORY}/${getPerOsSettingsStorageFolderName()}/${KeymapManagerImpl.KEYMAP_STORAGE}")
       if (keymapFilePath.exists()) {
         val element = JDOMUtil.load(keymapFilePath)
@@ -90,31 +91,25 @@ internal data class JbProductInfo(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext) {
-    logger.debug("Prefetching plugin descriptors from $pluginDir")
-    val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
-    descriptors2ProcessCnt.set(descriptorDeferreds.size)
-    logger.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
-    val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
-    val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginStringSetFile.readIdsSafe(disabledPluginsFile, logger) else setOf()
-    for (def in descriptorDeferreds) {
-      def.invokeOnCompletion {
-        val descr = def.getCompleted()
-        if (descr != null) {
-          if (disabledPlugins.contains(descr.pluginId)) {
-            logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
-          }
-          else {
-            descriptorsMap[descr.pluginId] = descr
-          }
+  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext): Deferred<Unit> {
+    return coroutineScope.async(CoroutineName("Plugins prefetch")) {
+      logger.debug("Prefetching plugin descriptors from $pluginDir")
+      val descriptorsDeferred = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
+      val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+      val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginStringSetFile.readIdsSafe(disabledPluginsFile, logger) else setOf()
+      val descriptors = descriptorsDeferred.await()
+      logger.debug { "There are ${descriptors.size} plugins in $pluginDir" }
+      for (descr in descriptors) {
+        if (disabledPlugins.contains(descr.pluginId)) {
+          logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
         }
-        if (descriptors2ProcessCnt.decrementAndGet() == 0) {
-          // checking for plugins compatibility:
-          for ((id, descriptor) in descriptorsMap) {
-            if (!isCompatible(descriptor)) {
-              descriptorsMap.remove(id)
-            }
-          }
+        else {
+          descriptorsMap[descr.pluginId] = descr
+        }
+      }
+      for ((id, descriptor) in descriptorsMap) {
+        if (!isCompatible(descriptor)) {
+          descriptorsMap.remove(id)
         }
       }
     }
@@ -150,8 +145,8 @@ internal data class JbProductInfo(
   }
 
   fun getPluginsDescriptors(): ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl> {
-    if (descriptors2ProcessCnt.get() != 0) {
-      logger.warn("There are $descriptors2ProcessCnt custom plugins that are not yet processed!")
+    if (descriptorsPrefetchTask.get()?.isCompleted != true) {
+      logger.warn("Plugins prefetch is still in progress!")
     }
     return descriptorsMap
   }

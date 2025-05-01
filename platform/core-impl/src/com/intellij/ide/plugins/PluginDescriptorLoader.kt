@@ -1200,8 +1200,10 @@ fun loadAndInitDescriptorsFromClassPathInTest(
 }
 
 // do not use it
-fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: PluginDescriptorLoadingContext): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  return scope.loadDescriptorsFromDir(dir = dir, loadingContext = context, isBundled = false, pool = NonShareableJavaZipFilePool())
+fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: PluginDescriptorLoadingContext): Deferred<List<IdeaPluginDescriptorImpl>> {
+  return scope.async {
+    scope.loadDescriptorsFromDir(dir = dir, loadingContext = context, isBundled = false, pool = NonShareableJavaZipFilePool()).awaitAllNotNull()
+  }
 }
 
 internal fun CoroutineScope.loadDescriptorsFromDir(
