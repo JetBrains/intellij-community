@@ -130,7 +130,7 @@ java_library(
     "//platform/testFramework",
     "//plugins/ui-designer:java-guiForms-designer",
     "//plugins/dev:dev-plugin-main",
-    "//plugins/devkit/intellij.devkit.plugin:plugin-main",
+    "//plugins/devkit:devkit-plugin-main",
     "//plugins/eclipse",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea/shared:vcs-git-shared",

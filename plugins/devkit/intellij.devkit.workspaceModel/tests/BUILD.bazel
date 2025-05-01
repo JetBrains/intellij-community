@@ -39,7 +39,7 @@ jvm_library(
     "//plugins/kotlin/tests-common",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
   ],
-  runtime_deps = ["//plugins/devkit/intellij.devkit:devkit"]
+  runtime_deps = ["//plugins/devkit"]
 )
 
 jvm_test(

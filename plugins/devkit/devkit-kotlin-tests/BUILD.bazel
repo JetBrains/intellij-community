@@ -45,7 +45,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":kotlin-tests_test_resources",
-    "//plugins/devkit/intellij.devkit:devkit",
+    "//plugins/devkit",
   ]
 )
 

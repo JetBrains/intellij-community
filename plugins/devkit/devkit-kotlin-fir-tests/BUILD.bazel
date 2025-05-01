@@ -15,7 +15,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
-    "//plugins/devkit/intellij.devkit:devkit",
+    "//plugins/devkit",
     "//plugins/devkit/devkit-core:core",
     "//java/openapi:java",
     "//plugins/devkit/devkit-tests:testFramework",

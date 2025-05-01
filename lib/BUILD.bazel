@@ -7481,8 +7481,8 @@ jvm_import(
 
 jvm_import(
   name = "noria-compiler-plugin",
-  jar = "@noria-compiler-plugin-2_1_20-0_2_http//file",
-  source_jar = "@noria-compiler-plugin-2_1_20-0_2-sources_http//file",
+  jar = "@noria-compiler-plugin-2_1_20-0_3_http//file",
+  source_jar = "@noria-compiler-plugin-2_1_20-0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8942,6 +8942,13 @@ jvm_import(
   name = "docker-java-transport-3_4_0_http_import",
   jar = "@docker-java-transport-3_4_0_http//file",
   source_jar = "@docker-java-transport-3_4_0-sources_http//file"
+)
+
+java_library(
+  name = "testcontainers-provided",
+  exports = [":testcontainers"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(

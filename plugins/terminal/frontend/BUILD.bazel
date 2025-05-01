@@ -30,6 +30,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/feedback",
   ],
   runtime_deps = [":frontend_resources"]
 )
@@ -60,6 +61,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-impl",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/feedback",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],

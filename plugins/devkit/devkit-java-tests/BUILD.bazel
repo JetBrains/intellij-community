@@ -60,7 +60,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":java-tests_test_resources",
-    "//plugins/devkit/intellij.devkit:devkit",
+    "//plugins/devkit",
   ]
 )
 
