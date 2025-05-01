@@ -567,12 +567,14 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
     val bundled = if (bundledPluginDir != null) {
       loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    } else CompletableDeferred(Collections.emptyList())
+    } else null
     return async {
-      ArrayList<IdeaPluginDescriptorImpl>(core.await().size + custom.await().size + bundled.await().size).apply {
-        addAll(core.await())
-        addAll(custom.await())
-        addAll(bundled.await())
+      ArrayList<IdeaPluginDescriptorImpl>(
+        core.await().plugins.size + custom.await().plugins.size + (bundled?.await()?.plugins?.size ?: 0)
+      ).apply {
+        addAll(core.await().plugins)
+        addAll(custom.await().plugins)
+        bundled?.await()?.let { addAll(it.plugins) }
       }
     }
   }
@@ -599,10 +601,10 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
     val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
     return async {
-      ArrayList<IdeaPluginDescriptorImpl>(core.await().size + custom.await().size + bundled.await().size).apply {
-        addAll(core.await())
-        addAll(custom.await())
-        addAll(bundled.await())
+      ArrayList<IdeaPluginDescriptorImpl>(core.await().plugins.size + custom.await().plugins.size + bundled.await().plugins.size).apply {
+        addAll(core.await().plugins)
+        addAll(custom.await().plugins)
+        addAll(bundled.await().plugins)
       }
     }
   }
@@ -635,9 +637,9 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       bundledPluginDir = effectiveBundledPluginDir,
     )
     return async {
-      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().size + fromClasspath.await().size).apply {
+      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().plugins.size + fromClasspath.await().size).apply {
         add(core.await())
-        addAll(custom.await())
+        addAll(custom.await().plugins)
         addAll(fromClasspath.await())
       }
     }
@@ -848,7 +850,7 @@ private fun CoroutineScope.loadCoreModules(
   isRunningFromSources: Boolean,
   pool: ZipEntryResolverPool,
   classLoader: ClassLoader,
-): Deferred<List<IdeaPluginDescriptorImpl>> {
+): Deferred<ProductPluginsList> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
   val (corePluginDeferred, isSingleDescriptorCore) = loadCorePlugin(
@@ -862,7 +864,7 @@ private fun CoroutineScope.loadCoreModules(
     classLoader = classLoader,
   )
   if (isSingleDescriptorCore) {
-    return async { listOfNotNull(corePluginDeferred.await()) }
+    return async { ProductPluginsList(listOfNotNull(corePluginDeferred.await())) }
   }
 
   val result: MutableList<Deferred<IdeaPluginDescriptorImpl?>> = ArrayList()
@@ -885,7 +887,7 @@ private fun CoroutineScope.loadCoreModules(
       }
     }
   }
-  return async { result.awaitAllNotNull() }
+  return async { ProductPluginsList(result.awaitAllNotNull()) }
 }
 
 /**
@@ -1152,11 +1154,17 @@ fun loadAndInitDescriptorsFromOtherIde(
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): PluginLoadingResult {
   val initContext = ProductPluginInitContext()
   return PluginDescriptorLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { loadingContext ->
+    val descriptors = coroutineScope {
+      loadDescriptorsFromDir(
+        dir = customPluginDir,
+        loadingContext = loadingContext,
+        isBundled = ignoreCompatibility, // FIXME
+        pool = NonShareableJavaZipFilePool()
+      )
+    }.await().plugins
     val result = PluginLoadingResult()
     result.initAndAddAll(
-      descriptors = coroutineScope {
-        loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
-      }.await(),
+      descriptors = descriptors,
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1211,7 +1219,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
 }
 
 // do not use it
-fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: PluginDescriptorLoadingContext): Deferred<List<IdeaPluginDescriptorImpl>> {
+fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: PluginDescriptorLoadingContext): Deferred<DiscoveredPluginsList> {
   return scope.loadDescriptorsFromDir(dir = dir, loadingContext = context, isBundled = false, pool = NonShareableJavaZipFilePool())
 }
 
@@ -1220,19 +1228,20 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
   loadingContext: PluginDescriptorLoadingContext,
   isBundled: Boolean,
   pool: ZipEntryResolverPool,
-): Deferred<List<IdeaPluginDescriptorImpl>> {
+): Deferred<DiscoveredPluginsList> {
+  val kind = if (isBundled) ::BundledPluginsList else ::CustomPluginsList
   if (!Files.isDirectory(dir)) {
-    return CompletableDeferred(Collections.emptyList())
+    return CompletableDeferred(kind(dir, Collections.emptyList()))
   }
   else {
-    val descriptors = Files.newDirectoryStream(dir).use { dirStream ->
+    val descriptorsDeferred = Files.newDirectoryStream(dir).use { dirStream ->
       dirStream.map { file ->
         async(Dispatchers.IO) {
           loadDescriptorFromFileOrDir(file = file, loadingContext = loadingContext, pool = pool, isBundled = isBundled)
         }
       }
     }
-    return async { descriptors.awaitAllNotNull() }
+    return async { kind(dir, descriptorsDeferred.awaitAllNotNull()) }
   }
 }
 

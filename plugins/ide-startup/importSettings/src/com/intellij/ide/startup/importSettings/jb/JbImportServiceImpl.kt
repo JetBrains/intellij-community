@@ -97,7 +97,7 @@ internal data class JbProductInfo(
       val descriptorsDeferred = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
       val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
       val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginStringSetFile.readIdsSafe(disabledPluginsFile, logger) else setOf()
-      val descriptors = descriptorsDeferred.await()
+      val descriptors = descriptorsDeferred.await().plugins
       logger.debug { "There are ${descriptors.size} plugins in $pluginDir" }
       for (descr in descriptors) {
         if (disabledPlugins.contains(descr.pluginId)) {
