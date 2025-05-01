@@ -60,12 +60,12 @@ class PluginLoadingResult {
 
   fun initAndAddAll(
     pluginLists: List<DiscoveredPluginsList>,
-    overrideUseIfCompatible: Boolean,
     initContext: PluginInitializationContext,
   ) {
     for (pluginList in pluginLists) {
       for (descriptor in pluginList.plugins) {
-        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, initContext = initContext)
+        // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
+        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = pluginList is SystemPropertyProvidedPluginsList, initContext = initContext)
       }
     }
   }

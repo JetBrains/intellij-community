@@ -173,7 +173,6 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   loadingContext.use {
     result.initAndAddAll(
       pluginLists = listOf(CustomPluginsList(dir, descriptors)),
-      overrideUseIfCompatible = false,
       initContext = initContext
     )
   }

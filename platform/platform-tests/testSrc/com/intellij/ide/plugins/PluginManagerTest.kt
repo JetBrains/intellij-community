@@ -232,7 +232,6 @@ class PluginManagerTest {
       val loadingResult = PluginLoadingResult()
       loadingResult.initAndAddAll(
         pluginLists = pluginLists,
-        overrideUseIfCompatible = false,
         initContext = PluginInitializationContext.buildForTest(
           essentialPlugins = emptySet(),
           disabledPlugins = emptySet(), // TODO refactor the test
@@ -379,7 +378,6 @@ class PluginManagerTest {
       }
       result.initAndAddAll(
         pluginLists = listOf(pluginList),
-        overrideUseIfCompatible = false,
         initContext = initContext
       )
       return PluginManagerCore.initializePlugins(

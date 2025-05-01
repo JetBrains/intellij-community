@@ -537,9 +537,7 @@ private suspend fun loadAndInitDescriptors(
     pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
   }
   val loadingResult = PluginLoadingResult()
-  loadingResult.initAndAddAll(pluginLists = plugins, overrideUseIfCompatible = false, initContext = initContext)
-  // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.initAndAddAll(pluginLists = listOf(pluginsFromProperty), overrideUseIfCompatible = true, initContext = initContext)
+  loadingResult.initAndAddAll(pluginLists = plugins + pluginsFromProperty, initContext = initContext)
   return loadingResult
 }
 
@@ -1124,7 +1122,6 @@ fun loadAndInitDescriptorsFromOtherIde(
           bundledPluginDir = bundledPluginDir,
         ).await()
       },
-      overrideUseIfCompatible = false,
       initContext = initContext
     )
     result
@@ -1145,7 +1142,6 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
     val result = PluginLoadingResult()
     result.initAndAddAll(
       pluginLists = listOf(custom),
-      overrideUseIfCompatible = false,
       initContext = initContext
     )
     result
@@ -1195,7 +1191,6 @@ fun loadAndInitDescriptorsFromClassPathInTest(
   }
   result.initAndAddAll(
     pluginLists = listOf(pluginsList),
-    overrideUseIfCompatible = false,
     initContext = initContext
   )
   return result.enabledPlugins
