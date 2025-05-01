@@ -116,7 +116,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
     val selectionCallback = Channel<VariantSelectedResponse>()
     project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
-      val (selectedVariantIndex, breakpointCallback) = selectionCallback.receive()
+      val (selectedVariantIndex, breakpointCallback) = selectionCallback.receiveCatching().getOrNull() ?: return@launch
       breakpointCallback.use {
         val variant = variants[selectedVariantIndex]
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager

@@ -99,9 +99,9 @@ private fun responseWithVariantChoice(
       selectionCallback.use {
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
-      val breakpointDto = breakpointCallback.receive()
+      val breakpointDto = breakpointCallback.receiveCatching().getOrNull() ?: return@compute null
       val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-      breakpointDto?.let { breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy }
+      breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
     }
   }
 }
