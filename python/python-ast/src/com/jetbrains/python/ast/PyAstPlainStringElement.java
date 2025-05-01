@@ -52,4 +52,9 @@ public interface PyAstPlainStringElement extends PyAstStringElement {
   default boolean isFormatted() {
     return false;
   }
+
+  @Override
+  default boolean isTemplate() {
+    return false;
+  }
 }
