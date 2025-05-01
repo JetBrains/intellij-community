@@ -1089,12 +1089,11 @@ fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): 
 }
 
 @Throws(ExecutionException::class, InterruptedException::class, IOException::class)
-fun loadAndInitDescriptorsFromOtherIde(
+fun loadDescriptorsFromOtherIde(
   customPluginDir: Path,
   bundledPluginDir: Path?,
-  brokenPluginVersions: Map<PluginId, Set<String>>?,
   productBuildNumber: BuildNumber?,
-): PluginLoadingResult {
+): List<DiscoveredPluginsList> {
   val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
   val pool = NonShareableJavaZipFilePool()
   val loadingContext = PluginDescriptorLoadingContext(
@@ -1119,19 +1118,7 @@ fun loadAndInitDescriptorsFromOtherIde(
     loadingContext.close()
     pool.close()
   }
-
-  val initContext = ProductPluginInitContext(
-    buildNumberOverride = productBuildNumber,
-    disabledPluginsOverride = emptySet(),
-    expiredPluginsOverride = emptySet(),
-    brokenPluginVersionsOverride = brokenPluginVersions,
-  )
-  val result = PluginLoadingResult()
-  result.initAndAddAll(
-    pluginLists = pluginLists,
-    initContext = initContext
-  )
-  return result
+  return pluginLists
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {
