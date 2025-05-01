@@ -102,9 +102,8 @@ class KotlinClassRenderer : ClassRenderer() {
         context: EvaluationContext
     ): Set<JvmMethodSignature>? {
         val uniqueKotlinDeclaringTypes = methods
-            .map { it.declaringType() }
+            .mapTo(HashSet()) { it.declaringType() }
             .filter { it.isInKotlinSources() }
-            .toSet()
         val metadataList = KotlinMetadataCacheService.getKotlinMetadataList(
             uniqueKotlinDeclaringTypes, context
         ) ?: return null

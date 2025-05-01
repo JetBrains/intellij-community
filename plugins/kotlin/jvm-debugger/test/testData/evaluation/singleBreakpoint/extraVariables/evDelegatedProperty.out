@@ -8,7 +8,7 @@ KotlinStackFrame (evDelegatedProperty.kt:13)
         JavaValue[field] prop$delegate: kotlin.properties.ReadWriteProperty = NotNullProperty(value=1) (evDelegatedProperty.kt:6)
             JavaValue[field] value: java.lang.Object = 1 (Delegates.!EXT!)
                 JavaValue[field] value: int = 1 (Integer.!EXT!)
-        JavaValue[getter] prop: int (evDelegatedProperty.kt:6)
+        JavaValue[getter evDelegatedProperty.A.getProp()] prop: int (evDelegatedProperty.kt:6)
 Disconnected from the target VM
 
 Process finished with exit code 0

@@ -1,21 +1,21 @@
-LineBreakpoint created at evaluatableGetters.kt:40
+LineBreakpoint created at evaluatableGetters.kt:42
 Run Java
 Connected to the target VM
-evaluatableGetters.kt:40
-KotlinStackFrame (evaluatableGetters.kt:40)
-    JavaValue[local] x: evaluatableGetters.X = evaluatableGetters.X@hashCode (evaluatableGetters.kt:38)
+evaluatableGetters.kt:42
+KotlinStackFrame (evaluatableGetters.kt:42)
+    JavaValue[local] x: evaluatableGetters.X = evaluatableGetters.X@hashCode (evaluatableGetters.kt:40)
         JavaValue[field] a: int = 1 (evaluatableGetters.kt:12)
-        JavaValue[field] c: java.lang.String (evaluatableGetters.kt:17)
-        JavaValue[getter] c: java.lang.String (evaluatableGetters.kt:17)
-        JavaValue[field] d: java.lang.String (evaluatableGetters.kt:20)
-        JavaValue[field] e: int = 1 (evaluatableGetters.kt:22)
-        JavaValue[getter] e: int (evaluatableGetters.kt:22)
-        JavaValue[field] f: java.lang.String = null (evaluatableGetters.kt:26)
-        JavaValue[getter] b: int (evaluatableGetters.kt:14)
-        JavaValue[getter] 😎: int (evaluatableGetters.kt:30)
-        JavaValue[getter] "": int (evaluatableGetters.kt:33)
-        JavaValue[getter] i: int (evaluatableGetters.kt:4)
-        JavaValue[getter] base: int (evaluatableGetters.kt:8)
+        JavaValue[field] c: java.lang.String (evaluatableGetters.kt:19)
+        JavaValue[getter evaluatableGetters.X.getC()] c: java.lang.String (evaluatableGetters.kt:19)
+        JavaValue[field] d: java.lang.String (evaluatableGetters.kt:22)
+        JavaValue[field] e: int = 1 (evaluatableGetters.kt:24)
+        JavaValue[getter evaluatableGetters.X.getE()] e: int (evaluatableGetters.kt:24)
+        JavaValue[field] f: java.lang.String = null (evaluatableGetters.kt:28)
+        JavaValue[getter evaluatableGetters.X.getB()] b: int (evaluatableGetters.kt:14)
+        JavaValue[getter evaluatableGetters.X.get😎()] 😎: int (evaluatableGetters.kt:32)
+        JavaValue[getter evaluatableGetters.X.get""()] "": int (evaluatableGetters.kt:35)
+        JavaValue[getter evaluatableGetters.X.getI()] i: int (evaluatableGetters.kt:4)
+        JavaValue[getter evaluatableGetters.Base.getBase()] base: int (evaluatableGetters.kt:8)
 Disconnected from the target VM
 
 Process finished with exit code 0

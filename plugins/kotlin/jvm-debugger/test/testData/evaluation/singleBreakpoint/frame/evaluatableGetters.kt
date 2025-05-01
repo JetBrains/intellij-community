@@ -11,6 +11,8 @@ abstract class Base {
 class X : Base(), I {
     val a = 1
 
+    fun getB(arg: Int): Int = 5
+
     val b: Int
         get() = 1 + 1
 
