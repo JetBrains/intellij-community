@@ -9,7 +9,6 @@ import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookLineMarke
 import com.intellij.notebooks.visualization.controllers.selfUpdate.common.NotebookCellSelfHighlighterController
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.TextAttributes
 
 class CodeCellBackgroundController(editorCell: EditorCell) : NotebookCellSelfHighlighterController(editorCell) {
@@ -19,7 +18,7 @@ class CodeCellBackgroundController(editorCell: EditorCell) : NotebookCellSelfHig
     }
   }
 
-  override fun getHighlighterLayer(): Int = HighlighterLayer.FIRST - 100
+  override fun getHighlighterLayer(): Int = editor.notebookAppearance.cellBackgroundHighlightLayer
 
   override fun getTextAttribute(): TextAttributes {
     val textAttributes = TextAttributes()

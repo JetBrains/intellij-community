@@ -1,12 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.controllers.selfUpdate.common
 
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookLineMarkerRenderer
 import com.intellij.notebooks.visualization.controllers.selfUpdate.SelfManagedCellController
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.Consumer
@@ -26,7 +26,7 @@ abstract class NotebookCellSelfHighlighterController(
     disposeHighlighter()
   }
 
-  open fun getHighlighterLayer(): Int = HighlighterLayer.FIRST
+  open fun getHighlighterLayer(): Int = editor.notebookAppearance.cellBackgroundHighlightLayer
   open fun createLineMarkerRender(rangeHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer? = null
   open fun getTextAttribute(): TextAttributes? = null
   open fun customizeHighlighter(cellHighlighter: RangeHighlighterEx) {}
@@ -47,7 +47,7 @@ abstract class NotebookCellSelfHighlighterController(
     createNewHighlighter()
   }
 
-  private fun disposeHighlighter() {
+  protected fun disposeHighlighter() {
     val highlighterEx = highlighter ?: return
     editor.markupModel.removeHighlighter(highlighterEx)
     highlighterEx.dispose()
