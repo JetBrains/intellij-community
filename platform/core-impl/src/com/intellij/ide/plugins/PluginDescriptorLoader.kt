@@ -429,7 +429,6 @@ suspend fun loadAndInitDescriptors(
   return loadingContext to loadingResult
 }
 
-@Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(
   zipPoolDeferred: Deferred<ZipEntryResolverPool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
