@@ -17,6 +17,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
@@ -304,7 +305,7 @@ object XBreakpointUtil {
     return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor, lineTypes,
                                           { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
                                           { type -> type.priority },
-                                          { type, line -> type.canPutAt(editor, line, project) })
+                                          { type, line -> type.canPutAtFast(editor, line, project).isAtLeast(ThreeState.UNSURE) })
   }
 
   private fun <T, B> getAvailableLineBreakpointInfo(

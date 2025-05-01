@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
@@ -33,7 +34,8 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
       for (breakpointType in breakpointTypes) {
         val file = position.getFile()
         val line = position.getLine()
-        if (breakpointType.canPutAt(position.editor, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+        if (breakpointType.canPutAtFast(position.editor, line, project).isAtLeast(ThreeState.UNSURE) ||
+            breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
           return true
         }
       }

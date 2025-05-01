@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
+import com.intellij.util.ThreeState
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType.StandardPanels
@@ -49,18 +50,37 @@ private class FrontendXLineBreakpointType(
 
   override val priority: Int = lineTypeInfo.priority
 
-  override fun canPutAt(editor: Editor, line: Int, project: Project): Boolean {
-    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLineFast(editor, line)
+  override suspend fun canPutAt(editor: Editor, line: Int, project: Project): Boolean {
+    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLine(editor, line)
     return availableTypes.any { it.id == this@FrontendXLineBreakpointType.id }
   }
 
-  override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
+  override fun canPutAtFast(editor: Editor, line: Int, project: Project): ThreeState {
+    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLineFast(editor, line)
+    if (availableTypes == null) {
+      return ThreeState.UNSURE
+    }
+    return ThreeState.fromBoolean(availableTypes.any { it.id == this@FrontendXLineBreakpointType.id })
+  }
+
+  override suspend fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
     // TODO IJPL-185322 What if called for other editors?
-    val editor = FileEditorManager.getInstance(project).getEditors(file).firstNotNullOfOrNull {
-      if (it is TextEditor) it.editor else null
-    } ?: return false
+    val editor = file.getOpenedEditor(project) ?: return false
 
     return canPutAt(editor, line, project)
+  }
+
+  override fun canPutAtFast(file: VirtualFile, line: Int, project: Project): ThreeState {
+    // TODO IJPL-185322 What if called for other editors?
+    val editor = file.getOpenedEditor(project) ?: return ThreeState.NO
+
+    return canPutAtFast(editor, line, project)
+  }
+
+  private fun VirtualFile.getOpenedEditor(project: Project): Editor? {
+    return FileEditorManager.getInstance(project).getEditors(this).firstNotNullOfOrNull {
+      if (it is TextEditor) it.editor else null
+    }
   }
 }
 

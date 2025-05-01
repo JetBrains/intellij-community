@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -285,7 +286,7 @@ public class XBreakpointVisualRepresentation {
   }
 
   private boolean canMoveTo(int line, VirtualFile file) {
-    if (file != null && myBreakpoint.getType().canPutAt(file, line, myProject)) {
+    if (file != null && myBreakpoint.getType().canPutAtFast(file, line, myProject) == ThreeState.YES) {
       if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
         XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
         XLineBreakpoint<?> existing =

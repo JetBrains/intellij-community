@@ -87,17 +87,10 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
    * Schedules data fetching if needed, so the next calls will hopefully return cached data.
    */
   @RequiresReadLock
-  fun getTypesForLineFast(editor: Editor, line: Int): List<XBreakpointTypeProxy> {
+  fun getTypesForLineFast(editor: Editor, line: Int): List<XBreakpointTypeProxy>? {
     val editorMap = editorsMap[editor] ?: return emptyList()
     val currentEditorStamp = editor.document.modificationStamp
-    val cached = editorMap.getTypesForLineInternal(line, currentEditorStamp)
-    if (cached == null) {
-      cs.launch {
-        getTypesForLine(editor, line)
-      }
-      return emptyList()
-    }
-    return cached
+    return editorMap.getTypesForLineInternal(line, currentEditorStamp)
   }
 
   companion object {
