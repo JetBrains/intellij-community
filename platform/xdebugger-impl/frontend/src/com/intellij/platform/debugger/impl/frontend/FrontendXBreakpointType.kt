@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -48,13 +49,18 @@ private class FrontendXLineBreakpointType(
 
   override val priority: Int = lineTypeInfo.priority
 
+  override fun canPutAt(editor: Editor, line: Int, project: Project): Boolean {
+    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLineFast(editor, line)
+    return availableTypes.any { it.id == this@FrontendXLineBreakpointType.id }
+  }
+
   override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
     // TODO IJPL-185322 What if called for other editors?
     val editor = FileEditorManager.getInstance(project).getEditors(file).firstNotNullOfOrNull {
       if (it is TextEditor) it.editor else null
     } ?: return false
-    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLineFast(editor, line)
-    return availableTypes.any { it.id == this@FrontendXLineBreakpointType.id }
+
+    return canPutAt(editor, line, project)
   }
 }
 

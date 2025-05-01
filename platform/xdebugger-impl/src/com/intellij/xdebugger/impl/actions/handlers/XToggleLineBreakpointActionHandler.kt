@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -33,7 +33,7 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
       for (breakpointType in breakpointTypes) {
         val file = position.getFile()
         val line = position.getLine()
-        if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
+        if (breakpointType.canPutAt(position.editor, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
           return true
         }
       }
@@ -60,7 +60,7 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
         XBreakpointUtil.toggleLineBreakpointProxy(project,
                                                   position,
                                                   !isFromGutterClick,
-                                                  editor,
+                                                  position.editor,
                                                   isAltClick || myTemporary,
                                                   !isFromGutterClick,
                                                   canRemove, isConditionalBreakpoint, selection)

@@ -167,7 +167,7 @@ object XBreakpointUtil {
   fun toggleLineBreakpoint(
     project: Project,
     position: XSourcePosition,
-    editor: Editor?,
+    editor: Editor,
     temporary: Boolean,
     moveCaret: Boolean,
     canRemove: Boolean,
@@ -184,7 +184,7 @@ object XBreakpointUtil {
     project: Project,
     position: XSourcePosition,
     selectVariantByPositionColumn: Boolean,
-    editor: Editor?,
+    editor: Editor,
     temporary: Boolean,
     moveCaret: Boolean,
     canRemove: Boolean,
@@ -205,7 +205,7 @@ object XBreakpointUtil {
     project: Project,
     position: XSourcePosition,
     selectVariantByPositionColumn: Boolean,
-    editor: Editor?,
+    editor: Editor,
     temporary: Boolean,
     moveCaret: Boolean,
     canRemove: Boolean,
@@ -223,7 +223,7 @@ object XBreakpointUtil {
     val res = XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy(
       project, typeWinner, winPosition, selectVariantByPositionColumn, temporary, editor, canRemove, isConditional, condition)
 
-    if (editor != null && lineStart != lineWinner) {
+    if (lineStart != lineWinner) {
       val offset = editor.document.getLineStartOffset(lineWinner)
       ExpandRegionAction.expandRegionAtOffset(editor, offset)
       if (moveCaret) {
@@ -297,14 +297,14 @@ object XBreakpointUtil {
     project: Project,
     position: XSourcePosition,
     selectTypeByPositionColumn: Boolean,
-    editor: Editor?,
+    editor: Editor,
   ): Pair<List<XLineBreakpointTypeProxy>, Int> {
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
     val lineTypes = breakpointManager.getLineBreakpointTypes()
     return getAvailableLineBreakpointInfo(position, selectTypeByPositionColumn, editor, lineTypes,
                                           { type, line -> breakpointManager.findBreakpointAtLine(type, position.file, line) },
                                           { type -> type.priority },
-                                          { type, line -> type.canPutAt(position.file, line, project) })
+                                          { type, line -> type.canPutAt(editor, line, project) })
   }
 
   private fun <T, B> getAvailableLineBreakpointInfo(
