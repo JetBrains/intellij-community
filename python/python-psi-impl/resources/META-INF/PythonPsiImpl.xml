@@ -384,6 +384,12 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyFStringToTStringIntention</className>
+      <bundleName>messages.PyPsiBundle</bundleName>
+      <categoryKey>INTN.category.python</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertLambdaToFunctionIntention</className>
       <bundleName>messages.PyPsiBundle</bundleName>
       <categoryKey>INTN.category.python</categoryKey>
