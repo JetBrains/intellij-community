@@ -3,26 +3,20 @@ package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.idea.AppMode
+import com.intellij.openapi.application.UiDispatcherKind.RELAX
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.PlatformUtils
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -298,8 +292,7 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
 @Experimental
 @Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  // TODO: Remove check for remote dev after fixing IJPL-168923
-  val context = if (useBackgroundWriteAction && !PlatformUtils.isJetBrainsClient() && !AppMode.isRemoteDevHost()) {
+  val context = if (useBackgroundWriteAction) {
     Dispatchers.Default + RunInBackgroundWriteActionMarker
   }
   else {
