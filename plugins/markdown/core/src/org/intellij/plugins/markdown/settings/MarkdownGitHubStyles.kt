@@ -699,8 +699,13 @@ span.user-del {
 /* JavaScript tweaks */
 
 .language-javascript .hljs-name,
+.language-html .language-javascript .hljs-name,
 .language-javascript .hljs-title.class_ {
   color: var(--github-md-syntax-variable);
+}
+
+.language-html .language-javascript .hljs-keyword {
+  color: var(--github-md-syntax-keyword);
 }
 
 /* JSON/JSON5 tweaks */

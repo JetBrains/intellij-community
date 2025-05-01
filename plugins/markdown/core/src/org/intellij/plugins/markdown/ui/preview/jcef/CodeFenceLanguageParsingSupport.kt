@@ -16,6 +16,7 @@ import org.intellij.plugins.markdown.ui.preview.jcef.impl.waitForPageLoad
 import java.net.URL
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class CodeFenceLanguageParsingSupport : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -129,6 +130,12 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
       return text.replace(Regex("&(amp|gt|lt|quot);")) { matchResult -> entities[matchResult.groupValues[1]] ?: "" }
     }
 
+    private val reverseEntities = mapOf("&" to "&amp;", ">" to "&gt;", "<" to "&lt;", "\"" to "&quot;")
+
+    private fun encodeEntities(text: String): String {
+      return text.replace(Regex("""[&><"]""")) { matchResult -> reverseEntities[matchResult.value] ?: "" }
+    }
+
     private val escapees: Map<Char, String> =
       mapOf('\\' to "\\\\",  '\'' to "\\'", '"' to "\\\"", '\n' to "\\n", '\r' to "\\r", '\t' to "\\t")
 
@@ -185,6 +192,53 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
 
     private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 
+    private fun parseSegment(language: String, content: String): String? {
+      jsExecLatch = CountDownLatch(1)
+
+      val execThread = Thread {
+        jsError = false
+        @Suppress("JSUnresolvedReference")
+        browser.executeJavaScript("markdownHighlighter('${escapeForJs(language)}', '${escapeForJs(content)}')")
+        jsExecLatch!!.countDown()
+        jsExecLatch = null
+        jsResultLatch = CountDownLatch(1)
+        jsResultLatch!!.await(2, TimeUnit.SECONDS)
+      }
+
+      execThread.start()
+      execThread.join(2000)
+
+      if (jsError || jsResult.isNullOrEmpty()) {
+        return null
+      }
+      else {
+        return jsResult
+      }
+    }
+
+    private fun parseMixedHtmlAndJavaScript(content: String): String? {
+      var scriptIndex = 0
+      val javaScript = HashMap<String, String>()
+
+      val opts = setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)
+      val html = Regex("""(<script[^>]*>)(.*?)(</\s*script\s*>)""", opts).replace(content) { match ->
+        if ((match.groups.get(2)?.value ?: "").trim() == "")
+          match.groups.get(0)!!.value
+        else {
+          val key = "$•••${++scriptIndex}•${Random.nextInt(0, Int.MAX_VALUE)}•••$"
+          val js = match.groups.get(2)!!.value
+
+          javaScript[key] = parseSegment("javascript", js) ?: "<span>${encodeEntities(js)}</span>"
+          match.groups.get(1)!!.value + key + match.groups.get(3)!!.value
+        }
+      }
+      var markedUpHtml = parseSegment("html", html) ?: return null
+
+      javaScript.forEach { (key, value) -> markedUpHtml = markedUpHtml.replace(key, "<span class=\"language-javascript\">$value</span>") }
+
+      return markedUpHtml
+    }
+
     internal fun parseToHighlightedHtml(language: String, content: String, node: ASTNode): String? {
       synchronized(browser) {
         startupLatch?.await(10, TimeUnit.SECONDS)
@@ -195,27 +249,17 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
           return null
         }
 
-        jsExecLatch = CountDownLatch(1)
+        var parsed: String
 
-        val execThread = Thread {
-          jsError = false
-          @Suppress("JSUnresolvedReference")
-          browser.executeJavaScript("markdownHighlighter('${escapeForJs(language)}', '${escapeForJs(content)}')")
-          jsExecLatch!!.countDown()
-          jsExecLatch = null
-          jsResultLatch = CountDownLatch(1)
-          jsResultLatch!!.await(2, TimeUnit.SECONDS)
+        if (language != "html" || !Regex("""<\s*script[^<]*?>""", RegexOption.IGNORE_CASE).containsMatchIn(content)) {
+          parsed = parseSegment(language, content) ?: return null
         }
-
-        execThread.start()
-        execThread.join(2000)
-
-        if (jsError || jsResult.isNullOrEmpty()) {
-          return null
+        else {
+          parsed = parseMixedHtmlAndJavaScript(content) ?: return null
         }
 
         val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
-        var html = convertToRangedSpans(jsResult!!, startOffset)
+        var html = convertToRangedSpans(parsed, startOffset)
 
         if (node.startOffset < startOffset) {
           // Needed to match code fence start, even though the fence start text itself isn't inside the span.
