@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -254,6 +255,9 @@ fun Application.cleanApplicationState() {
   }
 
   runCatching {
+    runInEdtAndWait {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    }
     waitForAppLeakingThreads(application = this, timeout = 10, timeUnit = TimeUnit.SECONDS)
   }.onFailure(::addError)
 
@@ -373,7 +377,7 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
 
-  while (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress()) {
+  while (RefreshQueue.getInstance() != null && (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress())) {
     if (EDT.isCurrentThreadEdt()) {
       EDT.dispatchAllInvocationEvents()
     }

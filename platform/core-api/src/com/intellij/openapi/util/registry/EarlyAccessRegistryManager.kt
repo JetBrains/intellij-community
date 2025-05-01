@@ -87,7 +87,7 @@ object EarlyAccessRegistryManager {
     }
 
     // see com.intellij.ide.plugins.PluginDescriptorLoader.loadForCoreEnv
-    val registryManager = ApplicationManager.getApplication().serviceOrNull<RegistryManager>() ?: return getOrFromSystemProperty(map, key)
+    val registryManager = ApplicationManager.getApplication()?.serviceOrNull<RegistryManager>() ?: return getOrFromSystemProperty(map, key)
     // use RegistryManager to make sure that Registry is fully loaded
     val value = try {
       registryManager.stringValue(key)
