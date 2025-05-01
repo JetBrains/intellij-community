@@ -3926,31 +3926,12 @@
       <scope name="Tests" level="WARNING" enabled="false" />
       <option name="MODULES_SETS_LOADED_TOGETHER">
         <modules-set>
-          <module name="intellij.java.impl" />
-          <module name="intellij.java.analysis.impl" />
-          <module name="intellij.java.execution" />
-          <module name="intellij.java" />
-          <module name="intellij.java.psi" />
-          <module name="intellij.java.ui" />
-          <module name="intellij.java.psi.impl" />
-          <module name="intellij.java.analysis" />
-          <module name="intellij.java.impl.refactorings" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.android.profilers.ui" />
           <module name="intellij.android.profilers" />
         </modules-set>
         <modules-set>
           <module name="intellij.android.wizard" />
           <module name="intellij.android.wizard.model" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.java.compiler.impl" />
-          <module name="intellij.java.compiler" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.java.compiler.instrumentationUtil.java8" />
-          <module name="intellij.java.compiler.instrumentationUtil" />
         </modules-set>
       </option>
     </inspection_tool>

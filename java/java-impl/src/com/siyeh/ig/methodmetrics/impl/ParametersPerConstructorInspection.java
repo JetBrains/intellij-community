@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.methodmetrics;
+package com.siyeh.ig.methodmetrics.impl;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsContexts;
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.methodmetrics.MethodMetricInspection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 

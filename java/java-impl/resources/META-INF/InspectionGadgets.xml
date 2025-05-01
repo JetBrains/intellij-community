@@ -534,11 +534,11 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="OverlyComplexAnonymousInnerClass" shortName="AnonymousClassComplexity"
                      bundle="messages.InspectionGadgetsBundle" key="overly.complex.anonymous.inner.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.metrics" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.classmetrics.AnonymousClassComplexityInspection"/>
+                     implementationClass="com.siyeh.ig.classmetrics.impl.AnonymousClassComplexityInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="AnonymousInnerClassWithTooManyMethods" shortName="AnonymousClassMethodCount"
                      bundle="messages.InspectionGadgetsBundle" key="anonymous.inner.class.with.too.many.methods.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.metrics" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.classmetrics.AnonymousClassMethodCountInspection"/>
+                     implementationClass="com.siyeh.ig.classmetrics.impl.AnonymousClassMethodCountInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="OverlyComplexClass" shortName="ClassComplexity" bundle="messages.InspectionGadgetsBundle"
                      key="overly.complex.class.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.class.metrics"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.classmetrics.ClassComplexityInspection"/>
@@ -1480,7 +1480,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="ConstructorWithTooManyParameters" shortName="ParametersPerConstructor"
                      bundle="messages.InspectionGadgetsBundle" key="parameters.per.constructor.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.method.metrics" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.methodmetrics.ParametersPerConstructorInspection"/>
+                     implementationClass="com.siyeh.ig.methodmetrics.impl.ParametersPerConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="OverlyComplexMethod" shortName="CyclomaticComplexity" bundle="messages.InspectionGadgetsBundle"
                      key="cyclomatic.complexity.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.method.metrics"
                      enabledByDefault="false" level="WARNING"
