@@ -2,6 +2,7 @@
 package com.intellij.java.debugger.impl.backend
 
 import com.intellij.debugger.actions.ThreadDumpAction
+import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.execution.filters.ExceptionFilters
@@ -51,6 +52,11 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
       channelDeferred.complete(dtosChannel)
     }
     return JavaThreadDumpResponseDto(channelDeferred.await(), ExceptionFilters.getFilters(session.searchScope))
+  }
+
+  override suspend fun setAsyncStacksEnabled(sessionId: XDebugSessionId, state: Boolean) {
+    val session = sessionId.findValue() ?: return
+    AsyncStacksUtils.setAsyncStacksEnabled(session, state)
   }
 }
 

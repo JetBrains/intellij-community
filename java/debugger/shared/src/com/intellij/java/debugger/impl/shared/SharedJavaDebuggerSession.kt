@@ -15,6 +15,7 @@ class SharedJavaDebuggerSession(dto: JavaDebuggerSessionDto, private val cs: Cor
 
   val isAttached: Boolean get() = isAttachedFlow.value
 
+  internal var isAsyncStacksEnabled: Boolean = true
 
   fun close() {
     cs.cancel()

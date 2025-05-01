@@ -290,10 +290,6 @@
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
-      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
-      </action>
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"/>
       <action id="Debugger.CallTracer" class="com.intellij.debugger.ui.breakpoints.CallTracer$CallTracerToggleAction"
               icon="AllIcons.Debugger.Db_set_breakpoint">

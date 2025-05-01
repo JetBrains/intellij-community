@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -356,8 +355,9 @@ public class JavaExecutionStack extends XExecutionStack {
           List<StackFrameItem> relatedStack = null;
           var creationStack = myCreationStack;
           XStackFrame topFrame = ContainerUtil.getFirstItem(frames);
-          if (AsyncStacksToggleAction.isAsyncStacksEnabled(
-            (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
+          JavaDebugProcess xdebugProcess = suspendContext.getDebugProcess().getXdebugProcess();
+          if (xdebugProcess != null &&
+              AsyncStacksUtils.isAsyncStacksEnabled((XDebugSessionImpl)xdebugProcess.getSession()) &&
               topFrame instanceof JavaStackFrame frame) {
             if (creationStack == null) {
               creationStack = DebugUtilsKt.computeSafeIfAny(CreationStackTraceProvider.EP,

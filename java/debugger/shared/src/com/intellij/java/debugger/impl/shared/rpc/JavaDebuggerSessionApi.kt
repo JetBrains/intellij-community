@@ -22,6 +22,8 @@ interface JavaDebuggerSessionApi : RemoteApi<Unit> {
 
   suspend fun dumpThreads(sessionId: XDebugSessionId, maxItems: Int = Int.MAX_VALUE, onlyPlatformThreads: Boolean): JavaThreadDumpResponseDto?
 
+  suspend fun setAsyncStacksEnabled(sessionId: XDebugSessionId, state: Boolean)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): JavaDebuggerSessionApi {

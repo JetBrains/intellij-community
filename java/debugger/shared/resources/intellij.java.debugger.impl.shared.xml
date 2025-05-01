@@ -12,6 +12,10 @@
                  key="debugger.thread.dump.max.items.frontend"/>
   </extensions>
   <actions resource-bundle="messages.JavaDebuggerSharedBundle">
+    <action id="Debugger.AsyncStacks" class="com.intellij.java.debugger.impl.shared.actions.AsyncStacksToggleAction">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
+    </action>
     <action id="DumpThreads" class="com.intellij.java.debugger.impl.shared.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>

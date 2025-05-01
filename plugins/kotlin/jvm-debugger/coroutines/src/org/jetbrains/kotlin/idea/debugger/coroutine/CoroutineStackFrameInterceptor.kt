@@ -2,12 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
-import com.intellij.debugger.actions.AsyncStacksToggleAction
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.MethodInvokeUtils
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.SuspendManagerUtil
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.impl.HelperClassNotAvailableException
@@ -41,7 +36,8 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
             || frame is SkipCoroutineStackFrameProxyImpl
-            || !AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
+            || !AsyncStacksUtils.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)
+        ) {
             return null
         }
         // skip -1 line in invokeSuspend and main
