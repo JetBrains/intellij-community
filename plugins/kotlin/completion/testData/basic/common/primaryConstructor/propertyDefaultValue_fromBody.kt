@@ -1,3 +1,5 @@
+// IGNORE_K1
+
 class X(
     val property: Int = <caret>,
 ) {
@@ -5,5 +7,5 @@ class X(
     val memberProperty: Int = 10
 }
 
-// EXIST: memberFun
-// EXIST: memberProperty
+// ABSENT: memberFun
+// ABSENT: memberProperty

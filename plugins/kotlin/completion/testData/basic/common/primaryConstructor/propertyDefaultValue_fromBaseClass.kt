@@ -1,3 +1,5 @@
+// IGNORE_K1
+
 class X(
     val property: Int = base<caret>,
 ) : Base()
@@ -10,7 +12,7 @@ open class Base {
     val Base.extPropertyFromBase: Int get() = 10
 }
 
-// EXIST: memberFunFromBase
-// EXIST: memberPropertyFromBase
-// EXIST: extFunFromBase
-// EXIST: extPropertyFromBase
+// ABSENT: memberFunFromBase
+// ABSENT: memberPropertyFromBase
+// ABSENT: extFunFromBase
+// ABSENT: extPropertyFromBase

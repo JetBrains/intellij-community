@@ -1,5 +1,3 @@
-// IGNORE_K1
-
 class X(
     val propertyOne: Int,
     parameterOne: Int,
@@ -10,8 +8,8 @@ class X(
     parameterThird: Int,
 )
 
-// EXIST: { lookupString: "propertyOne", typeText: "Int", module: "light_idea_test_case", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg", attributes: "bold", allLookupStrings: "getPropertyOne, propertyOne", itemText: "propertyOne" }
-// ABSENT: parameterOne
+// EXIST: { lookupString: "propertyOne", typeText: "Int", module: "light_idea_test_case", icon: "Parameter", attributes: "", allLookupStrings: "propertyOne", itemText: "propertyOne" }
+// EXIST: { lookupString: "parameterOne", typeText: "Int", module: "light_idea_test_case", icon: "Parameter", attributes: "", allLookupStrings: "parameterOne", itemText: "parameterOne" }
 
-// EXIST: propertyThird
+// ABSENT: propertyThird
 // ABSENT: parameterThird
