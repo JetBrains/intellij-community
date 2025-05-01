@@ -661,5 +661,6 @@
     <extensionPoint name="usagePresentationProvider"
                     interface="com.intellij.find.impl.UsagePresentationProvider"
                     dynamic="true"/>
+    <extensionPoint name="uiPluginManagerController" interface="com.intellij.ide.plugins.newui.UiPluginManagerController" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

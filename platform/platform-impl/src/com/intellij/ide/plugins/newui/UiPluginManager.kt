@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -31,6 +32,9 @@ class UiPluginManager {
   }
 
   fun getController(): UiPluginManagerController {
+    if (Registry.`is`("reworked.plugin.manager.enabled")) {
+      return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController
+    }
     return DefaultUiPluginManagerController
   }
 
