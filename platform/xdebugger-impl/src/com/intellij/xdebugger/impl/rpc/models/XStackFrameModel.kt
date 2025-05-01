@@ -11,9 +11,9 @@ import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 @ConsistentCopyVisibility
 @ApiStatus.Internal
@@ -57,14 +57,24 @@ private class XStackFrameDeduplicator {
   }
 
   private class ScopeBoundStorage() {
-    private val storage = ConcurrentHashMap<XStackFrame, XStackFrameId>()
+    private val storage = ConcurrentHashMap<IdentityWrapper, XStackFrameId>()
 
     fun getOrStore(stack: XStackFrame, createId: () -> XStackFrameId): XStackFrameId {
-      return storage.computeIfAbsent(stack) { createId() }
+      return storage.computeIfAbsent(IdentityWrapper(stack)) { createId() }
     }
 
     fun clear() {
       storage.clear()
+    }
+  }
+
+  private class IdentityWrapper(val frame: XStackFrame) {
+    override fun equals(other: Any?): Boolean {
+      return other is IdentityWrapper && frame === other.frame
+    }
+
+    override fun hashCode(): Int {
+      return System.identityHashCode(frame)
     }
   }
 
