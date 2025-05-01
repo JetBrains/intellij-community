@@ -64,7 +64,7 @@ class PluginSetTestBuilder(private val path: Path) {
     loadingContext.use {
       runBlocking {
         result.initAndAddAll(
-          descriptors = pluginList.plugins,
+          pluginLists = listOf(pluginList),
           overrideUseIfCompatible = false,
           initContext = initContext,
         )

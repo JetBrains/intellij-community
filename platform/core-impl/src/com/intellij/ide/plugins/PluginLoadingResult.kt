@@ -59,12 +59,14 @@ class PluginLoadingResult {
   }
 
   fun initAndAddAll(
-    descriptors: List<IdeaPluginDescriptorImpl>,
+    pluginLists: List<DiscoveredPluginsList>,
     overrideUseIfCompatible: Boolean,
     initContext: PluginInitializationContext,
   ) {
-    for (descriptor in descriptors) {
-      initAndAdd(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, initContext = initContext)
+    for (pluginList in pluginLists) {
+      for (descriptor in pluginList.plugins) {
+        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = overrideUseIfCompatible, initContext = initContext)
+      }
     }
   }
 

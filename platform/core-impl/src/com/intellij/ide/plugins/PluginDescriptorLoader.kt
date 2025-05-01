@@ -537,9 +537,9 @@ private suspend fun loadAndInitDescriptors(
     pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
   }
   val loadingResult = PluginLoadingResult()
-  loadingResult.initAndAddAll(descriptors = plugins.flatMap { it.plugins }, overrideUseIfCompatible = false, initContext = initContext)
+  loadingResult.initAndAddAll(pluginLists = plugins, overrideUseIfCompatible = false, initContext = initContext)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-  loadingResult.initAndAddAll(descriptors = pluginsFromProperty.plugins, overrideUseIfCompatible = true, initContext = initContext)
+  loadingResult.initAndAddAll(pluginLists = listOf(pluginsFromProperty), overrideUseIfCompatible = true, initContext = initContext)
   return loadingResult
 }
 
@@ -1111,7 +1111,7 @@ fun loadAndInitDescriptorsFromOtherIde(
     val result = PluginLoadingResult()
     @Suppress("RAW_RUN_BLOCKING")
     result.initAndAddAll(
-      descriptors = runBlocking {
+      pluginLists = runBlocking {
         val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
         val pool = NonShareableJavaZipFilePool()
         loadPluginDescriptorsImpl(
@@ -1122,7 +1122,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           zipPool = pool,
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
-        ).await().flatMap { it.plugins }
+        ).await()
       },
       overrideUseIfCompatible = false,
       initContext = initContext
@@ -1134,17 +1134,17 @@ fun loadAndInitDescriptorsFromOtherIde(
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): PluginLoadingResult {
   val initContext = ProductPluginInitContext()
   return PluginDescriptorLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { loadingContext ->
-    val descriptors = coroutineScope {
+    val custom = coroutineScope {
       loadDescriptorsFromDir(
         dir = customPluginDir,
         loadingContext = loadingContext,
         isBundled = ignoreCompatibility, // FIXME
         pool = NonShareableJavaZipFilePool()
       )
-    }.await().plugins
+    }.await()
     val result = PluginLoadingResult()
     result.initAndAddAll(
-      descriptors = descriptors,
+      pluginLists = listOf(custom),
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1194,7 +1194,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
     )
   }
   result.initAndAddAll(
-    descriptors = pluginsList.plugins,
+    pluginLists = listOf(pluginsList),
     overrideUseIfCompatible = false,
     initContext = initContext
   )
