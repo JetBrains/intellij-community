@@ -23,7 +23,6 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
         terminalCodeCompletion.invokeCompletion(e, 1)
       }
       else {
-
         invokeCompletion(e, CompletionType.BASIC, 1)
       }
     }

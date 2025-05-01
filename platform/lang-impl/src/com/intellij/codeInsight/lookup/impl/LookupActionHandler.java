@@ -24,9 +24,10 @@ import org.jetbrains.annotations.Nullable;
 
 
 public abstract class LookupActionHandler extends EditorActionHandler {
+  @Nullable
   protected final EditorActionHandler myOriginalHandler;
 
-  public LookupActionHandler(EditorActionHandler originalHandler) {
+  public LookupActionHandler(@Nullable EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
   }
 
@@ -187,14 +188,16 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   public static class LeftHandler extends LookupActionHandler {
-    public LeftHandler(EditorActionHandler originalHandler) {
+    public LeftHandler(@Nullable EditorActionHandler originalHandler) {
       super(originalHandler);
     }
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       if (!lookup.isCompletion()) {
-        myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        }
         return;
       }
 
@@ -206,7 +209,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
   public static class RightHandler extends LookupActionHandler {
-    public RightHandler(EditorActionHandler originalHandler) {
+    public RightHandler(@Nullable EditorActionHandler originalHandler) {
       super(originalHandler);
     }
 
@@ -216,7 +219,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       final int offset = editor.getCaretModel().getOffset();
       final CharSequence seq = editor.getDocument().getCharsSequence();
       if (seq.length() <= offset || !lookup.isCompletion()) {
-        myOriginalHandler.execute(editor, caret, context);
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(editor, caret, context);
+        }
         return;
       }
 
@@ -224,7 +229,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       CharFilter.Result lookupAction = LookupTypedHandler.getLookupAction(c, lookup);
 
       if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
-        myOriginalHandler.execute(editor, caret, context);
+        if (myOriginalHandler != null) {
+          myOriginalHandler.execute(editor, caret, context);
+        }
         return;
       }
 

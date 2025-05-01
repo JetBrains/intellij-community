@@ -11,20 +11,24 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class BackspaceHandler extends EditorActionHandler {
+  @Nullable
   private final EditorActionHandler myOriginalHandler;
 
-  public BackspaceHandler(EditorActionHandler originalHandler){
+  public BackspaceHandler(@Nullable EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
   }
 
   @Override
   public void doExecute(final @NotNull Editor editor, Caret caret, final DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-    if (lookup == null){
-      myOriginalHandler.execute(editor, caret, dataContext);
+    if (lookup == null) {
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
 
@@ -39,11 +43,11 @@ public final class BackspaceHandler extends EditorActionHandler {
 
   static void truncatePrefix(final DataContext dataContext,
                              LookupImpl lookup,
-                             final EditorActionHandler handler,
+                             final @Nullable EditorActionHandler handler,
                              final int hideOffset,
                              final Caret caret) {
     final Editor editor = lookup.getEditor();
-    if (!lookup.performGuardedChange(() -> handler.execute(editor, caret, dataContext))) {
+    if (handler != null && !lookup.performGuardedChange(() -> handler.execute(editor, caret, dataContext))) {
       return;
     }
 

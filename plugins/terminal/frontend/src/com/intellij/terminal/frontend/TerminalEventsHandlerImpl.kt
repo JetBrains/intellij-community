@@ -4,11 +4,11 @@ package com.intellij.terminal.frontend
 import com.google.common.base.Ascii
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.BackspaceHandler
+import com.intellij.codeInsight.lookup.impl.LookupActionHandler
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -17,6 +17,7 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import java.awt.Point
@@ -40,6 +41,7 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalInput: TerminalInput,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
+  private val outputModel: TerminalOutputModel
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -48,7 +50,7 @@ internal open class TerminalEventsHandlerImpl(
     get() = sessionModel.terminalState.value
 
   override fun keyTyped(e: TimedKeyEvent) {
-    updatePopUpCompletion(e.original.keyChar)
+    updateLookupOnTyping(e.original.keyChar)
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
@@ -82,6 +84,7 @@ internal open class TerminalEventsHandlerImpl(
     try {
       val keyCode = e.original.keyCode
       val keyChar = e.original.keyChar
+      updateLookupOnAction(keyCode)
 
       // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
@@ -163,6 +166,31 @@ internal open class TerminalEventsHandlerImpl(
            keycode == KeyEvent.VK_END ||
            keycode == KeyEvent.VK_PAGE_UP ||
            keycode == KeyEvent.VK_PAGE_DOWN
+  }
+
+  private fun updateLookupOnAction(keycode: Int) {
+    val caret = editor.getCaretModel().getCurrentCaret()
+    val offset = outputModel.cursorOffsetState.value
+    val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
+    if (lookup == null) {
+      return
+    }
+    lookup.performGuardedChange(Runnable { caret.moveToOffset(offset) })
+
+    val handler = when (keycode) {
+      KeyEvent.VK_LEFT -> {
+        LookupActionHandler.LeftHandler(null)
+      }
+      KeyEvent.VK_RIGHT -> {
+        LookupActionHandler.RightHandler(null)
+      }
+      KeyEvent.VK_BACK_SPACE -> {
+        BackspaceHandler(null)
+      }
+      else -> return
+    }
+
+    handler.execute(editor, caret, DataManager.getInstance().getDataContext(editor.getComponent()))
   }
 
   private fun simpleMapKeyCodeToChar(e: KeyEvent): Char {
@@ -326,19 +354,11 @@ internal open class TerminalEventsHandlerImpl(
     return command.toByteArray(Charset.forName(charset))
   }
 
-  private fun updatePopUpCompletion(charTyped: Char) {
+  private fun updateLookupOnTyping(charTyped: Char) {
     val project = editor.project ?: return
     val lookup = LookupManager.getActiveLookup(editor)
     if (lookup != null) {
-      if (charTyped.code.toByte() == Ascii.BS) {
-        val originalHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)
-        val backspaceHandler = BackspaceHandler(originalHandler)
-        backspaceHandler.doExecute(
-          editor,
-          editor.getCaretModel().getCurrentCaret(),
-          DataManager.getInstance().getDataContext(editor.getComponent()))
-      }
-      else {
+      if (charTyped.code != KeyEvent.VK_BACK_SPACE) {
         val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
         LookupTypedHandler.beforeCharTyped(
           charTyped,
