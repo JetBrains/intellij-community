@@ -1095,37 +1095,43 @@ fun loadAndInitDescriptorsFromOtherIde(
   brokenPluginVersions: Map<PluginId, Set<String>>?,
   productBuildNumber: BuildNumber?,
 ): PluginLoadingResult {
+  val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
+  val pool = NonShareableJavaZipFilePool()
+  val loadingContext = PluginDescriptorLoadingContext(
+    getBuildNumberForDefaultDescriptorVersion = { productBuildNumber ?: PluginManagerCore.buildNumber },
+    isMissingIncludeIgnored = true,
+    isMissingSubDescriptorIgnored = true,
+  )
+  val pluginLists = try {
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking {
+      loadPluginDescriptorsImpl(
+        loadingContext = loadingContext,
+        isUnitTestMode = PluginManagerCore.isUnitTestMode,
+        isRunningFromSources = PluginManagerCore.isRunningFromSources(),
+        mainClassLoader = classLoader,
+        zipPool = pool,
+        customPluginDir = customPluginDir,
+        bundledPluginDir = bundledPluginDir,
+      ).await()
+    }
+  } finally {
+    loadingContext.close()
+    pool.close()
+  }
+
   val initContext = ProductPluginInitContext(
     buildNumberOverride = productBuildNumber,
     disabledPluginsOverride = emptySet(),
     expiredPluginsOverride = emptySet(),
     brokenPluginVersionsOverride = brokenPluginVersions,
   )
-  return PluginDescriptorLoadingContext(
-    getBuildNumberForDefaultDescriptorVersion = { productBuildNumber ?: PluginManagerCore.buildNumber },
-    isMissingIncludeIgnored = true,
-    isMissingSubDescriptorIgnored = true,
-  ).use { loadingContext ->
-    val result = PluginLoadingResult()
-    @Suppress("RAW_RUN_BLOCKING")
-    result.initAndAddAll(
-      pluginLists = runBlocking {
-        val classLoader = PluginDescriptorLoadingContext::class.java.classLoader
-        val pool = NonShareableJavaZipFilePool()
-        loadPluginDescriptorsImpl(
-          loadingContext = loadingContext,
-          isUnitTestMode = PluginManagerCore.isUnitTestMode,
-          isRunningFromSources = PluginManagerCore.isRunningFromSources(),
-          mainClassLoader = classLoader,
-          zipPool = pool,
-          customPluginDir = customPluginDir,
-          bundledPluginDir = bundledPluginDir,
-        ).await()
-      },
-      initContext = initContext
-    )
-    result
-  }
+  val result = PluginLoadingResult()
+  result.initAndAddAll(
+    pluginLists = pluginLists,
+    initContext = initContext
+  )
+  return result
 }
 
 suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {
