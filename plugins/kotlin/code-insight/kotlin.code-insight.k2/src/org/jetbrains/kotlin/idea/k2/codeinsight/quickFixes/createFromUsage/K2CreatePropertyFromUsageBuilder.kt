@@ -97,9 +97,14 @@ object K2CreatePropertyFromUsageBuilder {
         var static = false
 
         val (defaultContainerPsi, receiverExpression) = when {
-          qualifiedElement == ref -> {
-              ref.parentOfType<KtClassOrObject>() to null
-          }
+            qualifiedElement == ref -> {
+                PsiTreeUtil.getParentOfType(
+                    /* element = */ ref,
+                    /* aClass = */ KtClassOrObject::class.java,
+                    /* strict = */ true,
+                    /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java
+                ) to null
+            }
           qualifiedElement is KtQualifiedExpression && qualifiedElement.selectorExpression == ref -> {
               val receiverExpression = qualifiedElement.receiverExpression
               static = receiverExpression.mainReference?.resolveToSymbol() is KaClassSymbol

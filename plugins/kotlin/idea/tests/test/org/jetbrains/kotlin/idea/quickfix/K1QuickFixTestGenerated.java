@@ -5958,6 +5958,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/smartCastWithNullCheck.kt");
                     }
 
+                    @TestMetadata("topLevelFunFromConstructorDefaultParameterValue.kt")
+                    public void testTopLevelFunFromConstructorDefaultParameterValue() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunFromConstructorDefaultParameterValue.kt");
+                    }
+
+                    @TestMetadata("topLevelFunFromDelegate.kt")
+                    public void testTopLevelFunFromDelegate() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunFromDelegate.kt");
+                    }
+
                     @TestMetadata("topLevelFunNoReceiver.kt")
                     public void testTopLevelFunNoReceiver() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/topLevelFunNoReceiver.kt");
@@ -7528,6 +7538,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("thisInNestedClass2.kt")
                     public void testThisInNestedClass2() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/thisInNestedClass2.kt");
+                    }
+
+                    @TestMetadata("topLevelPropertyFromConstructorDefaultParameterValue.kt")
+                    public void testTopLevelPropertyFromConstructorDefaultParameterValue() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/topLevelPropertyFromConstructorDefaultParameterValue.kt");
+                    }
+
+                    @TestMetadata("topLevelPropertyFromDelegate.kt")
+                    public void testTopLevelPropertyFromDelegate() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/topLevelPropertyFromDelegate.kt");
                     }
 
                     @TestMetadata("topLevelValNoReceiver.kt")

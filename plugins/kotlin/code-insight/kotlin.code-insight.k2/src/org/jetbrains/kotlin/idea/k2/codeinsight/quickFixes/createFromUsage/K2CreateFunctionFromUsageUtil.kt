@@ -226,7 +226,12 @@ object K2CreateFunctionFromUsageUtil {
         return when (val ktClassOrPsiClass = receiverExpression?.getClassOfExpressionType()) {
             is PsiClass -> ktClassOrPsiClass
             is KtClassOrObject -> ktClassOrPsiClass
-            else -> K2CreateFunctionFromUsageBuilder.computeImplicitReceiverClass(this) ?: getNonStrictParentOfType<KtClassOrObject>()
+            else -> K2CreateFunctionFromUsageBuilder.computeImplicitReceiverClass(this) ?: PsiTreeUtil.getParentOfType(
+                /* element = */ this,
+                /* aClass = */ KtClassOrObject::class.java,
+                /* strict = */ false,
+                /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java
+            )
         }
     }
 
@@ -239,12 +244,17 @@ object K2CreateFunctionFromUsageUtil {
         }
 
     private fun KtElement.getContainerClass(): JvmClass? {
-        val containingClass = getNonStrictParentOfType<KtClassOrObject>()
+        val containingClass = PsiTreeUtil.getParentOfType(
+            /* element = */ this,
+            /* aClass = */ KtClassOrObject::class.java,
+            /* strict = */ false,
+            /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java
+        )
         return containingClass?.toLightClass() ?: getContainingFileAsJvmClass()
     }
 
     private fun KtElement.getContainingFileAsJvmClass(): JvmClass? =
-        containingKtFile.findFacadeClass() ?: KtFileClassProviderImpl(project).getFileClasses(containingKtFile).firstOrNull()
+        containingKtFile.findFacadeClass() ?: JvmClassWrapperForKtClass(containingKtFile).takeUnless { containingKtFile.isCompiled }
 
     private val NAME_SUGGESTER = KotlinNameSuggester()
 
