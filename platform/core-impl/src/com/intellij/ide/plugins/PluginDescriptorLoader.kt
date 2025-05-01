@@ -567,13 +567,12 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
     val bundled = if (bundledPluginDir != null) {
       loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    } else Collections.emptyList()
+    } else CompletableDeferred(Collections.emptyList())
     return async {
-      val core = core.await()
-      ArrayList<IdeaPluginDescriptorImpl>(core.size + custom.size + bundled.size).apply {
-        addAll(core)
-        addAll(custom.awaitAllNotNull()) // TODO check order
-        addAll(bundled.awaitAllNotNull())
+      ArrayList<IdeaPluginDescriptorImpl>(core.await().size + custom.await().size + bundled.await().size).apply {
+        addAll(core.await())
+        addAll(custom.await()) // TODO check order
+        addAll(bundled.await())
       }
     }
   }
@@ -599,12 +598,11 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     )
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
     val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    return async{
-      val core = core.await()
-      ArrayList<IdeaPluginDescriptorImpl>(core.size + custom.size + bundled.size).apply {
-        addAll(core)
-        addAll(custom.awaitAllNotNull()) // TODO check order
-        addAll(bundled.awaitAllNotNull())
+    return async {
+      ArrayList<IdeaPluginDescriptorImpl>(core.await().size + custom.await().size + bundled.await().size).apply {
+        addAll(core.await())
+        addAll(custom.await()) // TODO check order
+        addAll(bundled.await())
       }
     }
   }
@@ -637,9 +635,9 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       bundledPluginDir = effectiveBundledPluginDir,
     )
     return async {
-      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.size + fromClasspath.size).apply {
+      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().size + fromClasspath.size).apply {
         add(core.await())
-        addAll(custom.awaitAllNotNull()) // TODO check order
+        addAll(custom.await()) // TODO check order
         addAll(fromClasspath.awaitAllNotNull())
       }
     }
@@ -1158,8 +1156,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
     result.initAndAddAll(
       descriptors = coroutineScope {
         loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = ignoreCompatibility, pool = NonShareableJavaZipFilePool())
-          .awaitAllNotNull()
-      },
+      }.await(),
       overrideUseIfCompatible = false,
       initContext = initContext
     )
@@ -1215,9 +1212,7 @@ fun loadAndInitDescriptorsFromClassPathInTest(
 
 // do not use it
 fun loadCustomDescriptorsFromDirForImportSettings(scope: CoroutineScope, dir: Path, context: PluginDescriptorLoadingContext): Deferred<List<IdeaPluginDescriptorImpl>> {
-  return scope.async {
-    scope.loadDescriptorsFromDir(dir = dir, loadingContext = context, isBundled = false, pool = NonShareableJavaZipFilePool()).awaitAllNotNull()
-  }
+  return scope.loadDescriptorsFromDir(dir = dir, loadingContext = context, isBundled = false, pool = NonShareableJavaZipFilePool())
 }
 
 internal fun CoroutineScope.loadDescriptorsFromDir(
@@ -1225,18 +1220,19 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
   loadingContext: PluginDescriptorLoadingContext,
   isBundled: Boolean,
   pool: ZipEntryResolverPool,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
+): Deferred<List<IdeaPluginDescriptorImpl>> {
   if (!Files.isDirectory(dir)) {
-    return Collections.emptyList()
+    return CompletableDeferred(Collections.emptyList())
   }
   else {
-    return Files.newDirectoryStream(dir).use { dirStream ->
+    val descriptors = Files.newDirectoryStream(dir).use { dirStream ->
       dirStream.map { file ->
         async(Dispatchers.IO) {
           loadDescriptorFromFileOrDir(file = file, loadingContext = loadingContext, pool = pool, isBundled = isBundled)
         }
       }
     }
+    return async { descriptors.awaitAllNotNull() }
   }
 }
 
