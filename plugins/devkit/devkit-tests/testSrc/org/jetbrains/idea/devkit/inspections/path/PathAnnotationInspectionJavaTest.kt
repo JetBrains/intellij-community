@@ -193,4 +193,111 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       }      
       """.trimIndent())
   }
+  /**
+   * Test that string literals that denote a filename (without slashes) are allowed in places where @Filename is expected.
+   */
+  fun testStringLiteralFilename() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.NativePath;
+
+      import java.nio.file.FileSystem;
+      import java.nio.file.FileSystems;
+      import java.nio.file.Path;
+
+      public class StringLiteralFilename {
+          public void testMethod() {
+              // String literals that denote a filename (without slashes) should be allowed in Path.of() more parameters
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+              Path path1 = Path.of(basePath, "file.txt"); // No warning, "file.txt" is a valid filename
+              Path path2 = Path.of(basePath, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">"invalid/filename"</warning>); // Warning, contains slash
+
+              // String literals that denote a filename should be allowed in FileSystem.getPath() more parameters
+              FileSystem fs = FileSystems.getDefault();
+              @NativePath String nativePath = "/usr/local/bin";
+              fs.getPath(nativePath, "file.txt"); // No warning, "file.txt" is a valid filename
+              fs.getPath(nativePath, <warning descr="${message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")}">"invalid/filename"</warning>); // Warning, contains slash
+
+              // String constants that denote a filename should also be allowed
+              final String validFilename = "file.txt";
+              final String invalidFilename = "invalid/filename";
+
+              Path path3 = Path.of(basePath, validFilename); // No warning, validFilename is a valid filename
+              Path path4 = Path.of(basePath, <warning descr="${message("inspections.message.more.parameters.in.path.of.should.be.annotated.with.multiroutingfilesystempath.or.filename")}">invalidFilename</warning>); // Warning, contains slash
+
+              fs.getPath(nativePath, validFilename); // No warning, validFilename is a valid filename
+              fs.getPath(nativePath, <warning descr="${message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")}">invalidFilename</warning>); // Warning, contains slash
+          }
+      }      
+      """.trimIndent())
+  }
+
+  /**
+   * Test that string literals that denote a filename (without slashes) are allowed in Path.resolve() method.
+   */
+  fun testPathResolve() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.Filename;
+      import java.nio.file.Path;
+      import java.nio.file.Paths;
+
+      public class PathResolve {
+          public void testMethod() {
+              // Create a base path
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+              Path base = Path.of(basePath);
+
+              // Test with string literals
+              Path path1 = base.resolve("file.txt"); // No warning, "file.txt" is a valid filename
+              Path path2 = base.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">"invalid/filename"</weak_warning>); // Warning, contains slash
+
+              // Test with annotated strings
+              @MultiRoutingFileSystemPath String multiRoutingPath = "some/path";
+              @Filename String filename = "file.txt";
+
+              Path path3 = base.resolve(multiRoutingPath); // No warning, annotated with @MultiRoutingFileSystemPath
+              Path path4 = base.resolve(filename); // No warning, annotated with @Filename
+
+              // Test with string constants
+              final String validFilename = "file.txt";
+              final String invalidFilename = "invalid/filename";
+
+              Path path5 = base.resolve(validFilename); // No warning, validFilename is a valid filename
+              Path path6 = base.resolve(<weak_warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">invalidFilename</weak_warning>); // Warning, contains slash
+          }
+      }      
+      """.trimIndent())
+  }
+
+  /**
+   * Test that @LocalPath annotations are processed correctly.
+   */
+  fun testLocalPath() {
+    doTest("""
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
+      import com.intellij.platform.eel.annotations.LocalPath;
+      import com.intellij.platform.eel.annotations.NativePath;
+      import java.nio.file.Path;
+      import java.nio.file.FileSystem;
+      import java.nio.file.FileSystems;
+
+      class LocalPathTest {
+          public void testMethod() {
+              // Test @LocalPath in Path.of()
+              @LocalPath String localPath = "/local/path";
+              Path path1 = Path.of(localPath); // @LocalPath can be used directly in Path.of()
+
+              // Test @LocalPath in Path.resolve()
+              @MultiRoutingFileSystemPath String basePath = "/base/path";
+              Path base = Path.of(basePath);
+              Path path2 = base.resolve(<warning descr="${message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")}">localPath</warning>); // Warning, @LocalPath should not be used in Path.resolve()
+
+              // Test @LocalPath in FileSystem.getPath()
+              FileSystem fs = FileSystems.getDefault();
+              fs.getPath(<warning descr="${message("inspections.message.first.argument.fs.getpath.should.be.annotated.with.nativepath")}">localPath</warning>, "file.txt"); // Warning, first argument should be @NativePath
+          }
+      }      
+      """.trimIndent())
+  }
 }
