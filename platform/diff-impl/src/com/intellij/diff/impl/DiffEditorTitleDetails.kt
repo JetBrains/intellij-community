@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.components.JBLabel
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -75,7 +76,7 @@ class DiffEditorTitleDetails(val pathLabel: DetailsLabelProvider?, val revisionL
     private val text: @NlsContexts.Label String,
     private val copiable: Boolean,
   ) : DetailsLabelProvider {
-    override fun createComponent(): JComponent = JBLabel(text).setCopyable(copiable)
+    override fun createComponent(): JComponent = JBLabel(XmlStringUtil.escapeString(text)).setCopyable(copiable)
   }
 }
 
