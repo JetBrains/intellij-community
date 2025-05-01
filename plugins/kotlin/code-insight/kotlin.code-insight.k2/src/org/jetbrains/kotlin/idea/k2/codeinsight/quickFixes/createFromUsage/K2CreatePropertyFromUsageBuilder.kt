@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -11,6 +12,8 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.EP_NAME
+import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
+import com.intellij.lang.jvm.types.JvmPrimitiveType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -197,12 +200,20 @@ object K2CreatePropertyFromUsageBuilder {
                         .filter { it != JvmModifier.PUBLIC && it != JvmModifier.ABSTRACT }
                         .mapNotNullTo(this, CreateFromUsageUtil::jvmModifierToKotlin)
 
-                    if (lateinit && !(request is CreatePropertyFromKotlinUsageRequest && request.isExtension)) {
+                    if (lateinit && isLateinitAllowed()) {
                         this += KtTokens.LATEINIT_KEYWORD
                     } else if (request.isConstant) {
                         this += KtTokens.CONST_KEYWORD
                     }
                 }.takeUnless { it.isEmpty() }
+
+        private fun isLateinitAllowed(): Boolean {
+            if (request is CreatePropertyFromKotlinUsageRequest &&
+                request.fieldType.all { it.theType is JvmPrimitiveType || (it as? ExpectedTypeWithNullability)?.nullability == Nullability.NULLABLE }) {
+                return false
+            }
+            return request !is CreatePropertyFromKotlinUsageRequest || !request.isExtension
+        }
 
         override fun getText(): String {
             return if (request is CreatePropertyFromKotlinUsageRequest) {

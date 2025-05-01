@@ -7445,6 +7445,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/memberWithTypeParameterAsReceiver.kt");
                     }
 
+                    @TestMetadata("noLateinitForNullable.kt")
+                    public void testNoLateinitForNullable() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/noLateinitForNullable.kt");
+                    }
+
+                    @TestMetadata("noLateinitForPrimitive.kt")
+                    public void testNoLateinitForPrimitive() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/noLateinitForPrimitive.kt");
+                    }
+
                     @TestMetadata("nonAbstractInInterface.kt")
                     public void testNonAbstractInInterface() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/nonAbstractInInterface.kt");

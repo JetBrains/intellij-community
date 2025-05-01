@@ -1,12 +1,10 @@
 // "Create property 'foo'" "true"
-// ERROR: Property must be initialized or be abstract
-// K2_AFTER_ERROR: 'lateinit' modifier is not allowed on properties of primitive types.
-class A {
-    private lateinit var foo: Int
+// ERROR: Property must be initialized
+// K2_AFTER_ERROR: Property must be initialized.
 
-    fun test() {
-        foo = 1
-    }
+fun m() {
+    f<caret>oo = null
 }
+
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction
