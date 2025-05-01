@@ -3924,16 +3924,6 @@
     </inspection_tool>
     <inspection_tool class="SuspiciousPackagePrivateAccess" enabled="true" level="ERROR" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
-      <option name="MODULES_SETS_LOADED_TOGETHER">
-        <modules-set>
-          <module name="intellij.android.profilers.ui" />
-          <module name="intellij.android.profilers" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.android.wizard" />
-          <module name="intellij.android.wizard.model" />
-        </modules-set>
-      </option>
     </inspection_tool>
     <inspection_tool class="SuspiciousReturnByteInputStream" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuspiciousSystemArraycopy" enabled="true" level="WARNING" enabled_by_default="true" />
