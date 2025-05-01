@@ -20,7 +20,7 @@ class TextMateNioResourceReader(private val directory: Path) : TextMateResourceR
       }
     }.getOrElse { e ->
       when (e) {
-        is NoSuchFileException -> {}
+        is java.nio.file.NoSuchFileException -> {}
         else -> LOG.warn(e) { "Can't load plists from `$relativePath`" }
       }
       emptyList()
@@ -31,7 +31,7 @@ class TextMateNioResourceReader(private val directory: Path) : TextMateResourceR
     return try {
       directory.resolve(relativePath).readBytes()
     }
-    catch (_: NoSuchFileException) {
+    catch (_: java.nio.file.NoSuchFileException) {
       LOG.warn { "Cannot find referenced file `$relativePath` in bundle `$directory`" }
       null
     }
