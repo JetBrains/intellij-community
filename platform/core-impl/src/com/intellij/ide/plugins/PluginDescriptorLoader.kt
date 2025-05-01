@@ -569,8 +569,9 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
     } else Collections.emptyList()
     return async {
+      val core = core.await()
       ArrayList<IdeaPluginDescriptorImpl>(core.size + custom.size + bundled.size).apply {
-        addAll(core.awaitAllNotNull())
+        addAll(core)
         addAll(custom.awaitAllNotNull()) // TODO check order
         addAll(bundled.awaitAllNotNull())
       }
@@ -598,9 +599,10 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     )
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
     val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    return async {
+    return async{
+      val core = core.await()
       ArrayList<IdeaPluginDescriptorImpl>(core.size + custom.size + bundled.size).apply {
-        addAll(core.awaitAllNotNull())
+        addAll(core)
         addAll(custom.awaitAllNotNull()) // TODO check order
         addAll(bundled.awaitAllNotNull())
       }
@@ -848,7 +850,7 @@ private fun CoroutineScope.loadCoreModules(
   isRunningFromSources: Boolean,
   pool: ZipEntryResolverPool,
   classLoader: ClassLoader,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
+): Deferred<List<IdeaPluginDescriptorImpl>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
   val (corePluginDeferred, isSingleDescriptorCore) = loadCorePlugin(
@@ -862,7 +864,7 @@ private fun CoroutineScope.loadCoreModules(
     classLoader = classLoader,
   )
   if (isSingleDescriptorCore) {
-    return Collections.singletonList(corePluginDeferred)
+    return async { listOfNotNull(corePluginDeferred.await()) }
   }
 
   val result: MutableList<Deferred<IdeaPluginDescriptorImpl?>> = ArrayList()
@@ -885,7 +887,7 @@ private fun CoroutineScope.loadCoreModules(
       }
     }
   }
-  return result
+  return async { result.awaitAllNotNull() }
 }
 
 /**
