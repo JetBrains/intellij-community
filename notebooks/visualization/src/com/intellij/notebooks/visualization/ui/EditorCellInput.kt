@@ -1,7 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.NotebookCellInlayController
+import com.intellij.notebooks.visualization.EditorCellInputFactory
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.openapi.editor.Inlay
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
 class EditorCellInput(
-  componentFactory: NotebookCellInlayController.InputFactory,
+  componentFactory: EditorCellInputFactory,
   val cell: EditorCell,
 ) : EditorCellViewComponent() {
   private val editor = cell.editor

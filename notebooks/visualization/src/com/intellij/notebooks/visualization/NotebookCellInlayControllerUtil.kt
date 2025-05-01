@@ -11,17 +11,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import java.awt.Color
 
 object NotebookCellInlayControllerUtil {
-  fun NotebookCellInlayController.updateFrameVisibility(
-    highlighter: RangeHighlighterEx?,
-    isVisible: Boolean,
-    startOffset: Int,
-    endOffset: Int,
-    frameColor: Color,
-    position: NotebookMarkdownCellCornerGutterLineMarkerRenderer.Position,
-  ): RangeHighlighterEx? {
-    return updateFrameVisibility(inlay, highlighter, isVisible, startOffset, endOffset, frameColor, position)
-  }
-
   fun updateFrameVisibility(
     inlay: Inlay<*>,
     highlighter: RangeHighlighterEx?,

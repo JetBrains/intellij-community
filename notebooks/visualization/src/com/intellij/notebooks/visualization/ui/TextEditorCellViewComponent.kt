@@ -173,10 +173,6 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
     presentationToInlay.remove(presentation)?.let { inlay -> Disposer.dispose(inlay) }
   }
 
-  override fun doGetInlays(): Sequence<Inlay<*>> {
-    return presentationToInlay.values.asSequence()
-  }
-
   override fun doCheckAndRebuildInlays() {
     if (isInlaysBroken()) {
       val presentations = presentationToInlay.keys.toList()

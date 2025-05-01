@@ -18,7 +18,6 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.JBColor
 import com.intellij.util.asDisposable
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.Dispatchers
@@ -133,7 +132,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
 
   private fun drawFrame(color: Color) {
     state.set(CellFrameState(true, color))
-    view?.updateFrameVisibility(true, color)
     drawLeftBorder()
     drawRightBorder()
   }
@@ -162,7 +160,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
 
   private fun clearFrame() {
     state.set(CellFrameState(false))
-    view?.updateFrameVisibility(false, JBColor.background())
     removeLeftBorder()
     removeRightBorder()
     val visibleArea = editor.scrollingModel.visibleArea
