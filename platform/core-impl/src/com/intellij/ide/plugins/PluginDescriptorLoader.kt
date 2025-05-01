@@ -1128,10 +1128,9 @@ fun loadAndInitDescriptorsFromOtherIde(
   }
 }
 
-suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): PluginLoadingResult {
-  val initContext = ProductPluginInitContext()
+suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreCompatibility: Boolean = false): DiscoveredPluginsList {
   return PluginDescriptorLoadingContext(isMissingIncludeIgnored = true, isMissingSubDescriptorIgnored = true).use { loadingContext ->
-    val custom = coroutineScope {
+    coroutineScope {
       loadDescriptorsFromDir(
         dir = customPluginDir,
         loadingContext = loadingContext,
@@ -1139,12 +1138,6 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
         pool = NonShareableJavaZipFilePool()
       )
     }.await()
-    val result = PluginLoadingResult()
-    result.initAndAddAll(
-      pluginLists = listOf(custom),
-      initContext = initContext
-    )
-    result
   }
 }
 
