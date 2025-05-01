@@ -254,7 +254,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
               // Test Path.toString() with FileSystem.getPath()
               val fs = FileSystems.getDefault()
               @NativePath val nativePath = "/usr/local/bin"
-              val fsPath = fs.getPath(nativePath, Path.of("file.txt").toString()) // TODO: add comment
+              val fsPath = fs.getPath(nativePath, <warning descr="${
+      DevKitBundle.message("inspections.message.more.parameters.in.fs.getpath.should.be.annotated.with.nativepath.or.filename")
+    }">Path.of("file.txt").toString()</warning>) // warning, Path.toString() is not recognized as special
 
               // Test Path.toString() with string concatenation
               val concatPath = Path.of(<warning descr="${
