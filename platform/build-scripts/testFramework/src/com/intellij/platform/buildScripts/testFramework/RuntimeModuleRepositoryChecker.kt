@@ -115,7 +115,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
               val mainModuleListString = 
                 if (mainModules.size < 3) mainModules.joinToString { it.stringId } 
                 else "${mainModules.first().stringId} and ${mainModules.size - 1} more modules" 
-              softly.collectAssertionError(
+              softly.collectAssertionErrorIfNotRegisteredYet(
                 AssertionError("""
                 |Module '${pluginModule.moduleId.stringId}' from plugin '${group.mainModule.moduleId}' has resource root $resourcePath,
                 |which is also added as a resource root of modules from the platform part ($mainModuleListString).
@@ -126,7 +126,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       }
     }
     catch (e: MalformedRepositoryException) { 
-      softly.collectAssertionError(AssertionError("Failed to load product-modules.xml for $descriptorsJarFile: $e", e))
+      softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("Failed to load product-modules.xml for $descriptorsJarFile: $e", e))
     }
   }
 
@@ -141,7 +141,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
     productModules.bundledPluginModuleGroups.forEach { group ->
       if (group.includedModules.isEmpty()) {
-        softly.collectAssertionError(AssertionError("""
+        softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("""
            |No modules from '$group' are included in a product running in the frontend mode, so corresponding plugin won't be loaded.
            |Probably it indicates that some incorrect dependency was added to the main plugin module.  
         """.trimMargin()))
@@ -184,7 +184,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         val rest = includedModules.size - displayedModulesCount
         val embeddedProductPresentableName = "${context.applicationInfo.shortProductName} Frontend"
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
-        softly.collectAssertionError(AssertionError("""
+        softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("""
           |Module '${moduleId.stringId}' is not part of $embeddedProductPresentableName included in the full ${context.applicationInfo.shortProductName} distribution, but it's packed in ${included.pathString},
           |which is included in the classpath of $embeddedProductPresentableName because:
           |$firstIncludedModuleData$more are also packed in it.
@@ -199,6 +199,15 @@ internal class RuntimeModuleRepositoryChecker private constructor(
           |  to separate JARs using explicit 'withModule(...)' calls in the layout configuration.
         """.trimMargin()))
       }
+    }
+  }
+  
+  private fun SoftAssertions.collectAssertionErrorIfNotRegisteredYet(e: AssertionError) {
+    if (errorsCollected().none {
+        val message = it.message
+        message != null && message.lineSequence().filterNot { line -> line.startsWith("at ") }.joinToString("\n").trim() == e.message?.trim() 
+    }) {
+      collectAssertionError(e)
     }
   }
 
