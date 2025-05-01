@@ -103,6 +103,12 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       
       productModules.bundledPluginModuleGroups.forEach { group ->
         val allPluginModules = group.includedModules.map { it.moduleDescriptor } + serviceModuleMapping.getAdditionalModules(group)
+        if (group.mainModule.moduleId == RuntimeModuleId.module("intellij.performanceTesting.async") && context.applicationInfo.productCode == "IC") {
+          //'intellij.performanceTesting.async' bundled with IDEA Community includes modules which are included in the core plugin for IDEA Ultimate, 
+          //so it won't be loaded in IDEA Community, see IJPL-186414 
+          return@forEach
+        }
+        
         for (pluginModule in allPluginModules) {
           if (pluginModule.moduleId == RuntimeModuleId.projectLibrary("commons-lang3")) {
             //ignore this error until IJPL-671 is fixed
@@ -114,12 +120,19 @@ internal class RuntimeModuleRepositoryChecker private constructor(
             if (mainModules != null) {
               val mainModuleListString = 
                 if (mainModules.size < 3) mainModules.joinToString { it.stringId } 
-                else "${mainModules.first().stringId} and ${mainModules.size - 1} more modules" 
+                else "${mainModules.first().stringId} and ${mainModules.size - 1} more modules"
+              val moduleId = pluginModule.moduleId.stringId
+              val pluginModuleId = group.mainModule.moduleId.stringId
               softly.collectAssertionErrorIfNotRegisteredYet(
                 AssertionError("""
-                |Module '${pluginModule.moduleId.stringId}' from plugin '${group.mainModule.moduleId}' has resource root $resourcePath,
-                |which is also added as a resource root of modules from the platform part ($mainModuleListString).
-                """.trimMargin()))
+                |Module '$moduleId' from plugin '$pluginModuleId' has resource root ${commonDistPath.relativize(resourcePath)},
+                |which is also added as a resource root of modules from the core (platform) plugin ($mainModuleListString).
+                |This may lead to classes from the core plugin to be loaded by two classloaders leading to ClassCastException at runtime.
+                |If '$moduleId' belongs to '$pluginModuleId' plugin, make sure that it's included in the plugin layout (if it's registered as a content module, it should be enough to remove
+                |explicit references to it from the build scripts, and it'll be packed in the plugin automatically).
+                |If '$moduleId' is a part of the core plugin, don't register it as a content module in '$pluginModuleId', and register it in `main-root-modules` tag in
+                |`product-modules.xml` instead. 
+                |""".trimMargin()))
             }
           }
         }

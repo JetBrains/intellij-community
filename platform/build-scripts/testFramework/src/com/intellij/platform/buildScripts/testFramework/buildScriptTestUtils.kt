@@ -200,6 +200,7 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
         if (checkIntegrityOfEmbeddedFrontend) {
           val frontendRootModule = context.productProperties.embeddedFrontendRootModule
           if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
+            RuntimeModuleRepositoryChecker.checkProductModules(productModulesModule = frontendRootModule, context = context, softly = softly)
             RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
             checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
           }
