@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.isInheritorOf
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.annotations.Filename
 import com.intellij.platform.eel.annotations.LocalPath
@@ -651,13 +652,9 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
       fun forExpression(expression: UExpression): PathAnnotationInfo {
         val callExpression = expression.getUCallExpression()
         if (callExpression != null) {
-          // Check if the expression is a call to Path.toString()
-          val method = callExpression.resolve()
-          if (method is com.intellij.psi.PsiMethod) {
-            val containingClass = method.containingClass
-            if (containingClass != null && containingClass.qualifiedName == "java.nio.file.Path" && method.name == "toString") {
-              return MultiRouting
-            }
+          if (callExpression.receiverType?.isInheritorOf("java.nio.file.Path") == true
+              && callExpression.methodName == "toString") {
+            return MultiRouting
           }
 
           // Check if the argument is a call to System.getProperty("user.home")
@@ -695,6 +692,13 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             }
           }
 
+          (resolvedUElement as? UVariable)?.uastInitializer?.getUCallExpression()?.let { callExpression ->
+            if (callExpression.receiverType?.isInheritorOf("java.nio.file.Path") == true
+                && callExpression.methodName == "toString") {
+              return MultiRouting
+            }
+          }
+
           val resolved = expression.resolve()
           if (resolved is PsiModifierListOwner) {
             val info = forModifierListOwner(resolved)
@@ -706,20 +710,6 @@ class PathAnnotationInspection : DevKitUastInspectionBase() {
             if (resolved is com.intellij.psi.PsiVariable) {
               val initializer = resolved.initializer
               if (initializer != null) {
-                // Check if the initializer is a call to Path.toString()
-                if (initializer is com.intellij.psi.PsiMethodCallExpression) {
-                  val methodExpression = initializer.methodExpression
-                  val qualifierExpression = methodExpression.qualifierExpression
-                  val methodName = methodExpression.referenceName
-
-                  if (methodName == "toString" && qualifierExpression != null) {
-                    val qualifierType = qualifierExpression.type
-                    if (qualifierType != null && qualifierType.canonicalText == "java.nio.file.Path") {
-                      return MultiRouting
-                    }
-                  }
-                }
-
                 // Check if the initializer is a call to System.getProperty("user.home")
                 if (initializer is com.intellij.psi.PsiMethodCallExpression) {
                   val methodExpression = initializer.methodExpression
