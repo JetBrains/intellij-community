@@ -2,13 +2,15 @@
 package com.intellij.util.animation
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.function.Consumer
 
-internal class AlphaAnimationContext(private val base: AlphaComposite, private val consumer: Consumer<AlphaComposite?>) {
+@ApiStatus.Internal
+class AlphaAnimationContext(private val base: AlphaComposite, private val consumer: Consumer<AlphaComposite?>) {
   constructor(consumer: Consumer<AlphaComposite?>) : this(AlphaComposite.SrcOver, consumer)
   constructor(component: Component) : this({ if (component.isShowing) component.repaint() }) {
     this.component = component

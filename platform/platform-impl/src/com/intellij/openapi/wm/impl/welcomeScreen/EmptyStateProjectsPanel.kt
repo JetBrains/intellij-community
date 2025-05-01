@@ -148,7 +148,7 @@ private fun createActionsToolbar(actionGroup: ActionGroup): ActionToolbarImpl {
       return actionIndex >= getWelcomeScreenPrimaryButtonsNum()
     }
 
-    override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
+    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
       super.actionsUpdated(forced, newVisibleActions)
       if (forced && !newVisibleActions.isEmpty() && componentCount > 0 && !wasFocusRequested) {
         val obj = FocusUtil.findFocusableComponentIn(components[0], null)

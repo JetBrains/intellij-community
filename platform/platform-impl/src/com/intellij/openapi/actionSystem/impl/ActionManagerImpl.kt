@@ -324,7 +324,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   final override fun createActionToolbar(place: String,
                                          group: ActionGroup,
                                          horizontal: Boolean,
-                                         separatorCreator: Function<in String, out Component>): ActionToolbar {
+                                         separatorCreator: Function<in String?, out Component>): ActionToolbar {
     val toolbar = createActionToolbarImpl(place = place,
                                           group = group,
                                           horizontal = horizontal,

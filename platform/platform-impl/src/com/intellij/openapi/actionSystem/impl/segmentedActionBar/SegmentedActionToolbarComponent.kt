@@ -2,6 +2,8 @@
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionToolbar.ACTION_BUTTON_CONSTRAINT
+import com.intellij.openapi.actionSystem.ActionToolbar.CUSTOM_COMPONENT_CONSTRAINT
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
@@ -20,9 +22,11 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 
 @ApiStatus.Internal
-open class SegmentedActionToolbarComponent(place: String,
-                                           group: ActionGroup,
-                                           private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
+open class SegmentedActionToolbarComponent(
+  place: String,
+  group: ActionGroup,
+  private val paintBorderForSingleItem: Boolean = true
+) : ActionToolbarImpl(place, group, true) {
   companion object {
     internal const val CONTROL_BAR_PROPERTY: String = "CONTROL_BAR_PROPERTY"
     internal const val CONTROL_BAR_FIRST: String = "CONTROL_BAR_PROPERTY_FIRST"
@@ -206,7 +210,7 @@ private class MyLayoutStrategy: ToolbarLayoutStrategy {
     var offset = 0
     for (child in toolbar.component.components) {
       val d = if (child.isVisible) child.preferredSize else Dimension()
-      res.add(Rectangle(insets.left + offset, insets.top, d.width, ActionToolbarImpl.DEFAULT_MINIMUM_BUTTON_SIZE.height))
+      res.add(Rectangle(insets.left + offset, insets.top, d.width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height))
       offset += d.width
     }
 
@@ -214,8 +218,8 @@ private class MyLayoutStrategy: ToolbarLayoutStrategy {
   }
 
   override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
-    val width = toolbar.component.components.filter { it.isVisible }.map { it.preferredSize.width }.sum()
-    return JBUI.size(width, ActionToolbarImpl.DEFAULT_MINIMUM_BUTTON_SIZE.height)
+    val width = toolbar.component.components.filter { it.isVisible }.sumOf { it.preferredSize.width }
+    return JBUI.size(width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
   }
 
   override fun calcMinimumSize(toolbar: ActionToolbar): Dimension = JBUI.emptySize()

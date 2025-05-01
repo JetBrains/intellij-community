@@ -460,7 +460,7 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun getSeparatorColor(): Color {
-    return JBColor.namedColor("MainToolbar.separatorColor", super.separatorColor)
+    return JBColor.namedColor("MainToolbar.separatorColor", super.getSeparatorColor())
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {
