@@ -25,34 +25,18 @@ class MarkdownGitHubStyles {
   --github-md-scrollbar-track-bg: #F6F8FA;
   --github-md-scrollbar-thumb-bg: #959595;
   --github-md-scrollbar-thumb-border: #F6F6F6;
-  --github-md-syntax-bracket-highlighter-angle: #59636E;
-  --github-md-syntax-bracket-highlighter-unmatched: #82071E;
   --github-md-syntax-comment: #59636E;
   --github-md-syntax-constant: #0550AE;
-  --github-md-syntax-constant-other-ref: #0A3069;
-  --github-md-syntax-cr: #F6F8FA;
-  --github-md-syntax-cr-bg: #CF222E;
   --github-md-syntax-entity: #6639BA;
   --github-md-syntax-entity-tag: #0550AE;
-  --github-md-syntax-invalid-illegal: #F8F8F8;
-  --github-md-syntax-invalid-illegal-bg: #82071E;
   --github-md-syntax-keyword: #CF222E;
-  --github-md-syntax-markup-bold: #1F2328;
-  --github-md-syntax-markup-changed-bg: #FFD8B5;
   --github-md-syntax-markup-deleted: #82071E;
   --github-md-syntax-markup-deleted-bg: #FFEBE9;
-  --github-md-syntax-markup-heading: #0550AE;
-  --github-md-syntax-markup-italic: #1F2328;
-  --github-md-syntax-markup-ignored: #D1D9E0;
-  --github-md-syntax-markup-ignored-bg: #0550AE;
   --github-md-syntax-markup-inserted: #116329;
   --github-md-syntax-markup-inserted-bg: #DAFBE1;
-  --github-md-syntax-markup-list: #3B2300;
-  --github-md-syntax-meta-diff-range: #8250DF;
   --github-md-syntax-storage-modifier: #1F2328;
   --github-md-syntax-string: #0A3069;
   --github-md-syntax-string-regex: #116329;
-  --github-md-syntax-sublime-linter-gutter-mark: #818B98;
   --github-md-syntax-variable: #953800;
   --github-md-table-border-color: #808080;
 }
@@ -77,35 +61,18 @@ class MarkdownGitHubStyles {
   --github-md-scrollbar-track-bg: #050505;
   --github-md-scrollbar-thumb-bg: #6B6B6B;
   --github-md-scrollbar-thumb-border: #0A0A0A;
-  --github-md-syntax-bracket-highlighter-angle: #9198A1;
-  --github-md-syntax-bracket-highlighter-unmatched: #F85149;
   --github-md-syntax-comment: #9198A1;
   --github-md-syntax-constant: #79C0FF;
-  --github-md-syntax-constant-other-ref: #A5D6FF;
-  --github-md-syntax-cr: #F0F6FC;
-  --github-md-syntax-cr-bg: #B62324;
   --github-md-syntax-entity: #D2A8FF;
   --github-md-syntax-entity-tag: #7EE787;
-  --github-md-syntax-invalid-illegal: #F0F6FC;
-  --github-md-syntax-invalid-illegal-bg: #8E1519;
   --github-md-syntax-keyword: #FF7B72;
-  --github-md-syntax-markup-bold: #F0F6FC;
-  --github-md-syntax-markup-changed: #FFDFB6;
-  --github-md-syntax-markup-changed-bg: #5A1E02;
   --github-md-syntax-markup-deleted: #FFDCD7;
   --github-md-syntax-markup-deleted-bg: #67060C;
-  --github-md-syntax-markup-heading: #1F6FEB;
-  --github-md-syntax-markup-italic: #F0F6FC;
-  --github-md-syntax-markup-ignored: #F0F6FC;
-  --github-md-syntax-markup-ignored-bg: #1158c7;
   --github-md-syntax-markup-inserted: #AFF5B4;
   --github-md-syntax-markup-inserted-bg: #033A16;
-  --github-md-syntax-markup-list: #F2CC60;
-  --github-md-syntax-meta-diff-range: #D2A8FF;
   --github-md-syntax-storage-modifier: #F0F6FC;
   --github-md-syntax-string: #A5D6FF;
   --github-md-syntax-string-regex: #7EE787;
-  --github-md-syntax-sublime-linter-gutter-mark: #3D444D;
   --github-md-syntax-variable: #FFA657;
   --github-md-table-border-color: gray;
 }
@@ -141,6 +108,11 @@ body {
 
 body * {
   box-sizing: border-box;
+}
+
+body > div {
+  margin: 0 auto;
+  max-width: 51.875rem;
 }
 
 .markdown-body > *:first-child {
@@ -574,137 +546,24 @@ span.user-del {
 
 """
 
+/*
+  Class names used on GitHub for syntax coloring
+
+  pl-c:      --github-md-syntax-comment
+  pl-c1      --github-md-syntax-constant
+  pl-e:      --github-md-syntax-entity
+  pl-en:     --github-md-syntax-entity
+  pl-ent:    --github-md-syntax-entity-tag
+  pl-k:      --github-md-syntax-keyword
+  pl-s1:     --github-md-fg-color
+  pl-s:      --github-md-syntax-string
+  pl-sr:     --github-md-syntax-string-regex
+  pl-smi:    --github-md-syntax-storage-modifier
+  pl-v:      --github-md-syntax-variable
+*/
+
     @Language("CSS")
     const val GITHUB_SYNTAX_COLOR_CSS_CLASSES = """
-.pl-ba {
-  color: var(--github-md-syntax-bracket-highlighter-angle) !important;
-}
-
-.pl-bu {
-  color: var(--github-md-syntax-bracket-highlighter-unmatched) !important;
-}
-
-.pl-c {
-  color: var(--github-md-syntax-comment) !important;
-}
-
-.pl-c1, .pl-s .pl-v {
-  color: var(--github-md-syntax-constant) !important;
-}
-
-.pl-c2 {
-  color: var(--github-md-syntax-cr) !important;
-  background-color: var(--github-md-syntax-cr-bg) !important;
-}
-
-.pl-c2::before {
-  content: "^M";
-}
-
-.pl-corl {
-  text-decoration: underline !important;
-  color: var(--github-md-syntax-constant-other-ref) !important;
-}
-
-.pl-e, .pl-en {
-  color: var(--github-md-syntax-entity) !important;
-}
-
-.pl-ent {
-  color: var(--github-md-syntax-entity-tag) !important;
-}
-
-.pl-k {
-  color: var(--github-md-syntax-keyword) !important;
-}
-
-.pl-ii {
-  background-color: var(--github-md-syntax-invalid-illegal-bg);
-  color: var(--github-md-syntax-invalid-illegal) !important;
-}
-
-.pl-mb {
-  color: var(--github-md-syntax-markup-bold);
-  font-weight: bold;
-}
-
-.pl-mc {
-  background-color: var(--github-md-syntax-markup-changed-bg) !important;
-  color: var(--github-md-syntax-markup-changed) !important;
-}
-
-.pl-md {
-  background-color: var(--github-md-syntax-markup-deleted-bg) !important;
-  color: var(--github-md-syntax-markup-deleted) !important;
-}
-
-.pl-mh, .pl-mh .pl-en, .pl-ms {
-  color: var(--github-md-syntax-markup-heading) !important;
-  font-weight: bold;
-}
-
-.pl-mi {
-  color: var(--github-md-syntax-markup-italic) !important;
-  font-style: italic;
-}
-
-.pl-mi1 {
-  background-color: var(--github-md-syntax-markup-inserted-bg) !important;
-  color: var(--github-md-syntax-markup-inserted) !important;
-}
-
-.pl-mi2 {
-  color: var(github-md-syntax-markup-ignored) !important;
-  background-color: var(github-md-syntax-markup-ignored-bg) !important;
-}
-
-.pl-ml {
-  color: var(--github-md-syntax-markup-list) !important;
-}
-
-.pl-mdr {
-  color: var(--github-md-syntax-meta-diff-range);
-  font-weight: bold !important;
-}
-
-.pl-mh, .pl-mh .pl-en, .pl-ms {
-  color: var(--github-md-syntax-markup-heading) !important;
-  font-weight: bold !important;
-}
-
-.pl-s1 {
-  color: var(--github-md-fg-color) !important;
-}
-
-.pl-s .pl-s1 {
-  color: var(--github-md-fg-color) !important;
-}
-
-.pl-s, .pl-pds, .pl-s .pl-pse .pl-s1, .pl-sr, .pl-sr, .pl-cce, .pl-sr .pl-sra, .pl-sr .pl-sre {
-  color: var(--github-md-syntax-string) !important;
-}
-
-.pl-smi {
-  color: var(--github-md-syntax-storage-modifier) !important;
-}
-
-.pl-sg {
-  color: var(--github-md-syntax-sublime-linter-gutter-mark) !important;
-}
-
-.pl-sr .pl-cce {
-  color: var(--github-md-syntax-string-regex) !important;
-  font-weight: bold !important;
-}
-
-.pl-v, .pl-smw {
-  color: var(--github-md-syntax-variable) !important;
-}
-
-.pl-x {
-  color: var(--github-md-fg-color) !important;
-}
-
 .hljs-doctag,
 .hljs-keyword,
 .hljs-meta .hljs-keyword,

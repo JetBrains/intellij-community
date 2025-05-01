@@ -107,7 +107,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     scrollSuppressions.put(editor, System.currentTimeMillis());
   }
 
-  private static void clearOutOldSuppressions() {
+  private static void clearOldScrollSuppressions() {
     long now = System.currentTimeMillis();
     var iterator = scrollSuppressions.entrySet().iterator();
 
@@ -131,16 +131,11 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
     public void visibleAreaChanged(@NotNull VisibleAreaEvent event) {
       // If the user double-clicks the preview, causing the editor to scroll to a new location,
       //   we want to avoid having the editor scrolling turn around and cause the preview to scroll.
-
       final Editor editor = event.getEditor();
 
-      clearOutOldSuppressions();
+      clearOldScrollSuppressions();
 
-      if (scrollSuppressions.get(editor) != null) {
-        return;
-      }
-
-      if (!isAutoScrollPreview()) {
+      if (scrollSuppressions.get(editor) != null || !isAutoScrollPreview()) {
         return;
       }
 

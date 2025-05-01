@@ -26,7 +26,6 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
@@ -53,7 +52,6 @@ import java.net.URL
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.round
-import org.cef.handler.CefDisplayHandlerAdapter
 
 class MarkdownJCEFHtmlPanel(
   private val project: Project?,
@@ -154,14 +152,6 @@ class MarkdownJCEFHtmlPanel(
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
-    // TODO: Removing after using for debugging.
-    jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
-      override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
-        println("$level [$source:$line]: $message")
-        return false
-      }
-    }, cefBrowser)
-
     browserPipe.subscribe(SCROLL_SOURCE_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
         var match = Regex("""^(\d+),(\d+)""").find(data)
@@ -224,8 +214,8 @@ class MarkdownJCEFHtmlPanel(
       """.trimMargin()
 
       executeJavaScript(code)
-
       loadIndexContent()
+
       updateHandler.requests.collectLatest { request ->
         when (request) {
           is PreviewRequest.Update -> {
@@ -249,7 +239,7 @@ class MarkdownJCEFHtmlPanel(
     previousRenderClosure = renderClosure
     // language=JavaScript
     val scrollCode = when {
-      firstUpdate -> "window.scrollController?.ensureMarkdownSrcOffsetIsVisible($initialScrollOffset, true);"
+      firstUpdate -> "window.scrollController?.ensureMarkdownSrcOffsetIsVisible($initialScrollOffset, true, true).finally();"
       else -> ""
     }
     // language=JavaScript
@@ -278,6 +268,7 @@ class MarkdownJCEFHtmlPanel(
         });
       })();
     """.trimIndent()
+
     executeCancellableJavaScript(code)
   }
 
@@ -357,6 +348,7 @@ class MarkdownJCEFHtmlPanel(
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
     val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
+    @Suppress("JSUnresolvedReference")
     executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
@@ -527,6 +519,7 @@ class MarkdownJCEFHtmlPanel(
 
   companion object {
     private val logger = logger<MarkdownJCEFHtmlPanel>()
+    @Suppress("JSUnresolvedReference")
     private const val SCROLL_SOURCE_EVENT = "scrollSource"
     private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 

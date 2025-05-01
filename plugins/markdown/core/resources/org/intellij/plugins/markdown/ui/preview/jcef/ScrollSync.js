@@ -71,7 +71,7 @@ class ScrollController {
 
     if (elementOrRect instanceof Element) {
       // If the element has descendants which add to its height, for scrolling-into-view purposes treat the
-      // parent element as if it has height reduced by its range-marked descendants.
+      // parent element as if its height is reduced by its range-marked descendants.
       const rect = elementOrRect.getBoundingClientRect();
 
       top = rect.top;
@@ -139,7 +139,33 @@ class ScrollController {
     return index;
   }
 
-  ensureMarkdownSrcOffsetIsVisible(offset, smooth = false) {
+  async #waitForStableSizeAndScrollPosition() {
+    return new Promise(resolve => {
+      let stableCount = 0;
+      let lastYOffset = window.scrollY;
+      let lastHeight = document.documentElement.getBoundingClientRect().height;
+
+      const checkStability = () => {
+        const yOffset = window.scrollY;
+        const height = document.documentElement.getBoundingClientRect().height;
+
+        if (lastYOffset === yOffset && lastHeight === height && ++stableCount > 3)
+          resolve();
+        else {
+          lastYOffset = yOffset;
+          lastHeight = height;
+          requestAnimationFrame(checkStability);
+        }
+      }
+
+      requestAnimationFrame(checkStability);
+    });
+  }
+
+  async ensureMarkdownSrcOffsetIsVisible(offset, smooth = false, whenStable = false) {
+    if (whenStable)
+      await this.#waitForStableSizeAndScrollPosition();
+
     // Find an element with the narrowest range inclusive of `offset`
     const elements = this.#getCachedMarkdownElements();
     let element;
