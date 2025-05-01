@@ -11,7 +11,6 @@ import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsCha
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.observable.properties.AtomicProperty
@@ -85,11 +84,11 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
   fun calculateLineFrameVerticalLine(): Line2D? {
     val inlays = view?.input?.getBlockElementsInRange() ?: return null
     val upperInlayBounds = inlays.firstOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && it.properties.isShownAbove
+      it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove
     }?.bounds ?: return null
 
     val lowerInlayBounds = inlays.lastOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && !it.properties.isShownAbove
+      it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove
     }?.bounds ?: return null
 
     val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
@@ -172,7 +171,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
         null,
         startOffset,
         endOffset,
-        HighlighterLayer.FIRST - 100,
+        editor.notebookAppearance.cellBorderHighlightLayer,
         HighlighterTargetArea.LINES_IN_RANGE,
         false
       ) { o: RangeHighlighterEx ->

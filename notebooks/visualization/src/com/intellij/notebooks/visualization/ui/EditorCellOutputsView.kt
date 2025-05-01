@@ -249,7 +249,7 @@ class EditorCellOutputsView(
     outerComponent,
     isRelatedToPrecedingText = true,
     showAbove = false,
-    priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
+    priority = editor.notebookAppearance.cellOutputToolbarInlayPriority,
     offset = computeInlayOffset(editor.document, cell.interval.lines),
   ).also { inlay ->
     Disposer.register(this, inlay)

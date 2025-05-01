@@ -68,7 +68,7 @@ class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
   override fun calculateBounds(): Rectangle {
     return getBlockElementsInRange()
       .asSequence()
-      .filter { it.properties.priority > editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY }
+      .filter { it.properties.priority > editor.notebookAppearance.cellOutputToolbarInlayPriority }
       .mapNotNull { it.bounds }
       .fold(component.calculateBounds()) { b, i ->
         b.union(i)
