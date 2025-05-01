@@ -1176,8 +1176,8 @@ fun loadAndInitDescriptorsFromClassPathInTest(
     getBuildNumberForDefaultDescriptorVersion = { buildNumber },
   )
   val result = PluginLoadingResult()
-  result.initAndAddAll(
-    descriptors = @Suppress("RAW_RUN_BLOCKING") runBlocking {
+  val pluginsList = @Suppress("RAW_RUN_BLOCKING") runBlocking {
+    ClassPathProvidedPluginsList(
       urlToFilename.map { (url, filename) ->
         async(Dispatchers.IO) {
           loadDescriptorFromResource(
@@ -1191,7 +1191,10 @@ fun loadAndInitDescriptorsFromClassPathInTest(
           )
         }
       }.awaitAllNotNull()
-    },
+    )
+  }
+  result.initAndAddAll(
+    descriptors = pluginsList.plugins,
     overrideUseIfCompatible = false,
     initContext = initContext
   )

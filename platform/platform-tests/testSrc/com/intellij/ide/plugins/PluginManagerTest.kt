@@ -204,8 +204,11 @@ class PluginManagerTest {
     val expectedPluginId = updated.getPluginId()
     Assert.assertEquals(expectedPluginId, bundled.getPluginId())
 
-    assertPluginPreInstalled(expectedPluginId, bundled, updated)
-    assertPluginPreInstalled(expectedPluginId, updated, bundled)
+    val bundledList = BundledPluginsList(listOf(bundled))
+    val customList = CustomPluginsList(pluginsPath.resolve("updated"), listOf(updated))
+
+    assertPluginPreInstalled(expectedPluginId, listOf(bundledList, customList))
+    assertPluginPreInstalled(expectedPluginId, listOf(customList, bundledList))
   }
 
   @Test
@@ -225,10 +228,10 @@ class PluginManagerTest {
     private val testDataPath: String
       get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort"
 
-    private fun assertPluginPreInstalled(expectedPluginId: PluginId?, vararg descriptors: IdeaPluginDescriptorImpl) {
+    private fun assertPluginPreInstalled(expectedPluginId: PluginId?, pluginLists: List<DiscoveredPluginsList>) {
       val loadingResult = PluginLoadingResult()
       loadingResult.initAndAddAll(
-        descriptors = descriptors.toList(),
+        descriptors = pluginLists.flatMap { it.plugins },
         overrideUseIfCompatible = false,
         initContext = PluginInitializationContext.buildForTest(
           essentialPlugins = emptySet(),
@@ -369,8 +372,13 @@ class PluginManagerTest {
       }
       loadingContext.close()
       val result = PluginLoadingResult()
+      val pluginList = if (isBundled) {
+        BundledPluginsList(list)
+      } else {
+        CustomPluginsList(Path.of(""), list)
+      }
       result.initAndAddAll(
-        descriptors = list,
+        descriptors = pluginList.plugins,
         overrideUseIfCompatible = false,
         initContext = initContext
       )
