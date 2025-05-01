@@ -7545,6 +7545,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/thisInNestedClass2.kt");
                     }
 
+                    @TestMetadata("topLevelPropertyFromAnnotationArg.kt")
+                    public void testTopLevelPropertyFromAnnotationArg() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/topLevelPropertyFromAnnotationArg.kt");
+                    }
+
                     @TestMetadata("topLevelPropertyFromConstructorDefaultParameterValue.kt")
                     public void testTopLevelPropertyFromConstructorDefaultParameterValue() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/topLevelPropertyFromConstructorDefaultParameterValue.kt");

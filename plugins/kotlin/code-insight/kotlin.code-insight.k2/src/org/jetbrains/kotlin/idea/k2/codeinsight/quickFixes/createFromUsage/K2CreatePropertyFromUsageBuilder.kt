@@ -102,7 +102,7 @@ object K2CreatePropertyFromUsageBuilder {
                     /* element = */ ref,
                     /* aClass = */ KtClassOrObject::class.java,
                     /* strict = */ true,
-                    /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java
+                    /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java, KtAnnotationEntry::class.java
                 ) to null
             }
           qualifiedElement is KtQualifiedExpression && qualifiedElement.selectorExpression == ref -> {
@@ -149,7 +149,8 @@ object K2CreatePropertyFromUsageBuilder {
             }
         } else {
             val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = receiverExpression != null, static = true, isAbstract = false)
-            requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = receiverExpression != null))
+            val mustBeConst = ref.parentOfType<KtAnnotationEntry>() != null
+            requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = receiverExpression != null, isConst = mustBeConst))
         }
         return requests
     }
