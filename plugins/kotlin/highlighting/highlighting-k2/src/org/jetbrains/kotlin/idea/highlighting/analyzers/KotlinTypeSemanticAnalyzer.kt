@@ -19,10 +19,8 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
     }
 
     override fun visitIntersectionType(intersectionType: KtIntersectionType) {
-        (intersectionType.parent as? KtTypeReference)?.run {
-            highlight(this, KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER)
-        }
-        super.visitIntersectionType(intersectionType)
+        val typeReference = intersectionType.parent as? KtTypeReference ?: return
+        highlight(typeReference, KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER)
     }
 
     private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = with(session) {
@@ -34,7 +32,7 @@ internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: 
             return
         }
 
-        if (expression.isVisitIntersectionType()) {
+        if (expression.isPartOfIntersectionType()) {
             // highlighted by visitIntersectionType()
             return
         }
@@ -118,7 +116,7 @@ fun KtSimpleNameExpression.isConstructorCallReference(): Boolean {
     return constructorCallee.constructorReferenceExpression == this
 }
 
-fun KtSimpleNameExpression.isVisitIntersectionType(): Boolean {
+private fun KtSimpleNameExpression.isPartOfIntersectionType(): Boolean {
     val type = parent as? KtUserType ?: return false
     val typeReference = type.parent as? KtTypeReference ?: return false
     return typeReference.parent is KtIntersectionType
