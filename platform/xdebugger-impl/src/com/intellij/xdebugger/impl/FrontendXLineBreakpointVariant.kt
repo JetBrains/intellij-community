@@ -14,9 +14,8 @@ import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -55,31 +54,56 @@ internal fun getFrontendLineBreakpointVariants(
   completedOrCancelledCallback: Promise<*>,
 ): CompletableFuture<List<FrontendXLineBreakpointVariant>> {
   val coroutineScope = project.service<FrontendXLineBreakpointVariantService>().cs
-  return coroutineScope.async {
-    val response = XBreakpointTypeApi.getInstance().getLineBreakpointVariants(project.projectId(), info.toRequest())
-                   ?: throw kotlin.coroutines.cancellation.CancellationException()
-
-    completedOrCancelledCallback.onProcessed {
-      response.selectionCallback.close()
+  // TODO Replace with `coroutineScope.future` after IJPL-184112 is fixed
+  val future = CompletableFuture<List<FrontendXLineBreakpointVariant>>()
+  coroutineScope.launch {
+    try {
+      val variants = computeVariants(project, info, completedOrCancelledCallback)
+      future.complete(variants)
     }
+    catch (e: Throwable) {
+      future.completeExceptionally(e)
+    }
+  }
+  return future
+}
 
-    val variantDtos = response.variants
-    variantDtos.mapIndexed { i, dto ->
-      FrontendXLineBreakpointVariantImpl(dto) { res ->
-        coroutineScope.launch {
-          res.compute {
-            val breakpointCallback = Channel<XBreakpointDto?>()
-            response.selectionCallback.use {
-              it.send(VariantSelectedResponse(i, breakpointCallback))
-            }
-            val breakpointDto = breakpointCallback.receive()
-            val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-            breakpointDto?.let { breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy }
-          }
-        }
+private suspend fun computeVariants(
+  project: Project,
+  info: XLineBreakpointInstallationInfo,
+  completedOrCancelledCallback: Promise<*>,
+): List<FrontendXLineBreakpointVariantImpl> {
+  val response = XBreakpointTypeApi.getInstance().getLineBreakpointVariants(project.projectId(), info.toRequest())
+                 ?: throw kotlin.coroutines.cancellation.CancellationException()
+
+  completedOrCancelledCallback.onProcessed {
+    response.selectionCallback.close()
+  }
+
+  return response.variants.mapIndexed { i, dto ->
+    FrontendXLineBreakpointVariantImpl(dto) { res ->
+      responseWithVariantChoice(project, res, response.selectionCallback, i)
+    }
+  }
+}
+
+private fun responseWithVariantChoice(
+  project: Project,
+  res: AsyncPromise<XLineBreakpointProxy?>,
+  selectionCallback: SendChannel<VariantSelectedResponse>,
+  selectedIndex: Int,
+) {
+  project.service<FrontendXLineBreakpointVariantService>().cs.launch {
+    res.compute {
+      val breakpointCallback = Channel<XBreakpointDto?>()
+      selectionCallback.use {
+        it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
+      val breakpointDto = breakpointCallback.receive()
+      val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+      breakpointDto?.let { breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy }
     }
-  }.asCompletableFuture()
+  }
 }
 
 private class FrontendXLineBreakpointVariantImpl(

@@ -475,15 +475,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final VirtualFile file = breakpointInfo.getPosition().getFile();
     final int line = breakpointInfo.getPosition().getLine();
     var res = new AsyncPromise<XLineBreakpointProxy>();
-    FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, breakpointInfo, res).thenApply(variantsWithAll -> {
+    FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, breakpointInfo, res).thenAccept(variantsWithAll -> {
       var variants = variantsWithAll.stream().filter(v -> v.shouldUseAsInlineVariant()).toList();
       if (variants.isEmpty()) {
         LOG.error("Unexpected empty variants");
         res.setResult(null);
-        return null;
+        return;
       }
 
-      var breakpoints = breakpointInfo.getTypes().stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()).toList();
+      List<XLineBreakpointProxy> breakpoints = breakpointInfo.getTypes().stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()).toList();
 
       FrontendXLineBreakpointVariant variant;
       if (selectVariantByPositionColumn) {
@@ -499,7 +499,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             removeBreakpointWithConfirmation(project, existingBreakpoint);
           }
           res.setResult(null);
-          return null;
+          return;
         }
 
         variant = (FrontendXLineBreakpointVariant)breakpointOrVariant;
@@ -510,14 +510,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             removeBreakpointsWithConfirmation(project, breakpoints);
           }
           res.setResult(null);
-          return null;
+          return;
         }
 
         variant = variants.stream().max(Comparator.comparing(v -> v.getPriority())).get();
       }
 
       variant.select(res);
-      return null;
     });
     return res;
   }

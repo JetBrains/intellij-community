@@ -43,6 +43,7 @@ interface XBreakpointManagerProxy {
 
   fun findBreakpointAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): XLineBreakpointProxy? =
     findBreakpointsAtLine(type, file, line).firstOrNull()
+
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
@@ -63,6 +64,11 @@ interface XBreakpointManagerProxy {
       breakpointManager.defaultGroup = group
     }
 
+    /**
+     * In monolith, this method does not install a breakpoint but just finds an already existing breakpoint and converts it to a proxy.
+     *
+     * Breakpoint installation is performed by the breakpoint manager.
+     */
     override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
       val type = XBreakpointUtil.breakpointTypes().firstOrNull { it.id == breakpointDto.typeId.id } ?: return null
       if (type !is XLineBreakpointType<*>) {
