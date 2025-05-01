@@ -465,7 +465,7 @@ internal class BazelBuildFileGenerator(
 
     val packagePrefix = (if (moduleDescriptor.isCommunity) "@community" else "") + "//${bazelModuleRelativePath}"
     val jarOutputDirectory = if (moduleDescriptor.isCommunity) {
-      "out/bazel-out/community+/\${BAZEL_OS}_\${BAZEL_ARCH}-fastbuild/bin/$bazelModuleRelativePath"
+      "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
     }
     else {
       "out/bazel-bin/$bazelModuleRelativePath"
