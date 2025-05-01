@@ -385,8 +385,8 @@ private fun resolveArchives(path: Path): MutableList<Path>? {
   }
 }
 
-private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): Deferred<SystemPropertyProvidedPluginsList> {
-  val pathProperty = System.getProperty("plugin.path") ?: return CompletableDeferred(SystemPropertyProvidedPluginsList(Collections.emptyList()))
+private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): Deferred<SystemPropertyProvidedPluginsList?> {
+  val pathProperty = System.getProperty("plugin.path") ?: return CompletableDeferred(value = null)
 
   // gradle-intellij-plugin heavily depends on this property to have core class loader plugins during tests
   val useCoreClassLoaderForPluginsFromProperty = java.lang.Boolean.getBoolean("idea.use.core.classloader.for.plugin.path")
@@ -536,8 +536,9 @@ private suspend fun loadAndInitDescriptors(
     val pluginsFromPropertyDeferred = loadDescriptorsFromProperty(loadingContext, zipPool)
     pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
   }
+  val pluginLists = if (pluginsFromProperty != null) { plugins + pluginsFromProperty } else { plugins }
   val loadingResult = PluginLoadingResult()
-  loadingResult.initAndAddAll(pluginLists = plugins + pluginsFromProperty, initContext = initContext)
+  loadingResult.initAndAddAll(pluginLists = pluginLists, initContext = initContext)
   return loadingResult
 }
 
