@@ -59,6 +59,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -233,7 +234,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     };
   }
 
-  private static int getIndexOfBestMatchingInlineVariant(int caretOffset, List<FrontendXLineBreakpointVariant> variants) {
+  private static int getIndexOfBestMatchingInlineVariant(int caretOffset, List<? extends FrontendXLineBreakpointVariant> variants) {
     assert !variants.isEmpty();
     TextRange bestRange = null;
     int bestIndex = -1;
@@ -251,7 +252,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return bestIndex == -1 ? 0 : bestIndex;
   }
 
-  private static <T> @Nullable T getBestMatchingBreakpoint(int caretOffset, Iterator<@NotNull T> breakpoints, Function<T, @Nullable TextRange> rangeProvider) {
+  private static <T> @NotNull T getBestMatchingBreakpoint(int caretOffset, Iterator<@NotNull T> breakpoints, Function<T, @Nullable TextRange> rangeProvider) {
     // Best matching = closest to the insertion point and minimal by range of all breakpoints or breakpoint variants
     T bestBreakpoint = null;
     int bestDistance = Integer.MAX_VALUE;
@@ -272,6 +273,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           bestRangeLength = rangeLength;
         }
     }
+    assert bestBreakpoint != null;
     return bestBreakpoint;
   }
 
@@ -346,7 +348,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     var res = new AsyncPromise<XLineBreakpointProxy>();
-    FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, breakpointInfo, res).thenApply(variants -> {
+    FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, res, variants -> {
       assert !variants.isEmpty();
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         for (XLineBreakpointTypeProxy type : breakpointInfo.getTypes()) {
@@ -357,14 +359,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         RelativePoint relativePoint = editor != null ? DebuggerUIUtil.getPositionForPopup(editor, line) : null;
         if (variants.size() > 1 && relativePoint != null) {
-          showBreakpointSelectionPopup(project, breakpointInfo.getPosition(), breakpointInfo.isTemporary(), editor, variants, res, relativePoint);
+          showBreakpointSelectionPopup(project, breakpointInfo.getPosition(), editor, variants, res, relativePoint);
         }
         else {
           FrontendXLineBreakpointVariant variant = variants.get(0);
-          variant.select(res);
+          variant.select();
         }
       });
-      return null;
+      return Unit.INSTANCE;
     });
     return res;
   }
@@ -372,9 +374,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static void showBreakpointSelectionPopup(
     @NotNull Project project,
     @NotNull XSourcePosition position,
-    boolean temporary,
     @NotNull Editor editor,
-    List<FrontendXLineBreakpointVariant> variants,
+    List<? extends FrontendXLineBreakpointVariant> variants,
     AsyncPromise<XLineBreakpointProxy> res,
     RelativePoint relativePoint
   ) {
@@ -443,7 +444,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         @Override
         public PopupStep<?> onChosen(FrontendXLineBreakpointVariant selectedValue, boolean finalChoice) {
           selectionListener.clearHighlighter();
-          selectedValue.select(res);
+          selectedValue.select();
           return FINAL_CHOICE;
         }
 
@@ -475,12 +476,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final VirtualFile file = breakpointInfo.getPosition().getFile();
     final int line = breakpointInfo.getPosition().getLine();
     var res = new AsyncPromise<XLineBreakpointProxy>();
-    FrontendXLineBreakpointVariantKt.getFrontendLineBreakpointVariants(project, breakpointInfo, res).thenAccept(variantsWithAll -> {
+    FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, res, variantsWithAll -> {
       var variants = variantsWithAll.stream().filter(v -> v.shouldUseAsInlineVariant()).toList();
       if (variants.isEmpty()) {
         LOG.error("Unexpected empty variants");
         res.setResult(null);
-        return;
+        return Unit.INSTANCE;
       }
 
       List<XLineBreakpointProxy> breakpoints = breakpointInfo.getTypes().stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()).toList();
@@ -499,7 +500,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             removeBreakpointWithConfirmation(project, existingBreakpoint);
           }
           res.setResult(null);
-          return;
+          return Unit.INSTANCE;
         }
 
         variant = (FrontendXLineBreakpointVariant)breakpointOrVariant;
@@ -510,13 +511,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             removeBreakpointsWithConfirmation(project, breakpoints);
           }
           res.setResult(null);
-          return;
+          return Unit.INSTANCE;
         }
 
         variant = variants.stream().max(Comparator.comparing(v -> v.getPriority())).get();
       }
 
-      variant.select(res);
+      variant.select();
+      return Unit.INSTANCE;
     });
     return res;
   }

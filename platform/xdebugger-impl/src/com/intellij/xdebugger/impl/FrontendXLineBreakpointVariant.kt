@@ -18,9 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 internal interface FrontendXLineBreakpointVariant {
@@ -29,7 +27,7 @@ internal interface FrontendXLineBreakpointVariant {
   val highlightRange: TextRange?
   val priority: Int
   fun shouldUseAsInlineVariant(): Boolean
-  fun select(res: AsyncPromise<XLineBreakpointProxy?>)
+  fun select()
 }
 
 internal data class XLineBreakpointInstallationInfo(
@@ -48,41 +46,28 @@ private fun XLineBreakpointInstallationInfo.toRequest() = XLineBreakpointInstall
   condition,
 )
 
-internal fun getFrontendLineBreakpointVariants(
+internal fun computeBreakpointProxy(
   project: Project,
   info: XLineBreakpointInstallationInfo,
-  completedOrCancelledCallback: Promise<*>,
-): CompletableFuture<List<FrontendXLineBreakpointVariant>> {
-  val coroutineScope = project.service<FrontendXLineBreakpointVariantService>().cs
-  // TODO Replace with `coroutineScope.future` after IJPL-184112 is fixed
-  val future = CompletableFuture<List<FrontendXLineBreakpointVariant>>()
-  coroutineScope.launch {
+  result: AsyncPromise<XLineBreakpointProxy?>,
+  onVariantsChoice: (List<FrontendXLineBreakpointVariant>) -> Unit,
+) {
+  project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
-      val variants = computeVariants(project, info, completedOrCancelledCallback)
-      future.complete(variants)
+      val response = XBreakpointTypeApi.getInstance().getLineBreakpointVariants(project.projectId(), info.toRequest())
+                     ?: throw kotlin.coroutines.cancellation.CancellationException()
+      result.onProcessed {
+        response.selectionCallback.close()
+      }
+      val variants = response.variants.mapIndexed { i, dto ->
+        FrontendXLineBreakpointVariantImpl(dto) {
+          responseWithVariantChoice(project, result, response.selectionCallback, i)
+        }
+      }
+      onVariantsChoice(variants)
     }
     catch (e: Throwable) {
-      future.completeExceptionally(e)
-    }
-  }
-  return future
-}
-
-private suspend fun computeVariants(
-  project: Project,
-  info: XLineBreakpointInstallationInfo,
-  completedOrCancelledCallback: Promise<*>,
-): List<FrontendXLineBreakpointVariantImpl> {
-  val response = XBreakpointTypeApi.getInstance().getLineBreakpointVariants(project.projectId(), info.toRequest())
-                 ?: throw kotlin.coroutines.cancellation.CancellationException()
-
-  completedOrCancelledCallback.onProcessed {
-    response.selectionCallback.close()
-  }
-
-  return response.variants.mapIndexed { i, dto ->
-    FrontendXLineBreakpointVariantImpl(dto) { res ->
-      responseWithVariantChoice(project, res, response.selectionCallback, i)
+      result.setError(e)
     }
   }
 }
@@ -100,23 +85,30 @@ private fun responseWithVariantChoice(
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
       val breakpointDto = breakpointCallback.receiveCatching().getOrNull() ?: return@compute null
-      val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-      breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+      createBreakpoint(project, breakpointDto)
     }
   }
 }
 
+private fun createBreakpoint(
+  project: Project,
+  breakpointDto: XBreakpointDto,
+): XLineBreakpointProxy? {
+  val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+  return breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+}
+
 private class FrontendXLineBreakpointVariantImpl(
   private val dto: XLineBreakpointVariantDto,
-  private val callback: (AsyncPromise<XLineBreakpointProxy?>) -> Unit,
+  private val callback: () -> Unit,
 ) : FrontendXLineBreakpointVariant {
   override val text: String = dto.text
   override val icon: Icon? = dto.icon?.icon()
   override val highlightRange: TextRange? = dto.highlightRange?.toTextRange()
   override val priority: Int = dto.priority
   override fun shouldUseAsInlineVariant(): Boolean = dto.useAsInline
-  override fun select(res: AsyncPromise<XLineBreakpointProxy?>) {
-    callback(res)
+  override fun select() {
+    callback()
   }
 }
 
