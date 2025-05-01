@@ -416,12 +416,6 @@
         </rules>
       </arrangement>
     </codeStyleSettings>
-    <codeStyleSettings language="JavaScript">
-      <indentOptions>
-        <option name="INDENT_SIZE" value="2" />
-        <option name="TAB_SIZE" value="2" />
-      </indentOptions>
-    </codeStyleSettings>
     <codeStyleSettings language="PHP">
       <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="0" />
       <option name="CLASS_BRACE_STYLE" value="1" />
