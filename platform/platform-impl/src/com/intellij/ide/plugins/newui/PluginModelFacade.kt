@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
+import com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID
+import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import javax.swing.JComponent
@@ -88,7 +91,14 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   fun hasPluginRequiresUltimateButItsDisabled(models: Collection<PluginUiModel>): Boolean {
+    if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
     return models.groupBy { it.source }.any { getController(it.key).hasPluginRequiresUltimateButItsDisabled(it.value) }
+  }
+
+  /** Returns true, if in descriptors list not only Ultimate plugins while we are on Core license.
+   * (Any plugin exists, for which we can change the enabled / disable state) */
+  fun hasPluginForEnableDisable(models: Collection<PluginUiModel>): Boolean {
+    return models.groupBy { it.source }.any { getController(it.key).hasPluginForEnableDisable(it.value) }
   }
 
   fun setEnabledState(models: Collection<PluginUiModel>, action: PluginEnableDisableAction) {
@@ -159,7 +169,6 @@ class PluginModelFacade(private val pluginModel: MyPluginModel) {
   private fun getController(model: PluginUiModel): PluginModelController {
     return getController(model.source)
   }
-
   private fun getController(source: PluginSource): PluginModelController{
     return when (source) {
       PluginSource.LOCAL -> localController

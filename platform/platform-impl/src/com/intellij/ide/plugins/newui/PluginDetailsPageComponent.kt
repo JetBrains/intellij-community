@@ -585,7 +585,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       val installedModel = installedPluginMarketplaceNode
       val node = installedModel ?: component!!.pluginModel
       val reviewComments = node.reviewComments!!
-      val page = reviewComments.nextPage
+      val page = reviewComments.getNextPage()
       ProcessIOExecutorService.INSTANCE.execute {
         val items = pluginModel.loadPluginReviews(node, page)
         ApplicationManager.getApplication().invokeLater({

@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -16,6 +17,18 @@ class UiPluginManager {
     return getController().getPlugins()
   }
 
+
+  fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
+    return getController().getVisiblePlugins(showImplementationDetails)
+  }
+
+  fun getInstalledPlugins(): List<PluginUiModel> {
+    return getController().getInstalledPlugins()
+  }
+
+  fun isPluginDisabled(pluginId: PluginId): Boolean {
+    return getController().isPluginDisabled(pluginId)
+  }
 
   fun getController(): UiPluginManagerController {
     return DefaultUiPluginManagerController

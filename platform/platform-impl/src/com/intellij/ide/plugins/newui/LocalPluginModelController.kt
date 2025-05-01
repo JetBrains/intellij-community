@@ -69,6 +69,11 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
     return models.any { pluginRequiresUltimatePluginButItsDisabled(it.pluginId, idMap) }
   }
 
+  override fun hasPluginForEnableDisable(models: List<PluginUiModel>): Boolean {
+    val idMap = PluginManagerCore.buildPluginIdMap()
+    return models.any { !pluginRequiresUltimatePluginButItsDisabled(it.pluginId, idMap) }
+  }
+
   override fun setEnabledState(models: List<PluginUiModel>, action: PluginEnableDisableAction) {
     localPluginModel.setEnabledState(models.map { it.getDescriptor() }, action)
   }

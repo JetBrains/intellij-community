@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.SystemInfoRt
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.Date
 
@@ -77,6 +78,8 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.releaseDate
   override val releaseVersion: Int
     get() = pluginDescriptor.releaseVersion
+  override val displayCategory: String?
+    get() = pluginDescriptor.displayCategory
   override val reviewComments: PageContainer<PluginReviewComment>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
 
@@ -272,6 +275,13 @@ class PluginUiModelAdapter(
     set(value) {
       if (pluginDescriptor is PluginNode) {
         pluginDescriptor.description = value
+      }
+    }
+  override var category: String?
+    get() = pluginDescriptor.category
+    set(value) {
+      if (pluginDescriptor is PluginNode && value != null) {
+        pluginDescriptor.setCategory(value)
       }
     }
 

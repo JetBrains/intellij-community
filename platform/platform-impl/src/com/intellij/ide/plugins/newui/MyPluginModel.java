@@ -885,14 +885,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (ContainerUtil.isEmpty(myTags)) {
       myTags = new TreeSet<>(String::compareToIgnoreCase);
 
-      for (IdeaPluginDescriptor descriptor : getInstalledDescriptors()) {
-        myTags.addAll(PluginUtilsKt.getTags(descriptor));
+      for (PluginUiModel descriptor : getInstalledDescriptors()) {
+        myTags.addAll(PluginUiModelKt.calculateTags(descriptor));
       }
     }
     return Collections.unmodifiableSortedSet(myTags);
   }
 
-  public @NotNull List<IdeaPluginDescriptor> getInstalledDescriptors() {
+  public @NotNull List<PluginUiModel> getInstalledDescriptors() {
     assert myInstalledPanel != null;
 
     return myInstalledPanel
@@ -900,14 +900,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       .stream()
       .filter(group -> !group.excluded)
       .flatMap(group -> group.plugins.stream())
-      .map(ListPluginComponent::getPluginDescriptor)
+      .map(ListPluginComponent::getPluginModel)
       .collect(Collectors.toList());
   }
 
-  private static @NotNull Map<String, Integer> getVendorsCount(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+  private static @NotNull Map<String, Integer> getVendorsCount(@NotNull Collection<PluginUiModel> descriptors) {
     Map<String, Integer> vendors = new HashMap<>();
 
-    for (IdeaPluginDescriptor descriptor : descriptors) {
+    for (PluginUiModel descriptor : descriptors) {
       String vendor = StringUtil.trim(descriptor.getVendor());
       if (!StringUtil.isEmptyOrSpaces(vendor)) {
         vendors.compute(vendor, (__, old) -> (old != null ? old : 0) + 1);
@@ -917,7 +917,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return vendors;
   }
 
-  public static boolean isVendor(@NotNull IdeaPluginDescriptor descriptor, @NotNull Set<String> vendors) {
+  public static boolean isVendor(@NotNull PluginUiModel descriptor, @NotNull Set<String> vendors) {
     String vendor = StringUtil.trim(descriptor.getVendor());
     if (StringUtil.isEmpty(vendor)) {
       return false;

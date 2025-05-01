@@ -57,8 +57,10 @@ interface PluginUiModel {
   val downloadUrl: String?
   val releaseDate: Date?
   val releaseVersion: Int
-  val reviewComments: PageContainer<PluginReviewComment>?
+  @get:NlsSafe
+  val displayCategory: String?
 
+  val reviewComments: PageContainer<PluginReviewComment>?
   @get:NlsSafe
   var forumUrl: String?
   @get:NlsSafe
@@ -69,29 +71,29 @@ interface PluginUiModel {
   var documentationUrl: String?
   @get:NlsSafe
   var sourceCodeUrl: String?
+
   @get:NlsSafe
   var reportPluginUrl: String?
-
   @get:NlsSafe
   var verifiedName: String?
   var isVerified: Boolean
-  var isTrader: Boolean
 
+  var isTrader: Boolean
   var screenShots: List<String>?
-  var externalPluginIdForScreenShots: String? 
+  var externalPluginIdForScreenShots: String?
   var externalPluginId: String?
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
   var date: Long
+
+
   var isEnabled: Boolean
-
-
   @get:NlsSafe
   var name: String?
   var tags: List<String>?
+
   var suggestedCommercialIde: String?
-  
   @get:NlsSafe
   var downloads: String?
   @get:NlsSafe
@@ -103,6 +105,9 @@ interface PluginUiModel {
   var installSource: FUSEventSource?
   @get:NlsSafe
   var description: String?
+  @get:NlsSafe
+  var category: String?
+
 
   fun addDependency(id: PluginId, optional: Boolean)
   /**
@@ -205,3 +210,4 @@ fun PluginUiModel.presentableDate(): String? {
 fun PluginUiModel.getTrialPeriodByProductCode(code: String): Int? {
   return customTrialPeriods?.getOrDefault(code, defaultTrialPeriod!!)
 }
+

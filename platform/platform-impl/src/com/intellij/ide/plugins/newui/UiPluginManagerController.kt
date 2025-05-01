@@ -10,4 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface UiPluginManagerController {
   fun getPlugins(): List<PluginUiModel>
+  fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
+  fun getInstalledPlugins(): List<PluginUiModel>
+  fun isPluginDisabled(pluginId: PluginId): Boolean
 }

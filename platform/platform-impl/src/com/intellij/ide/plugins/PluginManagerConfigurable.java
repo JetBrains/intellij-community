@@ -905,7 +905,7 @@ public final class PluginManagerConfigurable
                     pluginToScore = localRanker.rankPlugins(parser, result.getModels());
                   }
 
-                  if (!result.getDescriptors().isEmpty()) {
+                  if (!result.getModels().isEmpty()) {
                     String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
                     for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
@@ -989,6 +989,7 @@ public final class PluginManagerConfigurable
       @Override
       protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
+        UiPluginManager uiPluginManager = UiPluginManager.getInstance();
         myInstalledPanel = new PluginsGroupComponent(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
@@ -1009,21 +1010,22 @@ public final class PluginManagerConfigurable
 
           PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
           installing.addDescriptors(MyPluginModel.getInstallingPlugins());
-          if (!installing.getDescriptors().isEmpty()) {
+          if (!installing.getModels().isEmpty()) {
             installing.sortByName();
             installing.titleWithCount();
             myInstalledPanel.addGroup(installing);
           }
 
           PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
-          downloaded.addDescriptors(InstalledPluginsState.getInstance().getInstalledPlugins());
+          downloaded.addModels(UiPluginManager.getInstance().getInstalledPlugins());
 
-          Map<Boolean, List<IdeaPluginDescriptorImpl>> visiblePlugins = PluginManager
+          Map<Boolean, List<PluginUiModel>> visiblePlugins = uiPluginManager
             .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
-            .collect(Collectors.partitioningBy(PluginDescriptor::isBundled));
+            .stream()
+            .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
 
-          List<IdeaPluginDescriptorImpl> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
-          downloaded.addDescriptors(nonBundledPlugins);
+          List<PluginUiModel> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+          downloaded.addModels(nonBundledPlugins);
 
           LinkListener<Object> updateAllListener = new LinkListener<>() {
             @Override
@@ -1045,12 +1047,11 @@ public final class PluginManagerConfigurable
           downloaded.addRightAction(myUpdateAll);
           downloaded.addRightAction(myUpdateCounter);
 
-          if (!downloaded.getDescriptors().isEmpty()) {
+          if (!downloaded.getModels().isEmpty()) {
             downloaded.sortByName();
 
             long enabledNonBundledCount = nonBundledPlugins.stream()
-              .map(PluginDescriptor::getPluginId)
-              .filter(descriptor -> !PluginManagerCore.isDisabled(descriptor))
+              .filter(descriptor -> !uiPluginManager.isPluginDisabled(descriptor.getPluginId()))
               .count();
             downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
             myInstalledPanel.addGroup(downloaded);
@@ -1240,30 +1241,30 @@ public final class PluginManagerConfigurable
               }
             }
 
-            List<IdeaPluginDescriptor> descriptors = myPluginModelFacade.getModel().getInstalledDescriptors();
+            List<PluginUiModel> descriptors = myPluginModelFacade.getModel().getInstalledDescriptors();
 
             if (!parser.vendors.isEmpty()) {
-              for (Iterator<IdeaPluginDescriptor> I = descriptors.iterator(); I.hasNext(); ) {
+              for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
                 if (!MyPluginModel.isVendor(I.next(), parser.vendors)) {
                   I.remove();
                 }
               }
             }
             if (!parser.tags.isEmpty()) {
-              for (Iterator<IdeaPluginDescriptor> I = descriptors.iterator(); I.hasNext(); ) {
-                if (!ContainerUtil.intersects(PluginUtilsKt.getTags(I.next()), parser.tags)) {
+              for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+                if (!ContainerUtil.intersects(PluginUiModelKt.calculateTags(I.next()), parser.tags)) {
                   I.remove();
                 }
               }
             }
-            for (Iterator<IdeaPluginDescriptor> I = descriptors.iterator(); I.hasNext(); ) {
-              IdeaPluginDescriptor descriptor = I.next();
+            for (Iterator<PluginUiModel> I = descriptors.iterator(); I.hasNext(); ) {
+              PluginUiModel descriptor = I.next();
               if (parser.attributes) {
-                if (parser.enabled && (!myPluginModelFacade.getModel().isEnabled(descriptor) || myPluginModelFacade.getModel().hasErrors(descriptor))) {
+                if (parser.enabled && (!myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
                   I.remove();
                   continue;
                 }
-                if (parser.disabled && (myPluginModelFacade.getModel().isEnabled(descriptor) || myPluginModelFacade.getModel().hasErrors(descriptor))) {
+                if (parser.disabled && (myPluginModelFacade.isEnabled(descriptor) || !myPluginModelFacade.getErrors(descriptor).isEmpty())) {
                   I.remove();
                   continue;
                 }
@@ -1275,11 +1276,11 @@ public final class PluginManagerConfigurable
                   I.remove();
                   continue;
                 }
-                if (parser.invalid && !myPluginModelFacade.getModel().hasErrors(descriptor)) {
+                if (parser.invalid && myPluginModelFacade.getErrors(descriptor).isEmpty()) {
                   I.remove();
                   continue;
                 }
-                if (parser.needUpdate && !PluginUpdatesService.isNeedUpdate(descriptor)) {
+                if (parser.needUpdate && !PluginUpdatesService.isNeedUpdate(descriptor.getDescriptor())) {
                   I.remove();
                   continue;
                 }
@@ -1289,11 +1290,11 @@ public final class PluginManagerConfigurable
               }
             }
 
-            result.addDescriptors(descriptors);
+            result.addModels(descriptors);
             PluginManagerUsageCollector.performInstalledTabSearch(
               ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
 
-            if (!result.getDescriptors().isEmpty()) {
+            if (!result.getModels().isEmpty()) {
               if (parser.invalid) {
                 myPluginModelFacade.getModel().setInvalidFixCallback(() -> {
                   PluginsGroup group = myInstalledSearchPanel.getGroup();
@@ -1304,16 +1305,16 @@ public final class PluginManagerConfigurable
 
                   PluginsGroupComponent resultPanel = myInstalledSearchPanel.getPanel();
 
-                  for (IdeaPluginDescriptor descriptor : new ArrayList<>(group.getDescriptors())) {
-                    if (!myPluginModelFacade.getModel().hasErrors(descriptor)) {
-                      resultPanel.removeFromGroup(group, new PluginUiModelAdapter(descriptor));
+                  for (PluginUiModel descriptor : new ArrayList<>(group.getModels())) {
+                    if (myPluginModelFacade.getErrors(descriptor).isEmpty()) {
+                      resultPanel.removeFromGroup(group, descriptor);
                     }
                   }
 
                   group.titleWithCount();
                   myInstalledSearchPanel.fullRepaint();
 
-                  if (group.getDescriptors().isEmpty()) {
+                  if (group.getModels().isEmpty()) {
                     myPluginModelFacade.getModel().setInvalidFixCallback(null);
                     myInstalledSearchPanel.removeGroup();
                   }
@@ -1352,12 +1353,12 @@ public final class PluginManagerConfigurable
 
       PluginsGroup group = myInstalledSearchPanel.getGroup();
 
-      if (group.ui != null && group.ui.findComponent(descriptor) != null) {
+      if (group.ui != null && group.ui.findComponent(descriptor.getPluginId()) != null) {
         myInstalledSearchPanel.getPanel().removeFromGroup(group, new PluginUiModelAdapter(descriptor));
         group.titleWithCount();
         myInstalledSearchPanel.fullRepaint();
 
-        if (group.getDescriptors().isEmpty()) {
+        if (group.getModels().isEmpty()) {
           myInstalledSearchPanel.removeGroup();
         }
       }
@@ -1388,16 +1389,16 @@ public final class PluginManagerConfigurable
     private boolean myIsEnable = false;
 
     private ComparablePluginsGroup(@NotNull @NlsSafe String category,
-                                   @NotNull List<? extends IdeaPluginDescriptor> descriptors) {
+                                   @NotNull List<PluginUiModel> descriptors) {
       super(category, PluginsGroupType.INSTALLED);
 
-      this.addDescriptors(descriptors);
+      this.addModels(descriptors);
       sortByName();
 
       rightAction = new LinkLabelButton<>("",
                                           null,
                                           (__, ___) -> setEnabledState());
-      rightAction.setVisible(hasPluginsForEnableDisable(descriptors));
+      rightAction.setVisible(myPluginModelFacade.hasPluginForEnableDisable(descriptors));
       titleWithEnabled(myPluginModelFacade);
     }
 
@@ -1415,13 +1416,6 @@ public final class PluginManagerConfigurable
 
     private void setEnabledState() {
       setState(myPluginModelFacade, getModels(), myIsEnable);
-    }
-
-    /** Returns true, if in descriptors list not only Ultimate plugins while we are on Core license.
-     * (Any plugin exists, for which we can change the enabled / disable state) */
-    private static boolean hasPluginsForEnableDisable(List<? extends IdeaPluginDescriptor> descriptors){
-      var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-      return exists(descriptors, descriptor -> !pluginRequiresUltimatePluginButItsDisabled(descriptor.getPluginId(), idMap));
     }
   }
 
@@ -1443,7 +1437,8 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private static boolean containsQuery(IdeaPluginDescriptor descriptor, String searchQuery) {
+  private static boolean containsQuery(PluginUiModel descriptor, String searchQuery) {
+    if(descriptor.getName() == null ) return false;
     if (StringUtil.containsIgnoreCase(descriptor.getName(), searchQuery)) return true;
 
     String description = descriptor.getDescription();
@@ -1882,7 +1877,7 @@ public final class PluginManagerConfigurable
 
     int i = 0;
     for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
-      group.addDescriptor(iterator.next().getDescriptor());
+      group.addModel(iterator.next());
     }
 
     if (showAllPredicate.test(group)) {
@@ -1893,7 +1888,7 @@ public final class PluginManagerConfigurable
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
-    if (!group.getDescriptors().isEmpty()) {
+    if (!group.getModels().isEmpty()) {
       groups.add(group);
     }
     LOG.info("Marketplace tab: '" + name + "' group load finished");
