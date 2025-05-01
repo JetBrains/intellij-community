@@ -7,15 +7,11 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 
 /**
  * Kotlin implementation of tests for PathAnnotationInspection.
  * Some tests might not pass because the inspection implementation might not fully support Kotlin.
  */
-@RunWith(JUnit4::class)
 class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
   override fun getFileExtension(): String = "kt"
 
@@ -28,7 +24,6 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
-  @Test
   fun testFileSystemGetPath() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
@@ -68,12 +63,8 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
           }
       }      
       """)
-
-    // TODO: If this test fails, it might be because the inspection doesn't properly handle Kotlin code
-    // for FileSystem.getPath() method. The inspection might need to be updated to support Kotlin.
   }
 
-  @Test
   fun testNativePathInPathOf() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
@@ -91,12 +82,8 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
           }
       }      
       """)
-
-    // TODO: If this test fails, it might be because the inspection doesn't properly handle Kotlin code
-    // for Path.of() method with @NativePath annotated strings. The inspection might need to be updated to support Kotlin.
   }
 
-  @Test
   fun testKotlinPathResolve() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
@@ -136,12 +123,8 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
           }
       }      
       """)
-
-    // TODO: If this test fails, it might be because the inspection doesn't properly handle Kotlin code
-    // for Path.resolve() method. The inspection might need to be updated to support Kotlin.
   }
 
-  @Test
   fun testKotlinStringLiteralFilename() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
@@ -185,12 +168,8 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
           }
       }      
       """)
-
-    // TODO: If this test fails, it might be because the inspection doesn't properly handle Kotlin code
-    // for string literals in Path.of() and FileSystem.getPath() methods. The inspection might need to be updated to support Kotlin.
   }
 
-  @Test
   fun testKotlinLocalPath() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
@@ -223,8 +202,5 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
           }
       }      
       """)
-
-    // TODO: If this test fails, it might be because the inspection doesn't properly handle Kotlin code
-    // for @LocalPath annotations. The inspection might need to be updated to support Kotlin.
   }
 }
