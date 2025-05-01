@@ -537,7 +537,7 @@ private suspend fun loadAndInitDescriptors(
     pluginsDeferred.await() to pluginsFromPropertyDeferred.await()
   }
   val loadingResult = PluginLoadingResult()
-  loadingResult.initAndAddAll(descriptors = plugins, overrideUseIfCompatible = false, initContext = initContext)
+  loadingResult.initAndAddAll(descriptors = plugins.flatMap { it.plugins }, overrideUseIfCompatible = false, initContext = initContext)
   // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
   loadingResult.initAndAddAll(descriptors = pluginsFromProperty, overrideUseIfCompatible = true, initContext = initContext)
   return loadingResult
@@ -551,7 +551,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
   zipPool: ZipEntryResolverPool,
   customPluginDir: Path,
   bundledPluginDir: Path?,
-): Deferred<List<IdeaPluginDescriptorImpl>> {
+): Deferred<List<DiscoveredPluginsList>> {
   val platformPrefix = PlatformUtils.getPlatformPrefix()
 
   if (isUnitTestMode) {
@@ -568,15 +568,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     val bundled = if (bundledPluginDir != null) {
       loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
     } else null
-    return async {
-      ArrayList<IdeaPluginDescriptorImpl>(
-        core.await().plugins.size + custom.await().plugins.size + (bundled?.await()?.plugins?.size ?: 0)
-      ).apply {
-        addAll(core.await().plugins)
-        addAll(custom.await().plugins)
-        bundled?.await()?.let { addAll(it.plugins) }
-      }
-    }
+    return async { listOfNotNull(core.await(), custom.await(), bundled?.await()) }
   }
 
   val effectiveBundledPluginDir = bundledPluginDir ?: Paths.get(PathManager.getPreInstalledPluginsPath())
@@ -600,13 +592,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
     )
     val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
     val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
-    return async {
-      ArrayList<IdeaPluginDescriptorImpl>(core.await().plugins.size + custom.await().plugins.size + bundled.await().plugins.size).apply {
-        addAll(core.await().plugins)
-        addAll(custom.await().plugins)
-        addAll(bundled.await().plugins)
-      }
-    }
+    return async { listOfNotNull(core.await(), custom.await(), bundled.await()) }
   }
   else {
     val byteInput = ByteArrayInputStream(bundledPluginClasspathBytes, 2, bundledPluginClasspathBytes.size)
@@ -636,13 +622,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       zipPool = zipPool,
       bundledPluginDir = effectiveBundledPluginDir,
     )
-    return async {
-      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().plugins.size + fromClasspath.await().plugins.size).apply {
-        add(core.await())
-        addAll(custom.await().plugins)
-        addAll(fromClasspath.await().plugins)
-      }
-    }
+    return async { listOfNotNull(ProductPluginsList(listOf(core.await())), custom.await(), fromClasspath.await()) }
   }
 }
 
@@ -1142,7 +1122,7 @@ fun loadAndInitDescriptorsFromOtherIde(
           zipPool = pool,
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
-        ).await()
+        ).await().flatMap { it.plugins }
       },
       overrideUseIfCompatible = false,
       initContext = initContext

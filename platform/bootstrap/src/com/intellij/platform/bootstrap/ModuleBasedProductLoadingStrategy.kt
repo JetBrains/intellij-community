@@ -74,7 +74,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     isRunningFromSources: Boolean,
     zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
-  ): Deferred<List<IdeaPluginDescriptorImpl>> {
+  ): Deferred<List<DiscoveredPluginsList>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
     val isInDevServerMode = AppMode.isDevServer()
     val pathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
@@ -85,11 +85,11 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
     val bundled = loadBundledPluginDescriptors(scope, loadingContext, zipPool)
     return scope.async {
-      ArrayList<IdeaPluginDescriptorImpl>(1 + custom.await().plugins.size + bundled.await().plugins.size).apply {
-        corePlugin.await()?.let { add(it) }
-        addAll(custom.await().plugins)
-        addAll(bundled.await().plugins)
-      }
+      listOfNotNull(
+        corePlugin.await()?.let { ProductPluginsList(listOf(it)) },
+        custom.await(),
+        bundled.await(),
+      )
     }
   }
 
