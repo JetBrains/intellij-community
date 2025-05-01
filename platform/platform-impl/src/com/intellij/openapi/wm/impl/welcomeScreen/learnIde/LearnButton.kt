@@ -36,7 +36,7 @@ class LearnButton : JButton {
     }
     fun performActionOnWelcomeScreen(action: AnAction) {
       val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-      ActionUtil.performActionDumbAwareWithCallbacks(action, anActionEvent)
+      ActionUtil.performAction(action, anActionEvent)
     }
   }
 

@@ -862,7 +862,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                       @Nullable Supplier<? extends AnAction> delegateActionSupplier,
                                       @NotNull AnActionEvent actionEvent) {
     AnAction action = ActionManager.getInstance().getAction(actionID);
-    DumbAwareAction.create(e -> ActionUtil.performActionDumbAwareWithCallbacks(
+    DumbAwareAction.create(e -> ActionUtil.performAction(
       delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)
     ).registerCustomShortcutSet(action.getShortcutSet(), list);
   }
@@ -964,9 +964,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           AnAction completeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
           // the execution is wrapped into a command inside EditorAction
           if (completeAction != null && editor instanceof EditorEx) {
-            AnActionEvent dataContext =
-              AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
-            ActionUtil.performActionDumbAwareWithCallbacks(completeAction, dataContext);
+            AnActionEvent dataContext = AnActionEvent.createFromDataContext(
+              ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+            ActionUtil.performAction(completeAction, dataContext);
           }
           else {
             CommandProcessor.getInstance()

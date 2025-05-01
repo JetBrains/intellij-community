@@ -45,7 +45,7 @@ final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAw
       AnAction[] children = getChildren(e);
       for (AnAction child : children) {
         if (child instanceof OpenInNewTabAction) {
-          ActionUtil.performActionDumbAwareWithCallbacks(child, e);
+          ActionUtil.performAction(child, e);
           return;
         }
       }

@@ -43,7 +43,7 @@ public final class TerminalActionUtil {
     TerminalActionPresentation presentation = new TerminalActionPresentation(StringUtil.notNullize(name, "unknown"), keyStrokes);
     return new TerminalAction(presentation, (keyEvent) -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
-      ActionUtil.performActionDumbAwareWithCallbacks(action, AnActionEvent.createFromInputEvent(keyEvent, "Terminal", null, dataContext));
+      ActionUtil.performAction(action, AnActionEvent.createFromInputEvent(keyEvent, "Terminal", null, dataContext));
       return true;
     }).withHidden(hiddenAction);
   }
@@ -54,7 +54,7 @@ public final class TerminalActionUtil {
     String name = StringUtil.notNullize(action.getTemplateText(), "unknown");
     return new TerminalAction(new TerminalActionPresentation(name, List.copyOf(strokes)), (keyEvent) -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
-      ActionUtil.performActionDumbAwareWithCallbacks(action, AnActionEvent.createFromInputEvent(keyEvent, "Terminal", null, dataContext));
+      ActionUtil.performAction(action, AnActionEvent.createFromInputEvent(keyEvent, "Terminal", null, dataContext));
       return true;
     });
   }

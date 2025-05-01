@@ -50,10 +50,9 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
         // The newly opened project won't become an active window if another application is currently active.
         // This is not what user expects, so we activate our application explicitly.
         Desktop.getDesktop().requestForeground(false)
-        ActionUtil.performActionDumbAwareWithCallbacks(
-          action,
-          AnActionEvent.createFromAnAction(action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null))
-        )
+        val event = AnActionEvent.createFromAnAction(
+          action, null, ActionPlaces.DOCK_MENU, DataManager.getInstance().getDataContext(null))
+        ActionUtil.performAction(action, event)
       }
       recentProjectsMenu.add(menuItem)
     }

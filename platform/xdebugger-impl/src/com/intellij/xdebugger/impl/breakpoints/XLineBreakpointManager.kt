@@ -5,7 +5,7 @@ import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diff.impl.DiffUtil
@@ -310,7 +310,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
         val dataContext = SimpleDataContext.getSimpleContext(BREAKPOINT_LINE_KEY, line,
                                                              DataManager.getInstance().getDataContext(mouseEvent.component))
         val event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext)
-        performActionDumbAwareWithCallbacks(action, event)
+        ActionUtil.performAction(action, event)
       }
     }
 

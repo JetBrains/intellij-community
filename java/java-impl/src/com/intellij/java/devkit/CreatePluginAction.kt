@@ -43,6 +43,6 @@ internal class CreatePluginAction : DumbAwareAction() {
 
   private fun proceedToWizard(d: DataContext) {
     val event = AnActionEvent.createEvent(d, Presentation(), "", ActionUiKind.NONE, null)
-    ActionUtil.performActionDumbAwareWithCallbacks(ActionManager.getInstance().getAction("NewProject"), event)
+    ActionUtil.performAction(ActionManager.getInstance().getAction("NewProject"), event)
   }
 }

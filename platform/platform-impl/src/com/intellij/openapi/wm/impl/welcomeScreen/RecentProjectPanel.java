@@ -204,7 +204,7 @@ public class RecentProjectPanel extends JPanel {
     AnActionEvent actionEvent = AnActionEvent.createEvent(
       dataContext, selection.getTemplatePresentation().clone(),
       actionPlace, ActionUiKind.NONE, event);
-    ActionUtil.performActionDumbAwareWithCallbacks(selection, actionEvent);
+    ActionUtil.performAction(selection, actionEvent);
     return selection;
   }
 

@@ -721,7 +721,7 @@ object Switcher : BaseSwitcherAction(null) {
         val event = AnActionEvent.createEvent(dataContext, gotoAction.templatePresentation.clone(),
                                               ACTION_PLACE, ActionUiKind.NONE, e)
         blockingContext {
-          ActionUtil.performActionDumbAwareWithCallbacks(gotoAction, event)
+          ActionUtil.performAction(gotoAction, event)
         }
       }
     }

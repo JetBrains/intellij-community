@@ -1386,8 +1386,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (policy != null) {
         policy.setUp(getProject(), getTestRootDisposable(), getTestDataPath());
       }
-      ActionUtil.performActionDumbAwareWithCallbacks(
-        new EmptyAction(true), AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+      AnActionEvent event = AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT);
+      ActionUtil.performAction(new EmptyAction(true), event);
     });
 
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {

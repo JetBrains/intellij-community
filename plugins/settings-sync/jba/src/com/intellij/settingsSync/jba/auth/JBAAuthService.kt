@@ -4,11 +4,7 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -34,7 +30,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Component
 import java.awt.Dimension
-import java.util.ServiceLoader
+import java.util.*
 import java.util.concurrent.CancellationException
 import javax.swing.Action
 import javax.swing.JComponent
@@ -241,9 +237,8 @@ private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, fa
             if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
               job2Cancel?.cancel()
               val action = ActionUtil.getAction("Register")!!
-              ActionUtil.performActionDumbAwareWithCallbacks(action, AnActionEvent(
-                DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null, 0, ActionManager.getInstance()
-              ))
+              val event = AnActionEvent(DataContext.EMPTY_CONTEXT, Presentation(), "", ActionUiKind.NONE, null, 0, ActionManager.getInstance())
+              ActionUtil.performAction(action, event)
             }
           }
           if (SystemInfoRt.isMac) {

@@ -8,7 +8,6 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -607,7 +606,7 @@ object Switcher : BaseSwitcherAction(null) {
         val event = AnActionEvent.createEvent(dataContext, gotoAction.templatePresentation.clone(),
                                               ACTION_PLACE, ActionUiKind.NONE, e)
         blockingContext {
-          ActionUtil.performActionDumbAwareWithCallbacks(gotoAction, event)
+          ActionUtil.performAction(gotoAction, event)
         }
       }
     }
