@@ -4103,6 +4103,7 @@ f:com.intellij.util.profiling.ResolveProfiler
 - s:write(java.lang.String,com.intellij.psi.PsiElement,J):V
 f:com.intellij.util.ref.DebugReflectionUtil
 - <init>():V
+- s:walkObjects(I,I,java.util.Map,java.lang.Class,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
 - s:walkObjects(I,java.util.Map,java.lang.Class,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
 c:com.intellij.util.ref.DebugReflectionUtil$BackLink
 com.intellij.util.ref.IgnoredTraverseEntry
