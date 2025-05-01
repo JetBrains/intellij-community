@@ -135,15 +135,16 @@ public final class IdempotenceChecker {
   private static <T> void reportFailure(@Nullable T existing,
                                         @Nullable T fresh,
                                         @NotNull Class<?> providerClass,
-                                        @Nullable Computable<? extends T> recomputeValue, String msg) {
+                                        @Nullable Computable<? extends T> recomputeValue,
+                                        @NotNull String msg) {
     boolean shouldReport = (ApplicationManager.getApplication().isUnitTestMode()
                            || ourReportedValueClasses.add(providerClass))
-                           &&  !("true".equals(System.getProperty("idea.disable.idempotence.checker", "false")));
+                           &&  !"true".equals(System.getProperty("idea.disable.idempotence.checker", "false"));
     if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);
       }
-      LOG.error(PluginException.createByClass(msg, null, providerClass));
+      LOG.error(PluginException.createByClass(msg + " ("+providerClass+")", null, providerClass));
     }
   }
 
