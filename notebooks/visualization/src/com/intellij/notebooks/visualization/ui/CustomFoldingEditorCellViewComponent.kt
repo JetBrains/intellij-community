@@ -19,11 +19,9 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class CustomFoldingEditorCellViewComponent(
-  internal val component: JComponent,
-  private val editor: EditorEx,
-  private val cell: EditorCell,
-) : EditorCellViewComponent() {
+class CustomFoldingEditorCellViewComponent(private val cell: EditorCell, internal val component: JComponent)
+  : EditorCellViewComponent() {
+  private val editor: EditorEx = cell.editor
 
   private var foldingRegion: CustomFoldRegion? = null
 
@@ -108,7 +106,6 @@ class CustomFoldingEditorCellViewComponent(
 
   override fun addInlayBelow(presentation: InlayPresentation) {
     val inlayComponent = object : JComponent() {
-
       init {
         enableEvents(MOUSE_EVENT_MASK or MOUSE_MOTION_EVENT_MASK)
       }

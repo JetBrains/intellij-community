@@ -31,7 +31,7 @@ abstract class NotebookCellSelfHighlighterController(
   open fun getTextAttribute(): TextAttributes? = null
   open fun customizeHighlighter(cellHighlighter: RangeHighlighterEx) {}
 
-  override fun selfUpdate() {
+  override fun checkAndRebuildInlays() {
     if (highlighter?.isValid == true &&
         highlighter?.startOffset == editorCell.interval.getCellStartOffset(editor) &&
         highlighter?.endOffset == editorCell.interval.getCellEndOffset(editor)

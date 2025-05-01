@@ -2,23 +2,16 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.EditorCellInputFactory
-import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import java.awt.Rectangle
 
-class EditorCellInput(
-  componentFactory: EditorCellInputFactory,
-  val cell: EditorCell,
-) : EditorCellViewComponent() {
+class EditorCellInput(val cell: EditorCell) : EditorCellViewComponent() {
   private val editor = cell.editor
-  val interval: NotebookCellLines.Interval
-    get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
-
-  val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
+  val component: EditorCellViewComponent = EditorCellInputFactory.create(cell).also { add(it) }
 
   private val dragAssistant = when (Registry.`is`("jupyter.editor.dnd.cells")) {
     true -> EditorCellDragAssistant(editor, this, ::fold, ::unfold).also { Disposer.register(this, it) }
@@ -39,7 +32,7 @@ class EditorCellInput(
       return Pair(0, 0)
     }
 
-    val delimiterPanelSize = if (interval.ordinal == 0) {
+    val delimiterPanelSize = if (cell.interval.ordinal == 0) {
       editor.notebookAppearance.aboveFirstCellDelimiterHeight
     }
     else {
@@ -66,7 +59,7 @@ class EditorCellInput(
   }
 
   fun getBlockElementsInRange(): List<Inlay<*>> {
-    val linesRange = interval.lines
+    val linesRange = cell.interval.lines
     val startOffset = editor.document.getLineStartOffset(linesRange.first)
     val endOffset = editor.document.getLineEndOffset(linesRange.last)
     return editor.inlayModel.getBlockElementsInRange(startOffset, endOffset)

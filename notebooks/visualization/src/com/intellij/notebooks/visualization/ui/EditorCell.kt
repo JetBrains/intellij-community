@@ -77,6 +77,10 @@ class EditorCell(
     source.set(interval.getContentText(editor))
   }
 
+  fun checkAndRebuildInlays() {
+    view?.checkAndRebuildInlays()
+  }
+
   fun onViewportChange() {
     view?.onViewportChanges()
   }

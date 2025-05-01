@@ -42,7 +42,7 @@ abstract class NotebookCellSelfInlayController(
 
   abstract fun createLineMarkerRender(createdHighlighter: RangeHighlighterEx): NotebookLineMarkerRenderer?
 
-  override fun selfUpdate() {
+  override fun checkAndRebuildInlays() {
     editor.updateManager.update { updater ->
       updater.addInlayOperation {
         editorCell.intervalOrNull ?: return@addInlayOperation
@@ -60,7 +60,7 @@ abstract class NotebookCellSelfInlayController(
   }
 
   open fun updateHighlight() {
-    highlighterController.selfUpdate()
+    highlighterController.checkAndRebuildInlays()
   }
 
   private fun createInlay(): Inlay<*> {

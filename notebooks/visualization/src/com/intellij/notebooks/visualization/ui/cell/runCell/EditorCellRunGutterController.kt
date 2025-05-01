@@ -49,7 +49,7 @@ class EditorCellRunGutterController(
     cell.gutterAction.set(null)
   }
 
-  override fun selfUpdate() {}
+  override fun checkAndRebuildInlays() {}
 
   private fun updateGutterAction() {
     //For markdown, it will set up in markdown component
