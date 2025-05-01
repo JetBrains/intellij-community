@@ -339,7 +339,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     ActionToolbar toolbar = ActionToolbar.findToolbarBy(this);
     ActionUiKind uiKind = toolbar instanceof ActionUiKind o ? o : ActionUiKind.TOOLBAR;
     AnActionEvent e = AnActionEvent.createEvent(getDataContext(), myPresentation, myPlace, uiKind, null);
-    ActionUtil.performDumbAwareUpdate(myAction, e, false);
+    ActionUtil.updateAction(myAction, e);
     updateToolTipText();
     updateIcon();
   }

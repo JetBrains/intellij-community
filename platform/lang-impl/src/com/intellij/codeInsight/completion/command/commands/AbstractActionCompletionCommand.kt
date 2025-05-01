@@ -90,7 +90,8 @@ open class ActionCommandProvider(
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
                                           ActionUiKind.NONE, null)
-    if (ActionUtil.performDumbAwareUpdate(action, event, false)) {
+    val result = ActionUtil.updateAction(action, event)
+    if (!result.isPerformed) {
       return false
     }
     return event.presentation.isEnabled && event.presentation.isVisible

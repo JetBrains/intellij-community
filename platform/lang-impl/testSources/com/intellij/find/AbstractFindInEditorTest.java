@@ -79,9 +79,9 @@ public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
   protected void executeHeaderAction(AnAction action) {
     DataContext context = DataManager.getInstance().getDataContext(getEditorSearchComponent().getComponent());
     AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_TOOLBAR, null, context);
-    ActionUtil.performDumbAwareUpdate(action, e, false);
+    ActionUtil.updateAction(action, e);
     if (e.getPresentation().isEnabledAndVisible()) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, e);
+      ActionUtil.performAction(action, e);
     }
   }
 

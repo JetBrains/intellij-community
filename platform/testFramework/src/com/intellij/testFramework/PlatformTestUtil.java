@@ -615,9 +615,9 @@ public final class PlatformTestUtil {
     @SuppressWarnings("deprecation") DataContext context = DataManager.getInstance().getDataContext();
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
-    ActionUtil.performDumbAwareUpdate(action, event, false);
+    ActionUtil.updateAction(action, event);
     assertTrue(event.getPresentation().isEnabled());
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    ActionUtil.performAction(action, event);
   }
 
   public static void assertTiming(@NotNull String message, long expectedMillis, long actualMillis) {

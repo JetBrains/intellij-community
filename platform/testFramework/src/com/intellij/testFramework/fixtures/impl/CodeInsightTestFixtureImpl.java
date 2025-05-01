@@ -1005,9 +1005,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @NotNull Presentation testAction(@NotNull AnAction action) {
     AnActionEvent e = TestActionEvent.createTestEvent(action);
-    ActionUtil.performDumbAwareUpdate(action, e, false);
+    ActionUtil.updateAction(action, e);
     if (e.getPresentation().isEnabled()) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, e);
+      ActionUtil.performAction(action, e);
     }
     return e.getPresentation();
   }

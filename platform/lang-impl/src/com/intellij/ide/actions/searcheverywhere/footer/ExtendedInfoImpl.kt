@@ -97,7 +97,7 @@ internal class ExtendedInfoComponent(private val project: Project?, private val 
     private fun context(project: Project?) = project?.let { SimpleDataContext.getProjectContext(it) } ?: SimpleDataContext.EMPTY_CONTEXT
     private fun AnAction.updateIt(event: AnActionEvent) {
       let {
-        ActionUtil.performDumbAwareUpdate(it, event, false)
+        ActionUtil.updateAction(it, event)
       }
     }
 

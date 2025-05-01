@@ -4858,7 +4858,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       AnAction action = actionManager.getAction(mappedActionId);
       DataContext dataContext = DataManager.getInstance().getDataContext(e.getComponent());
       AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU, dataContext);
-      ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
+      ActionUtil.updateAction(action, actionEvent);
       if (actionEvent.getPresentation().isEnabled()) return false;
     }
     return true;
