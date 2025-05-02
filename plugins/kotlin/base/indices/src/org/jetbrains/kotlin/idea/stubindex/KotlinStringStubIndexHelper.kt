@@ -13,6 +13,7 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.indexing.IdFilter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.getAllKeysAndMeasure
 import org.jetbrains.kotlin.idea.base.indices.getByKeyAndMeasure
 import org.jetbrains.kotlin.idea.base.indices.processAllKeysAndMeasure
@@ -38,9 +39,10 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         scope: GlobalSearchScope,
         filter: (Key) -> Boolean = { true },
     ): Sequence<Key> {
-        val processor = CancelableCollectFilterProcessor<Key>(filter = filter)
+        val results = mutableListOf<Key>()
+        val processor = cancelableCollectFilterProcessor(results, filter = filter)
         processElements(key, project, scope, null, processor)
-        return processor.results.asSequence() // todo move valueFilter out
+        return results.asSequence() // todo move valueFilter out
     }
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
@@ -68,14 +70,15 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         noinline keyFilter: (String) -> Boolean = { true },
         noinline valueFilter: (SubKey) -> Boolean = { true },
     ): Sequence<SubKey> {
-        val processor = CancelableCollectFilterProcessor<SubKey>(filter = valueFilter)
+        val results = mutableListOf<SubKey>()
+        val processor = cancelableCollectFilterProcessor(results, filter = valueFilter)
         processAllElements(project, scope, keyFilter) { key ->
             if (key is SubKey)
                 processor.process(key)
             else
                 true
         }
-        return processor.results.asSequence() // todo move valueFilter out
+        return results.asSequence() // todo move valueFilter out
     }
 
     fun processAllElements(
@@ -96,7 +99,7 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
 
             val allKeys = HashSet<String>()
             val processAllKeys = processAllKeysAndMeasure(indexKey, logger) {
-                stubIndex.processAllKeys(indexKey, project, CancelableCollectFilterProcessor(allKeys, filter))
+                stubIndex.processAllKeys(indexKey, project, cancelableCollectFilterProcessor(allKeys, filter))
             }
             if (!processAllKeys) return
 
@@ -140,24 +143,34 @@ class CancelableDelegateFilterProcessor<T>(
             true
         }
     }
-    companion object {
-        val ALWAYS_TRUE: (Any) -> Boolean = { true }
-    }
 }
 
-class CancelableCollectFilterProcessor<T>(
+@ApiStatus.Internal
+fun <T> cancelableCollectFilterProcessor(
+    collection: Collection<T>,
+    filter: (T) -> Boolean = { true }
+): Processor<T> {
+    return CancelableCollectFilterProcessor(collection, filter = filter)
+}
+
+private class CancelableCollectFilterProcessor<T>(
     collection: Collection<T> = mutableListOf(),
+    private val checkCancelledEach: Int = 16,
     private val filter: (T) -> Boolean,
 ) : CommonProcessors.CollectProcessor<T>(collection) {
+    private var iterationNo = 0
 
     override fun process(t: T): Boolean {
-        ProgressManager.checkCanceled()
+        // see ProcessorWithThrottledCancellationCheck
+        // don't check cancellation on each iteration, since it may affect performance too much -- check each Nth iteration
+        iterationNo++
+        if (iterationNo >= checkCancelledEach) {
+            iterationNo = 0
+            ProgressManager.checkCanceled()
+        }
+
         return super.process(t)
     }
 
     override fun accept(t: T): Boolean = filter(t)
-
-    companion object {
-        val ALWAYS_TRUE: (Any) -> Boolean = { true }
-    }
 }

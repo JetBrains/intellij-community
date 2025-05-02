@@ -218,7 +218,8 @@ class KtSymbolFromIndexProvider(
         KotlinFunctionShortNameIndex,
         KotlinPropertyShortNameIndex,
     ).flatMap { helper ->
-        val processor = CancelableCollectFilterProcessor { declaration: KtNamedDeclaration ->
+        val results = mutableListOf<KtNamedDeclaration>()
+        val processor = cancelableCollectFilterProcessor(results) { declaration: KtNamedDeclaration ->
             declaration is KtCallableDeclaration
                     && declaration.isAcceptable(psiFilter)
         }
@@ -230,7 +231,7 @@ class KtSymbolFromIndexProvider(
             processor = processor,
         )
 
-        processor.results
+        results
     }.map { it.symbol }
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(name)
@@ -286,7 +287,8 @@ class KtSymbolFromIndexProvider(
         KotlinTopLevelFunctionFqnNameIndex,
         KotlinTopLevelPropertyFqnNameIndex,
     ).flatMap { helper ->
-        val processor = CancelableCollectFilterProcessor { declaration: KtCallableDeclaration ->
+        val results = mutableListOf<KtCallableDeclaration>()
+        val processor = cancelableCollectFilterProcessor(results) { declaration: KtCallableDeclaration ->
             declaration.isAcceptable(psiFilter)
                     && declaration.receiverTypeReference == null
         }
@@ -298,7 +300,7 @@ class KtSymbolFromIndexProvider(
             processor = processor,
         )
 
-        processor.results
+        results
     }.map { it.symbol }
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
