@@ -8132,7 +8132,6 @@ java_library(
   name = "platform-jewel-markdown-extensions-autolink-commonmark-ext-autolink",
   exports = [
     ":commonmark-ext-autolink-0_24_0_http_import",
-    ":commonmark-0_24_0_http_import",
     ":autolink-0_11_0_http_import",
   ],
   visibility = ["//visibility:public"]

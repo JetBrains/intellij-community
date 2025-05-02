@@ -16,6 +16,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/util/coroutines",
     "//platform/platform-impl/eel:ide-impl-wsl",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.ijent.community.testFramework` end
