@@ -1079,6 +1079,42 @@ public final class ConfigImportHelper {
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
 
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginsFetcher.fetchBrokenPlugins(newConfigDir);
+    if (!collectPluginsToMigrate(oldPluginsDir, options, brokenPluginVersions, pluginsToMigrate, pluginsToDownload)) {
+      log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
+      FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
+      return;
+    }
+
+    if (options.importSettings != null) {
+      options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
+    }
+
+    migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
+
+    pluginsToMigrate.removeIf(hasPendingUpdate);
+    if (!pluginsToMigrate.isEmpty()) {
+      migratePlugins(newPluginsDir, pluginsToMigrate, log);
+    }
+
+    pluginsToDownload.removeIf(hasPendingUpdate);
+    if (!pluginsToDownload.isEmpty()) {
+      downloadUpdatesForPlugins(newPluginsDir, options, pluginsToDownload, brokenPluginVersions);
+
+      // migrating plugins for which we weren't able to download updates
+      migratePlugins(newPluginsDir, pluginsToDownload, log);
+    }
+  }
+
+  /**
+   * Collects plugins which should be migrated from the previous IDE's version, and stores plugins which should be copied in 
+   * {@code pluginsToMigrate} and the plugins which should be downloaded from the plugin repository in {@code pluginsToDownload}.
+   * @return {@code false} if failed to collect plugins or {@code true} otherwise
+   */
+  private static boolean collectPluginsToMigrate(@NotNull Path oldPluginsDir,
+                                                 @NotNull ConfigImportOptions options,
+                                                 @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
+                                                 @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                                 @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
     @Nullable PluginLoadingResult oldIdeLoadingResult = null;
     try {
       /* FIXME
@@ -1098,12 +1134,10 @@ public final class ConfigImportHelper {
       oldIdeLoadingResult.initAndAddAll(pluginLists, initContext);
     }
     catch (ExecutionException | InterruptedException e) {
-      log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
-      FileUtil.copyDir(oldPluginsDir.toFile(), newPluginsDir.toFile());
-      return;
+      return false;
     }
     catch (IOException e) {
-      log.info("Non-existing plugins directory: " + oldPluginsDir, e);
+      options.log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
 
     if (oldIdeLoadingResult != null) {
@@ -1134,25 +1168,7 @@ public final class ConfigImportHelper {
         partitionNonBundled(oldIdeLoadingResult.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
       }
     }
-
-    if (options.importSettings != null) {
-      options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
-    }
-
-    migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
-
-    pluginsToMigrate.removeIf(hasPendingUpdate);
-    if (!pluginsToMigrate.isEmpty()) {
-      migratePlugins(newPluginsDir, pluginsToMigrate, log);
-    }
-
-    pluginsToDownload.removeIf(hasPendingUpdate);
-    if (!pluginsToDownload.isEmpty()) {
-      downloadUpdatesForPlugins(newPluginsDir, options, pluginsToDownload, brokenPluginVersions);
-
-      // migrating plugins for which we weren't able to download updates
-      migratePlugins(newPluginsDir, pluginsToDownload, log);
-    }
+    return true;
   }
 
   private static void performMigrations(PluginMigrationOptions options) {
