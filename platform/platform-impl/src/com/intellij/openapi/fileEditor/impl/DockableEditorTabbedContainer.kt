@@ -123,15 +123,35 @@ class DockableEditorTabbedContainer internal constructor(
     }
 
     val tabsAt = splitters.getTabsAt(point)
-    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
-    val below = RelativePoint(point.component, Point(point.point).apply { y += tolerance })
-    if (below.getPointOn(splitters).point.y < splitters.y + splitters.height) {
-      val tabsBelow = splitters.getTabsAt(below)
-      if (tabsBelow != null) return tabsBelow
+    val nearestTabs = when (UISettings.getInstance().editorTabPlacement) {
+      SwingConstants.TOP -> getTabsBelow(point) // the point is slightly above the tabs placed in the header
+      SwingConstants.BOTTOM -> getTabsAbove(point) // the point is slightly below the tabs placed in the footer
+      else -> null
     }
+    if (nearestTabs != null) return nearestTabs
     if (tabsAt != null) return tabsAt
 
     return (splitters.currentWindow ?: splitters.windows().firstOrNull())?.tabbedPane?.tabs
+  }
+
+  private fun getTabsBelow(point: RelativePoint): JBTabs? {
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    val below = RelativePoint(point.component, Point(point.point).apply { y += tolerance })
+    if (below.getPointOn(splitters).point.y < splitters.height) {
+      val tabsBelow = splitters.getTabsAt(below)
+      if (tabsBelow != null) return tabsBelow
+    }
+    return null
+  }
+
+  private fun getTabsAbove(point: RelativePoint): JBTabs? {
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    val above = RelativePoint(point.component, Point(point.point).apply { y -= tolerance })
+    if (above.getPointOn(splitters).point.y >= 0) {
+      val tabsAbove = splitters.getTabsAt(above)
+      if (tabsAbove != null) return tabsAbove
+    }
+    return null
   }
 
   override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {
