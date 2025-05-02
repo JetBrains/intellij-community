@@ -508,7 +508,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeVisibilityFixFactories.exposedReceiverType)
         registerFactory(ChangeVisibilityFixFactories.exposedPropertyType)
         registerFactory(ChangeVisibilityFixFactories.exposedPropertyTypeInConstructorError)
-        registerFactory(ChangeVisibilityFixFactories.exposedPropertyTypeInConstructorWarning)
         registerFactory(ChangeVisibilityFixFactories.exposedParameterType)
         registerFactory(ChangeVisibilityFixFactories.exposedSuperInterface)
         registerFactory(ChangeVisibilityFixFactories.exposedSuperClass)

@@ -139,11 +139,6 @@ internal object ChangeVisibilityFixFactories {
             createChangeVisibilityFixOnExposure(diagnostic.psi, diagnostic.elementVisibility, diagnostic.restrictingDeclaration, diagnostic.restrictingVisibility)
         }
 
-    val exposedPropertyTypeInConstructorWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExposedPropertyTypeInConstructorWarning ->
-            createChangeVisibilityFixOnExposure(diagnostic.psi, diagnostic.elementVisibility, diagnostic.restrictingDeclaration, diagnostic.restrictingVisibility)
-        }
-
     val exposedParameterType =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExposedParameterType ->
             createChangeVisibilityFixOnExposure(diagnostic.psi, diagnostic.elementVisibility, diagnostic.restrictingDeclaration, diagnostic.restrictingVisibility)

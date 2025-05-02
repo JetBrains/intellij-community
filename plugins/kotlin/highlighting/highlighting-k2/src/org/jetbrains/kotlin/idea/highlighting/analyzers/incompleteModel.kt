@@ -28,7 +28,6 @@ val ignoreIncompleteModeDiagnostics: Set<KClass<out KaFirDiagnostic<out PsiEleme
     AnnotationClassConstructorCall::class,
     EnumClassConstructorCall::class,
     ExposedPropertyTypeInConstructorError::class,
-    ExposedPropertyTypeInConstructorWarning::class,
     OperatorCallOnConstructor::class,
     AbsenceOfPrimaryConstructorForValueClass::class,
     InlineClassConstructorWrongParametersSize::class,
