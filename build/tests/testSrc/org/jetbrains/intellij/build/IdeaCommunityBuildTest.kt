@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import kotlin.io.path.Path
 
 class IdeaCommunityBuildTest {
   @Test
@@ -18,7 +19,7 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
     runTestBuild(
-      homeDir = homePath,
+      homeDir = Path(PathManager.getCommunityHomePath()),
       testInfo = testInfo,
       productProperties = productProperties,
     ) {
