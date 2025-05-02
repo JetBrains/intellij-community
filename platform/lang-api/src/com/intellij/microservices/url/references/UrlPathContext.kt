@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lazyPub
+import org.jetbrains.annotations.ApiStatus
 
 class UrlPathContext private constructor(
   private val immediate: LazyChain.Immediate<UrlPathContextData>,
@@ -25,7 +26,8 @@ class UrlPathContext private constructor(
     val authorities: Set<String>,
     val methods: Set<String>,
     val contentTypes: Set<String>,
-    val isDeclaration: Boolean
+    val isDeclaration: Boolean,
+    val fullUrlComputation: (() -> UrlPathContext?)? = null
   ) {
     init {
       if (ApplicationManager.getApplication().run { isUnitTestMode || isInternal }) {
@@ -45,6 +47,9 @@ class UrlPathContext private constructor(
           }
         }
       }
+
+    override fun toString(): String =
+      "Info(schemes=$schemes, authorities=$authorities, methods=$methods, contentTypes=$contentTypes, isDeclaration=$isDeclaration)"
   }
 
   private data class UrlPathContextData(
@@ -74,6 +79,19 @@ class UrlPathContext private constructor(
       logger<UrlPathContext>().assertTrue(canBuildUrlContext.get(), "expensive transformations shouldn't be called there")
       trans.invoke(it.context).genuineChain.value
     })
+
+  /**
+   * Provides full url information for generation from [UrlPathContext]
+   *
+   * This method is a workaround for HttpClient.
+   * Right now, we can't provide full url information from a resolved version of [UrlPathContext]
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun computeFullUrlInfo(): UrlPathContext {
+    logger<UrlPathContext>().assertTrue(canBuildUrlContext.get(), "expensive transformations shouldn't be called there")
+    return info.fullUrlComputation?.invoke() ?: this
+  }
 
   private fun update(transformation: UrlPathContextData.() -> UrlPathContextData): UrlPathContext {
     return UrlPathContext(this.immediate.chain(transformation), this.delayed?.chain(transformation))
@@ -150,6 +168,9 @@ class UrlPathContext private constructor(
     update {
       UrlPathContextData(info, this.parent?.paths ?: listOf(UrlPath.EMPTY), this.parent?.parent)
     }
+
+  fun withFullUrlComputation(fullUrlComputation: () -> UrlPathContext?): UrlPathContext =
+    update { UrlPathContextData(info.copy(fullUrlComputation = fullUrlComputation), paths, parent) }
 
   fun isEmpty(): Boolean = immediate.value.isEmpty()
 

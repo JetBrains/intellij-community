@@ -19,9 +19,8 @@ import org.jetbrains.uast.expressions.UInjectionHost
 fun urlInlayHintProvider(injector: UrlPathReferenceInjector<UExpression>): UastSemProvider<UrlPathInlayHintsProviderSemElement> {
   return uastSemElementProvider(listOf(UInjectionHost::class.java, UReferenceExpression::class.java)) { uExpression, _ ->
     val context = forbidExpensiveUrlContext {
-      val rootContext = injector.defaultRootContextProvider(uExpression)
-        if (!injector.ignoreSubPathContext) rootContext.subContext(injector.toUrlPath(uExpression))
-        else rootContext
+      injector.defaultRootContextProvider(uExpression)
+        .subContext(injector.toUrlPath(uExpression))
     }
 
     object : UrlPathInlayHintsProviderSemElement {
