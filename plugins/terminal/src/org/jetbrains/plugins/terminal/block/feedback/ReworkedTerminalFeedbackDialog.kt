@@ -48,8 +48,7 @@ internal class ReworkedTerminalFeedbackDialog(project: Project, forTest: Boolean
 
     RatingBlock(TerminalBundle.message("feedback.dialog.rating.title"), "overall_rating"),
 
-    RegularLabelBlock(TerminalBundle.message("feedback.dialog.issues.1")),
-    TextAreaBlock(TerminalBundle.message("feedback.dialog.issues.2"), "issues"),
+    TextAreaBlock(TerminalBundle.message("feedback.dialog.issues"), "issues"),
 
     CheckBoxGroupBlock(TerminalBundle.message("feedback.dialog.improvement"), improvementItems().shuffled(), "important_improvement")
       .addOtherTextField(),
