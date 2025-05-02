@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.shared.P3DynamicPluginSynchronizerKt;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.*;
@@ -1645,12 +1646,19 @@ public final class ConfigImportHelper {
 
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir, @Nullable ConfigImportSettings settings) {
     if (ProjectManagerEx.Companion.isChildProcessPath(path)) return true;
-    if (oldConfig.equals(path.getParent())) {
-      Path fileName = path.getFileName();
+    Path fileName = path.getFileName();
+    Path parent = path.getParent();
+    if (oldConfig.equals(parent)) {
       return shouldSkipFileDuringImport(path, settings) ||
              Files.exists(newConfig.resolve(fileName)) ||
              path.startsWith(oldPluginsDir);
     }
+    if (parent.getFileName().toString().equals(PathManager.OPTIONS_DIRECTORY) && oldConfig.equals(parent.getParent())) {
+      if (fileName.toString().equals(P3DynamicPluginSynchronizerKt.DYNAMIC_PLUGINS_SYNCHRONIZER_FILE_NAME)) {
+        return true;
+      }
+    }
+      
     if (settings != null && settings.shouldSkipPath(path)) {
       return true; // this check needs to repeat even for non-root paths
     }
