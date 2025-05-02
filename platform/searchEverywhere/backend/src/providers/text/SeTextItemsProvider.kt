@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
-import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -36,7 +36,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int) 
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(val project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>): SeItemsProvider {
+class SeTextItemsProvider(val project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>): SeItemsProvider {
   override val id: String get() = ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

@@ -6,15 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
-import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Internal
-class SeFilesProvider(val project: Project, private val contributorWrapper: SeAsyncContributorWrapper<Any>): SeItemsProvider,
-                                                                                                             SeSearchScopesProvider,
-                                                                                                             SeTypeVisibilityStateProvider {
+class SeFilesProvider(val project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>): SeItemsProvider,
+                                                                                                                     SeSearchScopesProvider,
+                                                                                                                     SeTypeVisibilityStateProvider {
   override val id: String get() = ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
@@ -18,6 +19,7 @@ import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListStopEvent
 import com.intellij.platform.searchEverywhere.frontend.vm.SeResultListUpdateEvent
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ScrollingUtil
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -25,6 +27,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.bindTextOnShow
 import com.intellij.util.containers.ContainerUtil
@@ -65,7 +68,16 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       when (val value = value) {
         is SeResultListItemRow -> {
           when (val presentation = value.item.presentation) {
-            is SeSimpleItemPresentation -> text(presentation.text)
+            is SeSimpleItemPresentation -> {
+              presentation.iconId?.icon()?.let { icon(it) }
+              text(presentation.text)
+              presentation.description?.let {
+                text(it) {
+                  align = LcrInitParams.Align.RIGHT
+                  attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
+                }
+              }
+            }
             else ->  throw IllegalStateException("Item is not handled: $presentation")
           }
         }

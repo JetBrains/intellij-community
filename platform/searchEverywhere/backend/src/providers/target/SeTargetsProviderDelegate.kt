@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
-import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import com.intellij.platform.searchEverywhere.providers.SeTypeVisibilityStateProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
@@ -30,7 +30,7 @@ class SeTargetItem(val legacyItem: ItemWithPresentation<*>, private val matchers
 }
 
 @Internal
-class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContributorWrapper<Any>) {
+class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
   @Volatile
   private var scopeIdToScope: ConcurrentHashMap<String, ScopeDescriptor> = ConcurrentHashMap()
 

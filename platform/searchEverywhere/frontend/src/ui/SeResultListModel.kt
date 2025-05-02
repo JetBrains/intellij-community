@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
+import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.FROZEN_COUNT
@@ -12,6 +15,18 @@ import javax.swing.DefaultListModel
 class SeResultListModel: DefaultListModel<SeResultListRow>() {
   private var frozenCount: Int = 0
   var ignoreFreezing: Boolean = false
+
+  private val prioritizedProviders: List<SeProviderId> = listOfNotNull(
+    "CalculatorSEContributor",
+    "AutocompletionContributor",
+    "CommandsContributor",
+    TopHitSEContributor::class.java.getSimpleName(),
+    if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null
+  ).map { SeProviderId(it) }
+
+  private val prioritizedProvidersPriorities: Map<SeProviderId, Int> = prioritizedProviders.withIndex().associate {
+    it.value to ( prioritizedProviders.size - it.index)
+  }
 
   fun freeze(count: Int) {
     if (count > frozenCount) {
@@ -39,7 +54,7 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
   fun addFromEvent(event: SeResultEvent) {
     when (event) {
       is SeResultAddedEvent -> {
-        val index = firstIndexOrNull(false) { event.itemData.weight > it.weight } ?: lastIndexToInsertItem
+        val index = indexToAdd(event.itemData)
         add(index, SeResultListItemRow(event.itemData))
 
         /* Animated icon in the text field disappears when the first result appears.
@@ -66,6 +81,20 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
       }
       is SeResultSkippedEvent -> null
     }
+  }
+
+  private fun indexToAdd(newItem: SeItemData): Int {
+    return firstIndexOrNull(false) { item ->
+      val newItemProviderPriority = prioritizedProvidersPriorities[newItem.providerId] ?: 0
+      val itemProviderPriority = prioritizedProvidersPriorities[item.providerId] ?: 0
+
+      if (newItemProviderPriority == itemProviderPriority) {
+        newItem.weight > item.weight
+      }
+      else {
+        newItemProviderPriority > itemProviderPriority
+      }
+    } ?: lastIndexToInsertItem
   }
 
   private fun firstIndexOrNull(fullSearch: Boolean, predicate: (SeItemData) -> Boolean): Int? {

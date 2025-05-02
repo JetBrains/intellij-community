@@ -10,7 +10,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
-import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
+import com.intellij.platform.searchEverywhere.providers.SeAsyncWeightedContributorWrapper
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,6 +25,6 @@ class SeSymbolsProviderFactory : SeItemsProviderFactory {
       SymbolSearchEverywhereContributor.Factory().createContributor(actionEvent) as WeightedSearchEverywhereContributor<Any>
     }
 
-    return SeSymbolsProvider(project, SeAsyncContributorWrapper(legacyContributor))
+    return SeSymbolsProvider(project, SeAsyncWeightedContributorWrapper(legacyContributor))
   }
 }

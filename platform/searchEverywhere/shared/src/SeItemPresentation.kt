@@ -26,7 +26,10 @@ sealed interface SeItemPresentation {
 
 @ApiStatus.Internal
 @Serializable
-class SeSimpleItemPresentation(override val text: @Nls String) : SeItemPresentation
+class SeSimpleItemPresentation(
+  val iconId: IconId? = null,
+  override val text: @Nls String,
+  val description: @NlsSafe String? = null) : SeItemPresentation
 
 @ApiStatus.Internal
 sealed interface SeActionItemPresentation : SeItemPresentation {
