@@ -66,6 +66,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionStartHelper;
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
+import org.jetbrains.plugins.terminal.fus.TerminalFocusFusService;
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay;
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
@@ -193,6 +194,11 @@ public final class TerminalToolWindowManager implements Disposable {
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer();
       DockManager.getInstance(myProject).register(myDockContainer, toolWindow.getDisposable());
+    }
+
+    var focusService = TerminalFocusFusService.getInstance();
+    if (focusService != null) { // the service only exists on the frontend
+      focusService.ensureInitialized();
     }
   }
 
