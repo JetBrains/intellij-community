@@ -28,7 +28,7 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
   suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): Deferred<XBreakpointDto?>
 
-  suspend fun getLineBreakpointVariants(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XLineBreakpointVariantResponse?
+  suspend fun toggleLineBreakpoint(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XToggleLineBreakpointResponse?
 
   companion object {
     @JvmStatic
@@ -74,10 +74,24 @@ data class XBreakpointTypeId(val id: String)
 
 @ApiStatus.Internal
 @Serializable
-data class XLineBreakpointVariantResponse(
+sealed interface XToggleLineBreakpointResponse
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointInstalledResponse(
+  val breakpoint: XBreakpointDto?,
+) : XToggleLineBreakpointResponse
+
+@ApiStatus.Internal
+@Serializable
+object XRemoveBreakpointResponse : XToggleLineBreakpointResponse
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointMultipleVariantResponse(
   val variants: List<XLineBreakpointVariantDto>,
   @Serializable(with = SendChannelSerializer::class) val selectionCallback: SendChannel<VariantSelectedResponse>,
-)
+) : XToggleLineBreakpointResponse
 
 @ApiStatus.Internal
 @Serializable
@@ -87,6 +101,7 @@ data class XLineBreakpointInstallationRequest(
   val isTemporary: Boolean,
   val isConditional: Boolean,
   val condition: String?,
+  val willRemoveBreakpointIfSingleVariant: Boolean,
 )
 
 

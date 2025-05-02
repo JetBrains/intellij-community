@@ -35,14 +35,18 @@ internal data class XLineBreakpointInstallationInfo(
   val isTemporary: Boolean,
   val isConditional: Boolean,
   val condition: String?,
-)
+  private val canRemove: Boolean,
+) {
+  fun canRemoveBreakpoint() = canRemove && !isTemporary
+}
 
-private fun XLineBreakpointInstallationInfo.toRequest() = XLineBreakpointInstallationRequest(
+private fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean) = XLineBreakpointInstallationRequest(
   types.map { XBreakpointTypeId(it.id) },
   position.toRpc(),
   isTemporary,
   isConditional,
   condition,
+  willRemoveBreakpointIfSingleVariant = canRemoveBreakpoint() && hasOneBreakpoint,
 )
 
 internal fun computeBreakpointProxy(
@@ -53,17 +57,29 @@ internal fun computeBreakpointProxy(
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
-      val response = XBreakpointTypeApi.getInstance().getLineBreakpointVariants(project.projectId(), info.toRequest())
+      val singleBreakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).singleOrNull()
+      val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), info.toRequest(singleBreakpoint != null))
                      ?: throw kotlin.coroutines.cancellation.CancellationException()
-      result.handle { _, _ ->
-        response.selectionCallback.close()
-      }
-      val variants = response.variants.mapIndexed { i, dto ->
-        FrontendXLineBreakpointVariantImpl(dto) {
-          responseWithVariantChoice(project, result, response.selectionCallback, i)
+      when (response) {
+        is XRemoveBreakpointResponse -> {
+          XDebuggerUtilImpl.removeBreakpointIfPossible(project, info, singleBreakpoint)
+          result.complete(null)
+        }
+        is XLineBreakpointInstalledResponse -> {
+          result.complete(createBreakpoint(project, response.breakpoint))
+        }
+        is XLineBreakpointMultipleVariantResponse -> {
+          result.handle { _, _ ->
+            response.selectionCallback.close()
+          }
+          val variants = response.variants.mapIndexed { i, dto ->
+            FrontendXLineBreakpointVariantImpl(dto) {
+              responseWithVariantChoice(project, result, response.selectionCallback, i)
+            }
+          }
+          onVariantsChoice(variants)
         }
       }
-      onVariantsChoice(variants)
     }
     catch (e: Throwable) {
       result.completeExceptionally(e)
@@ -73,21 +89,18 @@ internal fun computeBreakpointProxy(
 
 private fun responseWithVariantChoice(
   project: Project,
-  res: CompletableFuture<XLineBreakpointProxy?>,
+  result: CompletableFuture<XLineBreakpointProxy?>,
   selectionCallback: SendChannel<VariantSelectedResponse>,
   selectedIndex: Int,
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
-    try {
+    result.compute {
       val breakpointCallback = Channel<XBreakpointDto?>()
       selectionCallback.use {
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
       val breakpointDto = breakpointCallback.receiveCatching().getOrNull()
-      res.complete(createBreakpoint(project, breakpointDto))
-    }
-    catch (e: Throwable) {
-      res.completeExceptionally(e)
+      createBreakpoint(project, breakpointDto)
     }
   }
 }
@@ -117,3 +130,13 @@ private class FrontendXLineBreakpointVariantImpl(
 
 @Service(Service.Level.PROJECT)
 private class FrontendXLineBreakpointVariantService(val cs: CoroutineScope)
+
+private inline fun <T> CompletableFuture<T>.compute(block: () -> T) {
+  try {
+    val result = block()
+    complete(result)
+  }
+  catch (e: Throwable) {
+    completeExceptionally(e)
+  }
+}
