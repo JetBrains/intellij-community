@@ -86,26 +86,24 @@ abstract class BackDependencyIndexImpl protected constructor(
       }
     }
     else {
-      val sequence: Sequence<Long> = sequence {
-        yieldAll(deltaMap.keys)
-        depsToRemove.forEachKey {
-          yield(it)
-        }
-      }
-        .distinct()
-
-      for (idHash in sequence) {
-        val toRemove = depsToRemove.get(idHash)
-        val toAdd = deltaMap.get(idHash)
-        if (toRemove != null && !toRemove.isEmpty()) {
+      // iterate through the deltaMap keys first
+      @Suppress("UNCHECKED_CAST")
+      (deltaMap as MemoryMultiMaplet<Long, ReferenceID, MutableCollection<ReferenceID>>).map.forEach { idHash, toAdd ->
+        val toRemove = depsToRemove.remove(idHash)
+        if (toRemove != null) {
           toRemove.removeAll(toAdd)
           if (toRemove.isNotEmpty()) {
             map.removeValues(idHash, toRemove)
           }
         }
+
         map.appendValues(idHash, toAdd)
       }
 
+      // iterate the rest of depsToRemove (that were not deleted, so, they are not present in the deltaMap)
+      depsToRemove.forEach { idHash, toRemove ->
+        map.removeValues(idHash, toRemove)
+      }
     }
   }
 

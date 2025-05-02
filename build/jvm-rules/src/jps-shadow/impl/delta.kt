@@ -107,7 +107,7 @@ class DeltaImpl(
 class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
   @Suppress("unused") collectionFactory: Supplier<C>?,
 ) : MultiMapletEx<K, V> {
-  private val map = MutableScatterMap<K, PersistentSet<V>>()
+  @JvmField val map = MutableScatterMap<K, PersistentSet<V>>()
 
   override fun containsKey(key: K): Boolean {
     return map.containsKey(key)
