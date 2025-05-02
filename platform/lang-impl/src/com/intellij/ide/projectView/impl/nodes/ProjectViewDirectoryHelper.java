@@ -33,6 +33,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
 public class ProjectViewDirectoryHelper {
@@ -277,15 +278,23 @@ public class ProjectViewDirectoryHelper {
     final VirtualFile dir = psiDirectory.getVirtualFile();
     if (shouldBeShown(dir, settings)) {
       final List<PsiElement> children = new ArrayList<>();
-      psiDirectory.processChildren(new PsiElementProcessor<>() {
-        @Override
-        public boolean execute(@NotNull PsiFileSystemItem element) {
-          if (shouldBeShown(element.getVirtualFile(), settings)) {
-            children.add(element);
+      try {
+        psiDirectory.processChildren(new PsiElementProcessor<>() {
+          @Override
+          public boolean execute(@NotNull PsiFileSystemItem element) {
+            if (shouldBeShown(element.getVirtualFile(), settings)) {
+              children.add(element);
+            }
+            return true;
           }
-          return true;
-        }
-      });
+        });
+      }
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error("Showing only " + children.size() + " children of the directory " + psiDirectory + " because of an exception", e);
+      }
       return PsiUtilCore.toPsiElementArray(children);
     }
 
