@@ -201,9 +201,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           if (defaultValue != null) {
             final PyType type = context.getType(defaultValue);
             if (type != null && !(type instanceof PyNoneType)) {
-              if (type instanceof PyTupleType) {
-                return PyUnionType.createWeakType(type);
-              }
               return type;
             }
           }
