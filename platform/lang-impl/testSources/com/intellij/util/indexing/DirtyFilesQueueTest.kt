@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.loadExtensionWithText
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
@@ -43,22 +44,34 @@ import com.intellij.util.indexing.diagnostic.dto.JsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.indexing.mocks.FakeFileType
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.rules.TestName
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import java.io.DataInput
+import java.io.DataOutput
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.random.Random
 
+private class DoNoRethrowBrokenIndexingErrors : LoggedErrorProcessor() {
+  override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+    if ("#com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics" == category) {
+      return setOf(Action.LOG, Action.STDERR)
+    }
+    return super.processError(category, message, details, t)
+  }
+}
+
 /**
  * See also com.intellij.functionalTests.FunctionalDirtyFilesQueueTest
  */
-@RunWith(JUnit4::class)
+
+//@RunWith(JUnit4::class)
 class DirtyFilesQueueTest {
   companion object {
     @ClassRule
@@ -88,10 +101,8 @@ class DirtyFilesQueueTest {
 
   @After
   fun tearDown() {
-    runBlocking(Dispatchers.EDT) {
-      edtWriteAction {
-        Disposer.dispose(testRootDisposable) // must dispose in EDT
-      }
+    runInEdtAndWait {
+      Disposer.dispose(testRootDisposable) // must dispose in EDT
     }
   }
 
@@ -154,6 +165,98 @@ class DirtyFilesQueueTest {
     workspaceModel.update("add content root") { storage ->
       storage.modifyModuleEntity(this) {
         this.contentRoots += contentRoot
+      }
+    }
+  }
+
+  internal class BadFileBasedIndexExtension : FileBasedIndexExtension<String, String>() {
+    companion object {
+      private val INDEX_ID: ID<String, String> = ID.create("bad.file.based.index.extension")
+
+      @Volatile
+      internal var fails: Boolean = true
+    }
+
+    override fun getName(): ID<String, String> = INDEX_ID
+
+    override fun getInputFilter(): FileBasedIndex.InputFilter =
+      FileBasedIndex.InputFilter { file -> file.extension == FakeFileType().extension }
+
+    override fun dependsOnFileContent(): Boolean = true
+
+    override fun getIndexer(): DataIndexer<String?, String?, FileContent?> = DataIndexer<String?, String?, FileContent?> {
+      when {
+        fails -> error("Bad file failed to index")
+        else -> mapOf("key" to "value")
+      }
+    }
+
+    override fun getKeyDescriptor(): KeyDescriptor<String> {
+      return object : KeyDescriptor<String> {
+        override fun getHashCode(value: String): Int = value.hashCode()
+        override fun save(out: DataOutput, value: String?) = Unit // does nothing
+        override fun isEqual(val1: String?, val2: String?): Boolean = val1 == val2
+        override fun read(`in`: DataInput): String? = TODO("Not yet implemented")
+      }
+    }
+
+    override fun getValueExternalizer(): DataExternalizer<String> {
+      return object : DataExternalizer<String> {
+        override fun save(out: DataOutput, value: String) {
+          out.write(value.toByteArray())
+        }
+
+        override fun read(`in`: DataInput): String? = `in`.readLine()
+      }
+    }
+
+    override fun getVersion(): Int = 0
+  }
+
+  @Test
+  fun `test file is failed to index at startup but indexed after restart`() = LoggedErrorProcessor.executeWith<Throwable>(DoNoRethrowBrokenIndexingErrors()) {
+    val filetype = FakeFileType()
+    val text = "<fileBasedIndex implementation=\"${BadFileBasedIndexExtension::class.java.name}\"/>"
+
+    runBlocking {
+      runInEdt {
+        val child = loadExtensionWithText(text)
+        Disposer.register(testRootDisposable, child)
+        ScalarIndexExtension.EXTENSION_POINT_NAME.findExtensionOrFail(BadFileBasedIndexExtension::class.java)
+      }
+
+      openProject(testNameRule.methodName) { project, module ->
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        registerFiletype(filetype)
+        val src = tempDir.createVirtualDir("src")
+
+        edtWriteAction {
+          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          rootModel.addContentEntry(src)
+          rootModel.commit()
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+        edtWriteAction {
+          src.createFile("A.${filetype.defaultExtension}")
+        }
+
+        smartReadAction(project = project) {
+          assertThat(fileBasedIndex.getAllKeys<String>(BadFileBasedIndexExtension().name, project)).isEmpty()
+        }
+      }
+
+      BadFileBasedIndexExtension.fails = false
+      restart(skipFullScanning = true)
+
+      openProject(testNameRule.methodName) { project, module ->
+        readAction {
+          IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+        }
+        val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
+        val allKeys = smartReadAction(project = project) {
+          fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
+        }
+        assertThat(allKeys).isNotEmpty()
       }
     }
   }
