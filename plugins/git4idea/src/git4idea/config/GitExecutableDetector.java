@@ -94,12 +94,10 @@ public class GitExecutableDetector {
   }
 
   public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit) {
-    if (GitEelExecutableDetectionHelper.canUseEel()) {
-      var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, Path.of(pathToGit));
+    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, Path.of(pathToGit));
 
-      if (eel != null) {
-        return new GitExecutable.Eel(pathToGit, eel);
-      }
+    if (eel != null) {
+      return new GitExecutable.Eel(pathToGit, eel);
     }
 
     WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);
@@ -199,14 +197,12 @@ public class GitExecutableDetector {
   private @NotNull List<Detector> collectDetectors(@Nullable Project project, @Nullable Path gitDirectory) {
     List<Detector> detectors = new ArrayList<>();
 
-    if (GitEelExecutableDetectionHelper.canUseEel()) {
-      var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, gitDirectory);
-      if (eel != null) {
-        final var path = project != null ? project.getBasePath() : gitDirectory != null ? gitDirectory.toString() : null;
-        assert path != null;
-        detectors.add(new EelBasedDetector(eel, path));
-        return detectors;
-      }
+    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, gitDirectory);
+    if (eel != null) {
+      final var path = project != null ? project.getBasePath() : gitDirectory != null ? gitDirectory.toString() : null;
+      assert path != null;
+      detectors.add(new EelBasedDetector(eel, path));
+      return detectors;
     }
 
     var projectWslDistribution = findWslDistributionIfAny(project, gitDirectory);
@@ -518,12 +514,10 @@ public class GitExecutableDetector {
     Boolean isWindows = null;
     Path file = null;
 
-    if (GitEelExecutableDetectionHelper.canUseEel()) {
-      final var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, null);
-      if (eel != null) {
-        isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
-        file = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), path.trim()));
-      }
+    final var eel = GitEelExecutableDetectionHelper.tryGetEel(project, null);
+    if (eel != null) {
+      isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
+      file = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), path.trim()));
     }
 
     if (isWindows == null) {
@@ -548,12 +542,10 @@ public class GitExecutableDetector {
     Boolean isWindows = null;
     Path gitFile = null;
 
-    if (GitEelExecutableDetectionHelper.canUseEel()) {
-      final var eel = GitEelExecutableDetectionHelper.tryGetNonLocalEel(project, null);
-      if (eel != null) {
-        isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
-        gitFile = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), gitExecutable.trim()));
-      }
+    final var eel = GitEelExecutableDetectionHelper.tryGetEel(project, null);
+    if (eel != null) {
+      isWindows = eel.getPlatform() instanceof EelPlatform.Windows;
+      gitFile = EelNioBridgeServiceKt.asNioPath(EelFileSystemApiKt.getPath(eel.getFs(), gitExecutable.trim()));
     }
 
     if (isWindows == null) {

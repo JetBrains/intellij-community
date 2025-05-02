@@ -9,9 +9,10 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.where
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +46,6 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
     }
   }
 
-  // TODO: use eel for local projects
   companion object {
     @JvmStatic
     fun getInstance() = application.service<GitEelExecutableDetectionHelper>()
@@ -54,9 +54,24 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
     fun canUseEel(): Boolean = Registry.`is`("git.use.eel.for.non.local.projects")
 
     @JvmStatic
-    fun tryGetNonLocalEel(project: Project?, gitDirectory: Path?): EelApi? {
-      val descriptor: EelDescriptor? = project?.getEelDescriptor() ?: gitDirectory?.getEelDescriptor()
-      return descriptor?.takeIf { it !== LocalEelDescriptor }?.upgradeBlocking()
+    fun useEelForLocalProjects(): Boolean = Registry.`is`("git.use.eel.for.local.projects")
+
+    @RequiresBackgroundThread
+    @JvmStatic
+    fun tryGetEel(project: Project?, gitDirectory: Path?): EelApi? {
+      val canUseEelForNonLocal = canUseEel()
+      val canUseEelForLocal = useEelForLocalProjects()
+      return if (!canUseEelForLocal && !canUseEelForNonLocal) {
+        null
+      } else {
+        val descriptor: EelDescriptor? = project?.getEelDescriptor() ?: gitDirectory?.getEelDescriptor()
+        val shouldUse = if (descriptor === LocalEelDescriptor) canUseEelForLocal else canUseEelForNonLocal
+        if (!shouldUse) {
+          null
+        } else {
+          descriptor?.toEelApiBlocking()
+        }
+      }
     }
   }
 }
