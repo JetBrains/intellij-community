@@ -31,6 +31,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject;
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInRepo;
+import com.intellij.vcs.git.shared.branch.GitInOutProjectState;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
@@ -300,6 +301,23 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       }
       BackgroundTaskUtil.syncPublisher(myProject, GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
     }));
+  }
+
+  @ApiStatus.Internal
+  public @NotNull GitInOutProjectState getState() {
+    return new GitInOutProjectState(mapState(myLocalBranchesWithIncoming), mapState(myLocalBranchesWithOutgoing));
+  }
+
+  private static @NotNull Map<RepositoryId, Map<String, Integer>> mapState(@NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> projectState) {
+    var result = new HashMap<RepositoryId, Map<String, Integer>>();
+    projectState.forEach((repo, branches) -> result.put(repo.getRpcId(), remapLocalBranchToName(branches)));
+    return result;
+  }
+
+  private static @NotNull Map<String, Integer> remapLocalBranchToName(@NotNull Map<GitLocalBranch, Integer> repoState) {
+    Map<String, Integer> result = new HashMap<>();
+    repoState.forEach((localBranch, commits) -> result.put(localBranch.getName(), commits));
+    return result;
   }
 
   public @NotNull Collection<GitLocalBranch> getBranchesWithIncoming(@Nullable GitRepository repository) {

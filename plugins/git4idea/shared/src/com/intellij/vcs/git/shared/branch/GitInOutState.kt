@@ -9,8 +9,16 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import git4idea.i18n.GitBundle.message
 import icons.DvcsImplIcons
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
+
+@ApiStatus.Internal
+@Serializable
+data class GitInOutProjectState(
+  val incoming: Map<RepositoryId, Map<String, Int>>,
+  val outgoing: Map<RepositoryId, Map<String, Int>>,
+)
 
 @ApiStatus.Internal
 data class GitInOutCountersInProject(private val inOutRepoState: Map<RepositoryId, GitInOutCountersInRepo>) {

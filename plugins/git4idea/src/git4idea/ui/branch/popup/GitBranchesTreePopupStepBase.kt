@@ -29,6 +29,7 @@ internal abstract class GitBranchesTreePopupStepBase(
   internal val repositories: List<GitRepository>,
 ) : PopupStep<Any> {
   internal val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
+  internal val affectedRepositoriesIds = affectedRepositories.map { it.rpcId }
 
   internal abstract val treeModel: GitBranchesTreeModel
 

@@ -15,11 +15,11 @@ import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
 import com.intellij.vcs.git.shared.branch.GitIncomingOutgoingColors
 import com.intellij.vcs.git.shared.branch.calcTooltip
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitTagType
 import git4idea.i18n.GitBundle
@@ -136,15 +136,11 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
     treeNode ?: return GitInOutCountersInProject.EMPTY
 
     return when (treeNode) {
-      is GitLocalBranch -> getIncomingOutgoingState(treeNode)
+      is GitLocalBranch -> GitInOutStateHolder.getInstance(treePopupStep.project)
+        .getState(treeNode, treePopupStep.affectedRepositoriesIds)
       is GitBranchesTreeModel.RefUnderRepository -> getIncomingOutgoingState(treeNode.ref)
       else -> GitInOutCountersInProject.EMPTY
     }
-  }
-
-  private fun getIncomingOutgoingState(branch: GitLocalBranch): GitInOutCountersInProject {
-    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(treePopupStep.project)
-    return incomingOutgoingManager.getIncomingOutgoingState(treePopupStep.affectedRepositories, branch)
   }
 
   private inner class MyMainPanel : BorderLayoutPanel() {
