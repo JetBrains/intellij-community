@@ -32,8 +32,14 @@ abstract class NotebookCellSelfHighlighterController(
   open fun customizeHighlighter(cellHighlighter: RangeHighlighterEx) {}
 
   override fun checkAndRebuildInlays() {
+    val interval = editorCell.intervalOrNull
+    if (interval == null) {
+      disposeHighlighter()
+      return
+    }
+
     if (highlighter?.isValid == true &&
-        highlighter?.startOffset == editorCell.interval.getCellStartOffset(editor) &&
+        highlighter?.startOffset == interval.getCellStartOffset(editor) &&
         highlighter?.endOffset == editorCell.interval.getCellEndOffset(editor)
     ) {
       //No need to update highlighter

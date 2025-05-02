@@ -299,7 +299,12 @@ class EditorCellOutputsView(
   }
 
   override fun doCheckAndRebuildInlays() {
-    val offset = computeInlayOffset(editor.document, cell.interval.lines)
+    val interval = cell.intervalOrNull ?: let {
+      inlay?.let { Disposer.dispose(it) }
+      inlay = null
+      return
+    }
+    val offset = computeInlayOffset(editor.document, interval.lines)
     inlay?.let { currentInlay ->
       if (!currentInlay.isValid || currentInlay.offset != offset) {
         currentInlay.let { Disposer.dispose(it) }

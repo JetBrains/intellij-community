@@ -182,7 +182,8 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
   }
 
   private fun isInlaysBroken(): Boolean {
-    val offset = editor.document.getLineEndOffset(cell.interval.lines.last)
+    val interval = cell.intervalOrNull ?: return true
+    val offset = editor.document.getLineEndOffset(interval.lines.last)
     for (inlay in presentationToInlay.values) {
       if (!inlay.isValid || inlay.offset != offset) {
         return true

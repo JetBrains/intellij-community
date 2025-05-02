@@ -23,7 +23,7 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
   private val editor
     get() = editorCell.editor
   private val cellType
-    get() = editorCell.interval.type
+    get() = editorCell.intervalOrNull?.type
   private val view
     get() = editorCell.view
 
