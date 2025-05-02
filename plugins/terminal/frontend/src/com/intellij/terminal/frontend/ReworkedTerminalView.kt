@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
-import com.intellij.terminal.frontend.fus.TerminalFocusFusService
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.session.TerminalSession
@@ -178,8 +177,6 @@ internal class ReworkedTerminalView(
     listenAlternateBufferSwitch()
 
     TerminalVfsSynchronizer.install(controller, ::addFocusListener, this)
-
-    TerminalFocusFusService.getInstance().ensureInitialized() // this can be anywhere in the frontend, just to start listening to events
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
