@@ -85,7 +85,9 @@
     <group id="Terminal.ToolWindowActions">
       <reference ref="Terminal.Engine"/>
       <action id="Terminal.Settings" class="com.intellij.terminal.frontend.action.TerminalSettingsAction" icon="AllIcons.General.Settings"/>
-      <action id="Terminal.Feedback" class="com.intellij.terminal.frontend.action.TerminalFeedbackAction" />
+      <action id="Terminal.Feedback" class="com.intellij.terminal.frontend.action.TerminalFeedbackAction">
+        <override-text place="GoToAction"/>
+      </action>
     </group>
 
     <group id="Terminal.OutputContextMenu">
