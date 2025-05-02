@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -14,7 +14,7 @@ public final class IoErrorText {
    * In general, NIO2 exception messages are pretty informative, but special cases may miss a description and only report a path.
    */
   public static @NlsSafe @NotNull String message(@NotNull Throwable t) {
-    String message = t.getMessage();
+    var message = t.getMessage();
 
     if (t instanceof UncheckedIOException || t instanceof IOError) {
       t = t.getCause();
@@ -24,8 +24,8 @@ public final class IoErrorText {
       return UIBundle.message("io.error.unknown");
     }
 
-    if (t instanceof AccessDeniedException) {
-      String reason = ((AccessDeniedException)t).getReason();
+    if (t instanceof AccessDeniedException ade) {
+      var reason = ade.getReason();
       if (reason != null) {
         return UIBundle.message("io.error.access.denied.reason", message, reason);
       }
