@@ -17,8 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.compute
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 internal interface FrontendXLineBreakpointVariant {
@@ -49,14 +48,14 @@ private fun XLineBreakpointInstallationInfo.toRequest() = XLineBreakpointInstall
 internal fun computeBreakpointProxy(
   project: Project,
   info: XLineBreakpointInstallationInfo,
-  result: AsyncPromise<XLineBreakpointProxy?>,
+  result: CompletableFuture<XLineBreakpointProxy?>,
   onVariantsChoice: (List<FrontendXLineBreakpointVariant>) -> Unit,
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
       val response = XBreakpointTypeApi.getInstance().getLineBreakpointVariants(project.projectId(), info.toRequest())
                      ?: throw kotlin.coroutines.cancellation.CancellationException()
-      result.onProcessed {
+      result.handle { _, _ ->
         response.selectionCallback.close()
       }
       val variants = response.variants.mapIndexed { i, dto ->
@@ -67,33 +66,37 @@ internal fun computeBreakpointProxy(
       onVariantsChoice(variants)
     }
     catch (e: Throwable) {
-      result.setError(e)
+      result.completeExceptionally(e)
     }
   }
 }
 
 private fun responseWithVariantChoice(
   project: Project,
-  res: AsyncPromise<XLineBreakpointProxy?>,
+  res: CompletableFuture<XLineBreakpointProxy?>,
   selectionCallback: SendChannel<VariantSelectedResponse>,
   selectedIndex: Int,
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
-    res.compute {
+    try {
       val breakpointCallback = Channel<XBreakpointDto?>()
       selectionCallback.use {
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
-      val breakpointDto = breakpointCallback.receiveCatching().getOrNull() ?: return@compute null
-      createBreakpoint(project, breakpointDto)
+      val breakpointDto = breakpointCallback.receiveCatching().getOrNull()
+      res.complete(createBreakpoint(project, breakpointDto))
+    }
+    catch (e: Throwable) {
+      res.completeExceptionally(e)
     }
   }
 }
 
 private fun createBreakpoint(
   project: Project,
-  breakpointDto: XBreakpointDto,
+  breakpointDto: XBreakpointDto?,
 ): XLineBreakpointProxy? {
+  if (breakpointDto == null) return null
   val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
   return breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
 }
