@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BackgroundHighlighter;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -46,15 +46,17 @@ public final class IdentifierHighlighterPassFactory {
 
   @TestOnly
   @RequiresEdt
-  public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Runnable r) {
+  @ApiStatus.Internal
+  public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
     ThreadingAssertions.assertEventDispatchThread();
-    BackgroundHighlighter.Companion.enableListenersInTest(project, parentDisposable);
-    try {
-      TestModeFlags.runWithFlag(ourTestingIdentifierHighlighting, true, r);
-    }
-    finally {
-      waitForIdentifierHighlighting();
-    }
+    BackgroundHighlighter.Companion.runWithEnabledListenersInTest(project, ()-> {
+      try {
+        TestModeFlags.runWithFlag(ourTestingIdentifierHighlighting, true, r);
+      }
+      finally {
+        waitForIdentifierHighlighting();
+      }
+    });
   }
 
   @TestOnly

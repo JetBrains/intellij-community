@@ -261,7 +261,7 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIdentifierHighlighterForStaticImports() {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), getTestRootDisposable(), ()->{
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), ()->{
       try {
         createClass("""
 
@@ -329,7 +329,7 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testMethodParameterEndOfIdentifier() {
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), getTestRootDisposable(), ()-> {
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(getProject(), ()-> {
       try {
         configureFile();
       }

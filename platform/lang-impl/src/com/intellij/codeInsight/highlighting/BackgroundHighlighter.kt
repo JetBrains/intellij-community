@@ -82,13 +82,20 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
 
   companion object {
     @TestOnly
-    fun enableListenersInTest(project: Project, parentDisposable: Disposable) {
+    fun runWithEnabledListenersInTest(project: Project, r: Runnable) {
       val d = project.service<BackgroundHighlighterPerProject>()
+      val parentDisposable = Disposer.newDisposable()
       val coroutineScope = d.coroutineScope.childScope("Test Background Highlighter(disposable=$parentDisposable)")
       Disposer.register(parentDisposable, Disposable {
         coroutineScope.cancel()
       })
       service<BackgroundHighlighter>().registerListeners(project, parentDisposable, coroutineScope)
+      try {
+        r.run()
+      }
+      finally {
+        Disposer.dispose(parentDisposable)
+      }
     }
   }
 
