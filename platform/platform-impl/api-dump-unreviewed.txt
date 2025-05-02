@@ -11850,7 +11850,6 @@ a:com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 f:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 - com.intellij.openapi.util.SimpleModificationTracker
 - com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:canBeEnabledOnStatusBar(com.intellij.openapi.wm.StatusBarWidgetFactory,com.intellij.openapi.wm.StatusBar):Z
 - dispose():V
@@ -11860,7 +11859,6 @@ f:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 - f:updateWidget(com.intellij.openapi.wm.StatusBarWidgetFactory):V
 - f:updateWidget(java.lang.Class):V
 - f:wasWidgetCreated(java.lang.String):Z
-f:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager$Companion
 a:com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.Disposable

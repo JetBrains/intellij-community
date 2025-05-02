@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
@@ -71,19 +71,19 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
   @RequiresEdt
   public static void start(@NotNull StatusBar statusBar, @NotNull @NlsContexts.Tooltip String tooltipText) {
     if (statusBar.getWidget(ID) instanceof VfsRefreshWidget widget) {
-      widget.start(tooltipText);
+      widget.getComponent().start(tooltipText);
     }
   }
 
   @RequiresEdt
   public static void stop(@NotNull StatusBar statusBar) {
     if (statusBar.getWidget(ID) instanceof VfsRefreshWidget widget) {
-      widget.stop();
+      widget.getComponent().stop();
     }
   }
 
   private static final class VfsRefreshWidget implements CustomStatusBarWidget {
-    private final LazyInitializer.LazyValue<VfsRefreshWidgetComponent> myComponent = LazyInitializer.create(VfsRefreshWidgetComponent::new);
+    private final LazyInitializer.LazyValue<WidgetComponent> myComponent = LazyInitializer.create(WidgetComponent::new);
 
     @Override
     public @NotNull String ID() {
@@ -91,23 +91,15 @@ public final class VfsRefreshIndicatorWidgetFactory implements StatusBarWidgetFa
     }
 
     @Override
-    public JComponent getComponent() {
+    public WidgetComponent getComponent() {
       return myComponent.get();
     }
 
-    private void start(@NlsContexts.Tooltip String tooltipText) {
-      myComponent.get().start(tooltipText);
-    }
-
-    private void stop() {
-      myComponent.get().stop();
-    }
-
-    private static class VfsRefreshWidgetComponent extends JLabel {
+    private static class WidgetComponent extends JLabel {
       private final Icon INACTIVE_ICON = EmptyIcon.ICON_16;
       private final Icon PROGRESS_ICON = new AnimatedIcon.FS();
 
-      VfsRefreshWidgetComponent() {
+      private WidgetComponent() {
         super();
         setIcon(INACTIVE_ICON);
         setEnabled(false);
