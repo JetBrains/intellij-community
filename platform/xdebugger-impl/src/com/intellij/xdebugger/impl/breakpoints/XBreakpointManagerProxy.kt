@@ -138,7 +138,10 @@ interface XBreakpointManagerProxy {
     }
 
     override fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy> {
-      return breakpointManager.findBreakpointsAtLine((type as XLineBreakpointTypeProxy.Monolith).breakpointType, file, line).map { it.asProxy() }
+      val breakpointType = (type as XLineBreakpointTypeProxy.Monolith).breakpointType
+      return breakpointManager.findBreakpointsAtLine(breakpointType, file, line)
+        .filterIsInstance<XLineBreakpointImpl<*>>()
+        .map { it.asProxy() }
     }
   }
 }

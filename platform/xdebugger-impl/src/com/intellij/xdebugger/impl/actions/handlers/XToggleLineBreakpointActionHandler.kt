@@ -17,8 +17,10 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
 class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : DebuggerActionHandler() {
@@ -44,6 +46,11 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
   }
 
   override fun perform(project: Project, event: AnActionEvent) {
+    toggleLineBreakpoint(project, event)
+  }
+
+  @VisibleForTesting
+  fun toggleLineBreakpoint(project: Project, event: AnActionEvent): CompletableFuture<Void> {
     val editor = event.getData(CommonDataKeys.EDITOR)
     val isFromGutterClick = event.getData(XLineBreakpointManager.BREAKPOINT_LINE_KEY) != null
     val inputEvent = event.inputEvent
@@ -57,26 +64,25 @@ class XToggleLineBreakpointActionHandler(private val myTemporary: Boolean) : Deb
 
     // do not toggle more than once on the same line
     val processedLines = hashSetOf<Int>()
+    val futures = mutableListOf<CompletableFuture<*>>()
     for (position in ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.dataContext)) {
       if (processedLines.add(position.getLine())) {
-        XBreakpointUtil.toggleLineBreakpointProxy(project,
-                                                  position,
-                                                  !isFromGutterClick,
-                                                  position.editor,
-                                                  isAltClick || myTemporary,
-                                                  !isFromGutterClick,
-                                                  canRemove, isConditionalBreakpoint, selection)
-          .onSuccess { breakpoint ->
-            if (breakpoint != null && isConditionalBreakpoint) {
-              runInEdt {
-                // edit breakpoint
-                val position = LogicalPosition(breakpoint.getLine() + 1, 0)
-                val point = Point(inputEvent.getPoint().x, editor.logicalPositionToXY(position).y)
-                DebuggerUIUtil.showXBreakpointEditorBalloon(project, point, (editor as EditorEx).getGutterComponentEx(), false, breakpoint)
-              }
+        val future = XBreakpointUtil.toggleLineBreakpointProxy(
+          project, position, !isFromGutterClick, position.editor, isAltClick || myTemporary,
+          !isFromGutterClick, canRemove, isConditionalBreakpoint, selection
+        ).thenAccept { breakpoint ->
+          if (breakpoint != null && isConditionalBreakpoint) {
+            runInEdt {
+              // edit breakpoint
+              val position = LogicalPosition(breakpoint.getLine() + 1, 0)
+              val point = Point(inputEvent.getPoint().x, editor.logicalPositionToXY(position).y)
+              DebuggerUIUtil.showXBreakpointEditorBalloon(project, point, (editor as EditorEx).getGutterComponentEx(), false, breakpoint)
             }
           }
+        }
+        futures.add(future)
       }
     }
+    return CompletableFuture.allOf(*futures.toTypedArray())
   }
 }

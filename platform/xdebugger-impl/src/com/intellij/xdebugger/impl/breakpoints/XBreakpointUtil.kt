@@ -206,7 +206,7 @@ object XBreakpointUtil {
     moveCaret: Boolean,
     canRemove: Boolean,
   ): Promise<XLineBreakpoint<*>?> {
-    return toggleLineBreakpointProxy(project, position, selectVariantByPositionColumn, editor, temporary, moveCaret, canRemove)
+    return toggleLineBreakpointProxy(project, position, selectVariantByPositionColumn, editor, temporary, moveCaret, canRemove).asPromise()
       .then { proxy ->
         (proxy as? XLineBreakpointProxy.Monolith)?.breakpoint as? XLineBreakpoint<*>
       }
@@ -228,7 +228,7 @@ object XBreakpointUtil {
     canRemove: Boolean,
     isConditional: Boolean = false,
     condition: String? = null,
-  ): Promise<XLineBreakpointProxy?> {
+  ): CompletableFuture<XLineBreakpointProxy?> {
     // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
     val future = CompletableFuture<XLineBreakpointProxy?>()
     project.service<XBreakpointUtilProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
@@ -256,7 +256,7 @@ object XBreakpointUtil {
       }
     }
 
-    return future.asPromise()
+    return future
   }
 
   @ApiStatus.Internal
