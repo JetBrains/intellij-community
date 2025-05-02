@@ -126,6 +126,9 @@ internal fun getResourceItem(kotlinSourceElement: KtElement): ResourceItem? {
   return candidate?.let { declaration ->
     ResourceItem.fromResourceDeclaration(declaration)
     ?: declaration.takeIf { it is KtProperty }?.let { resolvePossibleDelegate(it as KtProperty)?.let { ResourceItem.fromResourceDeclaration(it) } }
+  } ?: run {
+    log.warn("Compose resource candidate not found for '${internalProperty.name}'")
+    null
   }
 }
 
