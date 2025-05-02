@@ -45,6 +45,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 @Internal
 class DockableEditorTabbedContainer internal constructor(
@@ -85,7 +86,20 @@ class DockableEditorTabbedContainer internal constructor(
     }
   }
 
-  override fun getAcceptArea(): RelativeRectangle = RelativeRectangle(splitters)
+  override fun getAcceptArea(): RelativeRectangle {
+    val component = splitters
+    val fallback = RelativeRectangle(component)
+    if (!component.isShowing) return fallback
+    // To support accept area larger than the component, we use the root pane as the component.
+    val rootPane = SwingUtilities.getRootPane(component) ?: return fallback
+    val bounds = SwingUtilities.convertRectangle(component.parent, component.bounds, rootPane)
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    bounds.y -= tolerance
+    bounds.height += tolerance * 2
+    if (bounds.y < 0) bounds.y = 0;
+    if (bounds.height > rootPane.height) bounds.height = rootPane.height;
+    return RelativeRectangle(rootPane, bounds)
+  }
 
   override fun getContentResponse(content: DockableContent<*>, point: RelativePoint): ContentResponse {
     val tabs = getTabsAt(content, point)
