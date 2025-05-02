@@ -124,34 +124,42 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
       startupLatch?.countDown()
     }
 
-    private val entities = mapOf("amp" to "&", "gt" to ">", "lt" to "<", "quot" to "\"")
+    private val entitiesMap = mapOf("amp" to "&", "gt" to ">", "lt" to "<", "quot" to "\"")
+    private val entities = Regex("&(amp|gt|lt|quot);")
 
     private fun decodeEntities(text: String): String {
-      return text.replace(Regex("&(amp|gt|lt|quot);")) { matchResult -> entities[matchResult.groupValues[1]] ?: "" }
+      return text.replace(entities) { matchResult -> entitiesMap[matchResult.groupValues[1]] ?: "" }
     }
 
-    private val reverseEntities = mapOf("&" to "&amp;", ">" to "&gt;", "<" to "&lt;", "\"" to "&quot;")
+    private val entityCandidatesMap = mapOf("&" to "&amp;", ">" to "&gt;", "<" to "&lt;", "\"" to "&quot;")
+    private val entityCandidates = Regex("[&<>\"']")
 
     private fun encodeEntities(text: String): String {
-      return text.replace(Regex("""[&><"]""")) { matchResult -> reverseEntities[matchResult.value] ?: "" }
+      return text.replace(entityCandidates) { matchResult -> entityCandidatesMap[matchResult.value] ?: "" }
     }
 
     private val escapees: Map<Char, String> =
       mapOf('\\' to "\\\\",  '\'' to "\\'", '"' to "\\\"", '\n' to "\\n", '\r' to "\\r", '\t' to "\\t")
+    private val basicEscapes = Regex("""([\\'"\n\r])""")
+    private val controlEscapes = Regex("""([\x00-\x1F])""")
 
     private fun escapeForJs(text: String): String {
-      return text.replace(Regex("""([\\'"\n\r])""")) { match -> escapees[match.groupValues[1][0]].orEmpty() }
-        .replace(Regex("""([\x00-\x1F])""")) { match -> "\\x" + match.groupValues[1][0].code.toString(16).padStart(2, '0') }
+      return text.replace(basicEscapes) { match -> escapees[match.groupValues[1][0]].orEmpty() }
+        .replace(controlEscapes) { match -> "\\x" + match.groupValues[1][0].code.toString(16).padStart(2, '0') }
     }
 
     private data class TagInfo(val line: Int, val offset: Int)
 
+    private val tagStart = Regex("^(<\\w+)")
+
     private fun addSourceRange(tag: String, start: Int, end: Int): String {
-      return tag.replace(Regex("^(<\\w+)")) { match -> "${match.value} md-src-pos=\"$start..$end\"" }
+      return tag.replace(tagStart) { match -> "${match.value} md-src-pos=\"$start..$end\"" }
     }
 
+    private val tagAndLineBreaks = Regex("""(?<=(>|\r\n|\r|\n))|(?=(<|\r\n|\r|\n))""")
+
     private fun convertToRangedSpans(html: String, startOffset: Int): String {
-      val chunks = html.split(Regex("""(?<=(>|\r\n|\r|\n))|(?=(<|\r\n|\r|\n))""")).toTypedArray()
+      val chunks = html.split(tagAndLineBreaks).toTypedArray()
       val nesting = ArrayDeque<TagInfo>()
       var offset = startOffset
       var justStartedTag = false
@@ -216,12 +224,13 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
       }
     }
 
+    private val scriptFinder = Regex("""(<script[^>]*>)(.*?)(</\s*script\s*>)""",
+                                     setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
+
     private fun parseMixedHtmlAndJavaScript(content: String): String? {
       var scriptIndex = 0
       val javaScript = HashMap<String, String>()
-
-      val opts = setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)
-      val html = Regex("""(<script[^>]*>)(.*?)(</\s*script\s*>)""", opts).replace(content) { match ->
+      val html = scriptFinder.replace(content) { match ->
         val js = match.groups[2]?.value ?: ""
 
         if (js.trim() == "")
@@ -240,6 +249,8 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
       return markedUpHtml
     }
 
+    private val scriptTag = Regex("""<\s*script[^>]*>""", RegexOption.IGNORE_CASE)
+
     internal fun parseToHighlightedHtml(language: String, content: String, node: ASTNode): String? {
       synchronized(browser) {
         startupLatch?.await(10, TimeUnit.SECONDS)
@@ -252,7 +263,7 @@ class CodeFenceLanguageParsingSupport : ProjectActivity {
 
         var parsed: String
 
-        if (language != "html" || !Regex("""<\s*script[^<]*?>""", RegexOption.IGNORE_CASE).containsMatchIn(content)) {
+        if (language != "html" || !scriptTag.containsMatchIn(content)) {
           parsed = parseSegment(language, content) ?: return null
         }
         else {
