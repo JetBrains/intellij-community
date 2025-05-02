@@ -97,8 +97,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
-      if (state instanceof JavaCommandLine) {
-        JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+      if (state instanceof JavaCommandLine javaCommandLine) {
+        JavaProgramPatcher.runCustomPatchers(javaCommandLine.getJavaParameters(), env.getExecutor(), env.getRunProfile());
       }
       return createContentDescriptor(state, env);
     });
@@ -107,16 +107,16 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
                                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException {
 
-    if (state instanceof RemoteConnectionCreator) {
-      RemoteConnection connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
-      boolean isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
+    if (state instanceof RemoteConnectionCreator remoteConnectionCreator) {
+      RemoteConnection connection = remoteConnectionCreator.createRemoteConnection(environment);
+      boolean isPollConnection = remoteConnectionCreator.isPollConnection();
       if (connection != null) {
         return attachVirtualMachine(state, environment, connection, isPollConnection);
       }
     }
 
-    if (state instanceof JavaCommandLine) {
-      JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
+    if (state instanceof JavaCommandLine javaCommandLine) {
+      JavaParameters parameters = javaCommandLine.getJavaParameters();
       int transport = DebuggerSettings.getInstance().getTransport();
       RemoteConnection connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
         .asyncAgent(true)
@@ -131,8 +131,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return attachVirtualMachine(state, environment, connection, true);
     }
 
-    if (state instanceof RemoteState) {
-      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, environment.getRunnerSettings());
+    if (state instanceof RemoteState remoteState) {
+      final RemoteConnection connection = createRemoteDebugConnection(remoteState, environment.getRunnerSettings());
       return attachVirtualMachine(state, environment, connection, false);
     }
 
