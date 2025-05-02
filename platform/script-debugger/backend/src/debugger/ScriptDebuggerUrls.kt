@@ -10,7 +10,6 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
-import java.net.URISyntaxException
 
 @ApiStatus.Internal
 object ScriptDebuggerUrls {
@@ -29,13 +28,16 @@ object ScriptDebuggerUrls {
   }
 
   private fun toUriPath(path: String): String {
-    var result = FileUtilRt.toSystemIndependentName(path)
+    var result = decodeAndConvertToSystemIndependent(path)
     if (result.length >= 2 && result[1] == ':') result = "/$result"
     return result
   }
 
+  // Shumaf: I hate that we have so many ways to parse a URL, yet none of them are correct
+  private fun decodeAndConvertToSystemIndependent(path: String): String = FileUtilRt.toSystemIndependentName(URLUtil.unescapePercentSequences(path))
+
   private fun toUri(absoluteOrRelativePath: String): Url {
-    var result = FileUtilRt.toSystemIndependentName(absoluteOrRelativePath)
+    var result = decodeAndConvertToSystemIndependent(absoluteOrRelativePath)
     if (result.length >= 2 && result[1] == ':') result = "/$result"
     return if (result.isNotEmpty() && result[0] == '/') newLocalFileUrl(result) else Urls.newUnparsable(result)
   }
