@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintManager
@@ -17,13 +17,13 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
@@ -36,7 +36,10 @@ import kotlin.math.max
 @ApiStatus.Internal
 class UiDslOptPaneRenderer : OptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project)
+  private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project) {
+    fun getOption(bindId: String): Any? = controller.getOption(bindId)
+    fun setOption(bindId: String, value: Any) = controller.setOption(bindId, value)
+  }
 
   override fun render(controller: OptionController,
                       pane: OptPane,
@@ -276,7 +279,32 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         }
       
         is OptMultiSelector -> {
-          TODO()
+          val list = JBList(component.elements).apply {
+            cellRenderer = listCellRenderer {
+              // TODO: recognise implementations of OptElement that provide more than text
+              text(value.text)
+            }
+            addListSelectionListener {
+              context.setOption(component.bindId, selectedValuesList)
+            }
+            selectionMode = when (component.mode) {
+              OptMultiSelector.SelectionMode.SINGLE, OptMultiSelector.SelectionMode.SINGLE_OR_EMPTY,
+                -> ListSelectionModel.SINGLE_SELECTION
+              OptMultiSelector.SelectionMode.MULTIPLE, OptMultiSelector.SelectionMode.MULTIPLE_OR_EMPTY,
+                -> ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
+            }
+            selectedIndices = (context.getOption(component.bindId) as? List<*>)
+                                ?.map { component.elements().indexOf(it) }
+                                ?.toList()
+                                ?.let { list -> IntArray(list.size) { n -> list[n] } }
+                              ?: IntArray(0)
+          }
+
+          val scroll = JBScrollPane(list)
+          scroll.minimumSize = JBDimension(350, 150)
+
+          cell(scroll)
+            .align(Align.FILL)
         }
 
         is OptDropdown -> {
@@ -399,14 +427,6 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
     tableModel.addRow(*row.toTypedArray())
   }
 
-  private fun RendererContext.getOption(bindId: String): Any? {
-    return this.controller.getOption(bindId)
-  }
-
-  private fun RendererContext.setOption(bindId: String, value: Any) {
-    this.controller.setOption(bindId, value)
-  }
-
   private fun editLastRow(table: ListTable) {
     val tableModel = table.model
     val row = tableModel.rowCount - 1
@@ -460,7 +480,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
     get() = this is OptGroup || this is OptStringList || this is OptTable
 
   private val OptComponent.hasResizableRow: Boolean
-    get() = this is OptStringList || this is OptTable
+    get() = this is OptStringList || this is OptTable || this is OptMultiSelector
 
   private fun convertItem(key: String, type: Class<*>): Any {
     @Suppress("UNCHECKED_CAST")
