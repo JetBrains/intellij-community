@@ -2,9 +2,7 @@
 package com.intellij.openapi.application.rw
 
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
@@ -12,9 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.progress.blockingContext
-import fleet.util.enumSetOf
 import kotlinx.coroutines.*
-import java.util.EnumSet
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
@@ -139,11 +135,8 @@ private sealed class ReadResult<out T> {
 private suspend fun yieldToPendingWriteActions() {
   // the runnable is executed on the write thread _after_ the current or pending write action
   yieldUntilRun { runnable ->
-    val application = ApplicationManager.getApplication()
     getGlobalThreadingSupport().runWhenWriteActionIsCompleted {
-      SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER)) {
-        application.invokeLater(runnable, ModalityState.any())
-      }
+      runnable.run()
     }
   }
 }
