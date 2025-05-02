@@ -963,6 +963,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         LOG.error(ex)
       }
     }
+    myLastUpdate = job
     job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { ex ->
       if (myLastUpdate === job) {
         myLastUpdate = null
