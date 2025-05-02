@@ -13,6 +13,19 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollectorImpl;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
 import org.jetbrains.kotlin.config.Services;
+import org.jetbrains.kotlin.incremental.EnumWhenTrackerImpl;
+import org.jetbrains.kotlin.incremental.ExpectActualTrackerImpl;
+import org.jetbrains.kotlin.incremental.ImportTrackerImpl;
+import org.jetbrains.kotlin.incremental.InlineConstTrackerImpl;
+import org.jetbrains.kotlin.incremental.LookupTrackerImpl;
+import org.jetbrains.kotlin.incremental.components.EnumWhenTracker;
+import org.jetbrains.kotlin.incremental.components.ExpectActualTracker;
+import org.jetbrains.kotlin.incremental.components.ImportTracker;
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker;
+import org.jetbrains.kotlin.incremental.components.LookupTracker;
+import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents;
+import org.jetbrains.kotlin.progress.CompilationCanceledException;
+import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
 
 import java.util.List;
 
@@ -40,7 +53,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   public ExitCode compile(Iterable<NodeSource> sources, DiagnosticSink diagnostic, OutputSink out) {
     try {
       K2JVMCompilerArguments kotlinCompilerArgs = buildKotlinCompilerArguments(myContext);
-      Services services = buildServices();
+      Services services = buildServices(kotlinCompilerArgs.getModuleName());
       MessageCollector messageCollector = new MessageCollectorImpl();
       //outputItemCollector
       AbstractCliPipeline<K2JVMCompilerArguments> pipeline = createPipeline();
@@ -56,8 +69,24 @@ public class KotlinCompilerRunner implements CompilerRunner {
     return ExitCode.OK;
   }
 
-  private Services buildServices() {
-    return null; //TODO: implement proper services building
+  private Services buildServices(String moduleName) {
+    Services.Builder builder = new Services.Builder();
+    builder.register(LookupTracker.class, new LookupTrackerImpl(LookupTracker.DO_NOTHING.INSTANCE));
+    builder.register(ExpectActualTracker.class, new ExpectActualTrackerImpl());
+    builder.register(InlineConstTracker.class, new InlineConstTrackerImpl());
+    builder.register(EnumWhenTracker.class, new EnumWhenTrackerImpl());
+    builder.register(ImportTracker.class, new ImportTrackerImpl());
+    builder.register(IncrementalCompilationComponents.class,
+                     new KotlinIncrementalCompilationComponents(moduleName, new KotlinIncrementalCacheImpl()));
+
+    builder.register(CompilationCanceledStatus.class, new CompilationCanceledStatus() {
+      @Override
+      public void checkCanceled() {
+        if (myContext.isCanceled()) throw new CompilationCanceledException();
+      }
+    });
+
+    return builder.build();
   }
 
   private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline() {
