@@ -10,12 +10,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-private const val ITEMS_PER_FILE_LIMIT = 500
+private const val ITEMS_PER_FILE_LIMIT = 100
 private const val RESOURCE_ITEM_CLASS = "ResourceItem"
 private const val LANGUAGE_QUALIFIER = "LanguageQualifier"
 private const val REGION_QUALIFIER = "RegionQualifier"
 private const val THEME_QUALIFIER = "ThemeQualifier"
 private const val DENSITY_QUALIFIER = "DensityQualifier"
+private const val INTERNAL_RESOURCE_API = "InternalResourceApi"
+private const val COMPOSE_RESOURCES_FQN = "org.jetbrains.compose.resources"
 
 internal suspend fun getAccessorsSpecs(
   //type -> id -> items
@@ -53,26 +55,27 @@ private suspend fun getChunkFileSpec(
 ) {
   val content = buildString {
     append("""
-        @file:OptIn(org.jetbrains.compose.resources.InternalResourceApi::class)
+        @file:OptIn($INTERNAL_RESOURCE_API::class)
 
         package $packageName
 
         import kotlin.OptIn
-        import org.jetbrains.compose.resources.${type.resourceName}
-        import org.jetbrains.compose.resources.$RESOURCE_ITEM_CLASS
-        import org.jetbrains.compose.resources.$LANGUAGE_QUALIFIER
-        import org.jetbrains.compose.resources.$REGION_QUALIFIER
-        import org.jetbrains.compose.resources.$THEME_QUALIFIER
-        import org.jetbrains.compose.resources.$DENSITY_QUALIFIER
+        import $COMPOSE_RESOURCES_FQN.$INTERNAL_RESOURCE_API
+        import $COMPOSE_RESOURCES_FQN.${type.resourceName}
+        import $COMPOSE_RESOURCES_FQN.$RESOURCE_ITEM_CLASS
+        import $COMPOSE_RESOURCES_FQN.$LANGUAGE_QUALIFIER
+        import $COMPOSE_RESOURCES_FQN.$REGION_QUALIFIER
+        import $COMPOSE_RESOURCES_FQN.$THEME_QUALIFIER
+        import $COMPOSE_RESOURCES_FQN.$DENSITY_QUALIFIER
         
       """.trimIndent())
     appendLine()
     idToResources.forEach { (resName, items) ->
       appendLine(
         buildString {
-          append("internal val Res.${type.accessorName}.${resName}: ${type.resourceName} get() = ")
+          append("internal val Res.${type.accessorName}.${resName}: ${type.resourceName} by lazy { ")
           append("${type.resourceName}(\"${type.typeName}:${resName}\", ${if (type.isStringType) "\"$resName\", " else ""}")
-          append(items.joinToString(prefix = "setOf(", postfix = "))") { item ->
+          append(items.joinToString(prefix = "setOf(", postfix = ")) }") { item ->
             buildString {
               append("${RESOURCE_ITEM_CLASS}(")
               append("setOf(${item.addQualifiers()}),")
