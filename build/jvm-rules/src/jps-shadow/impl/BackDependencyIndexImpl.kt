@@ -80,28 +80,32 @@ abstract class BackDependencyIndexImpl protected constructor(
     }
 
     val deltaMap = deltaIndex.map
-    val sequence: Sequence<Long> = if (depsToRemove.isEmpty()) {
-      deltaMap.keys.asSequence()
+    if (depsToRemove.isEmpty()) {
+      for (idHash in deltaMap.keys) {
+        map.appendValues(idHash, deltaMap.get(idHash))
+      }
     }
     else {
-      sequence {
+      val sequence: Sequence<Long> = sequence {
         yieldAll(deltaMap.keys)
         depsToRemove.forEachKey {
           yield(it)
         }
       }
         .distinct()
-    }
-    for (idHash in sequence) {
-      val toRemove = depsToRemove.get(idHash)
-      val toAdd = deltaMap.get(idHash)
-      if (toRemove != null && !toRemove.isEmpty()) {
-        toRemove.removeAll(toAdd)
-        if (toRemove.isNotEmpty()) {
-          map.removeValues(idHash, toRemove)
+
+      for (idHash in sequence) {
+        val toRemove = depsToRemove.get(idHash)
+        val toAdd = deltaMap.get(idHash)
+        if (toRemove != null && !toRemove.isEmpty()) {
+          toRemove.removeAll(toAdd)
+          if (toRemove.isNotEmpty()) {
+            map.removeValues(idHash, toRemove)
+          }
         }
+        map.appendValues(idHash, toAdd)
       }
-      map.appendValues(idHash, toAdd)
+
     }
   }
 
@@ -120,7 +124,7 @@ private fun refToMapKey(id: ReferenceID): Long = (id as JvmNodeReferenceID).hash
 class NodeDependenciesIndex(
   mapletFactory: MvStoreContainerFactory,
   isInMemory: Boolean,
-) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory, isInMemory) {
+) : BackDependencyIndexImpl(name = "node-backward-dependencies", mapletFactory = mapletFactory, isInMemory = isInMemory) {
   override fun processIndexedDependencies(node: Node<*, *>, processor: (ReferenceID) -> Unit) {
     val referentId = node.referenceID
     val visited = MutableScatterSet<ReferenceID>()
