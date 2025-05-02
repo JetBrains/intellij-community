@@ -35,12 +35,14 @@ class JoinInitializerAndIfToElvisHandler : JoinRawLinesHandlerDelegate {
                 }
             }
         }
+
+        val variableDeclaration = data.variableDeclaration.element ?: return CANNOT_JOIN
+        val initializer = data.initializer.element ?: return CANNOT_JOIN
+        val ifNullExpr = data.ifNullExpression.element ?: return CANNOT_JOIN
+        val typeChecked = data.typeChecked?.element
+
         return joinLines(
-            ifExpression,
-            data.variableDeclaration.element!!,
-            data.initializer.element!!,
-            data.ifNullExpression.element!!,
-            data.typeChecked?.element,
+            ifExpression, variableDeclaration, initializer, ifNullExpr, typeChecked,
             data.variableTypeString
         ).textRange.startOffset
     }
