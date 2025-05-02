@@ -105,9 +105,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val project = projectId.findProjectOrNull() ?: return null
     val position = request.position.sourcePosition()
     val lineTypes = request.types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
-    val variants = withContext(Dispatchers.EDT) {
-      XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position).await()
-    }
+    val variants = readAction { XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position) }.await()
     val variantDtos = readAction {
       variants.map {
         XLineBreakpointVariantDto(it.text, it.icon?.rpcId(), it.highlightRange?.toRpc(),
@@ -115,12 +113,12 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       }
     }
     val selectionCallback = Channel<VariantSelectedResponse>()
-    project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.launch(Dispatchers.EDT) {
+    project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.launch {
       val (selectedVariantIndex, breakpointCallback) = selectionCallback.receiveCatching().getOrNull() ?: return@launch
       breakpointCallback.use {
         val variant = variants[selectedVariantIndex]
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-        val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, position.line, request.isTemporary)
+        val breakpoint = readAction { XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, position.line, request.isTemporary) }
         if (breakpoint != null && request.isConditional) {
           breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
           if (request.condition != null) {
