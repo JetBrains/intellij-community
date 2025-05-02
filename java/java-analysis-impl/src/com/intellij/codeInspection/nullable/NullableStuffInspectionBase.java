@@ -210,6 +210,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                          ? tryCast(modifierList.getParent(), PsiModifierListOwner.class) : null;
         PsiType targetType = listOwner instanceof PsiMethod method ? method.getReturnType() :
                              listOwner instanceof PsiVariable variable ? variable.getType() : null;
+        if (listOwner != null && targetType != null) {
+          checkRedundantInContainerScope(annotation, manager.findContainerAnnotation(listOwner), nullability);
+        }
+        else if (type != null) {
+          checkRedundantInContainerScope(annotation, manager.findDefaultTypeUseNullability(annotation), nullability);
+        }
         if (type instanceof PsiPrimitiveType) {
           LocalQuickFix additionalFix = null;
           if (targetType instanceof PsiArrayType && targetType.getAnnotations().length == 0) {
@@ -277,6 +283,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             if (psiClass != null && !hasStringConstructor(psiClass)) {
               reportProblem(holder, value, "custom.exception.class.should.have.a.constructor");
             }
+          }
+        }
+      }
+
+      private void checkRedundantInContainerScope(@NotNull PsiAnnotation annotation,
+                                                  @Nullable NullabilityAnnotationInfo containerInfo,
+                                                  @NotNull Nullability nullability) {
+        if (containerInfo != null && !containerInfo.getAnnotation().equals(annotation) && containerInfo.getNullability() == nullability) {
+          PsiJavaCodeReferenceElement containerName = containerInfo.getAnnotation().getNameReferenceElement();
+          if (containerName != null) {
+            reportProblem(holder, annotation,
+                          new RemoveAnnotationQuickFix(annotation, null),
+                          "inspection.nullable.problems.redundant.annotation.under.container", containerName.getReferenceName());
           }
         }
       }
