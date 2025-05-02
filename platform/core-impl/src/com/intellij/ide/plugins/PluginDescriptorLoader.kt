@@ -44,11 +44,6 @@ import javax.xml.stream.XMLStreamException
 private val LOG: Logger
   get() = PluginManagerCore.logger
 
-@TestOnly
-fun loadDescriptor(file: Path, loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): IdeaPluginDescriptorImpl? {
-  return loadDescriptorFromFileOrDir(file = file, loadingContext = loadingContext, pool = pool)
-}
-
 @JvmOverloads
 fun loadAndInitForCoreEnv(pluginRoot: Path, fileName: String, relativeDir: String = PluginManagerCore.META_INF, id: PluginId? = null): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER

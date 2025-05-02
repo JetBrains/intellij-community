@@ -172,7 +172,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val loadingContext = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { buildNumber })
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
-  val descriptors = paths.mapNotNull { loadDescriptor(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) }
+  val descriptors = paths.mapNotNull { loadDescriptorFromFileOrDir(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) }
   loadingContext.use {
     result.initAndAddAll(
       descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(DiscoveredPluginsList(descriptors, PluginsSourceContext.Custom))),

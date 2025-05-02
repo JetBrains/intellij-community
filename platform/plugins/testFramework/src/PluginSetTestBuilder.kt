@@ -1,16 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.plugins.testFramework
 
-import com.intellij.ide.plugins.DiscoveredPluginsList
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginDescriptorLoadingContext
-import com.intellij.ide.plugins.PluginDescriptorLoadingResult
-import com.intellij.ide.plugins.PluginInitializationContext
-import com.intellij.ide.plugins.PluginLoadingResult
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginSet
-import com.intellij.ide.plugins.PluginsSourceContext
-import com.intellij.ide.plugins.loadDescriptor
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
@@ -33,18 +24,18 @@ class PluginSetTestBuilder private constructor(
 
   companion object {
     @JvmStatic
-    fun fromPath(path: Path): PluginSetTestBuilder = PluginSetTestBuilder { loadingContext -> 
+    fun fromPath(path: Path): PluginSetTestBuilder = PluginSetTestBuilder { loadingContext ->
       // constant order in tests
       val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
-      paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) }
+      paths.mapNotNull { path -> loadDescriptorFromFileOrDir(path, loadingContext, ZipFilePoolImpl()) }
     }
-    
+
     @JvmStatic
     fun fromDescriptors(pluginDescriptorLoader: (loadingContext: PluginDescriptorLoadingContext) -> List<IdeaPluginDescriptorImpl>): PluginSetTestBuilder {
       return PluginSetTestBuilder(pluginDescriptorLoader)
     }
   }
-  
+
   fun withDisabledPlugins(vararg disabledPluginIds: String): PluginSetTestBuilder = apply {
     this.disabledPluginIds += disabledPluginIds.map(PluginId::getId)
   }
