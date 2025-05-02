@@ -466,14 +466,25 @@ internal class BazelBuildFileGenerator(
       }
     }
 
+    val relativePathFromRoot = moduleDescriptor.relativePathFromProjectRoot.invariantSeparatorsPathString
     val bazelModuleRelativePath = if (moduleDescriptor.isCommunity) {
-      moduleDescriptor.relativePathFromProjectRoot.invariantSeparatorsPathString.removePrefix("community/")
+      if (relativePathFromRoot == "community") {
+        ""
+      }
+      else {
+        relativePathFromRoot.removePrefix("community/")
+      }
     }
     else {
-      moduleDescriptor.relativePathFromProjectRoot.invariantSeparatorsPathString
+      relativePathFromRoot
     }
 
-    val packagePrefix = (if (moduleDescriptor.isCommunity) "@community" else "") + "//${bazelModuleRelativePath}"
+    val packagePrefix = when {
+      moduleDescriptor.module.name == "intellij.idea.community.build.zip" -> "@rules_jvm//zip"
+      moduleDescriptor.isCommunity -> "@community//${bazelModuleRelativePath}"
+      else -> "//${bazelModuleRelativePath}"
+    }
+
     val jarOutputDirectory = if (moduleDescriptor.isCommunity) {
       "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
     }
@@ -708,6 +719,11 @@ private fun isUsed(
 }
 
 private fun jpsModuleNameToBazelBuildName(module: JpsModule, baseBuildDir: Path, projectDir: Path): @NlsSafe String {
+  // non-standard location unfortunately
+  if (module.name == "intellij.idea.community.build.zip") {
+    return "zip"
+  }
+
   val result = module.name
     .removePrefix("intellij.platform.")
     .removePrefix("intellij.idea.community.")
