@@ -4,6 +4,18 @@ package org.jetbrains.jps.bazel;
 import java.util.List;
 
 public interface BuilderArgs {
+  BuilderArgs EMPTY = new BuilderArgs() {
+    @Override
+    public List<String> getJavaCompilerArgs() {
+      return List.of();
+    }
+
+    @Override
+    public List<String> getKotlinCompilerArgs() {
+      return List.of();
+    }
+  };
+  
   List<String> getJavaCompilerArgs();
   
   List<String> getKotlinCompilerArgs();

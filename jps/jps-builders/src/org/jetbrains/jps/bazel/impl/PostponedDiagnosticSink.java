@@ -7,13 +7,19 @@ import org.jetbrains.jps.bazel.Message;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class PostponedDiagnosticSink extends DiagnosticSinkImpl {
+import static org.jetbrains.jps.javac.Iterators.find;
+
+public final class PostponedDiagnosticSink implements DiagnosticSink {
   private final List<Message> myMessages = new ArrayList<>();
 
   @Override
   public void report(Message msg) {
-    super.report(msg);
     myMessages.add(msg);
+  }
+
+  @Override
+  public boolean hasErrors() {
+    return find(myMessages, msg -> msg.getKind() == Message.Kind.ERROR) != null;
   }
 
   public void drainTo(DiagnosticSink sink) {
@@ -21,6 +27,5 @@ public final class PostponedDiagnosticSink extends DiagnosticSinkImpl {
       sink.report(message);
     }
     myMessages.clear();
-    myHasErrors = false;
   }
 }

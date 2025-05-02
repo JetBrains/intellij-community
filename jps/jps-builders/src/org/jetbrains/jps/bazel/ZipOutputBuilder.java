@@ -18,7 +18,7 @@ public interface ZipOutputBuilder extends Closeable {
 
   void putEntry(String entryName, byte[] content);
 
-  void deleteEntry(String entryName);
+  boolean deleteEntry(String entryName);
 
   @Override
   default void close() throws IOException {

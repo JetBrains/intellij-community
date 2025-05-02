@@ -19,8 +19,7 @@ public class ResourcesCopy implements CompilerRunner {
 
   @Override
   public boolean canCompile(NodeSource src) {
-    String path = src.toString();
-    return !path.endsWith(".kt") && !path.endsWith(".java");
+    return false; // todo: resource patterns configuration
   }
 
   @Override

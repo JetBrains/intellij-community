@@ -84,7 +84,11 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
   @Override
   public Iterable<String> listEntries(String entryName) {
-    return isDirectoryName(entryName)? map(myDirIndex.getOrDefault(entryName, Set.of()), n -> entryName + n) : Set.of();
+    if (!isDirectoryName(entryName)) {
+      return Set.of();
+    }
+    Set<String> children = myDirIndex.getOrDefault(entryName, Set.of());
+    return map(children, "/".equals(entryName)? n -> n : n -> entryName + n);
   }
 
   @Override
@@ -110,13 +114,16 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
 
   @Override
-  public void deleteEntry(String entryName) {
+  public boolean deleteEntry(String entryName) {
+    boolean changes = false;
     EntryData data = myEntries.remove(entryName);
     if (data != null) { 
       data.cleanup();
-      myHasChanges = true;
+      changes = true;
     }
-    myHasChanges |= removeFromPackageIndex(entryName);
+    changes |= removeFromPackageIndex(entryName);
+    myHasChanges |= changes;
+    return changes;
   }
 
   @Override
@@ -408,7 +415,10 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       }
     }
     for (String parent = getParent(entryName); parent != null; parent = getParent(entryName)) {
-      Set<String> children = myDirIndex.getOrDefault(parent, Set.of());
+      Set<String> children = myDirIndex.get(parent);
+      if (children == null) {
+        break; // not associated
+      }
       changes |= children.remove(getShortName(entryName));
       if (children.isEmpty()) {
         myDirIndex.remove(parent);

@@ -94,6 +94,7 @@ public class ZipBuilderTest extends TestCase {
     try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {
 
       assertEquals(allEntriesSorted, collect(builder.getEntryNames(), new ArrayList<>()));
+      assertEquals(allEntriesSorted, collect(Iterators.filter(Iterators.recurse("/", builder::listEntries, false), n -> !builder.isDirectory(n)), new ArrayList<>()).stream().sorted().collect(Collectors.toList()));
       assertEquals(allEntriesSorted, collect(Iterators.filter(Iterators.recurse("com/", builder::listEntries, false), n -> !builder.isDirectory(n)), new ArrayList<>()).stream().sorted().collect(Collectors.toList()));
 
       builder.deleteEntry("com/sys2/");
@@ -109,6 +110,7 @@ public class ZipBuilderTest extends TestCase {
 
     try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {
       assertEquals(allEntriesAfterModificationSorted, collect(builder.getEntryNames(), new ArrayList<>()));
+      assertEquals(allEntriesAfterModificationSorted, collect(Iterators.filter(Iterators.recurse("/", builder::listEntries, false), n -> !builder.isDirectory(n)), new ArrayList<>()).stream().sorted().collect(Collectors.toList()));
       assertEquals(allEntriesAfterModificationSorted, collect(Iterators.filter(Iterators.recurse("com/", builder::listEntries, false), n -> !builder.isDirectory(n)), new ArrayList<>()).stream().sorted().collect(Collectors.toList()));
 
       byte[] modifiedContent = builder.getContent("com/sys1/api/service1.class");

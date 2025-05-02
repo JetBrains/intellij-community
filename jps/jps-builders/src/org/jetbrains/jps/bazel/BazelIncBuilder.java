@@ -83,9 +83,9 @@ public class BazelIncBuilder {
           List<String> deletedPaths = new ArrayList<>();
           for (NodeSource source : filter(flat(snapshotDelta.getDeleted(), snapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
             // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
-            outputBuilder.deleteEntry(source.toString());
-            if (!context.isRebuild() && context.getBuildLogger().isEnabled()) {
-              deletedPaths.add(source.toString());
+            String path = source.toString();
+            if (outputBuilder.deleteEntry(path)) {
+              deletedPaths.add(path);
             }
           }
 
@@ -113,8 +113,9 @@ public class BazelIncBuilder {
           for (Node<?,?> node : flat(map(flat(snapshotDelta.getDeleted(), snapshotDelta.getModified()), depGraph::getNodes))) {
             if (node instanceof JVMClassNode) {
               String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
-              outputBuilder.deleteEntry(outputPath);
-              deletedPaths.add(outputPath);
+              if (outputBuilder.deleteEntry(outputPath)) {
+                deletedPaths.add(outputPath);
+              }
             }
           }
 
