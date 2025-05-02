@@ -3,9 +3,7 @@ package com.intellij.terminal.frontend.fus
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.terminal.session.TerminalContentUpdatedEvent
-import org.jetbrains.plugins.terminal.fus.FrontendLatencyService
-import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.*
 import java.util.concurrent.ArrayBlockingQueue
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -27,6 +25,14 @@ private class FrontendOutputActivityImpl(
   private val pendingPaints = ArrayBlockingQueue<ReceivedEvent>(100)
   private var editorRepaintRequests = 0L
   private var editorRepaintRequestsBeforeModelUpdate = 0L
+
+  private val latencyReporter = BatchLatencyReporter(batchSize = 100) { samples ->
+    ReworkedTerminalUsageCollector.logFrontendOutputLatency(
+      totalDuration = samples.totalDuration(),
+      duration90 = samples.percentile(90),
+      thirdLargestDuration = samples.thirdLargest(),
+    )
+  }
 
   init {
     outputEditor.setRepaintCallback { editorRepaintRequested() }
@@ -71,10 +77,7 @@ private class FrontendOutputActivityImpl(
 
   private fun reportLatency(receivedEvent: ReceivedEvent) {
     val latency = receivedEvent.time.elapsedNow()
-    ReworkedTerminalUsageCollector.logFrontendOutputLatency(
-      eventId = receivedEvent.event.id,
-      duration = latency,
-    )
+    latencyReporter.update(latency)
   }
 
   private data class ReceivedEvent(val time: TimeMark, val event: TerminalContentUpdatedEvent)

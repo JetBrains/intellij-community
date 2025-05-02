@@ -53,7 +53,7 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
 
   when (event) {
     is TerminalWriteBytesEvent -> {
-      terminalStarter.sendTrackedBytes(event.bytes, event.id, eventTime = TimeSource.Monotonic.markNow())
+      terminalStarter.sendTrackedBytes(event.bytes, eventTime = TimeSource.Monotonic.markNow())
       // We count enter key presses on the backend separately, because it's used in the settings
       // to show the feedback notification, and the settings are currently shown on the backend through Lux.
       if (event.bytes.firstOrNull()?.toInt() == '\r'.code && AppMode.isRemoteDevHost()) {

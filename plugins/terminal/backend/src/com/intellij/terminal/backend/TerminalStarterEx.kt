@@ -8,7 +8,7 @@ import com.jediterm.terminal.TerminalExecutorServiceManager
 import com.jediterm.terminal.TerminalStarter
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.model.JediTerminal
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.*
 import java.io.IOException
 import java.util.concurrent.ScheduledExecutorService
 import kotlin.time.TimeMark
@@ -29,6 +29,14 @@ internal class TerminalStarterEx(
   @Volatile
   private var isLastSentByteEscape = false
 
+  private val typingLatencyReporter = BatchLatencyReporter(batchSize = 50) { samples ->
+    ReworkedTerminalUsageCollector.logBackendTypingLatency(
+      totalDuration = samples.totalDuration(),
+      duration90 = samples.percentile(90),
+      secondLargestDuration = samples.secondLargest(),
+    )
+  }
+
   override fun requestEmulatorStop() {
     super.requestEmulatorStop()
     isStopped = true
@@ -38,7 +46,7 @@ internal class TerminalStarterEx(
    * Use for sending bytes for that typing latency should be reported.
    * [eventTime] is the moment when this writing bytes event was initialized.
    */
-  fun sendTrackedBytes(bytes: ByteArray, eventId: Int, eventTime: TimeMark) {
+  fun sendTrackedBytes(bytes: ByteArray, eventTime: TimeMark) {
     val length = bytes.size
     if (length > 0) {
       isLastSentByteEscape = bytes[length - 1].toInt() == KeyEvent.VK_ESCAPE
@@ -48,7 +56,7 @@ internal class TerminalStarterEx(
         ttyConnector.write(bytes)
 
         val latency = eventTime.elapsedNow()
-        ReworkedTerminalUsageCollector.logBackendTypingLatency(eventId, latency)
+        typingLatencyReporter.update(latency)
       }
       catch (e: IOException) {
         thisLogger().info("Cannot write to TtyConnector ${ttyConnector.javaClass.getName()}, connected: ${ttyConnector.isConnected}", e)

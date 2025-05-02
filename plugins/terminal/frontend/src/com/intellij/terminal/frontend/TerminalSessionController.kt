@@ -19,8 +19,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
-import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
@@ -40,6 +39,15 @@ internal class TerminalSessionController(
     EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
+
+  private val documentUpdateLatencyReporter = BatchLatencyReporter(batchSize = 100) { samples ->
+    ReworkedTerminalUsageCollector.logFrontendDocumentUpdateLatency(
+      totalDuration = samples.totalDurationOf(DurationAndTextLength::duration),
+      duration90 = samples.percentileOf(90, DurationAndTextLength::duration),
+      thirdLargestDuration = samples.thirdLargestOf(DurationAndTextLength::duration),
+      textLength90 = samples.percentileOf(90, DurationAndTextLength::textLength),
+    )
+  }
 
   fun handleEvents(session: TerminalSession) {
     coroutineScope.launch {
@@ -139,10 +147,8 @@ internal class TerminalSessionController(
     val styles = event.styles.map { it.toStyleRange() }
     model.updateContent(event.startLineLogicalIndex, event.text, styles)
 
-    ReworkedTerminalUsageCollector.logFrontendDocumentUpdateLatency(
-      textLength = event.text.length,
-      duration = startTime.elapsedNow(),
-    )
+    val latencyData = DurationAndTextLength(duration = startTime.elapsedNow(), textLength = event.text.length)
+    documentUpdateLatencyReporter.update(latencyData)
   }
 
   private fun getCurrentOutputModel(): TerminalOutputModel {
