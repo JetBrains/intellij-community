@@ -69,40 +69,4 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.terminal"/>
 
   </content>
-
-  <actions>
-    <group id="PythonPackageManagerActions" searchable="false">
-      <separator/>
-
-      <action id="UvLockAction"
-              class="com.jetbrains.python.uv.packaging.UvLockAction"
-              icon="com.intellij.icons.AllIcons.Diff.Lock"/>
-
-      <action id="UvSyncAction"
-              class="com.jetbrains.python.uv.packaging.UvSyncAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
-
-
-      <separator/>
-
-      <action id="PoetryLockAction"
-              class="com.jetbrains.python.poetry.packaging.PoetryLockAction"
-              icon="com.intellij.icons.AllIcons.Diff.Lock"/>
-
-      <action id="PoetryUpdateAction"
-              class="com.jetbrains.python.poetry.packaging.PoetryUpdateAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
-
-      <separator/>
-
-      <action id="HatchRunAction"
-              class="com.jetbrains.python.hatch.packaging.HatchRunAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
-
-      <separator/>
-
-      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
-      <!--<add-to-group group-id="EditorPopupMenu" relative-to-action="ShowIntentionsGroup" anchor="after"/>-->
-    </group>
-  </actions>
 </idea-plugin>

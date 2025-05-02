@@ -538,9 +538,6 @@
     <suggestedRefactoringSupport language="Python"
                                  implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
 
-    <!-- Poetry -->
-    <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlWatcher"/>
-
     <!-- Targets API -->
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
     <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
@@ -1023,6 +1020,41 @@
               text="Show uv Support Survey"/>
 
       <add-to-group group-id="Internal"/>
+    </group>
+  </actions>
+
+  <actions>
+    <group id="PythonPackageManagerActions" searchable="false">
+      <separator/>
+
+      <action id="UvLockAction"
+              class="com.jetbrains.python.uv.packaging.UvLockAction"
+              icon="com.intellij.icons.AllIcons.Diff.Lock"/>
+
+      <action id="UvSyncAction"
+              class="com.jetbrains.python.uv.packaging.UvSyncAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+
+      <separator/>
+
+      <action id="PoetryLockAction"
+              class="com.jetbrains.python.poetry.packaging.PoetryLockAction"
+              icon="com.intellij.icons.AllIcons.Diff.Lock"/>
+
+      <action id="PoetryUpdateAction"
+              class="com.jetbrains.python.poetry.packaging.PoetryUpdateAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+      <separator/>
+
+      <action id="HatchRunAction"
+              class="com.jetbrains.python.hatch.packaging.HatchRunAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+      <separator/>
+
+      <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
     </group>
   </actions>
 
