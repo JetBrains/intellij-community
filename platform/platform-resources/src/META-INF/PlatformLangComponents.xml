@@ -181,7 +181,8 @@
                         serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
 
     <!--XNext-->
-    <applicationService serviceImplementation="com.intellij.openapi.application.impl.InternalUICustomization"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
+                        serviceImplementation="com.intellij.openapi.application.impl.manyIslands.ManyIslandsUICustomization"/>
     <!---->
 
     <adEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdEntityProvider" />
