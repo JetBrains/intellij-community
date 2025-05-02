@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.ui.dialog
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.github.git.share.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -8,6 +8,7 @@ import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.BorderLayout
 import java.awt.Container
@@ -16,7 +17,8 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal class GithubExistingRemotesDialog(project: Project, private val remotes: List<String>) : DialogWrapper(project) {
+@ApiStatus.Internal
+class GithubExistingRemotesDialog(project: Project, private val remotes: List<String>) : DialogWrapper(project) {
   init {
     title = GithubBundle.message("share.error.project.is.on.github")
     setOKButtonText(GithubBundle.message("share.anyway.button"))

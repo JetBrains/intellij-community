@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.ui.dialog
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.github.git.share.dialog
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.actionSystem.DataSink
@@ -11,10 +11,12 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 
-internal class GithubUntrackedFilesDialog(
+@ApiStatus.Internal
+class GithubUntrackedFilesDialog(
   private val myProject: Project,
   untrackedFiles: List<VirtualFile>
 ) : SelectFilesDialog(myProject, untrackedFiles, null, null, true, false), UiDataProvider {

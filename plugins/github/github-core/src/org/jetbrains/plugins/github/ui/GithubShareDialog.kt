@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.dialog.DialogUtils
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
@@ -22,7 +23,7 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import java.awt.Component
 import java.util.regex.Pattern
 
-
+@ApiStatus.Internal
 class GithubShareDialog(
   private val project: Project,
   existingRemotes: Set<String>,

@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
-import com.intellij.configurationStore.saveSettings
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
@@ -43,11 +43,16 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
+import org.jetbrains.plugins.github.git.share.dialog.GithubExistingRemotesDialog
+import org.jetbrains.plugins.github.git.share.dialog.GithubUntrackedFilesDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
-import org.jetbrains.plugins.github.ui.dialog.GithubExistingRemotesDialog
-import org.jetbrains.plugins.github.ui.dialog.GithubUntrackedFilesDialog
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.GHCompatibilityUtil
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
+import org.jetbrains.plugins.github.util.GithubNotifications
+import org.jetbrains.plugins.github.util.GithubUtil
 import java.awt.Component
 import java.io.IOException
 
@@ -58,11 +63,11 @@ object GHShareProjectUtil {
   fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
     val gitRepository = GithubGitHelper.findGitRepository(project, file)
     val root = gitRepository?.root ?: project.baseDir
-    val projectName = file?.let { SubprojectInfoProvider.Companion.getSubprojectName(project, file) }?: project.name
+    val projectName = file?.let { SubprojectInfoProvider.getSubprojectName(project, file) } ?: project.name
     shareProjectOnGithub(project, gitRepository, root, projectName)
   }
 
-    // get gitRepository
+  // get gitRepository
   // check for existing git repo
   // check available repos and privateRepo access (net)
   // Show dialog (window)
@@ -207,7 +212,8 @@ object GHShareProjectUtil {
       }
 
       private fun createEmptyGitRepository(project: Project,
-                                           root: VirtualFile): Boolean {
+                                           root: VirtualFile
+      ): Boolean {
         val result = Git.getInstance().init(project, root)
         if (!result.success()) {
           VcsNotifier.getInstance(project).notifyError(GithubNotificationIdsHolder.GIT_REPO_INIT_REPO,
@@ -234,7 +240,7 @@ object GHShareProjectUtil {
 
         invokeAndWaitIfNeeded(indicator.modalityState) {
           runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
-            saveSettings(project, forceSavingAllSettings = true)
+            StoreUtil.saveSettings(project, forceSavingAllSettings = true)
           }
         }
 
@@ -320,7 +326,7 @@ object GHShareProjectUtil {
       private fun filterOutIgnored(project: Project, files: Collection<VirtualFile>): Collection<VirtualFile> {
         val changeListManager = ChangeListManager.getInstance(project)
         val vcsManager = ProjectLevelVcsManager.getInstance(project)
-        return ContainerUtil.filter(files) { file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) }
+        return files.filter({ file -> !changeListManager.isIgnoredFile(file) && !vcsManager.isIgnored(file) })
       }
 
       private fun pushCurrentBranch(project: Project,

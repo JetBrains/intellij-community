@@ -139,10 +139,11 @@ object GHAccountsUtil {
     }.showAndGet()
   }
 
+  @JvmStatic
   @RequiresEdt
   @JvmOverloads
-  @JvmStatic
-  internal fun requestNewToken(
+  @ApiStatus.Internal
+  fun requestNewToken(
     account: GithubAccount,
     project: Project?,
     parentComponent: Component? = null

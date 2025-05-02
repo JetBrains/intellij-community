@@ -19,6 +19,7 @@
 
   <content>
     <module name="intellij.vcs.github" loading="embedded"/>
+    <module name="intellij.vcs.github.git"/>
     <module name="intellij.vcs.github.tracker"/>
   </content>
 
