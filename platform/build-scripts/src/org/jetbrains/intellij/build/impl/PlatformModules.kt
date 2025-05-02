@@ -634,10 +634,19 @@ private fun getModuleDescriptor(moduleName: String, jpsModuleName: String, xIncl
 
 private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Set<ModuleItem> {
   val frontendModuleFilter = context.getFrontendModuleFilter()
+  val contentModuleFilter = context.getContentModuleFilter()
   val result = LinkedHashSet<ModuleItem>()
-  for (moduleElement in (root.getChildren("content").asSequence().flatMap { it.getChildren("module") })) {
+  val moduleElements = root.getChildren("content").flatMap { it.getChildren("module") }
+  for (moduleElement in moduleElements) {
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
     val loadingRule = moduleElement.getAttributeValue("loading")
+    val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
+    if (dependencyHelper.isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(moduleName, pluginMainModuleName = null)) {
+      Span.current().addEvent("Tag for module '$moduleName' is removed from the core plugin by $contentModuleFilter")
+      moduleElement.parent.removeContent(moduleElement)
+      continue
+    }
+
     val relativeOutFile = if (loadingRule == "embedded") getProductModuleJarName(moduleName, context, frontendModuleFilter) else "modules/$moduleName.jar"
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
