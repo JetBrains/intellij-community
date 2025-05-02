@@ -160,6 +160,13 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
     )
   }
 
+  override fun toString(): String {
+    return "JvmClass(" +
+      "name=$name, outerFqName=$outerFqName, superFqName=$superFqName, interfaces=$interfaces, " +
+      "fields=$fields, methods=$methods, annotationTargets=$annotationTargets, retentionPolicy=$retentionPolicy" +
+      ")"
+  }
+
   inner class Diff internal constructor(
     past: JvmClass,
     private val interfacesDiff: Lazy<Difference.Specifier<String, Difference>>,
