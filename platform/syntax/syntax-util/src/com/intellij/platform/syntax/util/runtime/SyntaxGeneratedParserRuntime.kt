@@ -25,6 +25,9 @@ import com.intellij.util.containers.LimitedPool
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmInline
+import kotlin.jvm.JvmOverloads
 import kotlin.math.min
 
 /**
