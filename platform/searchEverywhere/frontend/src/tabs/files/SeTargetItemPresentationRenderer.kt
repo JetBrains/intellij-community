@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs.files
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ide.actions.SETextShortener
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
@@ -13,11 +12,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.FontMetrics
-import java.util.*
 import javax.swing.JList
 import javax.swing.ListCellRenderer
-import kotlin.math.max
 
 @Internal
 class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultListRow>) {
@@ -42,11 +38,9 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
       val fontMetrics = resultList.getFontMetrics(resultList.font)
       val presentableTextWidth = fontMetrics.stringWidth(presentation.presentableText)
       val locationTextWidth = presentation.locationText?.let { fontMetrics.stringWidth(it) } ?: 0
-
       val width = resultList.width
 
-      @Suppress("HardCodedStringLiteral")
-      text(getContainerTextForLeftComponent(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), fontMetrics)) {
+      text(SETextShortener.getShortenContainerText(containerText, width - presentableTextWidth - JBUI.scale(16) - locationTextWidth - JBUI.scale(20), { fontMetrics.stringWidth(it) })) {
         attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
 
         if (selected) {
@@ -71,38 +65,5 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
         icon(locationIcon)
       }
     }
-  }
-
-  private fun getContainerTextForLeftComponent(containerText: String, maxWidth: Int, fm: FontMetrics): String {
-    var text = containerText
-    val textStartsWithIn = text.startsWith("in ")
-    if (textStartsWithIn) text = text.substring(3)
-    val left = if (textStartsWithIn) "in " else ""
-    val adjustedText = left + text
-    if (maxWidth < 0) return adjustedText
-
-    val fullWidth = fm.stringWidth(adjustedText)
-    if (fullWidth < maxWidth) return adjustedText
-
-    val separator = when {
-      text.contains("/") -> "/"
-      SystemInfo.isWindows && text.contains("\\") -> "\\"
-      text.contains(".") -> "."
-      text.contains("-") -> "-"
-      else -> " "
-    }
-
-    val parts = LinkedList(StringUtil.split(text, separator))
-    var index: Int
-    while (parts.size > 1) {
-      index = parts.size / 2 - 1
-      parts.removeAt(index)
-      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
-        parts.add(index, "...")
-        return left + StringUtil.join(parts, separator)
-      }
-    }
-    val adjustedWidth = max((adjustedText.length * maxWidth / fullWidth - 1).toDouble(), (left.length + 3).toDouble()).toInt()
-    return StringUtil.trimMiddle(adjustedText, adjustedWidth)
   }
 }

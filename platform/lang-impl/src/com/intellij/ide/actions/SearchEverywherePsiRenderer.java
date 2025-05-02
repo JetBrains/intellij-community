@@ -11,8 +11,6 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -24,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedList;
 
 /**
 * @author Konstantin Bulenkov
@@ -70,31 +67,8 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     String text = ObjectUtils.chooseNotNull(presentablePath, SymbolPresentationUtil.getSymbolContainerText(element));
     if (text == null || text.equals(name)) return null;
     text = PSIRenderingUtils.normalizePsiElementContainerText(element, text, presentablePath);
-
-    boolean in = text.startsWith("in ");
-    if (in) text = text.substring(3);
-    String left = in ? "in " : "";
-    String adjustedText = left + text;
-    if (maxWidth < 0) return adjustedText;
-
-    int fullWidth = fm.stringWidth(adjustedText);
-    if (fullWidth < maxWidth) return adjustedText;
-    String separator = text.contains("/") ? "/" :
-                       SystemInfo.isWindows && text.contains("\\") ? "\\" :
-                       text.contains(".") ? "." :
-                       text.contains("-") ? "-" : " ";
-    LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
-    int index;
-    while (parts.size() > 1) {
-      index = parts.size() / 2 - 1;
-      parts.remove(index);
-      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
-        parts.add(index, "...");
-        return left + StringUtil.join(parts, separator);
-      }
-    }
-    int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + 3);
-    return StringUtil.trimMiddle(adjustedText, adjustedWidth);
+    if (fm == null) return text;
+    return SETextShortener.INSTANCE.getShortenContainerText(text, maxWidth, fm::stringWidth);
   }
 
   @Override
