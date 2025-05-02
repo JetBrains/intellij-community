@@ -24,6 +24,7 @@ import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
+import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
@@ -87,7 +88,12 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
       }
     }
     val containingFile = virtualFileId?.virtualFile()?.parent ?: return null
-    val targetFile = containingFile.findFile(link.trimAnchor()) ?: return null
+    val targetFile = try {
+      containingFile.findFile(link.trimAnchor())
+    }
+    catch (_: IOException) {
+      null
+    }
     return targetFile
   }
 

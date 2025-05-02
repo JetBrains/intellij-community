@@ -13,12 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.jcef.JBCefPsiNavigationUtils
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -29,6 +30,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelEx
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
@@ -162,7 +164,15 @@ internal class MarkdownComposePanel(
           .verticalScroll(scrollState),
         enabled = true,
         selectable = true,
-        onUrlClick = { url -> BrowserUtil.open(url) },
+        onUrlClick = { url ->
+          if (!Registry.`is`("markdown.open.link.in.external.browser")) return@Markdown
+          if (JBCefPsiNavigationUtils.navigateTo(url)) return@Markdown
+
+          if (Registry.`is`("markdown.open.link.fallback"))
+            MarkdownLinkOpener.getInstance().openLink(project, url)
+          else
+            MarkdownLinkOpener.getInstance().openLink(project, url, virtualFile)
+                     },
         blockRenderer = blockRenderer,
       )
     }
