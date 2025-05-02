@@ -42,7 +42,15 @@ public final class GraphUpdater {
       return new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
     }
 
-    SourceSnapshotDelta nextSnapshotDelta = new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+    SourceSnapshotDelta nextSnapshotDelta;
+    if (delta.isSourceOnly()) {
+      // the delta does not correspond to real compilation session,
+      // mark files for recompilation in the existing delta and keep information about deleted files or already modified files
+      nextSnapshotDelta = snapshotDelta;
+    }
+    else {
+      nextSnapshotDelta = new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+    }
 
     if (!diffResult.isIncremental()) {
       // recompile whole target, no integrate necessary
@@ -75,15 +83,9 @@ public final class GraphUpdater {
 
       nextSnapshotDelta.markRecompile(src);
     }
-    
-    if (delta.isSourceOnly()) {
-      // the delta does not correspond to real compilation session, files already marked for recompilation should be marked for recompilation in the next snapshot too
-      for (NodeSource source : snapshotDelta.getModified()) {
-        nextSnapshotDelta.markRecompile(source);
-      }
-    }
 
-    if (!errorsDetected) {
+    if (!errorsDetected && !delta.isSourceOnly()) {
+      // do not integrade source only delta to keed information
       depGraph.integrate(diffResult);
     }
 

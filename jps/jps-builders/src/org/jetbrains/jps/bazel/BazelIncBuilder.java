@@ -183,7 +183,7 @@ public class BazelIncBuilder {
       // todo: save abi-jar
       if (outputBuilder != null) {
         try {
-          outputBuilder.close(!context.hasErrors());
+          outputBuilder.close(true);
         }
         catch (IOException e) {
           diagnostic.report(Message.create(null, e));
