@@ -44,7 +44,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
   private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "90% percentile")
 
-  private val tabOpenedEvent = GROUP.registerEvent("tab.opened", TABS_COUNT)
+  private val tabOpenedEvent = GROUP.registerEvent("tab.opened", TABS_COUNT, "Tabs count includes the currently opened tab")
 
   private val focusGainedEvent = GROUP.registerEvent("focus.gained", FOCUS)
 
@@ -66,7 +66,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
                                                                EXIT_CODE_FIELD,
                                                                EXECUTION_TIME_FIELD)
 
-  private val sessionRestoredEvent = GROUP.registerEvent("session.restored", TABS_COUNT)
+  private val sessionRestoredEvent = GROUP.registerEvent("session.restored", TABS_COUNT, "Terminal tabs were restored on first opening of the Terminal tool window after startup")
 
   private val hyperlinkFollowedEvent = GROUP.registerEvent("hyperlink.followed", HYPERLINK_INFO_CLASS)
 
@@ -76,6 +76,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
     "frontend.typing.latency",
+    "From receiving the key event to sending it to the backend",
     TOTAL_DURATION_FIELD,
     DURATION_90_FIELD,
     SECOND_LARGEST_DURATION_FIELD,
@@ -84,6 +85,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
     "backend.typing.latency",
+    "From receiving the event from the frontend to sending it to the shell process",
     TOTAL_DURATION_FIELD,
     DURATION_90_FIELD,
     SECOND_LARGEST_DURATION_FIELD,
@@ -92,6 +94,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
     "backend.output.latency",
+    "From reading bytes from the shell to sending the text update to the frontend",
     TOTAL_DURATION_FIELD,
     DURATION_90_FIELD,
     THIRD_LARGEST_DURATION_FIELD,
@@ -100,6 +103,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
     "frontend.output.latency",
+    "From receiving the content update event from the backend to displaying the change in the terminal editor",
     TOTAL_DURATION_FIELD,
     DURATION_90_FIELD,
     THIRD_LARGEST_DURATION_FIELD,
@@ -135,18 +139,20 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val startupCursorShowingLatency = GROUP.registerVarargEvent(
     "startup.cursor.showing.latency",
+    "From the moment of UI interaction to showing the cursor in the terminal",
     TERMINAL_OPENING_WAY,
     DURATION_FIELD,
   )
 
   private val startupShellStartingLatency = GROUP.registerVarargEvent(
     "startup.shell.starting.latency",
+    "From the moment of UI interaction to the moment when the shell process is started and can accept the input",
     TERMINAL_OPENING_WAY,
     DURATION_FIELD,
   )
 
   private val startupFirstOutputLatency = GROUP.registerVarargEvent(
-    "startup.first.output.latency",
+    "From the moment of UI interaction to showing the first meaningful output (any non-whitespace symbols)",
     TERMINAL_OPENING_WAY,
     DURATION_FIELD,
   )
