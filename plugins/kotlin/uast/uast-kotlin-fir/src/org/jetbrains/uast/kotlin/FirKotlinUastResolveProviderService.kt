@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -336,7 +337,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveToCall()?.singleConstructorCallOrNull()?.symbol ?: return null
-            return resolvedAnnotationConstructorSymbol.containingClassId
+            val type = resolvedAnnotationConstructorSymbol.returnType.fullyExpandedType
+            return type.symbol?.classId
                 ?.asSingleFqName()
                 ?.toString()
         }
