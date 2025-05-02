@@ -40,6 +40,10 @@ public class PyFStringToTStringIntentionTest extends PyIntentionTestCase {
     doFStringToTStringTest();
   }
 
+  public void testNotAvailableBefore314() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, this::doNegativeTest);
+  }
+
   private void doFStringToTStringTest() {
     doTest(PyPsiBundle.message("INTN.convert.f.string.to.t.string"), LanguageLevel.getLatest());
   }
@@ -49,6 +53,6 @@ public class PyFStringToTStringIntentionTest extends PyIntentionTestCase {
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doNegativeTest(PyPsiBundle.message("INTN.convert.f.string.to.t.string")));
+    doNegativeTest(PyPsiBundle.message("INTN.convert.f.string.to.t.string"));
   }
 }
