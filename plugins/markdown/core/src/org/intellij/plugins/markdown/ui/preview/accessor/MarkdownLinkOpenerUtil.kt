@@ -4,6 +4,8 @@ package org.intellij.plugins.markdown.ui.preview.accessor
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -17,6 +19,8 @@ import com.intellij.util.UriUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
+import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
@@ -25,15 +29,19 @@ object MarkdownLinkOpenerUtil {
   private val  logger = logger<MarkdownLinkOpenerUtil>()
 
   fun navigateToHeader(project: Project, headerInfo: MarkdownHeaderInfo) {
+    createFileUri(headerInfo.filePath) ?: return
     val file = headerInfo.virtualFileId.virtualFile() ?: return
     val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset) ?: return
-    //val manager = FileEditorManager.getInstance(project)
+    val manager = FileEditorManager.getInstance(project)
+    val openedEditor = manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>().firstOrNull()
+    if (openedEditor == null) {
+      val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
+      manager.openEditor(descriptor, true)
+      return
+    }
     PsiNavigateUtil.navigate(element, true)
-    //manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>().firstOrNull()?.let {
-    //
-    //}
-    //val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
-    //manager.openEditor(descriptor, true)
+    (openedEditor.previewEditor as? MarkdownPreviewFileEditor)
+      ?.scrollToLine(openedEditor.editor, headerInfo.lineNumber)
   }
 
   fun collectHeaders(project: Project, anchor: String, targetFile: VirtualFile): List<MarkdownHeaderInfo>? {
