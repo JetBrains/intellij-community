@@ -58,7 +58,6 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
 
     // updateMappingsOnRoundCompletion uses Iterators.map without an explicit size, cannot fix it for now
 
-
     val delta = DeltaImpl(toSet(compiledSources), toSet(deletedSources))
     if (delta.indices.map { it.name } != indices.map { it.name }) {
       throw RuntimeException(
@@ -126,15 +125,13 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
       emptySet()
     }
 
-    // Important: in case of errors,
-    // some sources sent to recompilation ('baseSources')
+    // Important: in case of errors, some sources sent to recompilation (`baseSources`)
     // might not have corresponding output classes either because a source has compilation errors
     // or because the compiler stopped compilation and has not managed to compile some sources
     // (=> produced no output for these sources).
-    // In this case, ignore 'baseSources' when building the set of previously available nodes,
+    // In this case, ignore 'baseSources' when building the set of previously available nodes
     // so that only successfully recompiled and deleted sources will take part in dependency analysis and affection of additional files.
-    // This will also affect the contents of 'deletedNodes' set:
-    // it will be based only on those sources
+    // This will also affect the contents of the `deletedNodes` set: it will be based only on those sources
     // which were deleted or processed without errors => the current set of nodes for such files is known.
     // Nodes in the graph corresponding to those 'baseSources',
     // for which the compiler has not produced any output, are available in the 'nodeWithErrors' set and can be analyzed separately.
@@ -149,7 +146,7 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
 
     // Do not process 'removed' per-source file.
     // This works when a class comes from exactly one source.
-    // However, it might not work, if a class can be associated with several sources
+    // However, it might not work if a class can be associated with several sources
     // better make a node-diff over all compiled sources => the sets of removed,
     // added, deleted _nodes_ will be more accurate and reflect reality
     val deletedNodes = if (nodesBefore.isEmpty()) emptyList() else nodesBefore.filter { !nodesAfter.contains(it) }
@@ -340,7 +337,7 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
     diffContext.affectedSources.forEach { affectedSources.add(it) }
 
     if (!delta.isSourceOnly) {
-      // complete affected file set with source-delta dependencies
+      // complete the affected file set with source-delta dependencies
       val compiledSources = ObjectOpenHashSet<NodeSource>(affectedSources.size)
       affectedSources.forEach {
         if (params.belongsToCurrentCompilationChunk().test(it)) {
@@ -417,16 +414,6 @@ class DependencyGraphImpl(containerFactory: MvStoreContainerFactory) : GraphImpl
           dataAfter = emptyScatterSet()
         ) { past, now -> deepDiffForNodes(past, now) }
       }
-    }
-  }
-
-  fun integrateDeltaWithExternalStorage(
-    deletedNodes: Iterable<Node<*, *>>,
-    updatedNodes: Iterable<Node<*, *>>,
-    delta: Delta,
-  ) {
-    for (index in indices) {
-      index.integrate(deletedNodes, updatedNodes, delta.getIndex(index.name))
     }
   }
 }

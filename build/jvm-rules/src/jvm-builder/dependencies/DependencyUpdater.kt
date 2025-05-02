@@ -108,6 +108,8 @@ internal suspend fun checkDependencies(
     deletedSources = toSourceSet(deletedNodes),
     depGraph = graph,
   )
+
+  // compute delta indexes - it is used for graph.differentiate (some differentiation rules can use delta indexes)
   tracer.span("associate dependencies") {
     changedOrAddedNodes.forEach { source, item ->
       delta.associateNodes(source, item.newNode!!)
@@ -158,26 +160,17 @@ internal suspend fun checkDependencies(
   }
 
   coroutineContext.ensureActive()
-
   try {
-    withContext(NonCancellable) {
-      launch(Dispatchers.IO) {
-        Files.createDirectories(usedAbiDir)
-        filesToCopy.forEach { (newFile, oldFile) ->
-          launch {
-            if (!isRebuild) {
-              Files.deleteIfExists(oldFile)
-            }
-            Files.createLink(oldFile, newFile)
+    withContext(Dispatchers.IO + NonCancellable) {
+      Files.createDirectories(usedAbiDir)
+      filesToCopy.forEach { (newFile, oldFile) ->
+        launch {
+          if (!isRebuild) {
+            Files.deleteIfExists(oldFile)
           }
+          Files.createLink(oldFile, newFile)
         }
       }
-
-      graph.integrateDeltaWithExternalStorage(deletedNodes = diffResult.deletedNodes, updatedNodes = sequence {
-        changedOrAddedNodes.forEachValue {
-          yield(it.oldNode ?: return@forEachValue)
-        }
-      }.asIterable(), delta = delta)
     }
   }
   catch (e: CancellationException) {
@@ -189,6 +182,10 @@ internal suspend fun checkDependencies(
 }
 
 private fun toSourceSet(changedOrAddedNodes: MutableScatterMap<AbiJarSource, NodeUpdateItem>): Set<NodeSource> {
+  if (changedOrAddedNodes.isEmpty()) {
+    return emptySet()
+  }
+
   return ObjectOpenHashSet<NodeSource>(changedOrAddedNodes.size).also { result ->
     changedOrAddedNodes.forEachKey { result.add(it) }
   }

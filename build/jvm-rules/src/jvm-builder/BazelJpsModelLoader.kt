@@ -63,7 +63,7 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-private const val TOOL_VERSION: Long = 52
+private const val TOOL_VERSION: Long = 53
 
 internal fun loadJpsModel(
   sources: List<Path>,
