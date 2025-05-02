@@ -105,11 +105,10 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
    */
   override fun actionPerformed(e: AnActionEvent) {
     val manager = getManager(e) ?: return
-
     val document = e.editor()?.document
 
-    runInEdt {
-      document?.let {
+    document?.let {
+      runInEdt {
         FileDocumentManager.getInstance().saveDocument(document)
       }
     }
