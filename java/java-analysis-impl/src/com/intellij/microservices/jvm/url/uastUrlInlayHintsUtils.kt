@@ -16,17 +16,11 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UReferenceExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 
-/**
- * if [ignoreSubPathContext] is true then [UrlPathReferenceInjector.defaultRootContextProvider] is used
- */
-fun urlInlayHintProvider(
-  injector: UrlPathReferenceInjector<UExpression>,
-  ignoreSubPathContext: Boolean = false,
-): UastSemProvider<UrlPathInlayHintsProviderSemElement> {
+fun urlInlayHintProvider(injector: UrlPathReferenceInjector<UExpression>): UastSemProvider<UrlPathInlayHintsProviderSemElement> {
   return uastSemElementProvider(listOf(UInjectionHost::class.java, UReferenceExpression::class.java)) { uExpression, _ ->
     val context = forbidExpensiveUrlContext {
       val rootContext = injector.defaultRootContextProvider(uExpression)
-        if (!ignoreSubPathContext) rootContext.subContext(injector.toUrlPath(uExpression))
+        if (!injector.ignoreSubPathContext) rootContext.subContext(injector.toUrlPath(uExpression))
         else rootContext
     }
 
