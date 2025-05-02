@@ -23,24 +23,30 @@ enum class TestModules(@JvmField val sourcePaths: List<String>, private val para
   LANG_IMPL(listOf("platform/lang-impl/src", "platform/lang-impl/gen"), "platform/lang-impl/lang-impl.jar-0.params"),
   PLATFORM_BOOTSTRAP(listOf("platform/platform-impl/bootstrap/src"), "platform/platform-impl/bootstrap/ide-bootstrap.jar-0.params"),
   JEWEL(listOf("platform/jewel/foundation/src/main/kotlin"), "platform/jewel/foundation/foundation.jar-0.params"),
+
+  TEST_AM_B(listOf("testData/IJI-2602/b"), "testData/IJI-2602/b.jar-0.params"),
   ;
 
-  fun getParams(baseDir: Path): String {
+  fun getParams(testPaths: TestWorkerPaths): String {
     @Suppress("SpellCheckingInspection")
-    return Files.readString(baseDir.resolve("bazel-out/community+/darwin_arm64-fastbuild/bin").resolve(paramsPath)).trim()
+    if (testPaths.communityDir == null) {
+      return Files.readString(testPaths.baseDir.resolve("bazel-out/darwin_arm64-fastbuild/bin").resolve(paramsPath)).trim().replace("external/+_", "../../external/+_")
+    }
+    else {
+      return Files.readString(testPaths.baseDir.resolve("bazel-out/community+/darwin_arm64-fastbuild/bin").resolve(paramsPath)).trim()
+    }
   }
 }
 
 data class TestWorkerPaths(
   @JvmField val baseDir: Path,
-  @JvmField val communityDir: Path,
+  @JvmField val communityDir: Path?,
   val userHomeDir: Path,
 )
 
 fun getTestWorkerPaths(): TestWorkerPaths {
   val userHomeDir = Path.of(System.getProperty("user.home"))
-  val ideaProjectDirName = "idea"
-  val projectDir = userHomeDir.resolve("projects/$ideaProjectDirName")
+  val projectDir = userHomeDir.resolve("projects/idea")
   val communityDir = projectDir.resolve("community")
   val baseDir = getBazelExecRoot(projectDir)
   return TestWorkerPaths(
@@ -50,12 +56,22 @@ fun getTestWorkerPaths(): TestWorkerPaths {
   )
 }
 
+fun getTestDataWorkerPaths(): TestWorkerPaths {
+  val userHomeDir = Path.of(System.getProperty("user.home"))
+  val projectDir = userHomeDir.resolve("projects/idea/community/build/jvm-rules")
+  return TestWorkerPaths(
+    baseDir = getBazelExecRoot(projectDir),
+    communityDir = null,
+    userHomeDir = Path.of(System.getProperty("user.home")),
+  )
+}
+
 private fun getBazelExecRoot(currentWorkingDir: Path): Path {
   val process = ProcessBuilder("bazelisk", "info", "execution_root")
     .directory(currentWorkingDir.toFile())
     .start()
 
-  val output = process.inputStream.readAllBytes().toString(Charsets.UTF_8).trim()
+  val output = process.inputStream.readAllBytes().decodeToString().trim()
   val exitCode = process.waitFor()
   if (exitCode == 0) {
     val result = Path.of(output)
@@ -69,14 +85,26 @@ private fun getBazelExecRoot(currentWorkingDir: Path): Path {
 }
 
 @OptIn(ExperimentalPathApi::class)
-fun collectSources(sourceDirPath: String, paths: TestWorkerPaths): Sequence<Path> {
-  return paths.communityDir.resolve(sourceDirPath)
+fun collectIjMonorepoSources(sourceDirPath: String, paths: TestWorkerPaths): Sequence<Path> {
+  return paths.communityDir!!.resolve(sourceDirPath)
     .walk()
     .filter {
       val p = it.toString()
       p.endsWith(".kt") || p.endsWith(".java")
     }
     .map { "../community+/" + paths.communityDir.relativize(it).invariantSeparatorsPathString }
+    .sorted()
+    .map { paths.baseDir.resolve(it).normalize() }
+}
+
+@OptIn(ExperimentalPathApi::class)
+fun collectTestDataSources(sourceDirPath: String, paths: TestWorkerPaths): Sequence<Path> {
+  return paths.baseDir.resolve(sourceDirPath)
+    .walk()
+    .filter {
+      val p = it.toString()
+      p.endsWith(".kt") || p.endsWith(".java")
+    }
     .sorted()
     .map { paths.baseDir.resolve(it).normalize() }
 }

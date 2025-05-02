@@ -5,8 +5,11 @@ package org.jetbrains.bazel.jvm.worker.test
 
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.TestModules
-import org.jetbrains.bazel.jvm.collectSources
+import org.jetbrains.bazel.jvm.TestWorkerPaths
+import org.jetbrains.bazel.jvm.collectIjMonorepoSources
+import org.jetbrains.bazel.jvm.collectTestDataSources
 import org.jetbrains.bazel.jvm.configureOpenTelemetry
+import org.jetbrains.bazel.jvm.getTestDataWorkerPaths
 import org.jetbrains.bazel.jvm.getTestWorkerPaths
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
@@ -17,6 +20,7 @@ import org.jetbrains.bazel.jvm.worker.buildUsingJps
 import org.jetbrains.bazel.jvm.worker.configureGlobalJps
 import org.jetbrains.bazel.jvm.worker.dependencies.DependencyAnalyzer
 import java.nio.file.Files
+import java.nio.file.Path
 import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
 
@@ -24,13 +28,26 @@ internal object TestJpsBuildWorker {
   @OptIn(ExperimentalPathApi::class)
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    val testPaths = getTestWorkerPaths()
-    val baseDir = testPaths.baseDir
+    val testModule = TestModules.TEST_AM_B
 
-    val testModule = TestModules.PLATFORM_IMPL
-    val sources = testModule.sourcePaths.flatMap { collectSources(sourceDirPath = it, paths = testPaths) }
-    require(sources.isNotEmpty())
-    val testParams = testModule.getParams(baseDir)
+    val testPaths: TestWorkerPaths
+
+    val sources: List<Path>
+
+    @Suppress("KotlinConstantConditions")
+    if (testModule.ordinal >= TestModules.TEST_AM_B.ordinal) {
+      testPaths = getTestDataWorkerPaths()
+      sources = testModule.sourcePaths.flatMap { collectTestDataSources(sourceDirPath = it, paths = testPaths) }
+    }
+    else {
+      testPaths = getTestWorkerPaths()
+      sources = testModule.sourcePaths.flatMap { collectIjMonorepoSources(sourceDirPath = it, paths = testPaths) }
+    }
+
+    require(sources.isNotEmpty()) { "No sources found" }
+
+    val testParams = testModule.getParams(testPaths)
+    val baseDir = testPaths.baseDir
 
     performTestInvocation { out, coroutineScope ->
       // IDEA console is bad and outdated, write to file and use modern tooling to view logs
