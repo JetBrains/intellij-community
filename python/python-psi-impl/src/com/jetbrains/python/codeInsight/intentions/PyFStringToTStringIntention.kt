@@ -8,16 +8,15 @@ import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.psi.PyDocStringOwner
-import com.jetbrains.python.psi.PyFormattedStringElement
-import com.jetbrains.python.psi.PyStringLiteralExpression
-import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.*
 
 /**
  * Intention to convert between f-strings and t-strings (PEP-750)
  */
 class PyFStringToTStringIntention : PsiUpdateModCommandAction<PyFormattedStringElement>(PyFormattedStringElement::class.java) {
   override fun getPresentation(context: ActionContext, stringElement: PyFormattedStringElement): Presentation? {
+    if (LanguageLevel.forElement(stringElement).isOlderThan(LanguageLevel.PYTHON314)) return null
+    
     val stringLiteral = stringElement.getParent() as? PyStringLiteralExpression ?: return null
     val docStringOwner = stringLiteral.parentOfType<PyDocStringOwner>()
     if (docStringOwner != null && docStringOwner.getDocStringExpression() === stringLiteral) return null
