@@ -517,6 +517,17 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsPositionalVarargArgument() {
+    doTest();
+  }
+
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsKeywordVarargArgument() {
+    doTest();
+  }
+
+  // PY-80850
   public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValue() {
     doTest();
   }
