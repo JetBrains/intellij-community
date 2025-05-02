@@ -22,12 +22,9 @@ import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
 import fleet.multiplatform.shims.ConcurrentHashMap
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NotNull
 import java.awt.Font
@@ -75,6 +72,8 @@ class FindRemoteApiImpl : FindRemoteApi {
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
           files.add(adapter.path)
           val previousItem: UsageInfo2UsageAdapter? = previousResultMap[adapter.path]
+          val originalOffset = adapter.navigationOffset
+          val originalLength = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset
           val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem)
           adapter.updateCachedPresentation()
           previousResultMap[adapter.path] = adapter
@@ -90,7 +89,9 @@ class FindRemoteApiImpl : FindRemoteApi {
             presentation = textChunks,
             line = adapter.line,
             offset = adapter.navigationOffset,
+            originalOffset = originalOffset,
             length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
+            originalLength = originalLength,
             fileId = virtualFile.rpcId(),
             path = virtualFile.path,
             presentablePath = presentablePath,

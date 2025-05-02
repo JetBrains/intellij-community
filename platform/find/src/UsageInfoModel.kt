@@ -28,13 +28,15 @@ class UsageInfoModel(val project: Project, private val model: FindInFilesResult,
 
   override fun getMergedInfosAsync(): CompletableFuture<Array<UsageInfo>> {
     val virtualFile = mergedModel.fileId.virtualFile() ?: return CompletableFuture.completedFuture(emptyArray())
-      val usageInfo = UsageInfo(
+    val usageInfos = mergedUsages.map {
+      UsageInfo(
         PsiManager.getInstance(project).findFile(virtualFile) ?: return CompletableFuture.completedFuture(emptyArray()),
-        mergedModel.offset, mergedModel.offset + mergedModel.length
+        it.originalOffset, it.originalOffset + it.originalLength
       )
+    }.toTypedArray()
 
     val future = CompletableFuture<Array<UsageInfo>>()
-    future.complete(arrayOf(usageInfo))
+    future.complete(usageInfos)
     return future
   }
 
