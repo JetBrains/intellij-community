@@ -33,18 +33,20 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
 
   @Override
   public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+    final Document document = editor.getDocument();
+    int textLength = document.getTextLength();
     List<Caret> adjusted = null;
     for (Caret c : editor.getCaretModel().getAllCarets()) {
       if (c != caret && c.getLogicalPosition().column == 0) {
         if (adjusted == null) adjusted = new ArrayList<>();
-        c.moveToOffset(c.getOffset() + 1);
+        int offset = c.getOffset();
+        c.moveToOffset(offset == textLength ? 0 : offset + 1);
         adjusted.add(c);
       }
     }
 
     final Project project = editor.getProject();
     assert project != null;
-    final Document document = editor.getDocument();
     final PsiFile file = getPsiFile(project, editor);
 
     final MoverWrapper mover = getSuitableMover(editor, file);
@@ -57,7 +59,8 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
 
     if (adjusted != null) {
       for (Caret c : adjusted) {
-        c.moveToOffset(c.getOffset() - 1);
+        int offset = c.getOffset();
+        c.moveToOffset(offset == 0 ? textLength : offset - 1);
       }
     }
   }
