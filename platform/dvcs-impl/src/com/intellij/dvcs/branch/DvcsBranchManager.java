@@ -176,7 +176,7 @@ public abstract class DvcsBranchManager<T extends Repository> {
   }
 
   public boolean isGroupingEnabled(@NotNull GroupingKey key) {
-    return myBranchSettings.getGroupingKeyIds().contains(key.getId());
+    return myBranchSettings.isGroupingEnabled(key);
   }
 
   public void setGrouping(@NotNull GroupingKey key, boolean state) {

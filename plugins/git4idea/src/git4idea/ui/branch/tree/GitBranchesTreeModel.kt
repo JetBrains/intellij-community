@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -20,8 +19,8 @@ import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchManager
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 
@@ -46,8 +45,7 @@ internal abstract class GitBranchesTreeModel(
     repositories.map { holder.get(it.rpcId) }
   }
 
-  private val branchManager = project.service<GitBranchManager>()
-  var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
+  var isPrefixGrouping: Boolean by equalVetoingObservable(GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
     applyFilterAndRebuild(null)
   }
 

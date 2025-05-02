@@ -23,6 +23,10 @@ class DvcsBranchSettings : BaseState() {
   @get:Tag("branch-grouping")
   @get:XCollection(style = XCollection.Style.v2)
   val groupingKeyIds by stringSet(defaultGroupingKey.id)
+
+  fun isGroupingEnabled(key: GroupingKey): Boolean {
+    return groupingKeyIds.contains(key.id)
+  }
 }
 
 private val defaultGroupingKey = GroupingKey.GROUPING_BY_DIRECTORY
