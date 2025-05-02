@@ -53,14 +53,16 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   override fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit) {
     val disposableFlag = Disposer.newCheckedDisposable()
     Disposer.register(disposable, disposableFlag)
-    project.messageBus.connect(disposable).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener {
+    val listener = ShelveChangesManagerListener {
       if (ApplicationManager.getApplication().isDispatchThread) {
         listener()
       }
       else {
         ApplicationManager.getApplication().invokeLater(listener) { disposableFlag.isDisposed }
       }
-    })
+    }
+    project.messageBus.connect(disposable).subscribe(ShelveChangesManager.SHELF_TOPIC, listener)
+    listener.shelvedListsChanged()
   }
 
   private fun mainLists(): List<ShelvedChangeList> {
