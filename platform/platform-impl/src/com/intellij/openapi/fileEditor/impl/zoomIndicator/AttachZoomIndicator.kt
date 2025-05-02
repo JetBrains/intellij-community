@@ -39,7 +39,7 @@ private class AttachZoomIndicator : EditorFactoryListener {
       if (!ZoomIndicatorManager.isEditorZoomIndicatorEnabled || shouldSuppressZoomIndicator(editorEx)) return@addPropertyChangeListener
 
       invokeLater {
-        if (!editorEx.isDisposed) {
+        if (!editorEx.isDisposed && editorEx.component.isShowing) {
           val balloon = service(project).createOrGetBalloon(editorEx)
           balloon?.showInBottomCenterOf(getComponentToUse(project, editorEx))
         }
