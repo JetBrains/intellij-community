@@ -1,14 +1,32 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
-java_library(
-  name = "core-nio-fs",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.java"]),
-  add_exports = ["java.base/sun.nio.fs"],
-  deps = ["@lib//:jetbrains-annotations"]
+### auto-generated section `build intellij.platform.core.nio.fs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = ["java.base/sun.nio.fs=ALL-UNNAMED"]
 )
 
-### skip generation section `build intellij.platform.core.nio.fs`
+jvm_resources(
+  name = "core-nio-fs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core-nio-fs",
+  module_name = "intellij.platform.core.nio.fs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  deps = ["@lib//:jetbrains-annotations"],
+  runtime_deps = [":core-nio-fs_resources"]
+)
+### auto-generated section `build intellij.platform.core.nio.fs` end
 
 ### auto-generated section `build intellij.platform.core.nio.fs.benchmarks` start
 load("@rules_java//java:defs.bzl", "java_library")
