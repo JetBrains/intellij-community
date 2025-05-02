@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
+import git4idea.GitTag
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
@@ -32,7 +33,7 @@ internal open class GitBranchesTreeSingleRepoModel(
 
   override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.branches.remoteBranches
 
-  override fun getTags() = repository.tags.keys
+  override fun getTags(): Set<GitTag> = repository.tagHolder.getTags().keys
 
   override fun getChildren(parent: Any?): List<Any> {
     if (parent == null || notHaveFilteredNodes()) return emptyList()

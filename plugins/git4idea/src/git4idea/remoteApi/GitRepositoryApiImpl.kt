@@ -26,7 +26,6 @@ import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.tree.tags
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 
@@ -102,6 +101,23 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       channel.trySend(GitRepositoryEvent.RepositoryStateUpdated(repository.rpcId, repositoryState))
     }
 
+    override fun tagsLoaded(repository: GitRepository) {
+      if (repository.isDisposed) return
+
+      // Even though getInfo is annotated with @NotNull, a value can still be missing during the initialization stage.
+      // At the same time, tags can be loaded at any point
+      @Suppress("SENSELESS_COMPARISON")
+      if (repository.info == null) {
+        LOG.debug("Tags were loaded while repo is not fully initialized. Skip")
+        return
+      }
+
+      LOG.debug("Tags were loaded for ${repository.root}. Updating state")
+
+      val repositoryState = convertRepositoryState(repository)
+      channel.trySend(GitRepositoryEvent.TagsLoaded(repository.rpcId, repositoryState))
+    }
+
     override fun favoriteRefsUpdated(repository: GitRepository?) {
       if (repository?.isDisposed == true) return
 
@@ -148,7 +164,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       val refsSet = GitReferencesSet(
         repository.info.localBranchesWithHashes.keys,
         repository.info.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
-        repository.tags.keys,
+        repository.tagHolder.getTags().keys,
       )
       return GitRepositoryState(
         GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repository)),

@@ -89,8 +89,15 @@ class GitRepositoriesFrontendHolder(
                 info
               }
             }
+            is GitRepositoryEvent.TagsLoaded -> {
+              repositories.computeIfPresent(event.repositoryId) { k, info ->
+                info.state = event.newState
+                info
+              }
+            }
           }
 
+          // TODO better more granular update
           widgetUpdateFlow.tryEmit(Unit)
         }
       }

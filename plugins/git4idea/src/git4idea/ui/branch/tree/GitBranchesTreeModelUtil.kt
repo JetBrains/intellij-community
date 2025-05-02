@@ -13,7 +13,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
-import com.intellij.vcs.log.Hash
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.*
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -35,11 +35,6 @@ internal val GitRepository.recentCheckoutBranches
   get() =
     if (!GitVcsSettings.getInstance(project).showRecentBranches()) emptyList()
     else branches.recentCheckoutBranches
-
-internal val GitRepository.tags: Map<GitTag, Hash>
-  get() =
-    if (!GitVcsSettings.getInstance(project).showTags()) emptyMap()
-    else this.tagHolder.getTags()
 
 internal val emptyBranchComparator = Comparator<GitReference> { _, _ -> 0 }
 

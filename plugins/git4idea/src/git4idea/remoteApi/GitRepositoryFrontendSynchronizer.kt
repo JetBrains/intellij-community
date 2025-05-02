@@ -12,6 +12,8 @@ internal interface GitRepositoryFrontendSynchronizer {
 
   fun repositoryUpdated(repository: GitRepository)
 
+  fun tagsLoaded(repository: GitRepository)
+
   fun favoriteRefsUpdated(repository: GitRepository?)
 
   companion object {

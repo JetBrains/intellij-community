@@ -54,6 +54,12 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
+  class TagsLoaded(val repositoryId: RepositoryId, val newState: GitRepositoryState) : GitRepositoryEvent {
+    override fun toString(): String = "Tags loaded in ${repositoryId}"
+  }
+
+  @Serializable
+  @ApiStatus.Internal
   class FavoriteRefsUpdated(val repositoryId: RepositoryId, val favoriteRefs: GitFavoriteRefs) : GitRepositoryEvent {
     override fun toString(): String = "Favorite refs updated ${repositoryId}"
   }

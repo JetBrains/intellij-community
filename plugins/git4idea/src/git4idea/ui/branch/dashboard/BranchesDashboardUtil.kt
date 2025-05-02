@@ -15,10 +15,10 @@ import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRefUtil.getCurrentTag
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.tree.tags
 import it.unimi.dsi.fastutil.ints.IntSet
 
 internal object BranchesDashboardUtil {
@@ -62,9 +62,11 @@ internal object BranchesDashboardUtil {
   }
 
   fun getTags(project: Project, repositories: Collection<GitRepository>): Set<TagInfo> {
+    if (!GitVcsSettings.getInstance(project).showTags()) return emptySet()
+
     val tags = mutableMapOf<GitTag, MutableList<GitRepository>>()
     repositories.forEach { repo ->
-      for (tag in repo.tags) {
+      for (tag in repo.tagHolder.getTags()) {
         tags.computeIfAbsent(tag.key) { mutableListOf() }.add(repo)
       }
     }

@@ -122,7 +122,10 @@ internal abstract class GitBranchesTreeModel(
   }
 
   private fun rebuildTags(matcher: MinusculeMatcher?) {
-    tagsTree = LazyRefsSubtreeHolder(getTags(), matcher, ::isPrefixGrouping, refComparatorGetter = ::getRefComparator)
+    tagsTree =
+      if (GitVcsSettings.getInstance(project).showTags())
+        LazyRefsSubtreeHolder(getTags(), matcher, ::isPrefixGrouping, refComparatorGetter = ::getRefComparator)
+      else LazyRefsSubtreeHolder.emptyHolder()
   }
 
   protected fun getRefComparator(affectedRepositories: List<GitRepositoryFrontendModel> = repositoriesFrontendModel): Comparator<GitReference> {
