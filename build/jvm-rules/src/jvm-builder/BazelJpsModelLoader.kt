@@ -12,6 +12,7 @@ import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
+import org.jetbrains.bazel.jvm.kotlin.getJvmTargetLevel
 import org.jetbrains.bazel.jvm.util.ArgMap
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
@@ -86,8 +87,7 @@ internal fun loadJpsModel(
   )
   val jpsJavaModuleExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module)
 
-  val languageLevelEnumName = "JDK_" + args.mandatorySingle(JvmBuilderFlags.JVM_TARGET).let { if (it == "8") "1_8" else it }
-  val langLevel = LanguageLevel.valueOf(languageLevelEnumName)
+  val langLevel = LanguageLevel.valueOf("JDK_" + getJvmTargetLevel(args))
   jpsJavaModuleExtension.languageLevel = langLevel
 
   for (source in sources) {

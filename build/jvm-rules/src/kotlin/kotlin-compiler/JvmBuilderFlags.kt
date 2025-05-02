@@ -29,8 +29,6 @@ enum class JvmBuilderFlags {
   TARGET_LABEL,
   // classpath
   CP,
-  DIRECT_DEPENDENCIES,
-  DEPS_ARTIFACTS,
 
   PLUGIN_ID,
   PLUGIN_CLASSPATH,
@@ -38,7 +36,6 @@ enum class JvmBuilderFlags {
   OUT,
   ABI_OUT,
 
-  RULE_KIND,
   KOTLIN_MODULE_NAME,
 
   API_VERSION,
@@ -56,7 +53,6 @@ enum class JvmBuilderFlags {
   WARN,
 
   FRIENDS,
-  STRICT_KOTLIN_DEPS,
 
   // makes sense only for JPS, not needed for Kotlinc
   ADD_EXPORT,
@@ -74,7 +70,7 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
   kotlinArgs.apiVersion = args.optionalSingle(JvmBuilderFlags.API_VERSION)
   kotlinArgs.languageVersion = args.optionalSingle(JvmBuilderFlags.LANGUAGE_VERSION)
   // jdkRelease leads to some strange compilation failures like "cannot access class 'Map.Entry'"
-  kotlinArgs.jvmTarget = args.mandatorySingle(JvmBuilderFlags.JVM_TARGET).let { if (it == "8") "1.8" else it }
+  kotlinArgs.jvmTarget = getJvmTargetLevel(args)
 
   // kotlin bug - not compatible with a new X compiler-plugin syntax
   //compilationArgs.disableDefaultScriptingPlugin = true
@@ -112,4 +108,8 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
       else -> throw IllegalArgumentException("unsupported kotlinc warning option: $it")
     }
   }
+}
+
+fun getJvmTargetLevel(args: ArgMap<JvmBuilderFlags>): String? {
+  return args.optionalSingle(JvmBuilderFlags.JVM_TARGET)?.let { if (it == "8") "1.8" else it } ?: "21"
 }

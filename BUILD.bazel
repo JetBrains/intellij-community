@@ -1,7 +1,4 @@
 load("@rules_java//java:defs.bzl", "java_binary")
-
-load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
-
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 create_kotlinc_options(name= "k8", jvm_target = 8)
