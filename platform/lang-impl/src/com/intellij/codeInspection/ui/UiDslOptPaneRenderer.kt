@@ -312,7 +312,6 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
           comboBox(getComboBoxModel(component.options), textListCellRenderer { it?.label?.label() })
             .applyToComponent {
               val option = context.getOption(component.bindId)
-              @Suppress("HardCodedStringLiteral")
               model.selectedItem = if (option is Enum<*>) option.name else option.toString()
             }
             .onChanged { context.setOption(component.bindId, convertItem(
@@ -442,6 +441,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { IdeFocusManager.getGlobalInstance().requestFocus(component, true) }
   }
 
+  @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
   private class ListWithListener(val list: MutableList<String>, val changeListener: () -> Unit): MutableList<String> by list {
     override fun removeAt(index: Int): String = list.removeAt(index).also { changeListener() }
     override fun remove(element: String): Boolean = list.remove(element).also { changeListener() }
