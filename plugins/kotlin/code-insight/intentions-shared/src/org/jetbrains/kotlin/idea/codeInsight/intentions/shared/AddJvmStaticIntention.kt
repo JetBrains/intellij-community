@@ -73,6 +73,7 @@ class AddJvmStaticIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
                     val searchScope = element.codeUsageScope().restrictByFileType(JavaFileType.INSTANCE)
                     ReferencesSearch
                         .search(element, searchScope)
+                        .asIterable()
                         .mapNotNull {
                             val refExpr = it.element as? PsiReferenceExpression ?: return@mapNotNull null
                             if ((refExpr.resolve() as? KtLightElement<*, *>)?.kotlinOrigin != element) return@mapNotNull null

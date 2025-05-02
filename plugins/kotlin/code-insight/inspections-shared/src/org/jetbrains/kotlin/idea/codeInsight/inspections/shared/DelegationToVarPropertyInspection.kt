@@ -31,10 +31,12 @@ internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
             val containingClass = parameter.containingClassOrObject as? KtClass ?: return
             val isUsedForOtherClass = containingClass != delegatedSuperTypeEntry.getStrictParentOfType<KtClass>()
 
-            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).none {
-                val element = it.element
-                element != delegateExpression && !element.isMemberPropertyInitializer(containingClass) && element.hasAssignment()
-            }
+            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass))
+                .asIterable()
+                .none {
+                    val element = it.element
+                    element != delegateExpression && !element.isMemberPropertyInitializer(containingClass) && element.hasAssignment()
+                }
             val canRemoveVar = canChangeToVal && !isUsedForOtherClass
 
             val fixes = listOfNotNull(

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k1.metaModel
 
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
@@ -44,6 +44,7 @@ internal fun ClassDescriptor.inheritors(
 ): List<ClassDescriptor> {
   val psiClass = javaPsiFacade.findClass(fqNameSafe.asString(), scope) ?: return emptyList()
   val inheritors = ClassInheritorsSearch.search(psiClass, scope, true, true, false)
+    .asIterable()
     .filterNot { it.qualifiedName == null }
     .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
   return inheritors.map { it.getJavaClassDescriptor()!! }

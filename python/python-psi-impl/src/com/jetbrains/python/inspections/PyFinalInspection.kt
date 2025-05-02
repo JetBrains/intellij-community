@@ -79,6 +79,7 @@ class PyFinalInspection : PyInspection() {
         if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
           PySuperMethodsSearch
             .search(node, myTypeEvalContext)
+            .asIterable()
             .asSequence()
             .filterIsInstance<PyFunction>()
             .firstOrNull { isFinal(it) }

@@ -663,7 +663,9 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun implementationsTestInstanceAnnotated(containingClass: PsiClass): Boolean =
-    ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true).any { TestUtils.testInstancePerClass(it) }
+    ClassInheritorsSearch.search(containingClass, containingClass.resolveScope, true)
+      .asIterable()
+      .any { TestUtils.testInstancePerClass(it) }
 
   private fun getComponentType(returnType: PsiType?, method: PsiMethod): PsiType? {
     val collectionItemType = JavaGenericsUtil.getCollectionItemType(returnType, method.resolveScope)

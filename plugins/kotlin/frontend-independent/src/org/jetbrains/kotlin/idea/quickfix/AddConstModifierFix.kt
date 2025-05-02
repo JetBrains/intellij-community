@@ -56,7 +56,9 @@ private fun replaceReferencesToGetterByReferenceToField(
     val backingField = LightClassUtil.getLightClassPropertyMethods(property).backingField
 
     if (backingField != null) {
-        val getterUsages = ReferencesSearch.search(getter, javaScope).mapNotNull { updater?.getWritable(it.element) }
+        val getterUsages = ReferencesSearch.search(getter, javaScope)
+            .asIterable()
+            .mapNotNull { updater?.getWritable(it.element) }
         if (getterUsages.isEmpty()) return
         val factory = PsiElementFactory.getInstance(project)
         val fieldFQName = backingField.containingClass!!.qualifiedName + "." + backingField.name

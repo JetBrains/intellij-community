@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.k2.metaModel
 
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
@@ -36,6 +36,7 @@ internal fun KaSession.inheritors(
   // can be rewritten using org.jetbrains.kotlin.idea.searching.inheritors.KotlinSearchUtilKt.findAllInheritors
   val psiClass = javaPsiFacade.findClass(classSymbol.javaClassFqn, scope) ?: return emptyList()
   return ClassInheritorsSearch.search(psiClass, scope, true, true, false)
+    .asIterable()
     .filterNot { it.isAnonymous }
     .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
     .mapNotNull {
