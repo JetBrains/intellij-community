@@ -4,7 +4,7 @@
 package test
 
 public final class Modifiers public constructor() {
-    public final var extVar: kotlin.Int /* compiled code */
+    public final var extVar: kotlin.Int /* compiled code */ /* hasBackingField: true */
         public final external get
         public final external set(value: kotlin.Int) {/* compiled code */ }
 

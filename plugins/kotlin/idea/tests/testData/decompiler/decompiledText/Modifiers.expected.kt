@@ -4,7 +4,7 @@
 package test
 
 public final data class Modifiers public constructor(x: kotlin.Int) {
-    public final val x: kotlin.Int /* compiled code */
+    public final val x: kotlin.Int /* compiled code */ /* hasBackingField: true */
 
     public final operator fun component1(): kotlin.Int { /* compiled code */ }
 

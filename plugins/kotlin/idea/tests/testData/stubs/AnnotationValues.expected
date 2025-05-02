@@ -98,7 +98,7 @@ PsiJetFileStubImpl[package=test]
           TYPE_REFERENCE
             USER_TYPE
               REFERENCE_EXPRESSION[referencedName=String]
-  PROPERTY[fqName=test.CONSTANT, hasDelegate=false, hasDelegateExpression=false, hasInitializer=true, hasReturnTypeRef=false, isExtension=false, isTopLevel=true, isVar=false, name=CONSTANT]
+  PROPERTY[fqName=test.CONSTANT, hasBackingField=null, hasDelegate=false, hasDelegateExpression=false, hasInitializer=true, hasReturnTypeRef=false, isExtension=false, isTopLevel=true, isVar=false, name=CONSTANT]
     MODIFIER_LIST[const]
   CLASS[classId=test/WithStringLiteral, fqName=test.WithStringLiteral, isClsStubCompiledToJvmDefaultImplementation=false, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=WithStringLiteral, superNames=[]]
     MODIFIER_LIST[]

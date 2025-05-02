@@ -5,11 +5,11 @@ package test
 
 public final class ClassWithClassObject public constructor() {
     public companion object {
-        public final val a: test.ClassWithClassObject.A /* compiled code */
+        public final val a: test.ClassWithClassObject.A /* compiled code */ /* hasBackingField: true */
 
-        public final var b: test.ClassWithClassObject.B /* compiled code */
+        public final var b: test.ClassWithClassObject.B /* compiled code */ /* hasBackingField: true */
 
-        public final val kotlin.Int.g: kotlin.Int /* compiled code */
+        public final val kotlin.Int.g: kotlin.Int /* compiled code */ /* hasBackingField: false */
             public final get
 
         public final fun <T, K, G> complexFun(a: T, b: K, c: G): G { /* compiled code */ }
