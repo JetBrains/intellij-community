@@ -5,10 +5,12 @@ package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.TabInfo
+import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.LayoutPassInfo
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.table.TableLayout
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.Rectangle
@@ -137,6 +139,15 @@ sealed class MultiRowLayout(
   }
 
   override fun getDropIndexFor(point: Point): Int {
+    val tabsAt = doGetDropIndexFor(point)
+    if (tabsAt != -1) return tabsAt
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    val tabsBelow = doGetDropIndexFor(Point(point).apply { y += tolerance })
+    if (tabsBelow != -1) return tabsBelow
+    return doGetDropIndexFor(Point(point).apply { y -= tolerance })
+  }
+
+  private fun doGetDropIndexFor(point: Point): Int {
     val data = prevLayoutPassInfo
     if (data == null) return -1
     var result = -1
