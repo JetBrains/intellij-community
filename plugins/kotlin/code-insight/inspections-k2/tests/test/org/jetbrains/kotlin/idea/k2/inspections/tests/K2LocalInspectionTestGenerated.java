@@ -3077,6 +3077,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testSuperClassWithDifferentEquals() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/superClassWithDifferentEquals.kt");
         }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode/valueClass.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -5171,6 +5171,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSuperClassWithDifferentEquals() throws Exception {
             runTest("testData/inspectionsLocal/equalsOrHashCode/superClassWithDifferentEquals.kt");
         }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/inspectionsLocal/equalsOrHashCode/valueClass.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

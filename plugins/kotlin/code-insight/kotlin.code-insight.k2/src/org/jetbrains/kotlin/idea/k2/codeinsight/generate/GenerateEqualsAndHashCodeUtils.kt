@@ -6,16 +6,10 @@ import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
@@ -29,12 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -50,7 +39,13 @@ object GenerateEqualsAndHashCodeUtils {
         val param = function.valueParameters.singleOrNull() ?: return false
         val paramType = param.returnType
         val returnType = function.returnType
-        return paramType.isNullableAnyType() && returnType.isNonNullableBooleanType()
+        if (!returnType.isNonNullableBooleanType()) return false
+        if (paramType.isNullableAnyType()) return true
+        // check for CustomEqualsInValueClasses
+        if (function.psi?.languageVersionSettings?.supportsFeature(LanguageFeature.CustomEqualsInValueClasses) != true) return false
+        val classSymbol = function.containingDeclaration as? KaNamedClassSymbol ?: return false
+        if (!classSymbol.isInline) return false
+        return paramType.semanticallyEquals(classSymbol.defaultType)
     }
 
     context(KaSession)
