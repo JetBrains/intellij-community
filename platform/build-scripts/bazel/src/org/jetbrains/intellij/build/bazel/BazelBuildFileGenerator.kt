@@ -28,6 +28,7 @@ import kotlin.io.path.relativeTo
 internal class ModuleList(
   @JvmField val community: List<ModuleDescriptor>,
   @JvmField val ultimate: List<ModuleDescriptor>,
+  val skippedModules: List<String>,
 ) {
   val deps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
   val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
@@ -196,15 +197,18 @@ internal class BazelBuildFileGenerator(
 
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
+    val skippedModules = ArrayList<String>()
     for (module in project.model.project.modules) {
       if (module.name == "intellij.platform.buildScripts.bazel") {
         // Skip bazel generator itself since it's a standalone Bazel project
+        skippedModules.add(module.name)
         continue
       }
 
       val imlDir = JpsModelSerializationDataService.getBaseDirectory(module)!!.toPath()
       if (imlDir.startsWith(bazelPluginDir)) {
         // Skip bazel plugin, they have their own bazel definitions
+        skippedModules.add(module.name)
         continue
       }
 
@@ -219,7 +223,7 @@ internal class BazelBuildFileGenerator(
 
     community.sortBy { it.module.name }
     ultimate.sortBy { it.module.name }
-    val result = ModuleList(community = community, ultimate = ultimate)
+    val result = ModuleList(community = community, ultimate = ultimate, skippedModules = skippedModules)
     for (module in (community + ultimate)) {
       val hasSources = module.sources.isNotEmpty()
       if (hasSources || module.testSources.isEmpty()) {
@@ -406,24 +410,8 @@ internal class BazelBuildFileGenerator(
     else {
       load("@rules_java//java:defs.bzl", "java_library")
 
-      target("java_library", isEmpty = {
-        it.optionCount() == 2 &&
-        // we have to create an empty production module if someone depends on such a test module from another production module
-        !isUsedAsTestDependency &&
-        // see community/plugins/kotlin/base/frontend-agnostic/README.md
-        module.name != "kotlin.base.frontend-agnostic" &&
-        // also a marker module like frontend-agnostic above
-        module.name != "intellij.platform.monolith" &&
-        module.name != "intellij.platform.backend" &&
-        // we have to create an empty production module if someone depends on such a module with only `provided` lib
-        // (it is necessary for JPS to trigger downloading of compiler plugin)
-        module.name != "intellij.platform.compose.compilerPlugin"
-      }) {
+      val target = Target("java_library").apply {
         option("name", moduleDescriptor.targetName)
-        productionCompileTargets.add(moduleDescriptor.targetName)
-        // https://bazel.build/reference/be/java#java_library -> lib${name}.jar
-        productionCompileJars.add("lib" + moduleDescriptor.targetName)
-
         visibility(arrayOf("//visibility:public"))
 
         if (moduleDescriptor.testSources.isEmpty()) {
@@ -435,6 +423,23 @@ internal class BazelBuildFileGenerator(
             forTests = false
           )
         }
+      }
+
+      val addPhonyTarget =
+        // meaning there are some attributes besides name and visibility
+        target.optionCount() != 2 ||
+        isUsedAsTestDependency ||
+        module.name == "kotlin.base.frontend-agnostic" ||
+        module.name == "intellij.platform.monolith" ||
+        module.name == "intellij.platform.backend" ||
+        module.name == "intellij.platform.compose.compilerPlugin"
+
+      if (addPhonyTarget) {
+        addTarget(target)
+
+        productionCompileTargets.add(moduleDescriptor.targetName)
+        // https://bazel.build/reference/be/java#java_library -> lib${name}.jar
+        productionCompileJars.add("lib" + moduleDescriptor.targetName)
       }
     }
 
@@ -476,11 +481,14 @@ internal class BazelBuildFileGenerator(
       "out/bazel-bin/$bazelModuleRelativePath"
     }
 
+    fun addPackagePrefix(target: String): String =
+      if (target.startsWith("//") || target.startsWith("@")) target else "$packagePrefix:$target"
+
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
-      productionTargets = productionCompileTargets.map { "$packagePrefix:$it" },
+      productionTargets = productionCompileTargets.map { addPackagePrefix(it) },
       productionJars = productionCompileJars.map { "$jarOutputDirectory/$it.jar" },
-      testTargets = testCompileTargets.map { "$packagePrefix:$it" },
+      testTargets = testCompileTargets.map { addPackagePrefix(it) },
       testJars = testCompileTargets.map { "$jarOutputDirectory/$it.jar" },
     )
   }
@@ -738,7 +746,7 @@ private fun resolveRelativeToBazelBuildFileDirectory(childDir: Path, contentRoot
 }
 
 private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor, jvmTarget: Int): String? {
-  val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.Companion.KIND) ?: return null
+  val kotlinFacetModuleExtension = module.module.container.getChild(JpsKotlinFacetModuleExtension.KIND) ?: return null
   val mergedCompilerArguments = kotlinFacetModuleExtension.settings.mergedCompilerArguments ?: return null
   // see create_kotlinc_options
   val effectiveOptIn = mergedCompilerArguments.optIn?.filter { it != "com.intellij.openapi.util.IntellijInternalApi" } ?: emptyList()

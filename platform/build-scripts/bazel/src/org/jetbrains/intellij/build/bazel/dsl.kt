@@ -27,11 +27,13 @@ internal class BuildFile {
     }
   }
 
-  fun target(type: String, isEmpty: (Target) -> Boolean = { false }, block: Target.() -> Unit) {
+  fun addTarget(target: Target) {
+    targets.add(target)
+  }
+
+  fun target(type: String, block: Target.() -> Unit) {
     val target = Target(type).apply(block)
-    if (!isEmpty(target)) {
-      targets.add(target)
-    }
+    addTarget(target)
   }
 
   fun render(): String {

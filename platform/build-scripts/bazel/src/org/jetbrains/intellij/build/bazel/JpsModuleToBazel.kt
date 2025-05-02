@@ -48,20 +48,20 @@ internal class JpsModuleToBazel {
         generatedFiles = (communityResult.moduleBuildFiles.keys.asSequence() + ultimateResult.moduleBuildFiles.keys.asSequence())
           .filter { it != projectDir }
           .sortedBy { projectDir.relativize(it).invariantSeparatorsPathString }
-          .toList(),
+          .toSet(),
       )
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
 
       val targetsFile = projectDir.resolve("build/bazel-targets.json")
-      saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets)
+      saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList.skippedModules)
 
       // save cache only on success. do not surround with try/finally
       urlCache.save()
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>) {
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, skippedModules: Collection<String>) {
       @Serializable
       data class TargetsFileModuleDescription(
         val productionTargets: List<String>,
@@ -87,7 +87,7 @@ internal class JpsModuleToBazel {
                 testTargets = moduleTarget.testTargets,
                 testJars = moduleTarget.testJars,
               )
-            }
+            } + skippedModules.associateWith { moduleName -> TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList()) }
           )))
         tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       } finally {
@@ -114,7 +114,7 @@ internal class JpsModuleToBazel {
   }
 }
 
-private fun deleteOldFiles(projectDir: Path, generatedFiles: List<Path>) {
+private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
   val fileListFile = projectDir.resolve("build/bazel-generated-file-list.txt")
   val oldFiles = if (Files.exists(fileListFile)) Files.readAllLines(fileListFile).map { projectDir.resolve(it.trim()) } else emptySet()
 
