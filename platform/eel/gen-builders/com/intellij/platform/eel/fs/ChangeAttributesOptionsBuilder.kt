@@ -4,8 +4,7 @@
  */
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.*
+import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch

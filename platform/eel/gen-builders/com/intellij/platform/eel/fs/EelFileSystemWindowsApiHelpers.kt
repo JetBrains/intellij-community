@@ -4,8 +4,9 @@
  */
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.*
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.GeneratedBuilder
+import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.path.EelPath
@@ -62,7 +63,7 @@ object EelFileSystemWindowsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemWindowsApi.listDirectoryWithAttrs]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.ListDirectoryWithAttrsArgs].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError> =
       owner.listDirectoryWithAttrs(
         ListDirectoryWithAttrsArgsImpl(
@@ -103,7 +104,7 @@ object EelFileSystemWindowsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemWindowsApi.stat]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.StatArgs].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelWindowsFileInfo, StatError> =
       owner.stat(
         StatArgsImpl(

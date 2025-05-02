@@ -4,14 +4,13 @@
  */
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.*
+import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.path.EelPath
 
 
 @GeneratedBuilder.Result
-class CreateTemporaryEntryOptionsBuilder {
+class CreateTemporaryEntryOptionsBuilder() {
   private var deleteOnExit: Boolean = false
 
   private var parentDirectory: EelPath? = null

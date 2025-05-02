@@ -9,17 +9,18 @@ import com.intellij.codeInsight.actions.RearrangeCodeProcessor
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.facet.FacetManager
-import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.openapi.application.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.progress.PerformInBackgroundOption
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
@@ -27,50 +28,95 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.writeText
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.project.stateStore
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.psi.util.findParentOfType
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.TestApplicationManager
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.fixture.TestFixtures
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.registerExtension
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.io.copyRecursively
 import com.intellij.util.io.createDirectories
-import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
-import com.maddyhome.idea.copyright.actions.UpdateCopyrightAction
+import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor
+import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
+import java.util.TreeSet
+import kotlin.Char
+import kotlin.OptIn
+import kotlin.Pair
+import kotlin.String
+import kotlin.check
 import kotlin.collections.ArrayDeque
 import kotlin.collections.addAll
+import kotlin.collections.map
+import kotlin.collections.mapNotNull
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.exists
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.walk
+import kotlin.isInitialized
 import kotlin.jvm.optionals.getOrNull
+import kotlin.let
+import kotlin.run
+import kotlin.sequences.associateWithTo
+import kotlin.sequences.joinToString
+import kotlin.takeIf
+import kotlin.text.Regex
+import kotlin.text.buildString
+import kotlin.text.isBlank
+import kotlin.text.isNotEmpty
+import kotlin.text.lines
+import kotlin.text.lowercase
+import kotlin.text.orEmpty
+import kotlin.text.prependIndent
+import kotlin.text.removePrefix
+import kotlin.text.removeSuffix
+import kotlin.text.replace
+import kotlin.text.replaceFirstChar
+import kotlin.text.split
+import kotlin.text.startsWith
+import kotlin.text.substring
+import kotlin.text.substringBeforeLast
+import kotlin.text.trim
+import kotlin.text.trimEnd
+import kotlin.text.trimIndent
+import kotlin.text.trimMargin
+import kotlin.text.trimStart
+import kotlin.text.uppercase
+import kotlin.text.uppercaseChar
+import kotlin.to
 
 /**
  * This test generates builders for `com.intellij.platform.eel.EelApi`.
@@ -78,42 +124,51 @@ import kotlin.jvm.optionals.getOrNull
  * If you want to regenerate some builders, run the test.
  * No specific arguments or prerequisites are required.
  * Remember to commit new builders.
- *
- * TODO The test fails with `Outdated stub in index` when it runs several times in a row.
- *   Remove the `system/test` directory in the monorepository.
  */
-@TestApplication
+@TestFixtures
+@UseK2PluginMode
 class BuildersGenerator {
   companion object {
     private var oldInitInspections = false
+    private lateinit var testClassDisposable: Disposable
+
+    @AfterAll
+    @JvmStatic
+    fun releaseDisposable() {
+      if (::testClassDisposable.isInitialized) {
+        Disposer.dispose(testClassDisposable)
+      }
+    }
 
     @BeforeAll
     @JvmStatic
     fun beforeAll() {
+      TestApplicationManager.getInstance()
+      testClassDisposable = Disposer.newDisposable()
+
       oldInitInspections = InspectionProfileImpl.INIT_INSPECTIONS
       InspectionProfileImpl.INIT_INSPECTIONS = true
-    }
-
-    @AfterAll
-    @JvmStatic
-    fun afterAll() {
-      InspectionProfileImpl.INIT_INSPECTIONS = oldInitInspections
+      Disposer.register(testClassDisposable) {
+        InspectionProfileImpl.INIT_INSPECTIONS = oldInitInspections
+      }
     }
   }
 
   val tempProject = projectFixture(openAfterCreation = false)
 
-  @Test
-  fun `generate sources and check changes`(): Unit = runBlocking(Dispatchers.Default) {
+  @BeforeEach
+  @AfterEach
+  fun invalidateIndexes() {
+    // For some reason, the test doesn't work correctly if it's launched a second time with old indexes.
+    // Also, this test would break further tests without dropping indexes.
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID)
+  }
+
+  @TestFactory
+  fun `generate sources and check changes`(): List<DynamicTest> = runBlocking(Dispatchers.Default) {
     val moduleName = "intellij.platform.eel"
     var tempProject = tempProject.get()
     try {
-      ApplicationManager.getApplication().registerExtension(
-        WorkspaceFacetContributor.EP_NAME,
-        KotlinFacetContributor(),
-        tempProject,
-      )
-
       val thisProject = Path.of(PathManager.getHomePath())
 
       run {
@@ -164,7 +219,7 @@ class BuildersGenerator {
 
       for ((path, contentPair) in filesContent) {
         path.parent.createDirectories()
-        if (!path.exists()) Files.createFile(path)
+        if (!Files.exists(path)) Files.createFile(path)
         val virtualFile = VfsUtil.findFile(path, true)!!
         val (_, newContent) = contentPair
         writeAction {
@@ -187,35 +242,31 @@ class BuildersGenerator {
 
       synchronizeVariousCaches(tempProject)
 
-      val importantChanges = filesContent.keys
-        .mapNotNull { path ->
-          val oldPrettifiedContent = oldPrettifiedFiles[path]
-          val newContent = VfsUtil.findFile(path, true)?.run { readAction { readText() } }
-          when {
-            oldPrettifiedContent == newContent -> null
-            oldPrettifiedContent == null -> "added: ${thisProject.relativize(path)}"
-            newContent == null -> "deleted: ${thisProject.relativize(path)}"
-            else -> "changed: ${thisProject.relativize(path)}"
-          }
-        }
-
-      if (importantChanges.isNotEmpty()) {
-        throw AssertionError("""
-          |Some builder interfaces changed, but no new builders were generated.
-          |Changes have been written to the disk, don't forget to commit them.
-          |
-          |${importantChanges.joinToString("\n")}
-        """.trimMargin())
-      }
-
       if (unimportantChanges.isNotEmpty()) {
         logger<BuildersGenerator>().warn(
           """
-        |Some styling options in the project has changed. It is recommended to commit new generated builders.
-        |
-        |${unimportantChanges.joinToString("\n")}
-        """.trimMargin()
+          |Some styling options in the project has changed. It is recommended to commit new generated builders.
+          |
+          |${unimportantChanges.joinToString("\n")}
+          """.trimMargin()
         )
+      }
+
+      filesContent.keys.map { path ->
+        val oldPrettifiedContent = oldPrettifiedFiles[path]
+        val newContent = VfsUtil.findFile(path, true)?.run { readAction { readText() } }
+        DynamicTest.dynamicTest(thisProject.relativize(path).toString()) {
+          val errorMsg =
+            if (UsefulTestCase.IS_UNDER_TEAMCITY)
+              "${path.toUri()} : " +
+              "The generated file was manually modified," +
+              " or it was not regenerated after changing interfaces," +
+              " or some changes were not committed."
+            else
+              "${path.toUri()} : " +
+              "The new version of the file has been written to the disk, don't forget to commit it."
+          assertEquals(oldPrettifiedContent, newContent, errorMsg)
+        }
       }
     }
     finally {
@@ -228,22 +279,20 @@ class BuildersGenerator {
   private suspend fun synchronizeVariousCaches(tempProject: Project) {
     writeAction {
       FileDocumentManager.getInstance().saveAllDocuments()
-      VirtualFileManager.getInstance().syncRefresh()
     }
-    SaveAndSyncHandler.getInstance().refreshOpenFiles()
     IndexingTestUtil.suspendUntilIndexesAreReady(tempProject)
   }
 
   private suspend fun prettifyFile(tempProject: Project, virtualFile: VirtualFile) {
-    withContext(Dispatchers.EDT) {
-      FileDocumentManager.getInstance().reloadFiles(virtualFile)
-    }
-
     val inspectionManager = InspectionManager.getInstance(tempProject)
     val globalContext = inspectionManager.createNewGlobalContext() as GlobalInspectionContextBase
-    val scope = AnalysisScope(readAction {
+    val psiFile = readAction {
       PsiManager.getInstance(tempProject).findFile(virtualFile)!!
-    })
+    }
+    val module = readAction {
+      ModuleUtilCore.findModuleForPsiElement(psiFile)
+    }
+    val scope = AnalysisScope(psiFile)
 
     globalContext.codeCleanup(
       scope,
@@ -254,21 +303,24 @@ class BuildersGenerator {
     )
 
     writeCommandAction(tempProject, "reformat") {
-      val psiFile = PsiManager.getInstance(tempProject).findFile(virtualFile)!!
       OptimizeImportsProcessor(tempProject, psiFile).run()
 
       RearrangeCodeProcessor(psiFile).run()
 
-      CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT = false
-      CodeStyleManager.getInstance(tempProject).reformat(psiFile)
-      CodeInsightSettings.getInstance().ENABLE_SECOND_REFORMAT = true
-      CodeStyleManager.getInstance(tempProject).reformat(psiFile)
+      val codeInsightSettings = CodeInsightSettings.getInstance()
+      try {
+        codeInsightSettings.ENABLE_SECOND_REFORMAT = false
+        CodeStyleManager.getInstance(tempProject).reformat(psiFile)
+        codeInsightSettings.ENABLE_SECOND_REFORMAT = true
+        CodeStyleManager.getInstance(tempProject).reformat(psiFile)
+      }
+      finally {
+        codeInsightSettings.ENABLE_SECOND_REFORMAT = false
+      }
 
-      ProgressManager.getInstance().run(
-        UpdateCopyrightAction.UpdateCopyrightTask(tempProject, AnalysisScope(psiFile), true, PerformInBackgroundOption.DEAF))
+      UpdateCopyrightProcessor(tempProject, module, psiFile).run()
 
-      FileDocumentManager.getInstance().saveAllDocuments()
-      virtualFile.writeText(virtualFile.readText().trimEnd())
+      CodeStyleManager.getInstance(tempProject).reformat(psiFile)
     }
   }
 
@@ -279,57 +331,56 @@ class BuildersGenerator {
     var genSrcDirName: Path? = null
     val ultimateProject: JpsProject = IntelliJProjectConfiguration.loadIntelliJProject(Path.of(PathManager.getHomePath()).pathString)
 
-    val kotlinLibraries = ultimateProject.libraryCollection.libraries.filter {
-      it.name == "kotlin-stdlib" || it.name == "kotlinx-coroutines-core"
-    }
+    val libraries = mutableListOf<JpsLibrary>()
 
     val newEelModule: Module = writeAction {
       val projectModel = ModuleManager.getInstance(tempProject).getModifiableModel()
 
-      val jpsModuleQueue = ArrayDeque(listOf(
-        ultimateProject.modules.first { it.name == moduleName }
-      ))
+      val jpsModuleQueue = mutableListOf(ultimateProject.modules.first { it.name == moduleName })
       // TODO Dependencies don't work well. Kotlin can't resolve types from them.
       run {
         var i = 0
         while (i < jpsModuleQueue.size) {
           val jpsModule = jpsModuleQueue[i]
           for (dependencyElement in jpsModule.dependenciesList.dependencies) {
-            if (dependencyElement is JpsModuleDependency) {
-              jpsModuleQueue.addLast(dependencyElement.module!!)
+            when (dependencyElement) {
+              is JpsModuleDependency -> jpsModuleQueue.add(dependencyElement.module!!)
+              is JpsLibraryDependency -> libraries.add(dependencyElement.library!!)
             }
           }
           ++i
         }
       }
 
-      val platformLibs = kotlinLibraries.map { kotlinLib ->
-        val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(tempProject).createLibrary(kotlinLib.name)
-        val libModel = lib.modifiableModel
-        for (root in kotlinLib.getRoots(JpsOrderRootType.COMPILED)) {
+      val platformLibs = libraries.map { jpsLibrary ->
+        val tempProjectLibrary = LibraryTablesRegistrar.getInstance().getLibraryTable(tempProject).createLibrary(jpsLibrary.name)
+        val libModel = tempProjectLibrary.modifiableModel
+        for (root in jpsLibrary.getRoots(JpsOrderRootType.COMPILED)) {
           libModel.addRoot(root.url, OrderRootType.CLASSES)
         }
         libModel.commit()
-        lib
+        tempProjectLibrary
       }
 
       while (true) {
         val jpsModule = jpsModuleQueue.removeLastOrNull() ?: break
-        val module = projectModel.newModule(jpsModule.name, StdModuleTypes.JAVA.id)
+        val module = projectModel.newModule(Path.of(tempProject.basePath!!).resolve(".idea/${jpsModule.name}.iml"), StdModuleTypes.JAVA.id)
 
         val rootModel = module.rootManager.modifiableModel
 
         rootModel.addLibraryEntries(platformLibs, DependencyScope.COMPILE, false)
 
         for (sourceRoot in jpsModule.sourceRoots) {
-          when (val properties = sourceRoot.properties) {
-            is JavaSourceRootProperties -> {
-              // TODO Filter only src roots.
-              if (properties.isForGeneratedSources) {
-                check(genSrcDirName == null) { "Multiple gen src dirs: $genSrcDirName, ${sourceRoot.path}" }
-                genSrcDirName = sourceRoot.path
+          when (val rootType = sourceRoot.rootType) {
+            is JavaSourceRootType -> {
+              if (!rootType.isForTests) {
+                val properties = sourceRoot.properties as JavaSourceRootProperties
+                if (properties.isForGeneratedSources) {
+                  check(genSrcDirName == null) { "Multiple gen src dirs: $genSrcDirName, ${sourceRoot.path}" }
+                  genSrcDirName = sourceRoot.path
+                }
+                rootModel.addContentEntry(sourceRoot.url).addSourceFolder(sourceRoot.url, false)
               }
-              rootModel.addContentEntry(sourceRoot.url).addSourceFolder(sourceRoot.url, false)
             }
           }
         }
@@ -343,14 +394,7 @@ class BuildersGenerator {
 
     check(genSrcDirName != null) { "No gen src dir found" }
 
-    writeAction {
-      for (module in tempProject.modules) {
-        val facetManager = FacetManager.getInstance(module)
-        val facetModel = facetManager.createModifiableModel()
-        facetModel.addFacet(facetManager.createFacet(KotlinFacetType.INSTANCE, "Kotlin", null))
-        facetModel.commit()
-      }
-    }
+    tempProject.stateStore.save(forceSavingAllSettings = true)
     return Pair(newEelModule, genSrcDirName)
   }
 }
@@ -440,10 +484,9 @@ private suspend fun writeBuilderFiles(
     }
 
   methods.sortBy { listOf(it.argsInterfaceFqn, it.clsFqn, it.methodName).joinToString() }
-  val imports = methods
-    .flatMapTo(sortedSetOf()) { listOf(it.argsInterfaceFqn, it.clsFqn) }
-    .plus(methods.flatMapTo(sortedSetOf()) { request -> request.imports.map { import -> import.removePrefix("import ") } })
-    .toHashSet()
+  val imports = TreeSet<String>()
+  methods.flatMapTo(imports) { listOf(it.argsInterfaceFqn, it.clsFqn) }
+  methods.flatMapTo(imports) { request -> request.imports.map { import -> import.removePrefix("import ") } }
 
   val filesToWrite = mutableMapOf<Path, String>()
 
@@ -477,7 +520,7 @@ private suspend fun writeBuilderFiles(
               iface.getSuperTypeList()
                 ?.entries
                 ?.mapNotNull { superTypeListEntry -> superTypeListEntry.typeReference }
-                ?.mapNotNull(KtTypeReference::getFqn)
+                ?.map(KtTypeReference::getFqn)
                 ?.map { fqn ->
                   val cls = getKtClassFromKtLightClass(javaPsiFacade.findClass(fqn, projectScope))
                   check(cls != null) { "PsiClass for $fqn not found" }
@@ -495,7 +538,7 @@ private suspend fun writeBuilderFiles(
           .map { property ->
             RequiredArgument(
               name = property.name!!,
-              typeFqn = property.typeReference!!.getFqn()!!,
+              typeFqn = property.typeReference!!.getFqn(),
               kdoc = property.docComment?.extractText() ?: "",
             )
           }
@@ -508,7 +551,7 @@ private suspend fun writeBuilderFiles(
           .map { property ->
             OptionalArgument(
               name = property.name!!,
-              typeFqn = property.typeReference!!.getFqn()!!,
+              typeFqn = property.typeReference!!.getFqn(),
               body = property.getter!!.bodyExpression!!.renderWithFqnTypes(),
               kdoc = property.docComment?.extractText() ?: "",
             )
@@ -616,8 +659,10 @@ private suspend fun writeBuilderFiles(
           @org.jetbrains.annotations.CheckReturnValue
           override suspend fun eelIt(): ${builderRequest.returnTypeFqn} =
             owner.${builderRequest.methodName}(${argsInterfaceInfo.name}Impl(
-            ${argsInterfaceInfo.propertyNames.joinToString("\n") { name -> "$name = $name," }}
-            ))
+            ${
+          argsInterfaceInfo.propertyNames.joinToString("\n") { name -> "$name = $name," }
+        })
+            )
         }
         """
       }
@@ -629,13 +674,11 @@ private suspend fun writeBuilderFiles(
       for ((argsInterfaceFqn, argsInterfaceInfo) in argsInterfacesByFqn) {
         text = """
         @GeneratedBuilder.Result
-        class ${argsInterfaceInfo.name}Builder(
-        ${
-          argsInterfaceInfo.requiredArguments.joinToString("\n") { prop ->
-            "${prop.kdoc.renderKdoc()}private var ${prop.name}: ${prop.typeFqn},"
+        class ${argsInterfaceInfo.name}Builder${
+          argsInterfaceInfo.requiredArguments.joinToString("", "(", ")") { prop ->
+            "\n${prop.kdoc.renderKdoc()}private var ${prop.name}: ${prop.typeFqn},"
           }
-        }
-        ) {
+        } {
         ${
           argsInterfaceInfo.optionalArguments.joinToString("\n\n") { prop ->
             "private var ${prop.name}: ${prop.typeFqn} = ${prop.body}"
@@ -660,16 +703,14 @@ private suspend fun writeBuilderFiles(
         }
     
         @GeneratedBuilder.Result
-        internal class ${argsInterfaceInfo.name}Impl(
-        ${
+        internal class ${argsInterfaceInfo.name}Impl(${
           argsInterfaceInfo.propertyNames.joinToString("\n") { name ->
             val typeFqn =
               argsInterfaceInfo.requiredArguments.firstOrNull { it.name == name }?.typeFqn
               ?: argsInterfaceInfo.optionalArguments.first { it.name == name }.typeFqn
             "override val $name: $typeFqn,"
           }
-        }
-        ) : $argsInterfaceFqn"""
+        }) : $argsInterfaceFqn"""
 
         filesToWrite[Path.of(genSrcDirName.toString(), sourcePackage.replace('.', '/'), "${argsInterfaceInfo.name}Builder.kt")] =
           fileHeader + text
@@ -736,10 +777,8 @@ private fun PsiElement.renderWithFqnTypes(): String = buildString {
       when (element) {
         is KtTypeReference -> {
           val fqn = element.getFqn()
-          if (fqn != null) {
-            append(fqn.javaToKotlinTypes())
-            written = true
-          }
+          append(fqn.javaToKotlinTypes())
+          written = true
         }
       }
       if (!written && element.firstChild == null) {
@@ -774,7 +813,7 @@ private fun String.surroundWithNewlinesIfNotBlank(): String =
   if (isBlank()) ""
   else "\n${trim()}\n"
 
-private fun KtTypeReference.getFqn(): String? =
+private fun KtTypeReference.getFqn(): String =
   analyze(this) { this@getFqn.type }.toString().replace("/", ".")
 
 private fun getKtClassFromKtLightClass(lightClass: PsiClass?): KtClass? {

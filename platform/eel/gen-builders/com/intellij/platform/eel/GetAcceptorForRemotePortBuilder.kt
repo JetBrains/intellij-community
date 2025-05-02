@@ -4,17 +4,14 @@
  */
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.*
-import com.intellij.platform.eel.EelTunnelsApi.HostAddress
 import com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
 @GeneratedBuilder.Result
-class GetAcceptorForRemotePortBuilder {
-  private var configureServerSocket: Function1<ConfigurableSocket, Unit> = {}
+class GetAcceptorForRemotePortBuilder() {
+  private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
 
   private var hostname: String = "localhost"
 
@@ -24,7 +21,7 @@ class GetAcceptorForRemotePortBuilder {
 
   private var timeout: Duration = 10.seconds
 
-  fun configureServerSocket(arg: Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePortBuilder = apply {
+  fun configureServerSocket(arg: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePortBuilder = apply {
     this.configureServerSocket = arg
   }
 
@@ -71,7 +68,7 @@ class GetAcceptorForRemotePortBuilder {
 
 @GeneratedBuilder.Result
 internal class GetAcceptorForRemotePortImpl(
-  override val configureServerSocket: Function1<ConfigurableSocket, Unit>,
+  override val configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>,
   override val hostname: String,
   override val port: UShort,
   override val protocolPreference: EelIpPreference,

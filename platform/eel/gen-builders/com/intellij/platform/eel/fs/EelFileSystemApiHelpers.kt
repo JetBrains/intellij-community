@@ -4,8 +4,9 @@
  */
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.*
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.GeneratedBuilder
+import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove
@@ -144,7 +145,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.changeAttributes]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
       owner.changeAttributes(
         ChangeAttributesOptionsImpl(
@@ -207,7 +208,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.copy]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.CopyOptions].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<Unit, EelFileSystemApi.CopyError> =
       owner.copy(
         CopyOptionsImpl(
@@ -257,7 +258,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.createTemporaryDirectory]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
       owner.createTemporaryDirectory(
         CreateTemporaryEntryOptionsImpl(
@@ -304,7 +305,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.createTemporaryFile]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> =
       owner.createTemporaryFile(
         CreateTemporaryEntryOptionsImpl(
@@ -347,7 +348,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.listDirectoryWithAttrs]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.ListDirectoryWithAttrsArgs].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<Collection<Pair<String, EelFileInfo>>, EelFileSystemApi.ListDirectoryError> =
       owner.listDirectoryWithAttrs(
         ListDirectoryWithAttrsArgsImpl(
@@ -399,7 +400,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.move]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.MoveArgs].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<Unit, EelFileSystemApi.MoveError> =
       owner.move(
         MoveArgsImpl(
@@ -442,7 +443,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.stat]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.StatArgs].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelFileInfo, StatError> =
       owner.stat(
         StatArgsImpl(
@@ -495,7 +496,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.openForReadingAndWriting]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError> =
       owner.openForReadingAndWriting(
         WriteOptionsImpl(
@@ -550,7 +551,7 @@ object EelFileSystemApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.openForWriting]
      * with an instance of [com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> =
       owner.openForWriting(
         WriteOptionsImpl(

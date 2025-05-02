@@ -4,15 +4,14 @@
  */
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelTunnelsApi.GetConnectionToRemotePortArgs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
 @GeneratedBuilder.Result
-class GetConnectionToRemotePortArgsBuilder {
-  private var configureSocketBeforeConnection: Function1<ConfigurableClientSocket, Unit> = {}
+class GetConnectionToRemotePortArgsBuilder() {
+  private var configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit> = {}
 
   private var hostname: String = "localhost"
 
@@ -22,9 +21,10 @@ class GetConnectionToRemotePortArgsBuilder {
 
   private var timeout: Duration = 10.seconds
 
-  fun configureSocketBeforeConnection(arg: Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePortArgsBuilder = apply {
-    this.configureSocketBeforeConnection = arg
-  }
+  fun configureSocketBeforeConnection(arg: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePortArgsBuilder =
+    apply {
+      this.configureSocketBeforeConnection = arg
+    }
 
   fun hostname(arg: String): GetConnectionToRemotePortArgsBuilder = apply {
     this.hostname = arg
@@ -69,7 +69,7 @@ class GetConnectionToRemotePortArgsBuilder {
 
 @GeneratedBuilder.Result
 internal class GetConnectionToRemotePortArgsImpl(
-  override val configureSocketBeforeConnection: Function1<ConfigurableClientSocket, Unit>,
+  override val configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>,
   override val hostname: String,
   override val port: UShort,
   override val protocolPreference: EelIpPreference,

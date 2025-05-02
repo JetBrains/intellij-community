@@ -5,9 +5,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelExecApi.*
 import com.intellij.platform.eel.EelTunnelsApi.Connection
-import com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.CheckReturnValue
 import kotlin.time.Duration
@@ -81,7 +79,7 @@ object EelTunnelsApiHelpers {
   class GetAcceptorForRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<EelResult<EelTunnelsApi.ConnectionAcceptor, EelConnectionError>> {
-    private var configureServerSocket: Function1<ConfigurableSocket, Unit> = {}
+    private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
 
     private var hostname: String = "localhost"
 
@@ -91,7 +89,7 @@ object EelTunnelsApiHelpers {
 
     private var timeout: Duration = 10.seconds
 
-    fun configureServerSocket(arg: Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePort = apply {
+    fun configureServerSocket(arg: @ExtensionFunctionType Function1<ConfigurableSocket, Unit>): GetAcceptorForRemotePort = apply {
       this.configureServerSocket = arg
     }
 
@@ -130,7 +128,7 @@ object EelTunnelsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelTunnelsApi.getAcceptorForRemotePort]
      * with an instance of [com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<EelTunnelsApi.ConnectionAcceptor, EelConnectionError> =
       owner.getAcceptorForRemotePort(
         GetAcceptorForRemotePortImpl(
@@ -150,7 +148,7 @@ object EelTunnelsApiHelpers {
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<EelResult<Connection, EelConnectionError>> {
-    private var configureSocketBeforeConnection: Function1<ConfigurableClientSocket, Unit> = {}
+    private var configureSocketBeforeConnection: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit> = {}
 
     private var hostname: String = "localhost"
 
@@ -160,9 +158,10 @@ object EelTunnelsApiHelpers {
 
     private var timeout: Duration = 10.seconds
 
-    fun configureSocketBeforeConnection(arg: Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePort = apply {
-      this.configureSocketBeforeConnection = arg
-    }
+    fun configureSocketBeforeConnection(arg: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePort =
+      apply {
+        this.configureSocketBeforeConnection = arg
+      }
 
     fun hostname(arg: String): GetConnectionToRemotePort = apply {
       this.hostname = arg
@@ -199,7 +198,7 @@ object EelTunnelsApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelTunnelsApi.getConnectionToRemotePort]
      * with an instance of [com.intellij.platform.eel.EelTunnelsApi.GetConnectionToRemotePortArgs].
      */
-    @org.jetbrains.annotations.CheckReturnValue
+    @CheckReturnValue
     override suspend fun eelIt(): EelResult<Connection, EelConnectionError> =
       owner.getConnectionToRemotePort(
         GetConnectionToRemotePortArgsImpl(
