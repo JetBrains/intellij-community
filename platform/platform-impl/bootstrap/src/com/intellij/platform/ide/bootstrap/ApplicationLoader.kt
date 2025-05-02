@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:Internal
 @file:Suppress("RAW_RUN_BLOCKING", "ReplaceJavaStaticMethodWithKotlinAnalog")
@@ -110,7 +110,9 @@ internal suspend fun loadApp(
     }
     else {
       async(CoroutineName("language and region")) {
-        getLanguageAndRegionDialogIfNeeded(euaDocumentDeferred.await())
+        euaDocumentDeferred.await()?.let {
+          getLanguageAndRegionDialogIfNeeded(it)
+        }
       }
     }
     
@@ -520,8 +522,9 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   }
 }
 
-private fun createDefaultAppStarter(): ApplicationStarter =
-  if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+private fun createDefaultAppStarter(): ApplicationStarter {
+  return if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+}
 
 @VisibleForTesting
 internal fun createAppLocatorFile() {

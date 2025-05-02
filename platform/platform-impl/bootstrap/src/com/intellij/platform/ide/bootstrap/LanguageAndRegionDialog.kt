@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.dd.plist.NSDictionary
@@ -18,7 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
@@ -42,7 +42,6 @@ import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
-import javax.swing.text.html.HTMLDocument
 
 private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"),
                                     Locale.JAPANESE to listOf("ja"),
@@ -54,7 +53,7 @@ private class LanguageAndRegionDialog(
   private var selectedRegion: Region,
   osLocale: Locale,
 ) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
-  val source = EventSource.PRE_EUA_DIALOG
+  private val source = EventSource.PRE_EUA_DIALOG
 
   init {
     isResizable = false
@@ -223,14 +222,11 @@ private class LanguageAndRegionDialog(
   private fun getMessageBundle() = DynamicBundle.getResourceBundleLocalized(this::class.java.classLoader, LanguageAndRegionBundle.BUNDLE_FQN, selectedLanguage)
 }
 
-
-internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Document?): (suspend () -> Boolean)? {
-  if (document == null) return null
+internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Document): (suspend () -> Boolean)? {
   val locale = Locale.getDefault()
-  val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true }
-                       ?: Locale.ENGLISH
+  val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true } ?: Locale.ENGLISH
   var matchingRegion = Region.NOT_SET
-  if (SystemInfo.isWindows) {
+  if (SystemInfoRt.isWindows) {
     try {
       val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
       matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
@@ -239,13 +235,16 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
       logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
     }
   }
-  else if (SystemInfo.isMac) {
+  else if (SystemInfoRt.isMac) {
     matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] }
                      ?: getLocaleFromGeneralPrefMacOs(SystemProperties.getUserHome())
                      ?: getLocaleFromGeneralPrefMacOs("")
                      ?: Region.NOT_SET
   }
-  if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
+  if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) {
+    return null
+  }
+
   return suspend {
     withContext(RawSwingDispatcher) {
       LanguageAndRegionDialog(matchingLocale, matchingRegion, locale).showAndGet()
