@@ -163,6 +163,7 @@ object OperatorToFunctionConverter {
         }
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun convertArrayAccess(element: KtArrayAccessExpression): KtExpression {
         var expressionToReplace: KtExpression = element
         val transformed = KtPsiFactory(element.project).buildExpression {
@@ -177,6 +178,17 @@ object OperatorToFunctionConverter {
                 appendFixedText("set(")
                 appendExpressions(element.indexExpressions)
                 appendFixedText(",")
+                allowAnalysisOnEdt {
+                    @OptIn(KtAllowAnalysisFromWriteAction::class)
+                    allowAnalysisFromWriteAction {
+                        analyze(element) {
+                            val argumentMapping = element.resolveCall()?.singleFunctionCallOrNull()?.argumentMapping.orEmpty()
+                            if (argumentMapping[element.indexExpressions.firstOrNull()]?.symbol?.isVararg == true) {
+                                argumentMapping[parent.right]?.symbol?.name?.asString().let { appendFixedText("$it = ") }
+                            }
+                        }
+                    }
+                }
                 appendExpression(parent.right)
             } else {
                 appendFixedText("get(")
