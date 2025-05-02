@@ -16,7 +16,7 @@ public class SneakyThrowsExceptionAddQuickFixTest extends AbstractLombokLightCod
     return super.getBasePath() + "/extension";
   }
 
-  public void testCheckedExeptionQuickFixExample() {
+  public void testCheckedExceptionQuickFixExample() {
     myFixture.configureByFile('/' + getTestName(false) + ".java");
 
     final List<IntentionAction> availableActions = getAvailableActions();
