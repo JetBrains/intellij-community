@@ -9,10 +9,10 @@ import org.jetbrains.jps.javac.Iterators;
 import java.io.IOException;
 import java.util.List;
 
-public interface SourceSnapshot {
+public interface SourceSnapshot extends ElementSnapshot<NodeSource> {
   SourceSnapshot EMPTY = new SourceSnapshot() {
     @Override
-    public @NotNull Iterable<@NotNull NodeSource> getSources() {
+    public @NotNull Iterable<@NotNull NodeSource> getElements() {
       return List.of();
     }
 
@@ -22,14 +22,16 @@ public interface SourceSnapshot {
     }
   };
 
+  @Override
   @NotNull
-  Iterable<@NotNull NodeSource> getSources();
+  Iterable<@NotNull NodeSource> getElements();
 
+  @Override
   @NotNull
   String getDigest(NodeSource src);
 
   default void write(GraphDataOutput out) throws IOException {
-    Iterable<@NotNull NodeSource> sources = getSources();
+    Iterable<@NotNull NodeSource> sources = getElements();
     out.writeInt(Iterators.count(sources));
     for (NodeSource src : sources) {
       out.writeUTF(getDigest(src));

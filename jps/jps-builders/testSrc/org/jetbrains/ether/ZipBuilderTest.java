@@ -4,6 +4,7 @@ package org.jetbrains.ether;
 import junit.framework.TestCase;
 import org.jetbrains.jps.bazel.ZipOutputBuilder;
 import org.jetbrains.jps.bazel.impl.ZipOutputBuilderImpl;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.javac.Iterators.collect;
 import static org.jetbrains.jps.javac.Iterators.isEmpty;
@@ -92,6 +94,7 @@ public class ZipBuilderTest extends TestCase {
     try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {
 
       assertEquals(allEntriesSorted, collect(builder.getEntryNames(), new ArrayList<>()));
+      assertEquals(allEntriesSorted, collect(Iterators.filter(Iterators.recurse("com/", builder::listEntries, false), n -> !builder.isDirectory(n)), new ArrayList<>()).stream().sorted().collect(Collectors.toList()));
 
       builder.deleteEntry("com/sys2/");
 
@@ -106,6 +109,7 @@ public class ZipBuilderTest extends TestCase {
 
     try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {
       assertEquals(allEntriesAfterModificationSorted, collect(builder.getEntryNames(), new ArrayList<>()));
+      assertEquals(allEntriesAfterModificationSorted, collect(Iterators.filter(Iterators.recurse("com/", builder::listEntries, false), n -> !builder.isDirectory(n)), new ArrayList<>()).stream().sorted().collect(Collectors.toList()));
 
       byte[] modifiedContent = builder.getContent("com/sys1/api/service1.class");
       assertEquals(1, modifiedContent.length);

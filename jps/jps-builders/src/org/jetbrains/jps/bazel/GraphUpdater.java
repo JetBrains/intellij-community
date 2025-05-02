@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel;
 
-import org.jetbrains.jps.bazel.impl.SnapshotDeltaImpl;
+import org.jetbrains.jps.bazel.impl.SourceSnapshotDeltaImpl;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.incremental.dependencies.LibraryDef;
@@ -24,7 +24,7 @@ public final class GraphUpdater {
     if (snapshotDelta.isRecompileAll()) {
       if (errorsDetected || delta.isSourceOnly()) {
         // do nothing
-        return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+        return new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
       }
     }
 
@@ -39,10 +39,10 @@ public final class GraphUpdater {
 
     if (snapshotDelta.isRecompileAll()) {
       depGraph.integrate(diffResult); // save full graph state
-      return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+      return new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
     }
 
-    SourceSnapshotDelta nextSnapshotDelta = new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+    SourceSnapshotDelta nextSnapshotDelta = new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
 
     if (!diffResult.isIncremental()) {
       // recompile whole target, no integrate necessary
@@ -78,7 +78,7 @@ public final class GraphUpdater {
     
     if (delta.isSourceOnly()) {
       // the delta does not correspond to real compilation session, files already marked for recompilation should be marked for recompilation in the next snapshot too
-      for (NodeSource source : snapshotDelta.getSourcesToRecompile()) {
+      for (NodeSource source : snapshotDelta.getModified()) {
         nextSnapshotDelta.markRecompile(source);
       }
     }

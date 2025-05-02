@@ -59,7 +59,64 @@ public final class JavacMain {
                                 final OutputFileConsumer outputSink,
                                 CanceledStatus canceledStatus,
                                 @NotNull JavaCompilingTool compilingTool,
+                                @Nullable InputFileDataProvider inputFileDataProvider) {
+    return compile(options,
+      sources,
+      classpath,
+      platformClasspath,
+      modulePath,
+      upgradeModulePath,
+      sourcePath,
+      outputDirToRoots,
+      diagnosticConsumer,
+      outputSink,
+      canceledStatus,
+      compilingTool,
+      null, inputFileDataProvider);
+  }
+
+  public static boolean compile(Iterable<String> options,  // todo: to remove
+                                Iterable<? extends File> sources,
+                                Iterable<? extends File> classpath,
+                                Iterable<? extends File> platformClasspath,
+                                ModulePath modulePath,
+                                Iterable<? extends File> upgradeModulePath,
+                                Iterable<? extends File> sourcePath,
+                                final Map<File, Set<File>> outputDirToRoots,
+                                final DiagnosticOutputConsumer diagnosticConsumer,
+                                final OutputFileConsumer outputSink,
+                                CanceledStatus canceledStatus,
+                                @NotNull JavaCompilingTool compilingTool,
                                 @Nullable JpsJavacFileProvider jpsJavacFileProvider) {
+    return compile(options,
+      sources,
+      classpath,
+      platformClasspath,
+      modulePath,
+      upgradeModulePath,
+      sourcePath,
+      outputDirToRoots,
+      diagnosticConsumer,
+      outputSink,
+      canceledStatus,
+      compilingTool,
+      jpsJavacFileProvider, null);
+  }
+
+  private static boolean compile(Iterable<String> options,
+                                Iterable<? extends File> sources,
+                                Iterable<? extends File> classpath,
+                                Iterable<? extends File> platformClasspath,
+                                ModulePath modulePath,
+                                Iterable<? extends File> upgradeModulePath,
+                                Iterable<? extends File> sourcePath,
+                                final Map<File, Set<File>> outputDirToRoots,
+                                final DiagnosticOutputConsumer diagnosticConsumer,
+                                final OutputFileConsumer outputSink,
+                                CanceledStatus canceledStatus,
+                                @NotNull JavaCompilingTool compilingTool,
+                                @Nullable JpsJavacFileProvider jpsJavacFileProvider,
+                                @Nullable InputFileDataProvider inputFileDataProvider) {
     JavaCompiler compiler;
     try {
       compiler = compilingTool.createCompiler();
@@ -77,7 +134,7 @@ public final class JavacMain {
     final boolean javacBefore9 = usingJavac && JAVA_RUNTIME_PRE_9; // since java 9 internal API's used by the optimizedFileManager have changed
     final JpsJavacFileManager fileManager = new JpsJavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, modulePath, canceledStatus), javacBefore9, JavaSourceTransformer.getTransformers(),
-      jpsJavacFileProvider
+      jpsJavacFileProvider, inputFileDataProvider
     );
     if (javacBefore9 && !Iterators.isEmpty(platformClasspath)) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar
@@ -155,7 +212,7 @@ public final class JavacMain {
         }
       }
 
-      if (!Iterators.isEmpty(classpath)) {
+      if (modulePath.isEmpty() || !Iterators.isEmpty(classpath)) {
         // because module path has priority if present, initialize classpath after the module path
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);

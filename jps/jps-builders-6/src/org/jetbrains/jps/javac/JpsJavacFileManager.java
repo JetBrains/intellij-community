@@ -44,7 +44,8 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   });
 
   private final Context myContext;
-  private final @Nullable JpsJavacFileProvider myJpsJavacFileProvider;
+  private final @Nullable JpsJavacFileProvider myJpsJavacFileProvider; // todo: replace with InputFileDataProvider
+  private final @Nullable InputFileDataProvider myInputFileDataProvider;
   private final boolean myJavacBefore9;
   private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
   private final FileOperations myFileOperations = new DefaultFileOperations();
@@ -78,14 +79,32 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private final Map<String, JavaFileObject> myInputSourcesIndex = new HashMap<>();
   private final List<Closeable> myCloseables = new ArrayList<>();
 
+  // todo: remove
   public JpsJavacFileManager(final Context context,
                              boolean javacBefore9,
                              Collection<? extends JavaSourceTransformer> transformers,
                              @Nullable final JpsJavacFileProvider javacFileProvider) {
+    this(context, javacBefore9, transformers, javacFileProvider, null);
+  }
+  
+  public JpsJavacFileManager(final Context context,
+                             boolean javacBefore9,
+                             Collection<? extends JavaSourceTransformer> transformers,
+                             @Nullable final InputFileDataProvider inputContentProvider) {
+    this(context, javacBefore9, transformers, null, inputContentProvider);
+  }
+
+  JpsJavacFileManager(final Context context,
+                             boolean javacBefore9,
+                             Collection<? extends JavaSourceTransformer> transformers,
+                             @Nullable final JpsJavacFileProvider javacFileProvider,
+                             @Nullable final InputFileDataProvider inputContentProvider
+                              ) {
     super(context.getStandardFileManager());
     myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
     myJpsJavacFileProvider = javacFileProvider;
+    myInputFileDataProvider = inputContentProvider;
     myContext = new Context() {
       @Nullable
       @Override
@@ -503,69 +522,74 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     try {
       if (isFileSystemLocation(location)) {
         // we consider here only locations that are known to be file-based
+
+        Iterable<JavaFileObject> providersContent = Iterators.flat(
+          myJpsJavacFileProvider != null? myJpsJavacFileProvider.list(location, packageName, kinds, recurse) : Collections.<JavaFileObject>emptyList(),
+          Iterators.map(myInputFileDataProvider != null? myInputFileDataProvider.list(location, packageName, kinds, recurse) : null, new Function<InputFileDataProvider.FileData, JavaFileObject>() {
+            @Override
+            public JavaFileObject fun(InputFileDataProvider.FileData fd) {
+              return new ExtInputFileObject(location, fd.getPath(), myEncodingName, fd.getContent());
+            }
+          }));
+
         final Iterable<? extends File> locationRoots = getLocation(location);
         if (Iterators.isEmpty(locationRoots)) {
-          if (myJpsJavacFileProvider == null) {
-            return Collections.emptyList();
-          }
-          else {
-            return myJpsJavacFileProvider.list(location, packageName, kinds, recurse);
-          }
+          return providersContent;
         }
         result = Iterators.flat(
-          myJpsJavacFileProvider == null ? null : myJpsJavacFileProvider.list(location, packageName, kinds, recurse),
+          providersContent,
           Iterators.flat(Iterators.map(locationRoots, new Function<File, Iterable<JavaFileObject>>() {
-          @Override
-          public Iterable<JavaFileObject> fun(File root) {
-            try {
-              final boolean isFile;
+            @Override
+            public Iterable<JavaFileObject> fun(File root) {
+              try {
+                final boolean isFile;
 
-              FileOperations.Archive archive = myFileOperations.lookupArchive(root);
-              if (archive != null) {
-                isFile = true;
-              }
-              else {
-                isFile = myFileOperations.isFile(root);
-              }
+                FileOperations.Archive archive = myFileOperations.lookupArchive(root);
+                if (archive != null) {
+                  isFile = true;
+                }
+                else {
+                  isFile = myFileOperations.isFile(root);
+                }
 
-              if (isFile) {
-                // Not a directory; either a file or non-existent, create the archive
-                try {
-                  if (archive == null) {
-                    archive = myFileOperations.openArchive(root, myEncodingName, location);
+                if (isFile) {
+                  // Not a directory; either a file or non-existent, create the archive
+                  try {
+                    if (archive == null) {
+                      archive = myFileOperations.openArchive(root, myEncodingName, location);
+                    }
+                    if (archive != null) {
+                      return archive.list(packageName.replace('.', '/'), kinds, recurse);
+                    }
+                    // fallback to default implementation
+                    return JpsJavacFileManager.super.list(location, packageName, kinds, recurse);
                   }
-                  if (archive != null) {
-                    return archive.list(packageName.replace('.', '/'), kinds, recurse);
+                  catch (IOException ex) {
+                    throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
                   }
-                  // fallback to default implementation
-                  return JpsJavacFileManager.super.list(location, packageName, kinds, recurse);
                 }
-                catch (IOException ex) {
-                  throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
-                }
+
+                // is a directory or does not exist
+                final File dir = new File(root, packageName.replace('.', '/'));
+
+                // Generally, no directories should be included in result. If recurse:= false,
+                // the fileOperations.listFiles(dir, recurse) output may contain children directories, so the filter should skip them too
+                final BooleanFunction<File> kindsMatcher = ourKindFilter.getFor(kinds);
+                final BooleanFunction<File> filter = recurse || !kinds.contains(JavaFileObject.Kind.OTHER)? kindsMatcher : new BooleanFunction<File>() {
+                  @Override
+                  public boolean fun(File file) {
+                    return kindsMatcher.fun(file) && (
+                      !(kinds.size() == 1 || JpsFileObject.findKind(file.getName()) == JavaFileObject.Kind.OTHER) /* the kind != OTHER */ || myFileOperations.isFile(file)
+                    );
+                  }
+                };
+                return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), location.isOutputLocation()? myFileToInputFileObjectConverter : myFileToCachingInputFileObjectConverter);
               }
-
-              // is a directory or does not exist
-              final File dir = new File(root, packageName.replace('.', '/'));
-
-              // Generally, no directories should be included in result. If recurse:= false,
-              // the fileOperations.listFiles(dir, recurse) output may contain children directories, so the filter should skip them too
-              final BooleanFunction<File> kindsMatcher = ourKindFilter.getFor(kinds);
-              final BooleanFunction<File> filter = recurse || !kinds.contains(JavaFileObject.Kind.OTHER) ? kindsMatcher : new BooleanFunction<File>() {
-                @Override
-                public boolean fun(File file) {
-                  return kindsMatcher.fun(file) && (
-                    !(kinds.size() == 1 || JpsFileObject.findKind(file.getName()) == JavaFileObject.Kind.OTHER) /* the kind != OTHER */ || myFileOperations.isFile(file)
-                  );
-                }
-              };
-              return Iterators.map(Iterators.filter(myFileOperations.listFiles(dir, recurse), filter), location.isOutputLocation()? myFileToInputFileObjectConverter : myFileToCachingInputFileObjectConverter);
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
             }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        }))
+          }))
         );
       }
       else {

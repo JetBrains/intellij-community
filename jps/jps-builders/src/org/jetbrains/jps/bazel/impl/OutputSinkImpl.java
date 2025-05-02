@@ -11,7 +11,6 @@ import org.jetbrains.jps.bazel.DiagnosticSink;
 import org.jetbrains.jps.bazel.Message;
 import org.jetbrains.jps.bazel.ZipOutputBuilder;
 import org.jetbrains.jps.bazel.runner.BytecodeInstrumenter;
-import org.jetbrains.jps.bazel.runner.CompilerDataSink;
 import org.jetbrains.jps.bazel.runner.OutputSink;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.NodeSource;
@@ -23,7 +22,7 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import java.util.*;
 
-public class OutputSinkImpl implements OutputSink, CompilerDataSink {
+public class OutputSinkImpl implements OutputSink {
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final DiagnosticSink myDiagnostic;
   private final ZipOutputBuilder myOutBuilder;

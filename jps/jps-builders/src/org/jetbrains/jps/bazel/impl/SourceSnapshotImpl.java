@@ -33,7 +33,7 @@ public class SourceSnapshotImpl implements SourceSnapshot {
   }
 
   @Override
-  public @NotNull Iterable<@NotNull NodeSource> getSources() {
+  public @NotNull Iterable<@NotNull NodeSource> getElements() {
     return mySources.keySet();
   }
 

@@ -9,17 +9,22 @@ public interface BuildContext extends DiagnosticSink {
   String getTargetName();
 
   boolean isRebuild();
-  
+
+  boolean isCanceled();
+
   Path getBaseDir();
 
   Path getOutputZip();
 
   SourceSnapshot getSources();
-  
+
+  PathSnapshot getBinaryDependencies();
+
   BuilderArgs getBuilderArgs();
 
   GraphConfiguration getGraphConfig();
 
+  BuildProcessLogger getBuildLogger();
   // wipe graph, delete all caches, snapshots, storages
   void cleanBuildState();
 }

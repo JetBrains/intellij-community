@@ -24,8 +24,8 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Formatter;
 import java.util.logging.*;
+import java.util.logging.Formatter;
 
 @ApiStatus.Internal
 public final class ExternalJavacProcess {
@@ -190,7 +190,7 @@ public final class ExternalJavacProcess {
     try {
       JavaCompilingTool tool = getCompilingTool();
       final boolean rc = JavacMain.compile(
-        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool, null
+        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool, (InputFileDataProvider)null
       );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }

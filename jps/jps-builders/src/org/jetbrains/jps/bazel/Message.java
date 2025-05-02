@@ -3,14 +3,9 @@ package org.jetbrains.jps.bazel;
 
 import org.jetbrains.jps.bazel.runner.Runner;
 
-/**
- * @author Eugene Zhuravlev
- * Date: 23 Apr 2025
- */
-public
-interface Message {
+public interface Message {
   enum Kind {
-    ERROR, WARNING, INFO
+    ERROR, WARNING, INFO, STDOUT
   }
 
   Kind getKind();
@@ -31,6 +26,10 @@ interface Message {
 
   static Message info(Runner reporter, String text) {
     return create(reporter, Kind.INFO, text);
+  }
+
+  static Message stdOut(Runner reporter, String text) {
+    return create(reporter, Kind.STDOUT, text);
   }
 
   static Message create(Runner reporter, Kind messageKind, String text) {

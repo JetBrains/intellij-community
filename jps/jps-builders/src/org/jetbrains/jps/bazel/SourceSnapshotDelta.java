@@ -4,16 +4,19 @@ package org.jetbrains.jps.bazel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 
-public interface SourceSnapshotDelta {
+public interface SourceSnapshotDelta extends ElementSnapshotDelta<NodeSource> {
 
+  @Override
   @NotNull
   SourceSnapshot getBaseSnapshot();
 
+  @Override
   @NotNull
-  Iterable<@NotNull NodeSource> getDeletedSources();
+  Iterable<@NotNull NodeSource> getDeleted();
 
+  @Override
   @NotNull
-  Iterable<@NotNull NodeSource> getSourcesToRecompile();
+  Iterable<@NotNull NodeSource> getModified(); // sources to recompile: both changed and newly added
   
   boolean isRecompile(@NotNull NodeSource src);
 
@@ -22,7 +25,7 @@ public interface SourceSnapshotDelta {
   boolean isRecompileAll();
 
   default void markRecompileAll() {
-    for (NodeSource s : getBaseSnapshot().getSources()) {
+    for (NodeSource s : getBaseSnapshot().getElements()) {
       markRecompile(s);
     }
   }

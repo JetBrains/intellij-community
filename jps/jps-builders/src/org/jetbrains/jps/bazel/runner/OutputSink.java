@@ -4,7 +4,7 @@ package org.jetbrains.jps.bazel.runner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 
-public interface OutputSink extends OutputExplorer{
+public interface OutputSink extends OutputExplorer, CompilerDataSink{
 
   interface OutputFile {
 
