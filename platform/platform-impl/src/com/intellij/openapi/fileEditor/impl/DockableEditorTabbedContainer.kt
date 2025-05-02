@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
+import java.awt.Point
 import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
@@ -111,9 +112,14 @@ class DockableEditorTabbedContainer internal constructor(
       return null
     }
 
-    splitters.getTabsAt(point)?.let {
-      return it
+    val tabsAt = splitters.getTabsAt(point)
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    val below = RelativePoint(point.component, Point(point.point).apply { y += tolerance })
+    if (below.getPointOn(splitters).point.y < splitters.y + splitters.height) {
+      val tabsBelow = splitters.getTabsAt(below)
+      if (tabsBelow != null) return tabsBelow
     }
+    if (tabsAt != null) return tabsAt
 
     return (splitters.currentWindow ?: splitters.windows().firstOrNull())?.tabbedPane?.tabs
   }
