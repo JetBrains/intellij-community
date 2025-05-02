@@ -347,30 +347,32 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         return CompletableFuture.completedFuture(null);
       }
     }
-    var res = new CompletableFuture<XLineBreakpointProxy>();
-    FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, res, variants -> {
-      assert !variants.isEmpty();
+    return FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, variantChoice -> {
+      assert !variantChoice.getVariants().isEmpty();
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
+        for (XLineBreakpointTypeProxy type : breakpointInfo.getTypes()) {
+          if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
+            variantChoice.breakpointRemoved();
+            return;
+          }
+        }
         RelativePoint relativePoint = editor != null ? DebuggerUIUtil.getPositionForPopup(editor, line) : null;
-        if (variants.size() > 1 && relativePoint != null) {
-          showBreakpointSelectionPopup(project, breakpointInfo.getPosition(), editor, variants, res, relativePoint);
+        if (variantChoice.getVariants().size() > 1 && relativePoint != null) {
+          showBreakpointSelectionPopup(project, breakpointInfo.getPosition(), editor, variantChoice, relativePoint);
         }
         else {
-          FrontendXLineBreakpointVariant variant = variants.get(0);
-          variant.select();
+          variantChoice.select(variantChoice.getVariants().get(0));
         }
       });
       return Unit.INSTANCE;
     });
-    return res;
   }
 
   private static void showBreakpointSelectionPopup(
     @NotNull Project project,
     @NotNull XSourcePosition position,
     @NotNull Editor editor,
-    List<? extends FrontendXLineBreakpointVariant> variants,
-    CompletableFuture<XLineBreakpointProxy> res,
+    VariantChoiceData choiceData,
     RelativePoint relativePoint
   ) {
     final int line = position.getLine();
@@ -414,11 +416,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
 
-    final int defaultIndex = getIndexOfBestMatchingInlineVariant(position.getOffset(), variants);
+    final int defaultIndex = getIndexOfBestMatchingInlineVariant(position.getOffset(), choiceData.getVariants());
 
     final MySelectionListener selectionListener = new MySelectionListener();
     BaseListPopupStep<FrontendXLineBreakpointVariant> step =
-      new BaseListPopupStep<>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
+      new BaseListPopupStep<>(XDebuggerBundle.message("popup.title.set.breakpoint"), choiceData.getVariants()) {
         @Override
         public @NotNull String getTextFor(FrontendXLineBreakpointVariant value) {
           return value.getText();
@@ -432,13 +434,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         @Override
         public void canceled() {
           selectionListener.clearHighlighter();
-          res.cancel(false);
+          choiceData.cancel();
         }
 
         @Override
         public PopupStep<?> onChosen(FrontendXLineBreakpointVariant selectedValue, boolean finalChoice) {
           selectionListener.clearHighlighter();
-          selectedValue.select();
+          choiceData.select(selectedValue);
           return FINAL_CHOICE;
         }
 
@@ -465,12 +467,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     @NotNull XLineBreakpointInstallationInfo breakpointInfo,
     boolean selectVariantByPositionColumn
   ) {
-    var res = new CompletableFuture<XLineBreakpointProxy>();
-    FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, res, variantsWithAll -> {
-      var variants = variantsWithAll.stream().filter(v -> v.shouldUseAsInlineVariant()).toList();
+    return FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, variantChoice -> {
+      var variants = variantChoice.getVariants().stream().filter(v -> v.getUseAsInlineVariant()).toList();
       if (variants.isEmpty()) {
         LOG.error("Unexpected empty variants");
-        res.complete(null);
+        variantChoice.cancel();
         return Unit.INSTANCE;
       }
 
@@ -487,7 +488,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
         if (breakpointOrVariant instanceof XLineBreakpointProxy existingBreakpoint) {
           removeBreakpointIfPossible(project, breakpointInfo, existingBreakpoint);
-          res.complete(null);
+          variantChoice.breakpointRemoved();
           return Unit.INSTANCE;
         }
 
@@ -496,17 +497,16 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       else {
         if (!breakpoints.isEmpty()) {
           removeBreakpointIfPossible(project, breakpointInfo, breakpoints.toArray(XLineBreakpointProxy[]::new));
-          res.complete(null);
+          variantChoice.breakpointRemoved();
           return Unit.INSTANCE;
         }
 
         variant = variants.stream().max(Comparator.comparing(v -> v.getPriority())).get();
       }
 
-      variant.select();
+      variantChoice.select(variant);
       return Unit.INSTANCE;
     });
-    return res;
   }
 
   static @NotNull List<@NotNull XLineBreakpointProxy> findBreakpointsAtLine(

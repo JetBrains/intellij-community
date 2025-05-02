@@ -25,8 +25,7 @@ internal interface FrontendXLineBreakpointVariant {
   val icon: Icon?
   val highlightRange: TextRange?
   val priority: Int
-  fun shouldUseAsInlineVariant(): Boolean
-  fun select()
+  val useAsInlineVariant: Boolean
 }
 
 internal data class XLineBreakpointInstallationInfo(
@@ -49,12 +48,32 @@ private fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean)
   willRemoveBreakpointIfSingleVariant = canRemoveBreakpoint() && hasOneBreakpoint,
 )
 
+internal class VariantChoiceData(
+  val variants: List<FrontendXLineBreakpointVariant>,
+  private val result: CompletableFuture<XLineBreakpointProxy?>,
+  private val selectionCallback: (Int) -> Unit,
+) {
+  fun select(variant: FrontendXLineBreakpointVariant) {
+    val index = variants.indexOf(variant)
+    selectionCallback(index)
+  }
+
+  fun cancel() {
+    result.cancel(false)
+  }
+
+  fun breakpointRemoved() {
+    result.complete(null)
+  }
+}
+
 internal fun computeBreakpointProxy(
   project: Project,
   info: XLineBreakpointInstallationInfo,
-  result: CompletableFuture<XLineBreakpointProxy?>,
-  onVariantsChoice: (List<FrontendXLineBreakpointVariant>) -> Unit,
-) {
+  onVariantsChoice: (VariantChoiceData) -> Unit,
+): CompletableFuture<XLineBreakpointProxy?> {
+  // TODO: Replace with `coroutineScope.future` after IJPL-184112 is fixed
+  val result = CompletableFuture<XLineBreakpointProxy?>()
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
       val singleBreakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).singleOrNull()
@@ -72,12 +91,11 @@ internal fun computeBreakpointProxy(
           result.handle { _, _ ->
             response.selectionCallback.close()
           }
-          val variants = response.variants.mapIndexed { i, dto ->
-            FrontendXLineBreakpointVariantImpl(dto) {
-              responseWithVariantChoice(project, result, response.selectionCallback, i)
-            }
+          val variants = response.variants.map(::FrontendXLineBreakpointVariantImpl)
+          val choiceData = VariantChoiceData(variants, result) { i ->
+            responseWithVariantChoice(project, result, response.selectionCallback, i)
           }
-          onVariantsChoice(variants)
+          onVariantsChoice(choiceData)
         }
       }
     }
@@ -85,6 +103,7 @@ internal fun computeBreakpointProxy(
       result.completeExceptionally(e)
     }
   }
+  return result
 }
 
 private fun responseWithVariantChoice(
@@ -114,18 +133,12 @@ private fun createBreakpoint(
   return breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
 }
 
-private class FrontendXLineBreakpointVariantImpl(
-  private val dto: XLineBreakpointVariantDto,
-  private val callback: () -> Unit,
-) : FrontendXLineBreakpointVariant {
-  override val text: String = dto.text
-  override val icon: Icon? = dto.icon?.icon()
-  override val highlightRange: TextRange? = dto.highlightRange?.toTextRange()
-  override val priority: Int = dto.priority
-  override fun shouldUseAsInlineVariant(): Boolean = dto.useAsInline
-  override fun select() {
-    callback()
-  }
+private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
+  override val text: String get() = dto.text
+  override val icon: Icon? get() = dto.icon?.icon()
+  override val highlightRange: TextRange? get() = dto.highlightRange?.toTextRange()
+  override val priority: Int get() = dto.priority
+  override val useAsInlineVariant: Boolean get() = dto.useAsInline
 }
 
 @Service(Service.Level.PROJECT)
