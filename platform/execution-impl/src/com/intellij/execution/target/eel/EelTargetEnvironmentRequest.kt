@@ -190,10 +190,6 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override val localRoot: Path,
     override val targetRoot: String,
   ) : UploadableVolume, DownloadableVolume {
-    init {
-      val x = 1
-    }
-
     private fun targetRootPath(): Path {
       return eel.fs.getPath(targetRoot).asNioPath()
     }
