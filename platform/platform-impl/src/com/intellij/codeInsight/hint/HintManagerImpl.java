@@ -33,6 +33,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HintManagerImpl extends HintManager {
 
@@ -582,8 +583,11 @@ public class HintManagerImpl extends HintManager {
 
     AccessibleContextUtil.setName(hint.getComponent(), IdeBundle.message("information.hint.accessible.context.name"));
     if (onHintHidden != null) {
-      hint.addHintListener((event) -> {
-        onHintHidden.run();
+      AtomicBoolean called = new AtomicBoolean();
+      hint.addHintListener(event -> {
+        if (called.compareAndSet(false, true)) {
+          onHintHidden.run();
+        }
       });
     }
 
