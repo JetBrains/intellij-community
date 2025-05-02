@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
   @Override
@@ -47,6 +48,11 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
 
   @Override
   protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment env, @NotNull RunProfileState state) {
+    // aborts the execution of the run configuration if `.canRun` returns false
+    if (state instanceof PythonCommandLineState pythonState && !pythonState.canRun()) {
+      return Promises.resolvedPromise(null);
+    }
+
     FileDocumentManager.getInstance().saveAllDocuments();
 
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();

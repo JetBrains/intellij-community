@@ -30,6 +30,15 @@ interface UvLowLevel {
   suspend fun listPackages(): Result<List<PythonPackage>>
   suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>>
 
+  suspend fun isProjectSynced(inexact: Boolean): Result<Boolean>
+  suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): Result<ScriptSyncCheckResult>
+
   suspend fun sync(): Result<String>
   suspend fun lock(): Result<String>
+}
+
+sealed class ScriptSyncCheckResult {
+  data object Synced : ScriptSyncCheckResult()
+  data object Unsynced : ScriptSyncCheckResult()
+  data object NoInlineMetadata : ScriptSyncCheckResult()
 }

@@ -647,6 +647,9 @@
                  description="When disabled stripes minor version to look for prebuilt skeletons"/>
     <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
                  description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
+
+    <!-- uv -->
+    <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
   </extensions>
 
   <extensionPoints>
