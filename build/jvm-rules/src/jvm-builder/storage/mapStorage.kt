@@ -201,8 +201,15 @@ internal class BazelPersistentMapletFactory private constructor(
   override fun close() {
     // during save, we enumerate strings, so we cannot save as a part of close,
     // as in this case string enumerator maps maybe not saved (as being closed)
-    store.commit()
-    store.close()
+    if (store.hasUnsavedChanges()) {
+      store.commit()
+      store.close()
+    }
+    else {
+      // even if no changes, MvStore update file header -
+      // we want to avoid unnecessary disk writes and file on disk with an updated "modified timestamp"
+      store.closeImmediately()
+    }
   }
 
   fun forceClose() {
