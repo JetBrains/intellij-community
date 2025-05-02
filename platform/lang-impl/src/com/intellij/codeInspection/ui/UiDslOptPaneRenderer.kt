@@ -21,6 +21,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
 import com.intellij.util.ui.JBDimension
@@ -308,7 +309,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         }
 
         is OptDropdown -> {
-          comboBox(getComboBoxModel(component.options), getComboBoxRenderer())
+          comboBox(getComboBoxModel(component.options), textListCellRenderer { it?.label?.label() })
             .applyToComponent {
               val option = context.getOption(component.bindId)
               @Suppress("HardCodedStringLiteral")
@@ -503,18 +504,6 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         else {
           super.setSelectedItem(anObject)
         }
-      }
-    }
-  }
-
-  private fun getComboBoxRenderer(): ListCellRenderer<OptDropdown.Option?> {
-    return object : SimpleListCellRenderer<OptDropdown.Option?>() {
-      override fun customize(list: JList<out OptDropdown.Option?>,
-                             value: OptDropdown.Option?,
-                             index: Int,
-                             selected: Boolean,
-                             hasFocus: Boolean) {
-        text = value?.label?.label()
       }
     }
   }
