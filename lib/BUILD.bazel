@@ -1627,7 +1627,7 @@ jvm_import(
 
 jvm_import(
   name = "gradle",
-  jar = "@gradle-api-8_14-rc-1_http//file",
+  jar = "@gradle-api-8_14_http//file",
   visibility = ["//visibility:public"]
 )
 
