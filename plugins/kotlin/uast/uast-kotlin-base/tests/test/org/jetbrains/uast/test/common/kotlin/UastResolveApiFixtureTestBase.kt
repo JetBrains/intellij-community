@@ -2623,16 +2623,16 @@ interface UastResolveApiFixtureTestBase {
             "MyStringJVM.kt", """
                 @file:kotlin.jvm.JvmMultifileClass
                 @file:kotlin.jvm.JvmName("MyStringsKt")
-                
+
                 package test.pkg
-                
+
                 annotation class MyAnnotation(
                   val myAttr: String = "defaultValue",
                 )
-                
+
                 @MyAnnotation
                 inline fun <T> T.belongsToClassPart(): String = TODO()
-                
+
                 @MyAnnotation("myAttrValue")
                 inline fun <reified T : Any> T.needFake(): String = TODO()
             """.trimIndent()
@@ -2640,8 +2640,9 @@ interface UastResolveApiFixtureTestBase {
         myFixture.configureByText(
             "main.kt", """
                 import java.util.function.Consumer
-                import test.pkg.*
-                
+                import test.pkg.belongsToClassPart
+                import test.pkg.needFake
+
                 fun test() {
                   Any().belongsToClassPart()
                   Any().needFake()
@@ -2653,6 +2654,13 @@ interface UastResolveApiFixtureTestBase {
         try {
             val uFile = myFixture.file.toUElementOfType<UFile>()!!
             uFile.accept(object : AbstractUastVisitor() {
+                override fun visitImportStatement(node: UImportStatement): Boolean {
+                    val txt = node.sourcePsi?.text
+                    val resolved = node.resolve()
+                    TestCase.assertNotNull(txt, resolved)
+                    return super.visitImportStatement(node)
+                }
+
                 override fun visitCallExpression(node: UCallExpression): Boolean {
                     if (node.isConstructorCall()) {
                         // Like Any()
