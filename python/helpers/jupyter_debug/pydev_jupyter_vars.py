@@ -97,7 +97,15 @@ def table_command(command_text):
     print(res)
 
 
-def image_table_command(command_text):
+def image_start_load_table_command(command_text):
+    ipython_shell = get_ipython()
+    namespace = ipython_shell.user_ns
+    command, command_type, _ = command_text.split(NEXT_VALUE_SEPARATOR)
+    status, res = exec_image_table_command(command, command_type, None, None, namespace, namespace)
+    print(res)
+
+
+def image_load_chunk_table_command(command_text):
     ipython_shell = get_ipython()
     namespace = ipython_shell.user_ns
     command, command_type, offset, image_id = command_text.split(NEXT_VALUE_SEPARATOR)
