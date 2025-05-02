@@ -166,11 +166,11 @@ private fun submit(name: String, scope: CoroutineScope, task: () -> Unit) {
     scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       writeIntentReadAction {
         try {
-          LOG.debug("MacMenu: init ", name)
+          LOG.debug { "MacMenu: init $name" }
           task()
         }
         finally {
-          LOG.debug("MacMenu: done ", name)
+          LOG.debug { "MacMenu: done $name" }
           ENABLED.set(true)
         }
       }
