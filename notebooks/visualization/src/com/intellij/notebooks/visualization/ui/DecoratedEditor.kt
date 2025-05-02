@@ -80,7 +80,11 @@ class DecoratedEditor private constructor(
           if (editorImpl.getMouseEventArea(event) != EditorMouseEventArea.EDITING_AREA) {
             editorImpl.setMode(NotebookEditorMode.COMMAND)
           }
-          updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(), event.isShiftPressed(), event.button)
+          val shouldConsumeEvent = updateSelectionAfterClick(hoveredCell.interval, event.isCtrlPressed(),
+                                                             event.isShiftPressed(), event.button)
+          if (shouldConsumeEvent) {
+            event.consume()
+          }
         }
       }
 
@@ -158,8 +162,10 @@ class DecoratedEditor private constructor(
     updateSelectionAfterClick(clickedCell, ctrlPressed, shiftPressed, mouseButton)
   }
 
-  @Suppress("ConvertArgumentToSet")
-  private fun updateSelectionAfterClick(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int) {
+  /**
+   * Return should event be consumed.
+   */
+  fun updateSelectionAfterClick(clickedCell: NotebookCellLines.Interval, ctrlPressed: Boolean, shiftPressed: Boolean, mouseButton: Int): Boolean {
     val model = editorImpl.cellSelectionModel!!
     when {
       ctrlPressed -> {
@@ -194,8 +200,12 @@ class DecoratedEditor private constructor(
           }
         }
       }
-      mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> model.selectSingleCell(clickedCell)
+      mouseButton == MouseEvent.BUTTON1 && !model.isSelectedCell(clickedCell) -> {
+        model.selectSingleCell(clickedCell)
+        return true
+      }
     }
+    return false
   }
 
   companion object {
