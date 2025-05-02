@@ -376,14 +376,19 @@ object ActionUtil {
    */
   @JvmStatic
   fun performAction(action: AnAction, event: AnActionEvent): AnActionResult {
+    val project = event.project
+    if (project != null && DumbService.getInstance(project).isDumb && !action.isDumbAware) {
+      if (event.presentation.getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
+        showDumbModeWarning(project, action, event)
+      }
+      return AnActionResult.IGNORED
+    }
+    if (!event.presentation.isEnabled) {
+      return AnActionResult.IGNORED
+    }
     val actionManager = event.actionManager as ActionManagerEx
     val result = actionManager.performWithActionCallbacks(action, event) {
       doPerformActionOrShowPopup(action, event, null)
-    }
-    if (result.isIgnored && event.project.let { it != null && DumbService.getInstance(it).isDumb && !action.isDumbAware }) {
-      if (event.presentation.getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE) != false) {
-        showDumbModeWarning(event.project, action, event)
-      }
     }
     return result
   }
