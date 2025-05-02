@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.impl.stickyLines;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -19,12 +21,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
 public final class StickyLinesModelImpl implements StickyLinesModel {
+  private static final Logger LOG = Logger.getInstance(StickyLinesModelImpl.class);
   private static final Key<SourceID> STICKY_LINE_SOURCE = Key.create("editor.sticky.lines.source");
   private static final Key<StickyLinesModelImpl> STICKY_LINES_MODEL_KEY = Key.create("editor.sticky.lines.model");
   private static final Key<StickyLineImpl> STICKY_LINE_IMPL_KEY = Key.create("editor.sticky.line.impl");
@@ -54,10 +59,33 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
 
   static @Nullable StickyLinesModelImpl getModel(@NotNull Project project, @NotNull Document document) {
     if (project.isDisposed()) {
+      String editors = editorsAsString(document);
+      LOG.error(
+        """
+          ______________________________________________________________________________________
+          getting sticky lines model when project is already disposed
+          disposed project: %s
+          editors:
+          %s
+          ______________________________________________________________________________________
+          """.formatted(project, editors),
+        new Throwable()
+      );
       return null;
     }
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
     if (markupModel == null) {
+      String editors = editorsAsString(document);
+      LOG.error(
+        """
+          ______________________________________________________________________________________
+          getting sticky lines model when markup model is not created
+          editors:
+          %s
+          ______________________________________________________________________________________
+          """.formatted(editors),
+        new Throwable()
+      );
       return null;
     }
     return getModel(markupModel);
@@ -209,6 +237,12 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
         }
       });
     });
+  }
+
+  private static @NotNull String editorsAsString(@NotNull Document document) {
+    return Arrays.stream(EditorFactory.getInstance().getEditors(document))
+      .map(editor -> editor.toString() + "\n" + editor.getProject())
+      .collect(Collectors.joining("\n"));
   }
 
   private record StickyLineImpl(
