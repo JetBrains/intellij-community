@@ -273,7 +273,7 @@ internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBas
           node is GitBranch && isNestedPopup() && treeStep.affectedRepositories.any { it.currentBranch == node } -> node
           node is GitBranch && !isNestedPopup() && treeStep.affectedRepositories.all { it.currentBranch == node } -> node
           node is GitBranch && treeStep.affectedRepositories.any { node in it.recentCheckoutBranches } -> node
-          node is RefUnderRepository && node.repository.currentBranch == node.ref -> node
+          node is RefUnderRepository && node.repository.state.isCurrentRef(node.ref) -> node
           node is RefTypeUnderRepository -> node
           else -> null
         }

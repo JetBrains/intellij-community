@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.branch.GitRefType
@@ -30,6 +31,9 @@ internal abstract class GitBranchesTreePopupStepBase(
 ) : PopupStep<Any> {
   internal val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
   internal val affectedRepositoriesIds = affectedRepositories.map { it.rpcId }
+  internal val affectedRepositoriesFrontendModel = GitRepositoriesFrontendHolder.getInstance(project).let { holder ->
+    affectedRepositoriesIds.map { holder.get(it) }
+  }
 
   internal abstract val treeModel: GitBranchesTreeModel
 

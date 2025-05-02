@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.navigation.ItemPresentation
@@ -150,7 +149,7 @@ internal abstract class GitBranchesTreeModel(
    * @return true if there is at least one repository where the reference is not the current branch.
    */
   private fun GitReference.isCurrentRefInAny(repositories: List<GitRepositoryFrontendModel>): Boolean {
-    return repositories.any { it.state.currentRef?.matches(this) ?: false }
+    return repositories.any { it.state.isCurrentRef(this) }
   }
 
   private fun GitReference.isFavoriteInAll(repositories: List<GitRepositoryFrontendModel>): Boolean {
@@ -163,22 +162,22 @@ internal abstract class GitBranchesTreeModel(
   }
   data class BranchesPrefixGroup(val type: GitRefType,
                                  val prefix: List<String>,
-                                 val repository: GitRepository? = null) : PathElementIdProvider {
+                                 val repository: GitRepositoryFrontendModel? = null) : PathElementIdProvider {
     override fun getPathElementId(): String = type.name + "/" + prefix.toString()
   }
-  data class RefTypeUnderRepository(val repository: GitRepository, val type: GitRefType)
+  data class RefTypeUnderRepository(val repository: GitRepositoryFrontendModel, val type: GitRefType)
 
   data class RepositoryNode(
-    val repository: GitRepository,
+    val repository: GitRepositoryFrontendModel,
     /**
      * Set to true if this repository node doesn't contain children (e.g., used to navigate to the next level pop-up).
      */
     val isLeaf: Boolean,
   ) : PresentableNode {
-    override fun getPresentableText(): String = DvcsUtil.getShortRepositoryName(repository)
+    override fun getPresentableText(): String = repository.shortName
   }
 
-  data class RefUnderRepository(val repository: GitRepository, val ref: GitReference): PresentableNode {
+  data class RefUnderRepository(val repository: GitRepositoryFrontendModel, val ref: GitReference): PresentableNode {
     override fun getPresentableText(): String = ref.name
   }
 

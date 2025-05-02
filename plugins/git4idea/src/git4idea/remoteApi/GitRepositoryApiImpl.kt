@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -11,6 +12,8 @@ import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.ref.GitReferenceName
+import com.intellij.vcs.git.shared.repo.GitHash
+import com.intellij.vcs.git.shared.repo.GitOperationState
 import com.intellij.vcs.git.shared.repo.GitRepositoryState
 import com.intellij.vcs.git.shared.rpc.GitReferencesSet
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
@@ -167,10 +170,21 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         repository.tagHolder.getTags().keys,
       )
       return GitRepositoryState(
-        GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repository)),
-        refsSet,
-        repository.branches.recentCheckoutBranches,
+        currentRef = GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repository)),
+        revision = repository.currentRevision?.let { GitHash(it) },
+        refs = refsSet,
+        recentBranches = repository.branches.recentCheckoutBranches,
+        operationState = convertOperationState(repository)
       )
+    }
+
+    private fun convertOperationState(repository: GitRepository): GitOperationState = when (repository.state) {
+      Repository.State.NORMAL -> GitOperationState.NORMAL
+      Repository.State.MERGING -> GitOperationState.MERGE
+      Repository.State.REBASING -> GitOperationState.REBASE
+      Repository.State.GRAFTING -> GitOperationState.CHERRY_PICK
+      Repository.State.REVERTING -> GitOperationState.REVERT
+      Repository.State.DETACHED -> GitOperationState.DETACHED_HEAD
     }
 
     private fun collectFavorites(repository: GitRepository): GitFavoriteRefs {

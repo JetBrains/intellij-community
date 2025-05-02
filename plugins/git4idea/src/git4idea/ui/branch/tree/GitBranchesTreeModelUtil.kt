@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
-import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsScope
@@ -14,6 +13,7 @@ import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.log.Hash
 import git4idea.*
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -41,7 +41,7 @@ internal val emptyBranchComparator = Comparator<GitReference> { _, _ -> 0 }
 internal fun buildBranchTreeNodes(branchType: GitRefType,
                                   branchesMap: Map<String, Any>,
                                   path: List<String>,
-                                  repository: GitRepository? = null): List<Any> {
+                                  repository: GitRepositoryFrontendModel? = null): List<Any> {
   if (path.isEmpty()) {
     return branchesMap.mapToNodes(branchType, path, repository)
   }
@@ -55,7 +55,7 @@ internal fun buildBranchTreeNodes(branchType: GitRefType,
   }
 }
 
-private fun Map<String, Any>.mapToNodes(branchType: GitRefType, path: List<String>, repository: GitRepository?): List<Any> {
+private fun Map<String, Any>.mapToNodes(branchType: GitRefType, path: List<String>, repository: GitRepositoryFrontendModel?): List<Any> {
   return entries.map { (name, value) ->
     if (value is GitReference && repository != null) GitBranchesTreeModel.RefUnderRepository(repository, value)
     else if (value is Map<*, *>) GitBranchesTreeModel.BranchesPrefixGroup(branchType, path + name, repository) else value
@@ -210,13 +210,13 @@ internal fun addSeparatorIfNeeded(nodes: Collection<Any>, separator: SeparatorWi
 
 internal open class LazyRepositoryHolder(
   project: Project,
-  repositories: List<GitRepository>,
+  repositories: List<GitRepositoryFrontendModel>,
   matcher: MinusculeMatcher?,
   canHaveChildren: Boolean,
 ) : LazyHolder<GitBranchesTreeModel.RepositoryNode>(
   repositories.map { GitBranchesTreeModel.RepositoryNode(it, !canHaveChildren) },
   matcher,
-  nodeNameSupplier = { DvcsUtil.getShortRepositoryName(it.repository) },
+  nodeNameSupplier = { it.repository.shortName },
   needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
 
 internal class LazyActionsHolder(project: Project, actions: List<Any>, matcher: MinusculeMatcher?) :

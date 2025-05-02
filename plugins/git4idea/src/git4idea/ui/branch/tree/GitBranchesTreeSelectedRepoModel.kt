@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
@@ -32,7 +33,9 @@ internal class GitBranchesTreeSelectedRepoModel(
 
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)
-    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositories, matcher, canHaveChildren = false)
+    val holder = GitRepositoriesFrontendHolder.getInstance(project)
+    val allProjectRepositoriesFrontendModel = allProjectRepositories.map { holder.get(it.rpcId) }
+    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositoriesFrontendModel, matcher, canHaveChildren = false)
   }
 
   override fun getTopLevelNodes(): List<Any> {

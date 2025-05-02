@@ -18,9 +18,9 @@ import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
 import com.intellij.vcs.git.shared.branch.GitIncomingOutgoingColors
 import com.intellij.vcs.git.shared.branch.calcTooltip
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitTagType
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -104,7 +104,7 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
   private fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
     return when (treeNode) {
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
-      is GitBranchesTreeModel.RepositoryNode -> GitBranchUtil.getDisplayableBranchText(treeNode.repository)
+      is GitBranchesTreeModel.RepositoryNode -> treeNode.repository.state.getDisplayableBranchText()
       is GitLocalBranch -> {
         treeNode.getCommonTrackedBranch(treePopupStep.affectedRepositories)?.name
       }

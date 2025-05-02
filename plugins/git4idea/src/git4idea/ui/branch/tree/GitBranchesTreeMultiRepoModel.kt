@@ -16,7 +16,7 @@ internal class GitBranchesTreeMultiRepoModel(
   repositories: List<GitRepository>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeModel(project, topLevelActions, repositories) {
-  private val repositoriesNodes = repositories.map { RepositoryNode(it, isLeaf = true) }
+  private val repositoriesNodes = repositoriesFrontendModel.map { RepositoryNode(it, isLeaf = true) }
 
   private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 

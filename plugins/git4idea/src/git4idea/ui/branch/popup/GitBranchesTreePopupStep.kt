@@ -88,7 +88,8 @@ internal class GitBranchesTreePopupStep(
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitBranchesTreeModel.RepositoryNode) {
-      return GitBranchesTreePopupStep(project, selectedValue.repository, listOf(selectedValue.repository), false)
+      val repo = repositories.find { it.rpcId == selectedValue.repository.repositoryId } ?: return null
+      return GitBranchesTreePopupStep(project, repo, listOf(repo), false)
     }
 
     val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository
@@ -96,8 +97,8 @@ internal class GitBranchesTreePopupStep(
 
     if (reference != null) {
       val actionGroup = ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
-      return createActionStep(actionGroup, project, selectedRepository,
-                              refUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, reference)
+      val repo = refUnderRepository?.repository?.let { refRepo -> repositories.find { it.rpcId == refRepo.repositoryId } }
+      return createActionStep(actionGroup, project, selectedRepository, repo?.let(::listOf) ?: affectedRepositories, reference)
     }
 
     if (selectedValue is PopupFactoryImpl.ActionItem) {

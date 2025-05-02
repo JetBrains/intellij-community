@@ -78,14 +78,16 @@ internal class GitBranchesTreePopup(
   private fun toggleFavorite(userObject: Any?) {
     val refUnderRepository = userObject as? RefUnderRepository
     val reference = userObject as? GitReference ?: refUnderRepository?.ref ?: return
-    val repositories = refUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
+    val repositories = refUnderRepository?.repository?.let(::listOf) ?: run {
+      val holder = GitRepositoriesFrontendHolder.getInstance(project)
+      treeStep.affectedRepositories.map { holder.get(it.rpcId) }
+    }
 
-    val holder = GitRepositoriesFrontendHolder.getInstance(project)
-    val makeFavorite = repositories.any { repository -> !holder.get(repository.rpcId).favoriteRefs.contains(reference) }
+    val makeFavorite = repositories.any { !it.favoriteRefs.contains(reference) }
 
     GitRepositoryApi.launchRequest(project) {
       toggleFavorite(project.projectId(),
-                     repositories.map { it.rpcId },
+                     repositories.map { it.repositoryId },
                      GitReferenceName(reference.fullName),
                      favorite = makeFavorite)
     }
