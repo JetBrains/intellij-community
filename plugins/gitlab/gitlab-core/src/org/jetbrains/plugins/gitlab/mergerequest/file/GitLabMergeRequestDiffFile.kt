@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.Project
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -72,8 +74,20 @@ private fun getFileName(mergeRequestIid: String): String = "$mergeRequestIid.dif
 private fun getPresentablePath(glProject: GitLabProjectCoordinates, mergeRequestIid: String): String =
   "$glProject/mergerequests/${mergeRequestIid}.diff"
 
-private fun isFileValid(project: Project, connectionId: String): Boolean =
-  project.serviceIfCreated<GitLabProjectViewModel>()?.connectedProjectVm?.value.takeIf { it?.connectionId == connectionId } != null
+private fun isFileValid(project: Project, connectionId: String): Boolean {
+  try {
+    if (project.isDisposed) return false
+    return project.serviceIfCreated<GitLabProjectViewModel>()?.connectedProjectVm?.value.takeIf { it?.connectionId == connectionId } != null
+  }
+  catch (e: CancellationException) {
+    logger<GitLabMergeRequestDiffFile>().error(RuntimeException(e))
+    return false
+  }
+  catch (e: Exception) {
+    logger<GitLabMergeRequestDiffFile>().error(e)
+    return false
+  }
+}
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
