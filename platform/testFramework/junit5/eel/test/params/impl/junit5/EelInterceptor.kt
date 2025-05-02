@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.impl.providers.LocalEelTestProvider
 import com.intellij.platform.testFramework.junit5.eel.params.impl.providers.getEelTestProviders
@@ -14,19 +15,19 @@ import com.intellij.platform.testFramework.junit5.eel.params.spi.EelTestProvider
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelTestProvider.StartResult.Skipped
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelTestProvider.StartResult.Started
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider
+import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.makeFixturesEelAware
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
-import org.junit.jupiter.api.extension.BeforeAllCallback
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.util.AnnotationUtils
 import org.opentest4j.TestAbortedException
 import java.io.Closeable
 import java.lang.reflect.Method
+import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
-internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback {
+internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback, BeforeEachCallback {
   private companion object {
     const val REMOTE_EEL_EXECUTED = "REMOTE_EEL_EXECUTED"
     const val PROVIDER_PROP_NAME = "java.nio.file.spi.DefaultFileSystemProvider"
@@ -36,6 +37,19 @@ internal class EelInterceptor : InvocationInterceptor, BeforeAllCallback {
         AnnotationUtils.findAnnotation(testClass.get(), TestApplicationWithEel::class.java).get().atLeastOneRemoteEelRequired
 
     val ExtensionContext.store: ExtensionContext.Store get() = getStore(ExtensionContext.Namespace.GLOBAL)
+
+    private val eelForFixturesProvider = EelForFixturesProvider { invocationContext ->
+      invocationContext.arguments.filterIsInstance<EelHolderImpl>().first().eel
+    }
+  }
+
+  override fun beforeEach(context: ExtensionContext) {
+    val testMethod = context.testMethod.getOrNull() ?: return
+    if (testMethod.annotations.filterIsInstance<EelSource>().any() ||
+        testMethod.parameters.any { it.annotations.filterIsInstance<EelSource>().any() }
+    ) {
+      context.makeFixturesEelAware(eelForFixturesProvider)
+    }
   }
 
   override fun beforeAll(context: ExtensionContext) {
@@ -147,7 +161,8 @@ private suspend fun <T : Any> EelTestProvider<T>.startIjentProvider(
     is Skipped -> {
       val skippedReason = r.skippedReason
       if (mandatoryAnnotation != null) {
-        throw IllegalStateException("Test is marked with mandatory annotation $mandatoryAnnotation but $this is not available: $skippedReason")
+        throw IllegalStateException(
+          "Test is marked with mandatory annotation $mandatoryAnnotation but $this is not available: $skippedReason")
       }
       else {
         throw TestAbortedException(skippedReason)

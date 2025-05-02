@@ -25,6 +25,9 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -41,7 +44,8 @@ import kotlin.io.path.exists
 fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path> = testFixture {
   val tempDir = withContext(Dispatchers.IO) {
     if (root == null) {
-      Files.createTempDirectory(prefix)
+      it.eel?.fs?.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().prefix(prefix).build())?.getOrThrow()?.asNioPath()
+      ?: Files.createTempDirectory(prefix)
     }
     else {
       if (!root.exists()) {

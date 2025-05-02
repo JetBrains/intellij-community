@@ -11,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith
  * ```kotlin
  * @EelTestApplication
  * class MyTest {
+ *     private val projectFixture = projectFixture() // these fixtures are
+ *     private val tempDir = tempPathFixture() // are also sit on en eel, but only instance-level, not project level
  *   @ParametrizedTest
  *   @EelSource // With Junit5Pioneer annotate parameter
  *   fun myTest(eh:EelHolder) {

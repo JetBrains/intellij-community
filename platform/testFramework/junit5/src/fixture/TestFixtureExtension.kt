@@ -1,12 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.getEelForParametrizedTestProvider
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.HierarchyTraversalMode
 import org.junit.platform.commons.support.ReflectionSupport
+import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
@@ -15,17 +18,35 @@ import kotlin.jvm.optionals.getOrNull
 internal class TestFixtureExtension : BeforeAllCallback,
                                       BeforeEachCallback,
                                       AfterEachCallback,
-                                      AfterAllCallback {
+                                      AfterAllCallback,
+                                      InvocationInterceptor {
 
   override fun beforeAll(context: ExtensionContext) {
     before(context, static = true)
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    before(context, static = false)
+    // If test is parametrized with eel -- postpone fixture initialization till interception: we can't call it before it:
+    // we need invocation context.
+    if (context.getEelForParametrizedTestProvider() == null) {
+      before(context, static = false)
+    }
   }
 
-  private fun before(context: ExtensionContext, static: Boolean) {
+  override fun interceptTestTemplateMethod(invocation: InvocationInterceptor.Invocation<Void>, invocationContext: ReflectiveInvocationContext<Method>, extensionContext: ExtensionContext) {
+    val eelForFixturesProvider = extensionContext.getEelForParametrizedTestProvider()
+    if (eelForFixturesProvider != null) {
+      before(extensionContext, static = false, eelApi = eelForFixturesProvider.getEel(invocationContext))
+    }
+
+    super.interceptTestTemplateMethod(invocation, invocationContext, extensionContext)
+
+    if (eelForFixturesProvider != null) {
+      after(extensionContext)
+    }
+  }
+
+  private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null) {
     val testClass: Class<*> = context.testClass.getOrNull() ?: return
     val testInstance = context.testInstance.getOrNull()
 
@@ -38,14 +59,16 @@ internal class TestFixtureExtension : BeforeAllCallback,
     for (field in fields) {
       field.isAccessible = true
       val fixture = field.get(testInstance) as TestFixtureImpl<*>
-      pendingFixtures.add(fixture.init(testScope, TestContextImpl(context)))
+      pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
     }
     awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)
   }
 
   override fun afterEach(context: ExtensionContext) {
-    after(context)
+    if (context.getEelForParametrizedTestProvider() == null) {
+      after(context)
+    }
   }
 
   override fun afterAll(context: ExtensionContext) {
