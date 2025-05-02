@@ -18,8 +18,6 @@ import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsApiImpl
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
-import com.intellij.platform.eel.provider.utils.toEelArch
-import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import org.jetbrains.annotations.VisibleForTesting
@@ -27,6 +25,7 @@ import java.io.File
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.random.Random
 
 internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
   init {
@@ -84,11 +83,13 @@ class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefaul
   }
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 private fun doCreateTemporaryDirectory(
   options: EelFileSystemApi.CreateTemporaryEntryOptions,
 ): EelResult<EelPath, CreateTemporaryEntryError> {
   return doCreateTemporaryEntry(options) { dir, prefix, suffix, deleteOnExit ->
-    FileUtil.createTempDirectory(dir, prefix, suffix, deleteOnExit)
+    // dir / Prefix + Random + Optional_Suffix
+    FileUtil.createTempDirectory(dir, prefix + Random.nextBytes(16).toHexString(), suffix, deleteOnExit)
   }
 }
 
