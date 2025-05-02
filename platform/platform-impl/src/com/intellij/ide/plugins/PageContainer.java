@@ -39,4 +39,12 @@ public final class PageContainer<T> {
   public int getNextPage() {
     return myCurrentPage + 1;
   }
+
+  public int getPageSize() {
+    return myPageSize;
+  }
+
+  public int getCurrentPage() {
+    return myCurrentPage;
+  }
 }

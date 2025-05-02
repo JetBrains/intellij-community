@@ -182,13 +182,28 @@ com.intellij.openapi.extensions.PluginDescriptor
 - a:setEnabled(Z):V
 f:com.intellij.openapi.extensions.PluginId
 - java.lang.Comparable
+- sf:Companion:com.intellij.openapi.extensions.PluginId$Companion
 - compareTo(com.intellij.openapi.extensions.PluginId):I
 - equals(java.lang.Object):Z
-- s:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
-- s:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId
-- s:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
-- getIdString():java.lang.String
+- sf:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
+- sf:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId
+- sf:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
+- f:getIdString():java.lang.String
 - hashCode():I
+bc:com.intellij.openapi.extensions.PluginId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.extensions.PluginId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.extensions.PluginId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.extensions.PluginId):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.openapi.extensions.PluginId$Companion
+- f:findId(java.lang.String):com.intellij.openapi.extensions.PluginId
+- f:findId(java.lang.String[]):com.intellij.openapi.extensions.PluginId
+- f:getEMPTY_ARRAY():com.intellij.openapi.extensions.PluginId[]
+- f:getId(java.lang.String):com.intellij.openapi.extensions.PluginId
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - com.intellij.openapi.extensions.BaseExtensionPointName
 - <init>(java.lang.String):V

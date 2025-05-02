@@ -4,12 +4,14 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.getTags
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.*
@@ -55,12 +57,11 @@ interface PluginUiModel {
   val size: String?
   @get:NlsSafe
   val downloadUrl: String?
-  val releaseDate: Date?
   val releaseVersion: Int
   @get:NlsSafe
   val displayCategory: String?
 
-  val reviewComments: PageContainer<PluginReviewComment>?
+  val reviewComments: ReviewsPageContainer?
   @get:NlsSafe
   var forumUrl: String?
   @get:NlsSafe
@@ -135,6 +136,7 @@ enum class PluginSource {
 /**
  * Represents a plugin dependency in the UI model
  */
+@Serializable
 @ApiStatus.Internal
 data class PluginDependencyModel(
   val pluginId: PluginId,

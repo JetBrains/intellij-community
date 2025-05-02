@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions
 
 import com.intellij.ReviseWhenPortedToJDK
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 import java.util.*
@@ -11,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Represents an ID of a plugin. A full descriptor of the plugin may be obtained
  * via [com.intellij.ide.plugins.PluginManagerCore.getPlugin] method.
  */
+@Serializable
 class PluginId private constructor(val idString: String) : Comparable<PluginId> {
 
   override fun equals(o: Any?): Boolean {

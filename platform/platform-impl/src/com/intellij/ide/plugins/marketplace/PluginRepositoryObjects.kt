@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.parseLong
 import com.intellij.openapi.util.text.StringUtil.unquoteString
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -180,6 +181,7 @@ internal class MarketplaceBrokenPlugin(
   val originalUntil: String? = null
 )
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PluginReviewComment(
@@ -193,12 +195,14 @@ data class PluginReviewComment(
   fun getDate(): Long = parseLong(cdate, 0)
 }
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ReviewCommentAuthor(
   val name: @Nls String = ""
 )
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ReviewCommentPlugin(

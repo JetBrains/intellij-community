@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
@@ -74,14 +75,18 @@ class PluginUiModelAdapter(
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.size else null
   override val downloadUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.downloadUrl else null
-  override val releaseDate: Date?
-    get() = pluginDescriptor.releaseDate
   override val releaseVersion: Int
     get() = pluginDescriptor.releaseVersion
   override val displayCategory: String?
     get() = pluginDescriptor.displayCategory
-  override val reviewComments: PageContainer<PluginReviewComment>?
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reviewComments else null
+  override val reviewComments: ReviewsPageContainer?
+    get() {
+      if (pluginDescriptor is PluginNode) {
+        val nodeReviewComments = pluginDescriptor.reviewComments ?: return null
+        return ReviewsPageContainer.fromPageContainer(nodeReviewComments)
+      }
+      return null
+    }
 
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
