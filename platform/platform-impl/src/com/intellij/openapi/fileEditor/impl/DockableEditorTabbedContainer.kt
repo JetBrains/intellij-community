@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
+import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -89,14 +90,23 @@ class DockableEditorTabbedContainer internal constructor(
 
   override fun getAcceptArea(): RelativeRectangle {
     val component = splitters
+    return when (val placement = UISettings.getInstance().editorTabPlacement) {
+      SwingConstants.TOP, SwingConstants.BOTTOM -> extendAcceptArea(component, direction = placement)
+      else -> RelativeRectangle(component)
+    }
+  }
+
+  private fun extendAcceptArea(component: JComponent, direction: Int): RelativeRectangle {
     val fallback = RelativeRectangle(component)
     if (!component.isShowing) return fallback
     // To support accept area larger than the component, we use the root pane as the component.
     val rootPane = SwingUtilities.getRootPane(component) ?: return fallback
     val bounds = SwingUtilities.convertRectangle(component.parent, component.bounds, rootPane)
     val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
-    bounds.y -= tolerance
-    bounds.height += tolerance * 2
+    if (direction == SwingConstants.TOP) {
+      bounds.y -= tolerance
+    }
+    bounds.height += tolerance
     if (bounds.y < 0) bounds.y = 0;
     if (bounds.height > rootPane.height) bounds.height = rootPane.height;
     return RelativeRectangle(rootPane, bounds)
