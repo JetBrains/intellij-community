@@ -24,11 +24,11 @@ public class PyFStringToTStringIntentionTest extends PyIntentionTestCase {
     doTStringToFStringTest();
   }
 
-  public void testRegularString() {
+  public void testNotAvailableForRegularString() {
     doNegativeTest();
   }
 
-  public void testDocString() {
+  public void testNotAvailableForDocstring() {
     doNegativeTest();
   }
 
