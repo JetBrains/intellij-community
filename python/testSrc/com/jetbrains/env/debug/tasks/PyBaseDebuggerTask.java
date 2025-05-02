@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -292,7 +293,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * @param line starting with 0
    */
   protected void toggleBreakpoint(final String file, final int line) {
-    ApplicationManager.getApplication().invokeAndWait(() -> doToggleBreakpoint(file, line), ModalityState.defaultModalityState());
+    doToggleBreakpoint(file, line);
     setBreakpointSuspendPolicy(getProject(), line, myDefaultSuspendPolicy);
   }
 
@@ -328,7 +329,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   private void doToggleBreakpoint(String file, int line) {
-    Assert.assertTrue(canPutBreakpointAt(getProject(), file, line));
+    boolean canPutBreakpointAt = ReadAction.compute(() -> canPutBreakpointAt(getProject(), file, line));
+    Assert.assertTrue(canPutBreakpointAt);
     XDebuggerTestUtil.toggleBreakpoint(getProject(),getFileByPath(file), line);
   }
 
