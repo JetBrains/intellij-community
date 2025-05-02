@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.utils.yieldIfNotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.internal.*
+import org.jetbrains.uast.kotlin.psi.UastFakeLightMethodBase
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
@@ -470,6 +471,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 resolvedTargetElement is PsiPackageImpl ||
                 !isKotlin(resolvedTargetElement)
             ) {
+                return resolvedTargetElement
+            }
+
+            // If the resolution result is "fake" PSI, it doesn't belong to any module.
+            // Before falling to the following module lookup, bail out here.
+            if (resolvedTargetElement is UastFakeLightMethodBase) {
                 return resolvedTargetElement
             }
 
