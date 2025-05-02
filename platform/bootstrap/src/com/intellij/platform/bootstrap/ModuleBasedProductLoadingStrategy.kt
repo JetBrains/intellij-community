@@ -113,8 +113,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         else {
           /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
              on 'intellij.profiler.common' and other module from the platform, in other IDEs it includes them as its own content. In the
-             latter case we currently cannot run it using the modular loader, because these modules will be loaded twice. */
-          logger<ModuleBasedProductLoadingStrategy>().debug("Skipped $moduleGroup: ${moduleGroup.includedModules}")
+             latter case we currently cannot run it using the modular loader, because these modules will be loaded twice.
+             Remove this check after IJPL-186414 is fixed */
+          logger<ModuleBasedProductLoadingStrategy>().info("Skipped loading $moduleGroup because it intersects with main module group")
           null
         }
       }
