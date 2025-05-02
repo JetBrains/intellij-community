@@ -8,6 +8,8 @@ import com.intellij.util.io.delete
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -146,9 +148,63 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return Result.success(Unit)
   }
 
-  fun formatPackageName(name: PythonPackageSpecification): String {
-    return if (name.versionSpecs.isNullOrBlank()) name.name else "${name.name}${name.versionSpecs}"
+  override suspend fun isProjectSynced(inexact: Boolean): Result<Boolean> {
+    val args = constructSyncArgs(inexact)
+
+    uvCli.runUv(cwd, *args.toTypedArray())
+      .onFailure {
+        val message = it.message ?: ""
+
+        if (message.contains("The environment is outdated")) {
+          return Result.success(false)
+        }
+
+        return Result.failure(it)
+      }
+
+    return Result.success(true)
   }
+
+  override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): Result<ScriptSyncCheckResult> {
+    val args = constructSyncArgs(inexact) + listOf("--script", scriptPath.pathString)
+
+    uvCli.runUv(cwd, *args.toTypedArray())
+      .onFailure {
+        val message = it.message ?: ""
+
+        if (message.contains("does not contain a PEP 723 metadata tag")) {
+          return Result.success(ScriptSyncCheckResult.NoInlineMetadata)
+        }
+
+        if (message.contains("The environment is outdated")) {
+          return Result.success(ScriptSyncCheckResult.Unsynced)
+        }
+
+        return Result.failure(it)
+      }
+
+    return Result.success(ScriptSyncCheckResult.Synced)
+  }
+
+  fun constructSyncArgs(inexact: Boolean): MutableList<String> {
+    val args = mutableListOf("sync", "--check")
+
+    if (inexact) {
+      args += "--inexact"
+    }
+
+    return args
+  }
+
+  fun PythonPackageInstallRequest.formatPackageName(): String = when (this) {
+    is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecification -> specification.nameWithVersionSpec
+    is PythonPackageInstallRequest.AllRequirements -> error("UV supports only single requirement installation")
+    is PythonPackageInstallRequest.ByLocation -> error("UV does not support installing from location uri")
+  }
+
+  //fun formatPackageName(name: PythonPackageSpecification): String {
+  //  return if (name.versionSpecs.isNullOrBlank()) name.name else "${name.name}${name.versionSpecs}"
+  //}
 
   fun parseUvPythonList(uvDir: Path, out: String): Set<Path> {
     val lines = out.lines()
