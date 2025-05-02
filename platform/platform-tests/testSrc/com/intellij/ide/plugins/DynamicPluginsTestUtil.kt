@@ -9,7 +9,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -37,13 +36,11 @@ internal fun loadAndInitDescriptorInTest(
     explicitPluginSubsetToLoad = null,
     disablePluginLoadingCompletely = false,
   )
-  val result = runBlocking {
-    loadDescriptorFromFileOrDirInTests(
-      file = dir,
-      loadingContext = loadingContext,
-      isBundled = isBundled,
-    )
-  }
+  val result = loadDescriptorFromFileOrDirInTests(
+    file = dir,
+    loadingContext = loadingContext,
+    isBundled = isBundled,
+  )
   if (result == null) {
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
     throw AssertionError("Cannot load plugin from $dir")
