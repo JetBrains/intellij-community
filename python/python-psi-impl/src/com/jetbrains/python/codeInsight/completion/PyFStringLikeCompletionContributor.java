@@ -17,9 +17,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -162,7 +160,16 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
     }
     return ContainerUtil.all(call.multiMapArguments(PyResolveContext.defaultContext(typeEvalContext)), mapping -> {
       PyCallableParameter param = mapping.getMappedParameters().get(callArgument);
-      return param != null && templateType.equals(param.getType(typeEvalContext));
+      if (param == null) return false;
+      PyType paramType = param.getType(typeEvalContext);
+      if (param.isPositionalContainer() && paramType instanceof PyTupleType tupleType && tupleType.isHomogeneous()) {
+        paramType = tupleType.getElementTypes().get(0);
+      }
+      else if (param.isKeywordContainer() && paramType instanceof PyCollectionType dictType &&
+               PyNames.DICT.equals(dictType.getPyClass().getName())) {
+        paramType = ContainerUtil.getOrElse(dictType.getElementTypes(), 1, null);
+      }
+      return templateType.equals(paramType);
     });
   }
 }
