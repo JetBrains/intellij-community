@@ -87,7 +87,7 @@ internal fun loadJpsModel(
   )
   val jpsJavaModuleExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module)
 
-  val langLevel = LanguageLevel.valueOf("JDK_" + getJvmTargetLevel(args))
+  val langLevel = LanguageLevel.valueOf("JDK_" + getJvmTargetLevel(args).replace('.', '_'))
   jpsJavaModuleExtension.languageLevel = langLevel
 
   for (source in sources) {

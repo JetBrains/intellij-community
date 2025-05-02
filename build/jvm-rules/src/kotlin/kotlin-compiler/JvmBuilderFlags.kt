@@ -110,6 +110,6 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
   }
 }
 
-fun getJvmTargetLevel(args: ArgMap<JvmBuilderFlags>): String? {
+fun getJvmTargetLevel(args: ArgMap<JvmBuilderFlags>): String {
   return args.optionalSingle(JvmBuilderFlags.JVM_TARGET)?.let { if (it == "8") "1.8" else it } ?: "21"
 }
