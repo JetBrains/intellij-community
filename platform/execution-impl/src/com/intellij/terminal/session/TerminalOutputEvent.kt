@@ -17,7 +17,6 @@ sealed interface TerminalOutputEvent
 @ApiStatus.Internal
 @Serializable
 data class TerminalContentUpdatedEvent(
-  val id: Int,
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
