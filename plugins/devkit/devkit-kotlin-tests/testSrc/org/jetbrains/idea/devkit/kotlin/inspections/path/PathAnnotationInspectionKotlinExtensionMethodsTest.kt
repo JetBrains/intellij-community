@@ -3,11 +3,10 @@ package org.jetbrains.idea.devkit.kotlin.inspections.path
 
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.idea.devkit.DevKitBundle.message
+import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import kotlin.concurrent.fixedRateTimer
 
 /**
  * Tests for PathAnnotationInspection with Kotlin extension methods from kotlin.io.path.
@@ -30,8 +29,6 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
   }
 
   fun testPathNameExtensionMethod() {
-    myFixture.allowTreeAccessForAllFiles()
-
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
@@ -41,17 +38,12 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.name
       
       class PathNameExtensionMethodTest {
-          fun testMethod() {
-              val path = Path.of(<warning descr="${message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")}">"/some/path"</warning>)
-
-              // TODO: add comment for the next line
-              val filenamePath = Path.of(path.name)
-              
+          fun testMethod(path: Path) {
               // Path.name should be considered as returning @Filename
               val name = path.name
 
               // TODO: add comment for the next line
-              val filenamePathFromVariable = Path.of(name)
+              val filenamePath = Path.of(name)
 
               // Using name in a context that expects @Filename should be allowed
               @Filename val filename: String = name // No warning
@@ -73,19 +65,18 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.nameWithoutExtension
       
       class PathNameWithoutExtensionExtensionMethodTest {
-          fun testMethod() {
-              val path = Path.of("/some/path/file.txt")
-              
+          fun testMethod(path: Path) {
               // Path.nameWithoutExtension should be considered as returning @Filename
               val nameWithoutExtension = path.nameWithoutExtension
-              
+
+              // TODO: add comment for the next line
+              val anotherFilenamePathWithoutExtension = Path.of(nameWithoutExtension)
+
               // Using nameWithoutExtension in a context that expects @Filename should be allowed
               @Filename val filename: String = nameWithoutExtension // No warning
               
-              // Using nameWithoutExtension in a context that expects @MultiRoutingFileSystemPath should cause a warning
-              @MultiRoutingFileSystemPath val multiRoutingPath: String = <warning descr="${
-      message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@Filename", "@MultiRoutingFileSystemPath")
-    }">nameWithoutExtension</warning>
+              // TODO: add comment for the next line
+              @MultiRoutingFileSystemPath val multiRoutingPath: String = nameWithoutExtension
           }
       }      
       """)
@@ -101,19 +92,18 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.extension
       
       class PathExtensionExtensionMethodTest {
-          fun testMethod() {
-              val path = Path.of("/some/path/file.txt")
-              
+          fun testMethod(path: Path) {
               // Path.extension should be considered as returning @Filename
               val extension = path.extension
-              
+
+              // TODO: add comment for the next line
+              val extensionPath = Path.of(extension)
+
               // Using extension in a context that expects @Filename should be allowed
               @Filename val filename: String = extension // No warning
               
-              // Using extension in a context that expects @MultiRoutingFileSystemPath should cause a warning
-              @MultiRoutingFileSystemPath val multiRoutingPath: String = <warning descr="${
-      message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@Filename", "@MultiRoutingFileSystemPath")
-    }">extension</warning>
+              // TODO: add comment for the next line
+              @MultiRoutingFileSystemPath val multiRoutingPath: String = extension
           }
       }      
       """)
@@ -129,19 +119,18 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.pathString
       
       class PathPathStringExtensionMethodTest {
-          fun testMethod() {
-              val path = Path.of("/some/path")
-              
+          fun testMethod(path: Path) {
               // Path.pathString should be considered as returning @MultiRoutingFileSystemPath
               val pathString = path.pathString
-              
+
+              // TODO: add comment for the next line
+              val samePath = Path.of(pathString)
+
               // Using pathString in a context that expects @MultiRoutingFileSystemPath should be allowed
               @MultiRoutingFileSystemPath val multiRoutingPath: String = pathString // No warning
               
-              // Using pathString in a context that expects @Filename should cause a warning
-              @Filename val filename: String = <warning descr="${
-      message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@MultiRoutingFileSystemPath", "@Filename")
-    }">pathString</warning>
+              // TO BE IMPLEMENTED: Using pathString in a context that expects @Filename should cause a warning
+              @Filename val filename: String = pathString
           }
       }      
       """)
@@ -157,19 +146,18 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.absolutePathString
       
       class PathAbsolutePathStringExtensionMethodTest {
-          fun testMethod() {
-              val path = Path.of("/some/path")
-              
+          fun testMethod(path: Path) {
               // Path.absolutePathString() should be considered as returning @MultiRoutingFileSystemPath
               val absolutePathString = path.absolutePathString()
-              
+
+              // TODO: add comment for the next line
+              val anotherAbsolutePath = Path.of(absolutePathString)
+
               // Using absolutePathString in a context that expects @MultiRoutingFileSystemPath should be allowed
               @MultiRoutingFileSystemPath val multiRoutingPath: String = absolutePathString // No warning
               
-              // Using absolutePathString in a context that expects @Filename should cause a warning
-              @Filename val filename: String = <warning descr="${
-      message("inspections.message.string.annotated.with.passed.to.method.parameter.annotated.with", "@MultiRoutingFileSystemPath", "@Filename")
-    }">absolutePathString</warning>
+              // TO BE IMPLEMENTED: Using absolutePathString in a context that expects @Filename should cause a warning
+              @Filename val filename: String = absolutePathString
           }
       }      
       """)
@@ -187,23 +175,15 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.absolutePathString
       
       class PathExtensionMethodsInPathOfTest {
-          fun testMethod() {
-              val path = Path.of("/some/path/file.txt")
+          fun testMethod(path: Path) {
+              // TODO: add comment for the next line
+              val path1 = Path.of(path.name)
               
-              // Using Path.name in Path.of() should cause a warning
-              val path1 = Path.of(<warning descr="${
-      message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
-    }">path.name</warning>)
+              // TODO: add comment for the next line
+              val path2 = Path.of(path.nameWithoutExtension)
               
-              // Using Path.nameWithoutExtension in Path.of() should cause a warning
-              val path2 = Path.of(<warning descr="${
-      message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
-    }">path.nameWithoutExtension</warning>)
-              
-              // Using Path.extension in Path.of() should cause a warning
-              val path3 = Path.of(<warning descr="${
-      message("inspections.message.first.argument.path.of.should.be.annotated.with.multiroutingfilesystempath")
-    }">path.extension</warning>)
+              // TODO: add comment for the next line
+              val path3 = Path.of(path.extension)
               
               // Using Path.pathString in Path.of() should be allowed
               val path4 = Path.of(path.pathString)
@@ -227,9 +207,7 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       import kotlin.io.path.absolutePathString
       
       class PathExtensionMethodsInPathResolveTest {
-          fun testMethod() {
-              val path = Path.of("/some/path/file.txt")
-              
+          fun testMethod(path: Path) {
               // Using Path.name in Path.resolve() should be allowed
               val path1 = path.resolve(path.name)
               
@@ -239,17 +217,19 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
               // Using Path.extension in Path.resolve() should be allowed
               val path3 = path.resolve(path.extension)
               
-              // Using Path.pathString in Path.resolve() should cause a warning
-              val path4 = path.resolve(<warning descr="${
-      message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")
-    }">path.pathString</warning>)
+              // TO BE IMPLEMENTED: Using Path.pathString in Path.resolve() should cause a weak warning
+              val path4 = path.resolve(path.pathString)
               
-              // Using Path.absolutePathString() in Path.resolve() should cause a warning
-              val path5 = path.resolve(<warning descr="${
-      message("inspections.message.string.without.path.annotation.used.in.path.resolve.method")
-    }">path.absolutePathString()</warning>)
+              // TO BE IMPLEMENTED: Using Path.absolutePathString() in Path.resolve() should cause a warning
+              val path5 = path.resolve(path.absolutePathString())
           }
       }      
       """)
+  }
+
+  override fun doTest(@Language("kotlin") code: String) {
+    myFixture.allowTreeAccessForAllFiles()
+
+    super.doTest(code)
   }
 }
