@@ -11,6 +11,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -20,7 +21,8 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   override val id: String get() = "SymbolSearchEverywhereContributor"
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
-    delegate.getItems(params)
+    if (params.inputQuery.isEmpty()) emptyFlow()
+    else delegate.getItems(params)
 
   override suspend fun getFilterEditor(): SeFilterEditor? =
     SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())

@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -19,7 +20,8 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
   override val id: String get() = "TextSearchContributor"
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
-    delegate.getItems(params)
+    if (params.inputQuery.isEmpty()) emptyFlow()
+    else delegate.getItems(params)
 
   override suspend fun getFilterEditor(): SeFilterEditor? = null
 
