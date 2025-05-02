@@ -4,6 +4,8 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
 
@@ -478,7 +480,18 @@ interface EelFileSystemApi {
     interface NameTooLong : DiskInfoError, EelFsError.NameTooLong
     interface Other : DiskInfoError, EelFsError.Other
   }
+
+  /**
+   * File watching
+   */
+  suspend fun watchChanges(paths: Set<WatchedPath>, options: Set<WatcherOption>): Flow<PathChange>? = null
 }
+
+data class PathChange(val path: String, val type: WatcherOption)
+
+data class WatchedPath(val path: String, val recursive: Boolean)
+
+enum class WatcherOption { GIVEUP, RESET, UNWATCHEABLE, MESSAGE, CREATE, DELETE, STATS, CHANGE }
 
 sealed interface EelOpenedFile {
   val path: EelPath
