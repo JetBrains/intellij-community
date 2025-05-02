@@ -53,7 +53,15 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
 
   when (event) {
     is TerminalWriteBytesEvent -> {
-      terminalStarter.sendTrackedBytes(event.bytes, eventTime = TimeSource.Monotonic.markNow())
+      val eventTime = TimeSource.Monotonic.markNow()
+
+      if (isTypingBytes(event.bytes)) {
+        terminalStarter.sendTypedBytes(event.bytes, eventTime)
+      }
+      else {
+        terminalStarter.sendBytes(event.bytes, false)
+      }
+
       // We count enter key presses on the backend separately, because it's used in the settings
       // to show the feedback notification, and the settings are currently shown on the backend through Lux.
       if (event.bytes.firstOrNull()?.toInt() == '\r'.code && AppMode.isRemoteDevHost()) {
@@ -91,4 +99,14 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
       }
     }
   }
+}
+
+/**
+ * Consider the byte sequence as typing if it contains the single character that is not a special symbol.
+ */
+private fun isTypingBytes(bytes: ByteArray): Boolean {
+  val string = String(bytes, Charsets.UTF_8)
+  if (string.length > 1) return false
+  val char = string[0]
+  return !Character.isISOControl(char) || char == '\r' || char.code == 127 // backspace (del)
 }

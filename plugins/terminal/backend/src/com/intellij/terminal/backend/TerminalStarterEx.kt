@@ -46,7 +46,7 @@ internal class TerminalStarterEx(
    * Use for sending bytes for that typing latency should be reported.
    * [eventTime] is the moment when this writing bytes event was initialized.
    */
-  fun sendTrackedBytes(bytes: ByteArray, eventTime: TimeMark) {
+  fun sendTypedBytes(bytes: ByteArray, eventTime: TimeMark) {
     val length = bytes.size
     if (length > 0) {
       isLastSentByteEscape = bytes[length - 1].toInt() == KeyEvent.VK_ESCAPE
