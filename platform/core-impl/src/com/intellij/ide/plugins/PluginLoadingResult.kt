@@ -65,7 +65,7 @@ class PluginLoadingResult {
     for (pluginList in descriptorLoadingResult.discoveredPlugins) {
       for (descriptor in pluginList.plugins) {
         // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = pluginList is SystemPropertyProvidedPluginsList, initContext = initContext)
+        initAndAdd(descriptor = descriptor, overrideUseIfCompatible = pluginList.source is PluginsSourceContext.SystemPropertyProvided, initContext = initContext)
       }
     }
   }

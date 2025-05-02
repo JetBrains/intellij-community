@@ -86,7 +86,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val bundled = loadBundledPluginDescriptors(scope, loadingContext, zipPool)
     return scope.async {
       listOfNotNull(
-        corePlugin.await()?.let { ProductPluginsList(listOf(it)) },
+        corePlugin.await()?.let { DiscoveredPluginsList(listOf(it), PluginsSourceContext.Product) },
         custom.await(),
         bundled.await(),
       )
@@ -97,7 +97,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     scope: CoroutineScope,
     context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
-  ): Deferred<BundledPluginsList> {
+  ): Deferred<DiscoveredPluginsList> {
     val mainGroupModulesSet = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor.moduleId }
     val mainGroupResourceRootSet = productModules.mainModuleGroup.includedModules.flatMapTo(HashSet()) { it.moduleDescriptor.resourceRootPaths }
     val serviceModuleMappingDeferred = scope.async { 
@@ -119,7 +119,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         }
       }
     }
-    return scope.async { BundledPluginsList(bundled.awaitAll().filterNotNull()) }
+    return scope.async { DiscoveredPluginsList(bundled.awaitAll().filterNotNull(), PluginsSourceContext.Bundled) }
   }
 
   private fun loadCustomPluginDescriptors(
@@ -127,9 +127,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     customPluginDir: Path,
     context: PluginDescriptorLoadingContext,
     zipFilePool: ZipEntryResolverPool,
-  ): Deferred<CustomPluginsList> {
+  ): Deferred<DiscoveredPluginsList> {
     if (!Files.isDirectory(customPluginDir)) {
-      return CompletableDeferred(CustomPluginsList(customPluginDir, emptyList()))
+      return CompletableDeferred(DiscoveredPluginsList(emptyList(), PluginsSourceContext.Custom))
     }
     val deferredDescriptors = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
     Files.newDirectoryStream(customPluginDir).use { dirStream ->
@@ -151,7 +151,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
       deferredDescriptors.addAll(loadPluginDescriptorsFromAdditionalRepositories(scope, additionalRepositoryPaths, context, zipFilePool))
     }
-    return scope.async { CustomPluginsList(customPluginDir, deferredDescriptors.awaitAll().filterNotNull()) }
+    return scope.async { DiscoveredPluginsList(deferredDescriptors.awaitAll().filterNotNull(), PluginsSourceContext.Custom) }
   }
 
   private fun loadPluginDescriptorsFromAdditionalRepositories(scope: CoroutineScope,

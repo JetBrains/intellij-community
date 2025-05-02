@@ -172,7 +172,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val descriptors = paths.mapNotNull { loadDescriptor(file = it, loadingContext = loadingContext, pool = ZipFilePoolImpl()) }
   loadingContext.use {
     result.initAndAddAll(
-      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(CustomPluginsList(dir, descriptors))),
+      descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(DiscoveredPluginsList(descriptors, PluginsSourceContext.Custom))),
       initContext = initContext
     )
   }

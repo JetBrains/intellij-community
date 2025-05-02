@@ -60,7 +60,7 @@ class PluginSetTestBuilder(private val path: Path) {
     // constant order in tests
     val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
     val descriptors = paths.mapNotNull { path -> loadDescriptor(path, loadingContext, ZipFilePoolImpl()) }
-    val pluginList = CustomPluginsList(path, descriptors)
+    val pluginList = DiscoveredPluginsList(descriptors, PluginsSourceContext.Custom)
     loadingContext.use {
       runBlocking {
         result.initAndAddAll(

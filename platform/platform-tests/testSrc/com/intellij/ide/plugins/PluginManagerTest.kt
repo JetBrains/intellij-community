@@ -204,8 +204,8 @@ class PluginManagerTest {
     val expectedPluginId = updated.getPluginId()
     Assert.assertEquals(expectedPluginId, bundled.getPluginId())
 
-    val bundledList = BundledPluginsList(listOf(bundled))
-    val customList = CustomPluginsList(pluginsPath.resolve("updated"), listOf(updated))
+    val bundledList = DiscoveredPluginsList(listOf(bundled), PluginsSourceContext.Bundled)
+    val customList = DiscoveredPluginsList(listOf(updated), PluginsSourceContext.Custom)
 
     assertPluginPreInstalled(expectedPluginId, listOf(bundledList, customList))
     assertPluginPreInstalled(expectedPluginId, listOf(customList, bundledList))
@@ -371,11 +371,7 @@ class PluginManagerTest {
       }
       loadingContext.close()
       val result = PluginLoadingResult()
-      val pluginList = if (isBundled) {
-        BundledPluginsList(list)
-      } else {
-        CustomPluginsList(Path.of(""), list)
-      }
+      val pluginList = DiscoveredPluginsList(list, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
       result.initAndAddAll(
         descriptorLoadingResult = PluginDescriptorLoadingResult.build(listOf(pluginList)),
         initContext = initContext

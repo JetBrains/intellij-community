@@ -385,7 +385,7 @@ private fun resolveArchives(path: Path): MutableList<Path>? {
   }
 }
 
-private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): Deferred<SystemPropertyProvidedPluginsList?> {
+private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDescriptorLoadingContext, pool: ZipEntryResolverPool): Deferred<DiscoveredPluginsList?> {
   val pathProperty = System.getProperty("plugin.path") ?: return CompletableDeferred(value = null)
 
   // gradle-intellij-plugin heavily depends on this property to have core class loader plugins during tests
@@ -398,7 +398,7 @@ private fun CoroutineScope.loadDescriptorsFromProperty(loadingContext: PluginDes
       loadDescriptorFromFileOrDir(file, loadingContext, pool, useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty)
     })
   }
-  return async { SystemPropertyProvidedPluginsList(list.awaitAllNotNull()) }
+  return async { DiscoveredPluginsList(list.awaitAllNotNull(), PluginsSourceContext.SystemPropertyProvided) }
 }
 
 suspend fun loadDescriptors(
@@ -619,7 +619,11 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
       zipPool = zipPool,
       bundledPluginDir = effectiveBundledPluginDir,
     )
-    return async { listOfNotNull(ProductPluginsList(listOf(core.await())), custom.await(), fromClasspath.await()) }
+    return async { listOfNotNull(
+      DiscoveredPluginsList(listOf(core.await()), PluginsSourceContext.Product),
+      custom.await(),
+      fromClasspath.await()
+    ) }
   }
 }
 
@@ -629,7 +633,7 @@ private fun CoroutineScope.loadFromPluginClasspathDescriptor(
   loadingContext: PluginDescriptorLoadingContext,
   zipPool: ZipEntryResolverPool,
   bundledPluginDir: Path,
-): Deferred<ClassPathProvidedPluginsList> {
+): Deferred<DiscoveredPluginsList> {
   val pluginCount = input.readUnsignedShort()
   val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>(pluginCount)
   repeat(pluginCount) {
@@ -666,7 +670,7 @@ private fun CoroutineScope.loadFromPluginClasspathDescriptor(
       }
     })
   }
-  return async { ClassPathProvidedPluginsList(result.awaitAllNotNull()) }
+  return async { DiscoveredPluginsList(result.awaitAllNotNull(), PluginsSourceContext.ClassPathProvided) }
 }
 
 private data class FileItem(@JvmField val file: Path, @JvmField val path: String)
@@ -827,7 +831,7 @@ private fun CoroutineScope.loadCoreModules(
   isRunningFromSources: Boolean,
   pool: ZipEntryResolverPool,
   classLoader: ClassLoader,
-): Deferred<ProductPluginsList> {
+): Deferred<DiscoveredPluginsList> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
   val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
   val (corePluginDeferred, isSingleDescriptorCore) = loadCorePlugin(
@@ -841,7 +845,7 @@ private fun CoroutineScope.loadCoreModules(
     classLoader = classLoader,
   )
   if (isSingleDescriptorCore) {
-    return async { ProductPluginsList(listOfNotNull(corePluginDeferred.await())) }
+    return async { DiscoveredPluginsList(listOfNotNull(corePluginDeferred.await()), PluginsSourceContext.Product) }
   }
 
   val result: MutableList<Deferred<IdeaPluginDescriptorImpl?>> = ArrayList()
@@ -864,7 +868,7 @@ private fun CoroutineScope.loadCoreModules(
       }
     }
   }
-  return async { ProductPluginsList(result.awaitAllNotNull()) }
+  return async { DiscoveredPluginsList(result.awaitAllNotNull(), PluginsSourceContext.Product) }
 }
 
 /**
@@ -1138,7 +1142,7 @@ suspend fun loadDescriptorsFromCustomPluginDir(customPluginDir: Path, ignoreComp
 fun loadDescriptorsFromClassPathInTest(
   loader: ClassLoader,
   buildNumber: BuildNumber = BuildNumber.fromString("2042.42")!!
-): ClassPathProvidedPluginsList {
+): DiscoveredPluginsList {
   @Suppress("UrlHashCode")
   val urlToFilename = collectPluginFilesInClassPath(loader)
   val zipPool: ZipEntryResolverPool = NonShareableJavaZipFilePool()
@@ -1147,7 +1151,7 @@ fun loadDescriptorsFromClassPathInTest(
   )
   try {
     val pluginsList = @Suppress("RAW_RUN_BLOCKING") runBlocking {
-      ClassPathProvidedPluginsList(
+      DiscoveredPluginsList(
         urlToFilename.map { (url, filename) ->
           async(Dispatchers.IO) {
             loadDescriptorFromResource(
@@ -1160,7 +1164,8 @@ fun loadDescriptorsFromClassPathInTest(
               libDir = null,
             )
           }
-        }.awaitAllNotNull()
+        }.awaitAllNotNull(),
+        source = PluginsSourceContext.ClassPathProvided
       )
     }
     return pluginsList
@@ -1182,12 +1187,7 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
   pool: ZipEntryResolverPool,
 ): Deferred<DiscoveredPluginsList> {
   fun buildResult(descriptors: List<IdeaPluginDescriptorImpl>): DiscoveredPluginsList {
-    if (isBundled) {
-      return BundledPluginsList(descriptors)
-    }
-    else {
-      return CustomPluginsList(dir, descriptors)
-    }
+    return DiscoveredPluginsList(descriptors, if (isBundled) PluginsSourceContext.Bundled else PluginsSourceContext.Custom)
   }
   if (!Files.isDirectory(dir)) {
     return CompletableDeferred(buildResult(Collections.emptyList()))

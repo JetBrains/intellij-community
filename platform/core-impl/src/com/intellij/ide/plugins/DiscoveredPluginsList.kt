@@ -2,38 +2,18 @@
 package com.intellij.ide.plugins
 
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @ApiStatus.Internal
-/**
- * Provides additional context for plugin sources in regard to plugin loading in the IDE.
- */
-sealed interface DiscoveredPluginsList {
-  val plugins: List<IdeaPluginDescriptorImpl>
+class DiscoveredPluginsList(
+  val plugins: List<IdeaPluginDescriptorImpl>,
+  val source: PluginsSourceContext
+)
+
+@ApiStatus.Internal
+sealed interface PluginsSourceContext {
+  object Product : PluginsSourceContext
+  object Bundled : PluginsSourceContext
+  object Custom : PluginsSourceContext
+  object SystemPropertyProvided : PluginsSourceContext
+  object ClassPathProvided : PluginsSourceContext
 }
-
-@ApiStatus.Internal
-class ProductPluginsList(
-  override val plugins: List<IdeaPluginDescriptorImpl>,
-) : DiscoveredPluginsList
-
-@ApiStatus.Internal
-class BundledPluginsList(
-  override val plugins: List<IdeaPluginDescriptorImpl>,
-) : DiscoveredPluginsList
-
-@ApiStatus.Internal
-class CustomPluginsList(
-  val location: Path,
-  override val plugins: List<IdeaPluginDescriptorImpl>,
-) : DiscoveredPluginsList
-
-@ApiStatus.Internal
-class ClassPathProvidedPluginsList(
-  override val plugins: List<IdeaPluginDescriptorImpl>,
-) : DiscoveredPluginsList
-
-@ApiStatus.Internal
-class SystemPropertyProvidedPluginsList(
-  override val plugins: List<IdeaPluginDescriptorImpl>,
-) : DiscoveredPluginsList
