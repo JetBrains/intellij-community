@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.TitledIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -220,7 +221,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           throw new RuntimeException(e);
         }
         Span span = startProcessSpan(progress);
-        logProcessIndicator(progress, true);
+        long startMillis = System.currentTimeMillis();
+        logProcessIndicator(progress, true, startMillis);
         if (span == null) {
           process.run();
         }
@@ -230,7 +232,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             return null;
           });
         }
-        logProcessIndicator(progress, false);
+        logProcessIndicator(progress, false, startMillis);
       }
       finally {
         if (progress != null && progress.isRunning()) {
@@ -250,41 +252,32 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return  ((TitledIndicator)progress).getTitle();
   }
 
-  private static void logProcessIndicator(@Nullable ProgressIndicator progress, Boolean started) {
+  private static void logProcessIndicator(@Nullable ProgressIndicator progress, boolean started, long startMillis) {
     String progressText = getProgressIndicatorText(progress);
-    if (progressText == null) return;
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
+      if (progressText != null) {
+        LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
+      }
       if (System.getProperty("idea.performanceReport.projectName") != null) { //in startup tests only
-        ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
-          long timestamp = System.currentTimeMillis();
-
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          String message = StringUtil.notNullize(progressText, "<empty>");
           if (started) {
-            if (progressTimestamps.size() > 20) {
-              progressTimestamps.clear();
-            }
-            progressTimestamps.put(progressText, timestamp);
             throw new RuntimeException("Progress Indicator Test Stats:\n" +
                                        "started\n" +
-                                       "message: " + progressText);
+                                       "message: " + message);
           }
           else {
-            long lengthMillis = -1;
-            Long start = progressTimestamps.remove(progressText);
-            if (start != null) {
-              lengthMillis = timestamp - start;
-            }
+            long lengthMillis = System.currentTimeMillis() - startMillis;
             throw new RuntimeException("Progress Indicator Test Stats:\n" +
-                                       "finished" + "\n" +
-                                       "message: " + progressText + "\n" +
-                                       "millis: " + lengthMillis);
+                                       "finished\n" +
+                                       ((lengthMillis >= 3000) ? "Progress is long enough" : "Short progress") + "\n" +
+                                       "millis: " + lengthMillis + "\n" +
+                                       "message: " + message);
           }
         });
       }
     }
   }
-
-  private static final Map<String, Long> progressTimestamps = new ConcurrentHashMap<>();
 
   private static @Nullable Span startProcessSpan(@Nullable ProgressIndicator progress) {
     String progressText = getProgressIndicatorText(progress);
