@@ -1,17 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
@@ -361,6 +366,8 @@ class CodeInliner(
                     expression.putCopyableUserData(WAS_FUNCTION_LITERAL_ARGUMENT_KEY, Unit)
                 }
 
+                markNonLocalJumps(expression, parameter)
+
                 analyze(call) {
                     val functionType = expression.expressionType as? KaFunctionType
                     if ((functionType)?.hasReceiver == true && !functionType.isSuspend) {
@@ -396,6 +403,14 @@ class CodeInliner(
         }
     }
 
+    private fun markNonLocalJumps(lambdaArgumentExpression: KtLambdaExpression, parameter: KtParameter) {
+        val ownerDeclaration = parameter.ownerDeclaration
+        if (ownerDeclaration !is KtNamedFunction || !ownerDeclaration.hasModifier(KtTokens.INLINE_KEYWORD)) return
+        val isJumpPossible = lambdaArgumentExpression.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)
+        val visitor = if (isJumpPossible) NonLocalJumpVisitor(lambdaArgumentExpression) else PsiElementVisitor.EMPTY_VISITOR
+        lambdaArgumentExpression.accept(visitor)
+    }
+
     override fun KtDeclaration.valueParameters(): List<KtParameter> = (this as? KtDeclarationWithBody)?.valueParameters ?: emptyList()
 
     override fun KtParameter.name(): Name = nameAsSafeName
@@ -410,6 +425,26 @@ class CodeInliner(
     ) {
         analyze(value) {
             codeToInline.introduceValue(value, valueType, usages, expressionToBeReplaced, nameSuggestion, safeCall)
+        }
+    }
+}
+
+private class NonLocalJumpVisitor(val lambdaArgumentExpression: KtLambdaExpression) : KtTreeVisitorVoid() {
+    override fun visitBreakExpression(expression: KtBreakExpression) {
+        markIfNonLocal(expression)
+    }
+
+    override fun visitContinueExpression(expression: KtContinueExpression) {
+        markIfNonLocal(expression)
+    }
+
+    private fun markIfNonLocal(expression: KtExpressionWithLabel) {
+        if (expression.getTargetLabel() != null) return
+        val loopForJump = expression.getStrictParentOfType<KtLoopExpression>() ?: return
+        if (PsiTreeUtil.isAncestor(loopForJump, lambdaArgumentExpression, true)) {
+            val loopToken = loopForJump.getCopyableUserData(InlineDataKeys.NON_LOCAL_JUMP_KEY) ?: NonLocalJumpToken()
+            loopForJump.putCopyableUserData(InlineDataKeys.NON_LOCAL_JUMP_KEY, loopToken)
+            expression.putCopyableUserData(InlineDataKeys.NON_LOCAL_JUMP_KEY, loopToken)
         }
     }
 }

@@ -8,10 +8,11 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getExistingLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getUniqueLabelName
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -204,7 +205,7 @@ private fun KtIfExpression.siblingsUpTo(other: KtExpression): List<PsiElement> {
 private class LabelLoopJumpVisitor(private val nearestLoopIfAny: KtLoopExpression?) : KtVisitorVoid(),PsiRecursiveVisitor {
     val labelName: String? by lazy {
         nearestLoopIfAny?.let { loop ->
-            (loop.parent as? KtLabeledExpression)?.getLabelName() ?: AddLoopLabelFix.getUniqueLabelName(loop)
+            getExistingLabelName(loop) ?: getUniqueLabelName(loop)
         }
     }
 
