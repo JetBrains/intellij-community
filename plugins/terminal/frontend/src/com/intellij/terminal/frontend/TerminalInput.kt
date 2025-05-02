@@ -12,8 +12,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.*
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeMark
@@ -44,6 +43,14 @@ internal class TerminalInput(
       terminalSessionFuture.await().getInputChannel()
     }
 
+  private val typingLatencyReporter = BatchLatencyReporter(batchSize = 50) { samples ->
+    ReworkedTerminalUsageCollector.logFrontendTypingLatency(
+      totalDuration = samples.totalDuration(),
+      duration90 = samples.percentile(90),
+      secondLargestDuration = samples.secondLargest(),
+    )
+  }
+
   init {
     val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
@@ -61,7 +68,7 @@ internal class TerminalInput(
 
           val latency = submission.eventTime?.elapsedNow()
           if (latency != null) {
-            ReworkedTerminalUsageCollector.logFrontendTypingLatency(event.id, latency)
+            typingLatencyReporter.update(latency)
           }
         }
       }

@@ -31,13 +31,18 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
-  private val EVENT_ID_FIELD = EventFields.Int("event_id")
-  private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_millis")
-  private val TEXT_LENGTH_FIELD = EventFields.Int("text_length")
   private val HYPERLINK_INFO_CLASS = EventFields.Class("hyperlink_info_class")
   private val TERMINAL_OPENING_WAY = EventFields.Enum<TerminalOpeningWay>("opening_way")
   private val TABS_COUNT = EventFields.Int("tab_count")
   private val FOCUS = StringEventField.ValidatedByCustomValidationRule("counterpart", TerminalFocusRule::class.java)
+
+  // Latency measurement related fields
+  private val DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_ms")
+  private val TOTAL_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "total_duration_ms", "Sum of all durations")
+  private val DURATION_90_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "duration_90_ms", "90% percentile")
+  private val SECOND_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "second_largest_duration_ms")
+  private val THIRD_LARGEST_DURATION_FIELD = EventFields.createDurationField(DurationUnit.MILLISECONDS, "third_largest_duration_ms")
+  private val TEXT_LENGTH_90_FIELD = EventFields.Int("text_length_90", "90% percentile")
 
   private val tabOpenedEvent = GROUP.registerEvent("tab.opened", TABS_COUNT)
 
@@ -71,50 +76,60 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
 
   private val frontendTypingLatencyEvent = GROUP.registerVarargEvent(
     "frontend.typing.latency",
-    EVENT_ID_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    SECOND_LARGEST_DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendTypingLatencyEvent = GROUP.registerVarargEvent(
     "backend.typing.latency",
-    EVENT_ID_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    SECOND_LARGEST_DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendOutputLatencyEvent = GROUP.registerVarargEvent(
     "backend.output.latency",
-    EVENT_ID_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    THIRD_LARGEST_DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val frontendOutputLatencyEvent = GROUP.registerVarargEvent(
     "frontend.output.latency",
-    EVENT_ID_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    THIRD_LARGEST_DURATION_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendTextBufferCollectionLatencyEvent = GROUP.registerVarargEvent(
     "backend.text.buffer.collection.latency",
-    TEXT_LENGTH_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    THIRD_LARGEST_DURATION_FIELD,
+    TEXT_LENGTH_90_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val backendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
     "backend.document.update.latency",
-    TEXT_LENGTH_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    THIRD_LARGEST_DURATION_FIELD,
+    TEXT_LENGTH_90_FIELD,
     OS_VERSION_FIELD,
   )
 
   private val frontendDocumentUpdateLatencyEvent = GROUP.registerVarargEvent(
     "frontend.document.update.latency",
-    TEXT_LENGTH_FIELD,
-    DURATION_FIELD,
+    TOTAL_DURATION_FIELD,
+    DURATION_90_FIELD,
+    THIRD_LARGEST_DURATION_FIELD,
+    TEXT_LENGTH_90_FIELD,
     OS_VERSION_FIELD,
   )
 
@@ -178,60 +193,70 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
     sessionRestoredEvent.log(project, tabCount)
   }
 
-  fun logFrontendTypingLatency(inputEventId: Int, duration: Duration) {
+  fun logFrontendTypingLatency(totalDuration: Duration, duration90: Duration, secondLargestDuration: Duration) {
     frontendTypingLatencyEvent.log(
-      EVENT_ID_FIELD with inputEventId,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      SECOND_LARGEST_DURATION_FIELD with secondLargestDuration,
       OS_VERSION_FIELD with osVersion,
     )
   }
 
 
-  fun logBackendTypingLatency(inputEventId: Int, duration: Duration) {
+  fun logBackendTypingLatency(totalDuration: Duration, duration90: Duration, secondLargestDuration: Duration) {
     backendTypingLatencyEvent.log(
-      EVENT_ID_FIELD with inputEventId,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      SECOND_LARGEST_DURATION_FIELD with secondLargestDuration,
       OS_VERSION_FIELD with osVersion,
     )
   }
 
 
-  fun logBackendOutputLatency(eventId: Int, duration: Duration) {
+  fun logBackendOutputLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration) {
     backendOutputLatencyEvent.log(
-      EVENT_ID_FIELD with eventId,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
       OS_VERSION_FIELD with osVersion,
     )
   }
 
-  fun logFrontendOutputLatency(eventId: Int, duration: Duration) {
+  fun logFrontendOutputLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration) {
     frontendOutputLatencyEvent.log(
-      EVENT_ID_FIELD with eventId,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
       OS_VERSION_FIELD with osVersion,
     )
   }
 
-  fun logBackendTextBufferCollectionLatency(textLength: Int, duration: Duration) {
+  fun logBackendTextBufferCollectionLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
     backendTextBufferCollectionLatencyEvent.log(
-      TEXT_LENGTH_FIELD with textLength,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
+      TEXT_LENGTH_90_FIELD with textLength90,
       OS_VERSION_FIELD with osVersion,
     )
   }
 
-  fun logBackendDocumentUpdateLatency(textLength: Int, duration: Duration) {
+  fun logBackendDocumentUpdateLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
     backendDocumentUpdateLatencyEvent.log(
-      TEXT_LENGTH_FIELD with textLength,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
+      TEXT_LENGTH_90_FIELD with textLength90,
       OS_VERSION_FIELD with osVersion,
     )
   }
 
-  fun logFrontendDocumentUpdateLatency(textLength: Int, duration: Duration) {
+  fun logFrontendDocumentUpdateLatency(totalDuration: Duration, duration90: Duration, thirdLargestDuration: Duration, textLength90: Int) {
     frontendDocumentUpdateLatencyEvent.log(
-      TEXT_LENGTH_FIELD with textLength,
-      DURATION_FIELD with duration,
+      TOTAL_DURATION_FIELD with totalDuration,
+      DURATION_90_FIELD with duration90,
+      THIRD_LARGEST_DURATION_FIELD with thirdLargestDuration,
+      TEXT_LENGTH_90_FIELD with textLength90,
       OS_VERSION_FIELD with osVersion,
     )
   }

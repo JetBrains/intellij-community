@@ -12,9 +12,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import java.util.concurrent.atomic.AtomicInteger
-
-private val outputUpdateEventIdCounter = AtomicInteger(0)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(
@@ -56,7 +53,6 @@ internal fun createTerminalOutputFlow(
       val actualContentUpdate = contentUpdate ?: contentChangesTracker.getContentUpdate()
       val contentUpdateEvent = if (actualContentUpdate != null) {
         TerminalContentUpdatedEvent(
-          id = outputUpdateEventIdCounter.getAndIncrement(),
           text = actualContentUpdate.text,
           styles = actualContentUpdate.styles,
           startLineLogicalIndex = actualContentUpdate.startLineLogicalIndex,
