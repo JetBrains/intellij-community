@@ -3,9 +3,7 @@ package org.intellij.plugins.markdown.ui.preview.accessor
 
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -19,36 +17,23 @@ import com.intellij.util.UriUtil
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
-import com.intellij.openapi.diagnostic.logger
 
 object MarkdownLinkOpenerUtil {
   private val  logger = logger<MarkdownLinkOpenerUtil>()
 
   fun navigateToHeader(project: Project, headerInfo: MarkdownHeaderInfo) {
-    val uri = createFileUri(headerInfo.filePath)
-    if (uri == null) return
-    val file = headerInfo.virtualFileId.virtualFile()
-    if (file == null) return
-    val manager = FileEditorManager.getInstance(project)
-    val openedEditors = manager.getEditorList(file).stream()
-      .filter { editor: FileEditor? -> editor is MarkdownEditorWithPreview }
-      .map<MarkdownEditorWithPreview?> { editor: FileEditor? -> editor as MarkdownEditorWithPreview }
-      .toList()
-    val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset)
-    if (element == null) return
-    if (!openedEditors.isEmpty()) {
-      for (editor in openedEditors) {
-        PsiUtilCore.getElementAtOffset(PsiUtilCore.getPsiFile(project, file), element.getTextOffset())
-        PsiNavigateUtil.navigate(element, true)
-      }
-      return
-    }
-    val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
-    manager.openEditor(descriptor, true)
+    val file = headerInfo.virtualFileId.virtualFile() ?: return
+    val element = PsiUtilCore.getPsiFile(project, file).findElementAt(headerInfo.textOffset) ?: return
+    //val manager = FileEditorManager.getInstance(project)
+    PsiNavigateUtil.navigate(element, true)
+    //manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>().firstOrNull()?.let {
+    //
+    //}
+    //val descriptor = OpenFileDescriptor(project, file, element.getTextOffset())
+    //manager.openEditor(descriptor, true)
   }
 
   fun collectHeaders(project: Project, anchor: String, targetFile: VirtualFile): List<MarkdownHeaderInfo>? {

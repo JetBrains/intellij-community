@@ -70,12 +70,20 @@ internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
   }
 
   override suspend fun fetchLinkNavigationData(link: String, virtualFileId: VirtualFileId?): MarkdownLinkNavigationData {
-    val file = resolveLinkAsFile(link, virtualFileId)?: return MarkdownLinkNavigationData(link, null, null, null)
+    val file = resolveLinkAsFile(link, virtualFileId)
+               ?: virtualFileId?.virtualFile()
+               ?: return MarkdownLinkNavigationData(link, null, null, null)
+
     var path = file.url
+    val project = guessProjectForFile(file)
+                  ?: return MarkdownLinkNavigationData(path, file.rpcId(), null, null)
+
     val anchor = extractAnchor(link)
-    if (!anchor.isEmpty()) path += "#$anchor"
-    val project = guessProjectForFile(file)?: return MarkdownLinkNavigationData(path, file.rpcId(), null, null)
-    if (anchor.isEmpty()) return MarkdownLinkNavigationData(path, file.rpcId(), project.projectId(), null)
+    if (anchor.isEmpty()) {
+      return MarkdownLinkNavigationData(path, file.rpcId(), project.projectId(), null)
+    }
+
+    path += "#$anchor"
     val headers = collectHeaders(anchor, file, project)
     return MarkdownLinkNavigationData(path, file.rpcId(), project.projectId(), headers)
   }
