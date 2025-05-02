@@ -2126,4 +2126,47 @@ interface UastApiFixtureTestBase {
             }
         )
     }
+
+    fun checkTypealiasAnnotation(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+              package org.junit;
+
+              import java.lang.annotation.ElementType;
+              import java.lang.annotation.Retention;
+              import java.lang.annotation.RetentionPolicy;
+              import java.lang.annotation.Target;
+
+              @Retention(RetentionPolicy.RUNTIME)
+              @Target({ElementType.METHOD})
+              public @interface Test {
+                  static class None extends Throwable {
+                      private None() {
+                      }
+                  }
+                  Class<? extends Throwable> expected() default None.class;
+              }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "test.kt",
+            """
+            // Mimic typealias kotlin.test.Test
+            typealias TT = org.junit.Test
+
+            class MyTest {
+              @TT(expected = Throwable::class)
+              fun foo() {}
+            }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val foo = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false)
+            .orFail("cant convert to UMethod: foo")
+        val anno = foo.findAnnotation("org.junit.Test")
+        TestCase.assertNotNull(anno)
+        val expected = anno!!.findDeclaredAttributeValue("expected") as? UClassLiteralExpression
+        TestCase.assertEquals("java.lang.Throwable", expected?.type?.canonicalText)
+    }
 }
