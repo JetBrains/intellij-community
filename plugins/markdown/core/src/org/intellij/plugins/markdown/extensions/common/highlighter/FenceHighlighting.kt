@@ -20,8 +20,7 @@ import org.intellij.plugins.markdown.lang.psi.util.textRange
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.children
-import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.altHighlighterAvailable
-import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.parseToHighlightedHtml
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingService
 import java.awt.Color
 import kotlin.math.max
 import kotlin.math.min
@@ -33,6 +32,7 @@ private fun parseContent(project: Project?, language: Language, text: String, no
                          collector: (String, IntRange, Color?, String?) -> Unit) {
   val file = LightVirtualFile("markdown_temp", text)
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
+  val fenceParsing = project?.getService(CodeFenceParsingService::class.java)
   val ecm = EditorColorsManager.getInstance()
   var colorScheme = ecm.globalScheme
   val settings = project?.let(MarkdownSettings::getInstance)
@@ -46,10 +46,10 @@ private fun parseContent(project: Project?, language: Language, text: String, no
     }
   }
 
-  if (settings.useAlternativeHighlighting && altHighlighterAvailable()) {
+  if (settings.useAlternativeHighlighting && fenceParsing?.altHighlighterAvailable() == true) {
     val lang = (if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase())
         .replace(fenceLanguage, "")
-    val html = parseToHighlightedHtml(lang, text, node)?.replace(terminalDoubleNewline, "\n")
+    val html = fenceParsing.parseToHighlightedHtml(lang, text, node)?.replace(terminalDoubleNewline, "\n")
 
     if (html.isNullOrEmpty() && language == Language.ANY) {
       // Alterative highlighting failed, and default highlighting doesn't work for the current language.
