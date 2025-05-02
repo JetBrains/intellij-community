@@ -52,7 +52,6 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
         }
       }
     }
-
   }
 
   private fun setupScrollPane() {
@@ -63,13 +62,13 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
   }
 
   private fun updateMouseOverCell(point: Point) {
-    val currentCell = manager.getCellByPoint(point)
-
-    if (mouseOverCell != currentCell) {
-      mouseOverCell?.isHovered?.set(false)
-      mouseOverCell = currentCell
-      mouseOverCell?.isHovered?.set(true)
-      editor.notebookEditor.hoveredCell.set(mouseOverCell)
+    val newCell = manager.getCellByPoint(point)
+    val prevCell = mouseOverCell
+    if (prevCell != newCell) {
+      mouseOverCell = newCell
+      newCell?.isHovered?.set(true)
+      prevCell?.isHovered?.set(false)
+      editor.notebookEditor.hoveredCell.set(newCell)
     }
   }
 
