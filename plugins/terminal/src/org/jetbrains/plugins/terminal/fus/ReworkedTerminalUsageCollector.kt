@@ -25,7 +25,7 @@ private const val GROUP_ID = "terminal"
 object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 8)
+  private val GROUP = EventLogGroup(GROUP_ID, 9)
 
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
@@ -152,6 +152,7 @@ object ReworkedTerminalUsageCollector : CounterUsagesCollector() {
   )
 
   private val startupFirstOutputLatency = GROUP.registerVarargEvent(
+    "startup.first.output.latency",
     "From the moment of UI interaction to showing the first meaningful output (any non-whitespace symbols)",
     TERMINAL_OPENING_WAY,
     DURATION_FIELD,
