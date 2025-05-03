@@ -5,13 +5,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.bazel.PathSnapshot;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 
 public class PathSnapshotImpl implements PathSnapshot {
   private final Map<Path, String> myPaths;
 
   public PathSnapshotImpl(Map<Path, String> digestPaths) {
-    myPaths = Map.copyOf(digestPaths);
+    myPaths = Collections.unmodifiableMap(digestPaths); // keep all properties of the passed map, i.e. iteration order
   }
 
   @Override

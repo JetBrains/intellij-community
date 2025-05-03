@@ -54,6 +54,7 @@ public class BazelIncBuilder {
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
+    // todo: additional diagnostics, if necessary
 
     GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
     DiagnosticSink diagnostic = context;
@@ -69,8 +70,7 @@ public class BazelIncBuilder {
       else {
         ConfigurationState pastState = loadConfigurationState(context);
         snapshotDelta = new SourceSnapshotDeltaImpl(pastState.getSourceSnapshot(), context.getSources());
-        if (!snapshotDelta.isRecompileAll() && !pastState.getDepsDigest().equals(presentState.getDepsDigest())) {
-          // todo: diagnostic?
+        if (!snapshotDelta.isRecompileAll() && !pastState.getClasspathStructureDigest().equals(presentState.getClasspathStructureDigest())) {
           snapshotDelta.markRecompileAll();
         }
       }
@@ -260,7 +260,7 @@ public class BazelIncBuilder {
   private static void saveConfigurationState(BuildContext context, ConfigurationState state) {
     Path snapshotPath = getSourceSnapshotStoreFile(context);
     try (var stream = new DataOutputStream(new DeflaterOutputStream(Files.newOutputStream(snapshotPath), new Deflater(Deflater.BEST_SPEED)))) {
-      stream.writeUTF(state.getDepsDigest());
+      stream.writeUTF(state.getClasspathStructureDigest());
       state.getSourceSnapshot().write(new GraphDataOutputImpl(stream));
     }
     catch (Throwable e) {
@@ -288,6 +288,10 @@ public class BazelIncBuilder {
     return context.getDataDir().resolve(DEP_GRAPH_FILE_NAME);
   }
 
+  private static boolean isAbiJar(Path path) {
+    return path.toString().endsWith("-abi.jar"); // todo: better criterion?
+  }
+
   private static void safeClose(Closeable cl, DiagnosticSink diagnostic) {
     if (cl == null) {
       return;
@@ -304,11 +308,12 @@ public class BazelIncBuilder {
     ConfigurationState EMPTY = create(SourceSnapshot.EMPTY, "");
     
     SourceSnapshot getSourceSnapshot();
-    
-    String getDepsDigest();
+
+    // tracks names and order of classpath entries as well as content digests of all third-party dependencies
+    String getClasspathStructureDigest();
 
     default ConfigurationState derive(SourceSnapshot snapshot) {
-      return create(snapshot, getDepsDigest());
+      return create(snapshot, getClasspathStructureDigest());
     }
 
     static ConfigurationState create(SourceSnapshot snapshot, String depsDigest) {
@@ -319,7 +324,7 @@ public class BazelIncBuilder {
         }
 
         @Override
-        public String getDepsDigest() {
+        public String getClasspathStructureDigest() {
           return depsDigest;
         }
       };
@@ -327,7 +332,12 @@ public class BazelIncBuilder {
 
     static ConfigurationState create(BuildContext context) {
       PathSnapshot deps = context.getBinaryDependencies();
-      return create(context.getSources(), Utils.digest(map(deps.getElements(), deps::getDigest)));
+
+      // digest name, count and order of classpath entries as well as content digests of all non-abi deps
+      Function<@NotNull Path, Iterable<String>> digestMapper =
+        path -> isAbiJar(path)? List.of(path.toString()) : List.of(path.toString(), deps.getDigest(path));
+      
+      return create(context.getSources(), Utils.digest(flat(map(deps.getElements(), digestMapper))));
     }
   }
 }

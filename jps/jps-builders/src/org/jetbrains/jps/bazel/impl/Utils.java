@@ -26,13 +26,13 @@ public class Utils {
     return Long.toHexString(stream.getAsLong());
   }
 
-  public static String digest(File file) {
-    return digest(file.toPath(), null);
+  public static String timestampDigest(File file) {
+    return timestampDigest(file.toPath(), null);
   }
   
-  public static String digest(Path path, @Nullable BasicFileAttributes attrs) {
+  public static String timestampDigest(Path path, @Nullable BasicFileAttributes attrs) {
     try {
-      return Long.toHexString((attrs != null? attrs.lastModifiedTime().toMillis() : Files.getLastModifiedTime(path).toMillis())); // todo
+      return Long.toHexString((attrs != null? attrs.lastModifiedTime().toMillis() : Files.getLastModifiedTime(path).toMillis())); 
     }
     catch (IOException ignored) {
       return "";
