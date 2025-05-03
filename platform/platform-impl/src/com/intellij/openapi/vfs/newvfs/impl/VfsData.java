@@ -214,7 +214,7 @@ public final class VfsData {
   @ApiStatus.Internal
   public static final class Segment {
     private static final int INT_FIELDS_COUNT = 1;
-    private static final int FLAGS_FIELD_NO = 0;
+    private static final int FLAGS_AND_MOD_COUNT_FIELD_NO = 0;
 
     final @NotNull VfsData owningVfsData;
 
@@ -282,7 +282,7 @@ public final class VfsData {
       BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
 
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       return (intFieldsArray.get(offset) & mask) != 0;
     }
 
@@ -291,7 +291,7 @@ public final class VfsData {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + fileId);
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       intFieldsArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
 
@@ -302,17 +302,22 @@ public final class VfsData {
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue) + ") set bits outside mask (" +
                                                     Integer.toHexString(combinedMask) + ")";
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       intFieldsArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
+    /**
+     * Transient content modification counter: different from {@link FSRecordsImpl#getModCount(int)} -- it is not persistent,
+     * and incremented only on file _content_ modification, while {@link FSRecordsImpl#getModCount(int)} is incremented on _any_
+     * file attribute/content/etc change.
+     */
     long getModificationStamp(int fileId) {
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       return intFieldsArray.get(offset) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int fileId, long stamp) {
-      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      int offset = fieldOffset(fileId, FLAGS_AND_MOD_COUNT_FIELD_NO);
       intFieldsArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
                                                     ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }

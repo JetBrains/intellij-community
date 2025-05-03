@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -233,7 +233,7 @@ public final class VfsImplUtil {
    * </pre></code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    var event = new VFileContentChangeEvent(REFRESH_REQUESTOR, file, file.getModificationStamp(), -1);
+    var event = new VFileContentChangeEvent(REFRESH_REQUESTOR, file, file.getModificationStamp(), VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH);
     RefreshQueue.getInstance().processEvents(false, List.of(event));
   }
 

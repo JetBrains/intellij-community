@@ -313,7 +313,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     private val newExecutable: Boolean,
     oldModificationStamp: Long,
   ) {
-    val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, -1, 0, 0, oldLength, newLength)
+    val event = VFileContentChangeEvent(REFRESH_REQUESTOR, file, oldModificationStamp, VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH.toLong(), 0, 0, oldLength, newLength)
 
     fun isOutdated() = file.data != null && file.data?.hash != oldData?.hash
 

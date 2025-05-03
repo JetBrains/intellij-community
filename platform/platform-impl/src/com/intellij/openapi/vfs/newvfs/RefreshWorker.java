@@ -670,7 +670,7 @@ final class RefreshWorker {
           "update file=" + child +
           (oldTimestamp != newTimestamp ? " TS=" + oldTimestamp + "->" + newTimestamp : "") +
           (oldLength != newLength ? " len=" + oldLength + "->" + newLength : ""));
-        events.add(new VFileContentChangeEvent(myRequestor, child, child.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength));
+        events.add(new VFileContentChangeEvent(myRequestor, child, child.getModificationStamp(), VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH, oldTimestamp, newTimestamp, oldLength, newLength));
       }
       child.markClean();
     }

@@ -2208,7 +2208,6 @@ c:com.intellij.util.ListWithSelection
 - select(java.lang.Object):Z
 - selectFirst():V
 f:com.intellij.util.LocalTimeCounter
-- sf:TIME_MASK:I
 - <init>():V
 - s:currentTime():J
 f:com.intellij.util.MathUtil
