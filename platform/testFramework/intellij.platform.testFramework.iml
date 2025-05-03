@@ -11,49 +11,58 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.refactoring" />
-    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
-    <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
-    <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="library" exported="" name="jetCheck" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
-    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="library" scope="PROVIDED" name="JUnit5Launcher" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="library" exported="" scope="PROVIDED" name="JUnit5Params" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
+    <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="http-client" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" scope="TEST" name="http-client" level="project" />
+    <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.boot" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
+    <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
+    <orderEntry type="module" module-name="intellij.platform.syntax" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module-library" scope="TEST">
       <library name="okhttp3-mockwebserver" type="repository">
         <properties maven-id="com.squareup.okhttp3:mockwebserver:5.0.0-alpha.11">
@@ -88,14 +97,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
-    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.todo" />
-    <orderEntry type="module" module-name="intellij.platform.syntax" />
-    <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
-    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>
