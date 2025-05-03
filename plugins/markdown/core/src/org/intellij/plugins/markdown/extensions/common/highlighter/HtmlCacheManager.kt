@@ -43,10 +43,6 @@ internal class HtmlCacheManager {
     values[key] = CachedHtmlResult(SoftReference(html), expires)
   }
 
-  fun hasKey(key: String): Boolean {
-    return values.containsKey(key)
-  }
-
   fun cleanup() {
     val time = System.currentTimeMillis()
     val expired = values.filter { it.value.expires < time }.keys
