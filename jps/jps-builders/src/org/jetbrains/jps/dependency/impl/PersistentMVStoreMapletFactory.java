@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 // suitable for relatively small amounts of stored data
-final class PersistentMVStoreMapletFactory implements MapletFactory, Closeable, Flushable {
+public final class PersistentMVStoreMapletFactory implements MapletFactory, Closeable, Flushable {
   private static final int BASE_CACHE_SIZE = 512 * (SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false)? 2 : 1);
   private static final int ALLOWED_STORE_COMPACTION_TIME_MS = -1; // -1 for full-compact, 0 to disable compaction
   private final MVSEnumerator myEnumerator;
@@ -41,7 +41,7 @@ final class PersistentMVStoreMapletFactory implements MapletFactory, Closeable, 
   private final int myCacheSize;
   private final MVStore myStore;
 
-  PersistentMVStoreMapletFactory(String filePath, int maxBuilderThreads) throws IOException {
+  public PersistentMVStoreMapletFactory(String filePath, int maxBuilderThreads) throws IOException {
     Files.createDirectories(Path.of(filePath).getParent());
     // todo: need transaction store for transactions?
     myStore = new MVStore.Builder()

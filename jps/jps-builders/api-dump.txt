@@ -1999,6 +1999,7 @@ org.jetbrains.jps.dependency.Graph
 - a:getSources():java.lang.Iterable
 - a:getSources(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
 org.jetbrains.jps.dependency.GraphConfiguration
+- s:create(org.jetbrains.jps.dependency.DependencyGraph,org.jetbrains.jps.dependency.NodeSourcePathMapper):org.jetbrains.jps.dependency.GraphConfiguration
 - a:getGraph():org.jetbrains.jps.dependency.DependencyGraph
 - a:getPathMapper():org.jetbrains.jps.dependency.NodeSourcePathMapper
 org.jetbrains.jps.dependency.GraphDataInput

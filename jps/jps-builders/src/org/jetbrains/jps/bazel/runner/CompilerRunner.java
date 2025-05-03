@@ -21,7 +21,7 @@ public interface CompilerRunner extends Runner{
     if (!context.isRebuild()) {
       BuildProcessLogger logger = context.getBuildLogger();
       if (logger.isEnabled() && !isEmpty(toCompile)) {
-        NodeSourcePathMapper pathMapper = context.getGraphConfig().getPathMapper();
+        NodeSourcePathMapper pathMapper = context.getPathMapper();
         logger.logCompiledPaths(map(toCompile, pathMapper::toPath), getName(), "Compiling files:");
       }
     }

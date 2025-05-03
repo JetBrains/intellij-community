@@ -6,14 +6,14 @@ import org.jetbrains.jps.bazel.impl.*;
 import org.jetbrains.jps.bazel.runner.BytecodeInstrumenter;
 import org.jetbrains.jps.bazel.runner.CompilerRunner;
 import org.jetbrains.jps.bazel.runner.RunnerFactory;
-import org.jetbrains.jps.dependency.Delta;
-import org.jetbrains.jps.dependency.DependencyGraph;
-import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
 import org.jetbrains.jps.dependency.impl.PathSource;
+import org.jetbrains.jps.dependency.impl.PersistentMVStoreMapletFactory;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 
+import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -30,6 +30,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
 
 public class BazelIncBuilder {
   private static final String SOURCE_SNAPSHOT_FILE_NAME = "src-snapshot.dat";
+  private static final String DEP_GRAPH_FILE_NAME = "dep-graph.mv";
 
   private static final List<RunnerFactory<? extends CompilerRunner>> ourCompilers = List.of(
     ResourcesCopy::new
@@ -41,27 +42,40 @@ public class BazelIncBuilder {
     NotNullInstrumenter::new, FormsInstrumenter::new
   );
 
+  private static GraphConfiguration setupGraphConfiguration(BuildContext context) throws IOException {
+    DependencyGraphImpl graph = new DependencyGraphImpl(
+      new PersistentMVStoreMapletFactory(context.getDataDir().resolve(DEP_GRAPH_FILE_NAME).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
+    );
+    return GraphConfiguration.create(graph, context.getPathMapper());
+  }
+
+
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
-
-    SourceSnapshotDelta snapshotDelta;
-    if (context.isRebuild()) {
-      snapshotDelta = new SourceSnapshotDeltaImpl(context.getSources());
-      snapshotDelta.markRecompileAll();
-    }
-    else {
-      snapshotDelta = new SourceSnapshotDeltaImpl(getOldSourceSnapshot(context), context.getSources());
-    }
 
     GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
     DiagnosticSink diagnostic = context;
     ZipOutputBuilder outputBuilder = null;
+    SourceSnapshotDelta snapshotDelta = null;
+    DependencyGraph depGraph = null;
+    
     try {
-      DependencyGraph depGraph = context.getGraphConfig().getGraph();
+      if (context.isRebuild()) {
+        snapshotDelta = new SourceSnapshotDeltaImpl(context.getSources());
+        snapshotDelta.markRecompileAll(); // force rebuild
+      }
+      else {
+        snapshotDelta = new SourceSnapshotDeltaImpl(loadSourceSnapshot(context), context.getSources());
+      }
+
       if (snapshotDelta.isRecompileAll()) {
         context.cleanBuildState();
       }
-      else {
+
+      GraphConfiguration graphConfig = setupGraphConfiguration(context);
+      depGraph = graphConfig.getGraph();
+
+      if (!snapshotDelta.isRecompileAll()) {
         // todo: process changes in libs
 
         // expand compile scope
@@ -179,17 +193,12 @@ public class BazelIncBuilder {
         // report postponed errors, if necessary
         ((PostponedDiagnosticSink)diagnostic).drainTo(context);
       }
-      saveSourceSnapshot(context, snapshotDelta.asSnapshot());
-      // todo: save abi-jar
-      if (outputBuilder != null) {
-        try {
-          outputBuilder.close(true);
-        }
-        catch (IOException e) {
-          diagnostic.report(Message.create(null, e));
-        }
+      if (snapshotDelta != null) {
+        saveSourceSnapshot(context, snapshotDelta.asSnapshot());
       }
-      // todo: close graph and save all caches
+      // todo: save abi-jar
+      safeClose(outputBuilder, diagnostic);
+      safeClose(depGraph, diagnostic);
     }
   }
 
@@ -211,7 +220,7 @@ public class BazelIncBuilder {
   }
 
   private static void saveSourceSnapshot(BuildContext context, SourceSnapshot snapshot) {
-    Path snapshotPath = context.getBaseDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
+    Path snapshotPath = context.getDataDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
     try (var stream = new DataOutputStream(new DeflaterOutputStream(Files.newOutputStream(snapshotPath), new Deflater(Deflater.BEST_SPEED)))) {
       snapshot.write(new GraphDataOutputImpl(stream));
     }
@@ -220,14 +229,26 @@ public class BazelIncBuilder {
     }
   }
 
-  private static SourceSnapshot getOldSourceSnapshot(BuildContext context) {
-    Path oldSnapshot = context.getBaseDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
+  private static SourceSnapshot loadSourceSnapshot(BuildContext context) {
+    Path oldSnapshot = context.getDataDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
     try (var stream = new DataInputStream(new InflaterInputStream(Files.newInputStream(oldSnapshot, StandardOpenOption.READ)))) {
       return new SourceSnapshotImpl(stream, PathSource::new);
     }
     catch (Throwable e) {
       context.report(Message.create(null, e));
       return SourceSnapshot.EMPTY;
+    }
+  }
+
+  private static void safeClose(Closeable cl, DiagnosticSink diagnostic) {
+    if (cl == null) {
+      return;
+    }
+    try {
+      cl.close();
+    }
+    catch (Throwable e) {
+      diagnostic.report(Message.create(null, e));
     }
   }
 }
