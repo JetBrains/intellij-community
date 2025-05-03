@@ -13,6 +13,6 @@ class CodeCellBackgroundControllerFactory : SelfManagedControllerFactory {
       return null
     if (editorCell.interval.type == NotebookCellLines.CellType.MARKDOWN)
       return null
-    return CodeCellBackgroundController(editorCell)
+    return NotebookCellBackgroundController(editorCell)
   }
 }
