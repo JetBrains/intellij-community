@@ -10,6 +10,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
@@ -43,9 +44,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
@@ -256,6 +255,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       myModel.setChanges(ContainerUtil.notNullize(changes), isContentsEqual);
       myAlignedDiffModel.realignChanges();
 
+      updateVCSBoundedSettings();
+
       //maybe readaction
       WriteIntentReadAction.run((Runnable)() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
 
@@ -264,6 +265,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       myContentPanel.repaintDivider();
       myStatusPanel.update();
     };
+  }
+
+  private void updateVCSBoundedSettings() {
+    if (myTextDiffProvider.areVCSBoundedActionsDisabled()) {
+      TextDiffSettingsHolder.TextDiffSettings settings = getTextSettings();
+      settings.setExpandByDefault(true);
+      settings.setEnableSyncScroll(false);
+      settings.setEnableAligningChangesMode(false);
+    }
   }
 
   protected @NotNull Runnable applyNotification(final @Nullable JComponent notification) {
@@ -306,7 +316,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @RequiresEdt
   public boolean scrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    SimpleDiffChange targetChange = scrollToPolicy.select(getNonSkippedDiffChanges());
+    SimpleDiffChange targetChange = scrollToPolicy.select(getNonSkippedDiffChanges(getCurrentSide()));
     if (targetChange == null) targetChange = scrollToPolicy.select(getDiffChanges());
     if (targetChange == null) return false;
 
@@ -354,8 +364,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return myModel.getChanges();
   }
 
-  private @NotNull @Unmodifiable List<SimpleDiffChange> getNonSkippedDiffChanges() {
-    return ContainerUtil.filter(myModel.getChanges(), it -> !it.isSkipped());
+  private @NotNull @Unmodifiable List<SimpleDiffChange> getNonSkippedDiffChanges(Side side) {
+    return ContainerUtil.filter(myModel.getChanges(side), it -> !it.isSkipped());
   }
 
   @Override
@@ -383,7 +393,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   public boolean isAligningViewModeSupported() {
-    return aligningViewModeSupported;
+    return aligningViewModeSupported && !myTextDiffProvider.areVCSBoundedActionsDisabled();
   }
 
   //
@@ -441,7 +451,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<SimpleDiffChange> {
     @Override
     protected @NotNull List<SimpleDiffChange> getChanges() {
-      return getNonSkippedDiffChanges();
+      return getNonSkippedDiffChanges(getCurrentSide());
     }
 
     @Override
@@ -639,9 +649,31 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myModel.destroyChange(change);
   }
 
+  protected class MyToggleAutoScrollAction extends TextDiffViewerUtil.ToggleAutoScrollAction {
+    public MyToggleAutoScrollAction() {
+      super(getTextSettings());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isVisible() && myTextDiffProvider.areVCSBoundedActionsDisabled()) {
+        e.getPresentation().setVisible(false);
+      }
+    }
+  }
+
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     MyToggleExpandByDefaultAction() {
       super(getTextSettings(), myFoldingModel);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isVisible() && myTextDiffProvider.areVCSBoundedActionsDisabled()) {
+        e.getPresentation().setVisible(false);
+      }
     }
   }
 
@@ -832,7 +864,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       Side side = Side.fromValue(getEditors(), editor);
       if (side == null) return null;
 
-      return ContainerUtil.map(getNonSkippedDiffChanges(), change -> {
+      return ContainerUtil.map(getNonSkippedDiffChanges(side), change -> {
         return DiffUtil.getLinesRange(editor.getDocument(), change.getStartLine(side), change.getEndLine(side));
       });
     }

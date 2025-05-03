@@ -13,6 +13,7 @@ import com.intellij.diff.editor.DiffViewerVirtualFile;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
+import com.intellij.diff.lang.DiffLangSpecificProvider;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.tools.combined.CombinedDiffViewer;
@@ -164,6 +165,7 @@ public abstract class DiffRequestProcessor
     }, this);
     DiffToolSubstitutor.EP_NAME.addChangeListener(() -> updateRequest(true), this);
     DiffIgnoredRangeProvider.EP_NAME.addChangeListener(() -> updateRequest(true), this);
+    DiffLangSpecificProvider.EP_NAME.addChangeListener(() -> updateRequest(true), this);
 
     myToolbarGroup = new DefaultActionGroup();
     myRightToolbarGroup = new DefaultActionGroup();

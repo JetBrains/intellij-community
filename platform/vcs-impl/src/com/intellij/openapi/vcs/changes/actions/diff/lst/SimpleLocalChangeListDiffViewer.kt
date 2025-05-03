@@ -147,6 +147,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
   private inner class MyLocalTrackerDiffHandler(private val progressIndicator: ProgressIndicator) : LocalTrackerDiffHandler {
 
     override fun done(isContentsEqual: Boolean,
+                      areVCSBoundedActionsDisabled: Boolean,
                       texts: Array<CharSequence>,
                       toggleableLineRanges: List<ToggleableLineRange>): Runnable {
 
@@ -164,7 +165,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
       }
 
       val applyChanges = apply(changes, isContentsEqual)
-      val applyGutterExcludeOperations = applyGutterOperations(toggleableLineRanges)
+      val applyGutterExcludeOperations = applyGutterOperations(toggleableLineRanges, areVCSBoundedActionsDisabled)
 
       return Runnable {
         applyChanges.run()
@@ -210,8 +211,9 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
     gutterCheckboxMouseMotionListener.destroyHoverHighlighter()
   }
 
-  private fun applyGutterOperations(toggleableLineRanges: List<ToggleableLineRange>): Runnable {
+  private fun applyGutterOperations(toggleableLineRanges: List<ToggleableLineRange>, areVCSBoundedActionsDisabled : Boolean): Runnable {
     return Runnable {
+      if (areVCSBoundedActionsDisabled) return@Runnable
       if (isAllowExcludeChangesFromCommit) {
         for (toggleableLineRange in toggleableLineRanges) {
           localHighlighters.addAll(createGutterToggleRenderers(toggleableLineRange))
@@ -516,7 +518,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
     private inner class MyGutterMouseListener(private val mySide: Side) : MouseAdapter() {
       override fun mouseMoved(e: MouseEvent) {
-        if (!isAllowExcludeChangesFromCommit) {
+        if (!isAllowExcludeChangesFromCommit || myTextDiffProvider.areVCSBoundedActionsDisabled()) {
           destroyHoverHighlighter()
           return
         }

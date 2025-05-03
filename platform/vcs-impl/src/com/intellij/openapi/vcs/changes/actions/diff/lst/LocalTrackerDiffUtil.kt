@@ -146,6 +146,7 @@ object LocalTrackerDiffUtil {
     val lineOffsets2 = LineOffsetsUtil.create(diffData.localText)
 
     val linesRanges = ranges.map { Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
+    val areVCSBoundedActionsDisabled = textDiffProvider.areVCSBoundedActionsDisabled()
     val newFragments = textDiffProvider.compare(diffData.vcsText, diffData.localText, linesRanges, indicator)!!
 
     val toggleableLineRanges = mutableListOf<ToggleableLineRange>()
@@ -162,14 +163,23 @@ object LocalTrackerDiffUtil {
         toggleableLineRanges += ToggleableLineRange(lineRange, listOf(fragment), rangesFragmentData)
       }
       else {
-        toggleableLineRanges += ToggleableLineRange(lineRange, newFragments[i], rangesFragmentData)
+        val newFragment = newFragments.getOrElse(i) {
+          assert(areVCSBoundedActionsDisabled)
+          emptyList()
+        }
+        toggleableLineRanges += ToggleableLineRange(lineRange, newFragment, rangesFragmentData)
       }
     }
-    return handler.done(isContentsEqual, texts, toggleableLineRanges)
+    return handler.done(isContentsEqual, areVCSBoundedActionsDisabled, texts, toggleableLineRanges)
   }
 
   interface LocalTrackerDiffHandler {
     fun done(isContentsEqual: Boolean,
+             texts: Array<CharSequence>,
+             toggleableLineRanges: List<ToggleableLineRange>): Runnable = done(isContentsEqual, true, texts, toggleableLineRanges)
+
+    fun done(isContentsEqual: Boolean,
+             areVCSBoundedActionsDisabled: Boolean,
              texts: Array<CharSequence>,
              toggleableLineRanges: List<ToggleableLineRange>): Runnable
 

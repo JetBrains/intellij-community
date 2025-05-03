@@ -35,6 +35,18 @@ public interface TwosideTextDiffProvider extends TextDiffProvider {
                                    @NotNull List<? extends Range> linesRanges,
                                    @NotNull ProgressIndicator indicator);
 
+
+  /**
+   * Some of the diff window actions rely on the default diff algorithm, for example, commiting only the part of the file.
+   * Such actions might not be suitable in cases when a custom diff algorithm is used, e.g. during semantic merge.
+   *
+   * @see com.intellij.openapi.vcs.changes.actions.diff.lst.SimpleLocalChangeListDiffViewer
+   * @return true if such actions should be disabled for the current context, false otherwise.
+   */
+  default boolean areVCSBoundedActionsDisabled() {
+    return false;
+  }
+
   default boolean isHighlightingDisabled() {
     return false;
   }

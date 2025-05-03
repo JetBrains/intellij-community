@@ -15,10 +15,8 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
+import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
-import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.tools.util.side.OnesideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
@@ -473,6 +471,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       myEditor.getGutterComponentEx().revalidateMarkup();
     };
   }
+
 
   private @NotNull RangeMarker createGuardedBlock(int start, int end) {
     RangeMarker block = myDocument.createGuardedBlock(start, end);

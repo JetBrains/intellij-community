@@ -38,7 +38,7 @@ public abstract class LangDiffIgnoredRangeProvider implements DiffIgnoredRangePr
     return computeIgnoredRanges(project, text, language);
   }
 
-  private static @Nullable Language getLanguage(@NotNull Project project, @NotNull DiffContent content) {
+  public static @Nullable Language getLanguage(@NotNull Project project, @NotNull DiffContent content) {
     Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
     if (language != null) return language;
 

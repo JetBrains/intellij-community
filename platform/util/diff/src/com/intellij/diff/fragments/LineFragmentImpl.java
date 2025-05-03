@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class LineFragmentImpl implements LineFragment {
   private static final LoggerRt LOG = LoggerRt.getInstance(LineFragmentImpl.class);
@@ -118,6 +119,36 @@ public class LineFragmentImpl implements LineFragment {
       }
     }
     return fragments;
+  }
+
+  @Override
+  public final boolean equals(Object o) {
+    if (!(o instanceof LineFragmentImpl)) return false;
+
+    LineFragmentImpl fragment = (LineFragmentImpl)o;
+    return myStartLine1 == fragment.myStartLine1 &&
+           myEndLine1 == fragment.myEndLine1 &&
+           myStartLine2 == fragment.myStartLine2 &&
+           myEndLine2 == fragment.myEndLine2 &&
+           myStartOffset1 == fragment.myStartOffset1 &&
+           myEndOffset1 == fragment.myEndOffset1 &&
+           myStartOffset2 == fragment.myStartOffset2 &&
+           myEndOffset2 == fragment.myEndOffset2 &&
+           Objects.equals(myInnerFragments, fragment.myInnerFragments);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myStartLine1;
+    result = 31 * result + myEndLine1;
+    result = 31 * result + myStartLine2;
+    result = 31 * result + myEndLine2;
+    result = 31 * result + myStartOffset1;
+    result = 31 * result + myEndOffset1;
+    result = 31 * result + myStartOffset2;
+    result = 31 * result + myEndOffset2;
+    result = 31 * result + Objects.hashCode(myInnerFragments);
+    return result;
   }
 
   @Override

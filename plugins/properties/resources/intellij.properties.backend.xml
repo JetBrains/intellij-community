@@ -147,6 +147,8 @@
 
     <lang.floatingToolbar language="Properties" minimal="true"/>
 
+    <diff.lang.DiffLangSpecificAdjuster implementation="com.intellij.lang.properties.diff.PropertiesDiffLangSpecificProvider"/>
+
     <applicationService serviceInterface="com.intellij.lang.properties.PropertiesUtilService"
                         serviceImplementation="com.intellij.lang.properties.PropertiesUtilServiceImpl"
                         overrides="true"/>

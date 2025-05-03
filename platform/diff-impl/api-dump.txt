@@ -549,6 +549,17 @@ com.intellij.diff.lang.DiffIgnoredRangeProvider
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z
 - a:getDescription():java.lang.String
 - a:getIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.diff.contents.DiffContent):java.util.List
+com.intellij.diff.lang.DiffLangSpecificProvider
+- sf:Companion:com.intellij.diff.lang.DiffLangSpecificProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:findApplicable(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):com.intellij.diff.lang.DiffLangSpecificProvider
+- a:getDescription():java.lang.String
+- getLineFragments(com.intellij.openapi.project.Project,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.base.IgnorePolicy,com.intellij.diff.tools.util.base.HighlightPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- getPatchedLineFragments(com.intellij.openapi.project.Project,java.util.List,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.base.IgnorePolicy,com.intellij.diff.tools.util.base.HighlightPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:getShouldPrecalculateLineFragments():Z
+- a:isApplicable(com.intellij.lang.Language):Z
+f:com.intellij.diff.lang.DiffLangSpecificProvider$Companion
+- f:findApplicable(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent):com.intellij.diff.lang.DiffLangSpecificProvider
 a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - com.intellij.diff.lang.DiffIgnoredRangeProvider
 - <init>():V
@@ -556,6 +567,7 @@ a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - pa:accepts(com.intellij.openapi.project.Project,com.intellij.lang.Language):Z
 - pa:computeIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.lang.Language):java.util.List
 - getIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.diff.contents.DiffContent):java.util.List
+- s:getLanguage(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):com.intellij.lang.Language
 c:com.intellij.diff.requests.LoadingDiffRequest
 - com.intellij.diff.requests.MessageDiffRequest
 c:com.intellij.diff.requests.OperationCanceledDiffRequest
@@ -900,6 +912,7 @@ c:com.intellij.diff.tools.simple.SimpleDiffModel
 - destroyChange(com.intellij.diff.tools.simple.SimpleDiffChange):V
 - getAllChanges():java.util.List
 - getChanges():java.util.List
+- getChanges(com.intellij.diff.util.Side):java.util.List
 - handleBeforeDocumentChange(com.intellij.diff.util.Side,com.intellij.openapi.editor.event.DocumentEvent):V
 - isContentsEqual():com.intellij.util.ThreeState
 - paintPolygons(java.awt.Graphics2D,javax.swing.JComponent):V
@@ -959,6 +972,10 @@ c:com.intellij.diff.tools.simple.SimpleDiffViewer$ModifierProvider
 - <init>(com.intellij.diff.tools.simple.SimpleDiffViewer):V
 - init():V
 - onModifiersChanged():V
+pc:com.intellij.diff.tools.simple.SimpleDiffViewer$MyToggleAutoScrollAction
+- com.intellij.openapi.project.DumbAwareToggleAction
+- <init>(com.intellij.diff.tools.simple.SimpleDiffViewer):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 pa:com.intellij.diff.tools.simple.SimpleDiffViewer$SelectedChangesActionBase
 - com.intellij.openapi.project.DumbAwareAction
 - p:<init>(com.intellij.diff.tools.simple.SimpleDiffViewer):V
@@ -1387,11 +1404,13 @@ e:com.intellij.diff.tools.util.base.IgnorePolicy
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:FORMATTING:com.intellij.diff.tools.util.base.IgnorePolicy
+- sf:IGNORE_LANGUAGE_SPECIFIC_CHANGES:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:IGNORE_WHITESPACES:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:IGNORE_WHITESPACES_CHUNKS:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:TRIM_WHITESPACES:com.intellij.diff.tools.util.base.IgnorePolicy
 - getComparisonPolicy():com.intellij.diff.comparison.ComparisonPolicy
 - getText():java.lang.String
+- isShouldSquash():Z
 - isShouldTrimChunks():Z
 - s:valueOf(java.lang.String):com.intellij.diff.tools.util.base.IgnorePolicy
 - s:values():com.intellij.diff.tools.util.base.IgnorePolicy[]
@@ -1703,9 +1722,6 @@ pa:com.intellij.diff.tools.util.side.TwosideTextDiffViewer$MyInitialScrollPositi
 - p:getCaretPositions():com.intellij.openapi.editor.LogicalPosition[]
 - p:getEditors():java.util.List
 - onRediff():V
-pc:com.intellij.diff.tools.util.side.TwosideTextDiffViewer$MyToggleAutoScrollAction
-- com.intellij.openapi.project.DumbAwareToggleAction
-- <init>(com.intellij.diff.tools.util.side.TwosideTextDiffViewer):V
 com.intellij.diff.tools.util.text.FineMergeLineFragment
 - com.intellij.diff.fragments.MergeLineFragment
 - a:getConflictType():com.intellij.diff.util.MergeConflictType
@@ -1721,6 +1737,7 @@ c:com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider
 - <init>(com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors,java.lang.Runnable,com.intellij.openapi.Disposable):V
 - compare(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 com.intellij.diff.tools.util.text.TwosideTextDiffProvider
+- areVCSBoundedActionsDisabled():Z
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,java.util.List,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - isHighlightingDisabled():Z

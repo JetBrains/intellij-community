@@ -884,10 +884,7 @@ public final class DiffUtil {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
     if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
-    if (smartProvider != null) return smartProvider;
-
-    return new SimpleTextDiffProvider(settings, rediff, disposable);
+    return SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
   }
 
   public static @NotNull TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
@@ -898,10 +895,7 @@ public final class DiffUtil {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
     if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
-    if (smartProvider != null) return smartProvider;
-
-    return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
+    return SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
   }
 
   public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,

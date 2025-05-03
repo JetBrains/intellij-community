@@ -352,6 +352,8 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider" dynamic="true"/>
     <!--suppress PluginXmlValidity -->
+    <extensionPoint name="diff.lang.DiffLangSpecificAdjuster" interface="com.intellij.diff.lang.DiffLangSpecificProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
     <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
     <!--suppress PluginXmlValidity -->

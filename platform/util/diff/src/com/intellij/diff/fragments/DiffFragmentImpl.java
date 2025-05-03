@@ -52,6 +52,26 @@ public class DiffFragmentImpl implements DiffFragment {
   }
 
   @Override
+  public final boolean equals(Object o) {
+    if (!(o instanceof DiffFragmentImpl)) return false;
+
+    DiffFragmentImpl fragment = (DiffFragmentImpl)o;
+    return myStartOffset1 == fragment.myStartOffset1 &&
+           myEndOffset1 == fragment.myEndOffset1 &&
+           myStartOffset2 == fragment.myStartOffset2 &&
+           myEndOffset2 == fragment.myEndOffset2;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myStartOffset1;
+    result = 31 * result + myEndOffset1;
+    result = 31 * result + myStartOffset2;
+    result = 31 * result + myEndOffset2;
+    return result;
+  }
+
+  @Override
   public @NonNls String toString() {
     return "DiffFragmentImpl [" + myStartOffset1 + ", " + myEndOffset1 + ") - [" + myStartOffset2 + ", " + myEndOffset2 + ")";
   }

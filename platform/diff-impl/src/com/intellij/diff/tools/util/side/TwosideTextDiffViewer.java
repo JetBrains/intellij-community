@@ -318,12 +318,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     }
   }
 
-  protected class MyToggleAutoScrollAction extends TextDiffViewerUtil.ToggleAutoScrollAction {
-    public MyToggleAutoScrollAction() {
-      super(getTextSettings());
-    }
-  }
-
   //
   // Helpers
   //

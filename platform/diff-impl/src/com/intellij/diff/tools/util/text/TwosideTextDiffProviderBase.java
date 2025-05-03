@@ -28,6 +28,11 @@ public abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase i
   }
 
   @Override
+  public boolean areVCSBoundedActionsDisabled() {
+    return getIgnorePolicy() == IgnorePolicy.IGNORE_LANGUAGE_SPECIFIC_CHANGES;
+  }
+
+  @Override
   public @Nullable List<LineFragment> compare(@NotNull CharSequence text1,
                                               @NotNull CharSequence text2,
                                               @NotNull ProgressIndicator indicator) {
@@ -36,9 +41,8 @@ public abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase i
 
     List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, null, indicator);
 
-    if (fragments == null) return null;
+    if (fragments == null || fragments.isEmpty()) return null;
 
-    assert fragments.size() == 1;
     return fragments.get(0);
   }
 
@@ -66,15 +70,15 @@ public abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase i
     indicator.checkCanceled();
     List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, linesRanges,
                                                    ignorePolicy, highlightPolicy, indicator);
-    assert fragments.size() == (linesRanges != null ? linesRanges.size() : 1);
 
     ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
-    boolean squashFragments = highlightPolicy.isShouldSquash();
+    boolean squashFragments = highlightPolicy.isShouldSquash() && ignorePolicy.isShouldSquash();
     boolean trimFragments = ignorePolicy.isShouldTrimChunks();
 
     indicator.checkCanceled();
+
     return ContainerUtil.map(fragments, rangeFragments -> ComparisonManager.getInstance().processBlocks(rangeFragments, text1, text2,
-                                                                                                      policy, squashFragments, trimFragments));
+                                                                                                        policy, squashFragments, trimFragments));
   }
 
   protected abstract @NotNull List<List<LineFragment>> doCompare(@NotNull CharSequence text1,
