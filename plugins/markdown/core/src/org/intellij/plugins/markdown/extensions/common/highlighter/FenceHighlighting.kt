@@ -47,7 +47,7 @@ private fun parseContent(project: Project?, language: Language, text: String, no
     }
   }
 
-  if (settings.useAlternativeHighlighting && fenceParsing?.altHighlighterAvailable() == true) {
+  if (settings.useAlternativeHighlighting && fenceParsing.altHighlighterAvailable()) {
     val lang = (if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase())
         .replace(fenceLanguage, "")
     val html = fenceParsing.parseToHighlightedHtml(lang, text, node)?.replace(terminalDoubleNewline, "\n")
