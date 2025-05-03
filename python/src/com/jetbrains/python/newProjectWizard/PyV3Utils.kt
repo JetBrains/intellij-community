@@ -16,15 +16,11 @@ import org.jetbrains.annotations.CheckReturnValue
 suspend fun installPackages(project: Project, sdk: Sdk, vararg packages: String): Result<Unit> {
   val packageManager = PythonPackageManager.forSdk(project, sdk)
   return supervisorScope { // Not install other packages if one failed
-    for (packageName in packages) {
-      val packageSpecification = PythonSimplePackageSpecification(packageName, null, null)
-      packageManager.installPackage(packageSpecification, emptyList<String>(), withBackgroundProgress = false).onFailure {
-        return@supervisorScope Result.failure(it)
-      }
-
+    val specifications = packages.map { PythonSimplePackageSpecification(it, null, null) }
+    return@supervisorScope packageManager.installPackages(specifications, emptyList(),
+                                                          withBackgroundProgress = true).map {
+      // We don't care about result, we just want to fail if any package failed to install
     }
-    return@supervisorScope Result.success(Unit)
-
   }
 }
 
