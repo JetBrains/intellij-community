@@ -24,8 +24,6 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -90,37 +88,17 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   @Override
   protected void doRun() {
     prepareRenameOfAccessors();
-    prepareRenameOfConstructorParameters();
 
     super.doRun();
   }
 
-  private void prepareRenameOfConstructorParameters() {
-    RecordConstructorCandidate ctorCandidate = myRecordCandidate.getCanonicalConstructorCandidate();
-    if (ctorCandidate == null) return;
-
-    ctorCandidate.getCtorParamsToFields().forEach((ctorParam, field) -> {
-      if (!ctorParam.getName().equals(field.getName())) {
-        RenameRefactoring renameRefactoring = RefactoringFactory.getInstance(myProject).createRename(ctorParam, field.getName());
-        renameRefactoring.setPreviewUsages(false);
-        renameRefactoring.setSearchInComments(false);
-        // The below line is required to not show conflicts midway and break the refactoring flow.
-        renameRefactoring.setSearchInNonJavaFiles(false);
-        renameRefactoring.setInteractive(null);
-        renameRefactoring.run();
-      }
-    });
-  }
-
   private void prepareRenameOfAccessors() {
     List<FieldAccessorCandidate> accessorsToRename = getAccessorsToRename();
-
     for (var fieldAccessorCandidate : accessorsToRename) {
       String backingFieldName = fieldAccessorCandidate.backingField().getName();
 
       List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.method());
       RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
-
       methods.forEach(method -> {
         myAllRenames.put(method, backingFieldName);
         methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);
@@ -265,6 +243,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     renameMembers(usages);
+    renameConstructorParameters();
 
     final PsiClass psiClass = myRecordCandidate.getPsiClass();
     final RecordConstructorCandidate canonicalCtorCandidate = myRecordCandidate.getCanonicalConstructorCandidate();
@@ -364,6 +343,30 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     return JavaPsiFacade.getInstance(myProject).getResolveHelper()
       .isAccessible(psiField, new LightModifierList(psiField.getManager(), psiField.getLanguage(), PsiModifier.PRIVATE),
                     place, null, null);
+  }
+
+  private void renameConstructorParameters() {
+    RecordConstructorCandidate ctorCandidate = myRecordCandidate.getCanonicalConstructorCandidate();
+    if (ctorCandidate == null) return;
+
+    Map<PsiElement, String> ctorParamRenames = new LinkedHashMap<>();
+    List<UsageInfo> usagesToRename = new ArrayList<>();
+    ctorCandidate.getCtorParamsToFields().forEach((ctorParam, field) -> {
+      if (!ctorParam.getName().equals(field.getName())) {
+        UsageInfo[] usages = RenameUtil.findUsages(ctorParam, field.getName(), false, false, ctorParamRenames);
+        usagesToRename.addAll(Arrays.asList(usages));
+        ctorParamRenames.put(ctorParam, field.getName());
+      }
+    });
+
+    MultiMap<PsiElement, UsageInfo> renameUsagesByElement = RenameProcessor.classifyUsages(ctorParamRenames.keySet(), usagesToRename);
+    for (var entry : ctorParamRenames.entrySet()) {
+      PsiElement element = entry.getKey();
+      String newName = entry.getValue();
+      UsageInfo[] elementRenameUsages = renameUsagesByElement.get(entry.getKey()).toArray(UsageInfo.EMPTY_ARRAY);
+      RenamePsiElementProcessor renamePsiElementProcessor = RenamePsiElementProcessor.forElement(element);
+      renamePsiElementProcessor.renameElement(element, newName, elementRenameUsages, null);
+    }
   }
 
   private void renameMembers(UsageInfo @NotNull [] usages) {

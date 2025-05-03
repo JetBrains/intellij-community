@@ -180,8 +180,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   protected abstract @NotNull @Command String getCommandName();
 
   /**
-   * Called as part of run {@link #run}
-   * 
+   * Called as part of {@link #run}.
+   * <p>
    * Must be called on EDT and outside a write action.
    */
   @RequiresEdt

@@ -29,6 +29,10 @@ public class ClassCanBeRecordInspectionWeakenAccessibilityTest extends LightQuic
 
   @Override
   public void runSingle() throws Throwable {
+    // Run and abort (because of conflicts), and then verify that no content was changed. See IDEA-371645.
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, () -> super.runSingle());
+    checkResultByFile(getTestName(false) + ".java", getBasePath() + "/before" + getTestName(false), false);
+    
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(super::runSingle);
   }
 }

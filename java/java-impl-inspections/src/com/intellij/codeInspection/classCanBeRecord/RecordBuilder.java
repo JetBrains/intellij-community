@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-class RecordBuilder {
+final class RecordBuilder {
   private final StringBuilder myRecordText = new StringBuilder();
   private final PsiClass myOriginClass;
 

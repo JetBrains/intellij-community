@@ -1,5 +1,4 @@
-// "Convert to record class" "true"
-// no "true-preview" above because of IDEA-369873
+// "Convert to record class" "true-preview"
 
 // Test for IDEA-371419
 class Point2<caret> {

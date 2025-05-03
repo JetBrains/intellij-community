@@ -1,3 +1,3 @@
 // "Convert to record class" "true-preview"
-record R(int myFirst) {
+record Person(String name, int age) {
 }
