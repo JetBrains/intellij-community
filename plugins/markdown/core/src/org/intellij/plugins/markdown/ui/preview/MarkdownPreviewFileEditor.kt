@@ -80,9 +80,7 @@ class MarkdownPreviewFileEditor(
   init {
     document.addDocumentListener(ReparseContentDocumentListener(), this)
 
-    coroutineScope.launch(Dispatchers.EDT) {
-      attachHtmlPanel()
-    }
+    coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()

@@ -55,7 +55,7 @@ import kotlin.math.round
 
 class MarkdownJCEFHtmlPanel(
   private val project: Project?,
-  private val virtualFile: VirtualFile?,
+  private val virtualFile: VirtualFile?
 ) : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
   constructor() : this(null, null)
 

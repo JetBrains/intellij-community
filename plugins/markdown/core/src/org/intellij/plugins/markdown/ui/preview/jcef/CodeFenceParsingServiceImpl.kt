@@ -131,7 +131,6 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope) : CodeFenceParsingService 
     startupLatch?.countDown()
   }
 
-
   override fun altHighlighterAvailable() = available
 
   private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
