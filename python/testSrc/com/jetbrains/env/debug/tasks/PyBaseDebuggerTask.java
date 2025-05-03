@@ -325,12 +325,11 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     // May be relative or not
     final VirtualFile vFile = getFileByPath(file);
     Assert.assertNotNull(String.format("There is no %s", file), vFile);
-    return XDebuggerUtil.getInstance().canPutBreakpointAt(project, vFile, line);
+    return ReadAction.compute(() -> XDebuggerUtil.getInstance().canPutBreakpointAt(project, vFile, line));
   }
 
   private void doToggleBreakpoint(String file, int line) {
-    boolean canPutBreakpointAt = ReadAction.compute(() -> canPutBreakpointAt(getProject(), file, line));
-    Assert.assertTrue(canPutBreakpointAt);
+    Assert.assertTrue(canPutBreakpointAt(getProject(), file, line));
     XDebuggerTestUtil.toggleBreakpoint(getProject(),getFileByPath(file), line);
   }
 
