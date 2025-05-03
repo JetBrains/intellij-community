@@ -98,11 +98,6 @@ public class BuildContextImpl implements BuildContext  {
   }
 
   @Override
-  public void cleanBuildState() {
-    // todo
-  }
-
-  @Override
   public void report(Message msg) {
     // todo
   }

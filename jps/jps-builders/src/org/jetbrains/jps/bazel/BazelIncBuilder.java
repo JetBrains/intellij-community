@@ -2,6 +2,7 @@
 package org.jetbrains.jps.bazel;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.bazel.impl.*;
 import org.jetbrains.jps.bazel.runner.BytecodeInstrumenter;
 import org.jetbrains.jps.bazel.runner.CompilerRunner;
@@ -21,7 +22,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
@@ -44,11 +47,10 @@ public class BazelIncBuilder {
 
   private static GraphConfiguration setupGraphConfiguration(BuildContext context) throws IOException {
     DependencyGraphImpl graph = new DependencyGraphImpl(
-      new PersistentMVStoreMapletFactory(context.getDataDir().resolve(DEP_GRAPH_FILE_NAME).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
+      new PersistentMVStoreMapletFactory(getDepGraphStoreFile(context).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
     );
     return GraphConfiguration.create(graph, context.getPathMapper());
   }
-
 
   public ExitCode build(BuildContext context) {
     // todo: support cancellation checks
@@ -65,11 +67,12 @@ public class BazelIncBuilder {
         snapshotDelta.markRecompileAll(); // force rebuild
       }
       else {
+        // todo: check dependencies digest and recompileAll if does not match
         snapshotDelta = new SourceSnapshotDeltaImpl(loadSourceSnapshot(context), context.getSources());
       }
 
       if (snapshotDelta.isRecompileAll()) {
-        context.cleanBuildState();
+        cleanBuildState(context);
       }
 
       GraphConfiguration graphConfig = setupGraphConfiguration(context);
@@ -121,19 +124,7 @@ public class BazelIncBuilder {
 
         if (!diagnostic.hasErrors()) {
           // delete outputs corresponding to deleted or recompiled sources
-
-          List<String> deletedPaths = new ArrayList<>();
-
-          for (Node<?,?> node : flat(map(flat(snapshotDelta.getDeleted(), snapshotDelta.getModified()), depGraph::getNodes))) {
-            if (node instanceof JVMClassNode) {
-              String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
-              if (outputBuilder.deleteEntry(outputPath)) {
-                deletedPaths.add(outputPath);
-              }
-            }
-          }
-
-          logDeletedPaths(context, deletedPaths);
+          cleanCompiledFiles(context, snapshotDelta, depGraph, outputBuilder);
 
           for (CompilerRunner runner : roundCompilers) {
             List<NodeSource> toCompile = collect(filter(snapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
@@ -202,6 +193,48 @@ public class BazelIncBuilder {
     }
   }
 
+  private static void cleanBuildState(BuildContext context) throws IOException {
+    Path output = context.getOutputZip();
+    Path abiOutput = context.getAbiOutputZip();
+    Path srcSnapshot = getSourceSnapshotStoreFile(context);
+
+    BuildProcessLogger logger = context.getBuildLogger();
+    if (logger.isEnabled() && !context.isRebuild()) {
+      // need this for tests
+      Set<String> deleted = new HashSet<>();
+      for (Path outPath : abiOutput != null? List.of(output, abiOutput) : List.of(output)) {
+        try (var out = new ZipOutputBuilderImpl(outPath)) {
+          collect(out.getEntryNames(), deleted);
+        }
+      }
+      logDeletedPaths(context, deleted);
+    }
+    
+    Files.deleteIfExists(output);
+    if (abiOutput != null) {
+      Files.deleteIfExists(abiOutput);
+    }
+    Files.deleteIfExists(srcSnapshot);
+    Files.deleteIfExists(getDepGraphStoreFile(context));
+  }
+
+  private static void cleanCompiledFiles(BuildContext context, SourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, ZipOutputBuilder outputBuilder) {
+    for (Iterable<@NotNull NodeSource> sourceGroup : List.of(snapshotDelta.getDeleted(), snapshotDelta.getModified())) {
+      if (isEmpty(sourceGroup)) {
+        continue;
+      }
+      // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
+      List<String> deletedPaths = new ArrayList<>();
+      for (Node<?, ?> node : filter(flat(map(sourceGroup, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
+        String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
+        if (outputBuilder.deleteEntry(outputPath)) {
+          deletedPaths.add(outputPath);
+        }
+      }
+      logDeletedPaths(context, deletedPaths);
+    }
+  }
+
   private static void logDeletedPaths(BuildContext context, Iterable<String> deletedPaths) {
     if (!context.isRebuild()) {
       BuildProcessLogger logger = context.getBuildLogger();
@@ -220,7 +253,7 @@ public class BazelIncBuilder {
   }
 
   private static void saveSourceSnapshot(BuildContext context, SourceSnapshot snapshot) {
-    Path snapshotPath = context.getDataDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
+    Path snapshotPath = getSourceSnapshotStoreFile(context);
     try (var stream = new DataOutputStream(new DeflaterOutputStream(Files.newOutputStream(snapshotPath), new Deflater(Deflater.BEST_SPEED)))) {
       snapshot.write(new GraphDataOutputImpl(stream));
     }
@@ -230,7 +263,7 @@ public class BazelIncBuilder {
   }
 
   private static SourceSnapshot loadSourceSnapshot(BuildContext context) {
-    Path oldSnapshot = context.getDataDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
+    Path oldSnapshot = getSourceSnapshotStoreFile(context);
     try (var stream = new DataInputStream(new InflaterInputStream(Files.newInputStream(oldSnapshot, StandardOpenOption.READ)))) {
       return new SourceSnapshotImpl(stream, PathSource::new);
     }
@@ -238,6 +271,14 @@ public class BazelIncBuilder {
       context.report(Message.create(null, e));
       return SourceSnapshot.EMPTY;
     }
+  }
+
+  private static @NotNull Path getSourceSnapshotStoreFile(BuildContext context) {
+    return context.getDataDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
+  }
+
+  private static @NotNull Path getDepGraphStoreFile(BuildContext context) {
+    return context.getDataDir().resolve(DEP_GRAPH_FILE_NAME);
   }
 
   private static void safeClose(Closeable cl, DiagnosticSink diagnostic) {

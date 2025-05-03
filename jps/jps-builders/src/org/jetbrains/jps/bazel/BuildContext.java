@@ -42,6 +42,4 @@ public interface BuildContext extends DiagnosticSink {
   NodeSourcePathMapper getPathMapper();
 
   BuildProcessLogger getBuildLogger();
-  // wipe graph, delete all caches, snapshots, storages
-  void cleanBuildState();
 }
