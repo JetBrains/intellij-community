@@ -173,12 +173,11 @@ def _new_plugin_from(plugin_id_to_configuration, plugins_for_phase):
         options = options,
     )
 
-def kt_jvm_produce_jar_actions(ctx, rule_kind):
+def kt_jvm_produce_jar_actions(ctx):
     """This macro sets up a compile action for a Kotlin jar.
 
     Args:
         ctx: Invoking rule ctx, used for attr, actions, and label.
-        rule_kind: The rule kind --e.g., `kt_jvm_library`.
     Returns:
         A struct containing the providers JavaInfo (`java`) and `kt` (KtJvmInfo). This struct is not intended to be
         used as a legacy provider -- rather the caller should transform the result.
@@ -204,7 +203,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
     compile_jar = _run_jvm_builder(
         ctx = ctx,
         output_jar = output_jar,
-        rule_kind = rule_kind,
         srcs = srcs,
         associates = associates,
         compile_deps = compile_deps,
@@ -257,7 +255,6 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
 def _run_jvm_builder(
         ctx,
         output_jar,
-        rule_kind,
         srcs,
         associates,
         compile_deps,
@@ -275,7 +272,7 @@ def _run_jvm_builder(
         kotlin_inc_threshold = kotlinc_options.inc_threshold
     java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
 
-    args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
+    args = init_builder_args(ctx, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
     args.add("--out", output_jar)
 
     outputs = [output_jar]

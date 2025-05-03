@@ -26,7 +26,7 @@ def _jvm_library(ctx):
     if ctx.attr.neverlink and ctx.attr.runtime_deps:
         fail("runtime_deps and neverlink is nonsensical.", attr = "runtime_deps")
 
-    return _make_providers(ctx, kt_jvm_produce_jar_actions(ctx, "kt_jvm_library"))
+    return _make_providers(ctx, kt_jvm_produce_jar_actions(ctx))
 
 jvm_library = rule(
     doc = """This rule compiles and links Kotlin and Java sources into a .jar file.""",
