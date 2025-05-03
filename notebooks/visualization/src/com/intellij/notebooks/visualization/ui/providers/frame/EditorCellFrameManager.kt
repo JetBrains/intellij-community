@@ -4,18 +4,12 @@ package com.intellij.notebooks.visualization.ui.providers.frame
 import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellLines.CellType
-import com.intellij.notebooks.visualization.NotebookVisualizationCoroutine
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.asDisposable
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.launch
 import java.awt.geom.Line2D
 
 @OptIn(FlowPreview::class)
@@ -37,10 +31,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
   val state: AtomicProperty<CellFrameState> = AtomicProperty(CellFrameState())
 
   private var cachedRightLine: Line2D? = null
-
-  private val scope = NotebookVisualizationCoroutine.Utils.scope.childScope("Cell frame manager for ${editorCell.interval}").also {
-    Disposer.register(this, it.asDisposable())
-  }
 
   init {
     editorCell.isSelected.afterDistinctChange(this) {
@@ -71,12 +61,9 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
       updateCellFrameShow()
     }
 
-
-    scope.launch {
-      JupyterBoundsChangeHandler.get(editor).eventFlow.collect {
-        cachedRightLine = null
-      }
-    }.cancelOnDispose(this)
+    JupyterBoundsChangeHandler.get(editor).subscribe(this) {
+      cachedRightLine = null
+    }
 
     updateCellFrameShow()
   }
@@ -85,13 +72,17 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     state.set(CellFrameState(false))
   }
 
-  fun calculateLineFrameVerticalLine(): Line2D? {
+  fun getOrCalculateLineFrameVerticalLine(): Line2D? {
     if (state.get().isVisible.not())
       return null
 
     cachedRightLine?.let {
       return it
     }
+    return calculateRightLine()
+  }
+
+  private fun calculateRightLine(): Line2D.Double? {
     val inlays = view?.input?.getBlockElementsInRange() ?: return null
     val upperInlayBounds = inlays.firstOrNull {
       it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove
