@@ -33,6 +33,7 @@ jvm_library(
     "//platform/structuralsearch:structuralSearch-tests_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/diff-impl",
   ]
 )
 

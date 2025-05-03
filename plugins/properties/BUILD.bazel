@@ -29,6 +29,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/structuralsearch:structuralSearch",
     "//plugins/properties/properties-common:properties",
+    "//platform/diff-impl",
   ],
   runtime_deps = [
     ":properties-backend_resources",

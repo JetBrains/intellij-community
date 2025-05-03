@@ -39,6 +39,9 @@ jvm_library(
     "@lib//:opentest4j",
     "//platform/testFramework/core",
     "//platform/util/jdom",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
   ],
   exports = ["//platform/testFramework/common"],
   runtime_deps = [":junit5_resources"]
@@ -72,6 +75,9 @@ jvm_library(
     "@lib//:opentest4j",
     "//platform/testFramework/core",
     "//platform/util/jdom",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
   ],
   runtime_deps = [
     ":junit5_resources",
