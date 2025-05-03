@@ -9,7 +9,6 @@ import org.cef.handler.CefDisplayHandlerAdapter
 import org.intellij.lang.annotations.Language
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
-import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
@@ -20,8 +19,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-@Service(Service.Level.PROJECT)
-class CodeFenceParsingServiceImpl(project: Project, cs: CoroutineScope) : CodeFenceParsingService {
+@Service(Service.Level.APP)
+class CodeFenceParsingServiceImpl(cs: CoroutineScope) : CodeFenceParsingService {
   private var MAX_HIGHLIGHT_JS_LOAD_TIME = 5000L // msec
   private var MAX_HIGHLIGHT_JS_WAIT_TIME = 2000L // msec
   private var MAX_ALLOWED_STARTUP_TIME = 10000L // msec

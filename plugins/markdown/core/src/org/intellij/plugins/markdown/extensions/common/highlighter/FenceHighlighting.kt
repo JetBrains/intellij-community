@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
 import com.intellij.lang.Language
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
@@ -32,7 +33,7 @@ private fun parseContent(project: Project?, language: Language, text: String, no
                          collector: (String, IntRange, Color?, String?) -> Unit) {
   val file = LightVirtualFile("markdown_temp", text)
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
-  val fenceParsing = project?.getService(CodeFenceParsingService::class.java)
+  val fenceParsing = service<CodeFenceParsingService>()
   val ecm = EditorColorsManager.getInstance()
   var colorScheme = ecm.globalScheme
   val settings = project?.let(MarkdownSettings::getInstance)
