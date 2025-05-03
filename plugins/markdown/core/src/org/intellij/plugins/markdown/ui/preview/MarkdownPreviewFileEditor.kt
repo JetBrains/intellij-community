@@ -43,7 +43,6 @@ import org.intellij.plugins.markdown.editor.findFirstOpenEditorForFile
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview.suppressNextScrollSyncForEditor
-import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceLanguageParsingSupport.Companion.codeFenceParsingStartUp
 import org.intellij.plugins.markdown.ui.preview.jcef.MarkdownJCEFHtmlPanel
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -82,7 +81,6 @@ class MarkdownPreviewFileEditor(
     document.addDocumentListener(ReparseContentDocumentListener(), this)
 
     coroutineScope.launch(Dispatchers.EDT) {
-      codeFenceParsingStartUp()
       attachHtmlPanel()
     }
 

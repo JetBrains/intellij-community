@@ -30,6 +30,8 @@ class MarkdownCodeFencePreviewHighlighter: CodeFenceGeneratingProvider {
     return result
   }
 
+  private val textOrPlain = Regex("""text|plain""")
+
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
     val project = (node as? MarkdownASTNode)?.project
     var keyExtra = ""
@@ -44,8 +46,7 @@ class MarkdownCodeFencePreviewHighlighter: CodeFenceGeneratingProvider {
     var injectedLanguage = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
 
     if (injectedLanguage == null) {
-      if (flexibleAboutLanguages && language.isNotEmpty() &&
-          !Regex("""text|plain""").containsMatchIn(language.lowercase())) {
+      if (flexibleAboutLanguages && language.isNotEmpty() && !textOrPlain.containsMatchIn(language.lowercase())) {
         injectedLanguage = Language.ANY
       }
       else {

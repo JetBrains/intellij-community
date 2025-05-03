@@ -144,6 +144,8 @@ class MarkdownJCEFHtmlPanel(
     return panelComponent
   }
 
+  private val sourceEventValues = Regex("""^(\d+),(\d+)""")
+
   init {
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
@@ -154,7 +156,7 @@ class MarkdownJCEFHtmlPanel(
 
     browserPipe.subscribe(SCROLL_SOURCE_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
-        var match = Regex("""^(\d+),(\d+)""").find(data)
+        var match = sourceEventValues.find(data)
 
         if (match != null && virtualFile != null) {
           val publisher = project?.messageBus?.syncPublisher(PreviewClickListener.TOPIC) ?: return false
@@ -272,19 +274,22 @@ class MarkdownJCEFHtmlPanel(
     executeCancellableJavaScript(code)
   }
 
+  private val imageMatcher = Regex("""<img\s+(?!class)[^>]+?>""", RegexOption.DOT_MATCHES_ALL)
+  private val rangeMatcher = Regex("""$md_src_pos="(\d+)\.\.(\d+)"""")
+
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
     val updatedHtml = StringBuilder()
     var highestIndex = 0
 
     // Some images don't get properly annotated with a source range. Add those source ranges now.
-    Regex("""<img\s+(?!class)[^>]+?>""", RegexOption.DOT_MATCHES_ALL).findAll(html).forEach {
+    imageMatcher.findAll(html).forEach {
       val before = html.substring(highestIndex, it.range.first)
       var img = it.value
 
       if (!img.contains(md_src_pos)) {
         val after = html.substring(it.range.last)
-        val previousSrcIndex = Regex("""$md_src_pos="\d+\.\.(\d+)"""").findAll(before).lastOrNull()?.groupValues?.get(1)?.toIntOrNull()
-        val nextSrcIndex = Regex("""$md_src_pos="(\d+)\.\.\d+"""").find(after)?.groupValues?.get(1)?.toIntOrNull()
+        val previousSrcIndex = rangeMatcher.findAll(before).lastOrNull()?.groupValues?.get(2)?.toIntOrNull()
+        val nextSrcIndex = rangeMatcher.find(after)?.groupValues?.get(1)?.toIntOrNull()
 
         if (previousSrcIndex != null && nextSrcIndex != null) {
           img = "<img md-src-pos=\"$previousSrcIndex..$nextSrcIndex\"" + img.substring(4)
