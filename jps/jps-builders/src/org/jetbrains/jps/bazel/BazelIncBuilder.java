@@ -60,15 +60,19 @@ public class BazelIncBuilder {
     ZipOutputBuilder outputBuilder = null;
     SourceSnapshotDelta snapshotDelta = null;
     DependencyGraph depGraph = null;
-    
+    ConfigurationState presentState = ConfigurationState.create(context);
     try {
       if (context.isRebuild()) {
         snapshotDelta = new SourceSnapshotDeltaImpl(context.getSources());
         snapshotDelta.markRecompileAll(); // force rebuild
       }
       else {
-        // todo: check dependencies digest and recompileAll if does not match
-        snapshotDelta = new SourceSnapshotDeltaImpl(loadSourceSnapshot(context), context.getSources());
+        ConfigurationState pastState = loadConfigurationState(context);
+        snapshotDelta = new SourceSnapshotDeltaImpl(pastState.getSourceSnapshot(), context.getSources());
+        if (!snapshotDelta.isRecompileAll() && !pastState.getDepsDigest().equals(presentState.getDepsDigest())) {
+          // todo: diagnostic?
+          snapshotDelta.markRecompileAll();
+        }
       }
 
       if (snapshotDelta.isRecompileAll()) {
@@ -185,7 +189,7 @@ public class BazelIncBuilder {
         ((PostponedDiagnosticSink)diagnostic).drainTo(context);
       }
       if (snapshotDelta != null) {
-        saveSourceSnapshot(context, snapshotDelta.asSnapshot());
+        saveConfigurationState(context, presentState.derive(snapshotDelta.asSnapshot()));
       }
       // todo: save abi-jar
       safeClose(outputBuilder, diagnostic);
@@ -252,24 +256,27 @@ public class BazelIncBuilder {
     return delta;
   }
 
-  private static void saveSourceSnapshot(BuildContext context, SourceSnapshot snapshot) {
+
+  private static void saveConfigurationState(BuildContext context, ConfigurationState state) {
     Path snapshotPath = getSourceSnapshotStoreFile(context);
     try (var stream = new DataOutputStream(new DeflaterOutputStream(Files.newOutputStream(snapshotPath), new Deflater(Deflater.BEST_SPEED)))) {
-      snapshot.write(new GraphDataOutputImpl(stream));
+      stream.writeUTF(state.getDepsDigest());
+      state.getSourceSnapshot().write(new GraphDataOutputImpl(stream));
     }
     catch (Throwable e) {
       context.report(Message.create(null, e));
     }
   }
 
-  private static SourceSnapshot loadSourceSnapshot(BuildContext context) {
+  private static ConfigurationState loadConfigurationState(BuildContext context) {
     Path oldSnapshot = getSourceSnapshotStoreFile(context);
     try (var stream = new DataInputStream(new InflaterInputStream(Files.newInputStream(oldSnapshot, StandardOpenOption.READ)))) {
-      return new SourceSnapshotImpl(stream, PathSource::new);
+      String depsDigest = stream.readUTF();
+      return ConfigurationState.create(new SourceSnapshotImpl(stream, PathSource::new), depsDigest);
     }
     catch (Throwable e) {
       context.report(Message.create(null, e));
-      return SourceSnapshot.EMPTY;
+      return ConfigurationState.EMPTY;
     }
   }
 
@@ -290,6 +297,37 @@ public class BazelIncBuilder {
     }
     catch (Throwable e) {
       diagnostic.report(Message.create(null, e));
+    }
+  }
+
+  private interface ConfigurationState {
+    ConfigurationState EMPTY = create(SourceSnapshot.EMPTY, "");
+    
+    SourceSnapshot getSourceSnapshot();
+    
+    String getDepsDigest();
+
+    default ConfigurationState derive(SourceSnapshot snapshot) {
+      return create(snapshot, getDepsDigest());
+    }
+
+    static ConfigurationState create(SourceSnapshot snapshot, String depsDigest) {
+      return new ConfigurationState() {
+        @Override
+        public SourceSnapshot getSourceSnapshot() {
+          return snapshot;
+        }
+
+        @Override
+        public String getDepsDigest() {
+          return depsDigest;
+        }
+      };
+    }
+
+    static ConfigurationState create(BuildContext context) {
+      PathSnapshot deps = context.getBinaryDependencies();
+      return create(context.getSources(), Utils.digest(map(deps.getElements(), deps::getDigest)));
     }
   }
 }

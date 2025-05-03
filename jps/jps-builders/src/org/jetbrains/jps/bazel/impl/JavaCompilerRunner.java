@@ -107,7 +107,7 @@ public class JavaCompilerRunner implements CompilerRunner {
     OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, outSink);
     JavacCompilerTool javacTool = new JavacCompilerTool();
     // set non-null output, pointing to a non-existent dir. Need this to enable JavacFileManager creating OutputFileObjects
-    Map<File, Set<File>> outputDir = Map.of(myContext.getOutputZip().getParent().toFile(), Set.of());
+    Map<File, Set<File>> outputDir = Map.of(myContext.getDataDir().resolve("__temp__").toFile(), Set.of());
 
     // always empty in the current implementation
     List<File> platformCp = List.of();

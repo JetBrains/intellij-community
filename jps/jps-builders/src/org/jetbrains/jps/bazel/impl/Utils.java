@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel.impl;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,14 @@ public class Utils {
 
   public static String digest(byte[] bytes) {
     return Long.toHexString(Hashing.xxh3_64().hashBytesToLong(bytes));
+  }
+
+  public static String digest(Iterable<String> digests) {
+    HashStream64 stream = Hashing.xxh3_64().hashStream();
+    for (String digest : digests) {
+      stream.putString(digest);
+    }
+    return Long.toHexString(stream.getAsLong());
   }
 
   public static String digest(File file) {
