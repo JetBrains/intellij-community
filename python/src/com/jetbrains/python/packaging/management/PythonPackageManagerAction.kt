@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.python.pyproject.PY_PROJECT_TOML
@@ -21,6 +22,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.PyPackageManager
@@ -162,4 +164,16 @@ private suspend fun Document.reloadIntentions(project: Project) {
   }?.let { psiFile ->
     DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
   }
+}
+
+
+internal fun PythonPackageManager.isRunLocked(): Boolean {
+  return CancellableJobSerialRunner.isRunLocked(this.sdk)
+}
+
+internal suspend fun <V> PythonPackageManager.runSynchronized(
+  title: @ProgressTitle String,
+  runnable: suspend () -> PyResult<V>,
+): PyResult<V> {
+  return CancellableJobSerialRunner.run(this.project, this.sdk, title, runnable)
 }
