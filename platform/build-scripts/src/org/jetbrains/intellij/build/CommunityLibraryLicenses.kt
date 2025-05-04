@@ -431,6 +431,10 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/hamcrest/JavaHamcrest/blob/master/LICENSE")
       .suppliedByPersons("Joe Walnes", "Nat Pryce", "Steve Freeman"),
 
+    LibraryLicense("Hamcrest More Matchers", libraryName = "github.seregamorph.hamcrest.more.matchers", url = "https://github.com/seregamorph/hamcrest-more-matchers")
+      .apache("https://github.com/seregamorph/hamcrest-more-matchers/blob/master/LICENSE")
+      .suppliedByPersons("Sergey Chernov"),
+
     LibraryLicense(libraryName = "hash4j", url = "https://github.com/dynatrace-oss/hash4j")
       .apache("https://github.com/dynatrace-oss/hash4j/blob/main/LICENSE"),
 
