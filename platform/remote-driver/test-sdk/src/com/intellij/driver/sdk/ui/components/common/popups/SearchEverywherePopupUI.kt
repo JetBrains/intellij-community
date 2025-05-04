@@ -23,11 +23,7 @@ fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null, block
   x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("SearchEverywhereUI")) }, SearchEverywherePopupUI::class.java).apply(block)
 
 class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
-  val resultsList by lazy {
-    x(JListUiComponent::class.java) { byType(JList::class.java) }.apply {
-      replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
-    }
-  }
+  val resultsList = accessibleList()
   val searchField: JTextFieldUI = textField { byType("com.intellij.ide.actions.BigPopupUI${"$"}SearchField") }
   val includeNonProjectItemsCheckBox = checkBox { byAccessibleName("Include non-project items") }
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })

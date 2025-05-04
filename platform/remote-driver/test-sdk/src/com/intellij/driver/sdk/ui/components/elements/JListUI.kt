@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.*
@@ -21,7 +22,7 @@ fun Finder.list(locator: QueryBuilder.() -> String) = x(JListUiComponent::class.
 
 fun Finder.accessibleList(locator: QueryBuilder.() -> String = { byType(JList::class.java) }) =
   x(JListUiComponent::class.java) { locator() }.apply {
-    replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
+    replaceCellRendererReader { driver.new(AccessibleNameCellRendererReader::class, rdTarget = (it as RefWrapper).getRef().rdTarget) }
   }
 
 /** Locates JBList element */
@@ -29,10 +30,10 @@ fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[
                                                                 JListUiComponent::class.java)
 
 open class JListUiComponent(data: ComponentData) : UiComponent(data) {
-  private var cellRendererReader: CellRendererReader? = null
+  private var cellRendererReaderSupplier: ((JListFixtureRef) -> CellRendererReader)? = null
   private val fixture by lazy {
     driver.new(JListFixtureRef::class, robot, component).apply {
-      cellRendererReader?.let { replaceCellRendererReader(it) }
+      cellRendererReaderSupplier?.let { replaceCellRendererReader(it(this)) }
     }
   }
 
@@ -47,8 +48,8 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   val selectedItems: List<String>
     get() = fixture.collectSelectedItems()
 
-  fun replaceCellRendererReader(reader: CellRendererReader) {
-    cellRendererReader = reader
+  fun replaceCellRendererReader(readerSupplier: (JListFixtureRef) -> CellRendererReader) {
+    cellRendererReaderSupplier = readerSupplier
   }
 
   fun clickItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
