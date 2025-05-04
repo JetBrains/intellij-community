@@ -122,48 +122,37 @@ private class DelegatingJpsStorageContentWriter(session: ProjectWithModulesSaveS
   override suspend fun writeFilesToDisk() = Unit
 }
 
-// Half- because we store external xml files directly, and internal iml files via stores
-// (because we want the store to generate  VFS events in order to keep iml files up-to-date)
-private class HalfDirectJpsStorageContentWriter(
+private class DirectJpsStorageContentWriter(
   session: ProjectWithModulesSaveSessionProducerManager,
   store: IProjectStore,
   project: Project,
   private val moduleManager: ModuleManager,
 ) : JpsStorageContentWriter(session, store, project) {
 
-  private class ImmediateJpsStorageContentWriter(
-    private val delegate: WritableImlFileContent,
-    private val moduleManager: ModuleManager,
-  ) : WritableJpsFileContent, Closeable {
-    override fun saveComponent(componentName: String, componentTag: Element?) {
-      delegate.saveComponent(componentName, componentTag)
-    }
-
-    override fun close() {
-      delegate.flush(moduleManager)
-    }
-  }
-
   // we expect that externalFileComponents might be accessed concurrently from different threads, but each file (=value)
   // is only accessed from a single thread (i.e. one file is populated from one thread, but several different files
   // might be populated from different threads).
-  private val externalFileComponents: MutableMap</*filePath*/String, WritableImlFileContent> = ConcurrentHashMap()
+  private val filesWithComponents: MutableMap</*filePath*/String, WritableImlFileContent> = ConcurrentHashMap()
 
   override fun saveInternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
-    session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
+    // componentTag == null is to remove component from iml/xml. We don't care about removing, because we always start with an empty file
+    if (componentTag != null) {
+      val fileComponents = filesWithComponents.getOrPut(filePath) { WritableImlFileContent(filePath) }
+      fileComponents.saveComponent(componentName, componentTag)
+    }
   }
 
   override fun saveExternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
     // componentTag == null is to remove component from iml/xml. We don't care about removing, because we always start with an empty file
     if (componentTag != null) {
-      val fileComponents = externalFileComponents.getOrPut(filePath) { WritableImlFileContent(filePath) }
+      val fileComponents = filesWithComponents.getOrPut(filePath) { WritableImlFileContent(filePath) }
       fileComponents.saveComponent(componentName, componentTag)
     }
   }
 
   override fun saveFile(fileUrl: String, writer: (WritableJpsFileContent) -> Unit) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (isExternalModuleFile(filePath) && shouldWriteExternalFilesImmediately()) {
+    if (shouldWriteExternalFilesImmediately()) {
       val fileComponents = WritableImlFileContent(filePath)
       ImmediateJpsStorageContentWriter(fileComponents, moduleManager).use(writer)
     }
@@ -177,7 +166,7 @@ private class HalfDirectJpsStorageContentWriter(
     val exceptions = CopyOnWriteArrayList<IOException>()
 
     // todo (IJPL-157852): we can use several threads
-    externalFileComponents.forEach { (_, components) ->
+    filesWithComponents.forEach { (_, components) ->
       try {
         components.flush(moduleManager)
       }
@@ -223,6 +212,73 @@ private class HalfDirectJpsStorageContentWriter(
       val writer = XmlDataWriter("module", components.values.toList(), rootAttributes = emptyMap(), pathMacroManager, filePath)
       writer.writeTo(path, requestor = null, LineSeparator.getSystemLineSeparator(), false)
     }
+  }
+
+  private class ImmediateJpsStorageContentWriter(
+    private val delegate: WritableImlFileContent,
+    private val moduleManager: ModuleManager,
+  ) : WritableJpsFileContent, Closeable {
+    override fun saveComponent(componentName: String, componentTag: Element?) {
+      delegate.saveComponent(componentName, componentTag)
+    }
+
+    override fun close() {
+      delegate.flush(moduleManager)
+    }
+  }
+}
+
+private class ComponentStoreContentWriter(
+  session: ProjectWithModulesSaveSessionProducerManager,
+  store: IProjectStore,
+  project: Project,
+) : JpsStorageContentWriter(session, store, project) {
+
+  override fun saveInternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    session.setModuleComponentState(filePath, componentName, componentTag)
+  }
+
+  override fun saveExternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    session.setModuleComponentState(filePath, componentName, componentTag)
+  }
+
+  override suspend fun writeFilesToDisk() {}
+
+}
+
+// Half- because we store external xml files directly, and internal iml files via stores
+// (because we want the store to generate  VFS events in order to keep iml files up-to-date)
+private class HalfDirectJpsStorageContentWriter(
+  session: ProjectWithModulesSaveSessionProducerManager,
+  store: IProjectStore,
+  project: Project,
+  moduleManager: ModuleManager,
+) : JpsStorageContentWriter(session, store, project) {
+
+  private val externalWriter = DirectJpsStorageContentWriter(session, store, project, moduleManager)
+  private val internalWriter = ComponentStoreContentWriter(session, store, project)
+
+  override fun saveInternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    internalWriter.saveComponent(filePath, componentName, componentTag)
+  }
+
+  override fun saveExternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    externalWriter.saveComponent(filePath, componentName, componentTag)
+  }
+
+  override fun saveFile(fileUrl: String, writer: (WritableJpsFileContent) -> Unit) {
+    val filePath = JpsPathUtil.urlToPath(fileUrl)
+    if (isExternalModuleFile(filePath)) {
+      externalWriter.saveFile(fileUrl, writer)
+    }
+    else {
+      super.saveFile(fileUrl, writer)
+    }
+  }
+
+  @Throws(IOException::class)
+  override suspend fun writeFilesToDisk() {
+    externalWriter.writeFilesToDisk()
   }
 }
 
