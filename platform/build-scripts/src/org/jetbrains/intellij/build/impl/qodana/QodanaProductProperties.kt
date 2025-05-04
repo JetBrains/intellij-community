@@ -21,6 +21,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dphp.additional.library.manager.new.updater=true",
   "-Dide.region.url.mapping.expiration.timeout=7200",
   "-Dexternal.system.auto.import.headless.async=true",
+  "-Dmaven.default.headless.import=true",
   )
 
 private const val IS_EAP = true
