@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community.testFramework.testEnv.conda` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "python-community-testFramework-testEnv-conda_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "python-community-testFramework-testEnv-conda",
@@ -14,6 +20,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/execution",
     "//platform/util",
-  ]
+  ],
+  runtime_deps = [":python-community-testFramework-testEnv-conda_resources"]
 )
 ### auto-generated section `build intellij.python.community.testFramework.testEnv.conda` end

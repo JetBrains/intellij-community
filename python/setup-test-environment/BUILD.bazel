@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community.testFramework.testEnv` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "community-testFramework-testEnv_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "community-testFramework-testEnv",
@@ -15,6 +21,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-  ]
+  ],
+  runtime_deps = [":community-testFramework-testEnv_resources"]
 )
 ### auto-generated section `build intellij.python.community.testFramework.testEnv` end

@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "community-impl-venv_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "community-impl-venv",
   module_name = "intellij.python.community.impl.venv",
@@ -49,7 +55,10 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/execution",
   ],
-  runtime_deps = [":community-impl-venv_resources"]
+  runtime_deps = [
+    ":community-impl-venv_resources",
+    ":community-impl-venv_test_resources",
+  ]
 )
 
 jvm_test(
