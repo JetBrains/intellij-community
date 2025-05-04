@@ -722,6 +722,10 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/weisJ/jsvg/blob/master/LICENSE")
       .suppliedByPersons("Jannis Weis"),
 
+    LibraryLicense("JUnit Pioneer", libraryName = "JUnit5Pioneer", url = "https://junit-pioneer.org")
+      .eplV2("https://github.com/junit-pioneer/junit-pioneer/blob/main/LICENSE.md")
+      .suppliedByPersons("Nicolai Parlog", "Matthias Bünger", "Simon Schrottner", "Mihály Verhás", "Daniel Kraus"),
+
     LibraryLicense(libraryName = "JUnit3", url = "https://github.com/stefanbirkner/junit3")
       .license("CPL 1.0", "https://github.com/stefanbirkner/junit3/blob/master/cpl-v10.html")
       .suppliedByPersons("Marc Philipp", "David Saff", "Kevin Cooney", "Stefan Birkner"),
