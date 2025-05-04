@@ -102,8 +102,12 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
 
             // Built-ins properties don't have hasBackingField flag in the metadata: KT-77281
             val adjustedClassStubAsText = classStubAsText.replace(hasBackingFieldRegex, "hasBackingField=null")
+            val builtinsClassStubText = builtInClassStub.serializeToString()
+            if (builtinsClassStubText.matches(hasBackingFieldRegex)) {
+                error("The workaround from KT-74777 has to be dropped as KT-77281 is fixed")
+            }
 
-            assertEquals("Stub mismatch for $classFqName", adjustedClassStubAsText, builtInClassStub.serializeToString())
+            assertEquals("Stub mismatch for $classFqName", adjustedClassStubAsText, builtinsClassStubText)
             classesEncountered.add(classFqName)
         }
 
