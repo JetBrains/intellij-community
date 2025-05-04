@@ -660,7 +660,7 @@
     <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
 
     <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/>
-    <registryKey key="ide.index.trigram.enable.exclude.extensions" defaultValue="false"
+    <registryKey key="ide.index.trigram.enable.exclude.extensions" defaultValue="true"
                  description="TrigramIndex doesn't index .java-files in libraries (plain un-indexed search will be used to search in libraries then)"
                  restartRequired="true"/>
 
