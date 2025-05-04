@@ -2,6 +2,7 @@ package org.intellij.plugins.markdown.extensions.common.highlighter
 
 import com.intellij.lang.Language
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
@@ -22,21 +23,43 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.children
 import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingService
+import org.intellij.plugins.markdown.ui.preview.jcef.CodeFenceParsingServiceImpl
 import java.awt.Color
 import kotlin.math.max
 import kotlin.math.min
 
+class FenceHighlighting()
+
 private val fenceLanguage = Regex("^lang(uage)=")
 private val terminalDoubleNewline = Regex("""\n\n$""", RegexOption.DOT_MATCHES_ALL)
+private var fallbackParsingService: CodeFenceParsingService? = null // Only needed for testing Markdown plugin as a dropped-in .jar file
+private val LOG = logger<FenceHighlighting>()
 
 private fun parseContent(project: Project?, language: Language, text: String, node: ASTNode,
                          collector: (String, IntRange, Color?, String?) -> Unit) {
   val file = LightVirtualFile("markdown_temp", text)
   val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file)
-  val fenceParsing = service<CodeFenceParsingService>()
+  var fenceParsing = fallbackParsingService
   val ecm = EditorColorsManager.getInstance()
   var colorScheme = ecm.globalScheme
   val settings = project?.let(MarkdownSettings::getInstance)
+
+  // This code is only needed for testing Markdown plugin as a dropped-in .jar file.
+  if (fenceParsing == null) {
+    try { // Normally this should never fail
+      fenceParsing = service<CodeFenceParsingService>()
+    }
+    catch (_: RuntimeException) {
+      LOG.error("CodeFenceParsingService was not registered as a service. Creating a fallback instance instead.")
+      try {
+        fenceParsing = CodeFenceParsingServiceImpl()
+        fallbackParsingService = fenceParsing
+      }
+      catch (_: Throwable) {
+        LOG.error("Fallback CodeFenceParsingService failed to be created.")
+      }
+    }
+  }
 
   if (settings?.style?.isVariable() != true) {
     val isCurrentThemeDark = ColorUtil.isDark(colorScheme.defaultBackground)
@@ -47,7 +70,7 @@ private fun parseContent(project: Project?, language: Language, text: String, no
     }
   }
 
-  if (settings.useAlternativeHighlighting && fenceParsing.altHighlighterAvailable()) {
+  if (settings.useAlternativeHighlighting && fenceParsing?.altHighlighterAvailable() == true) {
     val lang = (if (language == Language.ANY) ((node as? MarkdownASTNode)?.language ?: "") else language.id.lowercase())
         .replace(fenceLanguage, "")
     val html = fenceParsing.parseToHighlightedHtml(lang, text, node)?.replace(terminalDoubleNewline, "\n")

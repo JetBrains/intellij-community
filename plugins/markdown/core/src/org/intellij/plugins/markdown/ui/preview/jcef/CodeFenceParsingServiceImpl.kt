@@ -10,6 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.executeJavaScript
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 @Service(Service.Level.APP)
-class CodeFenceParsingServiceImpl(cs: CoroutineScope) : CodeFenceParsingService {
+class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsingService {
   private var MAX_HIGHLIGHT_JS_LOAD_TIME = 5000L // msec
   private var MAX_HIGHLIGHT_JS_WAIT_TIME = 2000L // msec
   private var MAX_ALLOWED_STARTUP_TIME = 10000L // msec
@@ -34,30 +35,30 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope) : CodeFenceParsingService 
   @Volatile private var jsResult: String? = null
   @Volatile private var jsError = false
 
-  private val browser: JBCefBrowser
+  private val browser: JBCefBrowser = object : JBCefBrowser() {
+    init {
+      jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
+        override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
+          if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter:")) {
+            jsExecLatch?.await()
+            jsResult = message.substring(12)
+            jsResultLatch?.countDown()
+          }
+          else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
+            System.err.println("Error while executing highlighter: $message")
+            jsError = true
+          }
+
+          return true // Prevent creation of jcef_*.log files
+        }
+      }, cefBrowser)
+    }
+  }
 
   init {
-    browser = object : JBCefBrowser() {
-      init {
-        jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
-          override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
-            if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter:")) {
-              jsExecLatch?.await()
-              jsResult = message.substring(12)
-              jsResultLatch?.countDown()
-            }
-            else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
-              System.err.println("Error while executing highlighter: $message")
-              jsError = true
-            }
+    val scope = cs ?: object: CoroutineScope { override val coroutineContext = Job()}
 
-            return true // Prevent creation of jcef_*.log files
-          }
-        }, cefBrowser)
-      }
-    }
-
-    cs.launch { codeFenceParsingStartUp() }
+    scope.launch { codeFenceParsingStartUp() }
   }
 
   private suspend fun codeFenceParsingStartUp() {
