@@ -2,20 +2,14 @@ package com.intellij.driver.sdk.ui.components.common.popups
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
-import com.intellij.driver.sdk.ActionManager
-import com.intellij.driver.sdk.ActionUtils
-import com.intellij.driver.sdk.AnAction
-import com.intellij.driver.sdk.step
-import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.*
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
-import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
 
 
