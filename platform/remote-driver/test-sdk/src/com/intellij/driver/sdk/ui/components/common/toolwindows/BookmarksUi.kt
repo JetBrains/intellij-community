@@ -1,11 +1,9 @@
 package com.intellij.driver.sdk.ui.components.common.toolwindows
 
-import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
-import com.intellij.driver.sdk.ui.components.elements.tree
-import com.intellij.driver.sdk.ui.rdTarget
+import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.withRetries
 import java.awt.Point
@@ -20,7 +18,7 @@ class BookmarksToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
     if (isRemDevMode) {
       wait(1.seconds) // wait till tree initialization
     }
-    tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
+    accessibleTree()
   }
 }
 
@@ -29,9 +27,7 @@ fun IdeaFrameUI.bookmarksPopup(action: BookmarksPopupUiComponent.() -> Unit = {}
 
 class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
 
-  val bookmarksTree by lazy {
-    tree().apply { replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class, rdTarget = component.rdTarget)) }
-  }
+  val bookmarksTree = accessibleTree()
 
   fun clickBookmark(predicate: (String) -> Boolean) {
     bookmarksTree.clickRow(Point(5, 5), predicate)

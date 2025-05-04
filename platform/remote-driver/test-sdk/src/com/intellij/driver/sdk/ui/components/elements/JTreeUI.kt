@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
@@ -30,19 +31,19 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) =
 
 fun Finder.accessibleTree(locator: QueryBuilder.() -> String = { byType(JTree::class.java) }) =
   x(xQuery { locator() }, JTreeUiComponent::class.java).apply {
-    replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
+    replaceCellRendererReader { driver.new(AccessibleNameCellRendererReader::class, rdTarget = (it as RefWrapper).getRef().rdTarget) }
   }
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private val treeComponent get() = driver.cast(component, JTreeComponent::class)
-  private var cellRendererReader: CellRendererReader? = null
+  private var cellRendererReaderSupplier: ((JTreeFixtureRef) -> CellRendererReader)? = null
   val fixture: JTreeFixtureRef
     get() = driver.new(JTreeFixtureRef::class, robot, component).apply {
-      cellRendererReader?.let { replaceCellRendererReader(it) }
+      cellRendererReaderSupplier?.let { replaceCellRendererReader(it(this)) }
     }
 
-  fun replaceCellRendererReader(reader: CellRendererReader) {
-    cellRendererReader = reader
+  fun replaceCellRendererReader(readerSupplier: (JTreeFixtureRef) -> CellRendererReader) {
+    cellRendererReaderSupplier = readerSupplier
   }
 
   fun clickRow(row: Int, point: Point? = null) {
