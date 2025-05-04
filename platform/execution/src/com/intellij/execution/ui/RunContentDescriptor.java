@@ -105,11 +105,26 @@ public class RunContentDescriptor implements Disposable {
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
     this(executionResult.getExecutionConsole(),
          executionResult.getProcessHandler(),
-         ui.getComponent(),
          profile.getName(),
          profile.getIcon(),
+         ui,
+         executionResult instanceof DefaultExecutionResult res ? res.getRestartActions() : null);
+  }
+
+  @ApiStatus.Internal
+  public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
+                              @Nullable ProcessHandler processHandler,
+                              @TabTitle String displayName,
+                              @Nullable Icon icon,
+                              @NotNull RunnerLayoutUi ui,
+                              AnAction @Nullable [] restartActions) {
+    this(executionConsole,
+         processHandler,
+         ui.getComponent(),
+         displayName,
+         icon,
          null,
-         executionResult instanceof DefaultExecutionResult ? ((DefaultExecutionResult)executionResult).getRestartActions() : null);
+         restartActions);
     myRunnerLayoutUi = ui;
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.actions.CreateAction;
@@ -21,8 +22,10 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.ui.content.Content;
@@ -35,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -64,7 +68,22 @@ public final class RunContentBuilder extends RunTab {
   private DefaultActionGroup toolbar = null;
 
   public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
-    super(environment, getRunnerType(executionResult.getExecutionConsole()));
+    this(executionResult,
+         environment.getProject(),
+         ExecutionSearchScopes.executionScope(environment.getProject(), environment.getRunProfile()),
+         getRunnerType(executionResult.getExecutionConsole()),
+         environment.getExecutor().getId(),
+         environment.getRunProfile().getName());
+    myEnvironment = environment;
+  }
+
+  @ApiStatus.Internal
+  public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String runnerType, @NotNull String runnerTitle, @NotNull String sessionName) {
+    super(project,
+          searchScope,
+          runnerType,
+          runnerTitle,
+          sessionName);
 
     myExecutionResult = executionResult;
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
@@ -85,14 +104,19 @@ public final class RunContentBuilder extends RunTab {
     myRunnerActions.add(action);
   }
 
-  private @NotNull RunContentDescriptor createDescriptor() {
-    RunProfile profile = myEnvironment.getRunProfile();
+  private @NotNull RunContentDescriptor createDescriptor(@NlsContexts.TabTitle String displayName,
+                                                         @Nullable Icon icon,
+                                                         @Nullable RunProfile profile) {
+
+    var console = myExecutionResult.getExecutionConsole();
+    var resultRestartActions = myExecutionResult instanceof DefaultExecutionResult res
+                         ? res.getRestartActions() : null;
+    RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, myExecutionResult.getProcessHandler(), displayName, icon,
+                                                                      myUi, resultRestartActions);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new RunContentDescriptor(profile, myExecutionResult, myUi);
+      return contentDescriptor;
     }
 
-    ExecutionConsole console = myExecutionResult.getExecutionConsole();
-    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     AnAction[] consoleActionsToMerge;
     AnAction[] additionalActionsToMerge;
     Content consoleContent = null;
@@ -103,7 +127,9 @@ public final class RunContentBuilder extends RunTab {
       else {
         consoleContent = buildConsoleUiDefault(myUi, console);
       }
-      initLogConsoles(profile, contentDescriptor, console);
+      if (profile != null) {
+        initLogConsoles(profile, contentDescriptor, console);
+      }
     }
     if (consoleContent != null && myUi.getContentManager().getContentCount() == 1 && console instanceof TerminalExecutionConsole) {
       // TerminalExecutionConsole provides too few toolbar actions. Such console toolbar doesn't look good, but occupy
@@ -134,9 +160,10 @@ public final class RunContentBuilder extends RunTab {
       toolbar.addAll(updatedToolbar.getChildren(ActionManager.getInstance()));
     });
 
-    if (profile instanceof RunConfigurationBase) {
+    if (profile != null && profile instanceof RunConfigurationBase<?> runConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
-        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
+        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener(runConfigurationBase.isShowConsoleOnStdOut(),
+                                                                                      runConfigurationBase.isShowConsoleOnStdErr(),
                                                                                       myProject,
                                                                                       myEnvironment.getExecutor(),
                                                                                       contentDescriptor,
@@ -307,7 +334,20 @@ public final class RunContentBuilder extends RunTab {
    * @param reuseContent see {@link RunContentDescriptor#myContent}
    */
   public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
-    RunContentDescriptor descriptor = createDescriptor();
+    RunProfile profile = myEnvironment.getRunProfile();
+    return showRunContent(reuseContent, profile.getName(), profile.getIcon(), profile);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent,
+                                                      @NlsContexts.TabTitle String displayName,
+                                                      @Nullable Icon icon,
+                                                      @Nullable RunProfile runProfile) {
+    RunContentDescriptor descriptor = createDescriptor(displayName, icon, runProfile);
+    return registerDescriptor(reuseContent, descriptor);
+  }
+
+  private @NotNull RunContentDescriptor registerDescriptor(@Nullable RunContentDescriptor reuseContent, RunContentDescriptor descriptor) {
     Disposer.register(descriptor, this);
     Disposer.register(myProject, descriptor);
     RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
@@ -326,12 +366,7 @@ public final class RunContentBuilder extends RunTab {
         return true; // will be hidden on a backend in split mode
       }
     };
-    Disposer.register(descriptor, this);
-    Disposer.register(myProject, descriptor);
-    // todo: do we need to copy reuseContent to a hidden descriptor?
-    RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
-    myRunContentDescriptor = descriptor;
-    return descriptor;
+    return registerDescriptor(reuseContent, descriptor);
   }
 
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
@@ -348,12 +383,20 @@ public final class RunContentBuilder extends RunTab {
                                   @NotNull Executor executor,
                                   @NotNull RunContentDescriptor runContentDescriptor,
                                   @NotNull RunnerLayoutUi ui) {
+      this(runConfigurationBase.isShowConsoleOnStdOut(), runConfigurationBase.isShowConsoleOnStdErr(), project, executor, runContentDescriptor, ui);
+    }
+
+    public ConsoleToFrontListener(boolean showConsoleOnStdOut, boolean showConsoleOnStdErr,
+                                  @NotNull Project project,
+                                  @NotNull Executor executor,
+                                  @NotNull RunContentDescriptor runContentDescriptor,
+                                  @NotNull RunnerLayoutUi ui) {
       myProject = project;
       myExecutor = executor;
       myRunContentDescriptor = runContentDescriptor;
       myUi = ui;
-      myShowConsoleOnStdOut = runConfigurationBase.isShowConsoleOnStdOut();
-      myShowConsoleOnStdErr = runConfigurationBase.isShowConsoleOnStdErr();
+      myShowConsoleOnStdOut = showConsoleOnStdOut;
+      myShowConsoleOnStdErr = showConsoleOnStdErr;
     }
 
     @Override
