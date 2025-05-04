@@ -1,2 +1,10 @@
 lib
+# a separate bazel project
 build/jvm-rules
+# a separate bazel project
+platform/build-scripts/bazel
+# test data
+android/apkanalyzer/gradle/integration-tests/projects
+# currently not required
+android/android/native/diagnostics/heap
+android/aswb
