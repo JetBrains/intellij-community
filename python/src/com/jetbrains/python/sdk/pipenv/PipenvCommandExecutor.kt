@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.runExecutable
@@ -25,7 +24,7 @@ import java.nio.file.Path
 @Internal
 suspend fun runPipEnv(dirPath: Path?, vararg args: String): Result<String> {
   val executable = getPipEnvExecutable().getOrElse { return Result.failure(it) }
-  return runExecutable(executable, dirPath, *args).asKotlinResult()
+  return runExecutable(executable, dirPath, *args)
 }
 
 /**

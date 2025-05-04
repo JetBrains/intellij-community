@@ -20,7 +20,6 @@ import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
@@ -172,7 +171,7 @@ internal abstract class CustomNewEnvironmentCreator(
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
         val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
-        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray()).asKotlinResult()
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray())
         executablePath.onSuccess {
           savePathToExecutableToProperties(it)
         }.onFailure {
