@@ -1198,6 +1198,10 @@ object CommunityLibraryLicenses {
       .lgpl21("https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html")
       .suppliedByOrganizations("Sun Microsystems, Inc."),
 
+    LibraryLicense("Testcontainers Core", libraryName = "testcontainers", url = "https://java.testcontainers.org")
+      .mit("https://github.com/testcontainers/testcontainers-java/blob/main/LICENSE")
+      .suppliedByPersons("Richard North"),
+
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
 

@@ -8,31 +8,32 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="testcontainers" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="apache.sshd.osgi" level="project" />
-    <orderEntry type="library" scope="TEST" name="testcontainers-junit-jupiter" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
+    <orderEntry type="library" scope="TEST" name="apache.sshd.osgi" level="project" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
-    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
+    <orderEntry type="library" scope="TEST" name="jna" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="testcontainers-junit-jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.testcontainers" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="uk.webcompere.system.stubs.jupiter" type="repository">
         <properties maven-id="uk.org.webcompere:system-stubs-jupiter:2.1.8">
@@ -71,6 +72,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="io.mockk.jvm" level="project" />
   </component>
 </module>
