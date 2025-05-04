@@ -5,8 +5,8 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitForOne
@@ -15,10 +15,7 @@ import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.popup(@Language("xpath") xpath: String? = null) =
-  x(xpath ?: "//div[@class='HeavyWeightWindow']", PopupUiComponent::class.java)
-
-fun Finder.popupLux(@Language("xpath") xpath: String? = null) =
-  x(xpath ?: "//div[@class='LuxFrontendWindow']", PopupUiComponent::class.java)
+  x(xpath ?: xQuery { or(byType("javax.swing.Popup${'$'}HeavyWeightWindow"), byType("com.jetbrains.thinclient.lux.swing.LuxFrontendWindow")) }, PopupUiComponent::class.java)
 
 fun Finder.popupMenu(locator: QueryBuilder.() -> String = { byClass("MyMenu") }) =
   x(xQuery(locator), PopupMenuUiComponent::class.java)
