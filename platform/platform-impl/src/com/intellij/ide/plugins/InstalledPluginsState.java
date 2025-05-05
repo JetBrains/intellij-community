@@ -81,6 +81,9 @@ public final class InstalledPluginsState {
     }
   }
 
+  /**
+   * @return whether a plugin with a given id was installed during this IDE session, it required a restart, and it was not an update of an existing plugin.
+   */
   public boolean wasInstalled(@NotNull PluginId id) {
     synchronized (myLock) {
       return myInstalledPlugins.containsKey(id);
@@ -136,6 +139,7 @@ public final class InstalledPluginsState {
       }
     }
   }
+
   /**
    * Should be called whenever a new plugin is installed or an existing one is updated.
    */
