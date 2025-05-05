@@ -483,6 +483,9 @@ class RecentProjectFilteringTree(
         projectNameLabel.apply {
           text = displayName
           foreground = if (isProjectValid) UIUtil.getListForeground() else NamedColorUtil.getInactiveTextColor()
+          accessibleContext.accessibleName =
+            if (isProjectValid) displayName
+            else IdeBundle.message("welcome.screen.recent.projects.name.label.unavailable.accessible.name", displayName)
         }
         providerPathLabel.apply {
           text = providerPath ?: ""
@@ -517,6 +520,9 @@ class RecentProjectFilteringTree(
           projectPathLabel.takeIf { projectPathLabel.isVisible },
           projectBranchNameLabel.takeIf { projectBranchNameLabel.isVisible },
         )
+        // Need to override the default description, which is the tooltip text,
+        // because we already have the tooltip content in the accessible name.
+        getAccessibleContext().accessibleDescription = ""
       }
 
       // Allow the recent project tree to reduce size of wide elements
