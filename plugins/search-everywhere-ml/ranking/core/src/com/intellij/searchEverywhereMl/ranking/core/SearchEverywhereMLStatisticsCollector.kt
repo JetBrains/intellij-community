@@ -178,8 +178,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       buildList {
         if (shouldLogFeatures) {
           val baseFeatures = contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo, sessionStartTime)
-          val featuresWithEssentialPrediction = contributorFeaturesProvider.addEssentialContributorFeature(baseFeatures, it.contributor)
-          addAll(featuresWithEssentialPrediction)
+          val essentialFeatures = contributorFeaturesProvider.getEssentialContributorFeatures(it.contributor)
+          addAll(baseFeatures)
+          addAll(essentialFeatures)
         }
         else {
           add(contributorFeaturesProvider.getContributorIdFeature(it.contributor))

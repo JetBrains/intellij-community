@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsFields
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
@@ -70,15 +71,15 @@ internal class SearchEverywhereContributorFeaturesProvider {
     return info + getStatisticianFeatures(contributor)
   }
 
-  fun addEssentialContributorFeature(features: List<EventPair<*>>, contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
+  fun getEssentialContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val marker = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
-    val is_essential_contributor = marker?.isContributorEssential(contributor) ?:
+    val isEssentialContributor = marker?.isContributorEssential(contributor) ?:
                                    (contributor is EssentialContributor && contributor.isEssential())
 
-    val result = features.toMutableList()
-    result.add(IS_ESSENTIAL_CONTRIBUTOR.with(is_essential_contributor))
+    val result = mutableListOf<EventPair<*>>()
+    result.add(IS_ESSENTIAL_CONTRIBUTOR.with(isEssentialContributor))
 
-    marker?.getContributorEssentialPrediction(contributor)?.let { prediction ->
+    (marker as? SearchEverywhereEssentialContributorMlMarker)?.getContributorEssentialPrediction(contributor)?.let { prediction ->
       result.add(ESSENTIAL_CONTRIBUTOR_PREDICTION.with(prediction))
     }
 

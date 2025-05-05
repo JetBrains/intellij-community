@@ -1,5 +1,3 @@
-@file:OptIn(IntellijInternalApi::class)
-
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
@@ -11,6 +9,7 @@ import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.isEssentialContributorPredictionExperiment
 import com.intellij.searchEverywhereMl.ranking.core.model.CatBoostModelFactory
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereCatBoostBinaryClassifierModel
+import java.util.WeakHashMap
 
 
 /**
@@ -27,6 +26,8 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     .withModelDirectory(MODEL_DIR)
     .withResourceDirectory(RESOURCE_DIR)
     .buildBinaryClassifier(TRUE_THRESHOLD)
+
+  private val contributorPredictionCache = WeakHashMap<SearchEverywhereContributor<*>, Float>()
 
   override fun isAvailable(): Boolean {
     return isActiveExperiment() && isSearchStateActive()
@@ -55,9 +56,13 @@ internal class SearchEverywhereEssentialContributorMlMarker : SearchEverywhereEs
     return model.predictTrue(features)
   }
 
-  override fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float? {
+  internal fun getContributorEssentialPrediction(contributor: SearchEverywhereContributor<*>): Float? {
+    contributorPredictionCache[contributor]?.let { return it }
+
     val features = getFeatures(contributor).associate { it.field.name to it.data }
-    return model.predict(features).toFloat()
+    val prediction = model.predict(features).toFloat()
+    contributorPredictionCache[contributor] = prediction
+    return prediction
   }
 
   private fun getFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
