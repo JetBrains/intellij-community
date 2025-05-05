@@ -39,6 +39,6 @@ interface UvLowLevel {
 
 sealed class ScriptSyncCheckResult {
   data object Synced : ScriptSyncCheckResult()
-  data object Unsynced : ScriptSyncCheckResult()
+  data object NotSynced : ScriptSyncCheckResult()
   data object NoInlineMetadata : ScriptSyncCheckResult()
 }
