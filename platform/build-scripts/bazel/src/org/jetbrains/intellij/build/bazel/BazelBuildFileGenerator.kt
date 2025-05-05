@@ -487,22 +487,29 @@ internal class BazelBuildFileGenerator(
       else -> "//${bazelModuleRelativePath}"
     }
 
-    val jarOutputDirectory = if (moduleDescriptor.isCommunity) {
-      "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
-    }
-    else {
-      "out/bazel-bin/$bazelModuleRelativePath"
+    val jarOutputDirectory = when {
+      moduleDescriptor.module.name == "intellij.idea.community.build.zip" -> "out/bazel-out/rules_jvm+/\${CONF}/bin/zip"
+      moduleDescriptor.isCommunity -> "out/bazel-out/community+/\${CONF}/bin/$bazelModuleRelativePath"
+      else -> "out/bazel-bin/$bazelModuleRelativePath"
     }
 
     fun addPackagePrefix(target: String): String =
       if (target.startsWith("//") || target.startsWith("@")) target else "$packagePrefix:$target"
 
+    fun getJarLocation(jarName: String) = when {
+      // full target name instead of just jar for intellij.dotenv.*
+      // like @community//plugins/env-files-support:dotenv-go_resources
+      jarName.startsWith("@community//") ->
+        "out/bazel-out/community+/\${CONF}/bin/${jarName.substringAfter("@community//").replace(':', '/')}.jar"
+      else -> "$jarOutputDirectory/$jarName.jar"
+    }
+
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
       productionTargets = productionCompileTargets.map { addPackagePrefix(it) },
-      productionJars = productionCompileJars.map { "$jarOutputDirectory/$it.jar" },
+      productionJars = productionCompileJars.map { getJarLocation(it) },
       testTargets = testCompileTargets.map { addPackagePrefix(it) },
-      testJars = testCompileTargets.map { "$jarOutputDirectory/$it.jar" },
+      testJars = testCompileTargets.map { getJarLocation(it) },
     )
   }
 
