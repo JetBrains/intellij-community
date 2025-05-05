@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunSessionService;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
@@ -16,6 +17,7 @@ import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
+import com.intellij.idea.AppModeAssertions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
@@ -46,6 +48,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+import static com.intellij.execution.ui.RunContentManagerImpl.isSplitRun;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 
 /**
@@ -60,6 +63,8 @@ public final class RunContentBuilder extends RunTab {
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP = "RunTab.TopToolbar";
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP = "RunTab.TopToolbar.More";
+
+  private static final String RUN_TOOL_WINDOW_ID = "Run";
 
   private static final String JAVA_RUNNER = "JavaRunner";
 
@@ -343,6 +348,14 @@ public final class RunContentBuilder extends RunTab {
                                                       @NlsContexts.TabTitle String displayName,
                                                       @Nullable Icon icon,
                                                       @Nullable RunProfile runProfile) {
+
+    if (isSplitRun() && AppModeAssertions.isBackend() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
+      RunContentDescriptor descriptor = buildHiddenDescriptor(reuseContent);
+      registerDescriptor(reuseContent, descriptor);
+      RunSessionService.getInstance(myProject).storeRunSession(myEnvironment, descriptor);
+      return descriptor;
+    }
+
     RunContentDescriptor descriptor = createDescriptor(displayName, icon, runProfile);
     return registerDescriptor(reuseContent, descriptor);
   }
