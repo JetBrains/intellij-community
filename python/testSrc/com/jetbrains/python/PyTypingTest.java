@@ -5937,6 +5937,17 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  public void testDataclassTransformDecoratedFunctionType() {
+    doTest("(cls: Any) -> None","""
+             from typing import dataclass_transform
+             
+             @dataclass_transform()
+             def my_dataclass(cls): ...
+             
+             expr = my_dataclass
+             """);
+  }
+
   // PY-76076
   public void testGenericAliasUnderVersionGuard() {
     doMultiFileStubAwareTest("list[str]", """
