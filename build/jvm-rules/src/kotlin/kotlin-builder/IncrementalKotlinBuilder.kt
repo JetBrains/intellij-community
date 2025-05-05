@@ -208,7 +208,7 @@ class IncrementalKotlinBuilder(
   ): ModuleLevelBuilder.ExitCode {
     val kotlinContext = getKotlinCompileContext(context)
     val kotlinTarget = kotlinContext.targetsIndex.byJpsTarget.get(jpsTarget) ?: return ModuleLevelBuilder.ExitCode.OK
-    val fsOperations = BazelKotlinFsOperationsHelper(context = context, chunk = chunk)
+    val fsOperations = BazelKotlinFsOperationsHelper(context)
     val proposedExitCode = tracer.span("compile kotlin") { span ->
       doBuild(
         chunk = chunk,
@@ -257,12 +257,9 @@ class IncrementalKotlinBuilder(
       return ModuleLevelBuilder.ExitCode.NOTHING_DONE
     }
 
-    val isChunkRebuilding = isRebuild
-
-    val kotlinDirtyFilesHolder = KotlinDirtySourceFilesHolder(chunk, context, dirtyFilesHolder)
-    val dirtyByTarget = kotlinDirtyFilesHolder.byTarget.get(jpsTarget)
+    val dirtyByTarget = KotlinDirtySourceFilesHolder(chunk, context, dirtyFilesHolder).byTarget.get(jpsTarget)
     if (dirtyByTarget == null || (dirtyByTarget.removed.isEmpty() && dirtyByTarget.dirty.isEmpty())) {
-      if (isChunkRebuilding) {
+      if (isRebuild) {
         kotlinContext.hasKotlinMarker.set(target, false)
       }
 
@@ -335,7 +332,7 @@ class IncrementalKotlinBuilder(
 
     // we do not save a cache version - TargetConfigurationDigestProperty.KOTLIN_VERSION is used to rebuild in case of kotlinc update
     if (kotlinContext.hasKotlinMarker.get(target) == null) {
-      fsOperations.markChunk(context = context, excludeFiles = dirtyByTarget.dirty.keys, dataManager = dataManager)
+      fsOperations.markChunk(context = context, excludeFiles = dirtyByTarget.dirty.keys, dataManager = dataManager, target = jpsTarget)
     }
 
     kotlinContext.hasKotlinMarker.set(target, true)
@@ -372,7 +369,7 @@ class IncrementalKotlinBuilder(
 
     updateLookupStorage(lookupTracker, kotlinContext.lookupStorageManager, dirtyByTarget)
 
-    if (!isChunkRebuilding) {
+    if (!isRebuild) {
       val dirtyFilesAsPathList = MutableScatterSet<Path>(dirtyByTarget.dirty.keys.size)
       for (file in dirtyByTarget.dirty.keys) {
         dirtyFilesAsPathList.add(file.toPath())
@@ -558,7 +555,7 @@ private suspend fun doCompileModuleChunk(
     baseDir = bazelConfigurationHolder.classPathRootDir,
     allSources = bazelConfigurationHolder.sources,
     changedKotlinSources = changedSources.asSequence().map { it.file.path },
-    classPath = bazelConfigurationHolder.classPath.asList(),
+    classPath = bazelConfigurationHolder.classPath,
   )
 
   val coroutineContext = coroutineContext

@@ -71,7 +71,7 @@ fun cleanOutputsCorrespondingToChangedFiles(
   }
 }
 
-internal fun cleanOutputsCorrespondingToChangedFiles(
+fun cleanOutputsCorrespondingToChangedFiles(
   files: Collection<Path>,
   dataManager: BazelBuildDataProvider,
   outputSink: OutputSink,

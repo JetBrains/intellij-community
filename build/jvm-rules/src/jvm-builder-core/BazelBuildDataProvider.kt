@@ -209,7 +209,7 @@ class BazelSourceToOutputMapping(
 
   fun getAndClearOutputs(sourceFile: Path): Array<String>? {
     synchronized(map) {
-      // must be not null - probably, later we should add warning here
+      // must be not null - probably, later we should add a warning here
       val descriptor = map.get(sourceFile) ?: return null
       val result = descriptor.outputs.takeIf { it.isNotEmpty() } ?: return null
       descriptor.outputs = emptyStringArray

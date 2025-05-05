@@ -109,7 +109,7 @@ fun configureModule(
   allSources: List<Path>,
   // if incremental compilation
   changedKotlinSources: Sequence<String>?,
-  classPath: List<Path>,
+  classPath: Array<Path>,
 ): ModuleBuilder {
   var isJava9Module = false
   config.moduleName = moduleName
@@ -259,16 +259,6 @@ private class BazelJvmBackendPipelinePhase(
 
     val module = configuration.moduleChunk!!.modules.single()
     checkCancelled()
-    // ensure that createOutputFilesFlushingCallbackIfPossible will not create files on disk - we do set outputDir only as a workaround
-    val configurationWithoutOutputDir = configuration.copy()
-    //val map = mapField.get(configurationWithoutOutputDir) as MutableMap<*, *>
-    //for (key in map.keys) {
-    //  if (key.toString() == JVMConfigurationKeys.OUTPUT_DIRECTORY.toString()) {
-    //    map.remove(key)
-    //    break
-    //  }
-    //}
-
     val codegenInput = KotlinToJVMBytecodeCompiler.runLowerings(
       project = project,
       //configuration = configurationWithoutOutputDir,

@@ -74,7 +74,7 @@ class NonIncrementalKotlinBuilder(
       baseDir = bazelConfigurationHolder.classPathRootDir,
       allSources = bazelConfigurationHolder.sources,
       changedKotlinSources = null,
-      classPath = bazelConfigurationHolder.classPath.asList(),
+      classPath = bazelConfigurationHolder.classPath,
     )
 
     val coroutineContext = coroutineContext
