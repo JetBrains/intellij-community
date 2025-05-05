@@ -9,6 +9,7 @@ import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -209,7 +210,12 @@ object K2CreateFunctionFromUsageBuilder {
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun KtSimpleNameExpression.getAbstractTypeOfContainingClass(): KaType? {
-        val containingClass = getStrictParentOfType<KtClassOrObject>() as? KtClass ?: return null
+        val containingClass = PsiTreeUtil.getParentOfType(
+            /* element = */ this,
+            /* aClass = */ KtClassOrObject::class.java,
+            /* strict = */ false,
+            /* ...stopAt = */ KtSuperTypeList::class.java, KtPrimaryConstructor::class.java, KtConstructorDelegationCall::class.java, KtObjectDeclaration::class.java
+        ) ?: return null
         if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
 
         val classSymbol = containingClass.symbol as? KaClassSymbol ?: return null

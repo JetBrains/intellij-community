@@ -5382,6 +5382,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/explicitReceiverOfContainingClass.kt");
                     }
 
+                    @TestMetadata("fromDelegate.kt")
+                    public void testFromDelegate() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/fromDelegate.kt");
+                    }
+
+                    @TestMetadata("fromPrimaryConstructorDefaultValue.kt")
+                    public void testFromPrimaryConstructorDefaultValue() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/fromPrimaryConstructorDefaultValue.kt");
+                    }
+
+                    @TestMetadata("fromSuperList.kt")
+                    public void testFromSuperList() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/fromSuperList.kt");
+                    }
+
                     @TestMetadata("inAbstractSuperclass.kt")
                     public void testInAbstractSuperclass() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/abstract/inAbstractSuperclass.kt");

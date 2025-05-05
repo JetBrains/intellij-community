@@ -10021,6 +10021,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/explicitReceiverOfContainingClass.kt");
             }
 
+            @TestMetadata("fromDelegate.kt")
+            public void testFromDelegate() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/fromDelegate.kt");
+            }
+
+            @TestMetadata("fromPrimaryConstructorDefaultValue.kt")
+            public void testFromPrimaryConstructorDefaultValue() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/fromPrimaryConstructorDefaultValue.kt");
+            }
+
+            @TestMetadata("fromSuperList.kt")
+            public void testFromSuperList() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/fromSuperList.kt");
+            }
+
             @TestMetadata("inAbstractSuperclass.kt")
             public void testInAbstractSuperclass() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/abstract/inAbstractSuperclass.kt");
