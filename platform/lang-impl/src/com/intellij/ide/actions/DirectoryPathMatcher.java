@@ -20,7 +20,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +46,7 @@ final class DirectoryPathMatcher {
 
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     Project project = model.getProject();
-    IdFilter projectIndexableFilesFilter = fileBasedIndex instanceof FileBasedIndexImpl
-                                           ? ((FileBasedIndexImpl)fileBasedIndex).projectIndexableFiles(project)
-                                           : null;
+    IdFilter projectIndexableFilesFilter = fileBasedIndex.projectIndexableFiles(project);
     var allScope = GlobalSearchScope.allScope(project);
     if (projectIndexableFilesFilter == null) {
       myProjectFileFilter = vFile -> allScope.contains(vFile);

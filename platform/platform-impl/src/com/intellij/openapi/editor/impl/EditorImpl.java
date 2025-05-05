@@ -832,11 +832,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void repaintCaretRegion(@NotNull CaretEvent e) {
     CaretImpl caretImpl = (CaretImpl)e.getCaret();
-    if (caretImpl != null) {
-      caretImpl.updateVisualPosition();
-      if (caretImpl.hasSelection()) {
-        repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd(), false);
-      }
+    caretImpl.updateVisualPosition();
+    if (caretImpl.hasSelection()) {
+      repaint(caretImpl.getSelectionStart(), caretImpl.getSelectionEnd(), false);
     }
   }
 

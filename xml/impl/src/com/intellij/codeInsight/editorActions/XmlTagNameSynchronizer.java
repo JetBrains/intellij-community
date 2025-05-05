@@ -200,9 +200,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     @Override
     public void caretRemoved(@NotNull CaretEvent event) {
       Caret caret = event.getCaret();
-      if (caret != null) {
-        clearMarkers(caret);
-      }
+      clearMarkers(caret);
     }
 
     @Override

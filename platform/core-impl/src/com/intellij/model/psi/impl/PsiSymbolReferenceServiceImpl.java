@@ -61,13 +61,6 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   private static final ParameterizedCachedValueProvider<Collection<? extends PsiSymbolReference>, PsiElement> OWN_REFERENCES_PROVIDER =
     element -> {
       Collection<? extends @NotNull PsiSymbolReference> references = element.getOwnReferences();
-      if (references.isEmpty()) {
-        references = Collections.emptyList();
-      }
-      else {
-        references = Collections.unmodifiableCollection(references);
-      }
-
       return Result.create(references, PsiModificationTracker.MODIFICATION_COUNT);
     };
 

@@ -58,7 +58,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
     Caret caret = event.getCaret();
-    if (caret != null && myEditor.getCaretModel().getCaretCount() == 1) {
+    if (myEditor.getCaretModel().getCaretCount() == 1) {
       int offset = caret.getOffset();
       FindResult occurrenceAtCaret = getOccurrenceAtCaret();
       if (occurrenceAtCaret != null && occurrenceAtCaret != myCursor) {
