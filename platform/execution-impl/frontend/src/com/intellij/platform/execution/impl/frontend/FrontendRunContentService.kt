@@ -37,6 +37,7 @@ internal class FrontendRunContentService(private val project: Project, private v
     }
   }
 
+  // TODO IJPL-181190: initial implementation should be improved
   private fun init() {
     cs.launch {
       val eventFlow = RunSessionsApi.getInstance().events(project.projectId())
