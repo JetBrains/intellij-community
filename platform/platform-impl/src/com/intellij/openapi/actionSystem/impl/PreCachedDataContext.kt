@@ -400,10 +400,7 @@ private fun cacheProviderData(sink: MySink, dataProvider: Any?) {
 }
 
 private fun hideParentEditorIfNeeded(sink: MySink, component: Component?) {
-  val hideEditor =
-    component is JTextComponent && component !is EditorComponentImpl ||
-    (component as? JComponent)?.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null
-  if (!hideEditor) return
+  if (component !is JTextComponent || component is EditorComponentImpl) return
   val map = sink.uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { sink.uiSnapshot = it }
   map[CommonDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
 }

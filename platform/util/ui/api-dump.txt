@@ -5132,7 +5132,6 @@ f:com.intellij.util.ui.UIUtil
 - sf:DEFAULT_HGAP:I
 - sf:DEFAULT_VGAP:I
 - sf:ENABLE_IME_FORWARDING_IN_POPUP:java.lang.String
-- sf:HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY:java.lang.String
 - sf:HR:java.lang.String
 - sf:HTML_MIME:java.lang.String
 - sf:KEEP_BORDER_SIDES:com.intellij.openapi.util.Key

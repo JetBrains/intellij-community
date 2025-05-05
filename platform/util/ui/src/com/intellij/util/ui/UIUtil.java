@@ -209,16 +209,6 @@ public final class UIUtil {
   public static final char MNEMONIC = BundleBase.MNEMONIC;
   public static final @NlsSafe String HTML_MIME = "text/html";
   public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
-  /**
-   * Prevent component DataContext from returning parent editor
-   * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
-   * <p>
-   * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
-   *
-   * @deprecated Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#EXPLICIT_NULL} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static final @NonNls String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
   public static final @NonNls String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 

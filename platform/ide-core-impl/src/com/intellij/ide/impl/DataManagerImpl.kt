@@ -24,7 +24,6 @@ import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -321,9 +320,6 @@ open class DataManagerImpl : DataManager() {
 
     @JvmStatic
     fun validateEditor(editor: Editor?, contextComponent: Component?): Editor? {
-      if (contextComponent is JComponent) {
-        if (contextComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null
-      }
       return editor
     }
   }
