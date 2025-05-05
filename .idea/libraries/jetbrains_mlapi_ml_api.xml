@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="jetbrains.mlapi.ml.api" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-api:76">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.mlapi:ml-api:86">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/76/ml-api-76.jar">
-          <sha256sum>0bba8638b6297f9f2b8c441dc6a95c68ccfbe97850e31892ecef1d418fecf7fd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/86/ml-api-86.jar">
+          <sha256sum>a52b66fc6cafd0f9f8e295e9748de49903ad662d0d1bebb9d6df60e672e4d4cb</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,13 +11,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/76/ml-api-76.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/86/ml-api-86.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/76/ml-api-76-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/86/ml-api-86-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/76/ml-api-76-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/86/ml-api-86-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

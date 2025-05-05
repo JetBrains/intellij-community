@@ -1380,7 +1380,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("jetbrains.llm.mlapi.catboost.shadow.need.slf4j"),
     jetbrainsLibrary("jetbrains.llm.mlapi.ml.api"),
     jetbrainsLibrary("jetbrains.llm.mlapi.ml.tools"),
-    jetbrainsLibrary("jetbrains.llm.mlapi.ml.tools.suspendable"),
     jetbrainsLibrary("jetbrains.ml.models.jetenry.inline.prompt.detection.model"),
     jetbrainsLibrary("jetbrains.ml.models.python.imports.ranking.model"),
     jetbrainsLibrary("jetbrains.mlapi.ml.api"),
