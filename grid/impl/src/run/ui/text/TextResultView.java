@@ -80,7 +80,6 @@ public class TextResultView implements ResultView {
     myViewer.getScrollPane().setBorder(JBUI.Borders.empty());
     myComponent = UiDataProvider.wrapComponent(myViewer.getComponent(), sink -> {
       sink.set(CommonDataKeys.EDITOR, myViewer);
-      sink.set(CommonDataKeys.HOST_EDITOR, myViewer);
     });
     myViewer.setColorsScheme(myViewer.createBoundColorSchemeDelegate(myResultPanel.getEditorColorsScheme()));
     updateColorScheme(myViewer);

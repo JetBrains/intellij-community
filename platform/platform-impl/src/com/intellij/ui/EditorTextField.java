@@ -1129,7 +1129,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (editor != null && editor.isRendererMode()) {
       sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
     }
-    sink.set(CommonDataKeys.EDITOR, editor);
+    if (editor == null) {
+      sink.setNull(CommonDataKeys.EDITOR);
+    }
+    else {
+      sink.set(CommonDataKeys.EDITOR, editor);
+    }
   }
 
   public void setFileType(@NotNull FileType fileType) {

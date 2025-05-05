@@ -168,7 +168,6 @@ public class TableResultPanel extends UserDataHolderBase
     myAutoscrollLocker = new JBAutoScroller.AutoscrollLocker();
     myDataHookUp = dataHookUp;
     myMainPanel = new GridMainPanel(this, sink -> uiDataSnapshot(sink));
-    myMainPanel.getComponent().putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
     myColumnAttributes = new ColumnAttributes();
     myLocalFilterState = new LocalFilterState(this, true);
 
@@ -875,6 +874,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   protected void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.setNull(CommonDataKeys.EDITOR);
     sink.set(PlatformDataKeys.COPY_PROVIDER, new GridCopyProvider(this));
     sink.set(PlatformDataKeys.PASTE_PROVIDER, new GridPasteProvider(this, GridUtil::retrieveDataFromText));
     sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteRowsAction());

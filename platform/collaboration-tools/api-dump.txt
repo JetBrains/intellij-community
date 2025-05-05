@@ -363,9 +363,6 @@ f:com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFil
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy,java.lang.String):com.intellij.ui.EditorTextField
-- bs:create$default(com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy,java.lang.String,I,java.lang.Object):com.intellij.ui.EditorTextField
-- f:wrapWithLeftIcon(com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig,javax.swing.JComponent):javax.swing.JComponent
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig
 - sf:Companion:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig$Companion
 - <init>(javax.swing.Icon,I):V
@@ -413,12 +410,14 @@ com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableIte
 - a:isResolved():kotlinx.coroutines.flow.StateFlow
 f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 - com.intellij.util.ui.components.BorderLayoutPanel
+- com.intellij.openapi.actionSystem.UiDataProvider
 - sf:Companion:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel$Companion
 - sf:FOLD_THRESHOLD:I
 - sf:UNFOLD_BUTTON_VERTICAL_GAP:I
 - <init>(javax.swing.ListModel,kotlin.jvm.functions.Function1,I,I):V
 - b:<init>(javax.swing.ListModel,kotlin.jvm.functions.Function1,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getFoldModel():com.intellij.collaboration.ui.SingleValueModel
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel$Companion
 - f:createUnfoldComponent(I,kotlin.jvm.functions.Function1):javax.swing.JComponent
 com.intellij.collaboration.ui.codereview.user.CodeReviewUser

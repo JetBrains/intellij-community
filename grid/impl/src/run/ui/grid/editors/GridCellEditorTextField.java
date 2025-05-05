@@ -129,7 +129,6 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
     sink.set(CommonDataKeys.VIRTUAL_FILE, FileDocumentManager.getInstance().getFile(getDocument()));
     Editor editor = getEditor();
     sink.set(CommonDataKeys.EDITOR, editor);
-    sink.set(CommonDataKeys.HOST_EDITOR, editor);
   }
 
   @Override

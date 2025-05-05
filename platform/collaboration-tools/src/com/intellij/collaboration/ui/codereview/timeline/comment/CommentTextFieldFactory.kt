@@ -7,9 +7,6 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.actions.IncrementalFindAction
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypes
@@ -17,12 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -32,80 +24,10 @@ import kotlin.math.min
 
 object CommentTextFieldFactory {
 
-  /**
-   * Use [com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory] or create a standalone editor
-   */
-  @Obsolete
-  fun create(
-    project: Project?,
-    document: Document,
-    scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
-    placeHolder: @Nls String? = null,
-  ): EditorTextField = CommentTextField(project, document).apply {
-    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    setPlaceholder(placeHolder)
-    addSettingsProvider {
-      it.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
-      it.colorsScheme.lineSpacing = 1f
-      it.settings.isUseSoftWraps = true
-      it.isEmbeddedIntoDialogWrapper = true
-      it.contentComponent.isOpaque = false
-    }
-    installScrollIfChangedController(scrollOnChange)
-    selectAll()
-  }
-
-  private fun EditorTextField.installScrollIfChangedController(policy: ScrollOnChangePolicy) {
-    if (policy == ScrollOnChangePolicy.DontScroll) return
-
-    fun scroll() {
-      val field = this
-      val parent = field.parent as? JComponent
-      when (policy) {
-        is ScrollOnChangePolicy.ScrollToComponent -> {
-          val componentToScroll = policy.component
-          parent?.scrollRectToVisible(Rectangle(0, 0, componentToScroll.width, componentToScroll.height))
-        }
-        ScrollOnChangePolicy.ScrollToField -> {
-          parent?.scrollRectToVisible(Rectangle(0, 0, parent.width, parent.height))
-        }
-        else -> Unit
-      }
-    }
-
-    addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        scroll()
-      }
-    })
-
-    // Previous listener doesn't work properly when text field's size is changed because component is not resized at this moment.
-    // Without the following listener component will not be scrolled to when newline is inserted.
-    addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        if (UIUtil.isFocusAncestor(parent)) {
-          scroll()
-        }
-      }
-    })
-  }
-
   sealed class ScrollOnChangePolicy {
     object DontScroll : ScrollOnChangePolicy()
     object ScrollToField : ScrollOnChangePolicy()
     class ScrollToComponent(val component: JComponent) : ScrollOnChangePolicy()
-  }
-
-  fun wrapWithLeftIcon(config: IconConfig, item: JComponent): JComponent {
-    val (icon, iconGap) = config
-    val iconLabel = JLabel(icon)
-    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset()) {
-      item.takeIf { it.isVisible }?.minimumSize?.height ?: 0
-    }).apply {
-      isOpaque = false
-      add(CommentFieldWithIconLayout.ICON, iconLabel)
-      add(CommentFieldWithIconLayout.ITEM, item)
-    }
   }
 
   internal fun wrapWithLeftIcon(config: IconConfig, item: JComponent, minimalItemHeightCalculator: () -> Int): JComponent {
