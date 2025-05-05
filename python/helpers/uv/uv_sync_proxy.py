@@ -2,6 +2,14 @@ import sys
 import os
 import subprocess
 
+# this script calls sync before any given `uv run` calls
+# the first argument is the path to uv
+# the second argument is the path to the script
+# the rest of the arguments should mirror all the arguments originally passed to uv
+# for example, if the uv command is `uv run --no-project --script script.py`, then
+# this script should be called in the following way:
+# `uv_sync_proxy.py /path/to/uv script.py run --no-project --script script.py`
+
 uv_path = sys.argv[1]
 script_path = sys.argv[2]
 

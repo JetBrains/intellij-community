@@ -38,11 +38,12 @@ data class UvRunConfigurationOptions(
     get() = uvSdkKey?.let {PythonSdkUtil.findSdkByKey(it)}
 }
 
-internal class UvRunConfiguration(
+@ApiStatus.Internal
+class UvRunConfiguration(
   project: Project,
   factory: ConfigurationFactory,
 ) : AbstractPythonRunConfiguration<UvRunConfiguration>(project, factory) {
-  var options = UvRunConfigurationOptions(
+  var options: UvRunConfigurationOptions = UvRunConfigurationOptions(
     uvSdkKey = project.pythonSdk?.name,
   )
 
@@ -55,27 +56,42 @@ internal class UvRunConfiguration(
     UvRunConfigurationState(this, environment, project)
 
   override fun readExternal(element: Element) {
-    XmlSerializer.deserializeInto(options, element)
+    readExternal(element, options)
   }
 
   override fun writeExternal(element: Element) {
-    XmlSerializer.serializeInto(options, element)
+    writeExternal(element, options)
   }
 
   override fun checkConfiguration() {
-    if (options.uvSdk == null) {
-      throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.sdk"))
-    }
+    checkConfiguration(options)
+  }
+}
 
-    val runType = options.runType
-    val scriptOrModule = options.scriptOrModule
+@ApiStatus.Internal
+fun readExternal(element: Element, options: UvRunConfigurationOptions) {
+  XmlSerializer.deserializeInto(options, element)
+}
 
-    if (runType == UvRunType.SCRIPT && tryResolvePath(scriptOrModule) == null) {
-      throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.script"))
-    }
+@ApiStatus.Internal
+fun writeExternal(element: Element, options: UvRunConfigurationOptions) {
+  XmlSerializer.serializeInto(options, element)
+}
 
-    if (runType == UvRunType.MODULE && scriptOrModule.isEmpty()) {
-      throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.module"))
-    }
+@ApiStatus.Internal
+fun checkConfiguration(options: UvRunConfigurationOptions) {
+  if (options.uvSdk == null) {
+    throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.sdk"))
+  }
+
+  val runType = options.runType
+  val scriptOrModule = options.scriptOrModule
+
+  if (runType == UvRunType.SCRIPT && (tryResolvePath(scriptOrModule) == null || scriptOrModule.isEmpty())) {
+    throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.script"))
+  }
+
+  if (runType == UvRunType.MODULE && scriptOrModule.isEmpty()) {
+    throw RuntimeConfigurationError(PyBundle.message("uv.run.configuration.validation.module"))
   }
 }

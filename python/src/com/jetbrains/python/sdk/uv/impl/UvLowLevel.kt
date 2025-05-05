@@ -177,7 +177,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
         }
 
         if (message.contains("The environment is outdated")) {
-          return Result.success(ScriptSyncCheckResult.Unsynced)
+          return Result.success(ScriptSyncCheckResult.NotSynced)
         }
 
         return Result.failure(it)
