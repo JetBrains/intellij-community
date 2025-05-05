@@ -207,14 +207,6 @@ interface UastApiTestBase : ExpectedPluginModeProvider {
         find { transform(it) == value }
             ?: throw AssertionError("'$value' not found, only ${this.joinToString { transform(it).toString() }}")
 
-    fun checkCallbackForSimpleAnnotated(uFilePath: String, uFile: UFile) {
-        uFile.findElementByTextFromPsi<UField>("@kotlin.SinceKotlin(\"1.0\")\n    val property: String = \"Mary\"").let { field ->
-            val annotation = field.uAnnotations.assertedFind("kotlin.SinceKotlin") { it.qualifiedName }
-            Assert.assertEquals("1.0", annotation.findDeclaredAttributeValue("version")?.evaluateString())
-            Assert.assertEquals("SinceKotlin", annotation.cast<UAnchorOwner>().uastAnchor?.sourcePsi?.text)
-        }
-    }
-
     private fun UFile.checkUastSuperTypes(refText: String, superTypes: List<String>) {
         findElementByTextFromPsi<UClass>(refText, false).let {
             TestCase.assertEquals("base classes", superTypes, it.uastSuperTypes.map { it.getQualifiedName() })

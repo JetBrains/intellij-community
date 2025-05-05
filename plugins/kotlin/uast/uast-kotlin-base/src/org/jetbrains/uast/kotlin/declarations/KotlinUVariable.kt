@@ -3,7 +3,6 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UVariable
@@ -18,8 +17,6 @@ class KotlinUVariable(
     override val javaPsi = unwrap<UVariable, PsiVariable>(psi)
 
     override val psi = javaPsi
-
-    override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean = true
 
     override fun getInitializer(): PsiExpression? {
         return super<AbstractKotlinUVariable>.getInitializer()

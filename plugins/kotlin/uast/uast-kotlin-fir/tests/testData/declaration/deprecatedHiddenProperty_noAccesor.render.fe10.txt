@@ -1,7 +1,7 @@
 package test.pkg
 
 public final class Test {
-    @org.jetbrains.annotations.NotNull @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN) private var pOld_noAccessor_deprecatedOnProperty: java.lang.String = "42"
+    @org.jetbrains.annotations.NotNull private var pOld_noAccessor_deprecatedOnProperty: java.lang.String = "42"
     @org.jetbrains.annotations.NotNull private var pOld_noAccessor_deprecatedOnGetter: java.lang.String = "42"
     @org.jetbrains.annotations.NotNull private var pOld_noAccessor_deprecatedOnSetter: java.lang.String = "42"
     @org.jetbrains.annotations.NotNull private var pNew_noAccessor: java.lang.String = "42"

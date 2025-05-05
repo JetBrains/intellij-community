@@ -3,11 +3,14 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.ULocalVariable
 import org.jetbrains.uast.ULocalVariableEx
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -20,9 +23,20 @@ open class KotlinULocalVariable(
 
     override val javaPsi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
 
-    override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean = true
-
     override val psi = javaPsi
+
+    private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+
+    override val uAnnotations: List<UAnnotation>
+        get() = uAnnotationsPart.getOrBuild {
+            // Nullity annotation if any
+            val annotations = super.uAnnotations.toMutableList()
+            (sourcePsi as? KtModifierListOwner)?.annotationEntries
+                ?.mapTo(annotations) {
+                    baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+                }
+            annotations
+        }
 
     override fun getInitializer(): PsiExpression? {
         return super<AbstractKotlinUVariable>.getInitializer()
