@@ -34,8 +34,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.editor.markup.TextAttributeKeyColor.markTextAttributeColors;
-
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(AbstractColorsScheme.class);
@@ -88,7 +86,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
 
   private final boolean myMarkColorIds = Registry.is("editor.color.scheme.mark.colors", true);
-  private final ValueElementReader myValueReader = new TextAttributesReader();
+  private final TextAttributesReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
   private final Properties metaInfo = new Properties();
   protected EditorColorsScheme parentScheme;
@@ -445,13 +443,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = e.getAttributeValue(NAME_ATTR);
       Element valueElement = e.getChild(VALUE_ELEMENT);
-      TextAttributes attr = valueElement != null ? myValueReader.read(TextAttributes.class, valueElement) :
+      TextAttributes attr = valueElement != null ? myValueReader.readAttributes(valueElement, myMarkColorIds ? keyName : null) :
                             e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null ? INHERITED_ATTRS_MARKER :
                             null;
       if (attr != null) {
-        if (keyName != null && valueElement != null && myMarkColorIds) {
-          markTextAttributeColors(keyName, attr);
-        }
         attributesMap.put(keyName, attr);
       }
     }

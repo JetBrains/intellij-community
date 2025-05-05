@@ -9,7 +9,7 @@ import java.awt.Color
 import java.util.*
 
 @ApiStatus.Internal
-class TextAttributeKeyColor private constructor(color: Color, val keyName: String, val type: TextAttributeKeyColorType) : Color(color.rgb, true), PresentableColor, ComparableColor {
+class TextAttributeKeyColor(color: Color, val keyName: String, val type: TextAttributeKeyColorType) : Color(color.rgb, true), PresentableColor, ComparableColor {
   override fun getPresentableName(): @NlsSafe String? {
     return "TextAttributeKey: $keyName"
   }
@@ -21,18 +21,6 @@ class TextAttributeKeyColor private constructor(color: Color, val keyName: Strin
 
   override fun colorHashCode(): Int {
     return Objects.hash(keyName, type)
-  }
-
-  companion object {
-    @JvmStatic
-    fun markTextAttributeColors(keyName: String, textAttribute: TextAttributes) {
-      val foregroundColor = textAttribute.foregroundColor?.let { TextAttributeKeyColor(it, keyName, TextAttributeKeyColorType.FOREGROUND) }
-      val backgroundColor = textAttribute.backgroundColor?.let { TextAttributeKeyColor(it, keyName, TextAttributeKeyColorType.BACKGROUND) }
-      val errorStripeColor = textAttribute.errorStripeColor?.let { TextAttributeKeyColor(it, keyName, TextAttributeKeyColorType.ERROR_STRIPE) }
-      val effectColor = textAttribute.effectColor?.let { TextAttributeKeyColor(it, keyName, TextAttributeKeyColorType.EFFECT_COLOR) }
-      textAttribute.setAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor,
-                                  textAttribute.effectType, textAttribute.fontType)
-    }
   }
 }
 

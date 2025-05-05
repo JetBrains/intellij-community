@@ -2,11 +2,14 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributeKeyColor;
+import com.intellij.openapi.editor.markup.TextAttributeKeyColorType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -38,22 +41,42 @@ public final class TextAttributesReader extends ValueElementReader {
    */
   @Override
   public <T> T read(Class<T> type, Element element) {
-    if (!TextAttributes.class.equals(type)) {
-      return super.read(type, element);
+    if (TextAttributes.class.equals(type)) {
+      //noinspection unchecked
+      return (T)readAttributes(element, null);
     }
 
+    return super.read(type, element);
+  }
+
+  public TextAttributes readAttributes(@Nullable Element element, @Nullable String keyName) {
     TextAttributes attributes = new TextAttributes();
     if (element != null) {
-      attributes.setAttributes(
-        readChild(Color.class, element, FOREGROUND),
-        readChild(Color.class, element, BACKGROUND),
-        readChild(Color.class, element, EFFECT_COLOR),
-        readChild(Color.class, element, ERROR_STRIPE),
-        Effect.read(this, element),
-        FontStyle.read(this, element));
+      Color foregroundColor = readChild(Color.class, element, FOREGROUND);
+      Color backgroundColor = readChild(Color.class, element, BACKGROUND);
+      Color effectColor = readChild(Color.class, element, EFFECT_COLOR);
+      Color errorStripeColor = readChild(Color.class, element, ERROR_STRIPE);
+      EffectType effectType = Effect.read(this, element);
+      int fontType = FontStyle.read(this, element);
+
+      if (keyName != null) {
+        if (foregroundColor != null) {
+          foregroundColor = new TextAttributeKeyColor(foregroundColor, keyName, TextAttributeKeyColorType.FOREGROUND);
+        }
+        if (backgroundColor != null) {
+          backgroundColor = new TextAttributeKeyColor(backgroundColor, keyName, TextAttributeKeyColorType.BACKGROUND);
+        }
+        if (effectColor != null) {
+          effectColor = new TextAttributeKeyColor(effectColor, keyName, TextAttributeKeyColorType.EFFECT_COLOR);
+        }
+        if (errorStripeColor != null) {
+          errorStripeColor = new TextAttributeKeyColor(errorStripeColor, keyName, TextAttributeKeyColorType.ERROR_STRIPE);
+        }
+      }
+
+      attributes.setAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor, effectType, fontType);
     }
-    //noinspection unchecked
-    return (T)attributes;
+    return attributes;
   }
 
   /**
