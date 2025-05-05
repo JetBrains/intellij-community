@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.MutableOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
@@ -67,7 +68,6 @@ class AutoImportProjectTracker(
   private val projectDataStates = ConcurrentHashMap<ExternalSystemProjectId, ProjectDataState>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
-  private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
 
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
@@ -97,7 +97,7 @@ class AutoImportProjectTracker(
     object : ExternalSystemProjectListener {
 
       override fun onProjectReloadStart() {
-        projectReloadOperation.traceStart()
+        projectData.reloadOperation.traceStart()
         projectData.status.markSynchronized(Stamp.nextStamp())
         projectData.isActivated = true
       }
@@ -106,7 +106,7 @@ class AutoImportProjectTracker(
         if (status != SUCCESS) {
           projectData.status.markBroken(Stamp.nextStamp())
         }
-        projectReloadOperation.traceFinish()
+        projectData.reloadOperation.traceFinish()
       }
     }
 
@@ -236,7 +236,7 @@ class AutoImportProjectTracker(
       return true
     }
 
-    if (projectReloadOperation.isOperationInProgress()) {
+    if (projectData.reloadOperation.isOperationInProgress()) {
       LOG.debug("$projectId: Disabled reload (project reload)")
       return true
     }
@@ -300,17 +300,29 @@ class AutoImportProjectTracker(
   override fun register(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
     val activationProperty = AtomicBooleanProperty(false)
+    val reloadOperation = AtomicOperationTrace(name = "Reload $projectId")
     val projectStatus = ProjectStatus(debugName = projectId.toString())
     val parentDisposable = Disposer.newDisposable(serviceDisposable, projectId.toString())
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
-    val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
+    val projectData = ProjectData(projectStatus, activationProperty, reloadOperation, projectAware, settingsTracker, parentDisposable)
 
     projectDataMap[projectId] = projectData
 
-    settingsTracker.beforeApplyChanges(parentDisposable) { projectReloadOperation.traceStart() }
-    settingsTracker.afterApplyChanges(parentDisposable) { projectReloadOperation.traceFinish() }
-    activationProperty.whenPropertySet(parentDisposable) { LOG.debug("$projectId is activated") }
-    activationProperty.whenPropertySet(parentDisposable) { scheduleChangeProcessing() }
+    settingsTracker.beforeApplyChanges(parentDisposable) { reloadOperation.traceStart() }
+    settingsTracker.afterApplyChanges(parentDisposable) { reloadOperation.traceFinish() }
+
+    activationProperty.whenPropertySet(parentDisposable) {
+      LOG.debug("$projectId is activated")
+      scheduleChangeProcessing()
+    }
+    reloadOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("$projectId: Detected project reload start event")
+      scheduleChangeProcessing()
+    }
+    reloadOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("$projectId: Detected project reload finish event")
+      scheduleChangeProcessing()
+    }
 
     projectAware.subscribe(createProjectReloadListener(projectData), parentDisposable)
     parentDisposable.whenDisposed { notificationAware.notificationExpire(projectId) }
@@ -403,14 +415,6 @@ class AutoImportProjectTracker(
   init {
     LOG.debug("Project tracker initialization")
 
-    projectReloadOperation.whenOperationStarted(serviceDisposable) {
-      LOG.debug("Detected project reload start event")
-      scheduleChangeProcessing()
-    }
-    projectReloadOperation.whenOperationFinished(serviceDisposable) {
-      LOG.debug("Detected project reload finish event")
-      scheduleChangeProcessing()
-    }
     projectChangeOperation.whenOperationStarted(serviceDisposable) {
       LOG.debug("Detected project change start event")
       scheduleChangeProcessing()
@@ -446,6 +450,7 @@ class AutoImportProjectTracker(
   private data class ProjectData(
     @JvmField val status: ProjectStatus,
     @JvmField val activationProperty: MutableBooleanProperty,
+    @JvmField val reloadOperation: MutableOperationTrace,
     @JvmField val projectAware: ExternalSystemProjectAware,
     @JvmField val settingsTracker: ProjectSettingsTracker,
     @JvmField val parentDisposable: Disposable

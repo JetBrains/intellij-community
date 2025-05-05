@@ -1202,4 +1202,30 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, notified = false, event = "schedule implicit project reload without any changes")
     }
   }
+
+  fun `test reload is enabled during reload of other project`() {
+    val systemId = ProjectSystemId("External System")
+    val projectId1 = ExternalSystemProjectId(systemId, "$projectPath/project1")
+    val projectId2 = ExternalSystemProjectId(systemId, "$projectPath/project2")
+    val projectAware1 = mockProjectAware(projectId1)
+    val projectAware2 = mockProjectAware(projectId2)
+
+    register(projectAware1)
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, event = "register project 1 without caches")
+
+    register(projectAware2)
+    assertStateAndReset(projectAware2, numReload = 1, notified = false, event = "register project 2 without caches")
+
+    projectAware1.reloadEventDispatcher.onceWhenEventHappened {
+      markDirty(projectId2)
+      scheduleProjectReload()
+      assertStateAndReset(projectAware1, numReload = 1, notified = false, event = "reload project 2 during project 1 reload")
+      assertStateAndReset(projectAware2, numReload = 1, notified = false, event = "reload project 2 during project 1 reload")
+    }
+
+    markDirty(projectId1)
+    scheduleProjectReload()
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, event = "reload project 1 and 2 completed")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, event = "reload project 1 and 2 completed")
+  }
 }
