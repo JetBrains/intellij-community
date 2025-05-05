@@ -500,6 +500,7 @@ class RecentProjectFilteringTree(
         projectBranchNameLabel.apply {
           isVisible = branchName != null
           text = branchName ?: ""
+          accessibleContext.accessibleName = IdeBundle.message("welcome.screen.recent.projects.branch.label.accessible.name", text)
         }
 
         projectActions.isVisible = false
@@ -509,12 +510,13 @@ class RecentProjectFilteringTree(
           toolTipText = tooltip
         }
 
-        AccessibleContextUtil.setCombinedName(this, projectNameLabel,
-                                              "-", providerPathLabel.takeIf { providerPathLabel.isVisible },
-                                              "-", projectPathLabel.takeIf { projectPathLabel.isVisible }) // NON-NLS
-        AccessibleContextUtil.setCombinedDescription(this, projectNameLabel,
-                                                     "-", providerPathLabel.takeIf { providerPathLabel.isVisible },
-                                                     "-", projectPathLabel.takeIf { projectPathLabel.isVisible }) // NON-NLS
+        getAccessibleContext().accessibleName = AccessibleContextUtil.getCombinedName(
+          ", ",
+          projectNameLabel,
+          providerPathLabel.takeIf { providerPathLabel.isVisible },
+          projectPathLabel.takeIf { projectPathLabel.isVisible },
+          projectBranchNameLabel.takeIf { projectBranchNameLabel.isVisible },
+        )
       }
 
       // Allow the recent project tree to reduce size of wide elements
