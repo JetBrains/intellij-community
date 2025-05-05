@@ -13,7 +13,6 @@ label_flag(
 label_flag(
     name = "worker-impl",
     build_setting_default = "//src/misc:worker-jvm",
-    # build_setting_default = "//src/misc:worker-native",
     visibility = ["//visibility:public"],
 )
 
@@ -22,9 +21,9 @@ kt_kotlinc_options(
     visibility = ["//visibility:public"],
 )
 
-# --@rules_jvm//:kt_trace
+# --@rules_jvm//:trace
 bool_flag(
-    name = "kt_trace",
+    name = "trace",
     build_setting_default = False,
 )
 

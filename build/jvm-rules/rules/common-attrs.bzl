@@ -98,7 +98,7 @@ common_attr = add_dicts(
             cfg = "exec",
         ),
         "_reduced_classpath": attr.bool(default = False),
-        "_trace": attr.label(default = "//:kt_trace"),
+        "_trace": attr.label(default = "//:trace"),
         "_kotlin_inc_threshold": attr.label(default = "//:koltin_inc_threshold"),
         "_java_inc_threshold": attr.label(default = "//:java_inc_threshold"),
     },
