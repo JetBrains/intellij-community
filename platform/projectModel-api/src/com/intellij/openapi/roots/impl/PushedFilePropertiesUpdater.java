@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,8 @@ public abstract class PushedFilePropertiesUpdater {
    */
   @Deprecated
   public abstract void filePropertiesChanged(@NotNull VirtualFile file);
+
+  @RequiresReadLock
   public abstract <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue);
 
   /**

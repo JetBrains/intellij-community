@@ -49,7 +49,9 @@ object IndexedFilePaths {
 
     val fileSize = if (fileOrDir.isDirectory) null else fileOrDir.length
     val portableFilePath = PortableFilePaths.getPortableFilePath(fileOrDir, project)
-    val allPusherValues = dumpFilePropertyPusherValues(fileOrDir, project).mapValues { it.value?.toString() ?: "<null-value>" }
+    val allPusherValues = runReadAction {
+      dumpFilePropertyPusherValues(fileOrDir, project).mapValues { it.value?.toString() ?: "<null-value>" }
+    }
     return IndexedFilePath(
       fileId,
       fileType,

@@ -32,6 +32,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.file.impl.FileManagerEx
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -309,6 +310,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     }
   }
 
+  @RequiresReadLock
   private fun doApplyPushersToFile(fileOrDir: VirtualFile,
                                    pushers: List<FilePropertyPusher<*>>,
                                    moduleValues: Array<Any?>?) {
