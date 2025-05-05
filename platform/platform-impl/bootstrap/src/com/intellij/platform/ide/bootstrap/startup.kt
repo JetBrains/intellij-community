@@ -113,7 +113,7 @@ fun CoroutineScope.startApplication(
     }
   }
 
-  val consoleLoggerJob = configureJavaUtilLogging()
+  val consoleLoggerJob = configureJavaUtilLogging(scope = this)
 
   launch {
     LoadingState.setStrictMode()
@@ -124,7 +124,7 @@ fun CoroutineScope.startApplication(
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(lockSystemDirsJob, busyThread)
   val initBaseLafJob = launch {
-    initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = this@startApplication)
+    initUi(initAwtToolkitJob, isHeadless, asyncScope = this@startApplication)
   }
 
   var initUiScale: Job? = null
@@ -142,8 +142,9 @@ fun CoroutineScope.startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
-    scheduleShowSplashIfNeeded(lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob, initUiScale, appInfoDeferred)
+
+    scheduleShowSplashIfNeeded(lockSystemDirsJob, initUiScale, appInfoDeferred, args)
   }
 
   val initLafJob = launch {
@@ -173,10 +174,10 @@ fun CoroutineScope.startApplication(
   }
 
   // system dirs checking must happen after locking system dirs
-  val checkSystemDirJob = checkSystemDirs(lockSystemDirsJob)
+  val checkSystemDirJob = checkDirectories(scope = this, lockSystemDirsJob)
 
   // log initialization must happen only after locking the system directory
-  val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
+  val logDeferred = setupLogger(scope = this, consoleLoggerJob, checkSystemDirJob)
   if (!isHeadless) {
     launch {
       lockSystemDirsJob.join()
@@ -195,21 +196,14 @@ fun CoroutineScope.startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred = logDeferred, appInfoDeferred = appInfoDeferred, initUiDeferred = initLafJob, args = args, mainScope = mainScope)
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope = this, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = async {
     importConfigIfNeeded(
-      isHeadless = isHeadless,
-      configImportNeededDeferred = configImportNeededDeferred,
-      lockSystemDirsJob = lockSystemDirsJob,
-      logDeferred = logDeferred,
-      args = args,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      appStarterDeferred = appStarterDeferred,
-      euaDocumentDeferred = euaDocumentDeferred,
-      initLafJob = initLafJob,
+      isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig, appStarterDeferred,
+      euaDocumentDeferred, initLafJob
     )
   }
 
@@ -223,12 +217,7 @@ fun CoroutineScope.startApplication(
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(
-      coroutineScope = this@startApplication,
-      zipPoolDeferred = zipPoolDeferred,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      logDeferred = logDeferred,
-    )
+    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -257,14 +246,14 @@ fun CoroutineScope.startApplication(
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   val appLoaded = async {
-    val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkit = initAwtToolkitJob, isHeadless = isHeadless)
+    val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkitJob, isHeadless)
 
     checkSystemDirJob.join()
 
     val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY)
     if (classBeforeAppProperty != null && !configImportNeededDeferred.await()) {
       logDeferred.join()
-      runPreAppClass(args = args, classBeforeAppProperty = classBeforeAppProperty)
+      runPreAppClass(args, classBeforeAppProperty)
     }
 
     val app = span("app instantiation") {
@@ -274,16 +263,8 @@ fun CoroutineScope.startApplication(
     }
 
     loadApp(
-      app = app,
-      initAwtToolkitAndEventQueueJob = initEventQueueJob,
-      pluginSetDeferred = pluginSetDeferred,
-      appInfoDeferred = appInfoDeferred,
-      euaDocumentDeferred = euaDocumentDeferred,
-      asyncScope = this@startApplication,
-      initLafJob = initLafJob,
-      logDeferred = logDeferred,
-      appRegisteredJob = appRegisteredJob,
-      args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
+      app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, asyncScope = this@startApplication, initLafJob, logDeferred, appRegisteredJob,
+      args = args.filterNot { CommandLineArgs.isKnownArgument(it) }, initEventQueueJob
     )
   }
 
@@ -304,7 +285,7 @@ fun CoroutineScope.startApplication(
 
     // with the main dispatcher for non-technical reasons
     mainScope.launch {
-      appStarter.start(InitAppContext(appRegistered = appRegisteredJob, appLoaded = appLoaded))
+      appStarter.start(InitAppContext(appRegisteredJob, appLoaded))
     }
   }
 
@@ -316,7 +297,7 @@ fun CoroutineScope.startApplication(
       val starter = appLoaded.await()
 
       val isInitialStart = configImportDeferred.await()
-      // appLoaded not only provides starter but also loads app, that's why it is here
+      // appLoaded not only provides starter but also loads app; that's why it is here
       launch {
         if (ConfigImportHelper.isFirstSession()) {
           IdeStartupWizardCollector.logWizardExperimentState()
@@ -328,26 +309,27 @@ fun CoroutineScope.startApplication(
         val log = logDeferred.await()
         runCatching {
           span("startup wizard run") {
-            runStartupWizard(isInitialStart = isInitialStart, app = ApplicationManager.getApplication())
+            runStartupWizard(isInitialStart, ApplicationManager.getApplication())
           }
         }.getOrLogException(log)
       }
 
-      executeApplicationStarter(starter = starter, args = args)
+      executeApplicationStarter(starter, args)
     }
     // no need to use a pool once started
     ZipFilePool.PATH_CLASSLOADER_POOL = null
   }
 }
 
-private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
+private fun scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
+  scope: CoroutineScope,
   logDeferred: Deferred<Logger>,
   appInfoDeferred: Deferred<ApplicationInfoEx>,
   initUiDeferred: Job,
   args: List<String>,
   mainScope: CoroutineScope,
 ) {
-  launch {
+  scope.launch {
     if (SystemInfoRt.isWindows) {
       span("system libs setup") {
         if (System.getProperty("winp.folder.preferred") == null) {
@@ -365,7 +347,7 @@ private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
 
     val appInfo = appInfoDeferred.await()
     launch(CoroutineName("essential IDE info logging")) {
-      logEssentialInfoAboutIde(log = log, appInfo = appInfo, args = args)
+      logEssentialInfoAboutIde(log, appInfo, args)
     }
 
     if (SystemInfoRt.isMac && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
@@ -400,32 +382,28 @@ private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: S
   }
 }
 
-private fun CoroutineScope.configureJavaUtilLogging(): Job {
-  return launch(CoroutineName("console logger configuration")) {
-    val rootLogger = java.util.logging.Logger.getLogger("")
-    if (rootLogger.handlers.isEmpty()) {
-      rootLogger.level = Level.WARNING
-      val consoleHandler = ConsoleHandler()
-      consoleHandler.level = Level.WARNING
-      rootLogger.addHandler(consoleHandler)
-    }
+private fun configureJavaUtilLogging(scope: CoroutineScope): Job = scope.launch(CoroutineName("console logger configuration")) {
+  val rootLogger = java.util.logging.Logger.getLogger("")
+  if (rootLogger.handlers.isEmpty()) {
+    rootLogger.level = Level.WARNING
+    val consoleHandler = ConsoleHandler()
+    consoleHandler.level = Level.WARNING
+    rootLogger.addHandler(consoleHandler)
   }
 }
 
-private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
-  return launch {
-    lockSystemDirJob.join()
+private fun checkDirectories(scope: CoroutineScope, lockSystemDirJob: Job): Job = scope.launch {
+  lockSystemDirJob.join()
 
-    val homePath = PathManager.getHomePath()
-    val configPath = PathManager.getConfigDir()
-    val systemPath = PathManager.getSystemDir()
-    if (!span("system dirs checking") { doCheckSystemDirs(homePath, configPath, systemPath) }) {
-      exitProcess(AppExitCodes.DIR_CHECK_FAILED)
-    }
+  val homePath = PathManager.getHomePath()
+  val configPath = PathManager.getConfigDir()
+  val systemPath = PathManager.getSystemDir()
+  if (!span("system dirs checking") { checkDirectories(homePath, configPath, systemPath) }) {
+    exitProcess(AppExitCodes.DIR_CHECK_FAILED)
   }
 }
 
-private suspend fun doCheckSystemDirs(homePath: String, configPath: Path, systemPath: Path): Boolean {
+private suspend fun checkDirectories(homePath: String, configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
     StartupErrorReporter.showError(
       BootstrapBundle.message("bootstrap.error.title.settings"),
@@ -529,28 +507,26 @@ private fun lockSystemDirs(args: List<String>) {
   }
 }
 
-private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> {
-  return async {
-    consoleLoggerJob.join()
-    checkSystemDirJob.join()
+private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSystemDirJob: Job): Deferred<Logger> = scope.async {
+  consoleLoggerJob.join()
+  checkSystemDirJob.join()
 
-    span("file logger configuration") {
-      try {
-        Logger.setFactory(LoggerFactory())
-      }
-      catch (e: Exception) {
-        e.printStackTrace()
-      }
-
-      val log = logger<AppStarter>()
-      log.info(IDE_STARTED)
-      ShutDownTracker.getInstance().registerShutdownTask { log.info(IDE_SHUTDOWN) }
-      if (java.lang.Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
-        System.setOut(PrintStreamLogger("STDOUT", System.out))
-        System.setErr(PrintStreamLogger("STDERR", System.err))
-      }
-      log
+  span("file logger configuration") {
+    try {
+      Logger.setFactory(LoggerFactory())
     }
+    catch (e: Exception) {
+      e.printStackTrace()
+    }
+
+    val log = logger<AppStarter>()
+    log.info(IDE_STARTED)
+    ShutDownTracker.getInstance().registerShutdownTask { log.info(IDE_SHUTDOWN) }
+    if (java.lang.Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
+      System.setOut(PrintStreamLogger("STDOUT", System.out))
+      System.setErr(PrintStreamLogger("STDERR", System.err))
+    }
+    log
   }
 }
 
