@@ -14,4 +14,14 @@ class FromDemo {
   List<<warning descr="Redundant nullability annotation in the scope of @NotNullByDefault">@NotNull</warning> String> param(<warning descr="Redundant nullability annotation in the scope of @NotNullByDefault">@NotNull</warning> String <warning descr="Redundant nullability annotation in the scope of @NotNullByDefault">@NotNull</warning> [] <warning descr="Redundant nullability annotation in the scope of @NotNullByDefault">@NotNull</warning> [] a) {
     return List.of();
   }
+
+  void fun() {
+    @Nullable String variableWhereAnnotationMakesSense = OtherClass.returnSomething();
+  }
+}
+
+class OtherClass {
+  static String returnSomething() {
+    return Math.random() > 0.5 ? "not null" : null;
+  }
 }
