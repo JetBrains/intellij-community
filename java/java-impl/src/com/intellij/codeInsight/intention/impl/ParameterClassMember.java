@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -35,6 +36,11 @@ public class ParameterClassMember implements ClassMember {
   @Override
   public @NotNull String getText() {
     return myParameter.getName();
+  }
+
+  @Override
+  public @Nullable Icon getIcon() {
+    return myParameter.getIcon(0);
   }
 
   public PsiParameter getParameter() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -20,5 +20,10 @@ public class PsiDocCommentOwnerMemberChooserObject extends PsiElementMemberChoos
   protected SimpleTextAttributes getTextAttributes(final JTree tree) {
     return new SimpleTextAttributes(myIsValid ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN,
       RenderingUtil.getForeground(tree));
+  }
+
+  @Override
+  protected SimpleTextAttributes getTextAttributes() {
+    return new SimpleTextAttributes(myIsValid ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN, null);
   }
 }

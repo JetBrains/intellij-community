@@ -787,6 +787,10 @@ com.intellij.codeInsight.generation.ClassMember
 - a:getParentNodeDelegate():com.intellij.codeInsight.generation.MemberChooserObject
 com.intellij.codeInsight.generation.MemberChooserObject
 - a:equals(java.lang.Object):Z
+- getAttributes():com.intellij.ui.SimpleTextAttributes
+- getIcon():javax.swing.Icon
+- getSecondaryText():java.lang.String
+- getSecondaryTextAttributes():com.intellij.ui.SimpleTextAttributes
 - a:getText():java.lang.String
 - a:hashCode():I
 - a:renderTreeNode(com.intellij.ui.SimpleColoredComponent,javax.swing.JTree):V
@@ -794,7 +798,9 @@ c:com.intellij.codeInsight.generation.MemberChooserObjectBase
 - com.intellij.codeInsight.generation.MemberChooserObject
 - <init>(java.lang.String):V
 - <init>(java.lang.String,javax.swing.Icon):V
+- getIcon():javax.swing.Icon
 - getText():java.lang.String
+- p:getTextAttributes():com.intellij.ui.SimpleTextAttributes
 - p:getTextAttributes(javax.swing.JTree):com.intellij.ui.SimpleTextAttributes
 - renderTreeNode(com.intellij.ui.SimpleColoredComponent,javax.swing.JTree):V
 com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter

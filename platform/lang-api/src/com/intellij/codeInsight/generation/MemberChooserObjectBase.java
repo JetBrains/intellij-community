@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -36,8 +36,17 @@ public class MemberChooserObjectBase implements MemberChooserObject {
     return myText;
   }
 
+  @Override
+  public @Nullable Icon getIcon() {
+    return myIcon;
+  }
+
   protected SimpleTextAttributes getTextAttributes(JTree tree) {
     return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, RenderingUtil.getForeground(tree));
+  }
+
+  protected SimpleTextAttributes getTextAttributes() {
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
 }
