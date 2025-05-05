@@ -15,6 +15,7 @@ java_library(
   runtime_deps = [
     ":junit5-launcher_resources",
     "@lib//:junit5Launcher",
+    "//libraries/junit5",
   ]
 )
 ### auto-generated section `build intellij.libraries.junit5.launcher` end

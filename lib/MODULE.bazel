@@ -6754,6 +6754,20 @@ http_file(
 )
 
 http_file(
+  name = "hamcrest-more-matchers-0_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/seregamorph/hamcrest-more-matchers/0.1/hamcrest-more-matchers-0.1.jar",
+  sha256 = "0b39c30f73a84dc50181a10e0d66e9543d6ef1b561c207b7fba6944e64dc22b3",
+  downloaded_file_path = "hamcrest-more-matchers-0.1.jar"
+)
+
+http_file(
+  name = "hamcrest-more-matchers-0_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/seregamorph/hamcrest-more-matchers/0.1/hamcrest-more-matchers-0.1-sources.jar",
+  sha256 = "288966e91a2383888ae5e68dde67991daf8cef90959870f75f090b9dd310c9ac",
+  downloaded_file_path = "hamcrest-more-matchers-0.1-sources.jar"
+)
+
+http_file(
   name = "skiko-awt-0_9_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/skiko/skiko-awt/0.9.2/skiko-awt-0.9.2.jar",
   sha256 = "e1f815f44f5dafcf12f673cda3355ae59c39754bf99f3b11f6d00fd700156148",

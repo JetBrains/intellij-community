@@ -4824,6 +4824,13 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+jvm_import(
+  name = "libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers",
+  jar = "@hamcrest-more-matchers-0_1_http//file",
+  source_jar = "@hamcrest-more-matchers-0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "libraries-ktor-client-cio-ktor-client-cio-internal",
   exports = [
