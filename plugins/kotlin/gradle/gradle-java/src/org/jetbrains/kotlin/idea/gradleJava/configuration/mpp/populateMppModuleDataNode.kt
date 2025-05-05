@@ -283,7 +283,8 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
 
             val compilationData = existingSourceSetDataNode?.data ?: createGradleSourceSetData(
                 moduleId, moduleExternalName, moduleInternalName, mainModuleFileDirectoryPath, mainModuleConfigPath
-            ).also {
+            )
+            compilationData.also {
                 it.group = externalProject.group
                 it.version = externalProject.version
 
