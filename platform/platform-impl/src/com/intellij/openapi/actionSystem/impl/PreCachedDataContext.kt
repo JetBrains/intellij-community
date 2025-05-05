@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ThrowableComputable
@@ -49,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
+import javax.swing.text.JTextComponent
 
 private val LOG = Logger.getInstance(PreCachedDataContext::class.java)
 
@@ -162,7 +164,6 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
     while (true) {
       val component = SoftReference.dereference(myComponentRef.ref)
       sink.keys = null
-      sink.hideEditor = hideEditor(component)
       sink.uiSnapshot = myCachedData.uiSnapshot.builder()
       cacheProviderData(sink, dataProvider)
       cachedData = CachedData(myCachedData.isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
@@ -307,7 +308,7 @@ internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, Inj
       val snapshot = sink.uiSnapshot?.build()
       if (snapshot == null) return context
       return AsyncDataContext { dataId: String ->
-        DataManager.getInstance().getCustomizedData(dataId, context, DataProvider { snapshot[it] })
+        DataManager.getInstance().getCustomizedData(dataId, context) { snapshot[it] }
       }
     }
   }
@@ -374,8 +375,8 @@ private fun cacheComponentsData(sink: MySink, isDisplayable: Boolean, components
   lateinit var cachedData: CachedData
   val start = System.currentTimeMillis()
   for (comp in components) {
-    sink.hideEditor = hideEditor(comp)
     val dataProvider = if (comp is UiDataProvider) comp else DataManagerImpl.getDataProviderEx(comp)
+    hideParentEditorIfNeeded(sink, comp)
     cacheProviderData(sink, dataProvider)
     cachedData = CachedData(isDisplayable, sink.uiSnapshot?.build() ?: persistentMapOf())
     ourPrevMaps[comp] = cachedData
@@ -396,12 +397,15 @@ private fun cacheProviderData(sink: MySink, dataProvider: Any?) {
   finally {
     sink.closed = true
   }
-  if (sink.hideEditor) {
-    val map = sink.uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { sink.uiSnapshot = it }
-    map[CommonDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
-    map[CommonDataKeys.HOST_EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
-    map[InjectedDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
-  }
+}
+
+private fun hideParentEditorIfNeeded(sink: MySink, component: Component?) {
+  val hideEditor =
+    component is JTextComponent && component !is EditorComponentImpl ||
+    (component as? JComponent)?.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null
+  if (!hideEditor) return
+  val map = sink.uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { sink.uiSnapshot = it }
+  map[CommonDataKeys.EDITOR.name] = CustomizedDataContext.EXPLICIT_NULL
 }
 
 private fun runSnapshotRules(sink: MySink, component: Component?, data: CachedData) {
@@ -440,7 +444,6 @@ private class MySink : DataSink {
   var source: Any? = null
 
   var keys: Array<DataKey<*>>? = null
-  var hideEditor: Boolean = false
 
   var closed: Boolean = true
 
@@ -482,6 +485,7 @@ private class MySink : DataSink {
     if (validated == null) return
     val map = uiComputed ?: uiSnapshot ?: persistentHashMapOf<String, Any>().builder().also { uiSnapshot = it }
     if (uiComputed != null && key != BGT_DATA_PROVIDER) {
+      // rules must not override other rules or snapshot values
       if (uiSnapshot?.get(key.name) != null || map[key.name] != null) {
         return
       }
@@ -617,11 +621,6 @@ private class MyLazyValue<T>(key: DataKey<T>, supplier: (DataMap) -> T?) : MyLaz
 
 private fun DataProvider.toDataMap() = object : DataMap {
   override fun <T : Any> get(key: DataKey<T>): T? = key.getData(this@toDataMap)
-}
-
-private fun hideEditor(component: Component?): Boolean {
-  return component is JComponent &&
-         component.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null
 }
 
 internal fun wrapUnsafeData(data: Any?): Any? = when {
