@@ -4,6 +4,7 @@ package com.intellij.platform.testFramework.junit5.eel.params.api
 import com.intellij.platform.testFramework.junit5.eel.params.impl.junit5.EelInterceptor
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
@@ -27,8 +28,16 @@ import org.junit.jupiter.api.extension.ExtendWith
  * ```
  * Run a test, and failure will report an option name.
  *
- * You either need to have providers (i.e. `intellij.platform.ijent.testFramework` in a classpath),
- * or disable [atLeastOneRemoteEelRequired]
+ * System tries to run your test against at least one remote (ijent-based) eel.
+ * You need to have providers (i.e. `intellij.platform.ijent.testFramework` in a classpath) to do that.
+ *
+ * If your particular test doesn't need remote eels for a certain OS, use [osesMayNotHaveRemoteEels].
+ *
+ * The following test will fail if no remote Eel available on any OS but Windows:
+ * ```kotlin
+ * @TestApplicationWithEel(osesMayNotHaveRemoteEels=[OS.WINDOWS])
+ * ```
+ * Do not use this option unless you are absolutely sure.
  */
 @TestOnly
 @Target(AnnotationTarget.CLASS)
@@ -36,4 +45,4 @@ import org.junit.jupiter.api.extension.ExtendWith
   EelInterceptor::class,
 )
 @TestApplication
-annotation class TestApplicationWithEel(val atLeastOneRemoteEelRequired: Boolean = true)
+annotation class TestApplicationWithEel(vararg val osesMayNotHaveRemoteEels: OS)
