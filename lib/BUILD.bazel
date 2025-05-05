@@ -2860,15 +2860,15 @@ jvm_import(
 
 jvm_import(
   name = "jetbrains-mlapi-ml-api",
-  jar = "@ml-api-76_http//file",
-  source_jar = "@ml-api-76-sources_http//file",
+  jar = "@ml-api-86_http//file",
+  source_jar = "@ml-api-86-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jetbrains-mlapi-ml-tools",
-  jar = "@ml-tools-76_http//file",
-  source_jar = "@ml-tools-76-sources_http//file",
+  jar = "@ml-tools-86_http//file",
+  source_jar = "@ml-tools-86-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

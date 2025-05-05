@@ -3933,31 +3933,31 @@ http_file(
 )
 
 http_file(
-  name = "ml-api-76_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/76/ml-api-76.jar",
-  sha256 = "0bba8638b6297f9f2b8c441dc6a95c68ccfbe97850e31892ecef1d418fecf7fd",
-  downloaded_file_path = "ml-api-76.jar"
+  name = "ml-api-86_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/86/ml-api-86.jar",
+  sha256 = "a52b66fc6cafd0f9f8e295e9748de49903ad662d0d1bebb9d6df60e672e4d4cb",
+  downloaded_file_path = "ml-api-86.jar"
 )
 
 http_file(
-  name = "ml-api-76-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/76/ml-api-76-sources.jar",
-  sha256 = "9330c37ca02564b3a42230b77150cc08869e7251abc71082abb9aa5681c8cc3d",
-  downloaded_file_path = "ml-api-76-sources.jar"
+  name = "ml-api-86-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/86/ml-api-86-sources.jar",
+  sha256 = "71001504fe5e7f21d83b717fa689bf6a2f3818428626eb4c0ff09eef688e03f6",
+  downloaded_file_path = "ml-api-86-sources.jar"
 )
 
 http_file(
-  name = "ml-tools-76_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/76/ml-tools-76.jar",
-  sha256 = "92f9aacba9f8bfaa6f4fc8341127f2499a432a84e0e95575302a1ecba6f7f6ef",
-  downloaded_file_path = "ml-tools-76.jar"
+  name = "ml-tools-86_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/86/ml-tools-86.jar",
+  sha256 = "1fd34e39c77dad83957882a7b6ccf99c1d49403b4643efc85a4b041aa1108a13",
+  downloaded_file_path = "ml-tools-86.jar"
 )
 
 http_file(
-  name = "ml-tools-76-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/76/ml-tools-76-sources.jar",
-  sha256 = "6b1b21aaf06124bcbd0ebdce6273a2e0763d95e4aae7797d50d1cdcb6f52c067",
-  downloaded_file_path = "ml-tools-76-sources.jar"
+  name = "ml-tools-86-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/86/ml-tools-86-sources.jar",
+  sha256 = "3780b7e4c6fad6945812f4729b661d54acc85068fd7a4b106e972bbd7d4dd0b1",
+  downloaded_file_path = "ml-tools-86-sources.jar"
 )
 
 http_file(
