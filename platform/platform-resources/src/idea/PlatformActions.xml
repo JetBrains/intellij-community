@@ -1795,5 +1795,10 @@
     </group>
 
     <action id="UndoDumpAction" internal="true" class="com.intellij.ide.actions.UndoDumpAction" />
+
+    <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
+    <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
+    <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
+    <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
   </actions>
 </idea-plugin>
