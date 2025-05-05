@@ -2,12 +2,12 @@
 package com.intellij.platform.searchEverywhere.frontend.ui
 
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.FROZEN_COUNT
+import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 
@@ -20,7 +20,8 @@ class SeResultListModel: DefaultListModel<SeResultListRow>() {
     "CalculatorSEContributor",
     "AutocompletionContributor",
     "CommandsContributor",
-    TopHitSEContributor::class.java.getSimpleName(),
+    SeTopHitItemsProvider.id(false),
+    SeTopHitItemsProvider.id(true),
     if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) RecentFilesSEContributor::class.java.getSimpleName() else null
   ).map { SeProviderId(it) }
 

@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.providers.topHit.SeTopHitItemsProvider
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
@@ -41,7 +42,22 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
     }
   }
 
-  private fun calculateEventType(newItem: SeItemData): SeResultEvent {
-    return SeResultAddedEvent(newItem) // TODO: Calculate properly
-  }
+  private fun calculateEventType(newItem: SeItemData): SeResultEvent =
+    if (newItem.providerId.isTopHit()) {
+      // Handle TopHit items: frontend items have higher priority, and they are preferred over backend items.
+      items.firstOrNull {
+        it.providerId.isTopHit() && it.presentation.text == newItem.presentation.text
+      }?.let { oldItem ->
+        if (newItem.weight > oldItem.weight) {
+          SeResultReplacedEvent(oldItem, newItem)
+        }
+        else {
+          SeResultSkippedEvent(newItem)
+        }
+      } ?: SeResultAddedEvent(newItem)
+    }
+    else SeResultAddedEvent(newItem) // TODO: Calculate properly
+
+  private fun SeProviderId.isTopHit(): Boolean =
+    value == SeTopHitItemsProvider.id(true) || value == SeTopHitItemsProvider.id(false)
 }

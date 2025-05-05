@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.providers.topHit
+package com.intellij.platform.searchEverywhere.providers.topHit
 
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
@@ -27,8 +27,6 @@ object SeTopHitItemPresentationProvider {
 
   suspend fun getPresentation(item: Any, project: Project): SeItemPresentation =
     readAction {
-      val descriptionText = "TOP_HIT"
-
       when (item) {
          is AnAction -> {
            val templatePresentation: Presentation = item.getTemplatePresentation()
@@ -45,7 +43,7 @@ object SeTopHitItemPresentationProvider {
              icon = toSize(icon, iconSize, iconSize)
            }
 
-           SeSimpleItemPresentation((icon ?: EmptyIcon.ICON_16).rpcId(), text, descriptionText)
+           SeSimpleItemPresentation((icon ?: EmptyIcon.ICON_16).rpcId(), text)
          }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
@@ -66,14 +64,13 @@ object SeTopHitItemPresentationProvider {
             SeOptionActionItemPresentation(SeActionItemPresentation.Common(text + " TOP_HIT", _switcherState = item.isOptionEnabled),
                                            isBooleanOption = true)
           }
-          else SeSimpleItemPresentation(EmptyIcon.ICON_16.rpcId(), textChunk, selectedTextChunk, descriptionText)
+          else SeSimpleItemPresentation(EmptyIcon.ICON_16.rpcId(), textChunk, selectedTextChunk)
         }
         else -> {
           val presentation: ItemPresentation? = item as? ItemPresentation ?: (item as? NavigationItem)?.presentation
 
           SeSimpleItemPresentation((presentation?.getIcon(false) ?: EmptyIcon.ICON_16).rpcId(),
-                                   presentation?.presentableText ?: item.toString(),
-                                   descriptionText)
+                                   presentation?.presentableText ?: item.toString())
         }
       }
     }

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.providers.topHit
+package com.intellij.platform.searchEverywhere.providers.topHit
 
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -11,11 +11,15 @@ import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTopHitItemsProviderFactory : SeItemsProviderFactory {
+abstract class SeTopHitItemsProviderFactory : SeItemsProviderFactory {
+  protected abstract val isHost: Boolean
+  protected abstract val displayName: @Nls String
+
   override val id: String
-    get() = SeTopHitItemsProvider.ID
+    get() = SeTopHitItemsProvider.id(isHost)
 
   override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
     val legacyContributor = readAction {
@@ -24,6 +28,6 @@ class SeTopHitItemsProviderFactory : SeItemsProviderFactory {
       TopHitSEContributor.Factory().createContributor(actionEvent)
     }
 
-    return SeTopHitItemsProvider(project, SeAsyncContributorWrapper(legacyContributor))
+    return SeTopHitItemsProvider(isHost, project, SeAsyncContributorWrapper(legacyContributor), displayName)
   }
 }

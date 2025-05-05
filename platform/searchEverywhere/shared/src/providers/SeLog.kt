@@ -5,41 +5,43 @@ import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object SeLog {
-  const val DEFAULT: Int = 0
-  const val ITEM_EMIT: Int = 1
-  const val USER_ACTION: Int = 2
-  const val LIFE_CYCLE: Int = 3
-  const val FROZEN_COUNT: Int = 4
+enum class SeLog {
+  DEFAULT,
+  ITEM_EMIT,
+  USER_ACTION,
+  LIFE_CYCLE,
+  FROZEN_COUNT;
 
-  private val allowedCategories = setOf(
-    DEFAULT,
-    ITEM_EMIT,
-    USER_ACTION,
-    LIFE_CYCLE,
-    FROZEN_COUNT
-  )
+  companion object {
+    private val allowedCategories = setOf(
+      DEFAULT,
+      ITEM_EMIT,
+      USER_ACTION,
+      LIFE_CYCLE,
+      FROZEN_COUNT
+    )
 
-  // #com.intellij.platform.searchEverywhere.providers.SeLog
-  private val logger = Logger.getInstance(SeLog::class.java)
+    // #com.intellij.platform.searchEverywhere.providers.SeLog
+    private val logger = Logger.getInstance(SeLog::class.java)
 
-  fun log(category: Int = DEFAULT, message: String) {
-    if (!logger.isDebugEnabled || category !in allowedCategories) return
+    fun log(category: SeLog = DEFAULT, message: String) {
+      if (!logger.isDebugEnabled || category !in allowedCategories) return
 
-    logger.debug(message.withSePrefix())
+      logger.debug(message.withSePrefix(category))
+    }
+
+    fun log(category: SeLog = DEFAULT, messageProvider: () -> String) {
+      if (!logger.isDebugEnabled || category !in allowedCategories) return
+
+      logger.debug(messageProvider().withSePrefix(category))
+    }
+
+    suspend fun logSuspendable(category: SeLog = DEFAULT, messageProvider: suspend () -> String) {
+      if (!logger.isDebugEnabled || category !in allowedCategories) return
+
+      logger.debug(messageProvider().withSePrefix(category))
+    }
+
+    private fun String.withSePrefix(category: SeLog): String = "SearchEverywhere2 ($category): $this"
   }
-
-  fun log(category: Int = DEFAULT, messageProvider: () -> String) {
-    if (!logger.isDebugEnabled || category !in allowedCategories) return
-
-    logger.debug(messageProvider().withSePrefix())
-  }
-
-  suspend fun logSuspendable(category: Int = DEFAULT, messageProvider: suspend () -> String) {
-    if (!logger.isDebugEnabled || category !in allowedCategories) return
-
-    logger.debug(messageProvider().withSePrefix())
-  }
-
-  private fun String.withSePrefix(): String = "SearchEverywhere2: $this"
 }

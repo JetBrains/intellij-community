@@ -81,10 +81,11 @@ private class SeAllFilterEditor(private val providersIdToName: Map<SeProviderId,
     val namesMap = providersIdToName.map { it.key.value to it.value }.toMap()
 
     val configuration = SearchEverywhereConfiguration.getInstance()
-    val persistentFilter = PersistentSearchEverywhereContributorFilter(namesMap.keys.toList(),
-                                                                       configuration,
-                                                                       Function { key: String? -> namesMap[key] },
-                                                                       Function { c: String? -> null })
+    val persistentFilter =
+      PersistentSearchEverywhereContributorFilter(namesMap.keys.toList().sortedWith { a, b -> namesMap[a]!!.compareTo(namesMap[b]!!) },
+                                                  configuration,
+                                                  Function { key: String? -> namesMap[key] },
+                                                  Function { c: String? -> null })
 
     return SearchEverywhereFiltersAction(persistentFilter) {
       filterValue = filterValue.cloneWith(disabledProviders)

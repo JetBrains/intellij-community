@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.providers.topHit
+package com.intellij.platform.searchEverywhere.providers.topHit
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
@@ -21,25 +20,29 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project): SeItem {
+class SeTopHitItem(val item: Any, private val weight: Int, private val project: Project) : SeItem {
   override fun weight(): Int = weight
   override suspend fun presentation(): SeItemPresentation = SeTopHitItemPresentationProvider.getPresentation(item, project)
 }
 
 @ApiStatus.Internal
-class SeTopHitItemsProvider(private val project: Project,
-                            private val contributorWrapper: SeAsyncContributorWrapper<Any>): SeItemsProvider {
-  override val id: String = ID
-  override val displayName: @Nls String = IdeBundle.message("search.everywhere.group.name.top.hit")
+open class SeTopHitItemsProvider(
+  private val isHost: Boolean,
+  private val project: Project,
+  private val contributorWrapper: SeAsyncContributorWrapper<Any>,
+  override val displayName: @Nls String,
+) : SeItemsProvider {
+  override val id: String get() = id(isHost)
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
-    val weight = TopHitSEContributor.TOP_HIT_ELEMENT_PRIORITY
+    val additionalWeight = if (isHost) 0 else 1
+    val weight = TopHitSEContributor.TOP_HIT_ELEMENT_PRIORITY + additionalWeight
 
     coroutineToIndicator {
       val indicator = DelegatingProgressIndicator(ProgressManager.getGlobalProgressIndicator())
 
-      contributorWrapper.fetchElements(inputQuery, indicator, object: AsyncProcessor<Any> {
+      contributorWrapper.fetchElements(inputQuery, indicator, object : AsyncProcessor<Any> {
         override suspend fun process(t: Any): Boolean {
           return collector.put(SeTopHitItem(t, weight, project))
         }
@@ -50,7 +53,7 @@ class SeTopHitItemsProvider(private val project: Project,
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeTopHitItem)?.item ?: return false
     return withContext(Dispatchers.EDT) {
-      contributorWrapper.contributor.processSelectedItem (legacyItem, modifiers, searchText)
+      contributorWrapper.contributor.processSelectedItem(legacyItem, modifiers, searchText)
     }
   }
 
@@ -59,6 +62,6 @@ class SeTopHitItemsProvider(private val project: Project,
   }
 
   companion object {
-    val ID: String = TopHitSEContributor::class.java.getSimpleName()
+    fun id(isHost: Boolean): String = TopHitSEContributor::class.java.getSimpleName().let { if (isHost) "$it-Host" else it }
   }
 }
