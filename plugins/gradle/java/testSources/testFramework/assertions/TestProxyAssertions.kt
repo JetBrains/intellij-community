@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.assertions
 
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -18,7 +19,9 @@ object TestProxyAssertions {
     methodName: String? = null,
     parameterName: String? = null,
   ) {
-    val location = testProxy.getLocation(project, GlobalSearchScope.allScope(project))
+    val location = runReadAction {
+      testProxy.getLocation(project, GlobalSearchScope.allScope(project))
+    }
     Assertions.assertNotNull(location) {
       "Cannot resolve location for ${testProxy.locationUrl}"
     }
