@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
@@ -67,18 +67,18 @@ object FilesScanExecutor {
   }
 
   @JvmStatic
-  fun <T> processOnAllThreadsInReadActionWithRetries(deque: ConcurrentLinkedDeque<T>, consumer: (T) -> Boolean): Boolean {
+  fun <T: Any> processOnAllThreadsInReadActionWithRetries(deque: ConcurrentLinkedDeque<T>, consumer: (T) -> Boolean): Boolean {
     return doProcessOnAllThreadsInReadAction(deque, consumer, true)
   }
 
   @JvmStatic
-  fun <T> processOnAllThreadsInReadActionNoRetries(deque: ConcurrentLinkedDeque<T>, consumer: (T) -> Boolean): Boolean {
+  fun <T: Any> processOnAllThreadsInReadActionNoRetries(deque: ConcurrentLinkedDeque<T>, consumer: (T) -> Boolean): Boolean {
     return doProcessOnAllThreadsInReadAction(deque, consumer, false)
   }
 
-  private fun <T> doProcessOnAllThreadsInReadAction(deque: ConcurrentLinkedDeque<T>,
-                                                    consumer: (T) -> Boolean,
-                                                    retryCanceled: Boolean): Boolean {
+  private fun <T: Any> doProcessOnAllThreadsInReadAction(deque: ConcurrentLinkedDeque<T>,
+                                                         consumer: (T) -> Boolean,
+                                                         retryCanceled: Boolean): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationEx
     return processOnAllThreads(deque) { o ->
       if (application.isReadAccessAllowed) {
@@ -97,7 +97,7 @@ object FilesScanExecutor {
     }
   }
 
-  private fun <T> processOnAllThreads(deque: ConcurrentLinkedDeque<T>, processor: (T) -> Boolean): Boolean {
+  private fun <T: Any> processOnAllThreads(deque: ConcurrentLinkedDeque<T>, processor: (T) -> Boolean): Boolean {
     ProgressManager.checkCanceled()
     if (deque.isEmpty()) {
       return true
