@@ -1,11 +1,7 @@
 UFile (package = ) [public final class SimpleAnnotated {...]
     UClass (name = SimpleAnnotated) [public final class SimpleAnnotated {...}]
-        UField (name = property) [@org.jetbrains.annotations.NotNull @kotlin.SinceKotlin(version = "1.0") private final var property: java.lang.String = "Mary"]
+        UField (name = property) [@org.jetbrains.annotations.NotNull private final var property: java.lang.String = "Mary"]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UAnnotation (fqName = kotlin.SinceKotlin) [@kotlin.SinceKotlin(version = "1.0")]
-                UNamedExpression (name = version) [version = "1.0"] = Undetermined
-                    UPolyadicExpression (operator = +) ["1.0"] = "1.0"
-                        ULiteralExpression (value = "1.0") ["1.0"] = "1.0"
             UPolyadicExpression (operator = +) ["Mary"] = "Mary"
                 ULiteralExpression (value = "Mary") ["Mary"] = "Mary"
         UMethod (name = method) [@kotlin.Suppress(names = "abc")...}]

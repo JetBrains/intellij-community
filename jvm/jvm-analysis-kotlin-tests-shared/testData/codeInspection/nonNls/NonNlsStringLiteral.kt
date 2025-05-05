@@ -1,6 +1,7 @@
 import org.jetbrains.annotations.NonNls
 
-@NonNls var topLevelVar = "topLevelNonNlsVarValue"
+@NonNls
+var topLevelVar = "topLevelNonNlsVarValue"
 
 class NonNlsStringLiteral {
   @NonNls
