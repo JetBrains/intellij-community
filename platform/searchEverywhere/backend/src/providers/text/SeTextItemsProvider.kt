@@ -25,7 +25,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int) 
   override suspend fun presentation(): SeItemPresentation =
     SeTextSearchItemPresentation(item.presentableText,
                                  item.presentation.text.map { chunk ->
-                                   SeTextSearchItemPresentation.SerializableTextChunk(
+                                   SerializableTextChunk(
                                      chunk.text,
                                      chunk.attributes.foregroundColor.rpcId(),
                                      chunk.attributes.fontType

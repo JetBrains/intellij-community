@@ -13,10 +13,9 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
-import com.intellij.platform.searchEverywhere.SeActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeItemPresentation
-import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
-import com.intellij.platform.searchEverywhere.SeSimpleItemPresentation
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.ui.Changeable
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil.toSize
 import com.intellij.util.ui.EmptyIcon
@@ -41,8 +40,8 @@ object SeTopHitItemPresentationProvider {
                icon = toolWindow.getIcon()
              }
            }
-           val text = templatePresentation.getText()
-           if (icon != null && icon.getIconWidth() <= iconSize && icon.getIconHeight() <= iconSize) {
+           val text = templatePresentation.text
+           if (icon != null && icon.iconWidth <= iconSize && icon.iconHeight <= iconSize) {
              icon = toSize(icon, iconSize, iconSize)
            }
 
@@ -50,21 +49,24 @@ object SeTopHitItemPresentationProvider {
          }
         is OptionDescription -> {
           val text = TopHitSEContributor.getSettingText(item)
-          //val attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES
-          //if (item is Changeable && (item as Changeable).hasChanged()) {
-          //  if (selected) {
-          //    attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
-          //  }
-          //  else {
-          //    val base = SimpleTextAttributes.LINK_BOLD_ATTRIBUTES
-          //    attrs = base.derive(SimpleTextAttributes.STYLE_BOLD, base.getFgColor(), null, null)
-          //  }
-          //}
+          val isChangedChangeable = item is Changeable && (item as Changeable).hasChanged()
+
+          val textChunk = (if (isChangedChangeable) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES).let {
+            SerializableTextChunk(text, it)
+          }
+          val base = SimpleTextAttributes.LINK_BOLD_ATTRIBUTES
+          val selectedTextChunk =
+            (if (isChangedChangeable)
+              base.derive(SimpleTextAttributes.STYLE_BOLD, base.fgColor, null, null)
+            else null)?.let {
+              SerializableTextChunk(text, it)
+            }
+
           if (item is BooleanOptionDescription) {
-            SeOptionActionItemPresentation(SeActionItemPresentation.Common(text, _switcherState = item.isOptionEnabled),
+            SeOptionActionItemPresentation(SeActionItemPresentation.Common(text + " TOP_HIT", _switcherState = item.isOptionEnabled),
                                            isBooleanOption = true)
           }
-          else SeSimpleItemPresentation(EmptyIcon.ICON_16.rpcId(), text, descriptionText)
+          else SeSimpleItemPresentation(EmptyIcon.ICON_16.rpcId(), textChunk, selectedTextChunk, descriptionText)
         }
         else -> {
           val presentation: ItemPresentation? = item as? ItemPresentation ?: (item as? NavigationItem)?.presentation

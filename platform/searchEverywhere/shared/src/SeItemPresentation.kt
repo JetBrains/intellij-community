@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -28,8 +29,17 @@ sealed interface SeItemPresentation {
 @Serializable
 class SeSimpleItemPresentation(
   val iconId: IconId? = null,
-  override val text: @Nls String,
-  val description: @NlsSafe String? = null) : SeItemPresentation
+  val textChunk: SerializableTextChunk? = null,
+  val selectedTextChunk: SerializableTextChunk? = null,
+  val description: @NlsSafe String? = null) : SeItemPresentation {
+    override val text: @Nls String get() = textChunk?.text ?: ""
+
+  constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null) : this(
+    iconId,
+    text?.let { SerializableTextChunk(it, null, 0) },
+    null,
+    description)
+  }
 
 @ApiStatus.Internal
 sealed interface SeActionItemPresentation : SeItemPresentation {
@@ -136,7 +146,12 @@ class SeTextSearchItemPresentation(
   val fileString: @NlsSafe String,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
+}
 
-  @Serializable
-  class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId?, val fontType: Int)
+@ApiStatus.Internal
+@Serializable
+class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId?, val fontType: Int) {
+  @Suppress("USELESS_CAST")
+  constructor(text: @NlsSafe String, attributes: SimpleTextAttributes) :
+    this(text, (attributes.fgColor as? Color)?.rpcId(), attributes.fontStyle)
 }
