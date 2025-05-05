@@ -47,6 +47,10 @@ object CreateParameterUtil {
                             Pair(if (klass is KtClass) klass else null, ValVar.NONE)
                     }
 
+                    it is KtConstructorDelegationCall -> {
+                        Pair(it.getStrictParentOfType<KtClassOrObject>(), ValVar.NONE)
+                    }
+
                     it is KtClassBody -> {
                         val klass = it.parent as? KtClassOrObject
                         when {
