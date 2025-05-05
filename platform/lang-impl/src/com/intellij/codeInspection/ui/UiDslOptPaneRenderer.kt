@@ -287,16 +287,20 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
                 is MemberChooserObject -> {
                   optElement.icon?.let { icon(it) }
                   text(optElement.text) {
+                    speedSearch {}
                     attributes = optElement.attributes
                   }
                   optElement.secondaryText?.let {
                     text(it) {
+                      speedSearch {}
                       attributes = optElement.secondaryTextAttributes
                     }
                   }
                 }
                 else -> {
-                  text(optElement.text)
+                  text(optElement.text) {
+                    speedSearch {}
+                  }
                 }
               }
             }
@@ -315,6 +319,7 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
                                 ?.let { list -> IntArray(list.size) { n -> list[n] } }
                               ?: IntArray(0)
           }
+          TreeUIHelper.getInstance().installListSpeedSearch(list) { element -> element.text }
 
           val scroll = JBScrollPane(list)
           scroll.minimumSize = JBDimension(350, 150)
