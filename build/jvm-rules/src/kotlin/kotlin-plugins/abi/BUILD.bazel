@@ -3,9 +3,11 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
 kt_jvm_library(
     name = "abi",
     srcs = glob(["**/*.kt"]),
-    deps = [
-        "//:kotlin-metadata",
-        "//:kotlin-compiler",
-    ],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     visibility = ["//visibility:public"],
+    deps = [
+        "//:kotlin-compiler",
+        "//:kotlin-metadata",
+        "//:kotlin-stdlib",
+    ],
 )
