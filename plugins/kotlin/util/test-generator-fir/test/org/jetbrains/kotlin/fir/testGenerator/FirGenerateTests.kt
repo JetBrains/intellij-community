@@ -274,6 +274,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 
+        testClass<AbstractK2TypeCodeFragmentCompletionTest> {
+            model("basic/typeFragments", pattern = KT_WITHOUT_FIR_PREFIX)
+        }
+
         testClass<AbstractK2JvmBasicCompletionFullJdkTest> {
             model("basic/fullJdk", pattern = KT_WITHOUT_FIR_PREFIX)
         }
