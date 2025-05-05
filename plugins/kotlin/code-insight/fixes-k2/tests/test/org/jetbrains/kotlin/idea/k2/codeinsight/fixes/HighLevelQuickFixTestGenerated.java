@@ -13136,6 +13136,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/inlineTypeParameterFix/function.kt");
         }
 
+        @TestMetadata("nullableTypeParam.kt")
+        public void testNullableTypeParam() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/inlineTypeParameterFix/nullableTypeParam.kt");
+        }
+
         @TestMetadata("typeConstraint.kt")
         public void testTypeConstraint() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/inlineTypeParameterFix/typeConstraint.kt");

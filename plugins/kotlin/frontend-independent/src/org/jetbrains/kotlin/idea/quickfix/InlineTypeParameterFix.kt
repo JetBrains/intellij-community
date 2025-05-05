@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
@@ -26,7 +26,10 @@ class InlineTypeParameterFix(
         val parameterList = parameterListOwner.typeParameterList ?: return
         val (parameter, bound, constraint) = prepareInlineTypeParameterContext(element, parameterList) ?: return
 
-        val writableTypeReferences = typeReferencesToInline.mapNotNull { it.element }.map(updater::getWritable)
+        val writableTypeReferences = typeReferencesToInline.mapNotNull { it.element }
+            .map(updater::getWritable)
+            .mapNotNull(KtTypeReference::getTypeElementWithoutQuestionMark)
+
         writableTypeReferences.forEach { it.replace(bound) }
 
         if (parameterList.parameters.size == 1) {
@@ -73,3 +76,6 @@ fun prepareInlineTypeParameterContext(
         else -> null
     }
 }
+
+private fun KtTypeReference.getTypeElementWithoutQuestionMark(): KtTypeElement? =
+    (typeElement as? KtNullableType)?.innerType ?: typeElement

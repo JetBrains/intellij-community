@@ -10634,6 +10634,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/inlineTypeParameterFix/function.kt");
         }
 
+        @TestMetadata("nullableTypeParam.kt")
+        public void testNullableTypeParam() throws Exception {
+            runTest("testData/quickfix/inlineTypeParameterFix/nullableTypeParam.kt");
+        }
+
         @TestMetadata("typeConstraint.kt")
         public void testTypeConstraint() throws Exception {
             runTest("testData/quickfix/inlineTypeParameterFix/typeConstraint.kt");
