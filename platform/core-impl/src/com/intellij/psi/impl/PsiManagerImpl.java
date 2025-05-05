@@ -71,6 +71,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
   
   @NonInjectable
+  @ApiStatus.Internal
   public PsiManagerImpl(@NotNull Project project, FileManagerEx fileManager) {
     // we need to initialize PsiBuilderFactory service, so it won't initialize under PsiLock from ChameleonTransform
     PsiBuilderFactory.getInstance();
