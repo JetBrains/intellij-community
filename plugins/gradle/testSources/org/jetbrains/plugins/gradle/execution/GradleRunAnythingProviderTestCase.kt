@@ -18,7 +18,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
-import com.intellij.testFramework.fixtures.BuildViewTestFixture
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -27,6 +27,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.junit.runners.Parameterized
 import java.util.concurrent.TimeUnit
 import javax.swing.tree.DefaultMutableTreeNode
@@ -159,18 +160,14 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
   }
 
 
-  fun BuildView.assertExecutionTree(
-    expected: String
-  ): BuildView = apply {
-    BuildViewTestFixture.assertExecutionTree(this, expected, false)
+  fun BuildView.assertExecutionTree(expected: String): BuildView = apply {
+    BuildViewAssertions.assertBuildViewTreeText(this) {
+      Assertions.assertEquals(expected.trim(), it.trim())
+    }
   }
 
-  fun BuildView.assertExecutionTreeNode(
-    nodeText: String,
-    assertSelected: Boolean = false,
-    consoleTextChecker: (String?) -> Unit
-  ): BuildView = apply {
-    BuildViewTestFixture.assertExecutionTreeNode(this, nodeText, consoleTextChecker, null, assertSelected)
+  fun BuildView.assertExecutionTreeNode(nodeText: String, assert: (String) -> Unit): BuildView = apply {
+    BuildViewAssertions.assertBuildViewNodeConsoleText(this, nodeText, assert)
   }
 
   companion object {

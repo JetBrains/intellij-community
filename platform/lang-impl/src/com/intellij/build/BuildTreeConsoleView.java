@@ -501,7 +501,10 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
   @ApiStatus.Internal
   @TestOnly
   public @Nullable ExecutionConsole getSelectedNodeConsole() {
-    ExecutionConsole console = myConsoleViewHandler.getCurrentConsole();
+    ExecutionConsole console = ObjectUtils.notNull(
+      myConsoleViewHandler.getCurrentConsole(),
+      () -> myConsoleViewHandler.getEmptyConsole()
+    );
     if (console instanceof ConsoleViewImpl) {
       ((ConsoleViewImpl)console).flushDeferredText();
     }
@@ -1014,6 +1017,11 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
     private void updateProgressBar(long total, long progress) {
       myPanelWithProgress.updateProgress(total, progress);
+    }
+
+    @TestOnly
+    private @NotNull ExecutionConsole getEmptyConsole() {
+      return myView.getView(EMPTY_CONSOLE_NAME);
     }
 
     private @Nullable ExecutionConsole getCurrentConsole() {

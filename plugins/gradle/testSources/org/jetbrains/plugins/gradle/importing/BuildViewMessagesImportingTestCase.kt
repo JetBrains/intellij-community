@@ -44,7 +44,7 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     buildViewTestFixture.assertSyncViewTreeSame(executionTreeText)
   }
 
-  protected fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String?) -> Unit) {
+  protected fun assertSyncViewTreeEquals(treeTestPresentationChecker: (String) -> Unit) {
     buildViewTestFixture.assertSyncViewTreeEquals(treeTestPresentationChecker)
   }
 

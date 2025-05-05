@@ -240,7 +240,7 @@ class BuildViewTest : LightPlatformTestCase() {
 
     buildViewTestFixture.assertBuildViewNode("cancelled", "")
     buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
-    buildViewTestFixture.assertBuildViewNodeConsole("Inner progress", ::assertNull)
+    buildViewTestFixture.assertBuildViewNode("Inner progress", "")
   }
 
   @Test
@@ -349,7 +349,7 @@ class BuildViewTest : LightPlatformTestCase() {
     )
 
     buildViewTestFixture.assertBuildViewNodeConsole("my event node text updated") { executionConsole ->
-      assertThat(executionConsole!!.component)
+      assertThat(executionConsole.component)
         .isEqualTo(component)
         .matches { (it as JButton).text == "test button" }
     }
