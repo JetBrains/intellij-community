@@ -1800,5 +1800,19 @@
     <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
     <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
     <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
+
+    <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
+    <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
+            icon="AllIcons.Nodes.PpWeb">
+    </action>
+    <group id="OpenInBrowserGroup" class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction">
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
+      <add-to-group group-id="RevealGroup" anchor="last"/>
+      <override-text place="RevealInPopup"/>
+    </group>
+    <group id="OpenInBrowserEditorContextBarGroupAction"
+           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">
+      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>
