@@ -3,8 +3,8 @@
 class MyClass {
     val value: Int = 42
 
-    fun String.doSomething() {
-        println("Value: ${value}, Param: ${this}")
+    fun String.doSomething(param: Int) {
+        println("Value: ${value}, Context Param: ${this}, Param: $param")
         withContext()
     }
 

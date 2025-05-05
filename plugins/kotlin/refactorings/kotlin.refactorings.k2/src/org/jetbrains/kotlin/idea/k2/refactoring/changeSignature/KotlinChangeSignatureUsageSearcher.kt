@@ -32,25 +32,29 @@ internal object KotlinChangeSignatureUsageSearcher {
         val oldSignatureParameters = ktCallableDeclaration.valueParameters
         val receiverOffset = if (ktCallableDeclaration.receiverTypeReference != null) 1 else 0
         for ((i, parameterInfo) in changeInfo.newParameters.withIndex()) {
-            val oldIndex = parameterInfo.oldIndex - receiverOffset
-            if (oldIndex >= 0 && oldIndex < oldSignatureParameters.size) {
-                val oldParam = oldSignatureParameters[oldIndex]
-                if (parameterInfo == changeInfo.receiverParameterInfo ||
-                    parameterInfo.oldName != parameterInfo.name ||
-                    isDataClass && i != parameterInfo.oldIndex
-                ) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
-                        val element = reference.element
-                        if (isDataClass &&
-                            element is KtSimpleNameExpression &&
-                            (element.parent as? KtCallExpression)?.calleeExpression == element &&
-                            element.getReferencedName() != parameterInfo.name &&
-                            OperatorNameConventions.COMPONENT_REGEX.matches(element.getReferencedName())
-                        ) {
-                            result.add(KotlinDataClassComponentUsage(element, "component${i + 1}"))
-                        } else if ((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName) {
-                            result.add(KotlinParameterUsage(element, parameterInfo))
-                        }
+            val oldParam = if (parameterInfo.wasContextParameter) {
+                ktCallableDeclaration.modifierList?.contextReceiverList?.contextParameters()?.getOrNull(parameterInfo.oldIndex)
+            } else {
+                val oldIndex = parameterInfo.oldIndex - receiverOffset
+                if (oldIndex >= 0 && oldIndex < oldSignatureParameters.size) {
+                    oldSignatureParameters[oldIndex]
+                } else null
+            } ?: continue
+            if (parameterInfo == changeInfo.receiverParameterInfo ||
+                parameterInfo.oldName != parameterInfo.name ||
+                isDataClass && i != parameterInfo.oldIndex
+            ) {
+                for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
+                    val element = reference.element
+                    if (isDataClass &&
+                        element is KtSimpleNameExpression &&
+                        (element.parent as? KtCallExpression)?.calleeExpression == element &&
+                        element.getReferencedName() != parameterInfo.name &&
+                        OperatorNameConventions.COMPONENT_REGEX.matches(element.getReferencedName())
+                    ) {
+                        result.add(KotlinDataClassComponentUsage(element, "component${i + 1}"))
+                    } else if ((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName) {
+                        result.add(KotlinParameterUsage(element, parameterInfo))
                     }
                 }
             }

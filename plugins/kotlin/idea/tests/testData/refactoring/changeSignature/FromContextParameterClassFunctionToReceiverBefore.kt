@@ -4,8 +4,8 @@ class MyClass {
     val value: Int = 42
 
     context(para<caret>m1: String)
-    fun doSomething() {
-        println("Value: $value, Param: $param1")
+    fun doSomething(param: Int) {
+        println("Value: $value, Context Param: $param1, Param: $param")
         withContext()
     }
 

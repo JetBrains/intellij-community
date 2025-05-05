@@ -266,4 +266,8 @@ class KotlinFirChangeSignatureTest :
     fun testConflictingRenameContextParameter() = doTestConflict {
         newParameters[0].name = "a"
     }
+
+    fun testRenameContextParameter() = doTest {
+        newParameters[0].name = "a"
+    }
 }
