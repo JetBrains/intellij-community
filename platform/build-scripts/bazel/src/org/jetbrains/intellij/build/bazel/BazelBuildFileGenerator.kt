@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
@@ -30,8 +32,8 @@ internal class ModuleList(
   @JvmField val ultimate: List<ModuleDescriptor>,
   val skippedModules: List<String>,
 ) {
-  val deps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
-  val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
+  @JvmField val deps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
+  @JvmField val testDeps = IdentityHashMap<ModuleDescriptor, ModuleDeps>()
 }
 
 @Suppress("ReplaceGetOrSet")
@@ -520,10 +522,10 @@ internal class BazelBuildFileGenerator(
     module: ModuleDescriptor,
     forTests: Boolean,
   ): GenerateResourcesResult {
-    if (module.sources.isEmpty() && !(module.module.dependenciesList.dependencies.none {
-        when (it) {  // -- require
+    if (module.sources.isEmpty() && module.testSources.isEmpty() && !(module.module.dependenciesList.dependencies.none { element ->
+        when (element) {
           is JpsModuleDependency, is JpsLibraryDependency -> {
-            val scope = javaExtensionService.getDependencyExtension(it)?.scope
+            val scope = javaExtensionService.getDependencyExtension(element)?.scope
             scope != JpsJavaDependencyScope.TEST && scope != JpsJavaDependencyScope.RUNTIME
           }
           else -> false
@@ -659,7 +661,7 @@ private fun extraResourceTarget(
     .mapNotNull { sourceRoot ->
       val sourceRootDir = sourceRoot.path
       val metaInf = sourceRootDir.resolve("META-INF")
-      if (!Files.exists(metaInf)) {
+      if (Files.notExists(metaInf)) {
         return@mapNotNull null
       }
 

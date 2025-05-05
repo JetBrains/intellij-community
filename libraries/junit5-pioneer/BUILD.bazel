@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.libraries.junit5.pioneer` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "junit5-pioneer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "junit5-pioneer",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:junit5Pioneer"],
+  runtime_deps = [
+    ":junit5-pioneer_resources",
+    "@lib//:junit5Pioneer",
+    "//libraries/junit5-launcher",
+    "//libraries/junit5-params",
+  ]
+)
+### auto-generated section `build intellij.libraries.junit5.pioneer` end

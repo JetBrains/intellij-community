@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.testcontainers` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "testcontainers_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "testcontainers",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:testcontainers"],
+  runtime_deps = [
+    ":testcontainers_resources",
+    "//libraries/junit4",
+  ]
+)
+### auto-generated section `build intellij.libraries.testcontainers` end
