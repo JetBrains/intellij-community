@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
+import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInspection.options.*
@@ -282,8 +283,22 @@ class UiDslOptPaneRenderer : OptionPaneRenderer {
         is OptMultiSelector -> {
           val list = JBList(component.elements).apply {
             cellRenderer = listCellRenderer {
-              // TODO: recognise implementations of OptElement that provide more than text
-              text(value.text)
+              when (val optElement = value) {
+                is MemberChooserObject -> {
+                  optElement.icon?.let { icon(it) }
+                  text(optElement.text) {
+                    attributes = optElement.attributes
+                  }
+                  optElement.secondaryText?.let {
+                    text(it) {
+                      attributes = optElement.secondaryTextAttributes
+                    }
+                  }
+                }
+                else -> {
+                  text(optElement.text)
+                }
+              }
             }
             addListSelectionListener {
               context.setOption(component.bindId, selectedValuesList)
