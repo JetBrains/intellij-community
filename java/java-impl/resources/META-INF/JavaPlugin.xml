@@ -1050,6 +1050,7 @@
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.XmlSurroundWithRangeAdjuster"/>
     <liveTemplateSubstitutor implementation="com.intellij.codeInsight.template.impl.JavaTemplateSubstitutor"/>
     <defaultLiveTemplates file="liveTemplates/Java"/>
+    <defaultLiveTemplates file="liveTemplates/JavaImplicitClass"/>
     <treeStructureProvider id="ClassesTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider"
                            order="last, after NestingTreeStructureProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
@@ -1194,6 +1195,10 @@
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$ElsePlace"/>
     <liveTemplateContext contextId="JAVA_DECLARATION" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCodeContextType$Declaration"/>
+    <liveTemplateContext contextId="JAVA_IMPLICIT_CLASS_DECLARATION" baseContextId="JAVA_CODE"
+                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$ImplicitClassDeclaration"/>
+    <liveTemplateContext contextId="JAVA_NORMAL_CLASS_DECLARATION" baseContextId="JAVA_CODE"
+                         implementation="com.intellij.codeInsight.template.JavaCodeContextType$NormalClassDeclaration"/>
     <liveTemplateContext contextId="JAVA_COMMENT" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.JavaCommentContextType"/>
     <liveTemplateContext contextId="JAVA_STRING" baseContextId="JAVA_CODE"

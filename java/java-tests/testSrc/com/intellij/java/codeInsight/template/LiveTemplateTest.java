@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class LiveTemplateTest extends LiveTemplateTestCase {
@@ -356,9 +357,11 @@ public class LiveTemplateTest extends LiveTemplateTestCase {
 
   public void testOtherContext() {
     configureFromFileText("a.java", "class Foo { <caret>xxx }");
-    assertInstanceOf(assertOneElement(
-                       TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()))),
-                     JavaCodeContextType.Declaration.class);
+    Set<TemplateContextType> types =
+      TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()));
+    assertEquals(2, types.size());
+    assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration.class)));
+    assertTrue(types.contains(TemplateContextTypes.getByClass(JavaCodeContextType.NormalClassDeclaration.class)));
 
     configureFromFileText("a.txt", "class Foo { <caret>xxx }");
     assertInstanceOf(assertOneElement(

@@ -11,7 +11,9 @@ import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.macro.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -295,7 +297,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     Set<TemplateContextType> contextTypeSet = TemplateManagerImpl
       .getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), myFixture.getEditor()));
     List<Class<? extends TemplateContextType>> applicableContextTypesClasses = ContainerUtil.map(contextTypeSet, TemplateContextType::getClass);
-    List<Class<JavaCodeContextType.Declaration>> declarationTypes = Arrays.asList(JavaCodeContextType.Declaration.class);
+    List<Class<? extends JavaCodeContextType>> declarationTypes = Arrays.asList(JavaCodeContextType.Declaration.class, JavaCodeContextType.NormalClassDeclaration.class);
 
     assertEquals(applicableContextTypesClasses, declarationTypes);
   }
@@ -335,8 +337,28 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertTrue(isApplicable("class Foo {{ \"\"\"<caret>\"\"\" }}", template));
   }
 
-  public void testJavaDeclarationContext() {
+  public void testJavaNormalClassDeclarationContext() {
     final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+      assertTrue(isApplicable("class Foo { <caret>xxx }", template));
+      assertTrue(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
+      assertFalse(isApplicable("<caret>", template));
+      assertFalse(isApplicable("int a = 1; <caret>", template));
+    });
+  }
+
+  public void testImplicitClassDeclarationContext() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java (Implicitly declared classes)");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
+      assertFalse(isApplicable("class Foo { <caret>xxx }", template));
+      assertFalse(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));
+      assertTrue(isApplicable("<caret>xxx", template));
+      assertTrue(isApplicable("int a = 1; <caret>xxx", template));
+    });
+  }
+
+  public void testJavaDeclarationContext() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psf", "Java");
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertFalse(isApplicable("class Foo {{ <caret>xxx }}", template));
     assertFalse(isApplicable("class Foo {{ if (a <caret>xxx) }}", template));

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templateSet group="Java (Implicitly declared classes)">
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.psvm"
+            name="psvm" toReformat="true" toShortenFQNames="true" value="void main(){&#13;&#10;  $END$&#13;&#10;}">
+    <context>
+      <option name="JAVA_IMPLICIT_CLASS_DECLARATION" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.short.psvm"
+            name="main" toReformat="true" toShortenFQNames="true" value="void main(){&#13;&#10;  $END$&#13;&#10;}">
+    <context>
+      <option name="JAVA_IMPLICIT_CLASS_DECLARATION" value="true" />
+    </context>
+  </template>
+</templateSet>

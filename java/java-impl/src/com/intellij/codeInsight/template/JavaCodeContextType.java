@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
@@ -241,6 +243,42 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       }
       PsiElement greatGrandParent = grandParent.getParent();
       return greatGrandParent instanceof PsiRecordHeader || greatGrandParent instanceof PsiRecordComponent;
+    }
+  }
+
+  public static final class ImplicitClassDeclaration extends JavaCodeContextType {
+    public ImplicitClassDeclaration() {
+      super(JavaBundle.message("live.template.context.implicit.class.declaration"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, element)) {
+        return false;
+      }
+      PsiFile containingFile = element.getContainingFile();
+      if (!(containingFile instanceof PsiJavaFile javaFile) || javaFile.getPackageStatement() != null) {
+        return false;
+      }
+      //first element is identifier
+      PsiElement parent = element.getParent();
+      return parent instanceof PsiJavaCodeReferenceElement &&
+             parent.getParent() instanceof PsiTypeElement psiTypeElement &&
+             (psiTypeElement.getParent() instanceof PsiJavaFile || psiTypeElement.getParent() instanceof PsiImplicitClass);
+    }
+  }
+
+  public static final class NormalClassDeclaration extends JavaCodeContextType {
+    private final JavaCodeContextType declarationContext = new Declaration();
+    private final JavaCodeContextType implicitClassContext = new ImplicitClassDeclaration();
+
+    public NormalClassDeclaration() {
+      super(JavaBundle.message("live.template.context.normal.class.declaration"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return declarationContext.isInContext(element) && !implicitClassContext.isInContext(element);
     }
   }
 }
