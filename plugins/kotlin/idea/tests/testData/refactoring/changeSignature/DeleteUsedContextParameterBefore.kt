@@ -6,6 +6,5 @@ class MyClass {
     context(para<caret>m1: String)
     fun doSomething() {
         println("Value: $value, Param: $param1")
-        withContext()
     }
 }

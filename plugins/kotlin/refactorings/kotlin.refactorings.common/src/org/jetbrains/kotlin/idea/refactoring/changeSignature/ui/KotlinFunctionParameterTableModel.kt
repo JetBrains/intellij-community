@@ -27,7 +27,7 @@ abstract class KotlinFunctionParameterTableModel<P: KotlinModifiableParameterInf
         KotlinFileType.INSTANCE
     ),
   DefaultParameterColumn(),
-  ContextParameterColumn<KotlinModifiableParameterInfo, ParameterTableModelItemBase<KotlinModifiableParameterInfo>>(),
+  ContextParameterColumn<KotlinModifiableParameterInfo>(),
   ReceiverColumn(methodDescriptor),
 ) {
     override fun removeRow(idx: Int) {
@@ -64,7 +64,7 @@ abstract class KotlinFunctionParameterTableModel<P: KotlinModifiableParameterInf
             BooleanTableCellEditor()
     }
 
-    private class ContextParameterColumn<P: KotlinModifiableParameterInfo, V>() :
+    private class ContextParameterColumn<P: KotlinModifiableParameterInfo>() :
         ColumnInfoBase<P, ParameterTableModelItemBase<P>, Boolean>(KotlinBundle.message("column.name.context.parameter")) {
 
         override fun valueOf(item: ParameterTableModelItemBase<P>): Boolean = item.parameter.isContextParameter
@@ -85,6 +85,6 @@ abstract class KotlinFunctionParameterTableModel<P: KotlinModifiableParameterInf
 
     companion object {
         fun isReceiverColumn(column: ColumnInfo<*, *>?): Boolean = column is ReceiverColumn<*, *>
-        fun isContextParameterColumn(column: ColumnInfo<*, *>?): Boolean = column is ContextParameterColumn<*, *>
+        fun isContextParameterColumn(column: ColumnInfo<*, *>?): Boolean = column is ContextParameterColumn<*>
     }
 }

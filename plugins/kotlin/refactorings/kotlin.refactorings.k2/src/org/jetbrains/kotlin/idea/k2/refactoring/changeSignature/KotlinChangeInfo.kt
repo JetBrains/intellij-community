@@ -124,8 +124,7 @@ class KotlinChangeInfo(
     }
 
     private val isParameterSetOrOrderChangedLazy: Boolean by lazy {
-        val signatureParameters = getNonReceiverParameters().filterNot { it.isContextParameter }
-        val contextParameters = getNonReceiverParameters().filter { it.isContextParameter }
+        val (contextParameters, signatureParameters) = getNonReceiverParameters().partition { it.isContextParameter }
         methodDescriptor.receiver?.oldIndex != receiverParameterInfo?.oldIndex ||
                 signatureParameters.size != methodDescriptor.parametersCount ||
                 signatureParameters.indices.any { i -> signatureParameters[i].oldIndex != i } ||

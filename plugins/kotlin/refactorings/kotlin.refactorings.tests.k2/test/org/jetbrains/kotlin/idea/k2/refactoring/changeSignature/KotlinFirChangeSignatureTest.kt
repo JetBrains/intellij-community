@@ -233,11 +233,24 @@ class KotlinFirChangeSignatureTest :
     }
 
     fun testToContextParameterClassFunctionFromReceiver() = doTest {
-        this.newParameters[0].isContextParameter = true
+        newParameters[0].isContextParameter = true
+        receiverParameterInfo = null
+    }
+
+    fun testToContextParameterFromReceiverWithUnqualifiedThisInFunctionalLiteral() = doTest {
+        newParameters[0].isContextParameter = true
         receiverParameterInfo = null
     }
 
     fun testFromContextParameterClassFunction() = doTest {
+        newParameters[0].isContextParameter = false
+    }
+
+    fun testFromContextParameterClassFunctionSubtyping() = doTest {
+        newParameters[0].isContextParameter = false
+    }
+
+    fun testFromContextParameterInsideAnotherContextFunction() = doTest {
         newParameters[0].isContextParameter = false
     }
 

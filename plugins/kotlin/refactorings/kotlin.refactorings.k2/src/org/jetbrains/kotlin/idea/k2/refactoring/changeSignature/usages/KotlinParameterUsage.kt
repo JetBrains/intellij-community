@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -119,8 +120,15 @@ fun PsiElement.qualifyNestedThisExpressions() {
         }
         val element = thisExpression.instanceReference.mainReference.resolve()
         val label = when (element) {
-            is KtClassOrObject -> element.nameAsName?.asString()
-            is KtTypeReference -> element.getParentOfType<KtCallableDeclaration>(true)?.nameAsName?.asString()
+            is KtClassOrObject -> element.name
+            is KtTypeReference -> element.getParentOfType<KtCallableDeclaration>(true)?.name
+            is KtFunctionLiteral -> {
+                allowAnalysisFromWriteActionInEdt(element) {
+                    element.containingKtFile.scopeContext(element).implicitReceivers.firstNotNullOfOrNull {
+                        it.ownerSymbol as? KaClassSymbol
+                    }?.name?.asString()
+                }
+            }
             else -> null
         } ?: return@forEachDescendantOfType
         thisExpression.replace(KtPsiFactory(project).createExpression("this@$label"))
