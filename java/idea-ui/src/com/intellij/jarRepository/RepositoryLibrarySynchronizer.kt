@@ -20,7 +20,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
@@ -41,11 +44,15 @@ private class RepositoryLibrarySynchronizer : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      project.trackActivity(LoadDependenciesActivityKey) {
-        val libs = collectLibrariesToSync(project)
-        if (!libs.isEmpty()) {
-          loadDependenciesSyncImpl(project, libs)}
+      project.serviceAsync<WorkspaceModel>().eventLog.collect { event ->
+        val libraryChanges = event.getChanges(LibraryEntity::class.java)
+        val libraryPropertiesChanges = event.getChanges(LibraryPropertiesEntity::class.java)
+        if (libraryChanges.isNotEmpty() || libraryPropertiesChanges.isNotEmpty()) {
+          loadDependenciesSync(project)
+        }
       }
+
+      loadDependenciesSync(project)
       return
     }
 
@@ -59,6 +66,19 @@ private class RepositoryLibrarySynchronizer : ProjectActivity {
     installOnExistingLibraries(globalLibSynchronizer, disposable)
     project.messageBus.connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer)
     synchronizationQueue.requestAllLibrariesSynchronization()
+  }
+
+
+  /**
+   * Load libraries in a synchronized way.
+   */
+  private suspend fun loadDependenciesSync(project: Project) {
+    project.trackActivity(LoadDependenciesActivityKey) {
+      val libs = collectLibrariesToSync(project)
+      if (!libs.isEmpty()) {
+        loadDependenciesSyncImpl(project, libs)
+      }
+    }
   }
 }
 
