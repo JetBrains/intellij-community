@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -282,6 +280,30 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("a<selection>b\nc</selection>d");
     executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
     checkResultByText("ab\ncd\n<selection>ab\ncd</selection>");
+  }
+
+  public void testDuplicateLinesMultiCaretLineStart() {
+    String before = """
+      <caret>one
+      <caret>two
+      <caret>three
+      """;
+    String after = """
+      one
+      <caret>one
+      two
+      <caret>two
+      three
+      <caret>three
+      """;
+
+    initText(before);
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    checkResultByText(after);
+
+    initText(before);
+    ctrlD();
+    checkResultByText(after);
   }
   
   public void testDuplicateLineWithGuardedBlock() {

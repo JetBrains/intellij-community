@@ -33,7 +33,7 @@ public final class MoveElementLeftRightActionHandler extends EditorWriteActionHa
   }
 
   @Override
-  protected boolean reverseCaretOrder() {
+  public boolean reverseCaretOrder() {
     return !myIsLeft;
   }
 

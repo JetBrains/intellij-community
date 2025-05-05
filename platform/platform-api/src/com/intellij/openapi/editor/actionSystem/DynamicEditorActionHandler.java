@@ -42,7 +42,7 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
   }
 
   @Override
-  protected boolean reverseCaretOrder() {
+  public boolean reverseCaretOrder() {
     return getHandler().reverseCaretOrder();
   }
 

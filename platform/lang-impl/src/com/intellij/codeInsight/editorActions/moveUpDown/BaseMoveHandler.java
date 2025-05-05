@@ -27,7 +27,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCa
   }
 
   @Override
-  protected boolean reverseCaretOrder() {
+  public boolean reverseCaretOrder() {
     return isDown;
   }
 

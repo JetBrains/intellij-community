@@ -2046,7 +2046,7 @@ a:com.intellij.openapi.editor.actionSystem.EditorActionHandler
 - isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):Z
 - f:isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
 - p:isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
-- p:reverseCaretOrder():Z
+- reverseCaretOrder():Z
 - runForAllCarets():Z
 a:com.intellij.openapi.editor.actionSystem.EditorActionHandler$ForEachCaret
 - com.intellij.openapi.editor.actionSystem.EditorActionHandler

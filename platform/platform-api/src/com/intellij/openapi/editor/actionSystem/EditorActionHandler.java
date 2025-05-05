@@ -179,7 +179,7 @@ public abstract class EditorActionHandler {
     return myRunForEachCaret;
   }
 
-  protected boolean reverseCaretOrder() {
+  public boolean reverseCaretOrder() {
     return false;
   }
 
