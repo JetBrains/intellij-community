@@ -388,6 +388,12 @@ public final class LocalRefUseInfo {
           }
         }
       }
+      else if (ref instanceof PsiJavaCodeReferenceElement javaRef && refElement instanceof PsiVariable &&
+               IncompleteModelUtil.canBeClassReference(javaRef)) {
+        for (PsiImportStatementBase potentialImport : IncompleteModelUtil.getPotentialImports(javaRef)) {
+          registerImportStatement(potentialImport);
+        }
+      }
     }
 
     @Override
