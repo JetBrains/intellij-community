@@ -123,11 +123,15 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
             private val components = ArrayList<JComponent>()
             private val nameEditor = EditorTextField(item.parameter.name, project, fileType)
             private val defaultParameterCheckbox = JCheckBox()
+            private val receiverCheckbox = JCheckBox()
+            private val contextParametersCheckbox = JCheckBox()
 
             private fun notifyReceiverListeners() {
                 val isNotReceiver = !item.isReceiverIn(parametersTableModel)
                 nameEditor.isEnabled = isNotReceiver
                 defaultParameterCheckbox.isEnabled = isNotReceiver && !item.parameter.isContextParameter
+                receiverCheckbox.isSelected = !isNotReceiver
+                contextParametersCheckbox.isSelected = item.parameter.isContextParameter
             }
 
             private fun isDefaultColumnEnabled() = item.parameter.isNewParameter && item.parameter != myMethod.receiver
@@ -181,7 +185,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
                         component = comboBox
                         editor = null
                     } else if (KotlinFunctionParameterTableModel.isReceiverColumn(columnInfo)) {
-                        val checkBox = JCheckBox()
+                        val checkBox = receiverCheckbox
                         checkBox.isSelected = parametersTableModel.receiver == item.parameter
                         checkBox.addItemListener(
                             disposable,
@@ -196,7 +200,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
                         component = checkBox
                         editor = null
                     } else if (supportContextParameters() && KotlinFunctionParameterTableModel.isContextParameterColumn(columnInfo)) {
-                        val checkBox = JCheckBox()
+                        val checkBox = contextParametersCheckbox
                         checkBox.isSelected = item.parameter.isContextParameter
                         checkBox.addItemListener(
                             disposable,
