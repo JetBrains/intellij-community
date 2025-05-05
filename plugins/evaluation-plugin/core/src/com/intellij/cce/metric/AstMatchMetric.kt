@@ -1,12 +1,12 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.evaluable.AIA_HIGHLIGHT_ERRORS
+import com.intellij.cce.evaluable.AIA_AST_MATCH
 import com.intellij.cce.metric.util.Sample
 
-class WithoutHighlightErrorsSessionRatio : Metric {
-  override val name: String = "Without Highlight Errors"
-  override val description: String = "Ratio of sessions without highlight errors appeared after modification"
+class AstMatchMetric : Metric {
+  override val name: String = "AST Match"
+  override val description: String = "Ratio of sessions where AST of predicted result completely matched with expected"
   override val valueType: MetricValueType = MetricValueType.DOUBLE
   override val showByDefault: Boolean = true
 
@@ -19,10 +19,9 @@ class WithoutHighlightErrorsSessionRatio : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach { lookup ->
-        val highlights = lookup.additionalList(AIA_HIGHLIGHT_ERRORS) ?: emptyList()
-        val withoutErrors = if (highlights.any { it.contains("[ERROR]") }) 0 else 1
-        sample.add(withoutErrors)
-        fileSample.add(withoutErrors)
+        val matched = lookup.additionalInfo[AIA_AST_MATCH] as? Double ?: 0.0
+        sample.add(matched)
+        fileSample.add(matched)
       }
     return fileSample.mean()
   }

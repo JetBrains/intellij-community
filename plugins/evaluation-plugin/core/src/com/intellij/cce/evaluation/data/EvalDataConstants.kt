@@ -202,6 +202,29 @@ object Analysis {
     )
   )
 
+  val EXPECTED_FUNCTION_CALLS: TrivialEvalData<List<String>> = EvalDataDescription(
+    name = "Expected function calls",
+    description = "Bind with the list of expected internal API calls",
+    placement = DataPlacement.AdditionalConcatenatedLines(AIA_EXPECTED_FUNCTION_CALLS),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      renderer = DataRenderer.Lines,
+    ),
+    problemIndicators = listOf(
+      ProblemIndicator.FromMetric { Metrics.FUNCTION_CALLING }
+    )
+  )
+
+  val ACTUAL_FUNCTION_CALLS: TrivialEvalData<List<String>> = EvalDataDescription(
+    name = "Actual function calls",
+    description = "Bind with the list of actual internal API calls",
+    placement = DataPlacement.AdditionalConcatenatedLines(AIA_ACTUAL_FUNCTION_CALLS),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      renderer = DataRenderer.Lines,
+    ),
+  )
+
   val HAS_NO_EFFECT: TrivialEvalData<Boolean> = EvalDataDescription(
     name = "Has no effect",
     description = "Bind with `true` if nothing has happened",
@@ -297,6 +320,15 @@ object Metrics {
     threshold = 1.0,
     dependencies = MetricDependencies(Analysis.FAILED_RELATED_FILE_VALIDATIONS)
   ) { RelatedFileValidationSuccess() }
+
+  val FUNCTION_CALLING: EvalMetric = EvalMetric(
+    threshold = 1.0,
+    dependencies = MetricDependencies(
+      Analysis.EXPECTED_FUNCTION_CALLS,
+      Analysis.ACTUAL_FUNCTION_CALLS,
+      DataRenderer.TextDiff
+    ) { expected, actual -> TextUpdate(expected.sorted().joinToString("\n"), actual.sorted().joinToString("\n")) }
+  ) { FunctionCallingMetric() }
 
   val EXACT_MATCH: EvalMetric = EvalMetric(
     threshold = 1.0,
