@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,30 +15,30 @@ import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurr
 final class VirtualDirectoryCache {
 
   /** FS roots only (dirs with .getParent()==null) */
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> idToRootCache = createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<VirtualDirectoryImpl> idToRootCache = createConcurrentIntObjectMap();
 
   /** FS inner dirs only (dirs with .getParent()!=null), separated from the root cache to speedup clear */
-  private final ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache = createConcurrentIntObjectSoftValueMap();
+  private final ConcurrentIntObjectMap<VirtualDirectoryImpl> idToDirCache = createConcurrentIntObjectSoftValueMap();
 
   @NotNull
-  VirtualFileSystemEntry getOrCacheDir(@NotNull VirtualFileSystemEntry newDir) {
+  VirtualDirectoryImpl getOrCacheDir(@NotNull VirtualDirectoryImpl newDir) {
     int id = newDir.getId();
-    ConcurrentIntObjectMap<VirtualFileSystemEntry> cache = getCache(newDir);
-    VirtualFileSystemEntry dir = cache.get(id);
+    ConcurrentIntObjectMap<VirtualDirectoryImpl> cache = getCache(newDir);
+    VirtualDirectoryImpl dir = cache.get(id);
     if (dir != null) return dir;
     return cache.cacheOrGet(id, newDir);
   }
 
-  private ConcurrentIntObjectMap<VirtualFileSystemEntry> getCache(@NotNull VirtualFileSystemEntry newDir) {
+  private ConcurrentIntObjectMap<VirtualDirectoryImpl> getCache(@NotNull VirtualDirectoryImpl newDir) {
     return newDir.getParent() == null ? idToRootCache : idToDirCache;
   }
 
-  void cacheDir(@NotNull VirtualFileSystemEntry newDir) {
+  void cacheDir(@NotNull VirtualDirectoryImpl newDir) {
     getCache(newDir).put(newDir.getId(), newDir);
   }
 
   @Nullable
-  VirtualFileSystemEntry cacheDirIfAbsent(@NotNull VirtualFileSystemEntry newDir) {
+  VirtualDirectoryImpl cacheDirIfAbsent(@NotNull VirtualDirectoryImpl newDir) {
     return getCache(newDir).putIfAbsent(newDir.getId(), newDir);
   }
 
@@ -60,7 +61,7 @@ final class VirtualDirectoryCache {
   }
 
   @NotNull
-  Iterable<VirtualFileSystemEntry> getCachedRootDirs() {
+  Iterable<VirtualDirectoryImpl> getCachedRootDirs() {
     return idToRootCache.values();
   }
 
