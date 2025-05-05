@@ -4,6 +4,7 @@ package org.jetbrains.jps.bazel.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.bazel.ElementSnapshot;
 import org.jetbrains.jps.bazel.ElementSnapshotDelta;
+import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 import org.jetbrains.jps.dependency.diff.Difference;
 
 import java.util.HashSet;
@@ -12,7 +13,7 @@ import java.util.Set;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
-public class ElementSnapshotDeltaImpl<T> implements ElementSnapshotDelta<T> {
+public class ElementSnapshotDeltaImpl<T extends ExternalizableGraphElement> implements ElementSnapshotDelta<T> {
   private final ElementSnapshot<T> myBaseSnapshot;
   private final Iterable<T> myDeleted;
   private final Iterable<T> myModified;

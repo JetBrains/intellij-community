@@ -23,6 +23,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import static org.jetbrains.jps.bazel.ZipOutputBuilder.*;
 import static org.jetbrains.jps.javac.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
@@ -78,17 +79,12 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
 
   @Override
-  public boolean isDirectory(String entryName) {
-    return isDirectoryName(entryName);
-  }
-
-  @Override
   public Iterable<String> listEntries(String entryName) {
     if (!isDirectoryName(entryName)) {
       return Set.of();
     }
     Set<String> children = myDirIndex.getOrDefault(entryName, Set.of());
-    return map(children, "/".equals(entryName)? n -> n : n -> entryName + n);
+    return "/".equals(entryName)? children : map(children, n -> entryName + n);
   }
 
   @Override
@@ -164,28 +160,6 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   private @NotNull Path getNewOutputName() {
     // todo: handle situation when file exists
     return myOutputZip.resolveSibling(myOutputZip.getFileName() + ".tmp");
-  }
-
-  @Nullable
-  private static String getParent(String entryName) {
-    if (entryName == null || entryName.isEmpty() || "/".equals(entryName)) {
-      return null;
-    }
-    int idx = isDirectoryName(entryName)? entryName.lastIndexOf('/', entryName.length() - 2) : entryName.lastIndexOf('/');
-    return idx > 0? entryName.substring(0, idx + 1) : "/";
-  }
-
-  @Nullable
-  private static String getShortName(String entryName) {
-    if (entryName == null || entryName.isEmpty() || "/".equals(entryName)) {
-      return entryName;
-    }
-    int idx = isDirectoryName(entryName)? entryName.lastIndexOf('/', entryName.length() - 2) : entryName.lastIndexOf('/');
-    return idx >= 0? entryName.substring(idx + 1) : entryName;
-  }
-
-  private static boolean isDirectoryName(String entryName) {
-    return entryName.endsWith("/");
   }
 
   private interface EntryData {
@@ -370,8 +344,8 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     }
   }
 
-  private static Iterable<String> allParentNames(String entryName) {
-    String parent = getParent(entryName);
+  private Iterable<String> allParentNames(String entryName) {
+    String parent = getParentEntryName(entryName);
     return parent == null? List.of() : () -> new Iterator<>() {
       private String next = parent;
       @Override
@@ -385,14 +359,14 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           throw new NoSuchElementException();
         }
         String result = next;
-        next = getParent(next);
+        next = getParentEntryName(next);
         return result;
       }
     };
   }
 
   private void addToPackageIndex(String entryName) {
-    String parent = getParent(entryName);
+    String parent = getParentEntryName(entryName);
     if (parent != null) {
       boolean added = myDirIndex.computeIfAbsent(parent, k -> new HashSet<>()).add(getShortName(entryName));
       if (added) {
@@ -414,7 +388,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         }
       }
     }
-    for (String parent = getParent(entryName); parent != null; parent = getParent(entryName)) {
+    for (String parent = getParentEntryName(entryName); parent != null; parent = getParentEntryName(entryName)) {
       Set<String> children = myDirIndex.get(parent);
       if (children == null) {
         break; // not associated

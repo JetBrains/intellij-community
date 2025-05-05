@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -187,7 +187,7 @@ public class GraphDataInputImpl implements GraphDataInput {
   }
 
   public static GraphDataInput wrap(DataInput in) {
-    return new GraphDataInputImpl(in);
+    return in instanceof GraphDataInput? (GraphDataInput)in : new GraphDataInputImpl(in);
   }
 
   public interface StringEnumerator {

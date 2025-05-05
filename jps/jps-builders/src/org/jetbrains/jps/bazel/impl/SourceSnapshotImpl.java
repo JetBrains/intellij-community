@@ -2,32 +2,29 @@
 package org.jetbrains.jps.bazel.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.bazel.SourceSnapshot;
+import org.jetbrains.jps.bazel.NodeSourceSnapshot;
 import org.jetbrains.jps.dependency.DataReader;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.impl.GraphDataInputImpl;
 
-import java.io.DataInput;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SourceSnapshotImpl implements SourceSnapshot {
+public class SourceSnapshotImpl implements NodeSourceSnapshot {
   private final Map<NodeSource, String> mySources;
 
   public SourceSnapshotImpl(Map<NodeSource, String> digestSources) {
     mySources = Map.copyOf(digestSources);
   }
   
-  public SourceSnapshotImpl(DataInput in, DataReader<? extends NodeSource> sourceReader) throws IOException {
-    GraphDataInput _inp = in instanceof GraphDataInput ? ((GraphDataInput) in) : new GraphDataInputImpl(in);
+  public SourceSnapshotImpl(GraphDataInput in, DataReader<? extends NodeSource> sourceReader) throws IOException {
     Map<NodeSource, String> sources = new HashMap<>();
-    int count = _inp.readInt();
+    int count = in.readInt();
     while (count-- > 0) {
-      String digest = _inp.readUTF();
-      sources.put(sourceReader.load(_inp), digest);
+      String digest = in.readUTF();
+      sources.put(sourceReader.load(in), digest);
     }
     mySources = Map.copyOf(sources);
   }

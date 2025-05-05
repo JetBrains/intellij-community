@@ -18,12 +18,20 @@ public class Utils {
     return Long.toHexString(Hashing.xxh3_64().hashBytesToLong(bytes));
   }
 
-  public static String digest(Iterable<String> digests) {
+  public static long digest(Iterable<String> strStream) {
     HashStream64 stream = Hashing.xxh3_64().hashStream();
-    for (String digest : digests) {
-      stream.putString(digest);
+    for (String data : strStream) {
+      stream.putString(data);
     }
-    return Long.toHexString(stream.getAsLong());
+    return stream.getAsLong();
+  }
+
+  public static long digestContent(Iterable<byte[]> contentStream) {
+    HashStream64 stream = Hashing.xxh3_64().hashStream();
+    for (byte[] bytes : contentStream) {
+      stream.putByteArray(bytes);
+    }
+    return stream.getAsLong();
   }
 
   public static String timestampDigest(File file) {

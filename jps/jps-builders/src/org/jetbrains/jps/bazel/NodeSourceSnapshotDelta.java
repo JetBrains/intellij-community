@@ -4,11 +4,11 @@ package org.jetbrains.jps.bazel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.NodeSource;
 
-public interface SourceSnapshotDelta extends ElementSnapshotDelta<NodeSource> {
+public interface NodeSourceSnapshotDelta extends ElementSnapshotDelta<NodeSource> {
 
   @Override
   @NotNull
-  SourceSnapshot getBaseSnapshot();
+  NodeSourceSnapshot getBaseSnapshot();
 
   @Override
   @NotNull
@@ -35,6 +35,6 @@ public interface SourceSnapshotDelta extends ElementSnapshotDelta<NodeSource> {
   /**
    * Provides a SourceSnapshot view for the delta where digests for files marked for recompilation are ignored
    */
-  SourceSnapshot asSnapshot();
+  NodeSourceSnapshot asSnapshot();
 
 }

@@ -33,9 +33,9 @@ public interface BuildContext extends DiagnosticSink {
   @Nullable
   Path getAbiOutputZip();
 
-  SourceSnapshot getSources();
+  NodeSourceSnapshot getSources();
 
-  PathSnapshot getBinaryDependencies();
+  NodeSourceSnapshot getBinaryDependencies();
 
   BuilderArgs getBuilderArgs();
 

@@ -10,8 +10,6 @@ public interface ZipOutputBuilder extends Closeable {
 
   Iterable<String> getEntryNames();
 
-  boolean isDirectory(String entryName);
-
   Iterable<String> listEntries(String entryName);
 
   byte @Nullable [] getContent(String entryName);
@@ -26,4 +24,26 @@ public interface ZipOutputBuilder extends Closeable {
   }
 
   void close(boolean saveChanges) throws IOException;
+
+
+  static @Nullable String getParentEntryName(String entryName) {
+    if (entryName == null || entryName.isEmpty() || "/".equals(entryName)) {
+      return null;
+    }
+    int idx = isDirectoryName(entryName)? entryName.lastIndexOf('/', entryName.length() - 2) : entryName.lastIndexOf('/');
+    return idx > 0? entryName.substring(0, idx + 1) : "/";
+  }
+
+  @Nullable
+  static String getShortName(String entryName) {
+    if (entryName == null || entryName.isEmpty() || "/".equals(entryName)) {
+      return entryName;
+    }
+    int idx = isDirectoryName(entryName)? entryName.lastIndexOf('/', entryName.length() - 2) : entryName.lastIndexOf('/');
+    return idx >= 0? entryName.substring(idx + 1) : entryName;
+  }
+
+  static boolean isDirectoryName(String entryName) {
+    return entryName.endsWith("/");
+  }
 }

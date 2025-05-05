@@ -73,12 +73,12 @@ public class BuildContextImpl implements BuildContext  {
   }
 
   @Override
-  public SourceSnapshot getSources() {
+  public NodeSourceSnapshot getSources() {
     return null; // todo
   }
 
   @Override
-  public PathSnapshot getBinaryDependencies() {
+  public NodeSourceSnapshot getBinaryDependencies() {
     return null; // todo
   }
 

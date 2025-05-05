@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.util.SmartList;
@@ -133,7 +133,7 @@ public class GraphDataOutputImpl implements GraphDataOutput {
   }
 
   public static GraphDataOutput wrap(DataOutput out) {
-    return new GraphDataOutputImpl(out);
+    return out instanceof GraphDataOutput? (GraphDataOutput)out : new GraphDataOutputImpl(out);
   }
   
   public interface StringEnumerator {

@@ -9,31 +9,21 @@ import org.jetbrains.jps.bazel.runner.CompilerRunner;
 import org.jetbrains.jps.bazel.runner.RunnerFactory;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
-import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl;
 import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.impl.PersistentMVStoreMapletFactory;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
+import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 
 import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
 public class BazelIncBuilder {
-  private static final String SOURCE_SNAPSHOT_FILE_NAME = "src-snapshot.dat";
-  private static final String DEP_GRAPH_FILE_NAME = "dep-graph.mv";
 
   private static final List<RunnerFactory<? extends CompilerRunner>> ourCompilers = List.of(
     ResourcesCopy::new
@@ -47,7 +37,7 @@ public class BazelIncBuilder {
 
   private static GraphConfiguration setupGraphConfiguration(BuildContext context) throws IOException {
     DependencyGraphImpl graph = new DependencyGraphImpl(
-      new PersistentMVStoreMapletFactory(getDepGraphStoreFile(context).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
+      new PersistentMVStoreMapletFactory(DataPaths.getDepGraphStoreFile(context).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
     );
     return GraphConfiguration.create(graph, context.getPathMapper());
   }
@@ -59,35 +49,55 @@ public class BazelIncBuilder {
     GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
     DiagnosticSink diagnostic = context;
     ZipOutputBuilder outputBuilder = null;
-    SourceSnapshotDelta snapshotDelta = null;
+    NodeSourceSnapshotDelta srcSnapshotDelta = null;
+    Iterable<NodeSource> modifiedLibraries = List.of();
     DependencyGraph depGraph = null;
-    ConfigurationState presentState = ConfigurationState.create(context);
+    ConfigurationState presentState = new ConfigurationState(context.getSources(), context.getBinaryDependencies());
     try {
       if (context.isRebuild()) {
-        snapshotDelta = new SourceSnapshotDeltaImpl(context.getSources());
-        snapshotDelta.markRecompileAll(); // force rebuild
+        srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
+        srcSnapshotDelta.markRecompileAll(); // force rebuild
       }
       else {
-        ConfigurationState pastState = loadConfigurationState(context);
-        snapshotDelta = new SourceSnapshotDeltaImpl(pastState.getSourceSnapshot(), context.getSources());
-        if (!snapshotDelta.isRecompileAll() && !pastState.getClasspathStructureDigest().equals(presentState.getClasspathStructureDigest())) {
-          snapshotDelta.markRecompileAll();
+        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
+        srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
+        if (!srcSnapshotDelta.isRecompileAll() && pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+          srcSnapshotDelta.markRecompileAll();
+        }
+        if (!srcSnapshotDelta.isRecompileAll()) {
+          Predicate<NodeSource> abiJarFilter = ns -> DataPaths.isAbiJar(ns.toString());
+          modifiedLibraries = new ElementSnapshotDeltaImpl<>(
+            ElementSnapshot.derive(pastState.getLibraries(), abiJarFilter),
+            ElementSnapshot.derive(context.getBinaryDependencies(), abiJarFilter)
+          ).getModified();
         }
       }
 
-      if (snapshotDelta.isRecompileAll()) {
+      List<Graph> libGraphs = new ArrayList<>();
+      Delta libDelta = null;
+      if (!srcSnapshotDelta.isRecompileAll()) {
+        // todo: create library graphs
+        for (Path lib : map(modifiedLibraries, context.getPathMapper()::toPath)) {
+          Path pastJarStoreFile = DataPaths.getPastJarStoreFile(context, lib);
+        }
+      }
+
+      if (srcSnapshotDelta.isRecompileAll()) {
         cleanBuildState(context);
       }
 
       GraphConfiguration graphConfig = setupGraphConfiguration(context);
       depGraph = graphConfig.getGraph();
 
-      if (!snapshotDelta.isRecompileAll()) {
-        // todo: process changes in libs
+      if (!srcSnapshotDelta.isRecompileAll()) {
+        //if (libDelta != null) {
+        //  // todo: update lib dependencies
+        //  //srcSnapshotDelta = graphUpdater.updateDependencyGraph(depGraph, srcSnapshotDelta, libDelta, /*errorsDetected: */ false);
+        //}
 
         // expand compile scope
-        Delta sourceOnlyDelta = depGraph.createDelta(snapshotDelta.getModified(), snapshotDelta.getDeleted(), true);
-        snapshotDelta = graphUpdater.updateDependencyGraph(depGraph, snapshotDelta, sourceOnlyDelta, /*errorsDetected: */ false);
+        Delta sourceOnlyDelta = depGraph.createDelta(srcSnapshotDelta.getModified(), srcSnapshotDelta.getDeleted(), true);
+        srcSnapshotDelta = graphUpdater.updateDependencyGraph(depGraph, srcSnapshotDelta, sourceOnlyDelta, /*errorsDetected: */ false);
       }
 
       outputBuilder = new ZipOutputBuilderImpl(context.getOutputZip());
@@ -102,7 +112,7 @@ public class BazelIncBuilder {
 
         if (isInitialRound) {
           List<String> deletedPaths = new ArrayList<>();
-          for (NodeSource source : filter(flat(snapshotDelta.getDeleted(), snapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
+          for (NodeSource source : filter(flat(srcSnapshotDelta.getDeleted(), srcSnapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
             // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
             String path = source.toString();
             if (outputBuilder.deleteEntry(path)) {
@@ -113,7 +123,7 @@ public class BazelIncBuilder {
           logDeletedPaths(context, deletedPaths);
 
           for (CompilerRunner runner : compilers) {
-            List<NodeSource> toCompile = collect(filter(snapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
+            List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
             if (toCompile.isEmpty()) {
               continue;
             }
@@ -128,10 +138,10 @@ public class BazelIncBuilder {
 
         if (!diagnostic.hasErrors()) {
           // delete outputs corresponding to deleted or recompiled sources
-          cleanCompiledFiles(context, snapshotDelta, depGraph, outputBuilder);
+          cleanCompiledFiles(context, srcSnapshotDelta, depGraph, outputBuilder);
 
           for (CompilerRunner runner : roundCompilers) {
-            List<NodeSource> toCompile = collect(filter(snapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
+            List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
             if (toCompile.isEmpty()) {
               continue;
             }
@@ -149,22 +159,22 @@ public class BazelIncBuilder {
           }
         }
 
-        SourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateDependencyGraph(depGraph, snapshotDelta, createGraphDelta(depGraph, snapshotDelta, outSink), diagnostic.hasErrors());
+        NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateDependencyGraph(depGraph, srcSnapshotDelta, createGraphDelta(depGraph, srcSnapshotDelta, outSink), diagnostic.hasErrors());
 
         if (!diagnostic.hasErrors()) {
-          snapshotDelta = nextSnapshotDelta;
+          srcSnapshotDelta = nextSnapshotDelta;
         }
         else {
-          if (snapshotDelta.isRecompileAll() || !nextSnapshotDelta.hasChanges()) {
+          if (srcSnapshotDelta.isRecompileAll() || !nextSnapshotDelta.hasChanges()) {
             return ExitCode.ERROR;
           }
           // keep previous snapshot delta, just augment it with the newly found sources for recompilation
           if (nextSnapshotDelta.isRecompileAll()) {
-            snapshotDelta.markRecompileAll();
+            srcSnapshotDelta.markRecompileAll();
           }
           else {
             for (NodeSource source : nextSnapshotDelta.getModified()) {
-              snapshotDelta.markRecompile(source);
+              srcSnapshotDelta.markRecompile(source);
             }
           }
           if (!isInitialRound) {
@@ -175,7 +185,7 @@ public class BazelIncBuilder {
 
         isInitialRound = false;
       }
-      while (snapshotDelta.hasChanges());
+      while (srcSnapshotDelta.hasChanges());
 
       return ExitCode.OK;
     }
@@ -188,8 +198,8 @@ public class BazelIncBuilder {
         // report postponed errors, if necessary
         ((PostponedDiagnosticSink)diagnostic).drainTo(context);
       }
-      if (snapshotDelta != null) {
-        saveConfigurationState(context, presentState.derive(snapshotDelta.asSnapshot()));
+      if (srcSnapshotDelta != null) {
+        new ConfigurationState(srcSnapshotDelta.asSnapshot(), presentState.getLibraries()).save(context);
       }
       // todo: save abi-jar
       safeClose(outputBuilder, diagnostic);
@@ -200,7 +210,7 @@ public class BazelIncBuilder {
   private static void cleanBuildState(BuildContext context) throws IOException {
     Path output = context.getOutputZip();
     Path abiOutput = context.getAbiOutputZip();
-    Path srcSnapshot = getSourceSnapshotStoreFile(context);
+    Path srcSnapshot = DataPaths.getConfigStateStoreFile(context);
 
     BuildProcessLogger logger = context.getBuildLogger();
     if (logger.isEnabled() && !context.isRebuild()) {
@@ -219,10 +229,10 @@ public class BazelIncBuilder {
       Files.deleteIfExists(abiOutput);
     }
     Files.deleteIfExists(srcSnapshot);
-    Files.deleteIfExists(getDepGraphStoreFile(context));
+    Files.deleteIfExists(DataPaths.getDepGraphStoreFile(context));
   }
 
-  private static void cleanCompiledFiles(BuildContext context, SourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, ZipOutputBuilder outputBuilder) {
+  private static void cleanCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, ZipOutputBuilder outputBuilder) {
     for (Iterable<@NotNull NodeSource> sourceGroup : List.of(snapshotDelta.getDeleted(), snapshotDelta.getModified())) {
       if (isEmpty(sourceGroup)) {
         continue;
@@ -248,7 +258,7 @@ public class BazelIncBuilder {
     }
   }
 
-  private static Delta createGraphDelta(DependencyGraph depGraph, SourceSnapshotDelta snapshotDelta, OutputSinkImpl outSink) {
+  private static Delta createGraphDelta(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, OutputSinkImpl outSink) {
     Delta delta = depGraph.createDelta(snapshotDelta.getModified(), snapshotDelta.getDeleted(), false);
     for (Pair<Node<?, ?>, Iterable<NodeSource>> pair : outSink.getNodes()) {
       delta.associate(pair.getFirst(), pair.getSecond());
@@ -256,41 +266,6 @@ public class BazelIncBuilder {
     return delta;
   }
 
-
-  private static void saveConfigurationState(BuildContext context, ConfigurationState state) {
-    Path snapshotPath = getSourceSnapshotStoreFile(context);
-    try (var stream = new DataOutputStream(new DeflaterOutputStream(Files.newOutputStream(snapshotPath), new Deflater(Deflater.BEST_SPEED)))) {
-      stream.writeUTF(state.getClasspathStructureDigest());
-      state.getSourceSnapshot().write(new GraphDataOutputImpl(stream));
-    }
-    catch (Throwable e) {
-      context.report(Message.create(null, e));
-    }
-  }
-
-  private static ConfigurationState loadConfigurationState(BuildContext context) {
-    Path oldSnapshot = getSourceSnapshotStoreFile(context);
-    try (var stream = new DataInputStream(new InflaterInputStream(Files.newInputStream(oldSnapshot, StandardOpenOption.READ)))) {
-      String depsDigest = stream.readUTF();
-      return ConfigurationState.create(new SourceSnapshotImpl(stream, PathSource::new), depsDigest);
-    }
-    catch (Throwable e) {
-      context.report(Message.create(null, e));
-      return ConfigurationState.EMPTY;
-    }
-  }
-
-  private static @NotNull Path getSourceSnapshotStoreFile(BuildContext context) {
-    return context.getDataDir().resolve(SOURCE_SNAPSHOT_FILE_NAME);
-  }
-
-  private static @NotNull Path getDepGraphStoreFile(BuildContext context) {
-    return context.getDataDir().resolve(DEP_GRAPH_FILE_NAME);
-  }
-
-  private static boolean isAbiJar(Path path) {
-    return path.toString().endsWith("-abi.jar"); // todo: better criterion?
-  }
 
   private static void safeClose(Closeable cl, DiagnosticSink diagnostic) {
     if (cl == null) {
@@ -304,40 +279,47 @@ public class BazelIncBuilder {
     }
   }
 
-  private interface ConfigurationState {
-    ConfigurationState EMPTY = create(SourceSnapshot.EMPTY, "");
-    
-    SourceSnapshot getSourceSnapshot();
-
-    // tracks names and order of classpath entries as well as content digests of all third-party dependencies
-    String getClasspathStructureDigest();
-
-    default ConfigurationState derive(SourceSnapshot snapshot) {
-      return create(snapshot, getClasspathStructureDigest());
-    }
-
-    static ConfigurationState create(SourceSnapshot snapshot, String depsDigest) {
-      return new ConfigurationState() {
-        @Override
-        public SourceSnapshot getSourceSnapshot() {
-          return snapshot;
-        }
-
-        @Override
-        public String getClasspathStructureDigest() {
-          return depsDigest;
-        }
-      };
-    }
-
-    static ConfigurationState create(BuildContext context) {
-      PathSnapshot deps = context.getBinaryDependencies();
-
-      // digest name, count and order of classpath entries as well as content digests of all non-abi deps
-      Function<@NotNull Path, Iterable<String>> digestMapper =
-        path -> isAbiJar(path)? List.of(path.toString()) : List.of(path.toString(), deps.getDigest(path));
-      
-      return create(context.getSources(), Utils.digest(flat(map(deps.getElements(), digestMapper))));
+  private static NodeSourceSnapshotDelta createLibraryNodeSourceSnapshotDelta(Path pastJar, Path presentJar) throws IOException {
+    try (var pastBuilder = new AbiJarBuilder(pastJar)) {
+      try (var presentBuilder = new AbiJarBuilder(presentJar)) {
+        return new SnapshotDeltaImpl(createLibraryNodeSourceSnapshot(pastBuilder), createLibraryNodeSourceSnapshot(presentBuilder));
+      }
     }
   }
+
+  private static NodeSourceSnapshot createLibraryNodeSourceSnapshot(AbiJarBuilder builder) {
+    Map<NodeSource, String> result = new HashMap<>();
+    for (Map.Entry<String, Long> entry : builder.getPackageIndex().entrySet()) {
+      result.put(new PathSource(entry.getKey()), Long.toHexString(entry.getValue()));
+    }
+    return new SourceSnapshotImpl(result);
+  }
+
+  private static Graph loadReadonlyLibraryGraph(DependencyGraph depGraph, ZipOutputBuilder builder) {
+    return loadReadonlyLibraryGraph(depGraph.createDelta(Set.of(), Set.of(), false), ClassDataZipEntry.fromZipOutputBuilder(builder));
+  }
+
+  private static Graph loadReadonlyLibraryGraph(DependencyGraph depGraph, Path jarPath) throws IOException {
+    try (var is = Files.newInputStream(jarPath)) {
+      return loadReadonlyLibraryGraph(depGraph.createDelta(Set.of(), Set.of(), false), ClassDataZipEntry.fromSteam(is));
+    }
+  }
+
+  private static Graph loadReadonlyLibraryGraph(Delta delta, Iterator<ClassDataZipEntry> entries) {
+    // for this presentation we use packages as 'node sources', and class files in the corresponding package as 'nodes'
+    Map<String, Iterable<NodeSource>> sourcesMap = new HashMap<>();
+    while (entries.hasNext()) {
+      ClassDataZipEntry entry = entries.next();
+      String path = entry.getPath();
+      String parent = entry.getParent();
+      if (parent != null) {
+        delta.associate(
+          JvmClassNodeBuilder.createForLibrary(path, entry.getClassReader()).getResult(),
+          sourcesMap.computeIfAbsent(parent, n -> Set.of(new PathSource(n)))
+        );
+      }
+    }
+    return delta;
+  }
+
 }

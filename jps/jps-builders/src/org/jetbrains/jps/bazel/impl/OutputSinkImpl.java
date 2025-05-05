@@ -52,7 +52,7 @@ public class OutputSinkImpl implements OutputSink {
   public Iterable<String> listFiles(String packageName, boolean recurse) {
     String dirName = packageName.replace('.', '/') + "/";
     var result = recurse? Iterators.recurse(dirName, myOutBuilder::listEntries, false) : myOutBuilder.listEntries(dirName);
-    return Iterators.filter(result, n -> !myOutBuilder.isDirectory(n));
+    return Iterators.filter(result, n -> !ZipOutputBuilder.isDirectoryName(n));
   }
 
   @Override

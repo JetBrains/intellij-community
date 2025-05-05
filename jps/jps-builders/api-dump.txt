@@ -2054,6 +2054,9 @@ org.jetbrains.jps.dependency.Usage
 - a:equals(java.lang.Object):Z
 - a:getElementOwner():org.jetbrains.jps.dependency.ReferenceID
 - a:hashCode():I
+org.jetbrains.jps.dependency.ValuesFilteredBackDependencyIndex
+- org.jetbrains.jps.dependency.BackDependencyIndex
+- s:create(org.jetbrains.jps.dependency.BackDependencyIndex,java.util.function.Predicate):org.jetbrains.jps.dependency.ValuesFilteredBackDependencyIndex
 org.jetbrains.jps.dependency.diff.DiffCapable
 - a:diffHashCode():I
 - a:difference(org.jetbrains.jps.dependency.diff.DiffCapable):org.jetbrains.jps.dependency.diff.Difference

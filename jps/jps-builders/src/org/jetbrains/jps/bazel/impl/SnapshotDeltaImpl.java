@@ -2,8 +2,8 @@
 package org.jetbrains.jps.bazel.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.bazel.SourceSnapshot;
-import org.jetbrains.jps.bazel.SourceSnapshotDelta;
+import org.jetbrains.jps.bazel.NodeSourceSnapshot;
+import org.jetbrains.jps.bazel.NodeSourceSnapshotDelta;
 import org.jetbrains.jps.dependency.NodeSource;
 
 import java.util.HashSet;
@@ -11,26 +11,26 @@ import java.util.Set;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
-public final class SourceSnapshotDeltaImpl extends ElementSnapshotDeltaImpl<NodeSource> implements SourceSnapshotDelta {
+public final class SnapshotDeltaImpl extends ElementSnapshotDeltaImpl<NodeSource> implements NodeSourceSnapshotDelta {
   private static final String RECOMPILED_SOURCE_DIGEST = "";
   
   private final Set<NodeSource> myRecompileMarked;
   private boolean myIsWholeTargetRecompile;
 
-  public SourceSnapshotDeltaImpl(SourceSnapshot base) {
+  public SnapshotDeltaImpl(NodeSourceSnapshot base) {
     super(base);
     myRecompileMarked = new HashSet<>();
   }
 
-  public SourceSnapshotDeltaImpl(SourceSnapshot pastSnapshot, SourceSnapshot presentSnapshot) {
+  public SnapshotDeltaImpl(NodeSourceSnapshot pastSnapshot, NodeSourceSnapshot presentSnapshot) {
     super(pastSnapshot, presentSnapshot);
     myIsWholeTargetRecompile = count(presentSnapshot.getElements()) == count(super.getModified());
     myRecompileMarked = myIsWholeTargetRecompile? Set.of() : collect(super.getModified(), new HashSet<>());
   }
 
   @Override
-  public @NotNull SourceSnapshot getBaseSnapshot() {
-    return (SourceSnapshot)super.getBaseSnapshot();
+  public @NotNull NodeSourceSnapshot getBaseSnapshot() {
+    return (NodeSourceSnapshot)super.getBaseSnapshot();
   }
 
   @Override
@@ -69,9 +69,9 @@ public final class SourceSnapshotDeltaImpl extends ElementSnapshotDeltaImpl<Node
   }
 
   @Override
-  public SourceSnapshot asSnapshot() {
-    SourceSnapshot baseSnapshot = getBaseSnapshot();
-    return !hasChanges()? baseSnapshot : new SourceSnapshot() {
+  public NodeSourceSnapshot asSnapshot() {
+    NodeSourceSnapshot baseSnapshot = getBaseSnapshot();
+    return !hasChanges()? baseSnapshot : new NodeSourceSnapshot() {
       @Override
       public @NotNull Iterable<@NotNull NodeSource> getElements() {
         return flat(getDeleted(), baseSnapshot.getElements());

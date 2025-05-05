@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel;
 
-import org.jetbrains.jps.bazel.impl.SourceSnapshotDeltaImpl;
+import org.jetbrains.jps.bazel.impl.SnapshotDeltaImpl;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.incremental.dependencies.LibraryDef;
@@ -20,11 +20,11 @@ public final class GraphUpdater {
     myTargetName = targetName;
   }
 
-  public SourceSnapshotDelta updateDependencyGraph(DependencyGraph depGraph, SourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected) {
+  public NodeSourceSnapshotDelta updateDependencyGraph(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected) {
     if (snapshotDelta.isRecompileAll()) {
       if (errorsDetected || delta.isSourceOnly()) {
         // do nothing
-        return new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+        return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
       }
     }
 
@@ -39,17 +39,17 @@ public final class GraphUpdater {
 
     if (snapshotDelta.isRecompileAll()) {
       depGraph.integrate(diffResult); // save full graph state
-      return new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+      return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
     }
 
-    SourceSnapshotDelta nextSnapshotDelta;
+    NodeSourceSnapshotDelta nextSnapshotDelta;
     if (delta.isSourceOnly()) {
       // the delta does not correspond to real compilation session,
       // mark files for recompilation in the existing delta and keep information about deleted files or already modified files
       nextSnapshotDelta = snapshotDelta;
     }
     else {
-      nextSnapshotDelta = new SourceSnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+      nextSnapshotDelta = new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
     }
 
     if (!diffResult.isIncremental()) {

@@ -28,7 +28,6 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
 import static org.jetbrains.jps.javac.Iterators.*;
@@ -56,8 +55,9 @@ public class JavaCompilerRunner implements CompilerRunner {
   public JavaCompilerRunner(BuildContext context) {
     myContext = context;
     myOptions = getFilteredOptions(context);
+    NodeSourcePathMapper pathMapper = context.getPathMapper();
 
-    Collection<File> classpath = collect(map(context.getBinaryDependencies().getElements(), Path::toFile), new ArrayList<>()); // todo: convert relative path to abs path
+    Collection<File> classpath = collect(map(context.getBinaryDependencies().getElements(), ns -> pathMapper.toPath(ns).toFile()), new ArrayList<>()); 
     File moduleInfoFile = findModuleInfo(context);
     if (moduleInfoFile != null || contains(myOptions, PATCH_MODULE_OPTION)) { // has modules or trying to patch a module
 

@@ -9,8 +9,8 @@ import org.jetbrains.jps.javac.Iterators;
 import java.io.IOException;
 import java.util.List;
 
-public interface SourceSnapshot extends ElementSnapshot<NodeSource> {
-  SourceSnapshot EMPTY = new SourceSnapshot() {
+public interface NodeSourceSnapshot extends ElementSnapshot<NodeSource> {
+  NodeSourceSnapshot EMPTY = new NodeSourceSnapshot() {
     @Override
     public @NotNull Iterable<@NotNull NodeSource> getElements() {
       return List.of();
@@ -30,6 +30,7 @@ public interface SourceSnapshot extends ElementSnapshot<NodeSource> {
   @NotNull
   String getDigest(NodeSource src);
 
+  @Override
   default void write(GraphDataOutput out) throws IOException {
     Iterable<@NotNull NodeSource> sources = getElements();
     out.writeInt(Iterators.count(sources));

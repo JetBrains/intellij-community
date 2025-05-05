@@ -2,8 +2,9 @@
 package org.jetbrains.jps.bazel;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.ExternalizableGraphElement;
 
-public interface ElementSnapshotDelta<T> {
+public interface ElementSnapshotDelta<T extends ExternalizableGraphElement> {
   @NotNull
   ElementSnapshot<T> getBaseSnapshot();
 
