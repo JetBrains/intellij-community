@@ -84,7 +84,7 @@ public final class KeyHashLog<Key> implements Closeable {
     int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
     final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS;
-    if (useCachedHashIds && id == myLastScannedId) {
+    if (useCachedHashIds && id == myLastScannedId && filter.getFilteringScopeType() == IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES) {
       if (myInvalidatedSessionIds.remove(id) == null) {
         try {
           hashMaskSet = loadProjectHashes(sessionProjectCacheFile);

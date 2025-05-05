@@ -250,6 +250,9 @@ public abstract class FileBasedIndex {
    */
   public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
+  /**
+   * If {@link FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()} is false {@link IdFilter} will be ignored.
+   */
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
   }

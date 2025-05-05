@@ -1539,4 +1539,42 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src).getId()));
     assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src2).getId()));
   }
+
+  public void test_traceKeyHashToVirtualFileMapping() {
+    TracingFileBasedIndexExtension extension =
+      TracingFileBasedIndexExtension.registerTracingFileBasedIndex(myFixture.getTestRootDisposable());
+
+    myFixture.addFileToProject("src/TestFoo.java", "class TestFoo { }").getVirtualFile();
+
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+
+    var processor = new Processor<String>() {
+      final AtomicInteger processed = new AtomicInteger(0);
+      @Override
+      public boolean process(String i) {
+        processed.incrementAndGet();
+        return true;
+      }
+
+      void reset() {
+        processed.set(0);
+      }
+    };
+
+    // process without a filter that should ignore a file, so we get 1 in the filter
+    fileBasedIndex.processAllKeys(extension.getName(), processor, getProject());
+    assertEquals(1, processor.processed.get());
+
+    processor.reset();
+
+    // process with a filter that should ignore a file, so we get 0 in the filter
+    TracingIdFilter filter = TracingFileBasedIndexExtension.Companion.getIdFilter();
+    fileBasedIndex.processAllKeys(extension.getName(),
+                                  processor,
+                                  GlobalSearchScope.everythingScope(getProject()),
+                                  filter
+    );
+
+    assertEquals(0, processor.processed.get());
+  }
 }
