@@ -116,7 +116,7 @@ internal class SelectInProjectViewImpl(
           if (LOG.isDebugEnabled) {
             LOG.debug("Created select-in context and delegating to it: $selectInContext")
           }
-          selectInContext.selectInCurrentTarget(requestFocus = invokedManually)
+          selectInContext.selectInCurrentTarget(project, requestFocus = invokedManually)
         }
         break
       }
@@ -155,13 +155,21 @@ internal class SelectInProjectViewImpl(
       }
     }
 
-  private fun createSelectInContext(psiFilePointer: SmartPsiElementPointer<PsiFile>, fileEditor: FileEditor): SimpleSelectInContext =
-    if (fileEditor is TextEditor) {
-      EditorSelectInContext(project, psiFilePointer, fileEditor)
+  private fun createSelectInContext(psiFilePointer: SmartPsiElementPointer<PsiFile>, fileEditor: FileEditor): SelectInContext {
+    val dataContext = DataManager.getInstance().getDataContext(fileEditor.component)
+    val providedSelectInContext = dataContext.getData(SelectInContext.DATA_KEY)
+    return when {
+      providedSelectInContext != null -> {
+        providedSelectInContext
+      }
+      fileEditor is TextEditor -> {
+        EditorSelectInContext(project, psiFilePointer, fileEditor)
+      }
+      else -> {
+        SimpleSelectInContext(project, psiFilePointer, fileEditor)
+      }
     }
-    else {
-      SimpleSelectInContext(project, psiFilePointer, fileEditor)
-    }
+  }
 
   fun ensureSelected(
     paneId: String,
@@ -335,6 +343,24 @@ internal class SelectInProjectViewImpl(
 
 }
 
+private suspend fun SelectInContext.selectInCurrentTarget(project: Project, requestFocus: Boolean) {
+  if (this is SimpleSelectInContext) {
+    selectInCurrentTarget(requestFocus) // simple, but overridable
+  }
+  else {
+    simpleSelectInCurrentTarget(project, requestFocus)
+  }
+}
+
+private fun SelectInContext.simpleSelectInCurrentTarget(project: Project, requestFocus: Boolean) {
+  val currentTarget = (project.serviceOrNull<ProjectView>() as ProjectViewImpl?)?.currentSelectInTarget
+  if (LOG.isDebugEnabled) {
+    LOG.debug("The current target is $currentTarget")
+  }
+  if (currentTarget == null) return
+  currentTarget.selectIn(this, requestFocus)
+}
+
 private open class SimpleSelectInContext(
   private val project: Project,
   psiFilePointer: SmartPsiElementPointer<PsiFile>,
@@ -346,12 +372,7 @@ private open class SimpleSelectInContext(
   }
 
   open suspend fun selectInCurrentTarget(requestFocus: Boolean) {
-    val currentTarget = (project.serviceOrNull<ProjectView>() as ProjectViewImpl?)?.currentSelectInTarget
-    if (LOG.isDebugEnabled) {
-      LOG.debug("The current target is $currentTarget")
-    }
-    if (currentTarget == null) return
-    currentTarget.selectIn(this, requestFocus)
+    simpleSelectInCurrentTarget(project, requestFocus)
   }
 
   override fun toString(): String {
