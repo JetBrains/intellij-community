@@ -257,7 +257,7 @@ class IncrementalKotlinBuilder(
       return ModuleLevelBuilder.ExitCode.NOTHING_DONE
     }
 
-    val isChunkRebuilding = isRebuild || kotlinContext.rebuildAfterCacheVersionChanged.get(target) == true
+    val isChunkRebuilding = isRebuild
 
     val kotlinDirtyFilesHolder = KotlinDirtySourceFilesHolder(chunk, context, dirtyFilesHolder)
     val dirtyByTarget = kotlinDirtyFilesHolder.byTarget.get(jpsTarget)
