@@ -10,7 +10,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -150,17 +149,12 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   public static boolean isInContentRoot(VirtualFile file, ProjectFileIndex index) {
     return file.equals(index.getContentRootForFile(file)) &&
-           projectHasNoSourceRoots(file, index);
+           noSourceRootConfigured(file, index);
   }
 
-  private static boolean projectHasNoSourceRoots(VirtualFile file, ProjectFileIndex index) {
+  private static boolean noSourceRootConfigured(VirtualFile file, ProjectFileIndex index) {
     Module module = index.getModuleForFile(file);
-    if (module != null) {
-      return ContainerUtil.or(ModuleManager.getInstance(module.getProject()).getModules(), m -> {
-        return ModuleRootManager.getInstance(module).getSourceRoots().length > 0;
-      });
-    }
-    return false;
+    return module != null && ModuleRootManager.getInstance(module).getSourceRoots().length == 0;
   }
 
   protected abstract boolean checkPackageExists(PsiDirectory directory);
