@@ -18517,6 +18517,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testIntAndDouble() throws Exception {
                 runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/intAndDouble.kt");
             }
+
+            @TestMetadata("outOfApplicabilityRange.kt")
+            public void testOutOfApplicabilityRange() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/outOfApplicabilityRange.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

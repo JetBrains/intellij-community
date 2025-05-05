@@ -16202,6 +16202,153 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator")
+    public abstract static class UnusedUnaryOperator extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine")
+        public static class MoveToPrevLine extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("bigDecimal.kt")
+            public void testBigDecimal() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/bigDecimal.kt");
+            }
+
+            @TestMetadata("binaryExpression.kt")
+            public void testBinaryExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/binaryExpression.kt");
+            }
+
+            @TestMetadata("int.kt")
+            public void testInt() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/int.kt");
+            }
+
+            @TestMetadata("intAndDouble.kt")
+            public void testIntAndDouble() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/intAndDouble.kt");
+            }
+
+            @TestMetadata("outOfApplicabilityRange.kt")
+            public void testOutOfApplicabilityRange() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/outOfApplicabilityRange.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation.kt")
+            public void testAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/annotation.kt");
+            }
+
+            @TestMetadata("annotation2.kt")
+            public void testAnnotation2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/annotation2.kt");
+            }
+
+            @TestMetadata("annotation3.kt")
+            public void testAnnotation3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/annotation3.kt");
+            }
+
+            @TestMetadata("annotation4.kt")
+            public void testAnnotation4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/annotation4.kt");
+            }
+
+            @TestMetadata("annotation5.kt")
+            public void testAnnotation5() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/annotation5.kt");
+            }
+
+            @TestMetadata("annotation6.kt")
+            public void testAnnotation6() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/annotation6.kt");
+            }
+
+            @TestMetadata("basic.kt")
+            public void testBasic() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/basic.kt");
+            }
+
+            @TestMetadata("basic2.kt")
+            public void testBasic2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/basic2.kt");
+            }
+
+            @TestMetadata("binaryExpression.kt")
+            public void testBinaryExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/binaryExpression.kt");
+            }
+
+            @TestMetadata("binaryExpression2.kt")
+            public void testBinaryExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/binaryExpression2.kt");
+            }
+
+            @TestMetadata("binaryExpression3.kt")
+            public void testBinaryExpression3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/binaryExpression3.kt");
+            }
+
+            @TestMetadata("binaryExpression4.kt")
+            public void testBinaryExpression4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/binaryExpression4.kt");
+            }
+
+            @TestMetadata("namedParameter.kt")
+            public void testNamedParameter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/namedParameter.kt");
+            }
+
+            @TestMetadata("plusAfterDiv.kt")
+            public void testPlusAfterDiv() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/plusAfterDiv.kt");
+            }
+
+            @TestMetadata("plusAfterMinus.kt")
+            public void testPlusAfterMinus() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/plusAfterMinus.kt");
+            }
+
+            @TestMetadata("usedAsExpression.kt")
+            public void testUsedAsExpression() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression.kt");
+            }
+
+            @TestMetadata("usedAsExpression2.kt")
+            public void testUsedAsExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression2.kt");
+            }
+
+            @TestMetadata("userOperator.kt")
+            public void testUserOperator() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unusedUnaryOperator/userOperator.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
     public static class RemoveExplicitTypeArgumentsFormerIntentionTest extends AbstractK2LocalInspectionTest {
         @java.lang.Override
