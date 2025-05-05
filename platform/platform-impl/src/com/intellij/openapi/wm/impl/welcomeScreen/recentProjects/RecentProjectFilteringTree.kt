@@ -687,6 +687,13 @@ class RecentProjectFilteringTree(
           else -> {}
         }
 
+        getAccessibleContext().accessibleName = AccessibleContextUtil.getCombinedName(
+          ", ",
+          projectNameLabel,
+          projectPathLabel.takeIf { projectPathLabel.isVisible },
+          projectProgressLabel.takeIf { projectProgressBarPanel.isVisible },
+        )
+
         return this
       }
     }
