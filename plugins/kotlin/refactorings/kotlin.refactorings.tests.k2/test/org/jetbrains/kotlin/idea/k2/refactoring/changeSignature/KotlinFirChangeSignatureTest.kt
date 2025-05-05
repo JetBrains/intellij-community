@@ -258,4 +258,8 @@ class KotlinFirChangeSignatureTest :
     fun testChangingTypeOfContextParameter() = doTest {
         newParameters[0].setType("kotlin.String")
     }
+
+    fun testChangingContextParametersOrder() = doTest {
+        swapParameters(0, 1)
+    }
 }
