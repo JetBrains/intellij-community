@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Key
@@ -316,11 +315,6 @@ open class DataManagerImpl : DataManager() {
         // add "injected" data-key for rules like "usageTarget"
         InjectedDataKeys.injectedKey(dataKey)
       }
-    }
-
-    @JvmStatic
-    fun validateEditor(editor: Editor?, contextComponent: Component?): Editor? {
-      return editor
     }
   }
 }

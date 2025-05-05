@@ -132,10 +132,8 @@ c:com.intellij.ide.impl.DataManagerImpl
 - sf:getDataProviderEx(java.lang.Object):com.intellij.openapi.actionSystem.DataProvider
 - loadFromDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.util.Key):java.lang.Object
 - saveInDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.util.Key,java.lang.Object):V
-- sf:validateEditor(com.intellij.openapi.editor.Editor,java.awt.Component):com.intellij.openapi.editor.Editor
 f:com.intellij.ide.impl.DataManagerImpl$Companion
 - f:getDataProviderEx(java.lang.Object):com.intellij.openapi.actionSystem.DataProvider
-- f:validateEditor(com.intellij.openapi.editor.Editor,java.awt.Component):com.intellij.openapi.editor.Editor
 f:com.intellij.ide.impl.OpenProjectTask
 - sf:Companion:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:asNewProject():com.intellij.ide.impl.OpenProjectTask
