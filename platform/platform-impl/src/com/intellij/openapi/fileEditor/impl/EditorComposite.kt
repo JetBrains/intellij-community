@@ -139,6 +139,7 @@ open class EditorComposite internal constructor(
     EDT.assertIsEdt()
 
     if (model is PrecomputedFlow) {
+      LOG.warn("Blocking handling is used. The overall file composite performance will experience a significant slowdown")
       if (model.fireFileOpened) {
         blockingHandleModel2(model.model)
       }

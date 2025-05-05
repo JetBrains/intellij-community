@@ -801,7 +801,7 @@ open class EditorsSplitters internal constructor(
   @RequiresEdt
   fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true): EditorWindow? = openInRightSplit(file, requestFocus, null)
 
-  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, explicitlySetComposite: EditorComposite?): EditorWindow? {
+  internal fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true, explicitlySetCompositeProvider: (() -> EditorComposite?)?): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent
     if (parent is Splitter) {
@@ -812,7 +812,7 @@ open class EditorsSplitters internal constructor(
           manager.openFile(
             file = file,
             window = rightSplitWindow,
-            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, explicitlyOpenComposite = explicitlySetComposite),
+            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false, explicitlyOpenCompositeProvider = explicitlySetCompositeProvider),
           )
           return rightSplitWindow
         }

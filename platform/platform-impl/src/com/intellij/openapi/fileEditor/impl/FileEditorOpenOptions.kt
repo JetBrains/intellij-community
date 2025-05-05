@@ -19,8 +19,8 @@ data class FileEditorOpenOptions(
   @Internal @JvmField val waitForCompositeOpen: Boolean = true,
   // it makes sense only if openMode == NEW_WINDOW
   @Internal @JvmField val isSingletonEditorInWindow: Boolean = false,
-  // IJPL-183875: Workaround to open a explicitly set composite that has been supplied from the backend
-  @Internal @JvmField val explicitlyOpenComposite: EditorComposite? = null,
+  // DO NOT USE! IJPL-183875: Workaround to open an explicitly set composite that has been supplied from the backend
+  @Internal @JvmField val explicitlyOpenCompositeProvider: (() -> EditorComposite?)? = null,
 ) {
   @Contract(pure = true)
   // no arg copying for Java
