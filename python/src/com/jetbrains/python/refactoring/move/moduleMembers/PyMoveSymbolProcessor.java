@@ -90,7 +90,8 @@ public class PyMoveSymbolProcessor {
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {
-    final PsiFile usageFile = usage.getContainingFile();
+    PsiFile psiFile = usage.getContainingFile();
+    final PsiFile usageFile = psiFile;
     if (belongsToSomeMovedElement(usage)) {
       return;
     }
@@ -132,10 +133,11 @@ public class PyMoveSymbolProcessor {
     else if (usage instanceof PyStringLiteralExpression) {
       for (PsiReference ref : usage.getReferences()) {
         if (ref instanceof PyDunderAllReference) {
+          PsiFile newFile = newElement.getContainingFile();
           if (myMovedElement.getContainingFile().getName().equals(PyNames.INIT_DOT_PY)) {
             // Update import statement in `__init__.py` if symbol is moved from there to another module
-            VirtualFile targetFile = newElement.getContainingFile().getVirtualFile();
-            VirtualFile currentFile = usage.getContainingFile().getVirtualFile();
+            VirtualFile targetFile = newFile.getVirtualFile();
+            VirtualFile currentFile = psiFile.getVirtualFile();
             if (targetFile != null && currentFile != null) {
               VirtualFile currentDir = currentFile.getParent();
               if (currentDir != null && !VfsUtilCore.isAncestor(currentDir, targetFile, true)) {
@@ -146,8 +148,8 @@ public class PyMoveSymbolProcessor {
           }
           else if (ref.getElement().getContainingFile().getName().equals(PyNames.INIT_DOT_PY)) {
             // Remove old import statement in `__init__.py` if symbol is moved from some ancestor module to another one
-            VirtualFile targetFile = newElement.getContainingFile().getVirtualFile();
-            VirtualFile currentFile = usage.getContainingFile().getVirtualFile();
+            VirtualFile targetFile = newFile.getVirtualFile();
+            VirtualFile currentFile = psiFile.getVirtualFile();
             if (targetFile != null && currentFile != null) {
               VirtualFile currentDir = currentFile.getParent();
               if (currentDir != null && !VfsUtilCore.isAncestor(currentDir, targetFile, true)) {
