@@ -127,7 +127,7 @@ abstract class KotlinBaseChangeSignatureDialog<P : KotlinModifiableParameterInfo
             private fun notifyReceiverListeners() {
                 val isNotReceiver = !item.isReceiverIn(parametersTableModel)
                 nameEditor.isEnabled = isNotReceiver
-                defaultParameterCheckbox.isEnabled = isNotReceiver
+                defaultParameterCheckbox.isEnabled = isNotReceiver && !item.parameter.isContextParameter
             }
 
             private fun isDefaultColumnEnabled() = item.parameter.isNewParameter && item.parameter != myMethod.receiver
