@@ -28,6 +28,8 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
@@ -1796,6 +1798,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       List<FileIndexingRequest> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(allFilesToUpdate, filter::acceptsRequest);
 
       if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
+        if (LOG.isDebugEnabled()) {
+          List<String> files = ContainerUtil.map(virtualFilesToBeUpdatedForProject, request -> request.getFile().getPath());
+          String message = "Indexing the following files because up-to-date indexes were requested by <see the stacktrace>. " +
+                           "Number of files: " + files.size() + " paths: " + StringUtil.trimLog(Strings.join(files, ", "), 500);
+          LOG.debug(message, new Throwable());
+        }
+
         myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
       }
     }
