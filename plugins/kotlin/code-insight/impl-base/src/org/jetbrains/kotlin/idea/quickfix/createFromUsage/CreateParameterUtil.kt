@@ -40,6 +40,8 @@ object CreateParameterUtil {
                         varExpected
                     )
 
+                    it is KtPrimaryConstructor -> Pair(it, if (varExpected) ValVar.VAR else ValVar.VAL)
+
                     it is KtAnonymousInitializer -> Pair(it.parents.match(KtClassBody::class, last = KtClass::class), ValVar.NONE)
                     it is KtSuperTypeListEntry -> {
                         val klass = it.getStrictParentOfType<KtClassOrObject>()

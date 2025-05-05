@@ -7235,6 +7235,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/fromEnumConstant.kt");
                 }
 
+                @TestMetadata("fromParameterDefaultValue.kt")
+                public void testFromParameterDefaultValue() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/fromParameterDefaultValue.kt");
+                }
+
                 @TestMetadata("insideInterface.kt")
                 public void testInsideInterface() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/insideInterface.kt");

@@ -9562,6 +9562,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/fromEnumConstant.kt");
             }
 
+            @TestMetadata("fromParameterDefaultValue.kt")
+            public void testFromParameterDefaultValue() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/fromParameterDefaultValue.kt");
+            }
+
             @TestMetadata("insideInterface.kt")
             public void testInsideInterface() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/primaryParameter/insideInterface.kt");
