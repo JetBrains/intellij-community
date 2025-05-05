@@ -344,6 +344,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
+        if (!isCaller && element !is KtFunctionLiteral) {
+            val contextParams = changeInfo.newParameters.filter { it.isContextParameter }
+            updateContextParametersList(contextParams, element, changeInfo.method, isInherited, psiFactory)
+        }
+
         if (changeInfo.isReceiverTypeChanged()) {
             val receiverTypeText = changeInfo.receiverParameterInfo?.typeText
             val receiverTypeRef = if (receiverTypeText != null) psiFactory.createType(
@@ -417,11 +422,6 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val parametersCount = changeInfo.newParameters.count { it != changeInfo.receiverParameterInfo && !it.isContextParameter }
         val isLambda = element is KtFunctionLiteral
         var canReplaceEntireList = false
-
-        if (!isCaller && !isLambda) {
-            val contextParams = changeInfo.newParameters.filter { it.isContextParameter }
-            updateContextParametersList(contextParams, element, baseFunction, isInherited, psiFactory)
-        }
 
         var newParameterList: KtParameterList? = null
         if (isLambda) {
