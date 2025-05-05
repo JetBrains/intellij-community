@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.testFramework.ExtensionTestUtil
@@ -35,6 +34,7 @@ import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.testFramework.utils.vfs.getFile
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.appendText
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -233,53 +233,74 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     projectTrackerSettings.loadState(state.second)
   }
 
-  protected fun assertProjectAware(
+  protected fun assertStateAndReset(
     projectAware: MockProjectAware,
-    numReload: Int? = null,
+    autoReloadType: AutoReloadType? = null,
+    numReload: Int,
     numSettingsAccess: Int? = null,
     numSubscribing: Int? = null,
     numUnsubscribing: Int? = null,
+    notified: Boolean,
+    activated: Boolean? = null,
     event: String,
   ) {
-    if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
-    if (numSettingsAccess != null) assertCountEvent(numSettingsAccess, projectAware.settingsAccessCounter.get(), "access to settings",
-                                                    event)
-    if (numSubscribing != null) assertCountEvent(numSubscribing, projectAware.subscribeCounter.get(), "subscribe", event)
-    if (numUnsubscribing != null) assertCountEvent(numUnsubscribing, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
+    assertProjectTrackerSettings(autoReloadType, event)
+
+    assertCountEventAndReset(projectAware.projectId, numReload, projectAware.reloadCounter, "project reload", event)
+    assertCountEventAndReset(projectAware.projectId, numSettingsAccess, projectAware.settingsAccessCounter, "access to settings", event)
+    assertCountEventAndReset(projectAware.projectId, numSubscribing, projectAware.subscribeCounter, "subscribe", event)
+    assertCountEventAndReset(projectAware.projectId, numUnsubscribing, projectAware.unsubscribeCounter, "unsubscribe", event)
+
+    assertNotificationAware(projectAware.projectId, notified, event)
+
+    assertActivationStatus(projectAware.projectId, activated, event)
   }
 
-  protected fun assertCountEvent(expected: Int, actual: Int, countEvent: String, event: String) {
-    val message = when {
-      actual > expected -> "Unexpected $countEvent event"
-      actual < expected -> "Expected $countEvent event"
-      else -> ""
+  protected fun assertCountEventAndReset(
+    projectId: ExternalSystemProjectId,
+    expected: Int?,
+    counter: AtomicInteger,
+    countEvent: String,
+    event: String,
+  ) {
+    if (expected != null) {
+      val actual = counter.getAndSet(0)
+      if (actual > expected) {
+        assertEquals("$projectId: Unexpected $countEvent event when $event", expected, actual)
+      }
+      if (actual < expected) {
+        assertEquals("$projectId: Expected $countEvent event when $event", expected, actual)
+      }
     }
-    assertEquals("$message when $event", expected, actual)
   }
 
-  protected fun assertProjectTrackerSettings(autoReloadType: AutoReloadType, event: String) {
-    val message = when (autoReloadType) {
-      ALL -> "Auto reload must be enabled"
-      SELECTIVE -> "Auto reload must be enabled"
-      NONE -> "Auto reload must be disabled"
+  protected fun assertProjectTrackerSettings(autoReloadType: AutoReloadType?, event: String) {
+    if (autoReloadType != null) {
+      val message = when (autoReloadType) {
+        ALL -> "Auto reload must be enabled"
+        SELECTIVE -> "Auto reload must be enabled"
+        NONE -> "Auto reload must be disabled"
+      }
+      assertEquals("$message when $event", autoReloadType, projectTrackerSettings.autoReloadType)
     }
-    assertEquals("$message when $event", autoReloadType, projectTrackerSettings.autoReloadType)
   }
 
-  protected fun assertActivationStatus(vararg projects: ExternalSystemProjectId, event: String) {
-    val message = when (projects.isEmpty()) {
-      true -> "Auto reload must be activated"
-      false -> "Auto reload must be deactivated"
+  protected fun assertActivationStatus(projectId: ExternalSystemProjectId, activated: Boolean?, event: String) {
+    if (activated != null) {
+      val activatedProjects = projectTracker.getActivatedProjects()
+      when (activated) {
+        true -> assertContainsElements("Notification must be notified when $event", activatedProjects, projectId)
+        else -> assertDoesntContain("Auto reload must be deactivated when $event", activatedProjects, projectId)
+      }
     }
-    assertEquals("$message when $event", projects.toSet(), projectTracker.getActivatedProjects())
   }
 
-  protected fun assertNotificationAware(vararg projects: ExternalSystemProjectId, event: String) {
-    val message = when (projects.isEmpty()) {
-      true -> "Notification must be expired"
-      else -> "Notification must be notified"
+  protected fun assertNotificationAware(projectId: ExternalSystemProjectId, notified: Boolean, event: String) {
+    val projectsWithNotification = notificationAware.getProjectsWithNotification()
+    when (notified) {
+      true -> assertContainsElements("Notification must be notified when $event", projectsWithNotification, projectId)
+      else -> assertDoesntContain("Notification must be expired when $event", projectsWithNotification, projectId)
     }
-    assertEquals("$message when $event", projects.toSet(), notificationAware.getProjectsWithNotification())
   }
 
   protected fun modification(action: () -> Unit) {
@@ -371,18 +392,16 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun createCustomCrcCalculator(additionalIsIgnoredTokenCheck: (CharSequence) -> Boolean) {
     val crcCalculator = object: AbstractCrcCalculator() {
+      override fun isApplicable(systemId: ProjectSystemId, file: VirtualFile): Boolean = true
       override fun isIgnoredToken(tokenType: IElementType, tokenText: CharSequence, parserDefinition: ParserDefinition): Boolean {
         val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
         return ignoredTokens.contains(tokenType) || additionalIsIgnoredTokenCheck(tokenText)
       }
-
-      override fun isApplicable(systemId: ProjectSystemId, file: VirtualFile): Boolean =
-        systemId == TEST_EXTERNAL_SYSTEM_ID
     }
-    ExtensionTestUtil.maskExtensions(ExternalSystemCrcCalculator.Companion.EP_NAME, listOf(crcCalculator), testDisposable)
+    ExtensionTestUtil.maskExtensions(ExternalSystemCrcCalculator.EP_NAME, listOf(crcCalculator), testDisposable)
   }
 
-  protected fun mockProjectAware(projectId: ExternalSystemProjectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)) =
+  protected fun mockProjectAware(projectId: ExternalSystemProjectId = ExternalSystemProjectId(ProjectSystemId("External System"), projectPath)) =
     MockProjectAware(projectId, myProject, testDisposable)
 
   protected inner class SimpleTestBench(val projectAware: MockProjectAware) {
@@ -456,21 +475,22 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     }
 
     fun assertStateAndReset(
-      numReload: Int? = null,
+      autoReloadType: AutoReloadType? = null,
+      numReload: Int,
       numSettingsAccess: Int? = null,
       numSubscribing: Int? = null,
       numUnsubscribing: Int? = null,
-      autoReloadType: AutoReloadType = SELECTIVE,
       notified: Boolean,
       event: String,
     ) {
-      assertProjectAware(projectAware, numReload, numSettingsAccess, numSubscribing, numUnsubscribing, event)
-      assertProjectTrackerSettings(autoReloadType, event = event)
-      when (notified) {
-        true -> assertNotificationAware(projectAware.projectId, event = event)
-        else -> assertNotificationAware(event = event)
-      }
-      projectAware.resetAssertionCounters()
+      assertStateAndReset(
+        projectAware,
+        autoReloadType,
+        numReload, numSettingsAccess, numSubscribing, numUnsubscribing,
+        notified,
+        activated = null,
+        event
+      )
     }
 
     fun waitForAllProjectActivities(action: () -> Unit) {

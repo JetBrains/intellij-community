@@ -60,13 +60,6 @@ class MockProjectAware(
   val modificationTypeAdjustingRule: AtomicReference<(String, ExternalSystemModificationType) -> ExternalSystemModificationType> =
     AtomicReference { _, type -> type }
 
-  fun resetAssertionCounters() {
-    settingsAccessCounter.set(0)
-    reloadCounter.set(0)
-    subscribeCounter.set(0)
-    unsubscribeCounter.set(0)
-  }
-
   fun registerSettingsFile(file: VirtualFile) {
     registerSettingsFile(file.toNioPath())
   }

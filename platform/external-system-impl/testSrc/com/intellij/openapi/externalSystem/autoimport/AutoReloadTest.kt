@@ -229,40 +229,33 @@ class AutoReloadTest : AutoReloadTestCase() {
     register(projectAware1)
     register(projectAware2)
 
-    assertProjectAware(projectAware1, numReload = 1, event = "register project without cache")
-    assertProjectAware(projectAware2, numReload = 1, event = "register project without cache")
-    assertNotificationAware(event = "register project without cache")
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, event = "register project without cache")
+    assertStateAndReset(projectAware2, numReload = 1, notified = false, event = "register project without cache")
 
     scriptFile1.appendString("println 1")
-    assertProjectAware(projectAware1, numReload = 1, event = "modification of first settings")
-    assertProjectAware(projectAware2, numReload = 1, event = "modification of first settings")
-    assertNotificationAware(projectId1, event = "modification of first settings")
+    assertStateAndReset(projectAware1, numReload = 0, notified = true, event = "modification of first settings")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, event = "modification of first settings")
 
     scriptFile2.appendString("println 2")
-    assertProjectAware(projectAware1, numReload = 1, event = "modification of second settings")
-    assertProjectAware(projectAware2, numReload = 1, event = "modification of second settings")
-    assertNotificationAware(projectId1, projectId2, event = "modification of second settings")
+    assertStateAndReset(projectAware1, numReload = 0, notified = true, event = "modification of second settings")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, event = "modification of second settings")
 
     scriptFile1.removeContent()
-    assertProjectAware(projectAware1, numReload = 1, event = "revert changes at second settings")
-    assertProjectAware(projectAware2, numReload = 1, event = "revert changes at second settings")
-    assertNotificationAware(projectId2, event = "revert changes at second settings")
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, event = "revert changes at second settings")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, event = "revert changes at second settings")
 
     scheduleProjectReload()
-    assertProjectAware(projectAware1, numReload = 1, event = "project refresh")
-    assertProjectAware(projectAware2, numReload = 2, event = "project refresh")
-    assertNotificationAware(event = "project refresh")
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, event = "project refresh")
+    assertStateAndReset(projectAware2, numReload = 1, notified = false, event = "project refresh")
 
     scriptFile1.replaceContent("println 'script 1'")
     scriptFile2.replaceContent("println 'script 2'")
-    assertProjectAware(projectAware1, numReload = 1, event = "modification of both settings")
-    assertProjectAware(projectAware2, numReload = 2, event = "modification of both settings")
-    assertNotificationAware(projectId1, projectId2, event = "modification of both settings")
+    assertStateAndReset(projectAware1, numReload = 0, notified = true, event = "modification of both settings")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, event = "modification of both settings")
 
     scheduleProjectReload()
-    assertProjectAware(projectAware1, numReload = 2, event = "project refresh")
-    assertProjectAware(projectAware2, numReload = 3, event = "project refresh")
-    assertNotificationAware(event = "project refresh")
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, event = "project refresh")
+    assertStateAndReset(projectAware2, numReload = 1, notified = false, event = "project refresh")
   }
 
   fun `test project link-unlink`() {
@@ -589,47 +582,35 @@ class AutoReloadTest : AutoReloadTestCase() {
     initialize()
 
     register(projectAware1, activate = false)
-    assertProjectAware(projectAware1, numReload = 0, event = "register project")
-    assertNotificationAware(projectId1, event = "register project")
-    assertActivationStatus(event = "register project")
+    assertStateAndReset(projectAware1, numReload = 0, notified = true, activated = false, event = "register inactive project")
 
     activate(projectId1)
-    assertProjectAware(projectAware1, numReload = 1, event = "activate project")
-    assertNotificationAware(event = "activate project")
-    assertActivationStatus(projectId1, event = "activate project")
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "activate project")
 
     register(projectAware2, activate = false)
-    assertProjectAware(projectAware1, numReload = 1, event = "register project 2")
-    assertProjectAware(projectAware2, numReload = 0, event = "register project 2")
-    assertNotificationAware(projectId2, event = "register project 2")
-    assertActivationStatus(projectId1, event = "register project 2")
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, activated = true, event = "register inactive project 2")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "register inactive project 2")
 
     registerSettingsFile(projectAware1, "settings.groovy")
     registerSettingsFile(projectAware2, "sub-project/settings.groovy")
     val settingsFile1 = createIoFile("settings.groovy")
     val settingsFile2 = createIoFile("sub-project/settings.groovy")
-    assertProjectAware(projectAware1, numReload = 1, event = "externally created both empty settings files, but project 2 is inactive")
-    assertProjectAware(projectAware2, numReload = 0, event = "externally created both empty settings files, but project 2 is inactive")
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, activated = true, event = "externally created both empty settings files, but project 2 is inactive")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "externally created both empty settings files, but project 2 is inactive")
 
     settingsFile1.replaceContentInIoFile("println 'hello'")
     settingsFile2.replaceContentInIoFile("println 'hello'")
-    assertProjectAware(projectAware1, numReload = 2, event = "externally modified both settings files, but project 2 is inactive")
-    assertProjectAware(projectAware2, numReload = 0, event = "externally modified both settings files, but project 2 is inactive")
-    assertNotificationAware(projectId2, event = "externally modified both settings files, but project 2 is inactive")
-    assertActivationStatus(projectId1, event = "externally modified both settings files, but project 2 is inactive")
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "externally modified both settings files, but project 2 is inactive")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "externally modified both settings files, but project 2 is inactive")
 
     settingsFile1.replaceString("hello", "Hello world!")
     settingsFile2.replaceString("hello", "Hello world!")
-    assertProjectAware(projectAware1, numReload = 2, event = "internally modify settings")
-    assertProjectAware(projectAware2, numReload = 0, event = "internally modify settings")
-    assertNotificationAware(projectId1, projectId2, event = "internally modify settings")
-    assertActivationStatus(projectId1, event = "internally modify settings")
+    assertStateAndReset(projectAware1, numReload = 0, notified = true, activated = true, event = "internally modify settings")
+    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "internally modify settings")
 
     scheduleProjectReload()
-    assertProjectAware(projectAware1, numReload = 3, event = "refresh project")
-    assertProjectAware(projectAware2, numReload = 1, event = "refresh project")
-    assertNotificationAware(event = "refresh project")
-    assertActivationStatus(projectId1, projectId2, event = "refresh project")
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "refresh project")
+    assertStateAndReset(projectAware2, numReload = 1, notified = false, activated = true, event = "refresh project")
   }
 
   fun `test enabling-disabling internal-external changes importing`() {
@@ -976,14 +957,14 @@ class AutoReloadTest : AutoReloadTestCase() {
     val projectAware = mockProjectAware()
     projectAware.registerSettingsFile(settingsFile1)
     register(projectAware)
-    assertProjectAware(projectAware, numReload = 1, event = "register project")
+    assertStateAndReset(projectAware, numReload = 1, notified = false, event = "register project")
 
     projectAware.fireSettingsFilesListChanged()
-    assertProjectAware(projectAware, numReload = 1, event = "handle settings files list change event when nothing actually changed")
+    assertStateAndReset(projectAware, numReload = 0, notified = false, event = "handle settings files list change event when nothing actually changed")
 
     projectAware.registerSettingsFile(settingsFile2)
     projectAware.fireSettingsFilesListChanged()
-    assertProjectAware(projectAware, numReload = 2, event = "handle settings files list change event when file added")
+    assertStateAndReset(projectAware, numReload = 1, notified = false, event = "handle settings files list change event when file added")
   }
 
   fun `test partial ignoring settings files modification events`() {
@@ -1140,7 +1121,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       settingsFile.delete()
       assertStateAndReset(numReload = 0, notified = false, event = "settings file with CRC == 0 deletion")
 
-      var newSettingsFile = createFile(SETTINGS_FILE)
+      val newSettingsFile = createFile(SETTINGS_FILE)
       assertStateAndReset(numReload = 0, notified = false, event = "create empty registered settings")
 
       newSettingsFile.appendString(SAMPLE_TEXT)
@@ -1152,6 +1133,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, notified = true, event = "settings file with CRC != 0 deletion")
     }
   }
+
   fun `test settings file deletion by java nio`() {
     test { settingsFile ->
       settingsFile.appendString(SAMPLE_TEXT)
