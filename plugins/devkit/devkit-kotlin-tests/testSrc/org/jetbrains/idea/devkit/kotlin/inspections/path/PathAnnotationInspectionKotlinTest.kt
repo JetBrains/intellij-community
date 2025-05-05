@@ -5,21 +5,24 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 /**
  * Kotlin implementation of tests for PathAnnotationInspection.
  * Some tests might not pass because the inspection implementation might not fully support Kotlin.
  */
-class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
+class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase(), ExpectedPluginModeProvider {
   override fun getFileExtension(): String = "kt"
 
   override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
   override fun setUp() {
-    super.setUp()
-    //setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    //super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
@@ -289,4 +292,27 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase() {
       }      
       """)
   }
+
+  fun testFalseNegative() {
+    doTest("""
+      @file:Suppress("UNUSED_VARIABLE")
+
+      import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+      import java.nio.file.Path
+      
+      class FalseNegativeTest {
+          fun testMethod(cachePathParameter: String?) {
+              val cachePath: @MultiRoutingFileSystemPath String? = cachePathParameter
+              if (cachePath == null) {
+                println("`cachePath` is null")
+                return
+              }
+              val installScript = Path.of(cachePath, "install.sh")
+          }
+      }
+      """)
+  }
+
+  override val pluginMode: KotlinPluginMode
+    get() = KotlinPluginMode.K2
 }
