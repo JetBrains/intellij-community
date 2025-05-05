@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
+import org.jetbrains.plugins.gradle.testFramework.assertions.TestProxyAssertions
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestExecutionConsoleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.SMTestRunnerOutputTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestExecutionConsoleTestFixtureImpl
@@ -73,5 +74,13 @@ abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {
     testStart: Int, testFinish: Int, testFailure: Int, testIgnore: Int,
   ) {
     testRunnerOutputFixture.assertTestEventCount(name, suiteStart, suiteFinish, testStart, testFinish, testFailure, testIgnore)
+  }
+
+  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
+    className: String, methodName: String? = null, parameterName: String? = null
+  ) {
+    assertValue { testProxy ->
+      TestProxyAssertions.assertPsiLocation(project, testProxy, className, methodName, parameterName)
+    }
   }
 }

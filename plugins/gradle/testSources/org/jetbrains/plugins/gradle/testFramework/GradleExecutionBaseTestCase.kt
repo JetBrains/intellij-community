@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
@@ -12,11 +11,11 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionConsol
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionConsoleFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionEnvironmentFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionOutputFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.junit.jupiter.api.AfterEach
 
@@ -64,7 +63,7 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     _executionEnvironmentFixture = GradleExecutionEnvironmentFixtureImpl(project)
     executionEnvironmentFixture.setUp()
 
-    _executionConsoleFixture = GradleExecutionConsoleFixtureImpl(project, executionEnvironmentFixture)
+    _executionConsoleFixture = GradleExecutionConsoleFixtureImpl(executionEnvironmentFixture)
     executionConsoleFixture.setUp()
 
     _buildViewFixture = BuildViewTestFixture(project)
@@ -139,12 +138,6 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
   fun assertRunViewTree(assert: SimpleTreeAssertion.Node<Nothing?>.() -> Unit) {
     executionConsoleFixture.assertRunTreeView(assert)
-  }
-
-  fun SimpleTreeAssertion.Node<AbstractTestProxy>.assertPsiLocation(
-    className: String, methodName: String? = null, parameterName: String? = null
-  ) {
-    executionConsoleFixture.assertPsiLocation(this, className, methodName, parameterName)
   }
 
   fun assertTestEventsContain(className: String, methodName: String? = null) {
