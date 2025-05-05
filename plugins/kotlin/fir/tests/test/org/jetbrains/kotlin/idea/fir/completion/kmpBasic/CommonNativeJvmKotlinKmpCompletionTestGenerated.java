@@ -674,6 +674,26 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/constructor/DoNotOfferConstructorForClassifier.kt");
         }
 
+        @TestMetadata("InSecondaryConstructorBody.kt")
+        public void testInSecondaryConstructorBody() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/InSecondaryConstructorBody.kt");
+        }
+
+        @TestMetadata("InSecondaryConstructorDefaultParameter.kt")
+        public void testInSecondaryConstructorDefaultParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/InSecondaryConstructorDefaultParameter.kt");
+        }
+
+        @TestMetadata("InSecondaryConstructorDelegationCall.kt")
+        public void testInSecondaryConstructorDelegationCall() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/InSecondaryConstructorDelegationCall.kt");
+        }
+
+        @TestMetadata("InSecondaryConstructorFirstDefaultParameter.kt")
+        public void testInSecondaryConstructorFirstDefaultParameter() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/InSecondaryConstructorFirstDefaultParameter.kt");
+        }
+
         @TestMetadata("MultipleConstructors.kt")
         public void testMultipleConstructors() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/MultipleConstructors.kt");
@@ -3674,26 +3694,6 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("InPropertyInitializer.kt")
         public void testInPropertyInitializer() throws Exception {
             runTest("../../completion/testData/basic/common/InPropertyInitializer.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorBody.kt")
-        public void testInSecondaryConstructorBody() throws Exception {
-            runTest("../../completion/testData/basic/common/InSecondaryConstructorBody.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorDefaultParameter.kt")
-        public void testInSecondaryConstructorDefaultParameter() throws Exception {
-            runTest("../../completion/testData/basic/common/InSecondaryConstructorDefaultParameter.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorDelegationCall.kt")
-        public void testInSecondaryConstructorDelegationCall() throws Exception {
-            runTest("../../completion/testData/basic/common/InSecondaryConstructorDelegationCall.kt");
-        }
-
-        @TestMetadata("InSecondaryConstructorFirstDefaultParameter.kt")
-        public void testInSecondaryConstructorFirstDefaultParameter() throws Exception {
-            runTest("../../completion/testData/basic/common/InSecondaryConstructorFirstDefaultParameter.kt");
         }
 
         @TestMetadata("InTypeAnnotation.kt")
