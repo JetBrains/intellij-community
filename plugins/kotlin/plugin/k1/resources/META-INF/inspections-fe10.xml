@@ -2167,7 +2167,7 @@
                      language="kotlin"
                      key="inspection.replace.guard.clause.with.function.call.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnusedUnaryOperatorInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnusedUnaryOperatorInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true"
