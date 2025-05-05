@@ -193,8 +193,8 @@ internal fun String.getModuleName(): String? = when (count { it == ':' }) {
 
 /** check if the new layout from version 1.8.1 is used */
 private fun KtElement.isNewLayout(): Boolean {
-  val moduleScope = module?.let { GlobalSearchScope.moduleScope(it) } ?: return false
-  return KotlinPropertyShortNameIndex["MD", project, moduleScope].any { it.containingFile == containingFile }
+  val fileScope = GlobalSearchScope.fileScope(containingFile)
+  return KotlinPropertyShortNameIndex["MD", project, fileScope].isNotEmpty()
 }
 
 private val log by lazy { fileLogger() }
