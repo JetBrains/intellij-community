@@ -104,4 +104,8 @@ internal class InlineCompletionFocusListener : FocusChangeListener {
       handler.invokeEvent(event)
     }
   }
+
+  override fun focusLost(editor: Editor) {
+    hideInlineCompletion(editor, FinishType.FOCUS_LOST) // IJPL-186694
+  }
 }
