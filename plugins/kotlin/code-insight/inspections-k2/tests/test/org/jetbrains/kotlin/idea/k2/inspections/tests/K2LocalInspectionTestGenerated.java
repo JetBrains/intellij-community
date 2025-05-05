@@ -15730,6 +15730,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/nullableTypealias.kt");
         }
 
+        @TestMetadata("superTypeQualifier.kt")
+        public void testSuperTypeQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/superTypeQualifier.kt");
+        }
+
         @TestMetadata("typeReference.kt")
         public void testTypeReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typeReference.kt");

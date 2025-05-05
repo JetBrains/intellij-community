@@ -105,6 +105,7 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
 
     override fun KaSession.prepareContext(element: KtElement): Context? {
         if (PsiTreeUtil.hasErrorElements(element)) return null // Temporary check until KT-77222 is fixed
+        if (element is KtTypeReference && element.parent is KtSuperExpression) return null // super type qualifier `super<Foo>`
         val typeArguments = element.getTypeArguments() ?: return null
 
         val canMakeNonNullable: Boolean
