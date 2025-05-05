@@ -202,11 +202,12 @@ object Utils {
 
   @Deprecated("Use [UiDataProvider] API instead]")
   @JvmStatic
-  fun wrapToUiDataProvider(dataProvider: DataProvider): UiDataProvider = object : UiCompatibleDataProvider, DataValidators.SourceWrapper {
-    override fun uiDataSnapshot(sink: DataSink) = Unit
-    override fun getData(dataId: @NonNls String): Any? = dataProvider.getData(dataId)
-    override fun unwrapSource(): Any = dataProvider
-  }
+  fun wrapToUiDataProvider(dataProvider: DataProvider): UiDataProvider =
+    dataProvider as? UiDataProvider ?: object : UiCompatibleDataProvider, DataValidators.SourceWrapper {
+      override fun uiDataSnapshot(sink: DataSink) = Unit
+      override fun getData(dataId: @NonNls String): Any? = dataProvider.getData(dataId)
+      override fun unwrapSource(): Any = dataProvider
+    }
 
   @JvmStatic
   fun isAsyncDataContext(dataContext: DataContext): Boolean {
