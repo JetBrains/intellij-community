@@ -75,7 +75,7 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      ScrollableContentBorder.setup(changesScrollPane, Side.TOP_AND_BOTTOM, scrollableBordersPanel)
+      ScrollableContentBorder.setup(changesScrollPane, setOf(Side.LEFT, Side.BOTTOM), scrollableBordersPanel)
       addToLeft(toolbar.component)
     }
   }
