@@ -44,7 +44,7 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
           stripPrefix = command[4]
           val index = p.indexOf(stripPrefix)
           require(index != -1)
-          stripPrefix = p.substring(0, index + stripPrefix.length)
+          stripPrefix = p.take(index + stripPrefix.length)
         }
         createZip(
           outJar = Path.of(output),
@@ -70,13 +70,12 @@ private suspend fun createZip(outJar: Path, inputs: Array<String>, baseDir: Path
   val stripPrefixWithSlash = stripPrefix.let { if (it.isEmpty()) "" else "$it/" }
   val files = ArrayList<String>(inputs.size)
   for (input in inputs) {
-    val p = input
-    if (!p.startsWith(stripPrefixWithSlash)) {
+    if (!input.startsWith(stripPrefixWithSlash)) {
       // input can contain our jar in the end
       continue
     }
 
-    files.add(p.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
+    files.add(input.substring(stripPrefixWithSlash.length).replace(File.separatorChar, '/'))
   }
 
   files.sort()

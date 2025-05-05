@@ -30,8 +30,6 @@ class ArgMap<T : Enum<T>> internal constructor(private val map: EnumMap<T, Mutab
     }
   }
 
-  fun mandatory(key: T): List<String> = requireNotNull(map[key]) { "$key is not optional" }
-
   fun optional(key: T): List<String>? = map[key]
 
   fun optionalList(key: T): List<String> = map[key] ?: emptyList()
