@@ -760,6 +760,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/TopScope3-.kt");
     }
 
+    @TestMetadata("UseSiteTargetAll.kt")
+    public void testUseSiteTargetAll() throws Exception {
+        runTest("../testData/keywords/UseSiteTargetAll.kt");
+    }
+
     @TestMetadata("UseSiteTargetForPrimaryConstructorParameter.kt")
     public void testUseSiteTargetForPrimaryConstructorParameter() throws Exception {
         runTest("../testData/keywords/UseSiteTargetForPrimaryConstructorParameter.kt");

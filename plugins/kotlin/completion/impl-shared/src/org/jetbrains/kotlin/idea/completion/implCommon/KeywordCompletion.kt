@@ -53,7 +53,8 @@ open class KeywordLookupObject {
 
 class KeywordCompletion() {
     companion object {
-        private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
+        // workaround for the all keyword can be removed after KT-77099
+        private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types + ALL_KEYWORD)
             .map { it as KtKeywordToken }
 
         private val INCOMPATIBLE_KEYWORDS_AROUND_SEALED = setOf(
@@ -676,6 +677,7 @@ class KeywordCompletion() {
     ): Boolean {
         val feature = when (keyword) {
             TYPE_ALIAS_KEYWORD -> LanguageFeature.TypeAliases
+            ALL_KEYWORD -> LanguageFeature.AnnotationAllUseSiteTarget
             EXPECT_KEYWORD, ACTUAL_KEYWORD -> LanguageFeature.MultiPlatformProjects
             SUSPEND_KEYWORD -> LanguageFeature.Coroutines
             FIELD_KEYWORD -> {

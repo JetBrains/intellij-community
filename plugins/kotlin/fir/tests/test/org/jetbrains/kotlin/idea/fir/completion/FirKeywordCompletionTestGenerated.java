@@ -762,6 +762,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../../completion/testData/keywords/TopScope3-.kt");
         }
 
+        @TestMetadata("UseSiteTargetAll.kt")
+        public void testUseSiteTargetAll() throws Exception {
+            runTest("../../completion/testData/keywords/UseSiteTargetAll.kt");
+        }
+
         @TestMetadata("UseSiteTargetForPrimaryConstructorParameter.kt")
         public void testUseSiteTargetForPrimaryConstructorParameter() throws Exception {
             runTest("../../completion/testData/keywords/UseSiteTargetForPrimaryConstructorParameter.kt");
