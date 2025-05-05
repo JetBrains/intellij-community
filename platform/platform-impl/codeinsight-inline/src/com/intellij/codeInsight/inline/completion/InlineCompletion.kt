@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionSelectionListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
@@ -63,6 +64,7 @@ object InlineCompletion {
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
+    editor.selectionModel.addSelectionListener(InlineCompletionSelectionListener(), disposable)
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
 
