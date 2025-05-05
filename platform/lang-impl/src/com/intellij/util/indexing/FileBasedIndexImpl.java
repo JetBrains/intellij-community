@@ -1887,7 +1887,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                          @NotNull Set<Project> containingProjects,
                                          @NotNull List<Project> dirtyQueueProjects) {
     myIndexableFilesFilterHolder.removeFile(fileId);
-    myDirtyFiles.addFile(Collections.emptyList(), fileId); // can be indexed by project which is currently closed
+    if (containingProjects.isEmpty() && canBeIndexed(file)) {
+      myDirtyFiles.addFile(Collections.emptyList(), fileId); // can be indexed by project which is currently closed
+    }
     IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
@@ -1921,7 +1923,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                       boolean onlyContentChanged,
                                       @NotNull List<Project> dirtyQueueProjects) {
     Set<Project> containingProjects = getContainingProjects(file);
-    if (containingProjects.isEmpty() || !file.isValid() || (!file.isDirectory() && isTooLarge(file))) {
+    if (containingProjects.isEmpty() || !canBeIndexed(file)) {
       // large file might be scheduled for update in before event when its size was not large
       doInvalidateIndicesForFile(fileId, file, containingProjects, dirtyQueueProjects);
       return;
@@ -1976,6 +1978,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         IndexingFlag.setFileIndexed(file, indexingStamp);
       }
     });
+  }
+
+  private boolean canBeIndexed(@NotNull VirtualFile file) {
+    return file.isValid() && (file.isDirectory() || !isTooLarge(file));
   }
 
   // TODO-ank (IJPL-412): use UnindexedFilesFinder.tryIndexWithoutContent instead
