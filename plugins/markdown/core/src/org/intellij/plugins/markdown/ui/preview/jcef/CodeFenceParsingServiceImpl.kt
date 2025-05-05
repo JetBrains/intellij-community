@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.jcef.JBCefBrowser
 import org.cef.CefSettings
 import org.cef.browser.CefBrowser
@@ -10,6 +11,7 @@ import org.intellij.lang.annotations.Language
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
@@ -18,6 +20,7 @@ import org.intellij.plugins.markdown.ui.preview.jcef.impl.waitForPageLoad
 import java.net.URL
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 import kotlin.random.Random
 
 @Service(Service.Level.APP)
@@ -35,30 +38,17 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
   @Volatile private var jsResult: String? = null
   @Volatile private var jsError = false
 
-  private val browser: JBCefBrowser = object : JBCefBrowser() {
-    init {
-      jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
-        override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
-          if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter:")) {
-            jsExecLatch?.await()
-            jsResult = message.substring(12)
-            jsResultLatch?.countDown()
-          }
-          else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
-            System.err.println("Error while executing highlighter: $message")
-            jsError = true
-          }
-
-          return true // Prevent creation of jcef_*.log files
-        }
-      }, cefBrowser)
-    }
-  }
+  private var browser: JBCefBrowser? = null
 
   init {
-    val scope = cs ?: object: CoroutineScope { override val coroutineContext = Job()}
+    if (cs != null) {
+      cs.launch { codeFenceParsingStartUp() }
+    }
+    else {
+      val scope = object : CoroutineScope { override val coroutineContext: CoroutineContext = Job() + Dispatchers.IO }
 
-    scope.launch { codeFenceParsingStartUp() }
+      scope.launch { codeFenceParsingStartUp() }
+    }
   }
 
   private suspend fun codeFenceParsingStartUp() {
@@ -66,6 +56,25 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
       return
 
     started = true
+    browser = object : JBCefBrowser() {
+      init {
+        jbCefClient.addDisplayHandler(object: CefDisplayHandlerAdapter() {
+          override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity, message: String, source: String, line: Int): Boolean {
+            if (level == CefSettings.LogSeverity.LOGSEVERITY_INFO && message.startsWith("highlighter:")) {
+              jsExecLatch?.await()
+              jsResult = message.substring(12)
+              jsResultLatch?.countDown()
+            }
+            else if (level == CefSettings.LogSeverity.LOGSEVERITY_ERROR) {
+              LOG.error("Error while executing highlighter: $message")
+              jsError = true
+            }
+
+            return true // Prevent creation of jcef_*.log files
+          }
+        }, cefBrowser)
+      }
+    }
 
     var latestJS: String? = null
     var fallbackJS: String? = null
@@ -93,9 +102,12 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
     val highlightJS = latestJS ?: fallbackJS
 
     if (highlightJS == null) {
+      LOG.error("Failed to load highlight.js code.")
       available = false
       return
     }
+
+    LOG.info("Using ${if (highlightJS == latestJS) "latest" else "built-in"} highlight.js.")
 
     @Suppress("JSUnresolvedReference")
     @Language("JavaScript")
@@ -124,16 +136,20 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
       |}
       """.trimMargin()
 
-    browser.createImmediately()
-    browser.waitForPageLoad("about:blank")
-    browser.executeJavaScript(highlightJS)
-    browser.executeJavaScript(jsExtra)
+    browser!!.createImmediately()
+    LOG.info("CodeFenceParsing browser created")
+    browser!!.waitForPageLoad("about:blank")
+    LOG.info("CodeFenceParsing browser loaded")
+    browser!!.executeJavaScript(highlightJS)
+    browser!!.executeJavaScript(jsExtra)
     startupCompleted = true
     startupLatch?.countDown()
+    LOG.info("CodeFenceParsing browser set--up completed")
   }
 
   override fun altHighlighterAvailable() = available
 
+  @Suppress("PrivatePropertyName")
   private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 
   private fun parseSegment(language: String, content: String): String? {
@@ -142,11 +158,11 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
     val execThread = Thread {
       jsError = false
       @Suppress("JSUnresolvedReference")
-      browser.executeJavaScript("markdownHighlighter('${escapeForJs(language)}', '${escapeForJs(content)}')")
+      browser!!.executeJavaScript("markdownHighlighter('${escapeForJs(language)}', '${escapeForJs(content)}')")
       jsExecLatch!!.countDown()
       jsExecLatch = null
       jsResultLatch = CountDownLatch(1)
-      jsResultLatch!!.await(2, TimeUnit.SECONDS)
+      jsResultLatch!!.await(MAX_HIGHLIGHT_JS_WAIT_TIME, TimeUnit.MILLISECONDS)
     }
 
     execThread.start()
@@ -187,43 +203,45 @@ class CodeFenceParsingServiceImpl(cs: CoroutineScope? = null) : CodeFenceParsing
 
   private val scriptTag = Regex("""<\s*script[^>]*>""", RegexOption.IGNORE_CASE)
 
+  @Synchronized
   override fun parseToHighlightedHtml(language: String, content: String, node: ASTNode): String? {
-    synchronized(browser) {
-      startupLatch?.await(MAX_ALLOWED_STARTUP_TIME, TimeUnit.MILLISECONDS)
-      startupLatch = null
+    startupLatch?.await(MAX_ALLOWED_STARTUP_TIME, TimeUnit.MILLISECONDS)
+    startupLatch = null
 
-      if (!startupCompleted) {
-        available = false
-        return null
-      }
-
-      var parsed: String
-
-      if (language != "html" || !scriptTag.containsMatchIn(content)) {
-        parsed = parseSegment(language, content) ?: return null
-      }
-      else {
-        parsed = parseMixedHtmlAndJavaScript(content) ?: return null
-      }
-
-      val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
-      var html = convertToRangedSpans(parsed, startOffset)
-
-      if (node.startOffset < startOffset) {
-        // Needed to match code fence start, even though the fence start text itself isn't inside the span.
-        html = "<span $md_src_pos=\"${node.startOffset}..$startOffset\"></span>" + html
-      }
-
-      if (node.endOffset > startOffset + content.length) {
-        // Needed to match code fence end, even though the fence end text itself isn't inside the span.
-        html += "<span $md_src_pos=\"${startOffset + content.length}..${node.endOffset}\"></span>"
-      }
-
-      return html
+    if (!startupCompleted) {
+      LOG.error("Startup timed out")
+      available = false
+      return null
     }
+
+    var parsed: String
+
+    if (language != "html" || !scriptTag.containsMatchIn(content)) {
+      parsed = parseSegment(language, content) ?: return null
+    }
+    else {
+      parsed = parseMixedHtmlAndJavaScript(content) ?: return null
+    }
+
+    val startOffset = DefaultCodeFenceGeneratingProvider.calculateCodeFenceContentBaseOffset(node)
+    var html = convertToRangedSpans(parsed, startOffset)
+
+    if (node.startOffset < startOffset) {
+      // Needed to match code fence start, even though the fence start text itself isn't inside the span.
+      html = "<span $md_src_pos=\"${node.startOffset}..$startOffset\"></span>" + html
+    }
+
+    if (node.endOffset > startOffset + content.length) {
+      // Needed to match code fence end, even though the fence end text itself isn't inside the span.
+      html += "<span $md_src_pos=\"${startOffset + content.length}..${node.endOffset}\"></span>"
+    }
+
+    return html
   }
 
   companion object {
+    private val LOG = logger<CodeFenceParsingService>()
+
     private val entitiesMap = mapOf("amp" to "&", "gt" to ">", "lt" to "<", "quot" to "\"")
     private val entities = Regex("&(amp|gt|lt|quot);")
 
