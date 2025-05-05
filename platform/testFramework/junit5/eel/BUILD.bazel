@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "testFramework-junit5-eel_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 jvm_library(
   name = "testFramework-junit5-eel",
@@ -7,22 +13,22 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:junit5",
     "@lib//:junit5Jupiter",
+    "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
+    "//libraries/junit5",
     "//platform/core-api:core",
     "//platform/core-nio-fs",
     "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/ide-core",
     "//platform/ide-core-impl",
+    "//platform/ijent",
     "//platform/testFramework/junit5",
     "//platform/util",
-    "//platform/util-ex",
-    "//platform/ijent",
     "//platform/util/coroutines",
+    "//platform/util-ex",
   ]
 )
 
@@ -32,27 +38,28 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":testFramework-junit5-eel"],
   deps = [
-    "@lib//:jetbrains-annotations",
-    "@lib//:junit5",
     "@lib//:junit5Jupiter",
+    "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5Params",
+    "//libraries/junit5",
+    "//libraries/junit5-pioneer",
     "//platform/core-api:core",
     "//platform/core-nio-fs",
     "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/ide-core",
     "//platform/ide-core-impl",
+    "//platform/ijent",
+    "//platform/ijent:ijent_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/util",
-    "//platform/util-ex",
-    "@lib//:junit5Pioneer",
-    "//platform/ijent",
-    "//platform/ijent:ijent_test_lib",
     "//platform/util/coroutines",
-  ]
+    "//platform/util-ex",
+  ],
+  runtime_deps = [":testFramework-junit5-eel_test_resources"]
 )
 
 jvm_test(
