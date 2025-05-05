@@ -1832,6 +1832,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
            isRealEditor() ? getFoldingAnchorWidth() : 0;
   }
 
+  int getFoldingAreaWidthForLineNumbersAfterIcons() {
+    return (int)(getFoldingAnchorWidth2D() / 1.4);
+  }
+
   private boolean isRealEditor() {
     return EditorUtil.isRealFileEditor(myEditor);
   }
@@ -1842,10 +1846,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   boolean isLineNumbersAfterIcons() {
     return myEditor.getSettings().isLineNumbersAfterIcons();
-  }
-
-  boolean isGapAfterIconsShown() {
-    return isLineMarkersShown() && !isLineNumbersAfterIcons();
   }
 
   boolean areIconsShown() {

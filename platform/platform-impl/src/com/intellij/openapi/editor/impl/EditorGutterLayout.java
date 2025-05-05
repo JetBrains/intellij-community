@@ -235,6 +235,10 @@ public final class EditorGutterLayout {
       area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth)
     );
 
+    List<GutterArea> rightEdgeAreasForLineNumbersAfterIcons = List.of(
+      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidthForLineNumbersAfterIcons)
+    );
+
     List<GutterArea> extraRightFreePainters = List.of(
       area(EXTRA_RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getExtraRightFreePaintersAreaWidth)
         .showIf(() -> myEditorGutter.isLineMarkersShown()),
@@ -255,6 +259,7 @@ public final class EditorGutterLayout {
       layout.addAll(dfmMarginArea);
       layout.addAll(iconRelatedAreas);
       layout.addAll(lineNumbersAreas);
+      layout.addAll(rightEdgeAreasForLineNumbersAfterIcons);
       layout.addAll(extraRightFreePainters);
     }
     else {
