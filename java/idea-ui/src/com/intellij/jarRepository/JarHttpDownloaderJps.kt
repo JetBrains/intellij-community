@@ -48,7 +48,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
     @JvmStatic
     fun getInstance(project: Project): JarHttpDownloaderJps = project.service<JarHttpDownloaderJps>()
 
-    private fun collectRelativePathsForJarHttpDownloaderOrLog(library: LibraryEx): CollectResult {
+    private fun collectRelativePathsForJarHttpDownloaderOrLog(project: Project?, library: LibraryEx): CollectResult {
       if (library.getKind() != RepositoryLibraryType.REPOSITORY_LIBRARY_KIND) {
         return CollectResult.Failure("Library '${library.name}' is not a repository library")
       }
@@ -73,6 +73,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
       val possibleMavenLocalRepositoryRoots = listOfNotNull(
         // could be overridden, like in tests
         JarRepositoryManager.getLocalRepositoryPath().path,
+        project?.let { JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(it).toString() },
 
         // always returns a canonical path (symlinks resolved), so can be anything even if it was not overridden
         PathMacroManager.getInstance(ApplicationManager.getApplication()).expandPath(JarRepositoryManager.MAVEN_REPOSITORY_MACRO),
@@ -134,7 +135,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
 
     @TestOnly
     fun whyLibraryCouldNotBeDownloaded(library: LibraryEx): String? {
-      val result = collectRelativePathsForJarHttpDownloaderOrLog(library)
+      val result = collectRelativePathsForJarHttpDownloaderOrLog(null, library)
       return if (result is CollectResult.Failure) result.reason else null
     }
   }
@@ -184,7 +185,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
    * return null if `library` could not be downloaded by JarHttpDownloader
    */
   fun downloadLibraryFilesAsync(library: LibraryEx): Promise<*>? {
-    val relativePaths = when (val result = collectRelativePathsForJarHttpDownloaderOrLog(library)) {
+    val relativePaths = when (val result = collectRelativePathsForJarHttpDownloaderOrLog(project, library)) {
       is CollectResult.Failure -> {
         LOG.debug(result.reason)
         return null
@@ -194,7 +195,7 @@ class JarHttpDownloaderJps(val project: Project, val coroutineScope: CoroutineSc
 
     LOG.debug("Downloading library '${library.name}'")
 
-    val localRepository = JarRepositoryManager.getLocalRepositoryPath().toPath()
+    val localRepository = JarRepositoryManager.getJPSLocalMavenRepositoryForIdeaProject(project)
     val remoteRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
 
     // TODO Needs some tests on cancellation, it's not supported well

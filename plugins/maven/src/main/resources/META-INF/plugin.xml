@@ -79,8 +79,7 @@
     <postStartupActivity implementation="org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
 
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
-    <projectPathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
-    <ignoredFileProvider implementation="org.jetbrains.idea.maven.utils.MavenIgnoreFileProvider"/>
+    <projectPathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenProjectPathMacroContributor"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.idea.maven.utils.MavenBuildProcessParameterProvider"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"

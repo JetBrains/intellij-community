@@ -3,6 +3,7 @@ package com.intellij.jarRepository
 
 import com.intellij.java.library.getMavenCoordinates
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -52,7 +53,13 @@ class RepositoryLibraryTest {
 
   @BeforeEach
   fun setUp() {
-    JarRepositoryManager.setLocalRepositoryPath(localMavenCache.root)
+
+    val repo = PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
+    PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", localMavenCache.root.absolutePath)
+    Disposer.register(disposable) {
+      PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", repo)
+
+    }
 
     MavenRepoFixture(mavenRepo.root).apply {
       addLibraryArtifact(group = GROUP_NAME, artifact = ARTIFACT_NAME, version = "1.0")
@@ -108,7 +115,7 @@ class RepositoryLibraryTest {
     val roots = RepositoryUtils.loadDependenciesToLibrary(projectRule.project, library as LibraryEx, false, false, null)
       .blockingGet(1, TimeUnit.MINUTES)!!
 
-    assertTrue(jar.exists())
+    assertTrue(jar.exists(), "$jar should exist")
     assertEquals(1, roots.size)
     assertEquals(OrderRootType.CLASSES, roots[0].type)
     assertEquals(VfsUtil.getUrlForLibraryRoot(jar), roots[0].file.url)
@@ -130,8 +137,7 @@ class RepositoryLibraryTest {
     val modelVersionBefore = workspaceVersion()
     RepositoryUtils.loadDependenciesToLibrary(projectRule.project, library as LibraryEx, false, false, null)
       .blockingGet(1, TimeUnit.MINUTES)!!
-    assertTrue(jar.exists())
-
+    assertTrue(jar.exists(), "$jar should exist")
     assertEquals(listOf(OrderRootType.CLASSES to jarUrl), getLibraryRoots(library).toList())
     assertTrue(workspaceVersion() == modelVersionBefore)
   }

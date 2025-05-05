@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.jarRepository.*;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;

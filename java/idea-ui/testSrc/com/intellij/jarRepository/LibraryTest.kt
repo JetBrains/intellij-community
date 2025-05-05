@@ -2,6 +2,7 @@
 package com.intellij.jarRepository
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -25,6 +26,7 @@ abstract class LibraryTest : UsefulTestCase() {
   protected lateinit var myMavenRepoDescription: RemoteRepositoryDescription
 
   private lateinit var myFixture: IdeaProjectTestFixture
+  private var myOldTestRepo: String? = null
 
   override fun setUp() {
     super.setUp()
@@ -35,11 +37,13 @@ abstract class LibraryTest : UsefulTestCase() {
     myMavenRepo = FileUtil.createTempDirectory("maven", "repo")
     myMavenLocalCache = FileUtil.createTempDirectory("maven", "cache")
     myMavenRepoDescription = RemoteRepositoryDescription("id", "name", myMavenRepo.toURI().toURL().toString())
-    JarRepositoryManager.setLocalRepositoryPath(myMavenLocalCache)
+    myOldTestRepo = PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
+    PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", myMavenLocalCache.absolutePath)
   }
 
   override fun tearDown() {
     RunAll(
+      { PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", myOldTestRepo) },
       { myFixture.tearDown() },
       { super.tearDown() },
     ).run()

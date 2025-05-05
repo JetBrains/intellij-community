@@ -49,6 +49,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -1135,7 +1136,7 @@ object MavenUtil {
       return Path.of(forcedM2Home)
     }
 
-    val api = if (path == null) localEel else path.getEelApiBlocking()
+    val api = if (path == null|| path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
     val result: Path = api.resolveM2Dir().resolve(REPOSITORY_DIR)
 
     try {

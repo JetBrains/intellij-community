@@ -29,7 +29,7 @@ class RepositoryLibraryUtilsTest {
     /**
      * See .idea/libraries/ in testData
      */
-    private const val TEST_MAVEN_LOCAL_REPOSITORY_MACRO = "REPOSITORY_LIBRARY_UTILS_TEST_LOCAL_MAVEN_REPOSITORY"
+    var mavenRepositoryOld: String? = null
     /**
      * See .idea/jarRepositories.xml in testData
      */
@@ -49,17 +49,15 @@ class RepositoryLibraryUtilsTest {
     @JvmStatic
     fun beforeAll() {
       val pathMacros: PathMacros = PathMacros.getInstance()
-      pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, m2DirectoryPath.toString())
-      JarRepositoryManager.setLocalRepositoryPath(m2DirectoryPath.toFile())
+      mavenRepositoryOld = pathMacros.getValue("MAVEN_REPOSITORY")
+      pathMacros.setMacro("MAVEN_REPOSITORY", m2DirectoryPath.toString())
     }
 
     @AfterClass
     @JvmStatic
     fun afterAll() {
       val pathMacros: PathMacros = PathMacros.getInstance()
-      pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, null)
-      pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, null)
-      JarRepositoryManager.setLocalRepositoryPath(null)
+      pathMacros.setMacro("MAVEN_REPOSITORY", mavenRepositoryOld)
     }
   }
 

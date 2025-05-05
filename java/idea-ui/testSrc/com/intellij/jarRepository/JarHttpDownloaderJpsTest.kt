@@ -48,6 +48,7 @@ class JarHttpDownloaderJpsTest {
   @Suppress("SpellCheckingInspection")
   private val authPassword = "passw0rd"
 
+
   @RegisterExtension
   @JvmField
   internal val serverExtension = TestHttpServerExtension { server ->
@@ -84,9 +85,11 @@ class JarHttpDownloaderJpsTest {
       pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, null)
     }
 
-    JarRepositoryManager.setLocalRepositoryPath(m2DirectoryPath.toFile())
+    val repo = PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
+    PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", m2DirectoryPath.toString())
+
     Disposer.register(disposable) {
-      JarRepositoryManager.setLocalRepositoryPath(null)
+      PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", repo)
     }
 
     assertTrue(JarHttpDownloader.forceHttps, "default forceHttps must be true")
