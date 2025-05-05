@@ -26,7 +26,7 @@ class ReplaceInvokeIntention : KotlinApplicableModCommandAction<KtDotQualifiedEx
     override fun getPresentation(
         context: ActionContext,
         element: KtDotQualifiedExpression
-    ): Presentation? {
+    ): Presentation {
         return Presentation.of(familyName).withPriority(PriorityAction.Priority.HIGH)
     }
 

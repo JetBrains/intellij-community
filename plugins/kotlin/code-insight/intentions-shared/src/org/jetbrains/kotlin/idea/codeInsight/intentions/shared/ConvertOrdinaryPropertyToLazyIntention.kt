@@ -34,7 +34,7 @@ internal class ConvertOrdinaryPropertyToLazyIntention :
                 !element.isLocal &&
                 !element.hasModifier(KtTokens.CONST_KEYWORD)
 
-    override fun KaSession.prepareContext(element: KtProperty): Context? {
+    override fun KaSession.prepareContext(element: KtProperty): Context {
         val initializer = element.initializer as? KtCallExpression
         val isRunCall = initializer?.isCalling(sequenceOf(KOTLIN_RUN)) == true
         return Context(isRunCall)

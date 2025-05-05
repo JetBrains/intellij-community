@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
 import com.intellij.psi.PsiNamedElement
@@ -642,7 +642,7 @@ object K2SemanticMatcher {
         override fun visitEscapeStringTemplateEntry(
             entry: KtEscapeStringTemplateEntry,
             data: KtElement?
-        ): Boolean? {
+        ): Boolean {
             val patternEntry = data as? KtEscapeStringTemplateEntry ?: return false
             return entry.unescapedValue == patternEntry.unescapedValue
         }
@@ -650,7 +650,7 @@ object K2SemanticMatcher {
         override fun visitStringTemplateEntryWithExpression(
             entry: KtStringTemplateEntryWithExpression,
             data: KtElement?
-        ): Boolean? {
+        ): Boolean {
             val patternEntry = data?.deparenthesized() as? KtStringTemplateEntryWithExpression ?: return false
             return elementsMatchOrBothAreNull(entry.expression, patternEntry.expression)
         }
@@ -658,7 +658,7 @@ object K2SemanticMatcher {
         override fun visitLiteralStringTemplateEntry(
             entry: KtLiteralStringTemplateEntry,
             data: KtElement?
-        ): Boolean? {
+        ): Boolean {
             val patternLiteral = data?.deparenthesized() as? KtLiteralStringTemplateEntry ?: return false
             return entry.text == patternLiteral.text
         }

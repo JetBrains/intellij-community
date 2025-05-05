@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class ReplaceContainsIntention : KotlinApplicableModCommandAction<KtDotQualifiedExpression, Unit>(KtDotQualifiedExpression::class) {
@@ -26,7 +25,7 @@ class ReplaceContainsIntention : KotlinApplicableModCommandAction<KtDotQualified
     override fun getPresentation(
         context: ActionContext,
         element: KtDotQualifiedExpression
-    ): Presentation? {
+    ): Presentation {
         return Presentation.of(familyName).withPriority(PriorityAction.Priority.HIGH)
     }
 

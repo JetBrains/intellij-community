@@ -526,7 +526,7 @@ open class KotlinFirIntroduceLambdaParameterHandler(
             project: Project,
             editor: Editor,
             lambdaExtractionDescriptor: ExtractableCodeDescriptor
-        ): KotlinIntroduceParameterDialog? {
+        ): KotlinIntroduceParameterDialog {
             val callable = lambdaExtractionDescriptor.extractionData.targetSibling as KtNamedDeclaration
             val originalRange = lambdaExtractionDescriptor.extractionData.originalRange
             val (parametersUsages, returnType) = analyzeInModalWindow(callable, KotlinBundle.message("fix.change.signature.prepare")) {

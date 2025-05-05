@@ -26,7 +26,7 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         private const val AVERAGE_SIZE_PER_LINE = 40
     }
 
-    override fun getGroup(): EventLogGroup? = GROUP
+    override fun getGroup(): EventLogGroup = GROUP
 
     // Collector ID
     private val GROUP = EventLogGroup("kotlin.project.structure", 1)

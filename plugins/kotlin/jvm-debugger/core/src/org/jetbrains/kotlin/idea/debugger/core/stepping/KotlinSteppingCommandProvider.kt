@@ -77,7 +77,7 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         suspendContext: SuspendContextImpl,
         ignoreFilters: Boolean,
         smartStepFilter: MethodFilter?
-    ): DebugProcessImpl.ResumeCommand? {
+    ): DebugProcessImpl.ResumeCommand {
         return DebuggerSteppingHelper.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter)
     }
 
@@ -85,7 +85,7 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
         suspendContext: SuspendContextImpl,
         ignoreBreakpoints: Boolean,
         sourcePosition: SourcePosition
-    ): DebugProcessImpl.ResumeCommand? {
+    ): DebugProcessImpl.ResumeCommand {
         return DebuggerSteppingHelper.createStepOverCommand(suspendContext, ignoreBreakpoints, sourcePosition)
     }
 

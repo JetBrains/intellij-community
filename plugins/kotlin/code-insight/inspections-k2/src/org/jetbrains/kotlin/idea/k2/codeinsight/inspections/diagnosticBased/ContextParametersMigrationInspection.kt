@@ -602,7 +602,7 @@ internal class ShadowedThisUsage(
         oldElement: KtElement,
         ktPsiFactory: KtPsiFactory,
         contextReceiversWithNewNames: Map<KtContextReceiver, String>
-    ): KtElement? = ktPsiFactory.createThisExpression(qualifierToAdd.asString())
+    ): KtElement = ktPsiFactory.createThisExpression(qualifierToAdd.asString())
 
     override fun provideElementForReplacement(): KtElement? = thisReference.element
 }

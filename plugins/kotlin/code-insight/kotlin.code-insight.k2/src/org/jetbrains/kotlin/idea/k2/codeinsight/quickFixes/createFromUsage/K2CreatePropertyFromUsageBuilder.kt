@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.Nullability
@@ -68,7 +68,7 @@ object K2CreatePropertyFromUsageBuilder {
         classOrFileName: String?,
         request: CreateFieldRequest,
         lateinit: Boolean
-    ): IntentionAction? {
+    ): IntentionAction {
         if (!request.isValid) null
         return CreatePropertyFromUsageAction(targetContainer, classOrFileName, request, lateinit)
     }
@@ -179,7 +179,7 @@ object K2CreatePropertyFromUsageBuilder {
         owner: KtModifierListOwner,
         target: AnnotationUseSiteTarget?,
         request: AnnotationRequest
-    ): IntentionAction? {
+    ): IntentionAction {
         if (!request.isValid) null
 
         return CreateAnnotationAction(owner, target, request)

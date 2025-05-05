@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
@@ -56,7 +56,7 @@ private sealed class PendingValue {
             return name.startsWith(AsmUtil.CAPTURED_PREFIX) || name == AsmUtil.CAPTURED_THIS_FIELD
         }
 
-        override fun addTo(existingVariables: ExistingVariables): DescriptorData<out ValueDescriptorImpl>? {
+        override fun addTo(existingVariables: ExistingVariables): DescriptorData<out ValueDescriptorImpl> {
             throw IllegalStateException("Should not be called on a container")
         }
     }

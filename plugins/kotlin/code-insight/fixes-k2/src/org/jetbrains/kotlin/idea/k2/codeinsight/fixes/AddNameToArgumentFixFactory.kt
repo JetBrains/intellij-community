@@ -49,7 +49,7 @@ internal object AddNameToArgumentFixFactory {
         override fun getPresentation(
             context: ActionContext,
             element: KtValueArgument,
-        ): Presentation? {
+        ): Presentation {
             val argumentName = getElementContext(context, element).argumentName
             val text = "${argumentName.identifier} = ${element.text}"
             return Presentation.of(KotlinBundle.message("fix.add.argument.name.text", text))

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
@@ -17,12 +17,7 @@ import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.statistics.KotlinCodeVisionUsagesCollector
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import java.awt.event.MouseEvent
 
@@ -89,7 +84,7 @@ class KotlinInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
     override fun handleClick(editor: Editor, element: PsiElement, event: MouseEvent?) {
         val lineMarkerNavigator = object : InheritorsLineMarkerNavigator() {
-            override fun getMessageForDumbMode(): @NlsContexts.PopupContent String? =
+            override fun getMessageForDumbMode(): @NlsContexts.PopupContent String =
                 KotlinBundle.message("notification.navigation.to.overriding.classes")
         }
         lineMarkerNavigator.navigate(event, (element as? KtNamedDeclaration)?.nameIdentifier ?: element)

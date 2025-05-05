@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -209,7 +209,7 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind
         val psiElementFactory = PsiElementFactory.getInstance(template.project)
         for (ktParameter in klass.primaryConstructorParameters) {
             val name = ktParameter.name ?: break
-            val returnType: PsiType? = allowAnalysisOnEdt {
+            val returnType: PsiType = allowAnalysisOnEdt {
                 allowAnalysisFromWriteAction {
                     analyze(klass) {
                         ktParameter.typeReference?.type?.asPsiType(klass, false, isAnnotationMethod = true)

@@ -46,7 +46,7 @@ class ConvertPropertyToFunctionIntention : PsiBasedModCommandAction<KtProperty>(
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("convert.property.to.function")
 
-    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation? {
+    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation {
         return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
     }
 

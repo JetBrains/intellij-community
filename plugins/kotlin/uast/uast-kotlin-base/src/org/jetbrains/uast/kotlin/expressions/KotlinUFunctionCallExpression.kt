@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -168,7 +168,7 @@ class KotlinUFunctionCallExpression(
                         // Instead, we create a new instance of [PsiClassReferenceType]
                         // whose [resolve] is just overridden to return `resolvedClass`.
                         return object : PsiClassReferenceType(referenceType.reference, referenceType.languageLevel) {
-                            override fun resolve(): PsiClass? {
+                            override fun resolve(): PsiClass {
                                 return resolvedClass
                             }
                         }
@@ -352,12 +352,12 @@ class KotlinUFunctionCallExpression(
 
         override fun getExpressionType() = receiverType
 
-        override fun resolve(): PsiElement? = implicitReceiver
+        override fun resolve(): PsiElement = implicitReceiver
 
         override val sourcePsi: PsiElement?
             get() = null
 
-        override val javaPsi: PsiElement?
+        override val javaPsi: PsiElement
             get() = implicitReceiver
     }
 
@@ -374,12 +374,12 @@ class KotlinUFunctionCallExpression(
 
         override fun getExpressionType() = receiverType
 
-        override fun resolve(): PsiElement? = extensionReceiver.javaPsi
+        override fun resolve(): PsiElement = extensionReceiver.javaPsi
 
         override val sourcePsi: PsiElement?
             get() = null
 
-        override val javaPsi: PsiElement?
+        override val javaPsi: PsiElement
             get() = extensionReceiver.javaPsi
     }
 

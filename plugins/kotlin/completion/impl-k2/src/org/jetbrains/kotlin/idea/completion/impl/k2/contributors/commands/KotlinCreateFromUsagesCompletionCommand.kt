@@ -137,11 +137,11 @@ internal class KotlinCreateFromUsagesCompletionCommand(val ktClass: KtClass) : C
         ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, name)
     }
 
-    override fun customPrefixMatcher(prefix: String): PrefixMatcher? {
+    override fun customPrefixMatcher(prefix: String): PrefixMatcher {
         return AlwaysMatchingCamelHumpMatcher(prefix, ktClass.project, methodNames)
     }
 
-    override val priority: Int?
+    override val priority: Int
         get() = 500
 }
 

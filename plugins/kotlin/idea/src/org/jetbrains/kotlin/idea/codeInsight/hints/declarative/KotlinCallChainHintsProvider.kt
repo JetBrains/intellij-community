@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints.declarative
 
 import com.intellij.codeInsight.hints.chain.AbstractDeclarativeCallChainProvider
@@ -9,13 +9,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.AbstractKotlinInlayHintsProvider.Companion.addInlayInfoDetail
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
-import org.jetbrains.kotlin.psi.KtArrayAccessExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtParenthesizedExpression
-import org.jetbrains.kotlin.psi.KtPostfixExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -43,7 +37,7 @@ class KotlinCallChainHintsProvider: AbstractDeclarativeCallChainProvider<KtQuali
 
     override val dotQualifiedClass: Class<KtQualifiedExpression> = KtQualifiedExpression::class.java
 
-    override fun KtQualifiedExpression.getReceiver(): PsiElement? =
+    override fun KtQualifiedExpression.getReceiver(): PsiElement =
         receiverExpression
 
     override fun KtQualifiedExpression.getParentDotQualifiedExpression(): KtQualifiedExpression? {

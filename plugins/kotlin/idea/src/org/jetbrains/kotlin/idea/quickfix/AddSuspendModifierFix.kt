@@ -19,7 +19,7 @@ internal class AddSuspendModifierFix(
     private val declarationName: String?
 ) : AddModifierFix(element, KtTokens.SUSPEND_KEYWORD) {
 
-    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation {
         val actionName = when (element) {
             is KtNamedFunction -> {
                 if (declarationName != null) {

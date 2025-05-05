@@ -121,7 +121,7 @@ fun SourcePosition?.toXSourcePosition(): XSourcePosition? = ReadAction.nonBlocki
     DebuggerUtilsEx.toXSourcePosition(this@toXSourcePosition)
 }.executeSynchronously()
 
-fun SuspendContextImpl.executionContext(): DefaultExecutionContext? {
+fun SuspendContextImpl.executionContext(): DefaultExecutionContext {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     return DefaultExecutionContext(this, this.frameProxy)
 }

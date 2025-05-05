@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.PriorityAction
@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -164,7 +163,7 @@ internal object SuperClassNotInitializedFactories {
             return KotlinBundle.message("add.constructor.parameters.from.superclass")
         }
 
-        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation? {
+        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation {
             return Presentation.of(
                 KotlinBundle.message("add.constructor.parameters.from.0.1", superClassName, renderedTypesForName)
             )

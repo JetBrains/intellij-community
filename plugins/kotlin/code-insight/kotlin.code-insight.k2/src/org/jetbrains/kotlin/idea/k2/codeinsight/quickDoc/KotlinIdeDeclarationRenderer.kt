@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.google.common.html.HtmlEscapers
@@ -67,7 +67,7 @@ internal class KotlinIdeDeclarationRenderer(
 ) {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    internal fun renderFunctionTypeParameter(parameter: KtParameter): String? = prettyPrint {
+    internal fun renderFunctionTypeParameter(parameter: KtParameter): String = prettyPrint {
         parameter.nameAsName?.let { name -> withSuffix(highlight(": ") { asColon }) { append(highlight(name.renderName()) { asParameter }) } }
         parameter.typeReference?.type?.let { type ->
             renderer.typeRenderer.renderType(useSiteSession, type, this)
