@@ -1898,6 +1898,7 @@ f:com.intellij.codeInspection.options.OptPane
 - f:hashCode():I
 - helpId():java.lang.String
 - s:horizontalStack(com.intellij.codeInspection.options.OptRegularComponent[]):com.intellij.codeInspection.options.OptHorizontalStack
+- s:multiSelector(java.lang.String,java.util.List,com.intellij.codeInspection.options.OptMultiSelector$SelectionMode):com.intellij.codeInspection.options.OptMultiSelector
 - s:number(java.lang.String,java.lang.String,I,I):com.intellij.codeInspection.options.OptNumber
 - s:option(java.lang.Enum,java.lang.String):com.intellij.codeInspection.options.OptDropdown$Option
 - s:option(java.lang.String,java.lang.String):com.intellij.codeInspection.options.OptDropdown$Option

@@ -375,6 +375,18 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components, @N
   }
 
   /**
+   * @param bindId   identifier of binding variable used by inspection; the corresponding variable is expected to be a mutable {@code List<OptElement>}.
+   * @param elements list of elements present in the list
+   * @param mode     selection mode
+   * @return a list with elements to select
+   */
+  public static @NotNull OptMultiSelector multiSelector(@Language("jvm-field-name") @NotNull String bindId,
+                                                        @NotNull List<? extends OptMultiSelector.OptElement> elements,
+                                                        @NotNull OptMultiSelector.SelectionMode mode) {
+    return new OptMultiSelector(bindId, elements, mode);
+  }
+
+  /**
    * @param bindId identifier of binding variable used by inspection; the corresponding variable is expected to be a mutable {@code List<String>}.
    * @param name   name of the table column
    * @return editable table column
