@@ -52,11 +52,15 @@ public interface Message {
   }
 
   static Message create(Runner reporter, Throwable ex) {
+    return create(reporter, Kind.ERROR, ex);
+  }
+  
+  static Message create(Runner reporter, Kind kind, Throwable ex) {
     String text = ex.getMessage();
     return new Message() {
       @Override
       public Kind getKind() {
-        return Kind.ERROR;
+        return kind;
       }
 
       @Override

@@ -18,14 +18,18 @@ public interface DataPaths {
     return context.getDataDir().resolve(DEP_GRAPH_FILE_NAME);
   }
 
-  static @NotNull Path getPastDependenciesStoreDir(BuildContext context) {
+  static @NotNull Path getDependenciesBackupStoreDir(BuildContext context) {
     return context.getDataDir().resolve(OLD_DEPS_DIR_NAME);
   }
 
-  static @NotNull Path getPastJarStoreFile(BuildContext context, Path jarPath) {
-    return getPastDependenciesStoreDir(context).resolve(jarPath.getFileName());
+  static @NotNull Path getJarBackupStoreFile(BuildContext context, Path jarPath) {
+    return getDependenciesBackupStoreDir(context).resolve(jarPath.getFileName());
   }
 
+  static boolean isAbiJar(Path path) {
+    return isAbiJar(path.getFileName().toString());
+  }
+  
   static boolean isAbiJar(String path) {
     return path.endsWith("-abi.jar"); // todo: better criterion?
   }

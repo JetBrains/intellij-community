@@ -9,6 +9,7 @@ import org.jetbrains.jps.javac.Iterators;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class GraphUpdater {
@@ -20,11 +21,26 @@ public final class GraphUpdater {
     myTargetName = targetName;
   }
 
-  public NodeSourceSnapshotDelta updateDependencyGraph(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected) {
+  public NodeSourceSnapshotDelta updateBeforeCompilation(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, List<Graph> extParts) {
+    return updateDependencyGraph(depGraph, snapshotDelta, delta, false, extParts, false);
+  }
+
+  public NodeSourceSnapshotDelta updateAfterCompilation(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected) {
+    return updateDependencyGraph(depGraph, snapshotDelta, delta, errorsDetected, List.of(), true);
+  }
+  
+  private NodeSourceSnapshotDelta updateDependencyGraph(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, Delta delta, boolean errorsDetected, List<Graph> extParts, boolean isAfterCompilation) {
     if (snapshotDelta.isRecompileAll()) {
-      if (errorsDetected || delta.isSourceOnly()) {
-        // do nothing
-        return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+      if (isAfterCompilation) {
+        if (errorsDetected) {
+          // do nothing
+          return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+        }
+      }
+      else {
+        if (delta.isSourceOnly()) {
+          return snapshotDelta;
+        }
       }
     }
 
@@ -35,21 +51,21 @@ public final class GraphUpdater {
       .withAffectionFilter(s -> !LibraryDef.isLibraryPath(s))
       .withChunkStructureFilter(s -> true).get();
 
-    DifferentiateResult diffResult = depGraph.differentiate(delta, params);
+    DifferentiateResult diffResult = depGraph.differentiate(delta, params, extParts);
 
-    if (snapshotDelta.isRecompileAll()) {
+    if (snapshotDelta.isRecompileAll() && isAfterCompilation) {
       depGraph.integrate(diffResult); // save full graph state
       return new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
     }
 
     NodeSourceSnapshotDelta nextSnapshotDelta;
-    if (delta.isSourceOnly()) {
+    if (isAfterCompilation) {
+      nextSnapshotDelta = new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
+    }
+    else {
       // the delta does not correspond to real compilation session,
       // mark files for recompilation in the existing delta and keep information about deleted files or already modified files
       nextSnapshotDelta = snapshotDelta;
-    }
-    else {
-      nextSnapshotDelta = new SnapshotDeltaImpl(snapshotDelta.getBaseSnapshot());
     }
 
     if (!diffResult.isIncremental()) {
@@ -84,8 +100,8 @@ public final class GraphUpdater {
       nextSnapshotDelta.markRecompile(src);
     }
 
-    if (!errorsDetected && !delta.isSourceOnly()) {
-      // do not integrade source only delta to keed information
+    if (!errorsDetected && isAfterCompilation) {
+      // do not integrate delta, if compilation has not happened, to keep information about deleted paths
       depGraph.integrate(diffResult);
     }
 
