@@ -1630,6 +1630,21 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/ClassWithClassObject.kt");
         }
 
+        @TestMetadata("ConstructorCompletion.kt")
+        public void testConstructorCompletion() throws Exception {
+            runTest("../completion/testData/handlers/basic/ConstructorCompletion.kt");
+        }
+
+        @TestMetadata("ConstructorCompletionWithMultipleConstructors.kt")
+        public void testConstructorCompletionWithMultipleConstructors() throws Exception {
+            runTest("../completion/testData/handlers/basic/ConstructorCompletionWithMultipleConstructors.kt");
+        }
+
+        @TestMetadata("ConstructorCompletionWithSingleConstructor.kt")
+        public void testConstructorCompletionWithSingleConstructor() throws Exception {
+            runTest("../completion/testData/handlers/basic/ConstructorCompletionWithSingleConstructor.kt");
+        }
+
         @TestMetadata("DoNotInsertReceiverCast.kt")
         public void testDoNotInsertReceiverCast() throws Exception {
             runTest("../completion/testData/handlers/basic/DoNotInsertReceiverCast.kt");

@@ -1,0 +1,10 @@
+package test
+
+class SomeTestClass
+
+fun getColor(): SomeTestClass {
+    return SomeTestClass()<caret>
+}
+
+// ELEMENT: SomeTestClass
+// TAIL_TEXT: "() (test)"
