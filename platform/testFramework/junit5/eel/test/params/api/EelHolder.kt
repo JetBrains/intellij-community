@@ -11,6 +11,6 @@ import org.jetbrains.annotations.TestOnly
  */
 @TestOnly
 @ApiStatus.NonExtendable
-interface EelHolder {
+sealed interface EelHolder {
   val eel: EelApi
 }
