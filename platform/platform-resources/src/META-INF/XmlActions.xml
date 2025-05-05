@@ -4,13 +4,6 @@
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
     </group>
-    <group id="DomCollectionControl">
-      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
-        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
-      </action>
-      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" use-shortcut-of="EditSource"/>
-      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" use-shortcut-of="$Delete"/>
-    </group>
 
     <group id="NewXml">
       <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction" icon="AllIcons.FileTypes.Html"/>

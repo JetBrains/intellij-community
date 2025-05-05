@@ -38,6 +38,16 @@
     <extensionPoint name="dom.gotoSuper" interface="com.intellij.util.xml.DomElementNavigationProvider" dynamic="true"/>
   </extensionPoints>
 
+  <actions resource-bundle="messages.XmlDomBundle">
+    <group id="DomCollectionControl">
+      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
+        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" use-shortcut-of="EditSource"/>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" use-shortcut-of="$Delete"/>
+    </group>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.gotoSuper language="XML" implementationClass="com.intellij.codeInsight.navigation.DomGotoSuperHandler"/>
 
