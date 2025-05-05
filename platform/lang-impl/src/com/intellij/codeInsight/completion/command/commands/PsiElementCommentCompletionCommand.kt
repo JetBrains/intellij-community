@@ -29,8 +29,9 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     val element = getHighLevelContext(context.offset, context.psiFile) ?: return null
     val range = element.textRange ?: return null
+    val adjustedName = if (element is PsiComment) "Uncomment" else "Comment by block comment"
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            name = super.name,
+                                            name = adjustedName,
                                             i18nName = super.i18nName,
                                             icon = super.icon,
                                             priority = super.priority,
