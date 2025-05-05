@@ -1674,9 +1674,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           indexId,
           e
         );
-        var projects = getContainingProjects(file);
-        List<Project> dirtyQueueProjects = myDirtyFiles.getProjects(inputId);
-        doInvalidateIndicesForFile(inputId, file, projects, dirtyQueueProjects);
+        myDirtyFiles.addFile(emptySet(), inputId); // so `inputId` will be rescanned on restart
         return null;
       }
       finally {

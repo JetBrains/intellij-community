@@ -45,6 +45,7 @@ import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.dto.JsonProjectScanningHistoryTimes
 import com.intellij.util.indexing.mocks.FakeFileType
 import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
@@ -52,8 +53,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.*
 import org.junit.rules.TestName
-import java.io.DataInput
-import java.io.DataOutput
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.random.Random
@@ -171,7 +170,7 @@ class DirtyFilesQueueTest {
 
   internal class BadFileBasedIndexExtension : FileBasedIndexExtension<String, String>() {
     companion object {
-      private val INDEX_ID: ID<String, String> = ID.create("bad.file.based.index.extension")
+      private val INDEX_ID: ID<String, String> = ID.create("badIndex")
 
       @Volatile
       internal var fails: Boolean = true
@@ -191,24 +190,8 @@ class DirtyFilesQueueTest {
       }
     }
 
-    override fun getKeyDescriptor(): KeyDescriptor<String> {
-      return object : KeyDescriptor<String> {
-        override fun getHashCode(value: String): Int = value.hashCode()
-        override fun save(out: DataOutput, value: String?) = Unit // does nothing
-        override fun isEqual(val1: String?, val2: String?): Boolean = val1 == val2
-        override fun read(`in`: DataInput): String? = TODO("Not yet implemented")
-      }
-    }
-
-    override fun getValueExternalizer(): DataExternalizer<String> {
-      return object : DataExternalizer<String> {
-        override fun save(out: DataOutput, value: String) {
-          out.write(value.toByteArray())
-        }
-
-        override fun read(`in`: DataInput): String? = `in`.readLine()
-      }
-    }
+    override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
+    override fun getValueExternalizer(): DataExternalizer<String> = EnumeratorStringDescriptor.INSTANCE
 
     override fun getVersion(): Int = 0
   }
@@ -240,9 +223,10 @@ class DirtyFilesQueueTest {
           src.createFile("A.${filetype.defaultExtension}")
         }
 
-        smartReadAction(project = project) {
-          assertThat(fileBasedIndex.getAllKeys<String>(BadFileBasedIndexExtension().name, project)).isEmpty()
+        val keys = smartReadAction(project = project) {
+          fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
         }
+        assertThat(keys).isEmpty()
       }
 
       BadFileBasedIndexExtension.fails = false
