@@ -7,8 +7,8 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
-import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface RunSessionsApi : RemoteApi<Unit> {
 
-  suspend fun events(projectId: ProjectId): RpcFlow<RunSessionEvent>
+  suspend fun events(projectId: ProjectId): Flow<RunSessionEvent>
 
   suspend fun getSession(projectId: ProjectId, runTabId: RunSessionId): RunSession?
 

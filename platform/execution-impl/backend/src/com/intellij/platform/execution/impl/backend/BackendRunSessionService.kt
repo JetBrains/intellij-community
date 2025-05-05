@@ -41,13 +41,14 @@ class BackendRunSessionService(val project: Project, val cs: CoroutineScope) : R
         executorEnvironment.toDto(cs),
         createProcessHandlerDto(cs, descriptor.processHandler!!)
       )
-      val runSessionId = storeValueGlobally(cs, runSession, type = RunSessionValueIdType)
+
+      val runSessionId = runSession.storeGlobally(cs)
       project.messageBus.syncPublisher(RUN_SESSIONS_TOPIC).sessionStarted(runSessionId)
     }
   }
 
   override suspend fun getRunSession(id: RunSessionId): RunSession? {
-    return findValueById(id, type = RunSessionValueIdType)
+    return id.findValue()
   }
 
   override fun createRunSessionEventsFlow(projectId: ProjectId): Flow<RunSessionEvent> {
@@ -55,10 +56,8 @@ class BackendRunSessionService(val project: Project, val cs: CoroutineScope) : R
     return channelFlow {
       project.messageBus.connect(this).subscribe(RUN_SESSIONS_TOPIC, object: RunSessionsListener {
         override fun sessionStarted(runSessionId: RunSessionId) {
-          launch {
-            val element = SessionStarted(runSessionId)
-            send(element)
-          }
+          val element = SessionStarted(runSessionId)
+          trySend(element)
         }
       })
       awaitClose()
@@ -66,7 +65,17 @@ class BackendRunSessionService(val project: Project, val cs: CoroutineScope) : R
   }
 }
 
-internal object RunSessionValueIdType : BackendValueIdType<RunSessionId, RunSession>(::RunSessionId)
+@ApiStatus.Internal
+fun RunSessionId.findValue(): RunSession? {
+  return findValueById(this, type = RunSessionValueIdType)
+}
+
+@ApiStatus.Internal
+fun RunSession.storeGlobally(coroutineScope: CoroutineScope): RunSessionId {
+  return storeValueGlobally(coroutineScope, this, type = RunSessionValueIdType)
+}
+
+private object RunSessionValueIdType : BackendValueIdType<RunSessionId, RunSession>(::RunSessionId)
 
 @ApiStatus.Internal
 interface RunSessionsListener : EventListener {

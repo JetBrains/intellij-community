@@ -8,15 +8,13 @@ import com.intellij.execution.rpc.RunSessionsApi
 import com.intellij.execution.rpc.RunSessionEvent
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import fleet.rpc.core.RpcFlow
-import fleet.rpc.core.toRpc
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.flow.Flow
 
-@ApiStatus.Internal
+
 internal class BackendRunSessionsApi : RunSessionsApi {
 
-  override suspend fun events(projectId: ProjectId): RpcFlow<RunSessionEvent> {
-    return RunSessionService.getInstance(projectId.findProject()).createRunSessionEventsFlow(projectId).toRpc()
+  override suspend fun events(projectId: ProjectId): Flow<RunSessionEvent> {
+    return RunSessionService.getInstance(projectId.findProject()).createRunSessionEventsFlow(projectId)
   }
 
   override suspend fun getSession(projectId: ProjectId, runTabId: RunSessionId): RunSession? {

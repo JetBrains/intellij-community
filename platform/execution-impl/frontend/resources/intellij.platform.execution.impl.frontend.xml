@@ -4,5 +4,9 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.execution.impl.frontend.FrontendRunInitializationProjectActivity"/>
+    <!-- IJPL-149684 -->
+    <!--suppress PluginXmlRegistrationCheck -->
+    <projectService serviceInterface="com.intellij.execution.RunSessionService"
+                    serviceImplementation="com.intellij.platform.execution.impl.frontend.FrontendRunSessionService"/>
   </extensions>
 </idea-plugin>

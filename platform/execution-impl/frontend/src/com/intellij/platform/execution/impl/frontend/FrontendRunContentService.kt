@@ -13,7 +13,6 @@ import com.intellij.execution.rpc.RunSessionsApi
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.RunContentManagerImpl
-import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
 import com.intellij.ide.ui.icons.icon
 import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.EDT
@@ -22,7 +21,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.psi.search.ExecutionSearchScopes
-import com.intellij.ui.docking.DockManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,13 +38,10 @@ internal class FrontendRunContentService(private val project: Project, private v
   }
 
   private fun init() {
-    val containerFactory = DockableGridContainerFactory()
-    DockManager.getInstance(project).register(DockableGridContainerFactory.TYPE, containerFactory, project)
-
     cs.launch {
       val eventFlow = RunSessionsApi.getInstance().events(project.projectId())
 
-      eventFlow.toFlow().collect {
+      eventFlow.collect {
         if (it is RunSessionEvent.SessionStarted) {
           val runSession = RunSessionsApi.getInstance().getSession(project.projectId(), it.runTabId) ?: return@collect
 
