@@ -1,11 +1,11 @@
-package test;
+package test
 
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.ScheduledForRemoval
 class <error descr="Scheduled for removal API must also be marked with '@Deprecated' annotation">Warnings</error> {
 
-  @ApiStatus.ScheduledForRemoval
+  @field:ApiStatus.ScheduledForRemoval
   val <error descr="Scheduled for removal API must also be marked with '@Deprecated' annotation">field</error>: Int = 0
 
   @ApiStatus.ScheduledForRemoval
