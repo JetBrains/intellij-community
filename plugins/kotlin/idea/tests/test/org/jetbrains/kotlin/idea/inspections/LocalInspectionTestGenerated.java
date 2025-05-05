@@ -10955,6 +10955,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/property/initializer.kt");
             }
 
+            @TestMetadata("intersectionType.kt")
+            public void testIntersectionType() throws Exception {
+                runTest("testData/inspectionsLocal/redundantNullableReturnType/property/intersectionType.kt");
+            }
+
             @TestMetadata("returnNullableFromLambdaInGetter.kt")
             public void testReturnNullableFromLambdaInGetter() throws Exception {
                 runTest("testData/inspectionsLocal/redundantNullableReturnType/property/returnNullableFromLambdaInGetter.kt");

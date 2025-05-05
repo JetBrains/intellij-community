@@ -960,5 +960,14 @@
                      language="kotlin"
                      key="inspection.nullable.type.argument.in.java.collection.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantNullableReturnTypeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.redundant.nullable.return.type.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>
