@@ -8,3 +8,6 @@ android/apkanalyzer/gradle/integration-tests/projects
 # currently not required
 android/android/native/diagnostics/heap
 android/aswb
+build/dependencies/build/android-sdk/
+out/
+platform/sqlite/target
