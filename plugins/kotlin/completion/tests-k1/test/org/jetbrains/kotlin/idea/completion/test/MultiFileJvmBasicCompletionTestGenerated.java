@@ -295,6 +295,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/JavaClassQualifierWithTypeArguments/");
     }
 
+    @TestMetadata("JavaConstructor")
+    public void testJavaConstructor() throws Exception {
+        runTest("../testData/basic/multifile/JavaConstructor/");
+    }
+
     @TestMetadata("JavaEnum")
     public void testJavaEnum() throws Exception {
         runTest("../testData/basic/multifile/JavaEnum/");

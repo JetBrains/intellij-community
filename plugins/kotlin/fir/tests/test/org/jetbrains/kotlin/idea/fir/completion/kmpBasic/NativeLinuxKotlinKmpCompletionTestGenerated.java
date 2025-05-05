@@ -652,6 +652,45 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/constructor")
+    public static class Constructor extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.NativeLinux;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("DoNotOfferConstructorForClassifier.kt")
+        public void testDoNotOfferConstructorForClassifier() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/DoNotOfferConstructorForClassifier.kt");
+        }
+
+        @TestMetadata("MultipleConstructors.kt")
+        public void testMultipleConstructors() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/MultipleConstructors.kt");
+        }
+
+        @TestMetadata("PreferConstructorInReturn.kt")
+        public void testPreferConstructorInReturn() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PreferConstructorInReturn.kt");
+        }
+
+        @TestMetadata("SingleConstructor.kt")
+        public void testSingleConstructor() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/common/dslMarker")
     public static class DslMarker extends AbstractKotlinKmpCompletionTest {
         @java.lang.Override
@@ -3935,11 +3974,6 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
         @TestMetadata("parameterDefaultValueInFunction.kt")
         public void testParameterDefaultValueInFunction() throws Exception {
             runTest("../../completion/testData/basic/common/parameterDefaultValueInFunction.kt");
-        }
-
-        @TestMetadata("PreferConstructorInReturn.kt")
-        public void testPreferConstructorInReturn() throws Exception {
-            runTest("../../completion/testData/basic/common/PreferConstructorInReturn.kt");
         }
 
         @TestMetadata("PreferLessParameters.kt")

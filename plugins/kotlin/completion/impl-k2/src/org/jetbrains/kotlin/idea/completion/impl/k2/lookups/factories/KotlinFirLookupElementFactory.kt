@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
@@ -27,6 +24,15 @@ import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 object KotlinFirLookupElementFactory {
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun createConstructorCallLookupElement(
+        symbol: KaNamedClassSymbol,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+    ): LookupElementBuilder? {
+        val constructorSymbols = symbol.memberScope.constructors.toList().takeIf { it.isNotEmpty() } ?: return null
+        return ClassLookupElementFactory.createConstructorLookup(symbol, constructorSymbols, importingStrategy)
+    }
 
     context(KaSession)
     fun createClassifierLookupElement(

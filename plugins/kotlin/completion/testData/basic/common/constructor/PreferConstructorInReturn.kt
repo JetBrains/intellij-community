@@ -1,4 +1,3 @@
-
 class FramePrefixViewAodel
 class FramePrefixViewModelA
 class FramePrefixViewModel
@@ -11,7 +10,8 @@ fun create(): FramePrefixViewModel {
 
 
 // WITH_ORDER
-// EXIST: FramePrefixViewModel
+// EXIST: {"lookupString": "FramePrefixViewModel", "tailText": " (<root>)" }
+// EXIST: {"lookupString": "FramePrefixViewModel", "tailText": "() (<root>)" }
 // EXIST: FramePrefixViewAodel
 // EXIST: FramePrefixViewModelA
 // EXIST: FramePrefixViewModelB

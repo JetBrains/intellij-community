@@ -628,6 +628,40 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/constructor")
+        public static class Constructor extends AbstractK1JSBasicCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("DoNotOfferConstructorForClassifier.kt")
+            public void testDoNotOfferConstructorForClassifier() throws Exception {
+                runTest("../testData/basic/common/constructor/DoNotOfferConstructorForClassifier.kt");
+            }
+
+            @TestMetadata("MultipleConstructors.kt")
+            public void testMultipleConstructors() throws Exception {
+                runTest("../testData/basic/common/constructor/MultipleConstructors.kt");
+            }
+
+            @TestMetadata("PreferConstructorInReturn.kt")
+            public void testPreferConstructorInReturn() throws Exception {
+                runTest("../testData/basic/common/constructor/PreferConstructorInReturn.kt");
+            }
+
+            @TestMetadata("SingleConstructor.kt")
+            public void testSingleConstructor() throws Exception {
+                runTest("../testData/basic/common/constructor/SingleConstructor.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/dslMarker")
         public static class DslMarker extends AbstractK1JSBasicCompletionTest {
             @java.lang.Override
@@ -3746,11 +3780,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("parameterDefaultValueInFunction.kt")
             public void testParameterDefaultValueInFunction() throws Exception {
                 runTest("../testData/basic/common/parameterDefaultValueInFunction.kt");
-            }
-
-            @TestMetadata("PreferConstructorInReturn.kt")
-            public void testPreferConstructorInReturn() throws Exception {
-                runTest("../testData/basic/common/PreferConstructorInReturn.kt");
             }
 
             @TestMetadata("PreferLessParameters.kt")
