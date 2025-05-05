@@ -208,7 +208,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     companion object {
       private fun handleFocusEvent(event: FocusEvent) {
         if (event.id == FocusEvent.FOCUS_LOST) {
-          if (event.oppositeComponent == null || event.isTemporary) {
+          // We're interested in the case when some other component gained focus permanently.
+          // Therefore, we're not interested if:
+          // 1. some component lost focus, but no other component gained it, or
+          // 2. the other (opposite) component gained focus only temporarily,
+          // 3. the component that gained focus is no longer showing (possible, because events arrive asynchronously).
+          if (event.oppositeComponent == null || event.isTemporary || !event.oppositeComponent.isShowing) {
             return
           }
 
