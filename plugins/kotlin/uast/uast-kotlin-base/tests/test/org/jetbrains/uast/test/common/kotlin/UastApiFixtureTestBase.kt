@@ -2157,7 +2157,7 @@ interface UastApiFixtureTestBase {
                         return super.visitField(node)
 
                     val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
-                    TestCase.assertEquals(node.name, 1, uAnnos.size)
+                    TestCase.assertEquals(node.name, 0, uAnnos.size)
 
                     val jAnnos = (node.javaPsi as? PsiField)?.annotations?.filter { it.qualifiedName == "test.pkg.Anno" }
                     TestCase.assertEquals(node.name, 0, jAnnos?.size)

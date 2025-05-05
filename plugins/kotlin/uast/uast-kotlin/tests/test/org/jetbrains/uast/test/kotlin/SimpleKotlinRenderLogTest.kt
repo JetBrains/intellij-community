@@ -97,9 +97,6 @@ class SimpleKotlinRenderLogTest : AbstractKotlinUastTest(), AbstractKotlinRender
     fun testConstructors() = doTest("Constructors")
 
     @Test
-    fun testClassAnnotation() = doTest("ClassAnnotation")
-
-    @Test
     fun testReceiverFun() = doTest("ReceiverFun")
 
     @Test

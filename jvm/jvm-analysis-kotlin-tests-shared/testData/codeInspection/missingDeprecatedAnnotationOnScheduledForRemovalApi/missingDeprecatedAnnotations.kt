@@ -1,4 +1,4 @@
-package test;
+package test
 
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,9 +19,9 @@ class <error descr="Scheduled for removal API must also be marked with '@Depreca
 @Deprecated("reason")
 class NoWarnings {
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("reason")
-  val field: Int = 0;
+  // @ApiStatus.ScheduledForRemoval
+  // @Deprecated("reason") // not applicable to backing field
+  // val field: Int = 0;
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("reason")

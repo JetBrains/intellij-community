@@ -45,6 +45,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnPropertyWithValueClass.kt");
     }
 
+    @TestMetadata("annotationUseSites.kt")
+    public void testAnnotationUseSites() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationUseSites.kt");
+    }
+
     @TestMetadata("build.gradle.kts")
     public void testBuild_gradle() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/build.gradle.kts");
