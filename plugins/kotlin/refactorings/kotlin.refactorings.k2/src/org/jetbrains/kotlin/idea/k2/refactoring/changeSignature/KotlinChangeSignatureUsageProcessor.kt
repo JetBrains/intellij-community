@@ -320,7 +320,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val offset = if (element.receiverTypeReference != null) 1 else 0
                 val parameterTypes = mutableMapOf<KtParameter, KtTypeReference>()
                 for ((paramIndex, parameter) in parameterList.parameters.withIndex()) {
-                    val parameterInfo = changeInfo.newParameters[paramIndex + offset]
+                    val parameterInfo = changeInfo.newParameters.filterNot { it.isContextParameter }[paramIndex + offset]
                     if (!(element.isEffectivelyActual() && changeInfo.method is KtNamedDeclaration && (changeInfo.method as KtNamedDeclaration).isExpectDeclaration())) {
                         parameter.setValOrVar(if (element.isExpectDeclaration()) KotlinValVar.None else parameterInfo.valOrVar)
                     }

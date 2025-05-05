@@ -262,4 +262,8 @@ class KotlinFirChangeSignatureTest :
     fun testChangingContextParametersOrder() = doTest {
         swapParameters(0, 1)
     }
+
+    fun testConflictingRenameContextParameter() = doTestConflict {
+        newParameters[0].name = "a"
+    }
 }

@@ -73,9 +73,11 @@ class KotlinChangeSignatureConflictSearcher(
             val parameterName = parameter.name
             if (parameter.oldName != parameterName || parameter.isNewParameter) {
                 val unresolvableCollisions = mutableListOf<UsageInfo>()
-                val ktParameter = if (!parameter.isNewParameter)
-                    function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
-                else null
+                val ktParameter = when {
+                    parameter.isNewParameter -> null
+                    parameter.wasContextParameter -> function.modifierList?.contextReceiverList?.contextParameters()?.getOrNull(parameter.oldIndex)
+                    else -> function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
+                }
                 if (ktParameter != null) {
                     checkRedeclarationConflicts(ktParameter, parameterName, unresolvableCollisions)
                 }
