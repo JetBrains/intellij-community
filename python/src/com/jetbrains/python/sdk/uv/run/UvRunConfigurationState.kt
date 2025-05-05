@@ -14,55 +14,26 @@ import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
+import com.jetbrains.python.sdk.uv.UvLowLevel
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
-import showSyncWarningDialogAndGet
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal class UvRunConfigurationState(
+@ApiStatus.Internal
+class UvRunConfigurationState(
   val uvRunConfiguration: UvRunConfiguration,
   env: ExecutionEnvironment,
   val project: Project,
 ) : PythonCommandLineState(uvRunConfiguration, env) {
   @RequiresEdt
   override fun canRun(): Boolean {
-    // force save to make sure that commands reads the most up-to-date pyproject.toml
-    FileDocumentManager.getInstance().saveAllDocuments()
-
-    // if the check is disabled, then we can run the configuration immediately
-    if (!uvRunConfiguration.options.checkSync) {
-      return true
-    }
-
-    val associatedModulePath = uvRunConfiguration.options.uvSdk?.associatedModulePath
-    val uvExecutable = getUvExecutable()
-    var isError = false
-    var isUnsynced = false
-
-    if (associatedModulePath != null && uvExecutable != null) {
-      runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
-        when (
-          requiresSync(
-            Path.of(associatedModulePath),
-            uvExecutable,
-            uvRunConfiguration.options
-          ).getOrNull()
-        ) {
-          true -> isUnsynced = true
-          false -> {}
-          null -> isError = true
-        }
-      }
-    } else {
-      isError = true
-    }
-
-    if (isError || isUnsynced) {
-      return showSyncWarningDialogAndGet(isError, uvRunConfiguration.options)
-    }
-
-    return true
+    return canRun(
+      project,
+      uvRunConfiguration.options,
+      UvSyncWarningDialogFactoryImpl()
+    )
   }
 
   override fun buildPythonExecution(helpersAwareRequest: HelpersAwareTargetEnvironmentRequest): PythonExecution {
@@ -70,19 +41,61 @@ internal class UvRunConfigurationState(
   }
 }
 
-internal suspend fun requiresSync(modulePath: Path, uvExecutable: Path, options: UvRunConfigurationOptions): Result<Boolean, Unit> {
+@ApiStatus.Internal
+@RequiresEdt
+fun canRun(
+  project: Project,
+  options: UvRunConfigurationOptions,
+  syncWarningFactory: UvSyncWarningDialogFactory
+): Boolean {
+  // force save to make sure that commands read the most up-to-date pyproject.toml
+  FileDocumentManager.getInstance().saveAllDocuments()
+
+  // if the check is disabled, then we can run the configuration immediately
+  if (!options.checkSync) {
+    return true
+  }
+
+  val associatedModulePath = options.uvSdk?.associatedModulePath
+  val uvExecutable = getUvExecutable()
+  var isError = false
+  var isUnsynced = false
+
+  if (associatedModulePath != null && uvExecutable != null) {
+    runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
+      val uv = createUvLowLevel(Path.of(associatedModulePath), createUvCli(uvExecutable))
+
+      when (requiresSync(uv, options).getOrNull()) {
+        true -> isUnsynced = true
+        false -> {}
+        null -> isError = true
+      }
+    }
+  } else {
+    isError = true
+  }
+
+  if (isError || isUnsynced) {
+    return syncWarningFactory.showAndGet(isError, options)
+  }
+
+  return true
+}
+
+@ApiStatus.Internal
+suspend fun requiresSync(uv: UvLowLevel, options: UvRunConfigurationOptions): Result<Boolean, Unit> {
   // module scenarios:
   // 1. module with --no-project flag -- no sync
   // 2. module -- syncs project
+  //
   // script scenarios:
   // 1. script with no metadata -- syncs project
   // 2. script with no metadata and --no-project flag -- no sync
   // 3. script with metadata -- syncs script deps, doesn't sync project
   // 4. script with metadata and --no-project flag -- syncs script deps, doesn't sync project (flag is ignored)
 
-  val uv = createUvLowLevel(modulePath, createUvCli(uvExecutable))
   val containsExact = !options.uvArgs.contains("--exact")
-  var hasNoMetadata = options.runType == UvRunType.MODULE // modules have no script metadata, so it starts with false in case of a module
+  var hasNoMetadata = options.runType == UvRunType.MODULE // modules have no script metadata, so it starts with true in case of a module
 
   if (options.runType == UvRunType.SCRIPT) {
     val result = uv
@@ -92,7 +105,7 @@ internal suspend fun requiresSync(modulePath: Path, uvExecutable: Path, options:
     when (result) {
       ScriptSyncCheckResult.NoInlineMetadata -> hasNoMetadata = true
       ScriptSyncCheckResult.Synced -> {}
-      ScriptSyncCheckResult.Unsynced -> {
+      ScriptSyncCheckResult.NotSynced -> {
         return Result.success(true)
       }
       null -> {

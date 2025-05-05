@@ -10,11 +10,13 @@ import com.jetbrains.python.run.PythonToolModuleExecution
 import com.jetbrains.python.run.PythonToolScriptExecution
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.collections.plusAssign
 import kotlin.io.path.pathString
 
+@ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
 fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Boolean): PythonExecution {
   val toolPath = getUvExecutable()
