@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.platform.backend.observation.ActivityKey
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
@@ -29,6 +31,11 @@ import kotlin.system.measureTimeMillis
 @ApiStatus.Internal
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {
+  private object ProjectSynchronizerActivityKey : ActivityKey {
+    override val presentableName: String
+      get() = "sync-project-model"
+  }
+
   override suspend fun execute(project: Project) {
     fun logJpsEntities(state: String) {
       val logger = thisLogger()
@@ -51,7 +58,9 @@ class DelayedProjectSynchronizer : ProjectActivity {
     }
 
     logJpsEntities("Before Util.doSync")
-    Util.doSync(project)
+    project.trackActivity(ProjectSynchronizerActivityKey) {
+      Util.doSync(project)
+    }
     logJpsEntities("After Util.doSync")
   }
 
