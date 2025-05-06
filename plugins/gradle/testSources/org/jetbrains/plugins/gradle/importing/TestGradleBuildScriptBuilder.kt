@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigurationAvoidanceSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
@@ -29,13 +28,6 @@ open class TestGradleBuildScriptBuilder(
       )
       call("tasks.create", arguments, configure)
     }
-
-  fun registerTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply {
-    assert(isTaskConfigurationAvoidanceSupported(gradleVersion))
-    withPostfix {
-      call("tasks.register", name, configure = configure)
-    }
-  }
 
   fun project(name: String, configure: Consumer<TestGradleBuildScriptBuilder>) = project(name) { configure.accept(this) }
   fun project(name: String, configure: TestGradleBuildScriptBuilder.() -> Unit) =

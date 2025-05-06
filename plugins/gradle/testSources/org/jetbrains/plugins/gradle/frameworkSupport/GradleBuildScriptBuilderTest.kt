@@ -383,6 +383,70 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
   }
 
   @Test
+  fun `test tasks registration`() {
+    assertBuildScript(
+      GradleVersion.current() to ("""
+        |tasks.register 'myTask'
+      """.trimMargin() to """
+        |tasks.register("myTask")
+      """.trimMargin()),
+
+      GradleVersion.version("4.5") to (
+        """
+          |tasks.create 'myTask'
+        """.trimMargin() to """
+          |tasks.create("myTask")
+        """.trimMargin())
+    ) {
+      registerTask("myTask")
+    }
+
+    assertBuildScript(
+      GradleVersion.current() to ("""
+        |tasks.register 'myTask', MyTask
+      """.trimMargin() to """
+        |tasks.register<MyTask>("myTask")
+      """.trimMargin()),
+
+      GradleVersion.version("4.5") to ("""
+        |tasks.create 'myTask', MyTask
+      """.trimMargin() to """
+        |tasks.create("myTask", MyTask::class.java)
+      """.trimMargin())
+    ) {
+      registerTask("myTask", "MyTask") {
+        // no configuration
+      }
+    }
+
+    assertBuildScript(
+      GradleVersion.current() to ("""
+        |tasks.register('myTask', MyTask) {
+        |    myConfiguration()
+        |}
+      """.trimMargin() to """
+        |tasks.register<MyTask>("myTask") {
+        |    myConfiguration()
+        |}
+      """.trimMargin()),
+
+      GradleVersion.version("4.5") to ("""
+        |tasks.create('myTask', MyTask) {
+        |    myConfiguration()
+        |}
+      """.trimMargin() to """
+        |tasks.create("myTask", MyTask::class.java) {
+        |    myConfiguration()
+        |}
+      """.trimMargin())
+    ) {
+      registerTask("myTask", "MyTask") {
+        call("myConfiguration")
+      }
+    }
+  }
+
+  @Test
   fun `test tasks configuration`() {
     assertBuildScript("""
       |test {

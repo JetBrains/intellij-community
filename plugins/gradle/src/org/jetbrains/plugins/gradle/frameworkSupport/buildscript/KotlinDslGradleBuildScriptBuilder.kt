@@ -16,6 +16,26 @@ abstract class KotlinDslGradleBuildScriptBuilder<Self : KotlinDslGradleBuildScri
 
   private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
 
+  override fun registerTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit): Self =
+    withPostfix {
+      if (isTaskConfigurationAvoidanceSupported(gradleVersion)) {
+        val arguments = listOfNotNull(
+          argument(name),
+          tree(configure).takeUnless { it.isEmpty() }?.let { argument(it) }
+        )
+        val typeArgument = type?.let { "<$it>" } ?: ""
+        call("tasks.register$typeArgument", arguments)
+      }
+      else {
+        val arguments = listOfNotNull(
+          argument(name),
+          type?.let { argument(code("$it::class.java")) },
+          tree(configure).takeUnless { it.isEmpty() }?.let { argument(it) }
+        )
+        call("tasks.create", arguments)
+      }
+    }
+
   override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
       val block = tree(configure)
