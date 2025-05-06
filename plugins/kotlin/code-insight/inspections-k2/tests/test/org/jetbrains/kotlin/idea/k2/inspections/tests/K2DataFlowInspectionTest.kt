@@ -79,6 +79,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testLetNonLocalReturn() = doTest()
     fun testList() = doTest()
     fun testListApply() = doTest()
+    fun testLocalFunctionDeconstruction() = doTest()
     fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()

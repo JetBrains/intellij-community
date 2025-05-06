@@ -49,7 +49,11 @@ class KtVariableDescriptor(
                 is KaPropertySymbol, is KaJavaFieldSymbol -> return@analyze symbol.isVal
                 is KaLocalVariableSymbol -> {
                     if (symbol.isVal) return@analyze true
-                    val psiElement = symbol.psi?.parent as? KtElement
+                    val psiElement = when (val declaration = symbol.psi) {
+                        is KtProperty -> declaration.parent
+                        is KtDestructuringDeclarationEntry -> (declaration.parent as? KtDestructuringDeclaration)?.parent
+                        else -> null
+                    } as? KtElement
                     if (psiElement == null) return@analyze true
                     return@analyze psiElement
                 }
@@ -146,7 +150,7 @@ class KtVariableDescriptor(
                     PsiTreeUtil.processElements(scope) { e ->
                         if (e !is KtSimpleNameExpression || !e.readWriteAccess(false).isWrite) return@processElements true
                         val target = e.mainReference.resolve()
-                        if (target !is KtProperty || !target.isLocal ||
+                        if (!(target is KtProperty && target.isLocal || target is KtDestructuringDeclarationEntry) ||
                             !PsiTreeUtil.isAncestor(scope, target, true)
                         ) return@processElements true
                         var parentScope: KtFunction?
@@ -162,7 +166,7 @@ class KtVariableDescriptor(
                             break
                         }
                         if (parentScope != null && PsiTreeUtil.isAncestor(scope, parentScope, true)) {
-                            result.add(target.symbol.variableDescriptor())
+                            result.add((target.symbol as KaVariableSymbol).variableDescriptor())
                         }
                         return@processElements true
                     }
