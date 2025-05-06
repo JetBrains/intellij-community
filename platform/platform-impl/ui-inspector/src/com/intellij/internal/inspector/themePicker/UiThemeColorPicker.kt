@@ -135,6 +135,7 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
 
           val colors = getColorsAt(point)
           hoverState.tryEmit(colors)
+          e.consume()
         }
       }
     }
@@ -166,13 +167,13 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
       .setRequestFocus(false)
       .setResizable(false)
       .setMovable(false)
-      .setCancelOnClickOutside(true)
+      .setCancelOnClickOutside(false)
       .setCancelOnWindowDeactivation(true)
       .createPopup()
     popup.content.putClientProperty(THEME_VIEWER_UI_MARKER_KEY, colors)
 
     currentPopup = WeakReference(popup)
-    popup.show(RelativePoint(point.component, Point(point.point.x + 100, point.point.y)))
+    popup.show(RelativePoint(point.component, Point(point.point.x + 100, point.point.y + 30)))
   }
 
   fun storeColorForPixel(component: JComponent, rectangle: Rectangle, color: Color, erase: Boolean) {
