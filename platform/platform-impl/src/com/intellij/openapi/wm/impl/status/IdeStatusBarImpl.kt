@@ -11,16 +11,16 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.Stat
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicatorModel
+import com.intellij.openapi.progress.ProgressModel
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.BridgeTaskSupport
 import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
@@ -326,7 +326,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     val anyModality = ModalityState.any().asContextElement()
     val items: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = span(widget.ID(), Dispatchers.EDT + anyModality) {
+        val component = span(widget.ID(), Dispatchers.ui(UiDispatcherKind.RELAX) + anyModality) {
           val component = wrap(widget)
           if (component is StatusBarWidgetWrapper) {
             component.beforeUpdate()
@@ -342,7 +342,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       }
     }
 
-    withContext(Dispatchers.EDT + anyModality + CoroutineName("status bar widget adding")) {
+    withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + anyModality + CoroutineName("status bar widget adding")) {
       for (item in items) {
         widgetMap.put(item.widget.ID(), item)
       }
@@ -356,14 +356,14 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
 
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.EDT + anyModality) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + anyModality) {
         for (item in items) {
           fireWidgetAdded(widget = item.widget, anchor = item.anchor)
         }
       }
     }
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
       PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
