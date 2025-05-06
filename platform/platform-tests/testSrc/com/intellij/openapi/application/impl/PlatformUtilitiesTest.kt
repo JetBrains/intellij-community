@@ -7,7 +7,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
@@ -25,6 +28,7 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class PlatformUtilitiesTest {
@@ -133,5 +137,35 @@ class PlatformUtilitiesTest {
     jobWaiting.join()
     infiniteJob.cancel()
     coroutine.cancelAndJoin()
+  }
+
+  @Test
+  fun `non-blocking read action is cancellable inside a non-cancellable section`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job = Job(coroutineContext.job)
+    val job2 = Job(coroutineContext.job)
+    val counter = AtomicInteger(0)
+    val nbraJob = launch {
+      Cancellation.executeInNonCancelableSection {
+        ReadAction.nonBlocking {
+          job2.complete()
+          job.asCompletableFuture().join()
+          try {
+            ProgressManager.checkCanceled()
+          }
+          catch (e: ProcessCanceledException) {
+            counter.incrementAndGet()
+            throw e
+          }
+        }.executeSynchronously()
+      }
+    }
+    job2.join()
+    launch {
+      writeAction { }
+    }
+    delay(50)
+    job.complete()
+    nbraJob.join()
+    assertThat(counter.get()).isEqualTo(1)
   }
 }

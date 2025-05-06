@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.CheckedDisposable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +44,7 @@ import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import kotlin.reflect.KClass;
 import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -509,7 +509,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     T executeSynchronously() {
       try {
         while (true) {
-          attemptComputation();
+          // here we override the context job in case when this code is running under non-cancellable section
+          Job tempJob = myChildContext.getJob() != null ? myChildContext.getJob() : JobKt.Job(null);
+          try (AccessToken ignored = ThreadContext.installThreadContext(ThreadContext.currentThreadContext().plus(tempJob), true)) {
+            attemptComputation();
+          }
 
           if (isDone()) {
             if (isCancelled()) {
