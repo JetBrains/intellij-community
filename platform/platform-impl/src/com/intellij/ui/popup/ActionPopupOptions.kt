@@ -156,6 +156,28 @@ class ActionPopupOptions private constructor(
 
     @ApiStatus.Internal
     @JvmStatic
+    fun convertForStep(
+      options: ActionPopupOptions,
+      items: List<PopupFactoryImpl.ActionItem>,
+    ): ActionPopupOptions {
+      val enableMnemonics = options.showNumbers ||
+                            options.honorActionMnemonics && PopupFactoryImpl.anyMnemonicsIn(items)
+
+      val defaultItem = items.getOrNull(options.defaultIndex)
+      val preselectCondition: Condition<in AnAction>? = when {
+        options.preselectCondition != null -> options.preselectCondition
+        defaultItem != null -> Condition { action -> defaultItem.action == action }
+        else -> null
+      }
+
+      return forStep(showDisabledActions = options.showDisabledActions,
+                     enableMnemonics = enableMnemonics,
+                     autoSelection = options.autoSelection,
+                     preselectCondition = preselectCondition)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
     fun forAid(
       aid: ActionSelectionAid?,
       showDisabledActions: Boolean,

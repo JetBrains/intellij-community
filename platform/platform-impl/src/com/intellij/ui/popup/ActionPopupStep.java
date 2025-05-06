@@ -115,12 +115,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     List<PopupFactoryImpl.ActionItem> items = createActionItems(
       actionGroup, dataContext, actionPlace, presentationFactory, options);
 
-    ActionPopupOptions stepOptions = ActionPopupOptions.forStep(
-      options.showDisabledActions(), options.showNumbers() || options.honorActionMnemonics() && PopupFactoryImpl.anyMnemonicsIn(items),
-      options.autoSelectionEnabled(), options.getPreselectCondition() != null ? options.getPreselectCondition() :
-                            action -> options.getDefaultIndex() >= 0 &&
-                                      options.getDefaultIndex() < items.size() &&
-                                      items.get(options.getDefaultIndex()).getAction().equals(action));
+    ActionPopupOptions stepOptions = ActionPopupOptions.convertForStep(options, items);
     return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, stepOptions);
   }
 
