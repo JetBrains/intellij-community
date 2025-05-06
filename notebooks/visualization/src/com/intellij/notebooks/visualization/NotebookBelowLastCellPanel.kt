@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBEmptyBorder
-import org.intellij.lang.annotations.Language
 import java.awt.FlowLayout
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -30,7 +29,7 @@ class NotebookBelowLastCellPanel(
     if (editor.isOrdinaryNotebookEditor()) {
       isOpaque = false
       border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
-      val actionGroup = ActionManager.getInstance().getAction(ACTION_GROUP_ID) as ActionGroup
+      val actionGroup = ActionManager.getInstance().getAction("Jupyter.CreateNewCellsPanel") as ActionGroup
       add(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this))
     }
   }
@@ -55,10 +54,5 @@ class NotebookBelowLastCellPanel(
         g2d.fillRect(x, lineY - 1, width, 2)
       }
     }
-  }
-
-  companion object {
-    @Language("devkit-action-id")
-    private const val ACTION_GROUP_ID = "Jupyter.CreateNewCellsPanel"
   }
 }

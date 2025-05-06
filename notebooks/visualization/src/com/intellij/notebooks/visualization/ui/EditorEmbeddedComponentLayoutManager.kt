@@ -2,7 +2,6 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.editor.CustomFoldRegion
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.components.JBScrollPane
 import java.awt.*
@@ -22,7 +21,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
   }
 
   override fun maximumLayoutSize(target: Container?): Dimension {
-    return Dimension(Int.Companion.MAX_VALUE, Int.Companion.MAX_VALUE)
+    return Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
   }
 
   override fun getLayoutAlignmentX(target: Container?): Float {
@@ -56,7 +55,7 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
 
   override fun layoutContainer(parent: Container) {
     synchronized(parent.treeLock) {
-      editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
+      editor.notebookEditorOrNull?.editorPositionKeeper?.keepScrollingPositionWhile {
         val visibleWidth = maxOf(myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth(), 0)
         for (entry in constraints) {
           val component: JComponent = entry.first
@@ -101,23 +100,6 @@ internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx
     val isFullWidth: Boolean
 
     val order: Int
-
-  }
-
-  class InlayConstraint internal constructor(
-    private val inlay: Inlay<*>,
-    override val isFullWidth: Boolean,
-  ) : Constraint {
-    override fun getBounds(): Rectangle? {
-      return inlay.bounds
-    }
-
-    override fun update() {
-      inlay.update()
-    }
-
-    override val order: Int
-      get() = inlay.offset
   }
 
   class CustomFoldingConstraint internal constructor(

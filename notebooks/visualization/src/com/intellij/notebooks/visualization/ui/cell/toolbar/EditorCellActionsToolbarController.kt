@@ -25,11 +25,11 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.time.Duration
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.time.toKotlinDuration
 
-@OptIn(FlowPreview::class)
+/** Position of the floating toolbar in cells top right corner. */
+@OptIn(FlowPreview::class) // For 'debounce'.
 internal class EditorCellActionsToolbarController(
   private val cell: EditorCell,
 ) : SelfManagedCellController {
@@ -84,36 +84,30 @@ internal class EditorCellActionsToolbarController(
     val component = targetComponent ?: return
     val actionGroup = getActionGroup(cell.interval.type) ?: return
 
-    toolbar = JupyterCellActionsToolbar(actionGroup, component)
+    toolbar = JupyterCellActionsToolbar(actionGroup, component, actionsUpdatedCallback = { updateToolbarPosition(component) })
     showToolbarJob?.cancel()
 
     showToolbarJob = coroutineScope.launch {
       delay(SHOW_TOOLBAR_DELAY_MS)
       withContext(Dispatchers.Main) {
-        editor.contentComponent.add(toolbar, 0)
         updateToolbarPosition(component)
-        refreshUI()
+        editor.contentComponent.add(toolbar, 0)
       }
     }
   }
 
   private fun updateToolbarPosition(targetComponent: JComponent) {
     val toolbar = toolbar ?: return
-
-    toolbar.validate()
-    toolbar.bounds = calculateToolbarBounds(targetComponent, toolbar)
+    val newBounds = calculateToolbarBounds(targetComponent, toolbar)
+    if (newBounds != toolbar.bounds) {
+      toolbar.bounds = newBounds
+    }
   }
 
   fun hideToolbar() {
     showToolbarJob?.cancel()
     showToolbarJob = null
     removeToolbar()
-    refreshUI()
-  }
-
-  private fun refreshUI() {
-    editor.contentComponent.revalidate()
-    editor.contentComponent.repaint()
   }
 
   private fun removeToolbar() = toolbar?.let {
@@ -122,7 +116,6 @@ internal class EditorCellActionsToolbarController(
   }
 
   override fun dispose() {
-    showToolbarJob?.cancel()
     coroutineScope.cancel()
     hideToolbar()
   }
@@ -143,14 +136,7 @@ internal class EditorCellActionsToolbarController(
     .templatePresentation
     .putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 
-  private fun calculateToolbarBounds(
-    panel: JComponent,
-    toolbar: JPanel,
-  ): Rectangle {
-    // todo: maybe fuse with JupyterAboveCellToolbarManager.Companion.calculateToolbarBounds
-    toolbar.doLayout()
-    panel.doLayout()
-
+  private fun calculateToolbarBounds(panel: JComponent, toolbar: JComponent): Rectangle {
     val toolbarHeight = toolbar.preferredSize.height
     val toolbarWidth = toolbar.preferredSize.width
 

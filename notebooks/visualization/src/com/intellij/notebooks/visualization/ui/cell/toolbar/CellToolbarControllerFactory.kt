@@ -9,11 +9,10 @@ import com.intellij.openapi.util.registry.Registry
 
 class CellToolbarControllerFactory : SelfManagedControllerFactory {
   override fun createController(editorCell: EditorCell): SelfManagedCellController? {
-    if (!Registry.`is`("jupyter.per.cell.management.actions.toolbar")) {
+    if (!Registry.`is`("jupyter.per.cell.management.actions.toolbar") ||
+        !editorCell.editor.isOrdinaryNotebookEditor()) {
       return null
     }
-    if (!editorCell.editor.isOrdinaryNotebookEditor())
-      return null
 
     return EditorCellActionsToolbarController(editorCell)
   }
