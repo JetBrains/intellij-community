@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * To support highlighting of fully matched parameters, subclasses may also implement [isSignatureFullyMatched].
  *
  * Detection of the current parameter is performed by [getSignatureCurrentParameter] method, which by default uses
- * [ParameterHtmlPresentation.sourceCodeRange]. If the code range is not provided, or if the default behavior is incorrect,
+ * [ParameterHtmlPresentation.actualArgumentCodeRange]. If the code range is not provided, or if the default behavior is incorrect,
  * subclasses should also override [getSignatureCurrentParameter].
  *
  * To support iteration through parameters using TAB, subclasses should implement [ParameterInfoHandlerWithTabActionSupport] interface.
@@ -44,7 +44,7 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
    * whether the signature is deprecated. Each of the parameters should have a name and a type with an optional default value.
    * Both strings should be provided with HTML markup. To render colored syntax, methods of
    * [com.intellij.lang.documentation.QuickDocHighlightingHelper] can be used. Each parameter may be matched to the provided
-   * argument in the parameter owner arguments list through the optional [ParameterHtmlPresentation.sourceCodeRange]. If the
+   * argument in the parameter owner arguments list through the optional [ParameterHtmlPresentation.actualArgumentCodeRange]. If the
    * source code range is not provided, [getSignatureCurrentParameter] should be overridden to provide the current parameter index.
    *
    * If base [SignatureHtmlPresentation] and [ParameterHtmlPresentation] interfaces are enough, subclasses may use
@@ -82,7 +82,7 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
   ): Boolean = false
 
   /**
-   * If the handler is not able to provide the [ParameterHtmlPresentation.sourceCodeRange] when creating presentation,
+   * If the handler is not able to provide the [ParameterHtmlPresentation.actualArgumentCodeRange] when creating presentation,
    * it should override this method to provide the current parameter index.
    */
   protected open fun getSignatureCurrentParameter(
@@ -93,7 +93,7 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
     val text = context.editor.document.text
     val offset = StringUtil.skipWhitespaceForward(text, context.offset)
     return signature.parameters
-      .indexOfLast { it.sourceCodeRange != null && offset in it.sourceCodeRange!!.startOffset..StringUtil.skipWhitespaceForward(text, it.sourceCodeRange!!.endOffset) }
+      .indexOfLast { it.actualArgumentCodeRange != null && offset in it.actualArgumentCodeRange!!.startOffset..StringUtil.skipWhitespaceForward(text, it.actualArgumentCodeRange!!.endOffset) }
   }
 
   /**
@@ -111,14 +111,14 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
    * A presentation of a call signature parameter in the parameter info list.
    *
    * @property nameAndType A string with HTML markup, which should contain the parameter name and the type.
-   * @property sourceCodeRange An optional range of the corresponding argument in the source code. To render colored syntax, methods of
+   * @property actualArgumentCodeRange An optional range of the corresponding argument in the source code. To render colored syntax, methods of
    *  [com.intellij.lang.documentation.QuickDocHighlightingHelper] can be used.
    * @property defaultValue An optional string with HTML markup, which should contain the default value of the parameter if any.
    */
   interface ParameterHtmlPresentation {
     val nameAndType: String
-    val sourceCodeRange: TextRange? get() = null
     val defaultValue: String? get() = null
+    val actualArgumentCodeRange: TextRange? get() = null
   }
 
   protected fun SignatureHtmlPresentation(parameters: List<ParameterHtmlPresentation>, deprecated: Boolean = false): SignatureHtmlPresentation =
@@ -127,11 +127,11 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
       override val deprecated: Boolean = deprecated
     }
 
-  protected fun ParameterHtmlPresentation(nameAndType: String, sourceCodeRange: TextRange? = null, defaultValue: String? = null): ParameterHtmlPresentation =
+  protected fun ParameterHtmlPresentation(nameAndType: String, actualArgumentCodeRange: TextRange? = null, defaultValue: String? = null): ParameterHtmlPresentation =
     object : ParameterHtmlPresentation {
       override val nameAndType: String get() = nameAndType
-      override val sourceCodeRange: TextRange? get() = sourceCodeRange
       override val defaultValue: String? get() = defaultValue
+      override val actualArgumentCodeRange: TextRange? get() = actualArgumentCodeRange
     }
 
   final override fun findElementForParameterInfo(context: CreateParameterInfoContext): ParameterOwner? {

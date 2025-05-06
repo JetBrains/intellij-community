@@ -459,9 +459,9 @@ com.intellij.ide.bookmark.BookmarksManager
 - f:updateParameterInfo(com.intellij.psi.PsiElement,com.intellij.lang.parameterInfo.UpdateParameterInfoContext):V
 - f:updateUI(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterInfoHandlerWithColoredSyntaxData,com.intellij.lang.parameterInfo.ParameterInfoUIContext):V
 *:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterHtmlPresentation
+- getActualArgumentCodeRange():com.intellij.openapi.util.TextRange
 - getDefaultValue():java.lang.String
 - a:getNameAndType():java.lang.String
-- getSourceCodeRange():com.intellij.openapi.util.TextRange
 *f:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterInfoHandlerWithColoredSyntaxData
 *:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation
 - getDeprecated():Z
