@@ -98,22 +98,6 @@ class ActionMenu constructor(
   }
 
   companion object {
-    @Deprecated("Use ActionUtil.SUPPRESS_SUBMENU")
-    @JvmField
-    val SUPPRESS_SUBMENU = ActionUtil.SUPPRESS_SUBMENU
-
-    @Deprecated("Use ActionUtil.ALWAYS_VISIBLE_GROUP")
-    @JvmField
-    val ALWAYS_VISIBLE = ActionUtil.ALWAYS_VISIBLE_GROUP
-
-    @Deprecated("Use ActionUtil.KEYBOARD_SHORTCUT_SUFFIX")
-    @JvmField
-    val KEYBOARD_SHORTCUT_SUFFIX = ActionUtil.KEYBOARD_SHORTCUT_SUFFIX
-
-    @Deprecated("Use ActionUtil.SECONDARY_ICON")
-    @JvmField
-    val SECONDARY_ICON = ActionUtil.SECONDARY_ICON
-
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
       return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff))

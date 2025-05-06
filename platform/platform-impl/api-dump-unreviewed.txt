@@ -5935,11 +5935,7 @@ c:com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 - updateUI():V
 f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - com.intellij.ui.components.JBMenu
-- sf:ALWAYS_VISIBLE:com.intellij.openapi.util.Key
 - sf:Companion:com.intellij.openapi.actionSystem.impl.ActionMenu$Companion
-- sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key
-- sf:SECONDARY_ICON:com.intellij.openapi.util.Key
-- sf:SUPPRESS_SUBMENU:com.intellij.openapi.util.Key
 - <init>(com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z):V
 - b:<init>(com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:clearItems():V

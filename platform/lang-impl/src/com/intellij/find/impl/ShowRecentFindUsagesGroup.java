@@ -6,7 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -33,7 +33,7 @@ public final class ShowRecentFindUsagesGroup extends ActionGroup {
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setPerformGroup(!e.isFromActionToolbar());
     e.getPresentation().setDisableGroupIfEmpty(false);
-    e.getPresentation().putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true);
+    e.getPresentation().putClientProperty(ActionUtil.SUPPRESS_SUBMENU, true);
     e.getPresentation().setEnabledAndVisible(project != null);
   }
 

@@ -3,8 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -33,8 +32,8 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setPerformGroup(true);
-    e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
-    e.getPresentation().putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true);
+    e.getPresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
+    e.getPresentation().putClientProperty(ActionUtil.SUPPRESS_SUBMENU, true);
   }
 
   @Override

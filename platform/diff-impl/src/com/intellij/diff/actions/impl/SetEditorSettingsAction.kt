@@ -8,7 +8,7 @@ import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Editor
@@ -83,7 +83,7 @@ class SetEditorSettingsAction @ApiStatus.Internal constructor(
       if (value !is PopupFactoryImpl.ActionItem) return
       val presentation = presentationFactory.getPresentation(value.action)
 
-      val secondaryIcon = presentation.getClientProperty(ActionMenu.SECONDARY_ICON) ?: return
+      val secondaryIcon = presentation.getClientProperty(ActionUtil.SECONDARY_ICON) ?: return
       myTextLabel.horizontalTextPosition = SwingConstants.LEFT
       myTextLabel.iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
       myTextLabel.icon = secondaryIcon

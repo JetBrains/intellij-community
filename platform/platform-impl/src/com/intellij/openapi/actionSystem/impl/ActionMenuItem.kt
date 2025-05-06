@@ -65,7 +65,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   var keepPopupOnPerform: KeepPopupOnPerform = KeepPopupOnPerform.Never
     private set
   val secondaryIcon: Icon?
-    get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionMenu.SECONDARY_ICON) else null
+    get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionUtil.SECONDARY_ICON) else null
 
   init {
     addActionListener(ActionListener { e -> performAction(e.modifiers) })
@@ -130,7 +130,7 @@ class ActionMenuItem internal constructor(action: AnAction,
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
     }
-    val shortcutSuffix = presentation.getClientProperty(ActionMenu.KEYBOARD_SHORTCUT_SUFFIX)
+    val shortcutSuffix = presentation.getClientProperty(ActionUtil.KEYBOARD_SHORTCUT_SUFFIX)
     val shortcut = defaultFirstShortcutText
     firstShortcutTextFromPresentation = if (shortcut.isNotEmpty() && !shortcutSuffix.isNullOrEmpty()) {
       shortcut + shortcutSuffix
