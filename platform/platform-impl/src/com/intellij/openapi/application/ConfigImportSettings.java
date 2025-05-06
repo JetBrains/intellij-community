@@ -2,12 +2,15 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @ApiStatus.Internal
 public interface ConfigImportSettings {
@@ -40,6 +43,22 @@ public interface ConfigImportSettings {
   /**
    * Allows editing lists of plugins that are about to be migrated or downloaded during import.
    */
+  default void processPluginsToMigrate(
+    @NotNull Path newConfigDir,
+    @NotNull Path oldConfigDir,
+    @NotNull Path oldPluginsDir,
+    @NotNull ConfigImportHelper.ConfigImportOptions options,
+    @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
+    @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+    @NotNull List<IdeaPluginDescriptor> pluginsToDownload
+  ) { 
+    processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
+  }
+
+  /**
+   * Override {@link #processPluginsToMigrate(Path, Path, Path, ConfigImportHelper.ConfigImportOptions, Map, List, List)} instead
+   */
+  @ApiStatus.Obsolete
   default void processPluginsToMigrate(
     @NotNull Path newConfigDir,
     @NotNull Path oldConfigDir,

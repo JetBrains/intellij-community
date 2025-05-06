@@ -107,6 +107,9 @@ public final class ConfigImportHelper {
   private static final String SYSTEM = "system";
   private static final Set<String> SESSION_FILES = Set.of(CUSTOM_MARKER_FILE_NAME, LOCK_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
 
+  public static final String FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME = "frontend-to-migrate";
+
+
   private ConfigImportHelper() { }
 
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer,
@@ -940,6 +943,11 @@ public final class ConfigImportHelper {
       return headless;
     }
 
+    @ApiStatus.Internal
+    public @NotNull Logger getLog() {
+      return log;
+    }
+
     public void setHeadless(boolean headless) {
       this.headless = headless;
     }
@@ -1093,7 +1101,21 @@ public final class ConfigImportHelper {
       }
     }
     if (options.importSettings != null) {
-      options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
+      options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, oldPluginsDir, 
+                                                     options, brokenPluginVersions,
+                                                     pluginsToMigrate, pluginsToDownload);
+    }
+
+    if (!PlatformUtils.isJetBrainsClient()) {
+      /* The plugins for the frontend process are stored in a 'frontend' subdirectory. 
+         If a new version of a regular IDE is started, we need to store the frontend plugins from the previous version somewhere in 
+         the new plugin directory. 
+         When the frontend variant of the new version starts, it migrates these plugins. 
+         This logic can be removed when IJPL-170369 is fixed. */
+      Path oldFrontendPlugins = oldPluginsDir.resolve("frontend");
+      if (Files.isDirectory(oldFrontendPlugins)) {
+        NioFiles.copyRecursively(oldFrontendPlugins, newPluginsDir.resolve(FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME));
+      }
     }
 
     migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
@@ -1117,11 +1139,11 @@ public final class ConfigImportHelper {
    * {@code pluginsToMigrate} and the plugins which should be downloaded from the plugin repository in {@code pluginsToDownload}.
    * @return {@code false} if failed to collect plugins or {@code true} otherwise
    */
-  private static boolean collectPluginsToMigrate(@NotNull Path oldPluginsDir,
-                                                 @NotNull ConfigImportOptions options,
-                                                 @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
-                                                 @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                                 @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
+  public static boolean collectPluginsToMigrate(@NotNull Path oldPluginsDir,
+                                                @NotNull ConfigImportOptions options,
+                                                @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
+                                                @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                                @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
     @Nullable PluginLoadingResult oldIdeLoadingResult = null;
     try {
       /* FIXME
