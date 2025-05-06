@@ -3,7 +3,6 @@
   <module value="com.intellij.modules.kotlin.k2"/>
 
   <dependencies>
-    <plugin id="com.intellij.java"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
