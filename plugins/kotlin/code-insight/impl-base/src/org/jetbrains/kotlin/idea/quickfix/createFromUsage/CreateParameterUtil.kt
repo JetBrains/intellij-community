@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 object CreateParameterUtil {
     private fun chooseContainingClass(psiElement: PsiElement, varExpected: Boolean): Pair<KtClass?,ValVar> {
-        return Pair(psiElement.parents.firstIsInstanceOrNull<KtClassOrObject>() as? KtClass, if (varExpected) ValVar.VAR else ValVar.VAL)
+        return Pair((psiElement.parents.firstIsInstanceOrNull<KtClassOrObject>() as? KtClass)?.takeUnless { it.isInterface() }, if (varExpected) ValVar.VAR else ValVar.VAL)
     }
     enum class ValVar { VAL, VAR, NONE }
     private val toxicPill: Pair<Nothing?, ValVar> = Pair(null, ValVar.NONE) // means do not check above this psi element, it's no use
