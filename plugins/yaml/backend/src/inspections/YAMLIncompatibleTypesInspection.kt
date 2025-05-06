@@ -1,17 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.inspections
 
-import com.intellij.codeInspection.*
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.SmartList
-import com.intellij.util.asSafely
 import com.intellij.util.containers.FactoryMap
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import org.jetbrains.annotations.Nls
@@ -37,24 +36,20 @@ private class YamlIncompatibleTypesVisitor(private val holder: ProblemsHolder,
     val mostPopularType = getMostPopularTypeForSiblings(scalar)
     if (mostPopularType == null || mostPopularType == estimatedType) return
 
-    val quickFixes = SmartList<LocalQuickFix>()
+    val problem = holder.problem(scalar,
+                                 YAMLBundle.message("inspections.incompatible.types.message", estimatedType.displayName, mostPopularType.displayName))
     if (mostPopularType == YamlStringType.getInstance()) {
       val siblings = findStructuralSiblings(scalar)
       val singleQuote = siblings.filterIsInstance<YAMLQuotedText>().firstOrNull()?.isSingleQuote ?: false
 
-      quickFixes.add(
+      problem.fix(
         YAMLAddQuoteQuickFix(scalar, YAMLBundle.message("inspections.incompatible.types.quickfix.wrap.quotes.message"), singleQuote))
       if (siblings.any { it != scalar && it !is YAMLQuotedText }) {
-        quickFixes.add(YAMLAddQuotesToSiblingsQuickFix(scalar, singleQuote))
+        problem.fix(YAMLAddQuotesToSiblingsQuickFix(scalar, singleQuote))
       }
     }
 
-    holder.registerProblem(
-      scalar,
-      YAMLBundle.message("inspections.incompatible.types.message", estimatedType.displayName, mostPopularType.displayName),
-      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-      *quickFixes.toTypedArray()
-    )
+    problem.register()
     super.visitScalar(scalar)
   }
 
@@ -81,13 +76,10 @@ private fun <T1, T2, R> UserDataHolder.memoizeWith2Keys(storageKey: Key<Map<T1, 
 
 
 private class YAMLAddQuotesToSiblingsQuickFix(baseElement: YAMLValue, private val singleQuote: Boolean = false) :
-  LocalQuickFixAndIntentionActionOnPsiElement(baseElement) {
-  override fun getText(): @Nls String = YAMLBundle.message("inspections.incompatible.types.quickfix.wrap.all.quotes.message")
+  PsiUpdateModCommandAction<YAMLValue>(baseElement) {
+  override fun getFamilyName(): @Nls String = YAMLBundle.message("inspections.incompatible.types.quickfix.wrap.all.quotes.message")
 
-  override fun getFamilyName(): @Nls String = text
-
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    val baseElement = startElement.asSafely<YAMLValue>() ?: return
+  override fun invoke(context: ActionContext, baseElement: YAMLValue, updater: ModPsiUpdater) {
     for (yamlValue in findStructuralSiblings(baseElement).filterNot { it is YAMLQuotedText }) {
       wrapWithQuotes(yamlValue, singleQuote)
     }
