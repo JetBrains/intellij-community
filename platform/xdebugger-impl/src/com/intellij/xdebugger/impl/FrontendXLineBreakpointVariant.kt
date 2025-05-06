@@ -21,7 +21,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
-internal interface FrontendXLineBreakpointVariant {
+@ApiStatus.Internal
+interface FrontendXLineBreakpointVariant {
   val text: String
   val icon: Icon?
   val highlightRange: TextRange?
@@ -136,7 +137,8 @@ private fun createBreakpoint(
   return breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
 }
 
-private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
+@ApiStatus.Internal
+class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
   override val text: String get() = dto.text
   override val icon: Icon? get() = dto.icon?.icon()
   override val highlightRange: TextRange? get() = dto.highlightRange?.toTextRange()

@@ -17,7 +17,7 @@ private class FrontendXDebuggerInitializationProjectActivity : ProjectActivity {
 
     // initialize debugger editor lines breakpoints manager
     if (useFeProxy()) {
-      FrontendEditorLinesBreakpointTypesManager.getInstance(project)
+      FrontendEditorLinesBreakpointsInfoManager.getInstance(project)
     }
   }
 }

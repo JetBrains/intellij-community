@@ -32,14 +32,14 @@ private val DOCUMENTS_UPDATE_DEBOUNCE = 600.milliseconds
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-internal class FrontendEditorLinesBreakpointTypesManager(private val project: Project, private val cs: CoroutineScope) {
-  private val editorsMap = ConcurrentHashMap<Editor, EditorBreakpointTypesMap>()
+internal class FrontendEditorLinesBreakpointsInfoManager(private val project: Project, private val cs: CoroutineScope) {
+  private val editorsMap = ConcurrentHashMap<Editor, EditorBreakpointLinesInfoMap>()
 
   init {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
         val editor = event.editor
-        putNewTypesMap(editor)
+        putNewLinesInfoMap(editor)
       }
 
       override fun editorReleased(event: EditorFactoryEvent) {
@@ -51,7 +51,7 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
     cs.launch {
       readAction {
         for (editor in EditorFactory.getInstance().allEditors) {
-          putNewTypesMap(editor)
+          putNewLinesInfoMap(editor)
         }
       }
       // dispose editors that were disposed during map initialization to prevent races with the listener
@@ -65,8 +65,8 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
     }
   }
 
-  private fun putNewTypesMap(editor: Editor): EditorBreakpointTypesMap {
-    val newMap = EditorBreakpointTypesMap(cs, editor, project)
+  private fun putNewLinesInfoMap(editor: Editor): EditorBreakpointLinesInfoMap {
+    val newMap = EditorBreakpointLinesInfoMap(cs, editor, project)
     val oldMap = editorsMap.putIfAbsent(editor, newMap)
     if (oldMap != null) {
       newMap.dispose()
@@ -74,12 +74,12 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
     return oldMap ?: newMap
   }
 
-  suspend fun getTypesForLine(editor: Editor, line: Int): List<XBreakpointTypeProxy> {
+  suspend fun getBreakpointsInfoForLine(editor: Editor, line: Int): EditorLineBreakpointsInfo {
     val editorMap = editorsMap[editor]
     if (editorMap == null) {
-      return putNewTypesMap(editor).getTypesForLine(line)
+      return putNewLinesInfoMap(editor).getBreakpointsInfoForLine(line)
     }
-    return editorMap.getTypesForLine(line)
+    return editorMap.getBreakpointsInfoForLine(line)
   }
 
   /**
@@ -87,28 +87,28 @@ internal class FrontendEditorLinesBreakpointTypesManager(private val project: Pr
    * Schedules data fetching if needed, so the next calls will hopefully return cached data.
    */
   @RequiresReadLock
-  fun getTypesForLineFast(editor: Editor, line: Int): List<XBreakpointTypeProxy>? {
-    val editorMap = editorsMap[editor] ?: return emptyList()
+  fun getBreakpointsInfoForLineFast(editor: Editor, line: Int): EditorLineBreakpointsInfo? {
+    val editorMap = editorsMap[editor] ?: return null
     val currentEditorStamp = editor.document.modificationStamp
-    return editorMap.getTypesForLineInternal(line, currentEditorStamp)
+    return editorMap.getBreakpointsInfoForLineInternal(line, currentEditorStamp)
   }
 
   companion object {
-    fun getInstance(project: Project): FrontendEditorLinesBreakpointTypesManager = project.service()
+    fun getInstance(project: Project): FrontendEditorLinesBreakpointsInfoManager = project.service()
   }
 }
 
 @OptIn(FlowPreview::class)
-private class EditorBreakpointTypesMap(
+private class EditorBreakpointLinesInfoMap(
   parentCs: CoroutineScope,
   private val editor: Editor,
   private val project: Project,
 ) {
   private val mapUpdateRequest = MutableSharedFlow<Unit>(replay = 1)
   private val debouncedUpdateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-  private val cs: CoroutineScope = parentCs.childScope("EditorBreakpointTypesMap")
+  private val cs: CoroutineScope = parentCs.childScope("EditorBreakpointLinesInfoMap")
 
-  private val breakpointsMap: FrontendViewportDataCache<List<XBreakpointTypeProxy>> = FrontendViewportDataCache(
+  private val breakpointsMap: FrontendViewportDataCache<EditorLineBreakpointsInfo> = FrontendViewportDataCache(
     loadData = { firstIndex, lastIndexInclusive ->
       getAvailableBreakpointTypesFromServer(project, editor, firstIndex, lastIndexInclusive)
     }
@@ -146,13 +146,13 @@ private class EditorBreakpointTypesMap(
     editor.scrollingModel.addVisibleAreaListener({ debouncedUpdateRequests.tryEmit(Unit) }, cs.asDisposable())
   }
 
-  suspend fun getTypesForLine(line: Int): List<XBreakpointTypeProxy> {
+  suspend fun getBreakpointsInfoForLine(line: Int): EditorLineBreakpointsInfo {
     // let's try to find breakpoint types from the current map
     val currentEditorStamp = readAction { editor.document.modificationStamp }
-    return breakpointsMap.getDataWithCaching(line, currentEditorStamp) ?: listOf()
+    return breakpointsMap.getDataWithCaching(line, currentEditorStamp) ?: EditorLineBreakpointsInfo(listOf(), false)
   }
 
-  fun getTypesForLineInternal(line: Int, currentEditorStamp: Long): List<XBreakpointTypeProxy>? {
+  fun getBreakpointsInfoForLineInternal(line: Int, currentEditorStamp: Long): EditorLineBreakpointsInfo? {
     return breakpointsMap.getData(line, currentEditorStamp)
   }
 
@@ -172,21 +172,30 @@ private class EditorBreakpointTypesMap(
   }
 }
 
-internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, line: Int): List<XBreakpointTypeProxy> {
-  val availableTypeIds = XBreakpointTypeApi.getInstance().getAvailableBreakpointTypesForLine(project.projectId(), editor.editorId(), line)
+internal class EditorLineBreakpointsInfo(
+  val types: List<XBreakpointTypeProxy>,
+  val singleBreakpointVariant: Boolean,
+)
+
+internal suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, line: Int): EditorLineBreakpointsInfo {
+  val breakpointLinesInfo = XBreakpointTypeApi.getInstance().getBreakpointsInfoForLine(project.projectId(), editor.editorId(), line)
   val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstance(project)
-  return availableTypeIds.mapNotNull { breakpointTypesManager.getTypeById(it) }
+  val types = breakpointLinesInfo.availableTypes.mapNotNull { breakpointTypesManager.getTypeById(it) }
+  return EditorLineBreakpointsInfo(types, breakpointLinesInfo.singleBreakpointVariant)
 }
 
-private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, start: Int, endInclusive: Int): List<List<XBreakpointTypeProxy>>? {
+private suspend fun getAvailableBreakpointTypesFromServer(project: Project, editor: Editor, start: Int, endInclusive: Int): List<EditorLineBreakpointsInfo>? {
   val breakpointTypesManager = FrontendXBreakpointTypesManager.getInstance(project)
   // TODO: is it possible to avoid this retry?
   val retriesCount = 5
   repeat(retriesCount) {
-    val availableTypeIds = XBreakpointTypeApi.getInstance().getAvailableBreakpointTypesForEditor(project.projectId(), editor.editorId(), start, endInclusive)
-    val types = availableTypeIds?.map { it.mapNotNull { id -> breakpointTypesManager.getTypeById(id) } }
-    if (types != null) {
-      return types
+    val breakpointsInfoDtos = XBreakpointTypeApi.getInstance().getBreakpointsInfoForEditor(project.projectId(), editor.editorId(), start, endInclusive)
+    val breakpointInfoList = breakpointsInfoDtos?.map { lineBreakpointInfo ->
+      val types = lineBreakpointInfo.availableTypes.mapNotNull { breakpointTypesManager.getTypeById(it) }
+      EditorLineBreakpointsInfo(types, lineBreakpointInfo.singleBreakpointVariant)
+    }
+    if (breakpointInfoList != null) {
+      return breakpointInfoList
     }
     delay(100.milliseconds)
   }

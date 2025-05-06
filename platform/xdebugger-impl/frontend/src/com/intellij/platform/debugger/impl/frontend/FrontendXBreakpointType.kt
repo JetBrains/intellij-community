@@ -51,12 +51,12 @@ private class FrontendXLineBreakpointType(
   override val priority: Int = lineTypeInfo.priority
 
   override suspend fun canPutAt(editor: Editor, line: Int, project: Project): Boolean {
-    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLine(editor, line)
+    val availableTypes = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLine(editor, line).types
     return availableTypes.any { it.id == this@FrontendXLineBreakpointType.id }
   }
 
   override fun canPutAtFast(editor: Editor, line: Int, project: Project): ThreeState {
-    val availableTypes = FrontendEditorLinesBreakpointTypesManager.getInstance(project).getTypesForLineFast(editor, line)
+    val availableTypes = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLineFast(editor, line)?.types
     if (availableTypes == null) {
       return ThreeState.UNSURE
     }

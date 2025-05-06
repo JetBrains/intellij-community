@@ -22,9 +22,9 @@ import org.jetbrains.annotations.ApiStatus
 interface XBreakpointTypeApi : RemoteApi<Unit> {
   suspend fun getBreakpointTypeList(project: ProjectId): XBreakpointTypeList
 
-  suspend fun getAvailableBreakpointTypesForLine(projectId: ProjectId, editorId: EditorId, line: Int): List<XBreakpointTypeId>
+  suspend fun getBreakpointsInfoForLine(projectId: ProjectId, editorId: EditorId, line: Int): XBreakpointsLineInfo
 
-  suspend fun getAvailableBreakpointTypesForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<List<XBreakpointTypeId>>?
+  suspend fun getBreakpointsInfoForEditor(projectId: ProjectId, editorId: EditorId, start: Int, endInclusive: Int): List<XBreakpointsLineInfo>?
 
   suspend fun addBreakpointThroughLux(projectId: ProjectId, typeId: XBreakpointTypeId): Deferred<XBreakpointDto?>
 
@@ -37,6 +37,13 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
     }
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointsLineInfo(
+  val availableTypes: List<XBreakpointTypeId>,
+  val singleBreakpointVariant: Boolean
+)
 
 @ApiStatus.Internal
 @Serializable
