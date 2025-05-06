@@ -214,9 +214,11 @@ object K2CreatePropertyFromUsageBuilder {
                 }.takeUnless { it.isEmpty() }
 
         private fun isLateinitAllowed(): Boolean {
-            if (request is CreatePropertyFromKotlinUsageRequest &&
-                request.fieldType.all { it.theType is JvmPrimitiveType || (it as? ExpectedTypeWithNullability)?.nullability == Nullability.NULLABLE }) {
-                return false
+            if (request is CreatePropertyFromKotlinUsageRequest) {
+                if (request.fieldType.all { it.theType is JvmPrimitiveType || (it as? ExpectedTypeWithNullability)?.nullability == Nullability.NULLABLE } ||
+                    request.modifiers.contains(JvmModifier.ABSTRACT)) {
+                    return false
+                }
             }
             return request !is CreatePropertyFromKotlinUsageRequest || !request.isExtension
         }

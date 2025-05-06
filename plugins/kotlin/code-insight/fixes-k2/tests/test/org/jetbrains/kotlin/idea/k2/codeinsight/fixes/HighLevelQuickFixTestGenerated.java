@@ -9684,6 +9684,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                     runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/abstract/interfaceNoExplicitReceiver.kt");
                 }
 
+                @TestMetadata("noLateinitInAbstract.kt")
+                public void testNoLateinitInAbstract() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/abstract/noLateinitInAbstract.kt");
+                }
+
                 @TestMetadata("notAbstractClass.kt")
                 public void testNotAbstractClass() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/abstract/notAbstractClass.kt");
