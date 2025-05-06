@@ -1,3 +1,5 @@
+@file:Suppress("ConvertTwoComparisonsToRangeCheck")
+
 package org.jetbrains.bazel.jvm.mvStore
 
 import org.h2.mvstore.DataUtils
@@ -59,12 +61,12 @@ object ModernStringDataType : DataType<String> {
     buff.putVarInt(bytes.size).put(bytes)
   }
 
-  override fun write(buff: WriteBuffer?, storage: Any?, len: Int) {
+  override fun write(buff: WriteBuffer, storage: Any?, len: Int) {
     @Suppress("UNCHECKED_CAST")
     storage as Array<String>
     for (i in 0 until len) {
       val bytes = storage[i].encodeToByteArray()
-      buff!!.putVarInt(bytes.size).put(bytes)
+      buff.putVarInt(bytes.size).put(bytes)
     }
   }
 }
