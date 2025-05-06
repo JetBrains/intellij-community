@@ -15766,21 +15766,23 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - setDataProvider(com.intellij.openapi.actionSystem.UiDataProvider):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.popup.ActionPopupOptions
-- autoSelectionEnabled():Z
-- s:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
-- s:empty():com.intellij.ui.popup.ActionPopupOptions
-- s:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
-- s:forStepAndItems(Z,Z,Z,Z,Z,com.intellij.openapi.util.Condition,I):com.intellij.ui.popup.ActionPopupOptions
-- getDefaultIndex():I
-- getMaxRowCount():I
-- getPreselectCondition():com.intellij.openapi.util.Condition
-- honorActionMnemonics():Z
-- s:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
-- s:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
-- s:showDisabled():com.intellij.ui.popup.ActionPopupOptions
-- showDisabledActions():Z
-- showNumbers():Z
-- useAlphaAsNumbers():Z
+- sf:Companion:com.intellij.ui.popup.ActionPopupOptions$Companion
+- b:<init>(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- sf:empty():com.intellij.ui.popup.ActionPopupOptions
+- sf:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- sf:forStepAndItems(Z,Z,Z,Z,Z,com.intellij.openapi.util.Condition,I):com.intellij.ui.popup.ActionPopupOptions
+- sf:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
+- sf:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
+- sf:showDisabled():com.intellij.ui.popup.ActionPopupOptions
+f:com.intellij.ui.popup.ActionPopupOptions$Companion
+- f:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- f:empty():com.intellij.ui.popup.ActionPopupOptions
+- f:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- f:forStepAndItems(Z,Z,Z,Z,Z,com.intellij.openapi.util.Condition,I):com.intellij.ui.popup.ActionPopupOptions
+- f:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
+- f:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
+- f:showDisabled():com.intellij.ui.popup.ActionPopupOptions
 c:com.intellij.ui.popup.ActionPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.MnemonicNavigationFilter
