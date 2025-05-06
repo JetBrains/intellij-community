@@ -56,7 +56,11 @@ internal class ComposeResourcesManager(private val project: Project) {
       val dirs = node.data.customComposeResourcesDirs.mapValues { (sourceSetName, directoryPath) ->
         ComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath))
       }
-      moduleName to ComposeResources(moduleName, dirs)
+      moduleName to ComposeResources(
+        moduleName = moduleName,
+        directoriesBySourceSetName = dirs,
+        isPublicResClass = node.data.isPublicResClass,
+      )
     }
 
   /** Refresh Compose resources directories after project import */
