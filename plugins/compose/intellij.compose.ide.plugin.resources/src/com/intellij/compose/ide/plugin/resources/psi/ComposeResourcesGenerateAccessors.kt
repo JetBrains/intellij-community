@@ -2,8 +2,10 @@
 package com.intellij.compose.ide.plugin.resources.psi
 
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesDir
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
 import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
@@ -50,7 +52,8 @@ internal suspend fun Project.generateAccessorsFrom(changedComposeResourcesDirs: 
     } ?: return
     val packageName = changedComposeResourcesDir.getResourcePackageName(this)
     val moduleDir = resourcesAccessorsDir.findFileByRelativePath(packageName.replace('.', '/')) ?: return
-    getAccessorsSpecs(resources, packageName, changedComposeResourcesDir.sourceSetName, moduleDir.path)
+    val isPublicResClass = this.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.isPublicResClass ?: false
+    getAccessorsSpecs(resources, packageName, changedComposeResourcesDir.sourceSetName, moduleDir.path, isPublicResClass)
   }
 }
 
