@@ -85,8 +85,8 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     boolean selected = isSelected(e);
     Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);
-    if (e.isFromContextMenu()) {
-      // force showing check marks instead of toggle icons in the context menu
+    if (e.getUiKind() instanceof ActionUiKind.Popup o && !o.isSearchPopup()) {
+      // force showing check marks instead of toggle icons
       presentation.setIcon(null);
     }
   }
