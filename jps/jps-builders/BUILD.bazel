@@ -45,6 +45,8 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "@lib//:http-client",
     "@lib//:kotlin-metadata",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-compiler-cli-provided",
   ],
   exports = [
     "@lib//:maven-resolver-provider",
