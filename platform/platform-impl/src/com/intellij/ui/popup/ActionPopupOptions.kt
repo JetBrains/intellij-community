@@ -164,6 +164,20 @@ class ActionPopupOptions private constructor(
 
     @ApiStatus.Internal
     @JvmStatic
+    fun convertForSubStep(
+      options: ActionPopupOptions,
+    ): ActionPopupOptions {
+      return ActionPopupOptionsImpl(
+        showDisabledActions = options.options.showDisabledActions,
+        honorActionMnemonics = false,
+        autoSelection = false,
+        preselectCondition = options.options.preselectCondition,
+        speedSearchFilter = null,
+      ).asOption()
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
     fun forAid(
       aid: ActionSelectionAid?,
       showDisabledActions: Boolean,

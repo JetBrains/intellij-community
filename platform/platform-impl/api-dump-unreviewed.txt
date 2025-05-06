@@ -15810,7 +15810,6 @@ c:com.intellij.ui.popup.ActionPopupStep
 - getSelectedIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
 - getSeparatorAbove(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):com.intellij.openapi.ui.popup.ListSeparator
 - getSpeedSearchFilter():com.intellij.openapi.ui.popup.SpeedSearchFilter
-- p:getSubStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,com.intellij.openapi.util.Condition,I):com.intellij.openapi.ui.popup.ListPopupStep
 - getTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getTitle():java.lang.String
 - getTooltipTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
