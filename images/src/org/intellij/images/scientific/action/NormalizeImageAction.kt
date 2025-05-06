@@ -21,10 +21,10 @@ class NormalizeImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val presentation = e.presentation
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
     val isNormalized = imageFile?.getUserData(IS_NORMALIZED_KEY) ?: false
-    presentation.text = if (isNormalized) ImagesBundle.message("action.restore.original.text") else ImagesBundle.message("action.normalize.image.text")
+    e.presentation.text = if (isNormalized) ImagesBundle.message("action.restore.original.text") else ImagesBundle.message("action.normalize.image.text")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
