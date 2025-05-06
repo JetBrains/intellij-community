@@ -1486,6 +1486,11 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
             runTest("../testData/intentions/objectLiteralToLambda/ExpressionBody.kt");
         }
 
+        @TestMetadata("FunInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../testData/intentions/objectLiteralToLambda/FunInterface.kt");
+        }
+
         @TestMetadata("HasData.kt")
         public void testHasData() throws Exception {
             runTest("../testData/intentions/objectLiteralToLambda/HasData.kt");

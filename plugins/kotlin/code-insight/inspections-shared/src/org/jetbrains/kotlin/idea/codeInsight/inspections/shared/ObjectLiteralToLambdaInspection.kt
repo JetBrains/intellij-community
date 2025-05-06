@@ -265,7 +265,7 @@ private fun extractData(element: KtObjectLiteralExpression): Data? {
                 val samInterface = baseClassSymbol.findSamSymbolOrNull(false) ?: return null
                 val origin = samInterface.origin
                 // TODO: it has to be reconsidered testData/intentions/objectLiteralToLambda/NotJavaSAM.kt
-                if (!origin.isJavaSourceOrLibrary()) return null
+                if (!origin.isJavaSourceOrLibrary() && !baseClassSymbol.isFun) return null
                 // TODO: it should be WITH_QUALIFIED_NAMES but shortenReferencesInRange does not handle that properly
                 val typeRepresentation = type.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE)
                 Data(typeRef, baseTypeClassId, typeRepresentation, singleFunction)
