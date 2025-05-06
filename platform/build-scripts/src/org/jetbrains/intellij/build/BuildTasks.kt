@@ -20,7 +20,7 @@ interface BuildTasks {
    * Compiles required modules and builds zip archives of the specified plugins in [BuildContext.nonBundledPlugins]
    * directory.
    */
-  suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
+  suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String> = emptyList())
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

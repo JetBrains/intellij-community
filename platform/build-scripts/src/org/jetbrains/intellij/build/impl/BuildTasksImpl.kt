@@ -80,7 +80,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     buildDistributions(context)
   }
 
-  override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>) {
+  override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, dependencyModules: List<String>) {
     checkProductProperties(context)
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
@@ -90,7 +90,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
 
     buildProjectArtifacts(distState.platform, getEnabledPluginModules(distState.pluginsToPublish, context), context)
 
-    val searchableOptionSet = buildSearchableOptions(context)
+    val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
     buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, null, distState, searchableOptionSet, context)
   }
 
