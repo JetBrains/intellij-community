@@ -40,6 +40,8 @@ fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, coroutineScop
         document.addDocumentListener(listener)
       }
     }
+  }.invokeOnCompletion {
+    document.removeDocumentListener(listener)
   }
 }
 
@@ -64,5 +66,7 @@ fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, corou
         }
       }
     }
+  }.invokeOnCompletion {
+    removeChangeListener(changeListener)
   }
 }
