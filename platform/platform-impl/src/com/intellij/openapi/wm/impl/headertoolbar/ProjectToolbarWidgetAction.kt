@@ -6,7 +6,6 @@ import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,10 +16,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.LEFT_ICONS_KEY
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
-import com.intellij.ui.*
-import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.GroupHeaderSeparator
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -35,7 +36,6 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Component
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -58,8 +58,6 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
 }
 
 class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
-
-  private val lefIconsKey = Key<List<Icon>>("leftIcons")
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
@@ -89,10 +87,9 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
     return object : ToolbarComboButton(model) {
       override fun updateFromPresentation(presentation: Presentation) {
-        text = presentation.text
-        toolTipText = presentation.description
-        leftIcons = presentation.getClientProperty(lefIconsKey) ?: emptyList()
-        rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
+        super.updateFromPresentation(presentation)
+        // Doesn't work for remdev because it uses BackendToolbarComboButton, maybe this should be a client property as well?
+        // Or just make it the default?
         betweenIconsGap = 9
       }
     }
@@ -120,7 +117,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
         add(customizer.getProjectIcon(project))
       }
     }
-    e.presentation.putClientProperty(lefIconsKey, icons)
+    e.presentation.putClientProperty(LEFT_ICONS_KEY, icons)
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {

@@ -5,6 +5,7 @@ import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.util.Key
 import com.intellij.ui.popup.PopupAlignableComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -37,7 +38,7 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
   open fun updateFromPresentation(presentation: Presentation) {
     text = presentation.text
     toolTipText = presentation.description
-    leftIcons = listOfNotNull(
+    leftIcons = presentation.getClientProperty(LEFT_ICONS_KEY) ?: listOfNotNull(
       if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
       else presentation.icon
     )
@@ -70,3 +71,5 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
     return result
   }
 }
+
+internal val LEFT_ICONS_KEY: Key<List<Icon>> = Key.create("leftIcons")
