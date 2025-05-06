@@ -200,11 +200,20 @@ object KotlinArtifactsDownloader {
             .also { Files.createDirectories(it.parent) }
 
         if (!artifact.exists()) {
+            val intellijDeps =
+                "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/" +
+                    "org/jetbrains/kotlin/$artifactId/$version/$fileName"
             val idePluginDeps =
                 "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
                     "org/jetbrains/kotlin/$artifactId/$version/$fileName"
             val mavenCentral = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/$artifactId/$version/$fileName"
-            val stream = URL(idePluginDeps).openStreamOrNull() ?: URL(mavenCentral).openStreamOrNull() ?: return null
+
+            val stream =
+                URL(intellijDeps).openStreamOrNull()
+                    ?: URL(idePluginDeps).openStreamOrNull()
+                    ?: URL(mavenCentral).openStreamOrNull()
+                    ?: return null
+
             Files.copy(stream, artifact)
             check(artifact.exists()) { "$artifact should be downloaded" }
         }
