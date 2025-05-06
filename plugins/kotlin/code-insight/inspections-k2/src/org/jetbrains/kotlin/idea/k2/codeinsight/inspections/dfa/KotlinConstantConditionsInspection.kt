@@ -25,6 +25,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -587,6 +588,13 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 // Negation operand: negation itself will be reported
                 (parent as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
             ) {
+                return true
+            }
+            if (value != ConstantValue.NULL && parent is KtSafeQualifiedExpression && parent.selectorExpression.isAncestor(expression)) {
+                // Like a?.b where b is always false. If the whole a?.b is false, it will be highlighted.
+                // Otherwise, a?.b could be false or null, so warning about 'b is always false' is quite useless.
+                // We still keep the warning if b is always null. In this case, a?.b is also always null, but having an additional
+                // warning may clarify things.
                 return true
             }
             if (expression is KtBinaryExpression && expression.operationToken == KtTokens.ELVIS) {

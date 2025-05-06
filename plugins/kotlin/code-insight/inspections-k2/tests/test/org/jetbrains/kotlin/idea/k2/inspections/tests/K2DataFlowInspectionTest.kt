@@ -86,6 +86,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testNestedLoopLabel() = doTest()
     fun testNestedThis() = doTest()
     fun testNothingType() = doTest()
+    fun testNullableBooleanWrapper() = doTest()
     fun testPlatformType() {
         // KTIJ-22430
         myFixture.addClass("""
