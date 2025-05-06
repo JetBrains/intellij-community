@@ -47,5 +47,7 @@
   <applicationListeners>
     <listener class="com.intellij.platform.recentFiles.frontend.RecentlySelectedEditorListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.platform.recentFiles.frontend.RecentFilesEditorTypingListener" activeInHeadlessMode="false"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener" activeInTestMode="true"/>
   </applicationListeners>
 </idea-plugin>

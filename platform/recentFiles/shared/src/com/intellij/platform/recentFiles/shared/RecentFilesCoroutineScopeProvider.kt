@@ -21,3 +21,13 @@ class RecentFilesCoroutineScopeProvider(val coroutineScope: CoroutineScope) {
     }
   }
 }
+
+@ApiStatus.Internal
+@Service(Service.Level.APP)
+class RecentFilesApplicationCoroutineScopeProvider(val coroutineScope: CoroutineScope) {
+  companion object {
+    fun getInstance(): RecentFilesApplicationCoroutineScopeProvider {
+      return service<RecentFilesApplicationCoroutineScopeProvider>()
+    }
+  }
+}
