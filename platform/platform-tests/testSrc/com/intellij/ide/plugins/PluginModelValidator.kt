@@ -182,8 +182,6 @@ class PluginModelValidator(
 
       val id = descriptor.id
                ?: descriptor.name
-               // can't specify 'com.intellij', because there is an ultimate plugin with the same ID
-               ?: if (sourceModuleName == "intellij.idea.community.customization") "com.intellij.community" else null
       if (id == null) {
         reportError(
           "Plugin id is not specified",
