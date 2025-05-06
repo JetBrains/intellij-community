@@ -174,6 +174,7 @@ class PluginModelValidator(
     }
 
     // 2. process plugins - process content to collect modules
+    val allMainModulesOfPlugins = ArrayList<ModuleInfo>()
     for ((sourceModuleName, moduleMetaInfo) in sourceModuleNameToFileInfo) {
       // interested only in plugins
       val descriptor = moduleMetaInfo.pluginDescriptor ?: continue
@@ -202,6 +203,7 @@ class PluginModelValidator(
         packageName = descriptor.`package`,
         descriptor = descriptor,
       )
+      allMainModulesOfPlugins.add(moduleInfo)
       if (sourceModuleName !in alternativeCorePluginMainModules && sourceModuleName !in validationOptions.mainModulesOfAlternativePluginVariants) {
         val prev = pluginIdToInfo.put(id, moduleInfo)
         // todo how do we can exclude it automatically
@@ -226,7 +228,7 @@ class PluginModelValidator(
     }
 
     // 3. check dependencies - we are aware about all modules now
-    for (pluginInfo in pluginIdToInfo.values) {
+    for (pluginInfo in allMainModulesOfPlugins) {
       val descriptor = pluginInfo.descriptor
 
       checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
