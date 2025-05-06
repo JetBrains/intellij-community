@@ -41,8 +41,6 @@ class SePopupVm(
     SeTabVm(project, coroutineScope, it, searchPattern)
   }
 
-  //val tabVmsFlow: StateFlow<List<SeTabVm>>
-
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(tabVms.indexOfFirst { it.tabId == initialTabIndex }.takeIf { it >= 0 } ?: 0)
   val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
 
