@@ -220,6 +220,12 @@ internal suspend fun loadApp(
     }
 
     launch {
+      if (AppMode.isRemoteDevHost()) {
+        span("telemetry waiting") {
+          initTelemetryJob.join()
+        }
+      }
+
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
