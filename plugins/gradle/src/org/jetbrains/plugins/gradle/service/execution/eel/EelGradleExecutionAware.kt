@@ -80,8 +80,6 @@ class EelGradleExecutionAware : GradleExecutionAware {
   private fun Project.isEelSyncAvailable(): Boolean {
     return Registry.`is`("gradle.sync.use.eel.for.wsl", false)
            && projectFilePath != null
-           && WSLUtil.isSystemCompatible()
-           && WslPath.getDistributionByWindowsUncPath(projectFilePath!!) != null
            && getEelDescriptor() !is LocalEelDescriptor
   }
 }

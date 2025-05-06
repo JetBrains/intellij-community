@@ -19,6 +19,8 @@ import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.plugins.gradle.execution.target.TargetModelBuilder;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -46,6 +49,7 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -136,8 +140,11 @@ public final class GradleExecutionHelper {
     @NotNull Function<? super ProjectConnection, ? extends T> f
   ) {
     String projectDir;
+    //noinspection IO_FILE_USAGE
     File projectPathFile = new File(projectPath);
-    if (projectPathFile.isFile() && projectPath.endsWith(GradleConstants.EXTENSION) && projectPathFile.getParent() != null) {
+    if (Files.isRegularFile(Path.of(projectPath)) &&
+        projectPath.endsWith(GradleConstants.EXTENSION) &&
+        projectPathFile.getParent() != null) {
       projectDir = projectPathFile.getParent();
       if (settings != null) {
         List<String> arguments = settings.getArguments();
@@ -288,9 +295,27 @@ public final class GradleExecutionHelper {
     var javaHome = GradleDaemonJvmHelper.isExecutingUpdateDaemonJvmTask(settings)
                    ? GradleDaemonJvmHelper.getGradleJvmForUpdateDaemonJvmTask(id)
                    : settings.getJavaHome();
-    if (javaHome != null && new File(javaHome).isDirectory()) {
-      LOG.debug("Java home to set for Gradle operation: " + javaHome);
+    if (javaHome == null) {
+      return;
+    }
+    Path javaHomePath = Path.of(javaHome);
+    if (!Files.isDirectory(javaHomePath)) {
+      return;
+    }
+    if (EelProviderUtil.getEelDescriptor(javaHomePath) == LocalEelDescriptor.INSTANCE) {
+      //noinspection IO_FILE_USAGE
       operation.setJavaHome(new File(javaHome));
+      LOG.debug("Java home to set for Gradle operation: " + javaHomePath);
+    }
+    else {
+      try {
+        if (operation instanceof TargetModelBuilder) {
+          ((TargetModelBuilder<?>)operation).patchJavaHome(javaHomePath);
+        }
+      }
+      catch (Exception e) {
+        LOG.debug("Unable to set %s as the java home for the operation", javaHomePath);
+      }
     }
   }
 
