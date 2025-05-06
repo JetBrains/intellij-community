@@ -127,6 +127,8 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
         listEventFlow.collect { listEvent ->
           withContext(Dispatchers.EDT) {
             textField.setSearchInProgress(false)
+            val oldSize = resultListModel.size()
+
             when (listEvent) {
               is SeResultListUpdateEvent -> {
                 resultListModel.freeze(indexToFreezeFromListOffset())
@@ -135,6 +137,10 @@ class SePopupContentPane(private val vm: SePopupVm) : JPanel(), Disposable {
               is SeResultListStopEvent -> {
                 resultListModel.removeLoadingItem()
               }
+            }
+
+            if (oldSize == 0 && resultListModel.size() > 0) {
+              resultList.selectedIndex = 0
             }
           }
         }
