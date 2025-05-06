@@ -7,7 +7,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsProvider
-import com.intellij.codeInsight.inline.completion.utils.InlineCompletionJob
+import com.intellij.codeInsight.inline.edit.InlineEditRequestJob
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -32,7 +32,7 @@ class InlineCompletionSession private constructor(
   val request: InlineCompletionRequest
 ) : Disposable {
 
-  private var job: InlineCompletionJob? = null
+  private var job: InlineEditRequestJob? = null
   private var variantsProvider: InlineCompletionVariantsProvider? = null
 
   val context = InlineCompletionContext(editor, request.file.language, request.endOffset)
@@ -103,7 +103,7 @@ class InlineCompletionSession private constructor(
   override fun dispose() = Unit
 
   @RequiresEdt
-  internal fun assignJob(job: InlineCompletionJob) {
+  internal fun assignJob(job: InlineEditRequestJob) {
     ThreadingAssertions.assertEventDispatchThread()
     check(this.job == null) {
       "Inline Completion Session job is already assigned."

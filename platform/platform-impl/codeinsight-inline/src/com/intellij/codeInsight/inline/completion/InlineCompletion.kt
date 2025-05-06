@@ -68,6 +68,10 @@ object InlineCompletion {
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
 
+    disposable.whenDisposed {
+      workingScope.cancel()
+    }
+
     LOG.trace { "[Inline Completion] Handler is installed for $editor." }
   }
 

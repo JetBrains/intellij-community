@@ -17,7 +17,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
-import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
+import com.intellij.codeInsight.inline.edit.InlineEditRequestExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.openapi.Disposable
@@ -39,20 +39,10 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.withIndex
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
@@ -75,7 +65,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   protected val parentDisposable: Disposable,
 ) {
-  private val executor = SafeInlineCompletionExecutor(scope)
+  private val executor = InlineEditRequestExecutor.create(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val completionState: InlineCompletionState = InlineCompletionState()
 
@@ -93,6 +83,8 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
     addEventListener(UserFactorsListener())
+
+    Disposer.register(parentDisposable, /* child = */ executor)
   }
 
   /**
@@ -184,9 +176,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       val newSession = startSessionOrNull(request, provider) ?: return
       newSession.guardCaretModifications()
 
-      executor.switchJobSafely(newSession::assignJob) {
-        invokeRequest(request, newSession)
-      }
+      switchAndInvokeRequest(request, newSession)
     }
     finally {
       completionState.isInvokingEvent = false
@@ -247,7 +237,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   }
 
   fun cancel(finishType: FinishType = FinishType.OTHER) {
-    executor.cancel()
     application.invokeAndWait {
       InlineCompletionContext.getOrNull(editor)?.let {
         hide(it, finishType)
@@ -571,7 +560,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   protected fun switchAndInvokeRequest(request: InlineCompletionRequest, newSession: InlineCompletionSession) {
     ThreadingAssertions.assertEventDispatchThread()
-    executor.switchJobSafely(newSession::assignJob) {
+    executor.switchRequest(onJobCreated = newSession::assignJob) {
       invokeRequest(request, newSession)
     }
   }
@@ -612,7 +601,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @TestOnly
   suspend fun awaitExecution() {
     ThreadingAssertions.assertEventDispatchThread()
-    executor.awaitAll()
+    executor.awaitActiveRequest()
   }
 
   @ApiStatus.Internal // TODO (remove?)
