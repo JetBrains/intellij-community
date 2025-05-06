@@ -87,9 +87,6 @@ object K2UnusedSymbolUtil {
                     if (containingClass.isInline() && declaration.hasValOrVar()) return false
                     if (isExpectedOrActual(containingClass)) return false
                 }
-            } else if (ownerFunction is KtFunctionLiteral) {
-                // do not highlight unused in .forEach { (a,b) -> {} }
-                return false
             } else if (ownerFunction is KtFunction) {
                 if (ownerFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
                     // operator parameters are hardcoded to be used since they can't be removed at will, because operator convention would break
@@ -711,6 +708,9 @@ object K2UnusedSymbolUtil {
             val ownerFunction = declaration.ownerFunction
             if (ownerFunction is KtPropertyAccessor && ownerFunction.isSetter) {
                 return emptyArray()
+            }
+            if (ownerFunction is KtFunctionLiteral) {
+                return arrayOf(RenameElementFix(declaration, "_"))
             }
         }
         // TODO: Implement K2 counterpart of `createAddToDependencyInjectionAnnotationsFix` and use it for `element` with annotations here.

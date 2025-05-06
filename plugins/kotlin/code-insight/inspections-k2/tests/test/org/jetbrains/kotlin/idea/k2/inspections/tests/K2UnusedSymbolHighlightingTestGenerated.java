@@ -377,6 +377,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionWithInlineClassReceiver.kt");
         }
 
+        @TestMetadata("functionalLiteral.kt")
+        public void testFunctionalLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionalLiteral.kt");
+        }
+
         @TestMetadata("inAnonymous.kt")
         public void testInAnonymous() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymous.kt");
