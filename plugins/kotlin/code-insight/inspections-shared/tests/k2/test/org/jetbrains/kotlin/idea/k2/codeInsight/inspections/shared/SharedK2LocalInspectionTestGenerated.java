@@ -1168,6 +1168,89 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/coroutines")
+    public abstract static class Coroutines extends AbstractSharedK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope")
+        public static class AmbiguousCoroutineScope extends AbstractSharedK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("CoroutineScopeSubclass_default.kt")
+            public void testCoroutineScopeSubclass_default() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/CoroutineScopeSubclass_default.kt");
+            }
+
+            @TestMetadata("CoroutineScopeSubclass_detectCoroutineScopeSublcassesEnabled.kt")
+            public void testCoroutineScopeSubclass_detectCoroutineScopeSublcassesEnabled() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/CoroutineScopeSubclass_detectCoroutineScopeSublcassesEnabled.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver.kt")
+            public void testFunctionExtensionReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_inlineWrapper.kt")
+            public void testFunctionExtensionReceiver_inlineWrapper() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_inlineWrapper.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendWrapper.kt")
+            public void testFunctionExtensionReceiver_suspendWrapper() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendWrapper_coroutineContext.kt")
+            public void testFunctionExtensionReceiver_suspendWrapper_coroutineContext() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper_coroutineContext.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendWrapper_explicitThis.kt")
+            public void testFunctionExtensionReceiver_suspendWrapper_explicitThis() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper_explicitThis.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendWrapper_genericExtension.kt")
+            public void testFunctionExtensionReceiver_suspendWrapper_genericExtension() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper_genericExtension.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendWrapper_unrelatedExtension.kt")
+            public void testFunctionExtensionReceiver_suspendWrapper_unrelatedExtension() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper_unrelatedExtension.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendWrapper_unrelatedGenericExtension.kt")
+            public void testFunctionExtensionReceiver_suspendWrapper_unrelatedGenericExtension() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper_unrelatedGenericExtension.kt");
+            }
+
+            @TestMetadata("lambdaExtensionReceiver.kt")
+            public void testLambdaExtensionReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver.kt");
+            }
+
+            @TestMetadata("lambdaExtensionReceiver_suspendWrapper.kt")
+            public void testLambdaExtensionReceiver_suspendWrapper() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver_suspendWrapper.kt");
+            }
+
+            @TestMetadata("lambdaExtensionReceiver_suspendWrapper_explicitThis.kt")
+            public void testLambdaExtensionReceiver_suspendWrapper_explicitThis() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver_suspendWrapper_explicitThis.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/delegationToVarProperty")
     public static class DelegationToVarProperty extends AbstractSharedK2LocalInspectionTest {
         @java.lang.Override

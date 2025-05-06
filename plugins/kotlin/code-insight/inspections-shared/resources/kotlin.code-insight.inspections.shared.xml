@@ -488,6 +488,14 @@
                       implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection"
                       presentation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspectionPresentation"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.SuspiciousImplicitCoroutineScopeReceiverAccessInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.coroutine"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.suspicious.implicit.coroutine.scope.receiver.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantEnumConstructorInvocationInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
