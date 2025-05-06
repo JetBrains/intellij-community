@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nls
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
-class SeTabDelegate(val project: Project,
+class SeTabDelegate(val project: Project?,
                     private val sessionRef: DurableRef<SeSessionEntity>,
                     private val logLabel: String,
                     private val providerIds: List<SeProviderId>,
@@ -73,7 +73,7 @@ class SeTabDelegate(val project: Project,
     private val LOG = Logger.getInstance(SeTabDelegate::class.java)
 
     private suspend fun initializeProviders(
-      project: Project,
+      project: Project?,
       providerIds: List<SeProviderId>,
       dataContext: DataContext,
       sessionRef: DurableRef<SeSessionEntity>,
@@ -91,10 +91,14 @@ class SeTabDelegate(val project: Project,
           hasWildcard || allProviderIds.contains(SeProviderId(it.id))
         }.mapNotNull {
           try {
-            it.getItemsProvider(project, dataContext)
+            val provider = it.getItemsProvider(project, dataContext)
+            if (provider == null) {
+              LOG.info("SearchEverywhere items provider factory returned null: ${it.id}")
+            }
+            provider
           }
           catch (e: Exception) {
-            LOG.warn("SearchEverywhere item provider wasn't created. Exception: ${e.message}")
+            LOG.warn("SearchEverywhere items provider wasn't created: ${it.id}. Exception:\n${e.message}")
             null
           }
         }.toList().associate { provider ->
@@ -105,12 +109,15 @@ class SeTabDelegate(val project: Project,
         if (hasWildcard) SeRemoteApi.getInstance().getAvailableProviderIds()
         else allProviderIds - localProviders.keys.toSet()
 
-      val remoteProviderIdToName =
-        SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
+      val frontendProviders = if (project != null) {
+        val remoteProviderIdToName =
+          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
 
-      val frontendProviders = remoteProviderIdToName.map { (providerId, name) ->
-        SeFrontendItemDataProvider(project.projectId(), providerId, name, sessionRef, dataContextId)
-      }.associateBy { it.id }
+        remoteProviderIdToName.map { (providerId, name) ->
+          SeFrontendItemDataProvider(project.projectId(), providerId, name, sessionRef, dataContextId)
+        }.associateBy { it.id }
+      }
+      else emptyMap()
 
       val providers = frontendProviders + localProviders
       providers.values.forEach { Disposer.register(parentDisposable, it) }

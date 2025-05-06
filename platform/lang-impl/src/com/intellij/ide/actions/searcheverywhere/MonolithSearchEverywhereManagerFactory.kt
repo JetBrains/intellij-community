@@ -10,5 +10,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class MonolithSearchEverywhereManagerFactory : SearchEverywhereManagerFactory {
   override fun isAvailable(): Boolean = !Registry.`is`("search.everywhere.new.enabled", false)
-  override fun getManager(project: Project): SearchEverywhereManager = project.service()
+  override fun getManager(project: Project?): SearchEverywhereManager = project?.service() ?: service()
 }

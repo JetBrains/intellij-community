@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.actions.SearchEverywhereAction;
 import com.intellij.ide.actions.SearchEverywhereManagerFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,20 +16,20 @@ import org.jetbrains.annotations.Nullable;
 public interface SearchEverywhereManager {
 
   static SearchEverywhereManager getInstance(Project project) {
-    if (project != null) {
-      for (SearchEverywhereManagerFactory entryPoint : SearchEverywhereManagerFactory.EP_NAME.getExtensionList()) {
-        try {
-          if (entryPoint.isAvailable()) {
-            return entryPoint.getManager(project);
-          }
-        }
-        catch (Throwable t) {
-          Logger.getInstance(SearchEverywhereAction.class).error(t);
+    if (project != null && project.getProjectFilePath() == null) {
+      // Avoid initializing SearchEverywhereManager for a project mock.
+      project = null;
+    }
+
+    for (SearchEverywhereManagerFactory entryPoint : SearchEverywhereManagerFactory.EP_NAME.getExtensionList()) {
+      try {
+        if (entryPoint.isAvailable()) {
+          return entryPoint.getManager(project);
         }
       }
-    }
-    else {
-      return ApplicationManager.getApplication().getService(SearchEverywhereManager.class);
+      catch (Throwable t) {
+        Logger.getInstance(SearchEverywhereAction.class).error(t);
+      }
     }
 
     Logger.getInstance(SearchEverywhereAction.class).error("SearchEverywhereManager is not available for project: " + project);

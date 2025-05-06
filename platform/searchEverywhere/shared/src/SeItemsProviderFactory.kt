@@ -13,7 +13,7 @@ interface SeItemsProviderFactory {
   val id: String
 
   @Contract("_, _ -> new", pure = true)
-  suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider
+  suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider?
 
   companion object {
     @ApiStatus.Internal

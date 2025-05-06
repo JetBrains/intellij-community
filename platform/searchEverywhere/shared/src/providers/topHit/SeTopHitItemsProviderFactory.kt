@@ -21,7 +21,9 @@ abstract class SeTopHitItemsProviderFactory : SeItemsProviderFactory {
   override val id: String
     get() = SeTopHitItemsProvider.id(isHost)
 
-  override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
+  override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? {
+    project ?: return null
+
     val legacyContributor = readAction {
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       @Suppress("UNCHECKED_CAST")

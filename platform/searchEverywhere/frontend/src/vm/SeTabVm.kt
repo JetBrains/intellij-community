@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Internal
 class SeTabVm(
-  project: Project,
+  project: Project?,
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
   searchPattern: StateFlow<String>,
@@ -39,13 +39,22 @@ class SeTabVm(
 
   private val _searchResults: MutableStateFlow<Flow<SeResultListEvent>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
-  private val dumbModeStateFlow = MutableStateFlow(DumbService.isDumb(project)).also {
-    project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
-      override fun enteredDumbMode() { it.value = true }
-      override fun exitDumbMode() { it.value = false }
-    })
-  }
 
+  private val dumbModeStateFlow =
+    if (project == null) flowOf(false)
+    else {
+      MutableStateFlow(DumbService.isDumb(project)).also {
+        project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+          override fun enteredDumbMode() {
+            it.value = true
+          }
+
+          override fun exitDumbMode() {
+            it.value = false
+          }
+        })
+      }
+    }
 
   init {
     coroutineScope.launch {

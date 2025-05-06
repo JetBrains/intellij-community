@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SearchEverywhereManagerFactory {
   fun isAvailable(): Boolean
-  fun getManager(project: Project): SearchEverywhereManager
+  fun getManager(project: Project?): SearchEverywhereManager
 
   companion object {
     @ApiStatus.Internal

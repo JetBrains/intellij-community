@@ -14,16 +14,16 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SeActionsProviderFactory: SeItemsProviderFactory {
+class SeActionsProviderFactory : SeItemsProviderFactory {
   override val id: String
     get() = SeActionsAdaptedProvider.ID
 
-  override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
+  override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider {
     return withContext(Dispatchers.EDT) {
-      SeActionsAdaptedProvider(project, ActionSearchEverywhereContributor(project,
-                                                                          dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT),
-                                                                          dataContext.getData(CommonDataKeys.EDITOR),
-                                                                          dataContext))
+      SeActionsAdaptedProvider(ActionSearchEverywhereContributor(project,
+                                                                 dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+                                                                 dataContext.getData(CommonDataKeys.EDITOR),
+                                                                 dataContext))
     }
   }
 }

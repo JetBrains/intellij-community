@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeActionsTabFactory : SeTabFactory {
-  override fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab {
+  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab? {
     val delegate = SeTabDelegate(project,
                                  sessionRef,
                                  "Actions",

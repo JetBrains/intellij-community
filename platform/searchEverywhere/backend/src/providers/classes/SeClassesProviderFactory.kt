@@ -18,13 +18,13 @@ class SeClassesProviderFactory : SeItemsProviderFactory {
   override val id: String
     get() = SeClassesProvider.ID
 
-  override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
+  override suspend fun getItemsProvider(project: Project?, dataContext: DataContext): SeItemsProvider? {
     val legacyContributor = readAction {
       val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
       @Suppress("UNCHECKED_CAST")
       ClassSearchEverywhereContributor.Factory().createContributor(actionEvent) as WeightedSearchEverywhereContributor<Any>
     }
 
-    return SeClassesProvider(project, SeAsyncWeightedContributorWrapper(legacyContributor))
+    return SeClassesProvider(SeAsyncWeightedContributorWrapper(legacyContributor))
   }
 }

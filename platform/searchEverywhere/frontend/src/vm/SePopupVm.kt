@@ -23,7 +23,7 @@ import kotlin.text.isNotEmpty
 @OptIn(ExperimentalCoroutinesApi::class)
 class SePopupVm(
   val coroutineScope: CoroutineScope,
-  private val project: Project,
+  private val project: Project?,
   private val sessionRef: DurableRef<SeSessionEntity>,
   tabs: List<SeTab>,
   initialSearchPattern: String?,

@@ -35,7 +35,7 @@ class SeTabMock(override val name: String,
 
   companion object {
     fun create(
-      project: Project,
+      project: Project?,
       sessionRef: DurableRef<SeSessionEntity>,
       name: String,
       providerIds: List<SeProviderId>

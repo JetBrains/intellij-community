@@ -8,7 +8,6 @@ import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.AsyncProcessor
@@ -36,7 +35,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int) 
 }
 
 @ApiStatus.Internal
-class SeTextItemsProvider(val project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>): SeItemsProvider {
+class SeTextItemsProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>): SeItemsProvider {
   override val id: String get() = ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

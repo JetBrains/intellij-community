@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.backend.providers.symbols
 
 import com.intellij.ide.util.gotoByName.LanguageRef
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
@@ -12,9 +11,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeSymbolsProvider(val project: Project, private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>): SeItemsProvider,
-                                                                                                                       SeSearchScopesProvider,
-                                                                                                                       SeTypeVisibilityStateProvider {
+class SeSymbolsProvider(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) : SeItemsProvider,
+                                                                                                  SeSearchScopesProvider,
+                                                                                                  SeTypeVisibilityStateProvider {
   override val id: String get() = ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

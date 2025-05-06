@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeTabFactoryMockCharlieRemote : SeTabFactory {
-  override fun getTab(project: Project, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab =
+  override fun getTab(project: Project?, sessionRef: DurableRef<SeSessionEntity>, dataContext: DataContext): SeTab? =
     SeTabMock.create(project,
                      sessionRef,
                      "Charlie-Remote",

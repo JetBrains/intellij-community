@@ -92,8 +92,8 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       } ?: throw IllegalStateException("Cannot create providers on the backend: couldn't deserialize data context")
 
       // We may create providers several times, but only one set of providers will be saved as a property to a session entity
-      val providers = SeItemsProviderFactory.EP_NAME.extensionList.asFlow().map {
-        val provider = it.getItemsProvider(project, dataContext)
+      val providers = SeItemsProviderFactory.EP_NAME.extensionList.asFlow().mapNotNull {
+        val provider = it.getItemsProvider(project, dataContext) ?: return@mapNotNull null
         if (provider.id != it.id) {
           SeLog.log { "Backend provider ID mismatch: ${provider.id} != ${it.id}" }
         }
