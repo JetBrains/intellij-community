@@ -124,6 +124,10 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
     BuildViewAssertions.assertBuildViewTree(executionEnvironment.buildView, assert)
   }
 
+  fun assertRunViewConsoleText(nodeText: String, assert: (String) -> Unit) {
+    BuildViewAssertions.assertBuildViewNodeConsoleText(executionEnvironment.buildView, nodeText, assert)
+  }
+
   fun assertTestEventsContain(className: String, methodName: String? = null) {
     executionOutputFixture.assertTestEventContain(className, methodName)
   }
