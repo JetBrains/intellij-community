@@ -9,6 +9,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -368,7 +369,7 @@ final class TrafficLightPopup {
     private MenuAction(@NotNull List<? extends AnAction> actions, @NotNull AnAction compactViewAction) {
       getTemplatePresentation().setPopupGroup(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.More);
-      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+      getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
       addAll(actions);
       add(compactViewAction);
     }

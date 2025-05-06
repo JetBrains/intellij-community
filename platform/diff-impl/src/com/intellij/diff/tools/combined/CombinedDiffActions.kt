@@ -13,8 +13,8 @@ import com.intellij.diff.tools.util.text.SmartTextDiffProvider
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
@@ -162,7 +162,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
                                                  private val foldingModels: () -> List<FoldingModelSupport>,
                                                  editors: () -> List<Editor>) : SetEditorSettingsActionGroup(settings, editors) {
   init {
-    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {

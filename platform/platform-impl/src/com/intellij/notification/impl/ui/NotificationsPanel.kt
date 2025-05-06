@@ -13,6 +13,7 @@ import com.intellij.notification.impl.*
 import com.intellij.notification.impl.actions.ClearAllNotificationsAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
@@ -1085,7 +1086,7 @@ private class NotificationComponent(
     presentation.description = IdeBundle.message("tooltip.turn.notification.off")
     presentation.isPopupGroup = true
     presentation.icon = AllIcons.Actions.More
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
 
     val button = object : ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {

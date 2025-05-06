@@ -3,11 +3,11 @@ package com.intellij.vcs.log.ui.actions
 
 import com.intellij.ide.actions.NonTrivialActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 
 internal class VcsLogToolWindowDropdownActionGroup : NonTrivialActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    e.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
   }
 }

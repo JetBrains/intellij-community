@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -31,7 +30,7 @@ final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAw
   public void update(@NotNull AnActionEvent e) {
     ServiceView selectedView = getSelectedView(e);
     e.getPresentation().setEnabled(selectedView != null);
-    e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, selectedView != null &&
+    e.getPresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, selectedView != null &&
                                                                            getSelectedItems(e).size() == 1);
     e.getPresentation().setPerformGroup(true);
   }

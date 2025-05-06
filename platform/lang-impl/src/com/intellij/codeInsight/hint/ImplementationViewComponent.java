@@ -9,7 +9,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -50,8 +50,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public final class ImplementationViewComponent extends JPanel {
@@ -179,7 +179,7 @@ public final class ImplementationViewComponent extends JPanel {
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setIcon(AllIcons.Actions.More);
-        e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+        e.getPresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
       }
 
       @Override

@@ -18,6 +18,7 @@ import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.model.Pointer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -666,7 +667,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
       super(actions);
       getTemplatePresentation().setPopupGroup(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.More);
-      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+      getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
     }
   }
 

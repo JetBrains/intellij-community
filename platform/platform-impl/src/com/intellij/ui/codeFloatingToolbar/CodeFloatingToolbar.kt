@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
@@ -176,7 +177,7 @@ class CodeFloatingToolbar(
     val hint = super.createHint()
     val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
     buttons.forEach { button ->
-      button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      button.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
       showMenuPopupOnMouseHover(button)
     }
     return hint

@@ -18,7 +18,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -183,7 +183,7 @@ public abstract class RunTab implements Disposable {
     public RunTabSupplier(@Nullable ActionGroup group) {
       myActionGroup = group;
       layoutActionGroup.setPopup(true);
-      layoutActionGroup.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      layoutActionGroup.getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     }
 
     @Override

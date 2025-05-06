@@ -11,9 +11,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -244,7 +244,7 @@ public class EditorSearchSession implements SearchSession,
     group.setPopup(true);
     group.getTemplatePresentation().setText(ApplicationBundle.message("editorsearch.more.popup"));
     group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
-    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    group.getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     return group;
   }
 

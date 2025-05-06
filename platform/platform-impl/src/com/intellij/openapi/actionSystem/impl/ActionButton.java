@@ -54,7 +54,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private static final @NonNls Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
   /** @deprecated Use {@link ActionUtil#HIDE_DROPDOWN_ICON} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = ActionUtil.HIDE_DROPDOWN_ICON;
 
   public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");

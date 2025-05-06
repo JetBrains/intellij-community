@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -79,7 +79,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
     presentation.isPopupGroup = actions.size > 1
     presentation.isPerformGroup = actions.size == 1
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
+    e.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
     presentation.isEnabledAndVisible = actions.isNotEmpty()
   }
 

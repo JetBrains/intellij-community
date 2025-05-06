@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -25,7 +25,7 @@ import git4idea.ui.branch.BranchGroupingAction
 internal class GitBranchesTreePopupSettings :
   DefaultActionGroup(DvcsBundle.messagePointer("action.BranchActionGroupPopup.settings.text"), true), DumbAware {
   init {
-    templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
   }
 
   override fun update(e: AnActionEvent) {
