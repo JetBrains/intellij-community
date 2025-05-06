@@ -5,16 +5,14 @@ import com.intellij.testFramework.junit5.SystemProperty
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
-import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
 
 @SystemProperty("idea.gradle.mavenRepositoryUrl", "")
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test
   fun `test empty build script`() {
-    assertBuildScript(GradleVersion.current() to ("" to "")) {}
+    assertBuildScript("", "") {}
   }
 
   @Test
@@ -171,25 +169,23 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     }
   }
 
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `test compile-implementation dependency scope`(gradleVersion: GradleVersion) {
-    assertBuildScript(gradleVersion to ("""
-        dependencies {
-            implementation 'my-dep'
-            runtimeOnly 'my-runtime-dep'
-            testImplementation 'my-test-dep'
-            testRuntimeOnly 'my-runtime-dep'
-        }
-      """.trimIndent() to """
-        dependencies {
-            implementation("my-dep")
-            runtimeOnly("my-runtime-dep")
-            testImplementation("my-test-dep")
-            testRuntimeOnly("my-runtime-dep")
-        }
-      """.trimIndent())
-    ) {
+  @Test
+  fun `test compile-implementation dependency scope`() {
+    assertBuildScript("""
+      dependencies {
+          implementation 'my-dep'
+          runtimeOnly 'my-runtime-dep'
+          testImplementation 'my-test-dep'
+          testRuntimeOnly 'my-runtime-dep'
+      }
+    """.trimIndent(), """
+      dependencies {
+          implementation("my-dep")
+          runtimeOnly("my-runtime-dep")
+          testImplementation("my-test-dep")
+          testRuntimeOnly("my-runtime-dep")
+      }
+    """.trimIndent()) {
       addImplementationDependency("my-dep")
       addRuntimeOnlyDependency("my-runtime-dep")
       addTestImplementationDependency("my-test-dep")
@@ -350,7 +346,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test
   fun `test string escaping`() {
-    assertBuildScript(groovyScript = """
+    assertBuildScript("""
       |def string = 'simple string'
       |println "string with ${'$'}string interpolation"
       |println '/example/unix/path'
@@ -359,7 +355,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       |println 'string with " quote'
       |println 'multi-line\n joined\n string'
       |println 'multi-line\n raw\n string'
-    """.trimMargin(), kotlinScript = """
+    """.trimMargin(), """
       |var string = "simple string"
       |println("string with ${'$'}string interpolation")
       |println("/example/unix/path")
@@ -388,11 +384,11 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test
   fun `test tasks configuration`() {
-    assertBuildScript(groovyScript = """
+    assertBuildScript("""
       |test {
       |    myConfiguration()
       |}
-    """.trimMargin(), kotlinScript = """
+    """.trimMargin(), """
       |tasks.test {
       |    myConfiguration()
       |}
@@ -402,11 +398,11 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       }
     }
 
-    assertBuildScript(groovyScript = """
+    assertBuildScript("""
       |tasks.named('myTask', MyTask) {
       |    myConfiguration()
       |}
-    """.trimMargin(), kotlinScript = """
+    """.trimMargin(), """
       |tasks.named<MyTask>("myTask") {
       |    myConfiguration()
       |}
@@ -416,7 +412,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       }
     }
 
-    assertBuildScript(groovyScript = "", kotlinScript = "") {
+    assertBuildScript("", "") {
       configureTask("myTask", "MyTask") {
         // no configuration
       }
