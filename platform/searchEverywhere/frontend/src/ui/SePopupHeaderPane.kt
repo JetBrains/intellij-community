@@ -41,7 +41,10 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
       val dimension = components.firstOrNull()?.preferredSize ?: Dimension(0, 0)
       return Dimension(dimension.width.coerceAtMost(MAX_FILTER_WIDTH), 0)
     }
-  }.apply { layout = GridLayout() }
+  }.apply {
+    layout = GridLayout()
+    background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
+  }
 
   init {
     background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND
