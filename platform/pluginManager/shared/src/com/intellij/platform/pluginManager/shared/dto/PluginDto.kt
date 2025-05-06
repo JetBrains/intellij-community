@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.api
+package com.intellij.platform.pluginManager.shared.dto
 
+import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -8,7 +9,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import java.util.Date
 
 
 @Serializable

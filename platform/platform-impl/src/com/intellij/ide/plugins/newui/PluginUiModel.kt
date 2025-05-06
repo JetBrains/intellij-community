@@ -2,11 +2,9 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.getTags
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.NlsSafe

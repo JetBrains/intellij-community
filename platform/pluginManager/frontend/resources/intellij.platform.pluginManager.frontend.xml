@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.pluginManager.shared"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <uiPluginManagerController implementation="com.intellij.platform.pluginManager.frontend.BackendUiPluginManagerController"
+                               order="first"/>
+  </extensions>
+</idea-plugin>

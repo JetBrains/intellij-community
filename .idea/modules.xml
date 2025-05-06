@@ -878,6 +878,9 @@
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/kernel/pasta/intellij.platform.pasta.iml" filepath="$PROJECT_DIR$/platform/kernel/pasta/intellij.platform.pasta.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/pluginManager/backend/intellij.platform.pluginManager.backend.iml" filepath="$PROJECT_DIR$/platform/pluginManager/backend/intellij.platform.pluginManager.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/pluginManager/frontend/intellij.platform.pluginManager.frontend.iml" filepath="$PROJECT_DIR$/platform/pluginManager/frontend/intellij.platform.pluginManager.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/pluginManager/shared/intellij.platform.pluginManager.shared.iml" filepath="$PROJECT_DIR$/platform/pluginManager/shared/intellij.platform.pluginManager.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/plugins/parser/impl/intellij.platform.plugins.parser.impl.iml" filepath="$PROJECT_DIR$/platform/plugins/parser/impl/intellij.platform.plugins.parser.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/plugins/testFramework/intellij.platform.plugins.testFramework.iml" filepath="$PROJECT_DIR$/platform/plugins/testFramework/intellij.platform.plugins.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/polySymbols/intellij.platform.polySymbols.iml" filepath="$PROJECT_DIR$/platform/polySymbols/intellij.platform.polySymbols.iml" />
