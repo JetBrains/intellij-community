@@ -8,12 +8,15 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
 class SeDefaultListItemRenderer {
   fun get(): ListCellRenderer<SeResultListRow> = listCellRenderer {
+    selectionColor = UIUtil.getListBackground(selected, selected)
+
     when (val value = value) {
       is SeResultListItemRow -> {
         when (val presentation = value.item.presentation) {
