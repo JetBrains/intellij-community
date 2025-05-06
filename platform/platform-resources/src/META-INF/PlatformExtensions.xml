@@ -648,7 +648,7 @@
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
-    <projectService serviceImplementation="com.intellij.ide.actions.DirectoryPathMatcherService"/>
+<!--    <projectService serviceImplementation="com.intellij.ide.actions.DirectoryPathMatcherService"/>-->
     <projectService serviceImplementation="com.intellij.ide.impl.ProjectUtilService"/>
 
     <registryKey key="lists.use.open.in.right.splitter" defaultValue="true"
