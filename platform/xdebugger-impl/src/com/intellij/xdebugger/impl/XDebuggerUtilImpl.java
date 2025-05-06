@@ -509,7 +509,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     });
   }
 
-  static @NotNull List<@NotNull XLineBreakpointProxy> findBreakpointsAtLine(
+  @ApiStatus.Internal
+  public static @NotNull List<@NotNull XLineBreakpointProxy> findBreakpointsAtLine(
     @NotNull Project project,
     @NotNull XLineBreakpointInstallationInfo breakpointInfo
   ) {
@@ -553,7 +554,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
   }
 
-  static <T extends XBreakpointProxy> void removeBreakpointIfPossible(Project project, XLineBreakpointInstallationInfo info, T... breakpoints) {
+  @ApiStatus.Internal
+  public static <T extends XBreakpointProxy> void removeBreakpointIfPossible(Project project, XLineBreakpointInstallationInfo info, T... breakpoints) {
     if (info.canRemoveBreakpoint()) {
       removeBreakpointsWithConfirmation(project, breakpoints);
     }

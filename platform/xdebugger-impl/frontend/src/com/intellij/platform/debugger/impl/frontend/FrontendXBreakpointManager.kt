@@ -10,30 +10,17 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
-import com.intellij.xdebugger.impl.rpc.XBreakpointApi
-import com.intellij.xdebugger.impl.rpc.XBreakpointDto
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
-import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.xdebugger.impl.rpc.XLineBreakpointInstalledResponse
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.toRequest
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentMap
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
@@ -45,7 +32,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
 
   private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = useFeLineBreakpointProxy())
 
-  private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, LightBreakpointInfo> = ConcurrentCollectionFactory.createConcurrentMap()
+  private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 
   // TODO[IJPL-160384]: support persistance between sessions
   override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -115,30 +102,40 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   }
 
   override fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
-    val lightBreakpointPosition = LightBreakpointPosition(installationInfo.position.file, installationInfo.position.line)
-    // removing already put light breakpoint
-    val currentLightBreakpointInfo = lightBreakpoints.remove(lightBreakpointPosition)
-    if (currentLightBreakpointInfo != null) {
-      currentLightBreakpointInfo.dispose()
-      return CompletableDeferred(value = null)
-    }
-    // putting new light breakpoint
     return cs.async {
+      val lightBreakpointPosition = LightBreakpointPosition(installationInfo.position.file, installationInfo.position.line)
       val type = installationInfo.types.firstOrNull() ?: return@async null
       val lightBreakpoint = FrontendXLightLineBreakpoint(project, this@async, type, installationInfo, this@FrontendXBreakpointManager)
-      val newLightBreakpointInfo = LightBreakpointInfo(lightBreakpoint, this@async.coroutineContext.job)
-      val oldBreakpoint = lightBreakpoints.putIfAbsent(lightBreakpointPosition, newLightBreakpointInfo)
+      val oldBreakpoint = lightBreakpoints.putIfAbsent(lightBreakpointPosition, lightBreakpoint)
       if (oldBreakpoint != null) {
-        oldBreakpoint.dispose()
-        newLightBreakpointInfo.dispose()
-        return@async null
-      }
-      val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(false))
-      val breakpointDto = (response as? XLineBreakpointInstalledResponse)?.breakpoint ?: return@async null
-
-      withContext(Dispatchers.EDT) {
         lightBreakpoint.dispose()
-        addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+      }
+      val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(oldBreakpoint != null))
+
+      withContext(Dispatchers.EDT + NonCancellable) {
+        lightBreakpoints.remove(lightBreakpointPosition, lightBreakpoint)
+        lightBreakpoint.dispose()
+        when (response) {
+          is XLineBreakpointInstalledResponse -> {
+            val breakpointDto = response.breakpoint
+            if (breakpointDto != null) {
+              addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+            }
+            else {
+              null
+            }
+          }
+          XRemoveBreakpointResponse -> {
+            val breakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, installationInfo).singleOrNull()
+            if (breakpoint != null) {
+              XDebuggerUtilImpl.removeBreakpointIfPossible(project, installationInfo, breakpoint)
+            }
+            null
+          }
+          else -> {
+            null
+          }
+        }
       }
     }
   }
@@ -220,11 +217,4 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
   }
 
   private data class LightBreakpointPosition(val file: VirtualFile, val line: Int)
-
-  private class LightBreakpointInfo(private val breakpoint: FrontendXLightLineBreakpoint, private val requestJob: Job) {
-    fun dispose() {
-      requestJob.cancel()
-      breakpoint.dispose()
-    }
-  }
 }
