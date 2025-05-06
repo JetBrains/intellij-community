@@ -2,8 +2,9 @@
 
 ## v0.28 (2025-04-30)
 
-**Supported IJP versions:** 2025.1.1+, 2024.3.6+
-**Compose Multiplatform version:** 1.8.0-alpha04
+Supported IJP versions | Compose Multiplatform version
+--- | ---
+2025.1.1+, 2024.3.6+ | 1.8.0-alpha04
 
 > [!IMPORTANT]
 > Jewel 0.28 is the first Jewel version to be published since the migration into the IJP codebase.
