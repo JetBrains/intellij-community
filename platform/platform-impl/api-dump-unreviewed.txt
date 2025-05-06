@@ -2499,8 +2499,8 @@ f:com.intellij.ide.actions.UndoAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - <init>():V
 a:com.intellij.ide.actions.UndoRedoAction
-- com.intellij.openapi.project.DumbAwareAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.openapi.project.DumbAwareAction
 - sf:IGNORE_SWING_UNDO_MANAGER:com.intellij.openapi.util.Key
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -6152,7 +6152,7 @@ f:com.intellij.openapi.command.impl.StartMarkAction$AlreadyStartedException
 - <init>(java.lang.String,com.intellij.openapi.editor.Document,com.intellij.openapi.command.undo.DocumentReference[]):V
 - getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
 - getDocument():com.intellij.openapi.editor.Document
-f:com.intellij.openapi.command.impl.UndoManagerImpl
+c:com.intellij.openapi.command.impl.UndoManagerImpl
 - com.intellij.openapi.command.undo.UndoManager
 - s:ourNeverAskUser:Z
 - addAffectedFiles(com.intellij.openapi.vfs.VirtualFile[]):V
