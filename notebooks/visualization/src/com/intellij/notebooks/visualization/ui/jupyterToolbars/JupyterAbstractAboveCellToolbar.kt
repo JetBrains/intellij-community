@@ -4,41 +4,46 @@ package com.intellij.notebooks.visualization.ui.jupyterToolbars
 import com.intellij.notebooks.ui.SelectClickedCellEventHelper
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
+/** Base for floating-toolbar in the top right corner of cell,
+ * and for new-cells-creation-toolbar appearing between cells. */
 @ApiStatus.Internal
 abstract class JupyterAbstractAboveCellToolbar(
   actionGroup: ActionGroup,
   toolbarTargetComponent: JComponent,
-  place: String = ActionPlaces.EDITOR_INLAY
-): ActionToolbarImpl(place, actionGroup, true) {
-  protected var isBeingRemoved: Boolean = false
+  place: String = ActionPlaces.EDITOR_INLAY,
+  private val actionsUpdatedCallback: (() -> Unit)? = null,
+) : ActionToolbarImpl(place, actionGroup, true) {
 
   init {
+    isOpaque = false
+    targetComponent = toolbarTargetComponent
+    cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
     val borderColor = when (NewUiValue.isEnabled()) {
       true -> JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
       else -> JBColor.GRAY
     }
     border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, getArcSize(), TOOLBAR_BORDER_THICKNESS),
                                                 BorderFactory.createEmptyBorder(getVerticalPadding(), getHorizontalPadding(), getVerticalPadding(), getHorizontalPadding()))
-    isOpaque = false
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    targetComponent = toolbarTargetComponent
     putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
+  }
+
+  override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
+    super.actionsUpdated(forced, newVisibleActions)
+    actionsUpdatedCallback?.invoke()
   }
 
   override fun paintComponent(g: Graphics) {
@@ -59,25 +64,8 @@ abstract class JupyterAbstractAboveCellToolbar(
 
   override fun updateUI() {
     super.updateUI()
-    if (!StartupUiUtil.isDarkTheme) {
+    if (JBColor.isBright()) {
       background = JBColor.WHITE
-    }
-  }
-
-  override fun addNotify() {
-    super.addNotify()
-    updateActionsImmediately(true)
-  }
-
-  override fun removeNotify() {
-    isBeingRemoved = true
-    super.removeNotify()
-  }
-
-  override fun updateActionsAsync(): Future<*> {
-    return when (isBeingRemoved) {
-      true -> CompletableFuture.completedFuture(null)
-      else -> super.updateActionsAsync()
     }
   }
 
