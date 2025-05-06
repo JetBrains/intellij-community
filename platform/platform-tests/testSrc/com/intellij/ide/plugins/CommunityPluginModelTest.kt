@@ -25,6 +25,13 @@ class CommunityPluginModelTest {
         "META-INF/analysis-api/analysis-api-fe10.xml",
         "META-INF/analysis-api/analysis-api-fir.xml",
         "META-INF/wizard-template-impl.xml",
+      ),
+      pluginVariantsWithDynamicIncludes = listOf(
+        PluginVariantWithDynamicIncludes(
+          mainModuleName = "kotlin.plugin",
+          systemPropertyName = "idea.kotlin.plugin.use.k2",
+          systemPropertyValue = "true",
+        )
       )
     )
     val result = validatePluginModel(communityPath, options)

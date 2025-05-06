@@ -14,6 +14,7 @@ import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.NamedFailure
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
@@ -48,6 +49,15 @@ val COMMUNITY_CORE_PLUGINS = listOf(
   CorePluginDescription(mainModuleName = "intellij.pycharm.community", rootPluginXmlName = "PyCharmCorePlugin.xml"),
 )
 
+/**
+ * Defines a variant of a plugin with a custom value of system property used in `includeUnless`/`includeIf` directives. 
+ */
+data class PluginVariantWithDynamicIncludes(
+  val mainModuleName: String,
+  val systemPropertyName: String,
+  val systemPropertyValue: String,
+)
+
 data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
   val reportDependsTagInPluginXmlWithPackageAttribute: Boolean = true,
@@ -71,7 +81,9 @@ data class PluginValidationOptions(
    * Set of modules where a descriptor file named after the module is placed in META-INF directory, not in the resource root.
    */
   val modulesWithIncorrectlyPlacedModuleDescriptor: Set<String> = emptySet(),
-  )
+
+  val pluginVariantsWithDynamicIncludes: List<PluginVariantWithDynamicIncludes> = emptyList(),
+)
 
 fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
   val project = IntelliJProjectConfiguration.loadIntelliJProject(projectPath.toString())
@@ -216,10 +228,40 @@ class PluginModelValidator(
           )
         }
       }
+    }
 
+    for (pluginVariant in validationOptions.pluginVariantsWithDynamicIncludes) {
+      PlatformTestUtil.withSystemProperty<Throwable>(pluginVariant.systemPropertyName, pluginVariant.systemPropertyValue) {
+        val sourceModule = sourceModuleNameToFileInfo[pluginVariant.mainModuleName]?.sourceModule
+                           ?: error("Cannot find source module '${pluginVariant.mainModuleName}' specified in 'pluginVariantsWithDynamicIncludes'")
+        val pluginModuleInfo = createFileInfo(sourceModule)
+        if (pluginModuleInfo == null) {
+          reportError("Failed to load descriptor for '${sourceModule.name}'", sourceModule)
+          return@withSystemProperty
+        }
+        
+        val pluginDescriptor = pluginModuleInfo.pluginDescriptor
+        val pluginDescriptorFile = pluginModuleInfo.pluginDescriptorFile
+        if (pluginDescriptor == null || pluginDescriptorFile == null) {
+          reportError("Plugin descriptor is not found in '${pluginModuleInfo.sourceModule.name}'", sourceModule)
+          return@withSystemProperty
+        }
+
+        allMainModulesOfPlugins.add(ModuleInfo(
+          pluginId = pluginDescriptor.id,
+          name = pluginVariant.mainModuleName,
+          sourceModule = sourceModule,
+          descriptorFile = pluginDescriptorFile,
+          packageName = pluginDescriptor.`package`,
+          descriptor = pluginDescriptor,
+        ))
+      }
+    }
+    
+    for (pluginInfo in allMainModulesOfPlugins) {
       checkContent(
-        contentElements = descriptor.contentModules,
-        referencingModuleInfo = moduleInfo,
+        contentElements = pluginInfo.descriptor.contentModules,
+        referencingModuleInfo = pluginInfo,
         sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
         moduleNameToInfo = moduleNameToInfo,
       )
