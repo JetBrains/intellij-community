@@ -597,7 +597,7 @@ object ProjectUtil {
   }
 
   private val projectsDirDefault: String
-    get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
+    get() = if (PlatformUtils.isDataGrip() || PlatformUtils.isDataSpell()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
 
   fun getProjectPath(name: String): Path {
     return Path.of(getProjectPath(), name)
