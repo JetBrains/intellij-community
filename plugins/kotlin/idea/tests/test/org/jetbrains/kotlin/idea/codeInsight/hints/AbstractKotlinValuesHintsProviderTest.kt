@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
-abstract class AbstractKotlinRangesHintsProviderTest : AbstractKotlinInlayHintsProviderTest() {
+abstract class AbstractKotlinValuesHintsProviderTest : AbstractKotlinInlayHintsProviderTest() {
 
     override fun inlayHintsProvider(): InlayHintsProvider =
         org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider()

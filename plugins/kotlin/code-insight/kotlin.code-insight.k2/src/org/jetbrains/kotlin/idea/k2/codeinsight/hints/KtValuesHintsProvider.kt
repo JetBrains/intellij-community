@@ -9,13 +9,21 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_KOTLIN_TIME
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RANGES
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -25,50 +33,89 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         element: PsiElement,
         sink: InlayTreeSink
     ) {
+        collectForKotlinTime(element, sink)
+        collectForRanges(element, sink)
+    }
+
+    private fun collectForKotlinTime(element: PsiElement, sink: InlayTreeSink) {
+        val expression = element as? KtDotQualifiedExpression ?: return
+        val selectorExpression = expression.selectorExpression ?: return
+        sink.whenOptionEnabled(SHOW_KOTLIN_TIME.name) {
+            val callableId = analyze(expression) {
+                val variableAccessCall = expression.resolveToCall()?.singleVariableAccessCall()
+                val symbol = variableAccessCall?.symbol?.takeIf {
+                    val classId = it.callableId?.classId
+                    classId == DURATION_CLASS_ID  || classId == DURATION_COMPANION_CLASS_ID
+                } as? KaCallableSymbol ?: return@whenOptionEnabled
+                symbol.callableId
+            } ?: return@whenOptionEnabled
+            when(callableId.callableName.asString()) {
+                "days" -> {
+                    sink.addPresentation(InlineInlayPosition(selectorExpression.startOffset, true), hintFormat = HintFormat.default) {
+                        text("24h")
+                    }
+                }
+                "inWholeDays" -> {
+                    sink.addPresentation(InlineInlayPosition(selectorExpression.endOffset, true), hintFormat = HintFormat.default) {
+                        text("24h")
+                    }
+                }
+            }
+        }
+    }
+
+    private fun collectForRanges(element: PsiElement, sink: InlayTreeSink) {
         val binaryExpression = element as? KtBinaryExpression ?: return
         val leftExp = binaryExpression.left ?: return
         val rightExp = binaryExpression.right ?: return
 
         val (leftText: String, rightText: String?) = binaryExpression.getRangeLeftAndRightSigns() ?: return
 
-        val applicable = analyze(binaryExpression) {
-            isApplicable(binaryExpression, leftExp, rightExp)
-        }
-        if (!applicable) return
+        sink.whenOptionEnabled(SHOW_RANGES.name) {
+            val applicable = analyze(binaryExpression) {
+                isApplicableForRanges(binaryExpression, leftExp, rightExp)
+            }
+            if (!applicable) return@whenOptionEnabled
 
-        sink.addPresentation(InlineInlayPosition(leftExp.endOffset, true), hintFormat = HintFormat.default) {
-            text(leftText)
-        }
-        rightText?.let {
-            sink.addPresentation(InlineInlayPosition(rightExp.startOffset, true), hintFormat = HintFormat.default) {
-                text(it)
+            sink.addPresentation(InlineInlayPosition(leftExp.endOffset, true), hintFormat = HintFormat.default) {
+                text(leftText)
+            }
+            rightText?.let {
+                sink.addPresentation(InlineInlayPosition(rightExp.startOffset, true), hintFormat = HintFormat.default) {
+                    text(it)
+                }
             }
         }
     }
 
-    context(KaSession)
-    private fun isApplicable(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
+    private fun KaSession.isApplicableForRanges(binaryExpression: KtBinaryExpression, leftExp: KtExpression, rightExp: KtExpression): Boolean {
         val functionCallOrNull = binaryExpression.resolveToCall()?.singleFunctionCallOrNull()
         functionCallOrNull?.symbol?.takeIf {
             val packageName = it.callableId?.packageName
             packageName == StandardNames.RANGES_PACKAGE_FQ_NAME || packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
         } ?: return false
 
-        return leftExp.isComparable() && rightExp.isComparable()
+        return isComparable(leftExp) && isComparable(rightExp)
     }
 
-    context(KaSession)
-    private fun KtExpression.isComparable(): Boolean =
-        when (this) {
-            is KtConstantExpression -> true
-            is KtBinaryExpression -> {
-                val leftExpression = left ?: return false
-                val rightExpression = right ?: return false
-                leftExpression.isComparable() && rightExpression.isComparable()
-            }
-            else -> {
-                val type = expressionType as? KaClassType ?: return false
-                type.classId in DefaultTypeClassIds.PRIMITIVES || type.isSubtypeOf(StandardClassIds.Comparable)
+    private fun KaSession.isComparable(expression: KtExpression): Boolean =
+        with(this) {
+            when (expression) {
+                is KtConstantExpression -> true
+                is KtBinaryExpression -> {
+                    val leftExpression = expression.left ?: return false
+                    val rightExpression = expression.right ?: return false
+                    isComparable(leftExpression) && isComparable(rightExpression)
+                }
+
+                else -> {
+                    val type = expression.expressionType as? KaClassType ?: return false
+                    type.classId in DefaultTypeClassIds.PRIMITIVES || type.isSubtypeOf(StandardClassIds.Comparable)
+                }
             }
         }
 }
+
+private val KOTLIN_TIME_PACKAGE = BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier("time"))
+private val DURATION_CLASS_ID = ClassId(KOTLIN_TIME_PACKAGE , Name.identifier("Duration"))
+private val DURATION_COMPANION_CLASS_ID = ClassId(KOTLIN_TIME_PACKAGE, Name.identifier("Duration.Companion"))

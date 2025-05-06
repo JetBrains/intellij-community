@@ -147,8 +147,8 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         testClass<AbstractKtLambdasHintsProvider> {
             model("../../../idea/tests/testData/codeInsight/hints/lambda")
         }
-        testClass<AbstractKtRangesHintsProviderTest> {
-            model("../../../idea/tests/testData/codeInsight/hints/ranges")
+        testClass<AbstractKtValuesHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/values")
         }
         testClass<AbstractKtParameterHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)

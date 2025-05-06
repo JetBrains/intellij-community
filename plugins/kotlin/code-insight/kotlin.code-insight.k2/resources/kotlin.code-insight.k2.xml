@@ -219,7 +219,18 @@
             providerId="kotlin.values.hints"
             bundle="messages.KotlinBundle"
             nameKey="hints.settings.values.ranges"
-            descriptionKey="inlay.kotlin.values.hints"/>
+            descriptionKey="inlay.kotlin.values.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.value.ranges"
+              enabledByDefault="true"
+              nameKey="hints.settings.value.ranges"
+              descriptionKey="inlay.kotlin.value.ranges"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.value.kotlin.time"
+              enabledByDefault="true"
+              nameKey="hints.settings.value.kotlin.time"
+              descriptionKey="inlay.kotlin.value.kotlin.time"/>
+    </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProvider
             language="kotlin"

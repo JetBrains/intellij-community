@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.k2.hints;
+package org.jetbrains.kotlin.idea.codeInsight.hints;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,23 +15,28 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("code-insight/kotlin.code-insight.k2")
+@TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../idea/tests/testData/codeInsight/hints/ranges")
-public class KtRangesHintsProviderTestGenerated extends AbstractKtRangesHintsProviderTest {
+@TestMetadata("testData/codeInsight/hints/values")
+public class KotlinValuesHintsProviderTestGenerated extends AbstractKotlinValuesHintsProviderTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+        return KotlinPluginMode.K1;
     }
 
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("simple.kt")
-    public void testSimple() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/ranges/simple.kt");
+    @TestMetadata("days.kt")
+    public void testDays() throws Exception {
+        runTest("testData/codeInsight/hints/values/days.kt");
+    }
+
+    @TestMetadata("ranges.kt")
+    public void testRanges() throws Exception {
+        runTest("testData/codeInsight/hints/values/ranges.kt");
     }
 }

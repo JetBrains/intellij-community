@@ -135,8 +135,6 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
 import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInferenceTest
-import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1CheckerTest
-import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1QuickFixTest
 import org.jetbrains.kotlin.psi.patternMatching.AbstractK1PsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
@@ -1095,8 +1093,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         testClass<AbstractKotlinLambdasHintsProvider> {
             model("codeInsight/hints/lambda")
         }
-        testClass<AbstractKotlinRangesHintsProviderTest> {
-            model("codeInsight/hints/ranges")
+        testClass<AbstractKotlinValuesHintsProviderTest> {
+            model("codeInsight/hints/values")
         }
 
         testClass<AbstractKotlinCallChainHintsProviderTest> {
