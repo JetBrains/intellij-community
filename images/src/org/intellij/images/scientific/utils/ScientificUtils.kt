@@ -14,7 +14,8 @@ import java.awt.geom.AffineTransform
 
 
 object ScientificUtils {
-  val SCIENTIFIC_MODE_KEY: Key<Unit> = Key<Unit>("SCIENTIFIC_MODE")
+  @JvmField
+  var SCIENTIFIC_MODE_KEY: Key<Unit> = Key<Unit>("SCIENTIFIC_MODE")
   val ORIGINAL_IMAGE_KEY: Key<BufferedImage> = Key("ORIGINAL_IMAGE")
   val ROTATION_ANGLE_KEY: Key<Int> = Key.create("IMAGE_ROTATION_ANGLE")
   const val DEFAULT_IMAGE_FORMAT: String = "png"
