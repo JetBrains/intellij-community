@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.icons.AllIcons
@@ -94,15 +94,6 @@ object PyPackageInstallUtils {
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
     return pythonPackageManager.updatePackage(packageSpecification)
-  }
-
-  suspend fun initPackages(project: Project, sdk: Sdk) {
-    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
-    if (pythonPackageManager?.installedPackages.isNullOrEmpty()) {
-      withContext(Dispatchers.IO) {
-        pythonPackageManager?.reloadPackages()
-      }
-    }
   }
 
   suspend fun installPackage(
