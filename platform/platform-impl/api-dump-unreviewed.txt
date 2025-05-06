@@ -15865,7 +15865,6 @@ f:com.intellij.ui.popup.HeavyWeightPopup
 - getWindow():java.awt.Window
 - hide():V
 - show():V
-com.intellij.ui.popup.KeepingPopupOpenAction
 c:com.intellij.ui.popup.LocalPopupComponentFactory
 - <init>():V
 - createPopupComponent(com.intellij.ui.popup.PopupComponentFactory$PopupType,java.awt.Component,java.awt.Component,I,I,com.intellij.openapi.ui.popup.JBPopup):com.intellij.ui.popup.PopupComponent

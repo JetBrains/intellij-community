@@ -937,7 +937,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public boolean isSubstepSuppressed() { return myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(myPresentation); }
 
     public @NotNull KeepPopupOnPerform getKeepPopupOnPerform() {
-      if (myAction instanceof KeepingPopupOpenAction) return KeepPopupOnPerform.Always;
       return myPresentation.getKeepPopupOnPerform();
     }
 

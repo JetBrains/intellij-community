@@ -25,7 +25,6 @@ import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.screenmenu.MenuItem
 import com.intellij.ui.plaf.beg.BegMenuItemUI
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.LafIconLookup.getDisabledIcon
 import com.intellij.util.ui.LafIconLookup.getIcon
@@ -126,9 +125,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
     description = presentation.description
-    keepPopupOnPerform =
-      if (actionRef.getAction() is KeepingPopupOpenAction) KeepPopupOnPerform.Always
-      else presentation.keepPopupOnPerform
+    keepPopupOnPerform = presentation.keepPopupOnPerform
     if (screenMenuItemPeer != null) {
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
