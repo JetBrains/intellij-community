@@ -32,7 +32,6 @@
 
     <module name="intellij.platform.find"/>
     <module name="intellij.platform.find.backend"/>
-    <module name="intellij.platform.find.frontend"/>
     <module name="intellij.platform.editor"/>
     <module name="intellij.platform.editor.backend"/>
     <module name="intellij.platform.editor.frontend"/>

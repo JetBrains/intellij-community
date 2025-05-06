@@ -33,13 +33,18 @@ open class FindInProjectExecutor {
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   ) {
-    val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfo2UsageAdapter)?.file }.toSet()
-    FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
-      val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
-      usage.presentation.icon // cache icon
-
-      onResult(usage)
+    if (FindKey.isEnabled) {
+      FindExecutor.getInstance().findUsages(project, findModel, previousUsages, onResult, onFinish)
     }
-    onFinish()
+    else {
+      val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfo2UsageAdapter)?.file }.toSet()
+      FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
+        val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
+        usage.presentation.icon // cache icon
+
+        onResult(usage)
+      }
+      onFinish()
+    }
   }
 }
