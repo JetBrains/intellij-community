@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.psi
 
 
+import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
@@ -10,32 +11,24 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object AddLoopLabelUtil {
-    fun getUniqueLabelName(loop: KtLoopExpression): String =
-        getUniqueLabelName(collectUsedLabels(loop))
-
-    private fun getUniqueLabelName(existingNames: Collection<String>): String {
-        var index = 0
-        var result = "loop"
-        while (result in existingNames) {
-            result = "loop${++index}"
-        }
-        return result
+    fun getUniqueLabelName(loop: KtLoopExpression): String {
+        val nameGenerator = UniqueNameGenerator()
+        collectUsedLabels(loop, nameGenerator)
+        return nameGenerator.generateUniqueName("loop")
     }
 
-    private fun collectUsedLabels(element: KtElement): Set<String> {
-        val usedLabels = hashSetOf<String>()
+    private fun collectUsedLabels(element: KtElement, nameGenerator: UniqueNameGenerator) {
         element.acceptChildren(object : KtTreeVisitorVoid() {
             override fun visitLabeledExpression(expression: KtLabeledExpression) {
                 super.visitLabeledExpression(expression)
-                usedLabels.add(expression.getLabelName()!!)
+                nameGenerator.addExistingName(expression.getLabelName()!!)
             }
         })
         element.parents.forEach {
             if (it is KtLabeledExpression) {
-                usedLabels.add(it.getLabelName()!!)
+                nameGenerator.addExistingName(it.getLabelName()!!)
             }
         }
-        return usedLabels
     }
 
     fun getExistingLabelName(loop: KtLoopExpression): String? =
