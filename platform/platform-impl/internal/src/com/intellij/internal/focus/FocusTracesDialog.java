@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -24,10 +25,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
@@ -87,7 +85,9 @@ public final class FocusTracesDialog extends DialogWrapper {
     myRequestsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRequestsTable.changeSelection(0, 0, false, true);
 
-    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    builder.setViewer(true);
+    consoleView = builder.getConsole();
     Disposer.register(getDisposable(), consoleView);
 
     init();
