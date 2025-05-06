@@ -267,11 +267,16 @@ class PluginModelValidator(
       )
     }
 
+    val registeredContentModules = allMainModulesOfPlugins.flatMapTo(HashSet()) { pluginInfo ->
+      pluginInfo.content.mapNotNull { it.name } 
+    }
+
     // 3. check dependencies - we are aware about all modules now
     for (pluginInfo in allMainModulesOfPlugins) {
       val descriptor = pluginInfo.descriptor
 
-      checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
+      checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo,
+                        registeredContentModules)
 
       // in the end, after processing content and dependencies
       if (validationOptions.reportDependsTagInPluginXmlWithPackageAttribute && pluginInfo.packageName != null) {
@@ -295,6 +300,7 @@ class PluginModelValidator(
           referencingPluginInfo = pluginInfo,
           moduleNameToInfo = moduleNameToInfo,
           sourceModuleNameToFileInfo = sourceModuleNameToFileInfo,
+          registeredContentModules = registeredContentModules,
         )
 
         if (contentModuleInfo.descriptor.depends.isNotEmpty()) {
@@ -318,7 +324,8 @@ class PluginModelValidator(
     referencingModuleInfo: ModuleInfo,
     referencingPluginInfo: ModuleInfo,
     moduleNameToInfo: Map<String, ModuleInfo>,
-    sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>
+    sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
+    registeredContentModules: Set<String>
   ) {
     val moduleDependenciesCount = dependenciesElements.count { 
       it is DependenciesElement.ModuleDependency || it is DependenciesElement.PluginDependency && it.pluginId.startsWith("com.intellij.modules.")
@@ -398,6 +405,12 @@ class PluginModelValidator(
               }
             }
             registerError("Module not found: $moduleName")
+            continue
+          }
+          
+          if (moduleName !in registeredContentModules) {
+            registerError("Module '$moduleName' is not registered as a content module, but used as a dependency." +
+                          "Either convert it to a content module, or use dependency on the plugin which includes it instead.")
             continue
           }
 
