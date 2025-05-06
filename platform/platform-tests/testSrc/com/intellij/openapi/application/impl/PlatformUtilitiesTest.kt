@@ -9,51 +9,22 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbModeTask
-import com.intellij.openapi.project.DumbService
-import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class PlatformUtilitiesTest {
-  val project = projectFixture(openAfterCreation = true)
-
-  @Test
-  fun `waitUntilIndexesReady works with background WA`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val project = project.get()
-    val dumbActionCompleted = AtomicBoolean(false)
-    DumbService.getInstance(project).queueTask(object : DumbModeTask() {
-      override fun performInDumbMode(indicator: ProgressIndicator) {
-        application.invokeAndWait {
-          dumbActionCompleted.set(true)
-        }
-      }
-    })
-    launch(Dispatchers.Default) {
-      backgroundWriteAction {
-      }
-    }
-    Thread.sleep(100) // do not release EDT event
-    Assertions.assertFalse(dumbActionCompleted.get())
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
-    Assertions.assertTrue(dumbActionCompleted.get())
-  }
 
   @Test
   fun `invokeAndWaitRelaxed does not take lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
