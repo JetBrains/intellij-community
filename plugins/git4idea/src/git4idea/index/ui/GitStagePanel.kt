@@ -40,10 +40,8 @@ import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.insertEditedCommitNode
 import com.intellij.vcs.log.runInEdt
@@ -132,16 +130,9 @@ internal class GitStagePanel(
 
     PopupHandler.installPopupMenu(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
-    val statusPanel = CommitStatusPanel(commitPanel).apply {
-      border = empty(0, 1, 0, 6)
-      background = tree.background
-
-      addToLeft(commitPanel.toolbar.component)
-    }
     val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
     val treePanel = GitStageTreePanel()
       .addToCenter(createScrollPane(tree, sideBorder))
-      .addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this)
 
     val treePanelWithToolbar = JPanel(BorderLayout())

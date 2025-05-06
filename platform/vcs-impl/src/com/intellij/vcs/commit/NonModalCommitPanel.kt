@@ -24,6 +24,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.emptyLeft
+import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUIUtil
@@ -32,6 +33,7 @@ import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.SwingConstants
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
@@ -73,11 +75,15 @@ abstract class NonModalCommitPanel(
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
     targetComponent = mainPanel
     component.isOpaque = false
+    setOrientation(SwingConstants.HORIZONTAL)
+    setReservePlaceAutoPopupIcon(false)
   }
 
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
   }
+
+  protected val statusComponent: CommitStatusPanel
 
   init {
     bottomPanel = JBPanel<JBPanel<*>>(VerticalLayout(0))
@@ -87,7 +93,15 @@ abstract class NonModalCommitPanel(
 
       setTargetComponent(mainPanel)
     }
+
+    statusComponent = CommitStatusPanel(this).apply {
+      border = emptyRight(6)
+
+      addToLeft(toolbar.component)
+    }
+
     centerPanel
+      .addToTop(statusComponent)
       .addToCenter(commitMessage)
       .addToBottom(bottomPanel)
 

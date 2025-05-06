@@ -19,7 +19,6 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
@@ -37,13 +36,6 @@ class ChangesViewPanel(val changesView: ChangesListView, parentDisposable: Dispo
     ActionManager.getInstance().createActionToolbar(CHANGES_VIEW_TOOLBAR, toolbarActionGroup, isToolbarHorizontal).apply {
       setTargetComponent(changesView)
     }
-
-  var statusComponent by observable<JComponent?>(null) { _, oldValue, newValue ->
-    if (oldValue == newValue) return@observable
-
-    if (oldValue != null) centerPanel.remove(oldValue)
-    if (newValue != null) centerPanel.addToBottom(newValue)
-  }
 
   private val changesScrollPane = createScrollPane(changesView, true)
   private val scrollableBordersPanel = simplePanel(changesScrollPane).andTransparent()

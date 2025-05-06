@@ -690,7 +690,6 @@ public class ChangesViewManager implements ChangesViewEx,
     private void configureToolbars() {
       boolean isToolbarHorizontal = CommitModeManager.getInstance(myProject).getCurrentCommitMode().useCommitToolWindow();
       myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
-      if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
     }
 
     @Override

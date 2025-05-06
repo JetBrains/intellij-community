@@ -4720,7 +4720,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - getIncludedUnversionedFiles():java.util.List
 - getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
 - isActive():Z
-- f:isToolbarHorizontal():Z
 - refreshChangesViewBeforeCommit(kotlin.coroutines.Continuation):java.lang.Object
 - f:registerRootComponent(javax.swing.JComponent):V
 - select(java.lang.Object):V
@@ -4728,7 +4727,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - setCompletionContext(java.util.List):V
 - setEditedCommit(com.intellij.vcs.commit.EditedCommitPresentation):V
 - setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
-- f:setToolbarHorizontal(Z):V
 com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - com.intellij.vcs.commit.NonModalCommitWorkflowUi
 - a:deactivate(Z):V
@@ -5012,6 +5010,7 @@ a:com.intellij.vcs.commit.NonModalCommitPanel
 - getDefaultCommitActionName():java.lang.String
 - getPreferredFocusableComponent():javax.swing.JComponent
 - f:getProject():com.intellij.openapi.project.Project
+- pf:getStatusComponent():com.intellij.vcs.commit.CommitStatusPanel
 - f:getToolbar():com.intellij.openapi.actionSystem.ActionToolbar
 - globalSchemeChange(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - isDefaultCommitActionEnabled():Z
