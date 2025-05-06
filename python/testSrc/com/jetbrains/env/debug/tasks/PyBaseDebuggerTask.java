@@ -3,10 +3,12 @@ package com.jetbrains.env.debug.tasks;
 
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -53,6 +55,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   protected boolean myProcessCanTerminate;
   protected ExecutionResult myExecutionResult;
   protected SuspendPolicy myDefaultSuspendPolicy = SuspendPolicy.THREAD;
+  protected final Logger myLogger = Logger.getInstance(PyBaseDebuggerTask.class);
   /**
    * The value must align with the one from the pydevd_resolver.py module.
    */
@@ -79,49 +82,34 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
     XSourcePosition position = currentSession.getCurrentPosition();
 
-
     currentSession.runToPosition(XDebuggerUtil.getInstance().createPosition(position.getFile(), line), false);
 
     waitForPause();
   }
 
   protected void resume() {
-    XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+    checkSessionPaused();
 
-    Assert.assertNotNull("Resume called for a session that does not exist or has already been stopped", currentSession);
-    Assert.assertTrue("Resume called for a session that is not in suspended state", currentSession.isSuspended());
-    Assert.assertEquals(0, myPausedSemaphore.availablePermits());
-
-    currentSession.resume();
+    XDebuggerManager.getInstance(getProject()).getCurrentSession().resume();
   }
 
   protected void stepOver() {
-    XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+    checkSessionPaused();
 
-    Assert.assertNotNull("Step over called for a session that does not exist or has already been stopped", currentSession);
-    Assert.assertTrue("Step over called for a session that is not in suspended state", currentSession.isSuspended());
-    Assert.assertEquals(0, myPausedSemaphore.availablePermits());
-
-    currentSession.stepOver(false);
+    XDebuggerManager.getInstance(getProject()).getCurrentSession().stepOver(false);
   }
 
   protected void stepInto() {
-    XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+    checkSessionPaused();
 
-    Assert.assertNotNull("Step into called for the session that does not exist or has already been stopped", currentSession);
-    Assert.assertTrue("Step into called for session that is not in suspended state", currentSession.isSuspended());
-    Assert.assertEquals(0, myPausedSemaphore.availablePermits());
-
-    currentSession.stepInto();
+    XDebuggerManager.getInstance(getProject()).getCurrentSession().stepInto();
   }
 
   @TestOnly
   protected void stepIntoMyCode() {
+    checkSessionPaused();
+
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
-
-    Assert.assertTrue(currentSession.isSuspended());
-    Assert.assertEquals(0, myPausedSemaphore.availablePermits());
-
     PyDebugProcess debugProcess = (PyDebugProcess)currentSession.getDebugProcess();
     debugProcess.startStepIntoMyCode(currentSession.getSuspendContext());
   }
@@ -511,7 +499,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return false;
   }
 
-
   public void setShouldPrintOutput(boolean shouldPrintOutput) {
     this.shouldPrintOutput = shouldPrintOutput;
   }
@@ -617,6 +604,43 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
       finishSession();
     }
+  }
+
+  protected void debugPaused() {
+    if (myPausedSemaphore != null) {
+      int availablePermits = myPausedSemaphore.availablePermits();
+      if (availablePermits > 0) {
+        myLogger.warn("Session was stopped twice in a row. This happens sometimes with debugger, seems it's a race inside Mono");
+      }
+      else {
+        myPausedSemaphore.release();
+      }
+    }
+  }
+
+  protected void debugTerminated(@NotNull ProcessEvent event, @NotNull String out) {
+    if (myTerminateSemaphore != null) {
+      int availablePermits = myTerminateSemaphore.availablePermits();
+      if (availablePermits > 0) {
+        myLogger.warn("Session was terminated twice");
+      }
+      else {
+        myTerminateSemaphore.release();
+        if (event.getExitCode() != 0 && !myProcessCanTerminate) {
+          Assert.fail("Process terminated unexpectedly\n" + out);
+        }
+      }
+    }
+  }
+
+  protected void checkSessionPaused() {
+    XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+    Assert.assertNotNull(currentSession);
+    Assert.assertTrue(currentSession.isSuspended());
+
+    if (myPausedSemaphore.availablePermits() != 0) {
+      myLogger.warn("Session was paused twice");
+    };
   }
 
   protected static class EvaluationCallback<T> {

@@ -67,32 +67,6 @@ public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
     return ImmutableMap.of();
   }
 
-  @Override
-  protected CommandLinePatcher[] createCommandLinePatchers(PyDebugRunner runner, PythonCommandLineState pyState, RunProfile profile,
-                                                           int serverLocalPort) {
-    final CommandLinePatcher[] debugPatchers = runner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort);
-    if (!usePytestRunner()) {
-      return debugPatchers;
-    }
-    ArrayList<CommandLinePatcher> result = new ArrayList<>();
-    result.add(pytestPatcher());
-    result.addAll(Arrays.asList(debugPatchers));
-    return result.toArray(new CommandLinePatcher[0]);
-  }
-
-  private static CommandLinePatcher pytestPatcher() {
-    return new CommandLinePatcher() {
-      @Override
-      public void patchCommandLine(GeneralCommandLine commandLine) {
-        final ParamsGroup scriptGroup = commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-        scriptGroup.addParameterAt(0, "--path");
-        scriptGroup.addParameterAt(0, PythonHelper.PYTEST.asParamString());
-
-        commandLine.getEnvironment().put("PYTEST_RUN_CONFIG", "True");
-      }
-    };
-  }
-
   public @Nullable PythonRunConfiguration getRunConfiguration() {
     return myRunConfiguration != null ? (PythonRunConfiguration)myRunConfiguration : null;
   }

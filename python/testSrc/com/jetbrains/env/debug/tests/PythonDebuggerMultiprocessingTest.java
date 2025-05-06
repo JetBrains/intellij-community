@@ -29,11 +29,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     }
 
     @Override
-    protected void init() {
-      setMultiprocessDebug(true);
-    }
-
-    @Override
     public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
       return level.compareTo(LanguageLevel.PYTHON27) > 0;
     }
@@ -341,18 +336,13 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
-    final class ExecAndSpawnWithBytesArgsTask extends PythonDebuggerTest.PyDebuggerTaskTagAware {
+    final class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTask {
 
       private final static String BYTES_ARGS_WARNING =
         "pydev debugger: bytes arguments were passed to a new process creation function. " + "Breakpoints may not work correctly.\n";
 
       private ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
         super(relativeTestDataPath, scriptName);
-      }
-
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
       }
 
       @Override
@@ -386,10 +376,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
     // TODO: remove lvl.compareTo(LanguageLevel.PYTHON27) < 0 after PY-79437
     runPythonTest(new PythonDebuggerLanguageLevelTask(lvl -> lvl.compareTo(LanguageLevel.PYTHON27) < 0, "/debug", "test_executable_script_debug.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {

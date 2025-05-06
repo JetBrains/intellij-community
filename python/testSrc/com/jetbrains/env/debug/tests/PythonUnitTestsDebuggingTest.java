@@ -5,15 +5,14 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyTestTask;
+import com.jetbrains.env.debug.tasks.PyTestDebuggingTask;
 import com.jetbrains.env.debug.tasks.PyUnitTestDebuggingTask;
-import com.jetbrains.python.testing.PyAbstractTestFactory;
-import com.jetbrains.python.testing.PyTestFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.Set;
 
 public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
@@ -176,7 +175,7 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("xdist");
+        return Collections.singleton("xdist");
       }
     });
   }
@@ -273,7 +272,7 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python3");
+        return Collections.singleton("python3");
       }
     });
   }
@@ -288,7 +287,7 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python2.7");
+        return Collections.singleton("python2.7");
       }
     });
   }
@@ -301,26 +300,5 @@ public class PythonUnitTestsDebuggingTest extends PyEnvTestCase {
         waitForPauseOnTestFailure("ValueError", "invalid literal for int() with base 10: 'Hello, World'");
       }
     });
-  }
-
-  private static class PyTestDebuggingTask extends PyUnitTestDebuggingTask {
-    PyTestDebuggingTask(@NotNull String scriptName) {
-      this(scriptName, null);
-    }
-
-    PyTestDebuggingTask(@NotNull String scriptName, @Nullable String targetName) {
-      super(scriptName, targetName);
-    }
-
-    @Override
-    protected Class<? extends PyAbstractTestFactory<?>> getRunConfigurationFactoryClass() {
-      return PyTestFactory.class;
-    }
-
-    @Override
-    public @NotNull Set<String> getTags() {
-      //noinspection SpellCheckingInspection
-      return ImmutableSet.of("pytest");
-    }
   }
 }

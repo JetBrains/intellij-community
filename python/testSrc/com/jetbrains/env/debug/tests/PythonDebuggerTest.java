@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.nio.file.Paths;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -181,7 +180,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
     });
   }
-
 
   @Test
   public void testWinEggDebug() {
@@ -443,7 +441,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testTypeHandler() {
-    runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_type_handler.py") {
+    runPythonTest(new PyDebuggerTask("/debug", "test_type_handler.py") {
 
 
       @Override
@@ -566,7 +564,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testCodeEvaluationWithGeneratorExpression() {
-    runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_code_eval_with_generator_expr.py") {
+    runPythonTest(new PyDebuggerTask("/debug", "test_code_eval_with_generator_expr.py") {
 
       @Override
       public void before() {
@@ -706,17 +704,5 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
-  }
-
-  static class PyDebuggerTaskTagAware extends PyDebuggerTask {
-
-    PyDebuggerTaskTagAware(@Nullable String relativeTestDataPath, String scriptName) {
-      super(relativeTestDataPath, scriptName);
-    }
-
-    public boolean hasTag(String tag) throws NullPointerException {
-      String env = Paths.get(myRunConfiguration.getSdkHome()).getParent().getParent().toString();
-      return ContainerUtil.exists(envTags.get(env), (t) -> t.startsWith(tag));
-    }
   }
 }

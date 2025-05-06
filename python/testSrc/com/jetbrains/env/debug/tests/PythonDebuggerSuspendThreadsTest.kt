@@ -16,9 +16,6 @@ class PythonDebuggerSuspendThreadsTest : PyEnvTestCase() {
   @Test
   fun testSuspendAllThreadsPolicy() {
     runPythonTest(object : PyDebuggerTask("/debug", "test_two_threads.py") {
-      override fun init() {
-        isMultiprocessDebug = true
-      }
 
       override fun before() {
         toggleBreakpoint(getFilePath(scriptName), 17)
