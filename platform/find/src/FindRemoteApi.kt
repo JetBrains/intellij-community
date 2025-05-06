@@ -2,6 +2,7 @@
 package com.intellij.platform.find
 
 import com.intellij.find.FindModel
+import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.markup.EffectType
@@ -35,7 +36,7 @@ interface FindRemoteApi : RemoteApi<Unit> {
 
 @Serializable
 data class FindInFilesResult(
-  val presentation: List<RdTextChunk>,
+  val presentation: List<SerializableTextChunk>,
   val line: Int,
   val offset: Int,
   val originalOffset: Int,
@@ -46,35 +47,3 @@ data class FindInFilesResult(
   val merged: Boolean,
   val backgroundColor: ColorId?,
 )
-
-@Serializable
-data class RdTextChunk(
-  val text: @Nls String,
-  val attributes: RdSimpleTextAttributes,
-) {
-  fun toTextChunk(): TextChunk {
-    val textAttributes = attributes.toInstance().toTextAttributes()
-    if (textAttributes.effectType == EffectType.SEARCH_MATCH) {
-      textAttributes.fontType = SimpleTextAttributes.STYLE_BOLD
-    }
-    return TextChunk(textAttributes, text)
-  }
-}
-
-@Serializable
-data class RdSimpleTextAttributes(
-  val fgColor: Int? = null,
-  val bgColor: Int? = null,
-  val waveColor: Int? = null,
-  val style: Int = 0,
-) {
-  fun toInstance(): SimpleTextAttributes {
-    return SimpleTextAttributes(
-      this.bgColor?.let { Color(it) },
-      this.fgColor?.let { Color(it) },
-      this.waveColor?.let { Color(it) },
-      this.style
-    )
-  }
-}
-

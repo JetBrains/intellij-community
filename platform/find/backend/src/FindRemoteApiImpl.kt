@@ -5,6 +5,7 @@ import com.intellij.find.FindModel
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.getPresentableFilePath
+import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
@@ -15,11 +16,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.platform.find.FindInFilesResult
 import com.intellij.platform.find.FindRemoteApi
-import com.intellij.platform.find.RdSimpleTextAttributes
-import com.intellij.platform.find.RdTextChunk
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
@@ -71,8 +69,7 @@ class FindRemoteApiImpl : FindRemoteApi {
           previousResultMap[adapter.path] = adapter
 
           val textChunks = adapter.text.map {
-            val attributes = it.simpleAttributesIgnoreBackground.toModel()
-            RdTextChunk(it.text, attributes)
+            SerializableTextChunk(it.text,it.attributes)
           }
           val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
           val presentablePath = getPresentableFilePath(project, scope, virtualFile)
@@ -97,13 +94,4 @@ class FindRemoteApiImpl : FindRemoteApi {
       }
     }
   }
-}
-
-fun SimpleTextAttributes.toModel(): RdSimpleTextAttributes {
-  return RdSimpleTextAttributes(
-    this.fgColor?.rgb,
-    this.bgColor?.rgb,
-    this.waveColor?.rgb,
-    this.style
-  )
 }

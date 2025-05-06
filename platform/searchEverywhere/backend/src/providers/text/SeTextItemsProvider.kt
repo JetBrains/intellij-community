@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.backend.providers.text
 
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.EDT
@@ -28,8 +29,7 @@ class SeTextSearchItem(val item: SearchEverywhereItem, private val weight: Int, 
                                  item.presentation.text.map { chunk ->
                                    SerializableTextChunk(
                                      chunk.text,
-                                     chunk.attributes.foregroundColor.rpcId(),
-                                     chunk.attributes.fontType
+                                     chunk.attributes
                                    )
                                  },
                                  item.presentation.backgroundColor?.rpcId(),

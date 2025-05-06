@@ -34,12 +34,7 @@ class SeTextSearchItemPresentationRenderer {
     }
 
     private fun SeTextSearchItemPresentation.asUsagePresentation(): UsagePresentation =
-      UsagePresentation(textChunks.map { chunk ->
-        TextChunk(TextAttributes().apply {
-          foregroundColor = chunk.foregroundColorId?.color()
-          fontType = chunk.fontType
-        }, chunk.text)
-      }.toArray(emptyArray()), backgroundColor, fileString)
+      UsagePresentation(textChunks.map { it.toTextChunk() }.toArray(emptyArray()), backgroundColor, fileString)
 
     override fun getListCellRendererComponent(
       list: JList<out SeResultListRow>?,

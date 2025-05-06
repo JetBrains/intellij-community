@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere
 
+import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.ui.colors.color
 import com.intellij.ide.ui.colors.rpcId
@@ -39,7 +40,7 @@ class SeSimpleItemPresentation(
 
   constructor(iconId: IconId? = null, text: @NlsSafe String? = null, description: @NlsSafe String? = null, extendedDescription: String? = null) : this(
     iconId,
-    text?.let { SerializableTextChunk(it, null, 0) },
+    text?.let { SerializableTextChunk(it) },
     null,
     description,
     extendedDescription)
@@ -156,12 +157,4 @@ class SeTextSearchItemPresentation(
   val fileString: @NlsSafe String,
 ) : SeItemPresentation {
   val backgroundColor: Color? get() = backgroundColorId?.color()
-}
-
-@ApiStatus.Internal
-@Serializable
-class SerializableTextChunk(val text: @NlsSafe String, val foregroundColorId: ColorId?, val fontType: Int) {
-  @Suppress("USELESS_CAST")
-  constructor(text: @NlsSafe String, attributes: SimpleTextAttributes) :
-    this(text, (attributes.fgColor as? Color)?.rpcId(), attributes.fontStyle)
 }

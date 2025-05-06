@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.providers.topHit
 
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
+import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
