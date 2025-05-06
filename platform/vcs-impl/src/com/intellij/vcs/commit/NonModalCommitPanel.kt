@@ -39,8 +39,7 @@ abstract class NonModalCommitPanel(
   val project: Project,
   val commitActionsPanel: CommitActionsPanel = CommitActionsPanel(),
   val commitAuthorComponent: CommitAuthorComponent = CommitAuthorComponent(project),
-) : BorderLayoutPanel(),
-    NonModalCommitWorkflowUi,
+) : NonModalCommitWorkflowUi,
     CommitActionsUi by commitActionsPanel,
     CommitAuthorTracker by commitAuthorComponent,
     ComponentContainer,
@@ -50,6 +49,21 @@ abstract class NonModalCommitPanel(
   private val dataProviders = mutableListOf<DataProvider>()
   private var needUpdateCommitOptionsUi = false
 
+  private val mainPanel: BorderLayoutPanel = object : BorderLayoutPanel(), UiDataProvider {
+    override fun updateUI() {
+      super.updateUI()
+
+      if (this@NonModalCommitPanel::bottomPanel.isInitialized) {
+        bottomPanel.background = getButtonPanelBackground()
+      }
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      DataSink.uiDataSnapshot(sink, commitMessage)
+      uiDataSnapshotFromProviders(sink)
+    }
+  }
+
   protected val centerPanel = JBUI.Panels.simplePanel()
 
   @Suppress("JoinDeclarationAndAssignment", "UNNECESSARY_LATEINIT") // used in super constructor.
@@ -57,7 +71,7 @@ abstract class NonModalCommitPanel(
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
-    targetComponent = this@NonModalCommitPanel
+    targetComponent = mainPanel
     component.isOpaque = false
   }
 
@@ -71,31 +85,23 @@ abstract class NonModalCommitPanel(
     commitActionsPanel.apply {
       border = getButtonPanelBorder()
 
-      setTargetComponent(this@NonModalCommitPanel)
+      setTargetComponent(mainPanel)
     }
     centerPanel
       .addToCenter(commitMessage)
       .addToBottom(bottomPanel)
 
-    addToCenter(centerPanel)
-    withPreferredHeight(85)
+    mainPanel.addToCenter(centerPanel)
+    mainPanel.withPreferredHeight(85)
     commitMessage.editorField.setDisposedWith(this)
     bottomPanel.background = getButtonPanelBackground()
 
-    InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-
-    if (this::bottomPanel.isInitialized) {
-      bottomPanel.background = getButtonPanelBackground()
-    }
+    InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(mainPanel)
   }
 
   override val commitMessageUi: CommitMessageUi get() = commitMessage
 
-  override fun getComponent(): JComponent = this
+  override fun getComponent(): JComponent = mainPanel
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun uiDataSnapshot(sink: DataSink) {

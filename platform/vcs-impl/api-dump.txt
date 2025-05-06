@@ -4987,7 +4987,6 @@ f:com.intellij.vcs.commit.NonModalAmendCommitHandler
 a:com.intellij.vcs.commit.NonModalCommitPanel
 - com.intellij.openapi.editor.colors.EditorColorsListener
 - com.intellij.openapi.ui.ComponentContainer
-- com.intellij.util.ui.components.BorderLayoutPanel
 - com.intellij.vcs.commit.CommitAuthorTracker
 - com.intellij.vcs.commit.NonModalCommitWorkflowUi
 - sf:Companion:com.intellij.vcs.commit.NonModalCommitPanel$Companion
@@ -5028,7 +5027,6 @@ a:com.intellij.vcs.commit.NonModalCommitPanel
 - startBeforeCommitChecks():V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:uiDataSnapshotFromProviders(com.intellij.openapi.actionSystem.DataSink):V
-- updateUI():V
 f:com.intellij.vcs.commit.NonModalCommitPanel$Companion
 - f:showAbove(com.intellij.openapi.ui.popup.JBPopup,javax.swing.JComponent):V
 a:com.intellij.vcs.commit.NonModalCommitWorkflow

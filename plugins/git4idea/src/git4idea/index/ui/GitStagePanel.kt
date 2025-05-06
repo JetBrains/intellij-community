@@ -15,14 +15,18 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -42,7 +46,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.insertEditedCommitNode
-import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.ui.ProgressStripe
@@ -148,7 +151,7 @@ internal class GitStagePanel(
     treeMessageSplitter = TwoKeySplitter(true, ProportionKey("git.stage.tree.message.splitter", 0.7f,
                                                              "git.stage.tree.message.splitter.horizontal", 0.5f))
     treeMessageSplitter.firstComponent = treePanelWithToolbar
-    treeMessageSplitter.secondComponent = commitPanel
+    treeMessageSplitter.secondComponent = commitPanel.component
 
     changesStatusPanel = Wrapper()
     changesStatusPanel.minimumSize = JBUI.emptySize()

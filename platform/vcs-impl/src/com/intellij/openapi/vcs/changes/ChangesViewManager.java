@@ -663,7 +663,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
         ChangesViewCommitPanel newCommitPanel = (ChangesViewCommitPanel)newWorkflowHandler.getUi();
         newCommitPanel.registerRootComponent(this);
-        myCommitPanelSplitter.setSecondComponent(newCommitPanel);
+        myCommitPanelSplitter.setSecondComponent(newCommitPanel.getComponent());
 
         myCommitWorkflowHandler = newWorkflowHandler;
         myCommitPanel = newCommitPanel;
