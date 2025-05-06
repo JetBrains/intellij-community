@@ -1674,7 +1674,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           indexId,
           e
         );
-        myDirtyFiles.addFile(emptySet(), inputId); // so `inputId` will be rescanned on restart
+        var projects = getContainingProjects(file);
+        myDirtyFiles.addFile(projects, inputId); // so `inputId` will be rescanned on restart
         return null;
       }
       finally {

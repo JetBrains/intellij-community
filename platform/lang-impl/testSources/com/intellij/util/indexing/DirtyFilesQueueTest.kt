@@ -233,9 +233,6 @@ class DirtyFilesQueueTest {
       restart(skipFullScanning = true)
 
       openProject(testNameRule.methodName) { project, module ->
-        readAction {
-          IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
-        }
         val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
         val allKeys = smartReadAction(project = project) {
           fileBasedIndex.getAllKeys(BadFileBasedIndexExtension().name, project)
