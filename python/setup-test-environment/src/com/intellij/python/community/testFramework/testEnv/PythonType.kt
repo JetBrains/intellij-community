@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.testFramework.testEnv
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -13,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.Result.Companion.failure
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.pathString
 
 /**
  * Gradle script installs two types of python: conda and vanilla. Env could be obtained by [createSdkClosableEnv] which also provides closable
@@ -47,7 +50,11 @@ abstract class PythonType<T : Any>(private val tag: @NonNls String) {
           ?: error("Can't get language level for $flavor , $binary")
         }
         .sortedByDescending { (_, languageLevel) -> languageLevel }
-        .map { (path, _) -> path }
+        .map { (path, _) -> path }.also { pythonDirs ->
+          // it is ok to access python dirs from tests
+          VfsRootAccess.allowRootAccess(ApplicationManager.getApplication(), *pythonDirs.map { it.pathString }.toTypedArray())
+        }
+
     }.toMutableList()
     val customPythonDir = if (pythons.isEmpty() && ensureAtLeastOnePython) {
       val pythonStr = customPython
