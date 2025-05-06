@@ -85,7 +85,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
 
-  private final boolean myMarkColorIds = Registry.is("editor.color.scheme.mark.colors", true);
+  private final boolean myMarkColorIds = Registry.is("editor.color.scheme.mark.colors", false);
   private final TextAttributesReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
   private final Properties metaInfo = new Properties();

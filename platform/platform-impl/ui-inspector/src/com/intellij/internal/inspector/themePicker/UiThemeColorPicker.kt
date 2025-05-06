@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.themePicker
 
+import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -13,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -22,6 +25,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.content.impl.ContentImpl
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.*
@@ -235,7 +239,7 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
         comment("Use Ctrl-Shift-Alt-Click to show colors in the Tool Window")
       }
       row {
-        checkBox("Show hover tooltip").applyToComponent {
+        checkBox("Show on-hover tooltip").applyToComponent {
           isSelected = manager.showPopup
           addItemListener { manager.showPopup = isSelected }
         }
@@ -248,7 +252,20 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
                 model = CollectionListModel(colors)
               }
             }
+          }.align(AlignY.FILL)
+      }.resizableRow()
+      row {
+        val editorRegistry = Registry.get("editor.color.scheme.mark.colors")
+        checkBox("Enable marker colors for EditorColorScheme IDs").applyToComponent {
+          isSelected = editorRegistry.asBoolean()
+          addItemListener {
+            invokeLater { // swing weirdness
+              editorRegistry.setValue(isSelected)
+              RegistryBooleanOptionDescriptor.suggestRestartIfNecessary(null)
+            }
           }
+        }
+        comment("Restart required")
       }
     }
     panel.putClientProperty(THEME_VIEWER_UI_MARKER_KEY, true)
