@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.progress.blockingContext
@@ -24,7 +23,7 @@ class FileNavigatorImpl : FileNavigator {
   override fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean {
     val file = descriptor.file
     if (file.isValid) {
-      return FileEditorManagerEx.getInstanceEx(descriptor.project).canOpenFile(file) || file.fileType is INativeFileType
+      return FileEditorManager.getInstance(descriptor.project).canOpenFile(file) || file.fileType is INativeFileType
     }
     else {
       return false

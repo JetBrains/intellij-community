@@ -232,7 +232,7 @@ public final class Mock {
     }
 
     @Override
-    public @NotNull StateFlow<FileEditor> getCurrentFileEditorFlow() {
+    public @NotNull StateFlow<FileEditor> getSelectedEditorFlow() {
       return StateFlowKt.MutableStateFlow(null);
     }
 

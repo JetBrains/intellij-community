@@ -8320,7 +8320,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - a:getActiveWindow():java.util.concurrent.CompletableFuture
 - a:getComponent():javax.swing.JComponent
 - a:getCurrentFile():com.intellij.openapi.vfs.VirtualFile
-- a:getCurrentFileEditorFlow():kotlinx.coroutines.flow.StateFlow
 - a:getCurrentWindow():com.intellij.openapi.fileEditor.impl.EditorWindow
 - getDockContainer():com.intellij.ui.docking.DockContainer
 - a:getEditorsWithProviders(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.util.Pair

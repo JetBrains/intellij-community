@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jdom.Element
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
@@ -262,8 +263,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     }
   }
 
-  override val currentFileEditorFlow: StateFlow<FileEditor?>
-    get() = MutableStateFlow(null)
+  override fun getSelectedEditorFlow(): StateFlow<FileEditor?> = MutableStateFlow(null).asStateFlow()
 
   override var currentWindow: EditorWindow?
     get() = null

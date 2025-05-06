@@ -15,15 +15,17 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
 private val LOG = logger<StatusBarWidgetsManager>()
@@ -40,16 +42,14 @@ class StatusBarWidgetsManager(
     StatusBarActionManager.getInstance()
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
 
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
-      flow { emit(project.serviceAsync<FileEditorManager>() as FileEditorManagerEx) }
-        .take(1)
-        .flatMapConcat { it.currentFileEditorFlow }
-        .stateIn(parentScope, started = SharingStarted.Eagerly, initialValue = null)
+      flow { val manager = project.serviceAsync<FileEditorManager>()
+        emitAll(manager.selectedEditorFlow)
+      }.stateIn(parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
   }
 

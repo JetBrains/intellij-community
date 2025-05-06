@@ -69,19 +69,15 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
-import com.intellij.toolWindow.xNext.island.XNextIslandHolder
-import com.intellij.toolWindow.xNext.island.XNextRoundedBorder
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
-import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -211,7 +207,7 @@ open class FileEditorManagerImpl(
 
   private val splitterFlow = MutableSharedFlow<EditorsSplitters>(replay = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-  final override val currentFileEditorFlow: StateFlow<FileEditor?>
+  private val selectedEditorFlow: StateFlow<FileEditor?>
 
   override val dockContainer: DockContainer?
     get() = dockable.value
@@ -281,7 +277,7 @@ open class FileEditorManagerImpl(
         .collect()
     }
 
-    currentFileEditorFlow = selectionFlow
+    selectedEditorFlow = selectionFlow
       .map { it?.fileEditorProvider?.fileEditor }
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
@@ -579,7 +575,7 @@ open class FileEditorManagerImpl(
   }
 
   override val preferredFocusedComponent: JComponent?
-    get() = currentFileEditorFlow.value?.preferredFocusedComponent
+    get() = selectedEditorFlow.value?.preferredFocusedComponent
 
   /**
    * @return color of the `file` which corresponds to the file's status
@@ -1633,6 +1629,10 @@ open class FileEditorManagerImpl(
   }
 
   override fun getSelectedEditor(): FileEditor? = getSelectedEditor { splitters }
+
+  override fun getSelectedEditorFlow(): StateFlow<FileEditor?> {
+    return selectedEditorFlow
+  }
 
   @Internal
   fun getLastFocusedEditor(): FileEditor? = getSelectedEditor { getLastFocusedSplitters() ?: splitters }

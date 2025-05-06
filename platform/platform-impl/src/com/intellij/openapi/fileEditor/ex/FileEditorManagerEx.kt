@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.docking.DockContainer
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
@@ -104,7 +103,7 @@ abstract class FileEditorManagerEx : FileEditorManager() {
 
   abstract fun hasOpenedFile(): Boolean
 
-  open fun canOpenFile(file: VirtualFile): Boolean {
+  override fun canOpenFile(file: VirtualFile): Boolean {
     return FileEditorProviderManager.getInstance().getProviderList(project, file).isNotEmpty()
   }
 
@@ -127,8 +126,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   open fun closeOpenedEditors() {
     closeAllFiles()
   }
-
-  abstract val currentFileEditorFlow: StateFlow<FileEditor?>
 
   abstract val splitters: EditorsSplitters
 
