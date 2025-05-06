@@ -1088,11 +1088,11 @@ private fun checkSiblings(
   siblings: ArrayDeque<Pair<SyntaxTreeBuilder.Marker, Int>>,
 ) {
   main@ while (!siblings.isEmpty()) {
-    val parenPair: Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?> = parens.first()
+    val parenPair = parens.firstOrNull()
     val rating: Int = siblings.first().second
     var count = 0
     for (pair in siblings) {
-      if (pair.second != rating || pair.first === parenPair.second) break@main
+      if (pair.second != rating || parenPair != null && pair.first === parenPair.second) break@main
       if (++count >= MAX_CHILDREN_IN_TREE) {
         val parentMarker: SyntaxTreeBuilder.Marker = pair.first.precede()
         parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.greedyLeftBinder(), null)
@@ -1150,8 +1150,8 @@ fun SyntaxGeneratedParserRuntime.parseAsTree(
         tokenCount = 0
       }
       if (tokenType == lBrace) {
-        val prev = siblings.first()
-        parens.addFirst(Pair(syntaxBuilder.mark(), prev.first))
+        val prev = siblings.firstOrNull()
+        parens.addFirst(Pair(syntaxBuilder.mark(), prev?.first))
       }
       checkSiblings(chunkType, parens, siblings)
       TOKEN_ADVANCER.parse(this, level)
