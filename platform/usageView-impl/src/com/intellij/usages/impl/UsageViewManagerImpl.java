@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
@@ -35,13 +35,13 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -202,14 +202,33 @@ public class UsageViewManagerImpl extends UsageViewManager {
           scope = UsageView.USAGE_SCOPE.getData((DataProvider)element);
         }
         int numberOfUsagesFound = view == null ? 0 : view.getUsagesCount();
+
         UsageViewStatisticsCollector.logSearchFinished(myProject, view, targetClass, scope, language, numberOfUsagesFound,
                                                        durationFirstResults, duration,
                                                        tooManyUsages.get(), isCancelled, CodeNavigateSource.FindToolWindow);
+
+        Set<Usage> usages = view == null ? Collections.emptySet() : view.getUsages();
+        informRankerMlService(project, usages, FileRankerMlService.CallSource.FIND_USAGES);
+
         return duration;
       }
     };
     ProgressManager.getInstance().run(task);
     return usageViewRef.get();
+  }
+
+  @ApiStatus.Internal
+  public static void informRankerMlService(@NotNull Project project,
+                                           @NotNull Collection<Usage> usages,
+                                           FileRankerMlService.@NotNull CallSource source) {
+    FileRankerMlService rankerMlService = FileRankerMlService.getInstance();
+    if (rankerMlService == null) {
+      return;
+    }
+    Set<VirtualFile> foundFiles = ContainerUtil.map2SetNotNull(
+      usages, usage -> usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null
+    );
+    rankerMlService.onSessionFinished(project, foundFiles, source);
   }
 
   @VisibleForTesting

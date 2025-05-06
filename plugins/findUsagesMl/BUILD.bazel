@@ -1,0 +1,61 @@
+### auto-generated section `build intellij.findUsagesMl` start
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "findUsagesMl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "findUsagesMl",
+  module_name = "intellij.findUsagesMl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-mlapi-ml-api",
+    "@lib//:commons-text",
+    "//platform/indexing-api:indexing",
+    "//platform/util",
+    "//platform/statistics",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/ml-logs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":findUsagesMl_resources"]
+)
+
+jvm_library(
+  name = "findUsagesMl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":findUsagesMl"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-mlapi-ml-api",
+    "@lib//:commons-text",
+    "//platform/indexing-api:indexing",
+    "//platform/util",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/ml-logs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "@lib//:kotlin-test",
+    "@lib//:junit5",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":findUsagesMl_resources"]
+)
+
+jps_test(
+  name = "findUsagesMl_test",
+  runtime_deps = [":findUsagesMl_test_lib"]
+)
+### auto-generated section `build intellij.findUsagesMl` end

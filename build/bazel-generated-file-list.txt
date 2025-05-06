@@ -786,6 +786,7 @@ plugins/evaluation-plugin/languages/java
 plugins/evaluation-plugin/languages/kotlin
 plugins/evaluation-plugin/languages/python
 plugins/filePrediction
+plugins/findUsagesMl
 plugins/git-features-trainer
 plugins/git-modal-commit
 plugins/git4idea

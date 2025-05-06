@@ -1,0 +1,33 @@
+<idea-plugin package="com.intellij.findUsagesMl">
+  <name>ML Ranking in Find Usages</name>
+  <description><![CDATA[
+    <p>The plugin is collecting anonymized data for training a machine learning model to improve the performance of the show usages
+    and find usages features. It will introduce this model for the 253 version.
+    </p>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+  <category>Local AI/ML Tools</category>
+  <id>com.intellij.findusages.ml</id>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.platform.ml.logs"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.psi.search.FileRankerMlService"
+                        serviceImplementation="com.intellij.findUsagesMl.FileRankerMlServiceImpl"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.findUsagesMl.FindUsagesFileRankerFeatureCollector"/>
+    <registryKey defaultValue="false"
+                 description="When false, all functionality from the findUsagesMl plugin will be disabled."
+                 key="find.usages.ml.ranker.isEnabled"/>
+    <registryKey defaultValue="true"
+                 description="When true, the old implementation of find usages will be used and FileRankerMlService calls will be made,
+                 but the results of ordering will be ignored. When false, find usages will use the new implementation."
+                 key="find.usages.ml.ranker.useOldImplementation"/>
+  </extensions>
+
+</idea-plugin>

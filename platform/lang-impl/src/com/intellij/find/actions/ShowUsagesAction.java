@@ -62,6 +62,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FileRankerMlService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -76,6 +77,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduler;
@@ -787,6 +789,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         else { // firstUsageTimestamp == 0 means that no usage was found.
           durationFirstResults = -1;
         }
+        UsageViewManagerImpl.informRankerMlService(project, usages, FileRankerMlService.CallSource.SHOW_USAGES);
         UsageViewStatisticsCollector.logSearchFinished(project, usageView,
                                                        actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(),
                                                        visibleUsages.size(),
