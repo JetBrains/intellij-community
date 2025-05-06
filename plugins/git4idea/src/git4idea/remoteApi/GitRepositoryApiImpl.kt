@@ -12,10 +12,10 @@ import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.ref.GitReferenceName
+import com.intellij.vcs.git.shared.ref.GitReferencesSet
 import com.intellij.vcs.git.shared.repo.GitHash
 import com.intellij.vcs.git.shared.repo.GitOperationState
 import com.intellij.vcs.git.shared.repo.GitRepositoryState
-import com.intellij.vcs.git.shared.rpc.GitReferencesSet
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent

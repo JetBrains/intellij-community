@@ -3,7 +3,7 @@ package com.intellij.vcs.git.shared.repo
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.vcs.git.shared.ref.GitCurrentRef
-import com.intellij.vcs.git.shared.rpc.GitReferencesSet
+import com.intellij.vcs.git.shared.ref.GitReferencesSet
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.i18n.GitBundle
