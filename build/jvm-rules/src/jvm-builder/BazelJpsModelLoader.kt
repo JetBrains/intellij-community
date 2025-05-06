@@ -59,12 +59,11 @@ import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 
 private val jpsElementFactory = JpsElementFactory.getInstance()
-
 private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: error("No java.home system property")
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
-private const val TOOL_VERSION: Long = 53
+private const val TOOL_VERSION: Long = 54
 
 internal fun loadJpsModel(
   sources: List<Path>,

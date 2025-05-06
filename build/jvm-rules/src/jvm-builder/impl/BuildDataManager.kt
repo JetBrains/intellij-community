@@ -30,7 +30,7 @@ internal class BuildDataManager private constructor(
   val relativizer: PathRelativizerService,
   private val dataManager: BuildDataProvider,
   @JvmField val depGraph: DependencyGraph,
-  private val containerFactory: BazelPersistentMapletFactory,
+  @JvmField val containerFactory: BazelPersistentMapletFactory,
 ) {
   private val depGraphPathMapper: NodeSourcePathMapper
 

@@ -42,7 +42,6 @@ import org.jetbrains.bazel.jvm.worker.state.SourceFileStateResult
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.worker.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.worker.state.createInitialSourceMap
-import org.jetbrains.bazel.jvm.worker.state.createNewDependencyList
 import org.jetbrains.bazel.jvm.worker.state.saveBuildState
 import org.jetbrains.bazel.jvm.worker.storage.StorageInitializer
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
@@ -190,22 +189,18 @@ suspend fun buildUsingJps(
 
   var rebuildReason = validateFileExistence(outputs = outputs, cacheDir = dataDir)
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
-  val depStateStorageFile = dataDir.resolve("$prefix-lib-roots-v2.arrow")
   val trackableDependencyFiles = moduleTarget.module.container.getChild(BazelConfigurationHolder.KIND).trackableDependencyFiles
 
   val buildState = if (rebuildReason == null) {
     tracer.span("load and check state") {
       computeBuildState(
         buildStateFile = buildStateFile,
-        depStateStorageFile = depStateStorageFile,
-        trackableDependencyFiles = trackableDependencyFiles,
         sourceRelativizer = typeAwareRelativizer.sourceRelativizer,
         allocator = allocator,
         sourceFileToDigest = sourceFileToDigest,
         targetDigests = targetDigests,
         forceIncremental = forceIncremental,
         tracer = tracer,
-        dependencyFileToDigest = dependencyFileToDigest,
         parentSpan = it,
       )
     }.also {
@@ -213,7 +208,7 @@ suspend fun buildUsingJps(
     }
   }
   else {
-    createCleanBuildStateResult(trackableDependencyFiles, dependencyFileToDigest, rebuildReason)
+    createCleanBuildStateResult(rebuildReason)
   }
 
   val isRebuild = rebuildReason != null
@@ -241,8 +236,8 @@ suspend fun buildUsingJps(
         allocator = allocator,
         isCleanBuild = isRebuild,
         libRootManager = DependencyStateStorage(
-          storageFile = depStateStorageFile,
-          state = buildState.dependencyState,
+          trackableDependencyFiles = trackableDependencyFiles,
+          dependencyFileToDigest = dependencyFileToDigest,
         ),
       ),
       sourceFileState = buildState.sourceFileState,
@@ -281,8 +276,8 @@ suspend fun buildUsingJps(
         allocator = allocator,
         isCleanBuild = true,
         libRootManager = DependencyStateStorage(
-          storageFile = depStateStorageFile,
-          state = createNewDependencyList(trackableDependencyFiles, dependencyFileToDigest),
+          trackableDependencyFiles = trackableDependencyFiles,
+          dependencyFileToDigest = dependencyFileToDigest,
         ),
       ),
       sourceFileState = null,
@@ -496,9 +491,6 @@ private fun CoroutineScope.postBuild(
       metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )
-  }
-  launch {
-    buildDataProvider.libRootManager.saveState(buildDataProvider.allocator, buildDataProvider.relativizer.sourceRelativizer)
   }
 
   launch {

@@ -31,7 +31,7 @@ import kotlin.time.toJavaDuration
 class DependencyAnalyzer(private val coroutineScope: CoroutineScope) {
   private val cache: AsyncCache<DependencyDescriptor, Pair<ScatterMap<AbiJarSource, NodeUpdateItem>, ScatterMap<AbiJarSource, NodeUpdateItem>>> = Caffeine.newBuilder()
     .expireAfterAccess(2.minutes.toJavaDuration())
-    .maximumSize(100)
+    .maximumSize(512)
     .executor { coroutineScope.launch { it.run() } }
     .buildAsync()
 
