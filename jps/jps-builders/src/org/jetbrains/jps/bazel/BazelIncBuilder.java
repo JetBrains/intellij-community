@@ -111,9 +111,9 @@ public class BazelIncBuilder {
         }
       }
 
-      List<CompilerRunner> compilers = collect(map(ourCompilers, f -> f.create(context)), new ArrayList<>());
-      List<CompilerRunner> roundCompilers = collect(map(ourRoundCompilers, f -> f.create(context)), new ArrayList<>());
-      List<BytecodeInstrumenter> instrumenters = collect(map(ourInstrumenters, f -> f.create(context)), new ArrayList<>());
+      List<CompilerRunner> compilers = collect(map(ourCompilers, f -> f.create(context, storageManager)), new ArrayList<>());
+      List<CompilerRunner> roundCompilers = collect(map(ourRoundCompilers, f -> f.create(context, storageManager)), new ArrayList<>());
+      List<BytecodeInstrumenter> instrumenters = collect(map(ourInstrumenters, f -> f.create(context, storageManager)), new ArrayList<>());
 
       boolean isInitialRound = true;
 

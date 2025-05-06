@@ -2,7 +2,8 @@
 package org.jetbrains.jps.bazel.runner;
 
 import org.jetbrains.jps.bazel.BuildContext;
+import org.jetbrains.jps.bazel.StorageManager;
 
 public interface RunnerFactory<T extends Runner> {
-  T create(BuildContext context);
+  T create(BuildContext context, StorageManager storageManager);
 }

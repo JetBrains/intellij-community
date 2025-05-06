@@ -4,12 +4,13 @@ package org.jetbrains.jps.bazel.impl;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.bazel.BuildContext;
+import org.jetbrains.jps.bazel.StorageManager;
 import org.jetbrains.jps.bazel.runner.BytecodeInstrumenter;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 public class NotNullInstrumenter implements BytecodeInstrumenter {
-  public NotNullInstrumenter(BuildContext context) {
+  public NotNullInstrumenter(BuildContext context, StorageManager storageManager) {
   }
 
   @Override

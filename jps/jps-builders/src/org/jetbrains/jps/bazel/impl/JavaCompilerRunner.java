@@ -5,10 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.bazel.BuildContext;
-import org.jetbrains.jps.bazel.DiagnosticSink;
-import org.jetbrains.jps.bazel.ExitCode;
-import org.jetbrains.jps.bazel.Message;
+import org.jetbrains.jps.bazel.*;
 import org.jetbrains.jps.bazel.runner.CompilerDataSink;
 import org.jetbrains.jps.bazel.runner.CompilerRunner;
 import org.jetbrains.jps.bazel.runner.OutputSink;
@@ -52,7 +49,7 @@ public class JavaCompilerRunner implements CompilerRunner {
   private final ModulePath myModulePath;
   private final Collection<File> myClassPath;
 
-  public JavaCompilerRunner(BuildContext context) {
+  public JavaCompilerRunner(BuildContext context, StorageManager storageManager) {
     myContext = context;
     myOptions = getFilteredOptions(context);
     NodeSourcePathMapper pathMapper = context.getPathMapper();

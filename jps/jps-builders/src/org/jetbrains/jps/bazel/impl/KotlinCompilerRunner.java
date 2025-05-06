@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel.impl;
 
-import org.jetbrains.jps.bazel.BuildContext;
-import org.jetbrains.jps.bazel.DiagnosticSink;
-import org.jetbrains.jps.bazel.ExitCode;
-import org.jetbrains.jps.bazel.Message;
+import org.jetbrains.jps.bazel.*;
 import org.jetbrains.jps.bazel.runner.CompilerRunner;
 import org.jetbrains.jps.bazel.runner.OutputSink;
 import org.jetbrains.jps.dependency.NodeSource;
@@ -13,16 +10,8 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollectorImpl;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
 import org.jetbrains.kotlin.config.Services;
-import org.jetbrains.kotlin.incremental.EnumWhenTrackerImpl;
-import org.jetbrains.kotlin.incremental.ExpectActualTrackerImpl;
-import org.jetbrains.kotlin.incremental.ImportTrackerImpl;
-import org.jetbrains.kotlin.incremental.InlineConstTrackerImpl;
-import org.jetbrains.kotlin.incremental.LookupTrackerImpl;
-import org.jetbrains.kotlin.incremental.components.EnumWhenTracker;
-import org.jetbrains.kotlin.incremental.components.ExpectActualTracker;
-import org.jetbrains.kotlin.incremental.components.ImportTracker;
-import org.jetbrains.kotlin.incremental.components.InlineConstTracker;
-import org.jetbrains.kotlin.incremental.components.LookupTracker;
+import org.jetbrains.kotlin.incremental.*;
+import org.jetbrains.kotlin.incremental.components.*;
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents;
 import org.jetbrains.kotlin.progress.CompilationCanceledException;
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
@@ -35,7 +24,7 @@ import static org.jetbrains.kotlin.cli.common.ExitCode.OK;
 public class KotlinCompilerRunner implements CompilerRunner {
   private final BuildContext myContext;
 
-  public KotlinCompilerRunner(BuildContext context) {
+  public KotlinCompilerRunner(BuildContext context, StorageManager storageManager) {
     myContext = context;
   }
 
