@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.ALWAYS_VISIBLE_GROUP
 import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_DISABLED_CHILDREN
 import com.intellij.openapi.actionSystem.ex.ActionUtil.SUPPRESS_SUBMENU
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -281,7 +280,6 @@ internal class ActionUpdater @JvmOverloads constructor(
       result
         .mapNotNull {
           updatedPresentations[it]?.getClientProperty(ActionUtil.INLINE_ACTIONS)
-          ?: (it as? InlineActionsHolder)?.inlineActions
         }
         .flatten()
         .map {

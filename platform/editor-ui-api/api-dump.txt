@@ -1406,8 +1406,6 @@ com.intellij.openapi.actionSystem.ex.CustomComponentAction
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation):javax.swing.JComponent
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
 - updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
-com.intellij.openapi.actionSystem.ex.InlineActionsHolder
-- getInlineActions():java.util.List
 com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 - a:alwaysShowIconInMainMenu():Z
 com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
