@@ -75,7 +75,7 @@ object K2UnusedSymbolUtil {
             if (name == null || name == "_") return false
             // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
             if (declaration.isFunctionTypeParameter) return false
-            val ownerFunction = declaration.getOwnerFunction()
+            val ownerFunction = declaration.ownerDeclaration
             if (ownerFunction is KtConstructor<*>) {
                 // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
                 val containingClass = declaration.containingClass()

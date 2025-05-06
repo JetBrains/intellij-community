@@ -14398,6 +14398,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/removeUnused/companionViaImport3.kt");
         }
 
+        @TestMetadata("contextParametersInInterface.kt")
+        public void testContextParametersInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnused/contextParametersInInterface.kt");
+        }
+
         @TestMetadata("deledage.kt")
         public void testDeledage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeUnused/deledage.kt");
