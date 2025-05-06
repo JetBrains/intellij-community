@@ -18,6 +18,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
@@ -63,6 +64,9 @@ public class ConfigurationState {
     try {
       return new ConfigurationState(DataPaths.getConfigStateStoreFile(context));
     }
+    catch (NoSuchFileException e) {
+      return EMPTY;
+    }
     catch (Throwable e) {
       context.report(Message.create(null, e));
       return EMPTY;
@@ -83,7 +87,7 @@ public class ConfigurationState {
 
     // digest name, count and order of classpath entries as well as content digests of all non-abi deps
     Iterators.Function<@NotNull NodeSource, Iterable<String>> digestMapper =
-      path -> DataPaths.isAbiJar(path.toString())? List.of(path.toString()) : List.of(path.toString(), deps.getDigest(path));
+      path -> DataPaths.isLibraryTracked(path.toString())? List.of(path.toString()) : List.of(path.toString(), deps.getDigest(path));
 
     return Utils.digest(flat(map(deps.getElements(), digestMapper)));
   }

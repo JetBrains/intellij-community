@@ -15,6 +15,7 @@ import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -61,10 +62,10 @@ public class BazelIncBuilder {
           srcSnapshotDelta.markRecompileAll();
         }
         if (!srcSnapshotDelta.isRecompileAll()) {
-          Predicate<NodeSource> abiJarFilter = ns -> DataPaths.isAbiJar(ns.toString());
+          Predicate<NodeSource> isLibTracked = ns -> DataPaths.isLibraryTracked(ns.toString());
           ElementSnapshotDeltaImpl<NodeSource> libsSnapshotDelta = new ElementSnapshotDeltaImpl<>(
-            ElementSnapshot.derive(pastState.getLibraries(), abiJarFilter),
-            ElementSnapshot.derive(context.getBinaryDependencies(), abiJarFilter)
+            ElementSnapshot.derive(pastState.getLibraries(), isLibTracked),
+            ElementSnapshot.derive(context.getBinaryDependencies(), isLibTracked)
           );
           modifiedLibraries = libsSnapshotDelta.getModified();
           deletedLibraries = libsSnapshotDelta.getDeleted();
@@ -121,7 +122,7 @@ public class BazelIncBuilder {
 
         if (srcSnapshotDelta.isRecompileAll()) {
           storageManager.cleanBuildState();
-          modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isAbiJar(ns.toString())).getElements();
+          modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isLibraryTracked(ns.toString())).getElements();
           deletedLibraries = Set.of();
         }
 
@@ -239,7 +240,9 @@ public class BazelIncBuilder {
           try {
             Files.createLink(backup, path);
           }
-          catch (IOException e) {
+          catch (NoSuchFileException ignored) {
+          }
+          catch (Throwable e) {
             context.report(Message.create(null, Message.Kind.WARNING, e));
             // fallback to copy
             Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);

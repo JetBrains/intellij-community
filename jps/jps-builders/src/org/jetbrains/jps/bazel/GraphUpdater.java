@@ -4,13 +4,15 @@ package org.jetbrains.jps.bazel;
 import org.jetbrains.jps.bazel.impl.SnapshotDeltaImpl;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
-import org.jetbrains.jps.incremental.dependencies.LibraryDef;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
+
+import static org.jetbrains.jps.javac.Iterators.contains;
 
 public final class GraphUpdater {
   private static final String MODULE_INFO_FILE_NAME = "module-info.java";
@@ -44,12 +46,14 @@ public final class GraphUpdater {
       }
     }
 
+    NodeSourceSnapshot baseSnapshot = snapshotDelta.getBaseSnapshot();
+    Predicate<NodeSource> currentChunkScopeFilter = s -> contains(baseSnapshot.getElements(), s);
     DifferentiateParameters params = DifferentiateParametersBuilder.create(myTargetName)
       .compiledWithErrors(errorsDetected)
       .calculateAffected(!snapshotDelta.isRecompileAll())
       .processConstantsIncrementally(true)
-      .withAffectionFilter(s -> !LibraryDef.isLibraryPath(s))
-      .withChunkStructureFilter(s -> true).get();
+      .withAffectionFilter(currentChunkScopeFilter)
+      .withChunkStructureFilter(currentChunkScopeFilter).get();
 
     DifferentiateResult diffResult = depGraph.differentiate(delta, params, extParts);
 

@@ -26,11 +26,14 @@ public interface DataPaths {
     return getDependenciesBackupStoreDir(context).resolve(jarPath.getFileName());
   }
 
-  static boolean isAbiJar(Path path) {
-    return isAbiJar(path.getFileName().toString());
+  static boolean isLibraryTracked(Path path) {
+    return isLibraryTracked(path.getFileName().toString());
   }
-  
-  static boolean isAbiJar(String path) {
-    return path.endsWith("-abi.jar"); // todo: better criterion?
+
+  /**
+   * @param path checks if the given library should be tracked: whether the corresponding graph snippet is built and analyzed
+   */
+  static boolean isLibraryTracked(String path) {
+    return true/*path.endsWith("-abi.jar")*/;
   }
 }

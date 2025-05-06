@@ -7,13 +7,13 @@ import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 
 public interface NodeSourceSnapshot extends ElementSnapshot<NodeSource> {
   NodeSourceSnapshot EMPTY = new NodeSourceSnapshot() {
     @Override
     public @NotNull Iterable<@NotNull NodeSource> getElements() {
-      return List.of();
+      return Set.of();
     }
 
     @Override
