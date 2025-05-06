@@ -915,6 +915,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             // only insert when not already present.
             int row = -(p + 1);
             insertRow(row, v);
+          } else {
+            removeRow(p);
+            insertRow(p, v);
           }
         }
       }
@@ -1157,7 +1160,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ).wrapProgress(indicator).executeSynchronously();
 
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
-        ConcurrentHashMap<String, Reference<FindPopupItem>> fileToRecentItemRef = new ConcurrentHashMap<>();
+        ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
+        Set<String> filePaths = ConcurrentHashMap.newKeySet();
 
         projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, (usage)-> {
           if (isCancelled()) {
@@ -1171,8 +1175,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             onStop(hash);
             return false;
           }
+          filePaths.add(usage.getPath());
 
-          FindPopupItem recentItem = SoftReference.dereference(fileToRecentItemRef.get(usage.getPath()));
+          FindPopupItem recentItem = SoftReference.dereference(recentItemRef.get());
           FindPopupItem newItem;
           boolean merged = !myHelper.isReplaceState() && recentItem != null && recentItem.getUsage().merge(usage);
           if (!merged) {
@@ -1192,7 +1197,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             UsagePresentation recentUsagePresentation = UsagePresentationProvider.getPresentation(recentItemUsage, project, scope);
             newItem = recentItem.withPresentation(recentUsagePresentation);
           }
-          fileToRecentItemRef.put(usage.getPath(), new WeakReference<>(newItem));
+          recentItemRef.set(new WeakReference<>(newItem));
 
           ApplicationManager.getApplication().invokeLater(() -> {
             if (isCancelled()) {
@@ -1201,24 +1206,13 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             }
             myPreviewSplitter.getSecondComponent().setVisible(true);
             DefaultTableModel model = (DefaultTableModel)myResultsPreviewTable.getModel();
-            if (!merged) {
-              model.addRow(new Object[]{newItem});
-            }
-            else {
-              for (int rowNum = 0; rowNum < model.getRowCount(); rowNum++) {
-                if (model.getValueAt(rowNum, 0) == recentItem) {
-                  model.setValueAt(newItem, rowNum, 0);
-                  model.fireTableRowsUpdated(rowNum, rowNum);
-                  break;
-                }
-              }
-            }
+            model.addRow(new Object[]{newItem});
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
             int occurrences = resultsCount.get();
-            int filesWithOccurrences = fileToRecentItemRef.size();
+            int filesWithOccurrences = filePaths.size();
             myCodePreviewComponent.setVisible(occurrences > 0);
             myReplaceAllButton.setEnabled(occurrences > 0);
             myReplaceSelectedButton.setEnabled(occurrences > 0);

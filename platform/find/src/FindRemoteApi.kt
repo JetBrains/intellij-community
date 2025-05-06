@@ -38,12 +38,11 @@ interface FindRemoteApi : RemoteApi<Unit> {
 data class FindInFilesResult(
   val presentation: List<SerializableTextChunk>,
   val line: Int,
-  val offset: Int,
-  val originalOffset: Int,
+  val navigationOffset: Int,
+  val mergedOffsets: List<Int>,
   val length: Int,
   val originalLength: Int,
   val fileId: VirtualFileId,
   @param:NlsSafe val presentablePath: String,
-  val merged: Boolean,
   val backgroundColor: ColorId?,
 )

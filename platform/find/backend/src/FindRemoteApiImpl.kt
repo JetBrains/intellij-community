@@ -39,7 +39,7 @@ class FindRemoteApiImpl : FindRemoteApi {
         val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
 
         val isReplaceState = findModel.isReplaceState
-        val previousResultMap: ConcurrentHashMap<String, UsageInfo2UsageAdapter> = ConcurrentHashMap()
+        val previousResult = ThreadLocal<UsageInfo2UsageAdapter>()
         val maxUsages = ShowUsagesAction.getUsagesPageSize()
         val usagesCount = AtomicInteger()
 
@@ -61,12 +61,11 @@ class FindRemoteApiImpl : FindRemoteApi {
           }
 
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
-          val previousItem: UsageInfo2UsageAdapter? = previousResultMap[adapter.path]
-          val originalOffset = adapter.navigationOffset
+          val previousItem: UsageInfo2UsageAdapter? = previousResult.get()
           val originalLength = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset
-          val merged = !isReplaceState && previousItem != null && adapter.merge(previousItem)
+          if (!isReplaceState && previousItem != null) adapter.merge(previousItem)
           adapter.updateCachedPresentation()
-          previousResultMap[adapter.path] = adapter
+          previousResult.set(adapter)
 
           val textChunks = adapter.text.map {
             SerializableTextChunk(it.text,it.attributes)
@@ -77,13 +76,12 @@ class FindRemoteApiImpl : FindRemoteApi {
           val result = FindInFilesResult(
             presentation = textChunks,
             line = adapter.line,
-            offset = adapter.navigationOffset,
-            originalOffset = originalOffset,
+            navigationOffset = adapter.navigationOffset,
+            mergedOffsets = adapter.mergedInfos.map { it.navigationOffset },
             length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
             originalLength = originalLength,
             fileId = virtualFile.rpcId(),
             presentablePath = presentablePath,
-            merged = merged,
             backgroundColor = bgColor,
           )
           launch {
