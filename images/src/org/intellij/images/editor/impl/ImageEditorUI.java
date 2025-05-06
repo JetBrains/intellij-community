@@ -57,6 +57,7 @@ import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
+import org.intellij.images.scientific.utils.ScientificUtils;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -174,15 +175,58 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     contentPanel.add(errorPanel, ERROR_PANEL);
 
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    JPanel bottomPanel = new NonOpaquePanel(new BorderLayout());
+
+    infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
+    infoLabel.setBorder(JBUI.Borders.emptyRight(2));
+
+    boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
     if (!isEmbedded) {
       topPanel.add(toolbarPanel, BorderLayout.WEST);
-      infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
-      infoLabel.setBorder(JBUI.Borders.emptyRight(2));
-      topPanel.add(infoLabel, BorderLayout.EAST);
+      if (isScientificMode) {
+        JPanel scientificInfoPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        JLabel positionLabel = new JLabel(ImagesBundle.message("scientific.cursor.position", 0, 0));
+        JLabel valueLabel = new JLabel(ImagesBundle.message("scientific.pixel.value", 0, 0, 0));
+        scientificInfoPanel.add(positionLabel);
+        scientificInfoPanel.add(valueLabel);
+
+        imageComponent.addMouseMotionListener(new MouseMotionAdapter() {
+          @Override
+          public void mouseMoved(MouseEvent e) {
+            BufferedImage image = imageComponent.getDocument().getValue();
+            if (image != null) {
+              double zoom = imageComponent.getZoomFactor();
+
+              int x = (int)((e.getX() - ImageComponent.IMAGE_INSETS) / zoom);
+              int y = (int)((e.getY() - ImageComponent.IMAGE_INSETS) / zoom);
+
+              if (x >= 0 && x < image.getWidth() && y >= 0 && y < image.getHeight()) {
+                int pixel = image.getRGB(x, y);
+                int r = (pixel >> 16) & 0xFF;
+                int g = (pixel >> 8) & 0xFF;
+                int b = pixel & 0xFF;
+                positionLabel.setText(ImagesBundle.message("scientific.cursor.position", x, y));
+                valueLabel.setText(ImagesBundle.message("scientific.pixel.value", r, g, b));
+              }
+              else {
+                positionLabel.setText(ImagesBundle.message("scientific.cursor.position", 0, 0));
+                valueLabel.setText(ImagesBundle.message("scientific.pixel.value", 0, 0, 0));
+              }
+            }
+          }
+        });
+
+        bottomPanel.add(scientificInfoPanel, BorderLayout.WEST);
+        bottomPanel.add(infoLabel, BorderLayout.EAST);
+      }
+      else {
+        topPanel.add(infoLabel, BorderLayout.EAST);
+      }
     }
 
     add(topPanel, BorderLayout.NORTH);
     add(contentPanel, BorderLayout.CENTER);
+    add(bottomPanel, BorderLayout.SOUTH);
 
     myScrollPane.addComponentListener(new ComponentAdapter() {
       @Override
