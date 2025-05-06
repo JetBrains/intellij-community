@@ -15767,7 +15767,6 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.ui.popup.ActionPopupOptions
 - sf:Companion:com.intellij.ui.popup.ActionPopupOptions$Companion
-- b:<init>(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - sf:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
 - sf:empty():com.intellij.ui.popup.ActionPopupOptions
 - sf:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
@@ -15775,6 +15774,7 @@ f:com.intellij.ui.popup.ActionPopupOptions
 - sf:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
 - sf:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
 - sf:showDisabled():com.intellij.ui.popup.ActionPopupOptions
+- f:withSpeedSearchFilter(com.intellij.openapi.ui.popup.SpeedSearchFilter):com.intellij.ui.popup.ActionPopupOptions
 f:com.intellij.ui.popup.ActionPopupOptions$Companion
 - f:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
 - f:empty():com.intellij.ui.popup.ActionPopupOptions

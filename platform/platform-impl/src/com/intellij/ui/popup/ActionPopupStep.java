@@ -39,6 +39,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
   private final Condition<? super AnAction> myPreselectActionCondition;
+  private final SpeedSearchFilter<PopupFactoryImpl.ActionItem> mySpeedSearchFilter;
   private @NotNull BiFunction<DataContext, AnAction, DataContext> mySubStepContextAdjuster = (c, a) -> c;
 
   /** @deprecated {@link #ActionPopupStep(List, String, Supplier, String, PresentationFactory, ActionPopupOptions)} instead */
@@ -74,6 +75,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myOptions = options;
     myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(options.getPreselectCondition(), items);
     myPreselectActionCondition = options.getPreselectCondition();
+    mySpeedSearchFilter = options.getSpeedSearchFilter();
     myAutoSelectionEnabled = options.autoSelectionEnabled();
     myShowDisabledActions = options.showDisabledActions();
   }
@@ -112,8 +114,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                                       @NotNull PresentationFactory presentationFactory,
                                                                                       @NotNull Supplier<? extends DataContext> contextSupplier,
                                                                                       @NotNull ActionPopupOptions options) {
-    List<PopupFactoryImpl.ActionItem> items = createActionItems(
-      actionGroup, dataContext, actionPlace, presentationFactory, options);
+    List<PopupFactoryImpl.ActionItem> items = createActionItems(actionGroup, dataContext, actionPlace, presentationFactory, options);
 
     ActionPopupOptions stepOptions = ActionPopupOptions.convertForStep(options, items);
     return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, stepOptions);
@@ -356,6 +357,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public SpeedSearchFilter<PopupFactoryImpl.ActionItem> getSpeedSearchFilter() {
+    if (mySpeedSearchFilter != null) return mySpeedSearchFilter;
     return this;
   }
 

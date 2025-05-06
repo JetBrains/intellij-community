@@ -3,6 +3,7 @@ package com.intellij.ui.popup
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid
+import com.intellij.openapi.ui.popup.SpeedSearchFilter
 import com.intellij.openapi.util.Condition
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,11 +16,16 @@ private data class ActionPopupOptionsImpl(
   val autoSelection: Boolean = false,
   val preselectCondition: Condition<in AnAction>? = null,
   val defaultIndex: Int = -1,
+  val speedSearchFilter: SpeedSearchFilter<PopupFactoryImpl.ActionItem>? = null,
 )
 
 class ActionPopupOptions private constructor(
   private val options: ActionPopupOptionsImpl,
 ) {
+  fun withSpeedSearchFilter(filter: SpeedSearchFilter<PopupFactoryImpl.ActionItem>?): ActionPopupOptions {
+    return options.copy(speedSearchFilter = filter).asOption()
+  }
+
   @ApiStatus.Internal
   fun showNumbers(): Boolean {
     return options.showNumbers
@@ -58,6 +64,11 @@ class ActionPopupOptions private constructor(
   @ApiStatus.Internal
   fun getDefaultIndex(): Int {
     return options.defaultIndex
+  }
+
+  @ApiStatus.Internal
+  fun getSpeedSearchFilter(): SpeedSearchFilter<PopupFactoryImpl.ActionItem>? {
+    return options.speedSearchFilter
   }
 
   companion object {
@@ -142,10 +153,13 @@ class ActionPopupOptions private constructor(
         else -> null
       }
 
-      return forStep(showDisabledActions = options.showDisabledActions,
-                     enableMnemonics = enableMnemonics,
-                     autoSelection = options.autoSelection,
-                     preselectCondition = preselectCondition)
+      return ActionPopupOptionsImpl(
+        showDisabledActions = options.showDisabledActions,
+        honorActionMnemonics = enableMnemonics,
+        autoSelection = options.autoSelection,
+        preselectCondition = preselectCondition,
+        speedSearchFilter = options.speedSearchFilter,
+      ).asOption()
     }
 
     @ApiStatus.Internal

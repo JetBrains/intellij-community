@@ -183,6 +183,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val presentationFactory = PresentationFactory()
     val asyncDataContext: DataContext = Utils.createAsyncDataContext(context)
     val options = ActionPopupOptions.showDisabled()
+      .withSpeedSearchFilter(ProjectWidgetSpeedsearchFilter())
     return ActionPopupStep.createActionsStep(null, actionGroup, asyncDataContext, ActionPlaces.PROJECT_WIDGET_POPUP, presentationFactory,
                                              Supplier { asyncDataContext }, options)
   }
@@ -253,6 +254,14 @@ private class WidgetPositionListeners(private val widget: ToolbarComboButton, pr
       SwingUtilities.convertPoint(it.parent, it.x, it.y, widget.rootPane).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     }
     project?.service<ProjectWidgetGradientLocationService>()?.setProjectWidgetIconCenterRelativeToRootPane(offset)
+  }
+}
+
+private class ProjectWidgetSpeedsearchFilter : SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
+  override fun getIndexedString(value: PopupFactoryImpl.ActionItem): String? {
+    val action = value.action as? ProjectToolbarWidgetPresentable
+    if (action == null) return value.text
+    return action.projectNameToDisplay + " " + action.projectPathToDisplay.orEmpty() + " " + action.providerPathToDisplay.orEmpty()
   }
 }
 
