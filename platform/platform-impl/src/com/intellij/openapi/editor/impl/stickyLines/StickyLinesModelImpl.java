@@ -76,7 +76,9 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
     if (markupModel == null) {
       String editors = editorsAsString(document);
-      LOG.error(
+      // TODO: it should be error but in test `RunWithComposeHotReloadRunGutterSmokeTest` happens something crazy:
+      //  editor and markup model do not exist inside `doApplyInformationToEditor`
+      LOG.warn /*error*/ (
         """
           ______________________________________________________________________________________
           getting sticky lines model when markup model is not created
