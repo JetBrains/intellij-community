@@ -67,7 +67,6 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
   protected open fun getMismatchedParameters(
     signature: SigPresentation,
     parameterOwner: ParameterOwner,
-    context: ParameterInfoContext,
   ): Set<ParameterHtmlPresentation> = emptySet()
 
   /**
@@ -175,7 +174,7 @@ abstract class ParameterInfoHandlerWithColoredSyntax<ParameterOwner : PsiElement
     context.objectsToView.forEach {
       @Suppress("UNCHECKED_CAST")
       (it as? ParameterInfoHandlerWithColoredSyntaxData)?.let {
-        it.mismatchedParameters = getMismatchedParameters(it.signatureHtmlPresentation as SigPresentation, parameterOwner, context)
+        it.mismatchedParameters = getMismatchedParameters(it.signatureHtmlPresentation as SigPresentation, parameterOwner)
         it.selectedParameter = getSignatureCurrentParameter(it.signatureHtmlPresentation as SigPresentation, parameterOwner, context)
         it.isFullyMatched = it.mismatchedParameters.isEmpty() && isSignatureFullyMatched(it.signatureHtmlPresentation as SigPresentation, parameterOwner)
       }
