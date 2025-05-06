@@ -68,6 +68,11 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
     return this
   }
   
+  override fun setDate(date: Long): PluginUiModelBuilder {
+    pluginNode.date = date
+    return this
+  }
+  
   override fun setSize(size: String?): PluginUiModelBuilder {
     if (size != null) pluginNode.size = size
     return this
@@ -125,6 +130,21 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
 
   override fun setIsPaid(isPaid: Boolean): PluginUiModelBuilder {
     pluginNode.setIsPaid(isPaid)
+    return this
+  }
+  
+  override fun setExternalPluginId(externalPluginId: String?): PluginUiModelBuilder {
+    pluginNode.externalPluginId = externalPluginId
+    return this
+  }
+  
+  override fun setExternalUpdateId(externalUpdateId: String?): PluginUiModelBuilder {
+    pluginNode.externalUpdateId = externalUpdateId
+    return this
+  }
+  
+  override fun setTags(tags: List<String>?): PluginUiModelBuilder {
+    pluginNode.tags = tags
     return this
   }
 

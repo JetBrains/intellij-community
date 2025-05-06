@@ -34,6 +34,10 @@ interface PluginUiModelBuilder {
   fun setOrganization(string: String?): PluginUiModelBuilder
   fun setIsConverted(converted: Boolean): PluginUiModelBuilder
   fun setIsPaid(isPaid: Boolean): PluginUiModelBuilder
+  fun setExternalPluginId(externalPluginId: String?): PluginUiModelBuilder
+  fun setExternalUpdateId(externalUpdateId: String?): PluginUiModelBuilder
+  fun setTags(tags: List<String>?): PluginUiModelBuilder
+  fun setDate(date: Long): PluginUiModelBuilder
 
   fun build(): PluginUiModel
 }

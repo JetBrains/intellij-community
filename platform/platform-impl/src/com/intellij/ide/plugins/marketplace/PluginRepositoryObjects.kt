@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.Tags
@@ -54,35 +55,39 @@ internal data class IntellijUpdateMetadata(
   val url: String? = null,
   val size: Int = 0
 ) {
-  fun toPluginNode(): PluginNode {
-    val pluginNode = PluginNode(PluginId.getId(id), name, size.toString())
-    pluginNode.description = description
-    pluginNode.vendor = vendor
-    pluginNode.tags = tags
-    pluginNode.changeNotes = notes
-    pluginNode.sinceBuild = since
-    pluginNode.untilBuild = until
-    pluginNode.productCode = productCode
-    pluginNode.version = version
-    pluginNode.setVendorDetails(organization)
-    pluginNode.url = url
+  fun toUiModel(): PluginUiModel {
+    val pluginId = PluginId.getId(id)
+    val builder = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+
+    builder.setName(name)
+    builder.setSize(size.toString())
+
+    builder.setDescription(description)
+    builder.setVendor(vendor)
+    builder.setTags(tags)
+    builder.setChangeNotes(notes)
+    builder.setSinceBuild(since)
+    builder.setUntilBuild(until)
+    builder.setProductCode(productCode)
+    builder.setVersion(version)
+    builder.setVendorDetails(organization)
+    builder.setUrl(url)
+
     for (dep in dependencies) {
-      pluginNode.addDepends(dep, false)
+      builder.addDependency(dep, false)
     }
     for (dep in optionalDependencies) {
-      pluginNode.addDepends(dep, true)
+      builder.addDependency(dep, true)
     }
 
-    RepositoryHelper.addMarketplacePluginDependencyIfRequired(PluginUiModelAdapter(pluginNode))
+    val model = builder.build()
 
-    return pluginNode
-  }
-
-  fun toUiModel(): PluginUiModel {
-    return PluginUiModelAdapter(toPluginNode())
+    RepositoryHelper.addMarketplacePluginDependencyIfRequired(model)
+    return model
   }
 }
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 class MarketplaceSearchPluginData(
@@ -116,10 +121,28 @@ class MarketplaceSearchPluginData(
   }
 
   fun toPluginUiModel(): PluginUiModel {
-    return PluginUiModelAdapter(toPluginNode())
+    val pluginId = PluginId.getId(id)
+    val builder = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+
+    builder.setName(name)
+    builder.setRating("%.2f".format(Locale.US, rating))
+    builder.setDownloads(downloads)
+    builder.setOrganization(organization)
+    builder.setExternalPluginId(externalPluginId)
+    builder.setExternalUpdateId(externalUpdateId ?: nearestUpdate?.id)
+    builder.setIsPaid(isPaid)
+
+    if (cdate != null) {
+      builder.setDate(cdate)
+    }
+    if (isPaid) {
+      builder.setTags(listOf(Tags.Paid.name))
+    }
+    return builder.build()
   }
 }
 
+@Serializable
 @ApiStatus.Internal
 @JsonIgnoreProperties(ignoreUnknown = true)
 class NearestUpdate(
