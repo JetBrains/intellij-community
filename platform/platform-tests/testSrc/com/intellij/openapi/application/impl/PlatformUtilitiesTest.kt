@@ -16,9 +16,8 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.application
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Assertions
@@ -119,5 +118,20 @@ class PlatformUtilitiesTest {
       Thread.sleep(50)
       ActionManager.getInstance().tryToExecute(DummyAction(), null, null, null, true)
     }
+  }
+
+  @Test
+  fun `reacquisition of write-intent lock is not promptly cancellable`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val infiniteJob = Job(currentCoroutineContext().job)
+    val jobWaiting = Job(currentCoroutineContext().job)
+    val coroutine = launch(Dispatchers.EDT) {
+      getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+        jobWaiting.complete()
+        infiniteJob.asCompletableFuture().join()
+      }
+    }
+    jobWaiting.join()
+    infiniteJob.cancel()
+    coroutine.cancelAndJoin()
   }
 }
