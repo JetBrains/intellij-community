@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +25,8 @@ import java.util.Map;
  * </p>
  */
 public final class GitBranchesCollection {
+  private static final int MAX_RECENT_CHECKOUT_BRANCHES = 5;
+
   private final @NotNull Map<GitLocalBranch, Hash> myLocalBranches;
   private final @NotNull Map<GitRemoteBranch, Hash> myRemoteBranches;
 
@@ -35,7 +37,7 @@ public final class GitBranchesCollection {
                                @NotNull List<GitLocalBranch> recentCheckoutBranches) {
     myRemoteBranches = remoteBranches;
     myLocalBranches = localBranches;
-    myRecentCheckoutBranches = recentCheckoutBranches;
+    myRecentCheckoutBranches = ContainerUtil.getFirstItems(recentCheckoutBranches, MAX_RECENT_CHECKOUT_BRANCHES);
   }
 
   public @NotNull List<GitLocalBranch> getRecentCheckoutBranches() {

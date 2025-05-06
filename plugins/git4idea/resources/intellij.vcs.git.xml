@@ -624,8 +624,6 @@
     <registryKey key="git.recent.checkout.branches.reflog.entries.count" defaultValue="50"
                  restartRequired="true"
                  description="Max amount of entry to process from Git reflog to parse recently checkout branches"/>
-    <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
-                 description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
     <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry" defaultValue="true"
                  restartRequired="true"
                  description="Enable embedded pinentry application for unlock GPG private key while Git perform commit signing. For remote dev (unix backend) and WSL."/>

@@ -4,7 +4,6 @@ package git4idea.ui.branch.tree
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -35,7 +34,7 @@ internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches
 internal val GitRepository.recentCheckoutBranches
   get() =
     if (!GitVcsSettings.getInstance(project).showRecentBranches()) emptyList()
-    else branches.recentCheckoutBranches.take(Registry.intValue("git.show.recent.checkout.branches"))
+    else branches.recentCheckoutBranches
 
 internal val GitRepository.tags: Map<GitTag, Hash>
   get() =
