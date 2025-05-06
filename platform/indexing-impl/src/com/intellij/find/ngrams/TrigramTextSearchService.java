@@ -16,33 +16,44 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 @ApiStatus.Internal
 public final class TrigramTextSearchService implements TextSearchService {
+
+  private static final boolean USE_INDEX_FOR_SEARCH = getBooleanProperty("find.use.indexing.searcher.extensions", true);
+
   @Override
   public @NotNull TextSearchResult processFilesWithText(@NotNull String text,
                                                         @NotNull Processor<? super VirtualFile> processor,
                                                         @NotNull GlobalSearchScope scope) {
     IntSet keys = TrigramBuilder.getTrigrams(text);
-    if (keys.isEmpty()) return TextSearchResult.NO_TRIGRAMS;
-    return FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, f -> {
+    if (keys.isEmpty()) {
+      return TextSearchResult.NO_TRIGRAMS;
+    }
+
+    boolean fullyCompleted = FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, file -> {
       //TODO RC: checkCanceled() is not needed here, since all processors are already wrapped in cancellableProcessor()
       ProgressManager.checkCanceled();
-      return processor.process(f);
-    }, scope)
-           ? TextSearchResult.FINISHED
-           : TextSearchResult.STOPPED;
+      return processor.process(file);
+    }, scope);
+    return fullyCompleted ?
+           TextSearchResult.FINISHED :
+           TextSearchResult.STOPPED;
   }
 
   @Override
-  public boolean isInSearchableScope(@NotNull VirtualFile file, @NotNull Project project) {
+  public boolean isInSearchableScope(@NotNull VirtualFile file,
+                                     @NotNull Project project) {
     FileType fileType = file.getFileType();
-    return !file.isDirectory() &&
-           TrigramIndex.isIndexable(file, project) &&
-           !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType) &&
-           !SingleRootFileViewProvider.isTooLargeForIntelligence(file);
+    return !file.isDirectory()
+           && TrigramIndex.isIndexable(file, project)
+           && !ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)
+           && !SingleRootFileViewProvider.isTooLargeForIntelligence(file);
   }
 
+  /** @return true if search by index available */
   public static boolean useIndexingSearchExtensions() {
-    return Boolean.parseBoolean(System.getProperty("find.use.indexing.searcher.extensions", "true"));
+    return USE_INDEX_FOR_SEARCH;
   }
 }

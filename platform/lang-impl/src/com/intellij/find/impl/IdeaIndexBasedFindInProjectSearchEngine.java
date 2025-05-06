@@ -4,11 +4,13 @@ package com.intellij.find.impl;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.TextSearchService;
+import com.intellij.find.TextSearchService.TextSearchResult;
+import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,34 +24,40 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/** Search engine implementation based on {@link com.intellij.find.ngrams.TrigramIndex} */
 @ApiStatus.Internal
 public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProjectSearchEngine {
   @Override
-  public @NotNull FindInProjectSearcher createSearcher(@NotNull FindModel findModel, @NotNull Project project) {
-    return new MyFindInProjectSearcher(project, findModel);
+  public @NotNull FindInProjectSearcher createSearcher(@NotNull FindModel findModel,
+                                                       @NotNull Project project) {
+    return new FindInProjectByIndexSearcher(project, findModel);
   }
 
-  private static final class MyFindInProjectSearcher implements FindInProjectSearcher {
-    private final @NotNull ProjectFileIndex myFileIndex;
+  private static final class FindInProjectByIndexSearcher implements FindInProjectSearcher {
+    private final @NotNull TextSearchService myTextSearchService = TextSearchService.getInstance();
     private final @NotNull Project myProject;
+    private final @NotNull ProjectFileIndex myFileIndex;
     private final @NotNull FindModel myFindModel;
-    private final @NotNull TextSearchService myTextSearchService;
 
-    private final boolean myHasTrigrams;
+    /**
+     * If findModel's search pattern is a regexp -- trigram index could still be used to provide candidate files.
+     * Basically: we build a lookup string from 'static' parts of the regexp pattern.
+     * (We still use the actual regexp pattern to look inside candidate files)
+     */
     private final String myStringToFindInIndices;
+    /** Has pattern at least one trigram? If false -- trigram index can't be used to provide candidates. */
+    private final boolean myHasTrigrams;
 
-    MyFindInProjectSearcher(@NotNull Project project, @NotNull FindModel findModel) {
+    FindInProjectByIndexSearcher(@NotNull Project project,
+                                 @NotNull FindModel findModel) {
       myProject = project;
       myFindModel = findModel;
       myFileIndex = ProjectFileIndex.getInstance(myProject);
-      myTextSearchService = TextSearchService.getInstance();
+
       String stringToFind = findModel.getStringToFind();
-
-      if (findModel.isRegularExpressions()) {
-        stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind, project);
-      }
-
-      myStringToFindInIndices = stringToFind;
+      myStringToFindInIndices = findModel.isRegularExpressions() ?
+                                FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind, project) :
+                                stringToFind;
 
       myHasTrigrams = hasTrigrams(myStringToFindInIndices);
     }
@@ -63,22 +71,26 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     public Collection<VirtualFile> doSearchForOccurrences() {
-      String stringToFind = getStringToFindInIndexes(myFindModel, myProject);
-
-      if (stringToFind.isEmpty()) {
+      if (myStringToFindInIndices.isEmpty()) {
         return Collections.emptySet();
       }
 
-
-      final GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(FindInProjectUtil.getScopeFromModel(myProject, myFindModel),
-                                                                                myProject);
+      GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
+        FindInProjectUtil.getScopeFromModel(myProject, myFindModel),
+        myProject
+      );
 
       List<VirtualFile> hits = new ArrayList<>();
-      ThrowableComputable<TextSearchService.TextSearchResult, RuntimeException> findTextComputable =
-        () -> myTextSearchService.processFilesWithText(stringToFind, Processors.cancelableCollectProcessor(hits), scope);
-      TextSearchService.TextSearchResult result =
-        DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(findTextComputable);
-      if (result != TextSearchService.TextSearchResult.NO_TRIGRAMS) {
+      TextSearchResult result = DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(
+        () -> {
+          return myTextSearchService.processFilesWithText(
+            myStringToFindInIndices,
+            Processors.cancelableCollectProcessor(hits),
+            scope
+          );
+        }
+      );
+      if (result != TextSearchResult.NO_TRIGRAMS) {
         return Collections.unmodifiableCollection(hits);
       }
 
@@ -88,14 +100,18 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       return DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
         Set<VirtualFile> resultFiles = new HashSet<>();
 
-        helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
+        helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), myStringToFindInIndices, file -> {
           ContainerUtil.addIfNotNull(resultFiles, file);
           return true;
         });
 
         // in case our word splitting is incorrect
-        VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(stringToFind, UsageSearchContext.ANY, scope,
-                                                                           myFindModel.isCaseSensitive());
+        VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(
+          myStringToFindInIndices,
+          UsageSearchContext.ANY,
+          scope,
+          myFindModel.isCaseSensitive()
+        );
 
         Collections.addAll(resultFiles, filesWithWord);
         return Collections.unmodifiableCollection(resultFiles);
@@ -104,7 +120,12 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
     @Override
     public boolean isReliable() {
-      if (DumbService.isDumb(myProject)) return false;
+      if (DumbService.isDumb(myProject)) {
+        return false;
+      }
+      if (!TrigramTextSearchService.useIndexingSearchExtensions()) {
+        return false;
+      }
 
       // a local scope may be over a non-indexed file
       if (myFindModel.getCustomScope() instanceof LocalSearchScope) return false;
@@ -113,14 +134,16 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
       // $ is used to separate words when indexing plain-text files but not when indexing
       // Java identifiers, so we can't consistently break a string containing $ characters into words
-      return myFindModel.isWholeWordsOnly() &&
-             myStringToFindInIndices.indexOf('$') < 0 &&
-             !StringUtil.getWordsIn(myStringToFindInIndices).isEmpty();
+      return myFindModel.isWholeWordsOnly()
+             && myStringToFindInIndices.indexOf('$') < 0
+             && !StringUtil.getWordsIn(myStringToFindInIndices).isEmpty();
     }
 
     @Override
     public boolean isCovered(@NotNull VirtualFile file) {
-      return myHasTrigrams && isCoveredByIndex(file) && (myFileIndex.isInContent(file) || myFileIndex.isInLibrary(file));
+      return myHasTrigrams
+             && isCoveredByIndex(file)
+             && (myFileIndex.isInContent(file) || myFileIndex.isInLibrary(file));
     }
 
     private boolean isCoveredByIndex(@NotNull VirtualFile file) {
@@ -129,16 +152,6 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
     private static boolean hasTrigrams(@NotNull String text) {
       return !TrigramBuilder.getTrigrams(text).isEmpty();
-    }
-
-    private static @NotNull String getStringToFindInIndexes(@NotNull FindModel findModel, @NotNull Project project) {
-      String stringToFind = findModel.getStringToFind();
-
-      if (findModel.isRegularExpressions()) {
-        stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind, project);
-      }
-
-      return stringToFind;
     }
   }
 }

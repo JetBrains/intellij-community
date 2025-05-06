@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -29,7 +29,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,25 +68,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
 
   private static final Comparator<VirtualFile> SEARCH_RESULT_FILE_COMPARATOR =
-    Comparator.comparing((VirtualFile f) -> f instanceof VirtualFileWithId ? ((VirtualFileWithId)f).getId() : 0)
+    Comparator.comparing((VirtualFile f) -> (f instanceof VirtualFileWithId fileWithId) ? fileWithId.getId() : 0)
       .thenComparing(VirtualFile::getName) // in case files without id are also searched
       .thenComparing(VirtualFile::getPath);
-  private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
+
+  /** Total size of processed files before asking user 'too many files, should we continue?' */
+  //TODO 70 Kb -- isn't it too small limit?
+  private static final int TOTAL_FILES_SIZE_LIMIT_BEFORE_ASKING = 70 * 1024 * 1024; // megabytes.
 
   private final FindModel myFindModel;
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final @Nullable VirtualFile myDirectory;
   private final ProjectFileIndex myProjectFileIndex;
-  private final Condition<VirtualFile> myFileMask;
+  private final Predicate<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
   private final @Nullable Module myModule;
   private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(new HashSet<>());
@@ -96,7 +100,9 @@ final class FindInProjectTask {
   private final @NotNull List<FindInProjectSearchEngine.@NotNull FindInProjectSearcher> mySearchers;
   private long mySearchStartedAt;
 
-  FindInProjectTask(@NotNull FindModel findModel, @NotNull Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially,
+  FindInProjectTask(@NotNull FindModel findModel,
+                    @NotNull Project project,
+                    @NotNull Set<? extends VirtualFile> filesToScanInitially,
                     boolean tooManyUsagesStatus) {
     myFindModel = findModel;
     myProject = project;
@@ -108,9 +114,9 @@ final class FindInProjectTask {
     myModule = moduleName == null ? null : ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    Condition<CharSequence> patternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
+    Predicate<CharSequence> patternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
 
-    myFileMask = file -> file != null && patternCondition.value(file.getNameSequence());
+    myFileMask = file -> file != null && patternCondition.test(file.getNameSequence());
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     myProgress = progress != null ? progress : new EmptyProgressIndicator();
@@ -132,7 +138,7 @@ final class FindInProjectTask {
     }
     mySearchStartedAt = System.nanoTime();
     try {
-      Processor<VirtualFile> fileProcessor = wrapUsageProcessor(processPresentation, usageProcessor);
+      Processor<VirtualFile> fileProcessor = adaptUsageProcessor(processPresentation, usageProcessor);
 
       myProgress.setIndeterminate(true);
       myProgress.setText(FindBundle.message("progress.text.scanning.indexed.files"));
@@ -144,7 +150,8 @@ final class FindInProjectTask {
       }
 
       ConcurrentLinkedDeque<VirtualFile> deque = new ConcurrentLinkedDeque<>(
-        ContainerUtil.sorted(filesForFastWordSearch, SEARCH_RESULT_FILE_COMPARATOR));
+        ContainerUtil.sorted(filesForFastWordSearch, SEARCH_RESULT_FILE_COMPARATOR)
+      );
       AtomicInteger processedFastFiles = new AtomicInteger();
       FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(deque, o -> {
         boolean result = fileProcessor.process(o);
@@ -158,13 +165,14 @@ final class FindInProjectTask {
       myProgress.setIndeterminate(true);
       myProgress.setText(FindBundle.message("progress.text.scanning.non.indexed.files"));
 
-      boolean canRelyOnIndices = canRelyOnSearchers();
+      boolean hasReliableSearchers = hasReliableSearchers();
       AtomicInteger otherFilesCount = new AtomicInteger();
-      processFilesInScope(filesForFastWordSearch, canRelyOnIndices, file -> {
+      processFilesInScope(filesForFastWordSearch, hasReliableSearchers, file -> {
         boolean result = fileProcessor.process(file);
         otherFilesCount.incrementAndGet();
         return result;
       });
+
       if (LOG.isDebugEnabled()) {
         LOG.debug("Search processed " + otherFilesCount.get() + " non-indexed files");
         LOG.debug("Search completed in " + TimeoutUtil.getDurationMillis(mySearchStartedAt) + " ms");
@@ -173,7 +181,7 @@ final class FindInProjectTask {
     catch (ProcessCanceledException e) {
       processPresentation.setCanceled(true);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Search canceled after " + TimeoutUtil.getDurationMillis(mySearchStartedAt) + " ms", e);
+        LOG.debug("Search canceled after " + TimeoutUtil.getDurationMillis(mySearchStartedAt) + " ms", new Exception(e));
       }
     }
     catch (Throwable th) {
@@ -189,30 +197,49 @@ final class FindInProjectTask {
     }
   }
 
-  private @NotNull Processor<VirtualFile> wrapUsageProcessor(@NotNull FindUsagesProcessPresentation processPresentation,
-                                                             @NotNull Processor<? super UsageInfo> usageConsumer) {
+  /**
+   * Adapt usageProcessor so it could be called as {@code Processor<VirtualFile>} -- i.e. it searches
+   * a virtual file provided to {@code Processor<VirtualFile>} for the search pattern, and delivers all
+   * the usages found (if any) to the usageProcessor.
+   */
+  private @NotNull Processor<VirtualFile> adaptUsageProcessor(@NotNull FindUsagesProcessPresentation processPresentation,
+                                                              @NotNull Processor<? super UsageInfo> usageProcessor) {
     AtomicInteger occurrenceCount = new AtomicInteger();
-    Map<VirtualFile, Set<UsageInfo>> usagesBeingProcessed = new ConcurrentHashMap<>();
+    ConcurrentMap<VirtualFile, Set<UsageInfo>> usagesBeingProcessed = new ConcurrentHashMap<>();
     AtomicBoolean reportedFirst = new AtomicBoolean();
 
-    StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ? null :
+    StringSearcher searcher = myFindModel.isRegularExpressions() || StringUtil.isEmpty(myFindModel.getStringToFind()) ?
+                              null :
                               new StringSearcher(myFindModel.getStringToFind(), myFindModel.isCaseSensitive(), true);
 
     ClientId currentClientId = ClientId.getCurrent();
 
     return virtualFile -> {
       try (AccessToken ignored = ClientId.withClientId(currentClientId)) {
-        return processFindInFilesUsagesInFile(processPresentation, usageConsumer, occurrenceCount,
-                                              usagesBeingProcessed, reportedFirst, searcher,
-                                              virtualFile);
+        return processFindInFilesUsagesInFile(
+          processPresentation,
+          usageProcessor,
+          occurrenceCount,
+          usagesBeingProcessed,
+          reportedFirst,
+          searcher,
+          virtualFile
+        );
       }
     };
   }
 
+  /**
+   * Looks up for the search pattern (=myFindModel) in the single virtualFile, and delivers all the usages found
+   * (if any) to the usageProcessor.
+   * Also does all the counting (occurrences found, etc) and the progress presentation updates (processPresentation)
+   *
+   * @return false if usageConsumer returns false for any of the occurrences found, true otherwise
+   */
   private boolean processFindInFilesUsagesInFile(@NotNull FindUsagesProcessPresentation processPresentation,
                                                  @NotNull Processor<? super UsageInfo> usageConsumer,
                                                  @NotNull AtomicInteger occurrenceCount,
-                                                 @NotNull Map<? super VirtualFile, Set<UsageInfo>> usagesBeingProcessed,
+                                                 @NotNull ConcurrentMap<? super VirtualFile, Set<UsageInfo>> usagesBeingProcessed,
                                                  @NotNull AtomicBoolean reportedFirst,
                                                  @Nullable StringSearcher searcher,
                                                  @NotNull VirtualFile virtualFile) {
@@ -238,7 +265,8 @@ final class FindInProjectTask {
     Pair.NonNull<PsiFile, VirtualFile> pair = ReadAction.compute(() -> findFile(virtualFile));
     if (pair == null) return true;
 
-    Set<UsageInfo> processedUsages = usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ConcurrentCollectionFactory.createConcurrentSet());
+    Set<UsageInfo> processedUsages =
+      usagesBeingProcessed.computeIfAbsent(virtualFile, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     PsiFile psiFile = pair.first;
     VirtualFile sourceVirtualFile = pair.second;
 
@@ -289,12 +317,15 @@ final class FindInProjectTask {
       totalSize = myTotalFilesSize.addAndGet(fileLength);
     }
 
-    if (totalSize > FILES_SIZE_LIMIT) {
+    if (totalSize > TOTAL_FILES_SIZE_LIMIT_BEFORE_ASKING) {
       TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(myProgress);
       if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-        UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, myProgress, null, () -> FindBundle.message("find.excessive.total.size.prompt",
-                                                        UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
-                                                        ApplicationNamesInfo.getInstance().getProductName()), null);
+        UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, myProgress, null,
+                                                           () -> FindBundle.message("find.excessive.total.size.prompt",
+                                                                                    UsageViewManagerImpl.presentableSize(
+                                                                                      myTotalFilesSize.longValue()),
+                                                                                    ApplicationNamesInfo.getInstance().getProductName()),
+                                                           null);
       }
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
       myProgress.checkCanceled();
@@ -312,54 +343,65 @@ final class FindInProjectTask {
     boolean ignoreExcluded = myDirectory != null
                              && !Registry.is("find.search.in.excluded.dirs")
                              && !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
-    boolean withSubdirs = myDirectory != null && myFindModel.isWithSubdirectories();
-    boolean locateClassSources = myDirectory != null && ReadAction.compute(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
-    boolean searchInLibs = globalCustomScope != null && ReadAction.compute(() -> globalCustomScope.isSearchInLibraries());
+    boolean withSubdirs = myDirectory != null
+                          && myFindModel.isWithSubdirectories();
+    boolean locateClassSources = myDirectory != null
+                                 && ReadAction.compute(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
+    boolean searchInLibs = globalCustomScope != null
+                           && ReadAction.compute(() -> globalCustomScope.isSearchInLibraries());
 
-    ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();
+    //Queue{ VirtualFile | IndexableFilesIterator | FindModelExtension }
+    ConcurrentLinkedDeque<Object> searchTaskDeque = new ConcurrentLinkedDeque<>();
     if (customScope instanceof LocalSearchScope) {
-      deque.addAll(GlobalSearchScopeUtil.getLocalScopeFiles((LocalSearchScope)customScope));
+      searchTaskDeque.addAll(GlobalSearchScopeUtil.getLocalScopeFiles((LocalSearchScope)customScope));
     }
     else if (customScope instanceof VirtualFileEnumeration) {
       // GlobalSearchScope can include files out of project roots e.g., FileScope / FilesScope
-      ContainerUtil.addAll(deque, FileBasedIndexEx.toFileIterable(((VirtualFileEnumeration)customScope).asArray()));
+      ContainerUtil.addAll(searchTaskDeque, FileBasedIndexEx.toFileIterable(((VirtualFileEnumeration)customScope).asArray()));
     }
     else if (myDirectory != null) {
-      deque.addAll(withSubdirs ? List.of(myDirectory) : List.of(myDirectory.getChildren()));
+      searchTaskDeque.addAll(withSubdirs ? List.of(myDirectory) : List.of(myDirectory.getChildren()));
     }
     else if (myModule != null) {
       EntityStorage storage = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(myModule.getName())));
-      deque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, myProject));
+      searchTaskDeque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, myProject));
     }
     else {
-      deque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(myProject));
+      searchTaskDeque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(myProject));
     }
-    deque.addAll(FindModelExtension.EP_NAME.getExtensionList());
+    searchTaskDeque.addAll(FindModelExtension.EP_NAME.getExtensionList());
 
-    ConcurrentBitSet visitedFiles = ConcurrentBitSet.create();
-    Processor<Object> consumer = obj -> {
+    ConcurrentBitSet visitedFileIds = ConcurrentBitSet.create();
+    Processor<Object> consumer = searchItem -> {  //item == { VirtualFile | IndexableFilesIterator | FindModelExtension }
       ProgressManager.checkCanceled();
-      if (obj instanceof IndexableFilesIterator) {
-        IndexableSetOrigin origin = ((IndexableFilesIterator)obj).getOrigin();
-        if (!searchInLibs && !(origin instanceof ContentOrigin)) return true;
-        ((IndexableFilesIterator)obj).iterateFiles(myProject, file -> {
-          if (file.isDirectory()) return true;
-          deque.add(file);
-          return true;
-        }, VirtualFileFilter.ALL);
+
+      if (searchItem instanceof IndexableFilesIterator filesIterator) {
+        IndexableSetOrigin origin = filesIterator.getOrigin();
+        if (searchInLibs || origin instanceof ContentOrigin) {
+          filesIterator.iterateFiles(myProject, file -> {
+            if (!file.isDirectory()) {
+              searchTaskDeque.add(file);
+            }
+            return true;
+          }, VirtualFileFilter.ALL);
+        }
+
+        return true;
       }
-      else if (obj instanceof FindModelExtension) {
-        ((FindModelExtension)obj).iterateAdditionalFiles(myFindModel, myProject, o -> {
-          if (o.isDirectory()) return true;
-          if (!alreadySearched.contains(o)) {
-            return fileProcessor.process(o);
+      else if (searchItem instanceof FindModelExtension findModelExtension) {
+        findModelExtension.iterateAdditionalFiles(myFindModel, myProject, file -> {
+          if (!file.isDirectory() && !alreadySearched.contains(file)) {
+            return fileProcessor.process(file);
           }
           return true;
         });
+
+        return true;
       }
-      else if (obj instanceof VirtualFile file) {
-        if (file instanceof VirtualFileWithId && visitedFiles.set(((VirtualFileWithId)file).getId())) {
+      else if (searchItem instanceof VirtualFile file) {
+        if (file instanceof VirtualFileWithId fileWithId
+            && visitedFileIds.set(fileWithId.getId())) {//so files without id we could search > once?
           return true;
         }
         if (!file.isValid()) {
@@ -370,11 +412,11 @@ final class FindInProjectTask {
         }
         if (file.isDirectory()) {
           if (withSubdirs) {
-            ContainerUtil.addAll(deque, ((VirtualFile)obj).getChildren());
+            ContainerUtil.addAll(searchTaskDeque, file.getChildren());
           }
           return true;
         }
-        if (!myFileMask.value(file) ||
+        if (!myFileMask.test(file) ||
             globalCustomScope != null && !globalCustomScope.contains(file) ||
             checkCoveredBySearchers && ContainerUtil.find(mySearchers, p -> p.isCovered(file)) != null) {
           return true;
@@ -385,7 +427,7 @@ final class FindInProjectTask {
           if (locateClassSources) {
             Pair.NonNull<PsiFile, VirtualFile> pair = findFile(file);
             if (pair == null) return true;
-            adjustedFile = Objects.requireNonNull(pair.second);
+            adjustedFile = pair.second;
           }
           else {
             return true;
@@ -399,15 +441,21 @@ final class FindInProjectTask {
         }
         return fileProcessor.process(adjustedFile);
       }
-      else {
-        throw new AssertionError("unknown item: " + obj);
-      }
-      return true;
+
+      throw new AssertionError("unknown item: " + searchItem);
     };
-    FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(deque, consumer::process);
+
+    FilesScanExecutor.processOnAllThreadsInReadActionWithRetries(searchTaskDeque, consumer::process);
   }
 
-  private boolean canRelyOnSearchers() {
+  /**
+   * @return true if there is at least one reliable searcher ({@link FindInProjectSearchEngine.FindInProjectSearcher#isReliable()}),
+   * false otherwise.
+   */
+  private boolean hasReliableSearchers() {
+    //TODO RC: why we access TrigramTextSearchService explicitly here, if we can do the same
+    //         inside IdeaIndexBasedFindInProjectSearchEngine.isReliable() there it is much more
+    //         logical to access trigram index configuration?
     if (!TrigramTextSearchService.useIndexingSearchExtensions()) return false;
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
@@ -415,15 +463,18 @@ final class FindInProjectTask {
   private @NotNull Set<VirtualFile> getFilesForFastWordSearch() {
     Set<VirtualFile> resultFiles = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFile file : myFilesToScanInitially) {
-      if (myFileMask.value(file)) {
+      if (myFileMask.test(file)) {
         resultFiles.add(file);
       }
     }
-    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return resultFiles;
+    //TODO RC: move it to IdeaIndexBasedFindInProjectSearchEngine
+    if (!TrigramTextSearchService.useIndexingSearchExtensions()) {
+      return resultFiles;
+    }
     for (FindInProjectSearchEngine.FindInProjectSearcher searcher : mySearchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
       for (VirtualFile file : virtualFiles) {
-        if (myFileMask.value(file)) {
+        if (myFileMask.test(file)) {
           resultFiles.add(file);
         }
       }
@@ -432,7 +483,8 @@ final class FindInProjectTask {
     return resultFiles;
   }
 
-  private Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull VirtualFile virtualFile) {
+  /** @return [psiFile, sourceFile] corresponding to the virtualFile */
+  private @Nullable Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull VirtualFile virtualFile) {
     PsiFile psiFile = myPsiManager.findFile(virtualFile);
     if (psiFile != null) {
       PsiElement sourceFile = psiFile.getNavigationElement();
