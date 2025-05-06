@@ -16173,6 +16173,7 @@ c:com.intellij.ui.popup.list.PopupListElementRenderer
 - p:getBackground():java.awt.Color
 - p:getDelegateAccessibleName():java.lang.String
 - getPopup():com.intellij.ui.popup.list.ListPopupImpl
+- getTextInTests():java.lang.String
 - p:isShowSecondaryIcon():Z
 - p:isShowSecondaryText():Z
 - p:layoutComponent(javax.swing.JComponent):javax.swing.JComponent

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionHolder;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -25,6 +26,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -521,5 +523,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       shortcutLabelAccessibleName = shortcutLabelAccessibleName.trim();
     }
     return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, shortcutLabelAccessibleName);
+  }
+
+  @TestOnly
+  public String getTextInTests() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myTextLabel.getText();
   }
 }
