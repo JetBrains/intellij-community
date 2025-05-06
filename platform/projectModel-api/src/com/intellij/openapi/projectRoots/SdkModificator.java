@@ -48,7 +48,7 @@ public interface SdkModificator {
   void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType);
 
   default void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
-    VirtualFile rootFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+    VirtualFile rootFile = VirtualFileManager.getInstance().findFileByUrl(url);
     if (rootFile != null) {
       addRoot(rootFile, rootType);
     }
