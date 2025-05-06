@@ -2,14 +2,29 @@
 
 ## v0.28 (2025-04-30)
 
-**Supported IJP versions:** 2025.1.1+, 2024.3.5+
-**Compose Multiplatform version:** 1.8.0-alpha0
+**Supported IJP versions:** 2025.1.1+, 2024.3.6+
+**Compose Multiplatform version:** 1.8.0-alpha04
 
 > [!IMPORTANT]
 > Jewel 0.28 is the first Jewel version to be published since the migration into the IJP codebase.
-> Users of the library are expected to use the bundled dependencies when running in the IJP, and the
+> Users of the library are expected to use the **bundled dependencies** when running in the IJP, and the
 > Maven artefacts for running in non-IJP scenarios (standalone).
+> 
 > A sample setup using the IJP Gradle plugin is available [here](https://github.com/rock3r/jewel-ijp-template).
+> If you need to support IJP 243.5 or lower, you'll need to use the bridge Maven artefacts. An example is available
+> in that repository's [`243-and-251-compat`](https://github.com/rock3r/jewel-ijp-template/tree/243-and-251-compat) branch.
+
+### New versioning scheme and Maven coordinates
+Starting from Jewel 0.28, artefacts are published to Maven Central. It is no longer necessary to add a custom repository to your project to access Jewel artefacts. You can remove the `https://packages.jetbrains.team/maven/p/kpm/public` repository from your builds.
+
+Artefact IDs are also changing, removing the `-[ijpVersion]` suffixes. Now, the target IJP version is included in the version number. The new version format is: `[jewelVersion]-[ijpBuild]`. The `jewelVersion` tells you that a certain set of features and APIs are available, and the `ijpBuild` tells you which IJP build this was derived from. For example, `0.28-243.15667` means that the artifact contains the Jewel `0.28` features and APIs, and was built from the IJP `243.15567` build. From the `ijpBuild` you can derive two pieces of information; the first is that this artefact is targeting IJP 243, and the second is that it is guaranteed to work for 243 builds with ID >= 15567.
+
+As mentioned in the Jewel readme, if you're building a purely non-IJP app with Jewel, it's always recommended to use the version with the highest `jewelVersion` and `ijpBuild`s, as to get the latest version of Jewel with all the features supported in standalone mode. If, however, you are using the standalone artefacts in conjunction with bridge artefacts, you must always use the same version of the standalone and bridge artefacts to avoid incompatibilities. An example use case is using standalone artefacts in UI unit tests to avoid having to spin up the entire IJ platform, which can cause flakiness and obscure issues in UI tests.
+
+### Binary and source compatibility
+Artefacts with the same `jewelVersion` number are generally binary and source compatible with each other across IJP versions, with the exception of deprecated and scheduled-for-removal APIs, which can be removed in newer versions.
+
+Jewel APIs marked as experimental can change at any time and no guarantees are made on their binary and source compatibility. We'll try to minimise these changes as much as possible, but by using these APIs you acknowledge there might be disruptions. APIs marked as internal must never be used by clients and are subject to change at any point without notice, and no compatibility guarantees of any kind are made about them.
 
 ### New Features & Bug Fixes
 
