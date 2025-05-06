@@ -2,8 +2,10 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.ide.ui.icons.icon
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.project.projectId
@@ -73,6 +75,7 @@ internal class VariantChoiceData(
 
 internal fun computeBreakpointProxy(
   project: Project,
+  editor: Editor?,
   info: XLineBreakpointInstallationInfo,
   onVariantsChoice: (VariantChoiceData) -> Unit,
 ): CompletableFuture<XLineBreakpointProxy?> {
@@ -80,6 +83,12 @@ internal fun computeBreakpointProxy(
   val result = CompletableFuture<XLineBreakpointProxy?>()
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
+      val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
+      if (editor != null && readAction { breakpointManager.canAddLightBreakpoint(editor, info) }) {
+        val breakpoint = breakpointManager.addLightBreakpoint(editor, info).await()
+        result.complete(breakpoint)
+        return@launch
+      }
       val singleBreakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).singleOrNull()
       val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), info.toRequest(singleBreakpoint != null))
                      ?: throw kotlin.coroutines.cancellation.CancellationException()

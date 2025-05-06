@@ -64,7 +64,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -324,7 +323,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   ) {
     var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isConditional, condition, canRemove);
     if (areInlineBreakpointsEnabled(position.getFile())) {
-      return processInlineBreakpoints(project, breakpointInfo, selectVariantByPositionColumn);
+      return processInlineBreakpoints(project, editor, breakpointInfo, selectVariantByPositionColumn);
     }
     else {
       return selectBreakpointVariantWithPopup(project, breakpointInfo, editor);
@@ -347,7 +346,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         return CompletableFuture.completedFuture(null);
       }
     }
-    return FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, variantChoice -> {
+    return FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, editor, breakpointInfo, variantChoice -> {
       assert !variantChoice.getVariants().isEmpty();
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         for (XLineBreakpointTypeProxy type : breakpointInfo.getTypes()) {
@@ -464,10 +463,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   private static @NotNull CompletableFuture<@Nullable XLineBreakpointProxy> processInlineBreakpoints(
     @NotNull Project project,
+    @Nullable Editor editor,
     @NotNull XLineBreakpointInstallationInfo breakpointInfo,
     boolean selectVariantByPositionColumn
   ) {
-    return FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, breakpointInfo, variantChoice -> {
+    return FrontendXLineBreakpointVariantKt.computeBreakpointProxy(project, editor, breakpointInfo, variantChoice -> {
       var variants = variantChoice.getVariants().stream().filter(v -> v.getUseAsInlineVariant()).toList();
       if (variants.isEmpty()) {
         LOG.error("Unexpected empty variants");

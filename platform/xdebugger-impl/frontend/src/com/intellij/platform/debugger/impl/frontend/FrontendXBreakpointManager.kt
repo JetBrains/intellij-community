@@ -97,8 +97,21 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     return newBreakpoint
   }
 
-  override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+  override fun canAddLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean {
+    val type = info.types.singleOrNull() ?: return false
+    if (findBreakpointsAtLine(type, info.position.file, info.position.line).isNotEmpty()) {
+      return false
+    }
+    if (info.isTemporary || info.isConditional) {
+      return false
+    }
+    val lineInfo = FrontendEditorLinesBreakpointsInfoManager.getInstance(project).getBreakpointsInfoForLineFast(editor, info.position.line)
+    return lineInfo?.singleBreakpointVariant == true
+  }
+
+  override fun addLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
     return cs.async {
+      val type = installationInfo.types.firstOrNull() ?: return@async null
       val lightBreakpoint = FrontendXLightLineBreakpoint(project, this@async, type, installationInfo, this@FrontendXBreakpointManager)
       val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(false))
       val breakpointDto = (response as? XLineBreakpointInstalledResponse)?.breakpoint ?: return@async null
