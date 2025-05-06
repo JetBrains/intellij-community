@@ -66,10 +66,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (getQualifierExpression() != null) {
       throw new IncorrectOperationException("Reference is qualified: "+getText());
     }
-    if (!isPhysical()) {
-      // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
-      return this;
-    }
     String staticName = getReferenceName();
     PsiFile containingFile = getContainingFile();
     PsiImportList importList = null;

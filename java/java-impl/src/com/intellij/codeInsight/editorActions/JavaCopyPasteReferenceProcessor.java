@@ -1,19 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -54,7 +62,7 @@ public final class JavaCopyPasteReferenceProcessor extends CopyPasteReferencePro
   /**
    * Remove imports on {@code imports} (including static imports in format Class_Name.Member_Name)
    * To ensure that on-demand import expands when one of the import inside was deleted, let's do optimize imports.
-   *
+   * <p>
    * This may change some unrelated imports
    */
   public static void removeImports(PsiJavaFile javaFile, Set<String> imports) {
@@ -115,11 +123,28 @@ public final class JavaCopyPasteReferenceProcessor extends CopyPasteReferencePro
 
   @Override
   protected void restoreReferences(ReferenceData @NotNull [] referenceData,
-                                   PsiJavaCodeReferenceElement @NotNull [] refs,
+                                   List<PsiJavaCodeReferenceElement> refs,
                                    @NotNull Set<? super String> imported) {
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement reference = refs[i];
+    restoreReferences(referenceData, refs, imported, null);
+  }
+
+  @Override
+  protected void restoreReferences(ReferenceData @NotNull [] referenceData,
+                                   List<PsiJavaCodeReferenceElement> refs,
+                                   @NotNull Set<? super String> imported,
+                                   @Nullable ModPsiUpdater updater) {
+    PsiJavaModule writableDescriptor = null;
+    PsiJavaModule fromDescriptor = null;
+    for (int i = 0; i < refs.size(); i++) {
+      PsiJavaCodeReferenceElement reference = refs.get(i);
       if (reference == null || !reference.isValid()) continue;
+      PsiFile containingFile = reference.getContainingFile();
+      if (fromDescriptor == null) {
+        fromDescriptor = JavaPsiModuleUtil.findDescriptorByElement(containingFile.getOriginalElement());
+        if (fromDescriptor != null && updater != null && PsiUtil.isAvailable(JavaFeature.MODULES, containingFile.getOriginalElement())) {
+          writableDescriptor = updater.getWritable(fromDescriptor);
+        }
+      }
       try {
         PsiManager manager = reference.getManager();
         ReferenceData refData = referenceData[i];
@@ -128,7 +153,7 @@ public final class JavaCopyPasteReferenceProcessor extends CopyPasteReferencePro
         if (refClass != null) {
           if (refData.staticMemberName == null) {
             if (reference instanceof PsiJavaCodeReferenceElementImpl &&
-                ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(reference.getContainingFile()) ==
+                ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(containingFile) ==
                 PsiJavaCodeReferenceElementImpl.Kind.PACKAGE_NAME_KIND) {
               // Trying to paste class reference into e.g. package statement
               continue;
@@ -138,8 +163,16 @@ public final class JavaCopyPasteReferenceProcessor extends CopyPasteReferencePro
           }
           else {
             LOG.assertTrue(reference instanceof PsiReferenceExpression);
-            ((PsiReferenceExpression)reference).bindToElementViaStaticImport(refClass);
+            if (reference instanceof PsiReferenceExpressionImpl expression) {
+              expression.bindToElementViaStaticImport(refClass);
+            }
             imported.add(StringUtil.getQualifiedName(refData.qClassName, refData.staticMemberName));
+          }
+          if (fromDescriptor != null && (updater == null || writableDescriptor != null)) {
+            PsiJavaModule toDescriptor = JavaPsiModuleUtil.findDescriptorByElement(refClass);
+            if (toDescriptor == null) continue;
+            if (!JavaModuleGraphHelper.getInstance().isAccessible(refClass, reference)) continue;
+            JavaModuleGraphUtil.addDependency(writableDescriptor != null ? writableDescriptor : fromDescriptor, toDescriptor, null);
           }
         }
       }

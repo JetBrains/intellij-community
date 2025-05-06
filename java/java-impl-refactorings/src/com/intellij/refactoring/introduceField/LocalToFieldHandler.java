@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -354,7 +355,7 @@ public abstract class LocalToFieldHandler {
         //required to check anchors as rearranger allows any configuration 
         myField = BaseExpressionToFieldHandler.ConvertToFieldRunnable
           .appendField(myLocal.getInitializer(), myInitializerPlace, myDestinationClass, myDestinationClass, myField, anchorMember);
-
+        myField = (PsiField)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(myField);
         myLocal.normalizeDeclaration();
         PsiElement declarationStatement = myLocal.getParent();
         final BaseExpressionToFieldHandler.InitializationPlace finalInitializerPlace;

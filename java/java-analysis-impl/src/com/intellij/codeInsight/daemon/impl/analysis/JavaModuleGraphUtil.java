@@ -134,9 +134,9 @@ public final class JavaModuleGraphUtil {
     if (contains(from.getRequires(), to.getName())) return false;
     if (JavaPsiModuleUtil.reads(from, to)) return false;
     PsiUtil.addModuleStatement(from, JavaKeywords.REQUIRES + " " +
-                                     (isStaticModule(to.getName(), scope) ? JavaKeywords.STATIC + " " : "") +
-                                     (isExported(from, to) ? JavaKeywords.TRANSITIVE + " " : "") +
-                                     to.getName());
+                                      (isStaticModule(to.getName(), scope) ? JavaKeywords.STATIC + " " : "") +
+                                      (isExported(from, to) ? JavaKeywords.TRANSITIVE + " " : "") +
+                                      to.getName());
     return true;
   }
 

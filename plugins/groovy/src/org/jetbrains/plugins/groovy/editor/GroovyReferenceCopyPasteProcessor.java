@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public final class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcessor<GrReferenceElement> {
@@ -116,10 +117,10 @@ public final class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceP
 
   @Override
   protected void restoreReferences(ReferenceData @NotNull [] referenceData,
-                                   GrReferenceElement @NotNull [] refs,
+                                   List<GrReferenceElement> refs,
                                    @NotNull Set<? super String> imported) {
-    for (int i = 0; i < refs.length; i++) {
-      GrReferenceElement reference = refs[i];
+    for (int i = 0; i < refs.size(); i++) {
+      GrReferenceElement reference = refs.get(i);
       if (reference == null) continue;
       try {
         PsiManager manager = reference.getManager();
