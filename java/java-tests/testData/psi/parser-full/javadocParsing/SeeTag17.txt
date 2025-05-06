@@ -10,12 +10,12 @@ PsiJavaFile:SeeTag17.java
       PsiDocTag:@see
         PsiDocToken:DOC_TAG_NAME('@see')
         PsiWhiteSpace(' ')
-        PsiJavaModuleReference
-          PsiDocToken:DOC_TAG_VALUE_TOKEN('java.base')
-        PsiDocToken:DOC_TAG_VALUE_DIV_TOKEN('/')
-        PsiWhiteSpace('\n ')
         PsiElement(DOC_TAG_VALUE_ELEMENT)
-          PsiDocToken:DOC_COMMENT_END('*/')
+          PsiJavaModuleReference
+            PsiDocToken:DOC_TAG_VALUE_TOKEN('java.base')
+          PsiDocToken:DOC_TAG_VALUE_DIV_TOKEN('/')
+      PsiWhiteSpace('\n ')
+      PsiDocToken:DOC_COMMENT_END('*/')
     PsiWhiteSpace('\n')
     PsiModifierList:
       <empty list>

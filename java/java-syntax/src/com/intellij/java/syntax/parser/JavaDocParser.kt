@@ -479,7 +479,7 @@ class JavaDocParser(
   }
 
   private fun parseSeeTagValue(allowBareFieldReference: Boolean) {
-    parseModuleRef(builder.mark())
+    val moduleMarker = parseModuleRef(builder.mark())
 
     val tokenType = getTokenType()
     if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
@@ -502,22 +502,30 @@ class JavaDocParser(
         refStart.drop()
       }
     }
-    else {
+    else if (moduleMarker == null) {
       val tagValue = builder.mark()
       builder.advanceLexer()
       tagValue.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
     }
+
+    moduleMarker?.done(JavaDocSyntaxElementType.DOC_TAG_VALUE_ELEMENT)
   }
 
   private fun parseModuleRef(
     refStart: SyntaxTreeBuilder.Marker,
-  ) {
+  ): SyntaxTreeBuilder.Marker? {
     builder.advanceLexer()
     if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN) {
-      refStart.done(JavaSyntaxElementType.MODULE_REFERENCE)
+      refStart.rollbackTo()
+      val containerRef = builder.mark()
+      val moduleRef = builder.mark()
       builder.advanceLexer()
+      moduleRef.done(JavaSyntaxElementType.MODULE_REFERENCE)
+      builder.advanceLexer()
+      return containerRef
     } else {
       refStart.rollbackTo()
+      return null
     }
   }
 

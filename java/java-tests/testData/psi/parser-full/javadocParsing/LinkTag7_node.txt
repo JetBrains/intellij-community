@@ -7,18 +7,22 @@ java.FILE
       WHITE_SPACE
       DOC_COMMENT_LEADING_ASTERISKS
       DOC_COMMENT_DATA
-      DOC_TAG
+      DOC_INLINE_TAG
+        DOC_INLINE_TAG_START
         DOC_TAG_NAME
         WHITE_SPACE
         DOC_TAG_VALUE_ELEMENT
           MODULE_REFERENCE
             DOC_TAG_VALUE_TOKEN
           DOC_TAG_VALUE_DIV_TOKEN
+        DOC_INLINE_TAG_END
+      DOC_COMMENT_DATA
       WHITE_SPACE
       DOC_COMMENT_END
     WHITE_SPACE
     MODIFIER_LIST
-      <empty list>
+      PUBLIC_KEYWORD
+    WHITE_SPACE
     CLASS_KEYWORD
     WHITE_SPACE
     IDENTIFIER
@@ -29,4 +33,25 @@ java.FILE
     IMPLEMENTS_LIST
       <empty list>
     LBRACE
+    WHITE_SPACE
+    METHOD
+      MODIFIER_LIST
+        PUBLIC_KEYWORD
+      TYPE_PARAMETER_LIST
+        <empty list>
+      WHITE_SPACE
+      TYPE
+        VOID_KEYWORD
+      WHITE_SPACE
+      IDENTIFIER
+      PARAMETER_LIST
+        LPARENTH
+        RPARENTH
+      THROWS_LIST
+        <empty list>
+      WHITE_SPACE
+      CODE_BLOCK
+        LBRACE
+        RBRACE
+    WHITE_SPACE
     RBRACE
