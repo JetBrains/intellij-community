@@ -1,6 +1,5 @@
 #  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
-
 from _pydevd_bundle.tables.images.pydevd_image_loader import (save_image_to_storage, GRAYSCALE_MODE, RGB_MODE, RGBA_MODE)
 
 try:
@@ -41,9 +40,12 @@ def create_image(arr):
         arr_min, arr_max = np.min(arr_to_convert), np.max(arr_to_convert)
         if arr_min == arr_max:  # handle constant values
             arr_to_convert = np.full_like(arr_to_convert, 127, dtype=np.uint8)
+        elif 0 <= arr_min <= 1 and 0 <= arr_max <= 1:
+            arr_to_convert = (arr_to_convert * 255).astype(np.uint8)
+        elif arr_min < 0 or arr_max > 255:
+            arr_to_convert = ((arr_to_convert - arr_min) * 255 / (arr_max - arr_min)).astype(np.uint8)
         else:
-            arr_to_convert = ((arr_to_convert - arr_min) / (
-                    arr_max - arr_min) * 255).astype(np.uint8)
+            arr_to_convert = arr_to_convert.astype(np.uint8)
 
         arr_to_convert_ndim = arr_to_convert.ndim
         if arr_to_convert_ndim == 2:

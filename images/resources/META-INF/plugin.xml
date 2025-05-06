@@ -165,6 +165,10 @@
               id="Images.RotateImageAction"
               icon="AllIcons.Actions.Refresh">
       </action>
+      <action class="org.intellij.images.scientific.action.NormalizeImageAction"
+              id="Images.NormalizeImageAction"
+              icon="AllIcons.Actions.Colors">
+      </action>
       <group id="Images.ImageOperationsGroup"
              class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
     </group>

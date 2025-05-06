@@ -17,7 +17,7 @@ class CopyImageAction : DumbAwareAction() {
       return
     }
     provider.performCopy(dataContext)
-    ScientificImageActionsCollector.logCopyImageInvoked(this)
+    ScientificImageActionsCollector.logCopyImageInvoked()
   }
 
   override fun update(e: AnActionEvent) {
