@@ -94,30 +94,26 @@ internal class MacNativeActionMenuItem(action: AnAction,
                          insideCheckedGroup: Boolean) {
     if (isToggleable && (insideCheckedGroup || !UISettings.getInstance().showIconsInMenus) || presentation.icon == null) {
       menuItemPeer.setState(isToggled)
-      setIcon(menuItemPeer, presentation.icon, useDarkIcons, action)
+      menuItemPeer.setIcon(adjustIcon(presentation.icon, useDarkIcons, action, presentation))
     }
     else if (UISettings.getInstance().showIconsInMenus) {
       var icon = presentation.icon
       if (isToggleable && isToggled) {
         icon = icon?.let { PoppedIcon(it, 16, 16) }
       }
-      setIcon(
-        menuItemPeer = menuItemPeer,
-        icon = if (presentation.isEnabled) icon else presentation.disabledIcon ?: icon?.let { IconLoader.getDisabledIcon(it) },
-        action = action,
-        useDarkIcons = useDarkIcons,
-      )
+      menuItemPeer.setIcon(adjustIcon(
+        if (presentation.isEnabled) icon else presentation.disabledIcon ?: icon?.let { IconLoader.getDisabledIcon(it) },
+        useDarkIcons, action, presentation))
     }
   }
-}
 
-private fun setIcon(menuItemPeer: MenuItem, icon: Icon?, useDarkIcons: Boolean, action: AnAction) {
-  val effectiveIcon = when {
-                        ActionMenu.isShowNoIcons(action) -> null
-                        !ActionMenu.isAligned || !ActionMenu.isAlignedInGroup -> icon?.let { getMenuBarIcon(it, useDarkIcons) }
-                        else -> icon ?: getMenuBarIcon(EMPTY_MENU_ACTION_ICON, useDarkIcons)
-                      } ?: return
-  menuItemPeer.setIcon(effectiveIcon)
+  private fun adjustIcon(icon: Icon?, useDarkIcons: Boolean, action: AnAction, presentation: Presentation): Icon? {
+    return when {
+      ActionMenu.isShowNoIcons(action, presentation) -> null
+      !ActionMenu.isAligned || !ActionMenu.isAlignedInGroup -> icon?.let { getMenuBarIcon(it, useDarkIcons) }
+      else -> icon ?: getMenuBarIcon(EMPTY_MENU_ACTION_ICON, useDarkIcons)
+    }
+  }
 }
 
 private fun performAction(action: AnAction, place: String, presentation: Presentation, context: DataContext) {

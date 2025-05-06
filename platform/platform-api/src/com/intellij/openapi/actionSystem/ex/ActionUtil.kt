@@ -94,6 +94,10 @@ object ActionUtil {
   @JvmField
   val HIDE_DROPDOWN_ICON: Key<Boolean> = Key.create("HIDE_DROPDOWN_ICON");
 
+  /** Icons in the main menu could be suppressed. Use this key to override that. */
+  @JvmField
+  val SHOW_ICON_IN_MAIN_MENU: Key<Boolean> = Key.create("SHOW_ICON_IN_MAIN_MENU");
+
   @JvmField
   val KEYBOARD_SHORTCUT_SUFFIX: Key<@NlsSafe String> = Key.create("KEYBOARD_SHORTCUT_SUFFIX");
 

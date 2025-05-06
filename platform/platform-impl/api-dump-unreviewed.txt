@@ -1911,12 +1911,10 @@ f:com.intellij.ide.actions.AboutDialog
 - s:getBuildInfo(com.intellij.openapi.application.ApplicationInfo):com.intellij.openapi.util.Pair
 - getExtendedAboutText():java.lang.String
 c:com.intellij.ide.actions.ActivateToolWindowAction
-- com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 - com.intellij.openapi.project.DumbAwareAction
 - sf:Companion:com.intellij.ide.actions.ActivateToolWindowAction$Companion
 - p:<init>(java.lang.String):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- alwaysShowIconInMainMenu():Z
 - p:createEmptyState(com.intellij.openapi.project.Project):V
 - sf:getActionIdForToolWindow(java.lang.String):java.lang.String
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -5952,7 +5950,7 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - sf:isAlignedInGroup():Z
 - f:isMainMenuPlace():Z
 - sf:isShowNoIcons():Z
-- sf:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction):Z
+- sf:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation):Z
 - menuSelectionChanged(Z):V
 - removeNotify():V
 - setDisplayedMnemonicIndex(I):V
@@ -5965,7 +5963,7 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenu$Companion
 - f:isAligned():Z
 - f:isAlignedInGroup():Z
 - f:isShowNoIcons():Z
-- f:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction):Z
+- f:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation):Z
 - f:shouldConvertIconToDarkVariant():Z
 - f:showDescriptionInStatusBar(Z,java.awt.Component,java.lang.String):V
 f:com.intellij.openapi.actionSystem.impl.ActionMenuItem

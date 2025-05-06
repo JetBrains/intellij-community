@@ -1768,6 +1768,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:SEARCH_TAG:com.intellij.openapi.util.Key
 - sf:SECONDARY_ICON:com.intellij.openapi.util.Key
 - sf:SECONDARY_TEXT:com.intellij.openapi.util.Key
+- sf:SHOW_ICON_IN_MAIN_MENU:com.intellij.openapi.util.Key
 - sf:SHOW_TEXT_IN_TOOLBAR:com.intellij.openapi.util.Key
 - sf:SUPPRESS_SUBMENU:com.intellij.openapi.util.Key
 - sf:TOOLTIP_TEXT:com.intellij.openapi.util.Key
