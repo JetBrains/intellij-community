@@ -60,6 +60,7 @@ internal class ComposeResourcesManager(private val project: Project) {
         moduleName = moduleName,
         directoriesBySourceSetName = dirs,
         isPublicResClass = node.data.isPublicResClass,
+        nameOfResClass = node.data.nameOfResClass,
       )
     }
 

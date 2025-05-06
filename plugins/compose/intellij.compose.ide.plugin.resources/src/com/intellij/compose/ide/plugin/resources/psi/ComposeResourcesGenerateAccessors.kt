@@ -52,8 +52,17 @@ internal suspend fun Project.generateAccessorsFrom(changedComposeResourcesDirs: 
     } ?: return
     val packageName = changedComposeResourcesDir.getResourcePackageName(this)
     val moduleDir = resourcesAccessorsDir.findFileByRelativePath(packageName.replace('.', '/')) ?: return
-    val isPublicResClass = this.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName]?.isPublicResClass ?: false
-    getAccessorsSpecs(resources, packageName, changedComposeResourcesDir.sourceSetName, moduleDir.path, isPublicResClass)
+    val composeResourcesConfig = this.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName] ?: return
+    val isPublicResClass = composeResourcesConfig.isPublicResClass
+    val nameOfResClass = composeResourcesConfig.nameOfResClass
+    getAccessorsSpecs(
+      resources = resources,
+      packageName = packageName,
+      sourceSetName = changedComposeResourcesDir.sourceSetName,
+      moduleDir = moduleDir.path,
+      isPublicResClass = isPublicResClass,
+      nameOfResClass = nameOfResClass,
+    )
   }
 }
 
