@@ -19,7 +19,7 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
     runTestBuild(
-      homeDir = Path(PathManager.getCommunityHomePath()),
+      homeDir = COMMUNITY_ROOT.communityRoot,
       testInfo = testInfo,
       productProperties = productProperties,
     ) {
