@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html
 
 import com.intellij.lang.html.HTMLLanguage
@@ -15,14 +15,12 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asSafely
-import com.intellij.util.io.URLUtil
 import com.intellij.xml.Html5SchemaProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
 import java.io.FileNotFoundException
-import java.net.URL
 
 @RunWith(JUnit4::class)
 class Html5TagAndAttributeNamesProviderTest : BasePlatformTestCase() {
@@ -44,12 +42,7 @@ class Html5TagAndAttributeNamesProviderTest : BasePlatformTestCase() {
   private fun generateFile(version: Int): String {
     val virtualFile: VirtualFile?
     val location = Html5SchemaProvider.getHtml5SchemaLocation()
-    if (location.startsWith(URLUtil.JAR_PROTOCOL)) {
-      virtualFile = myFixture.createFile("html5.rnc", URL(location).openStream().reader().use { it.readText() })
-    }
-    else {
-      virtualFile = VfsUtil.findFileByIoFile(File(location), true)
-    }
+    virtualFile = VfsUtil.findFileByIoFile(File(location), true)
     val descriptor = (PsiManager.getInstance(project).findFile(
       virtualFile
       ?: throw FileNotFoundException(location)
