@@ -131,23 +131,29 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       IElementType assignmentType = expression.getOperationTokenType();
+      boolean compoundAssignment = assignmentType != JavaTokenType.EQ;
       PsiType rType = rExpression.getType();
-      if (!TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression) && rType != null) {
-        throw evaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
+      if (!compoundAssignment && !TypeConversionUtil.areTypesAssignmentCompatible(lType, rExpression) && rType != null) {
+        throw evaluateException(
+          JavaDebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
       }
       lExpression.accept(this);
       Evaluator lEvaluator = myResult;
 
-      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator, expression.getProject());
-
-      if (assignmentType != JavaTokenType.EQ) {
+      if (compoundAssignment) {
         IElementType opType = TypeConversionUtil.convertEQtoOperation(assignmentType);
         final PsiType typeForBinOp = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, opType, true);
         if (typeForBinOp == null || rType == null) {
           throw evaluateException(JavaDebuggerBundle.message("evaluation.error.unknown.expression.type", expression.getText()));
         }
+        if (!TypeConversionUtil.areTypesConvertible(typeForBinOp, lType)) {
+          throw evaluateException(
+            JavaDebuggerBundle.message("evaluation.error.incompatible.types", expression.getOperationSign().getText()));
+        }
         rEvaluator = createBinaryEvaluator(lEvaluator, lType, rEvaluator, rType, opType, typeForBinOp);
       }
+
+      rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rType, rEvaluator, expression.getProject());
       myResult = new AssignmentEvaluator(lEvaluator, rEvaluator);
     }
 
