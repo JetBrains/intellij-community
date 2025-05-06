@@ -2,6 +2,7 @@
 package org.jetbrains.jps.bazel;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.bazel.impl.Utils;
 
 import java.nio.file.Path;
 
@@ -23,7 +24,8 @@ public interface DataPaths {
   }
 
   static @NotNull Path getJarBackupStoreFile(BuildContext context, Path jarPath) {
-    return getDependenciesBackupStoreDir(context).resolve(jarPath.getFileName());
+    // ensure jars with the same name won't clash in the backup store
+    return getDependenciesBackupStoreDir(context).resolve(Long.toHexString(Utils.digest(jarPath.getParent().normalize().toString())) + "-" + jarPath.getFileName());
   }
 
   static boolean isLibraryTracked(Path path) {

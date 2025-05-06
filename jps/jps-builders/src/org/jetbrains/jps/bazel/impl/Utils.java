@@ -14,10 +14,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 /** @noinspection NonFinalUtilityClass*/
 public class Utils {
 
-  public static String digest(byte[] bytes) {
-    return Long.toHexString(Hashing.xxh3_64().hashBytesToLong(bytes));
+  public static long digest(String str) {
+    return Hashing.xxh3_64().hashStream().putString(str).getAsLong();
   }
-
+  
   public static long digest(Iterable<String> strStream) {
     HashStream64 stream = Hashing.xxh3_64().hashStream();
     for (String data : strStream) {
