@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
@@ -16,9 +18,11 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ClientProperty;
 import com.intellij.util.ui.SwingUndoUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +30,7 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public abstract class UndoRedoAction extends DumbAwareAction implements LightEditCompatible {
+public abstract class UndoRedoAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
   public static final Key<Boolean> IGNORE_SWING_UNDO_MANAGER = new Key<>("IGNORE_SWING_UNDO_MANAGER");
 
@@ -73,6 +77,16 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
     presentation.setText(pair.first);
     presentation.setDescription(pair.second);
+  }
+
+  @Internal
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    if (Registry.is("ide.undo.frontend.if.possible", false)) {
+      // see `com.jetbrains.rdclient.command.FrontendUndoManager`
+      return ActionRemoteBehavior.FrontendOtherwiseBackend;
+    }
+    return ActionRemoteBehavior.BackendOnly;
   }
 
   private UndoManager getUndoManager(FileEditor editor, DataContext dataContext, boolean isActionPerformed) {

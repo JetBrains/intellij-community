@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -42,7 +42,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public final class UndoManagerImpl extends UndoManager {
+public class UndoManagerImpl extends UndoManager {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @SuppressWarnings("StaticNonFinalField")
@@ -172,8 +172,9 @@ public final class UndoManagerImpl extends UndoManager {
     this((ComponentManager)null);
   }
 
+  @ApiStatus.Internal
   @NonInjectable
-  private UndoManagerImpl(@Nullable ComponentManager componentManager) {
+  protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project ? (Project)componentManager : null;
   }
 
@@ -529,7 +530,7 @@ public final class UndoManagerImpl extends UndoManager {
     try {
       final RuntimeException[] exception = new RuntimeException[1];
       Runnable executeUndoOrRedoAction = () -> {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(UndoRedoListener.Companion.getTOPIC()).undoRedoStarted(myProject, this, editor, isUndo, disposable);
+        notifyUndoRedoStarted(editor, isUndo, disposable);
         try {
           CopyPasteManager.getInstance().stopKillRings();
           state.myMerger.undoOrRedo(editor, isUndo);
@@ -973,6 +974,14 @@ public final class UndoManagerImpl extends UndoManager {
     }
     mySharedUndoStacksHolder.clearDocumentReferences(document);
     mySharedRedoStacksHolder.clearDocumentReferences(document);
+  }
+
+  @ApiStatus.Internal
+  protected void notifyUndoRedoStarted(FileEditor editor, boolean isUndo, Disposable disposable) {
+    ApplicationManager.getApplication()
+      .getMessageBus()
+      .syncPublisher(UndoRedoListener.Companion.getTOPIC())
+      .undoRedoStarted(myProject, this, editor, isUndo, disposable);
   }
 
   @Override
