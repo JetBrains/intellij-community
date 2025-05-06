@@ -26,6 +26,8 @@ public class OutputSinkImpl implements OutputSink {
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final DiagnosticSink myDiagnostic;
   private final ZipOutputBuilder myOutBuilder;
+  @Nullable
+  private final AbiJarBuilder myAbiOutputBuilder;
   private final List<BytecodeInstrumenter> myInstrumenters;
 
   // -----------------------------------------------------------
@@ -36,9 +38,10 @@ public class OutputSinkImpl implements OutputSink {
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
   private final Map<NodeSource, Set<Usage>> mySelfUsages = new HashMap<>();
 
-  public OutputSinkImpl(DiagnosticSink diagnostic, ZipOutputBuilder outBuilder, List<BytecodeInstrumenter> instrumenters) {
+  public OutputSinkImpl(DiagnosticSink diagnostic, ZipOutputBuilder outBuilder, @Nullable AbiJarBuilder abiOutputBuilder, List<BytecodeInstrumenter> instrumenters) {
     myDiagnostic = diagnostic;
     myOutBuilder = outBuilder;
+    myAbiOutputBuilder = abiOutputBuilder;
     myInstrumenters = instrumenters;
   }
 
@@ -46,6 +49,14 @@ public class OutputSinkImpl implements OutputSink {
   public void addFile(OutputFile outFile, Iterable<NodeSource> originSources) {
     // todo: make sure the outFile.getPath() is relative to output root
     processAndSave(outFile, originSources);
+  }
+
+  @Override
+  public boolean deletePath(String path) {
+    if (myAbiOutputBuilder != null) {
+      myAbiOutputBuilder.deleteEntry(path);
+    }
+    return myOutBuilder.deleteEntry(path);
   }
 
   @Override
@@ -63,6 +74,9 @@ public class OutputSinkImpl implements OutputSink {
   private void processAndSave(OutputFile outFile, Iterable<NodeSource> originSources) {
     byte[] content = outFile.getContent();
     myOutBuilder.putEntry(outFile.getPath(), content); // make file content immediately available
+    if (myAbiOutputBuilder != null) {
+      myAbiOutputBuilder.putEntry(outFile.getPath(), content);
+    }
 
     if (outFile.getKind() == OutputFile.Kind.bytecode) {
       // todo: parse/instrument files and create nodes asynchronously?
@@ -94,13 +108,16 @@ public class OutputSinkImpl implements OutputSink {
         }
         if (changes) {
           myOutBuilder.putEntry(outFile.getPath(), content);
+          if (myAbiOutputBuilder != null) {
+            myAbiOutputBuilder.putEntry(outFile.getPath(), content);
+          }
         }
       }
     }
   }
 
   private InstrumentationClassFinder getInstrumentationClassFinder() {
-    return null; // todo
+    return null; // todo: required for the instrumentation
   }
 
   private void associate(String classFileName, Iterable<NodeSource> sources, ClassReader cr, boolean isGenerated) {

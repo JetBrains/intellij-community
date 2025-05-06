@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel.impl;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.bazel.BuildContext;
 import org.jetbrains.jps.bazel.BuildProcessLogger;
 import org.jetbrains.jps.bazel.DataPaths;
@@ -25,6 +27,7 @@ public class StorageManager implements Closeable {
   private final BuildContext myContext;
   private GraphConfiguration myGraphConfig;
   private ZipOutputBuilderImpl myOutputBuilder;
+  private AbiJarBuilder myAbiOutputBuilder;
 
   public StorageManager(BuildContext context) {
     myContext = context;
@@ -70,6 +73,7 @@ public class StorageManager implements Closeable {
     }
   }
 
+  @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
     GraphConfiguration config = myGraphConfig;
     if (config == null) {
@@ -81,10 +85,23 @@ public class StorageManager implements Closeable {
     return config;
   }
 
+  @NotNull
   public ZipOutputBuilderImpl getOutputBuilder() throws IOException {
     ZipOutputBuilderImpl builder = myOutputBuilder;
     if (builder == null) {
       myOutputBuilder = builder = new ZipOutputBuilderImpl(myContext.getOutputZip());
+    }
+    return builder;
+  }
+
+  @Nullable
+  public AbiJarBuilder getAbiOutputBuilder() throws IOException {
+    AbiJarBuilder builder = myAbiOutputBuilder;
+    if (builder == null) {
+      Path abiOutputPath = myContext.getAbiOutputZip();
+      if (abiOutputPath != null) {
+        myAbiOutputBuilder = builder = new AbiJarBuilder(abiOutputPath);
+      }
     }
     return builder;
   }
@@ -103,7 +120,9 @@ public class StorageManager implements Closeable {
 
     safeClose(myOutputBuilder);
     myOutputBuilder = null;
-    
+
+    safeClose(myAbiOutputBuilder);
+    myAbiOutputBuilder = null;
   }
 
   private void safeClose(Closeable cl) {

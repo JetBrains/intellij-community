@@ -24,4 +24,6 @@ public interface OutputSink extends OutputExplorer, CompilerDataSink{
   }
 
   void addFile(OutputFile outFile, Iterable<NodeSource> originSources);
+
+  boolean deletePath(String path);
 }

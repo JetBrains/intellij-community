@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.bazel.impl.*;
 import org.jetbrains.jps.bazel.runner.BytecodeInstrumenter;
 import org.jetbrains.jps.bazel.runner.CompilerRunner;
+import org.jetbrains.jps.bazel.runner.OutputSink;
 import org.jetbrains.jps.bazel.runner.RunnerFactory;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.PathSource;
@@ -110,32 +111,35 @@ public class BazelIncBuilder {
         }
       }
 
-      if (srcSnapshotDelta.isRecompileAll()) {
-        storageManager.cleanBuildState();
-        modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isAbiJar(ns.toString())).getElements();
-        deletedLibraries = Set.of();
-      }
-
       List<CompilerRunner> compilers = collect(map(ourCompilers, f -> f.create(context)), new ArrayList<>());
       List<CompilerRunner> roundCompilers = collect(map(ourRoundCompilers, f -> f.create(context)), new ArrayList<>());
       List<BytecodeInstrumenter> instrumenters = collect(map(ourInstrumenters, f -> f.create(context)), new ArrayList<>());
 
       boolean isInitialRound = true;
+
       do {
+
+        if (srcSnapshotDelta.isRecompileAll()) {
+          storageManager.cleanBuildState();
+          modifiedLibraries = ElementSnapshot.derive(context.getBinaryDependencies(), ns -> DataPaths.isAbiJar(ns.toString())).getElements();
+          deletedLibraries = Set.of();
+        }
+
         diagnostic = isInitialRound? new PostponedDiagnosticSink() : context; // for initial round postpone error reporting
-        OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager.getOutputBuilder(), instrumenters);
+        OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager.getOutputBuilder(), storageManager.getAbiOutputBuilder(), instrumenters);
 
         if (isInitialRound) {
-          List<String> deletedPaths = new ArrayList<>();
-          for (NodeSource source : filter(flat(srcSnapshotDelta.getDeleted(), srcSnapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
-            // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
-            String path = source.toString();
-            if (storageManager.getOutputBuilder().deleteEntry(path)) {
-              deletedPaths.add(path);
+          if (!srcSnapshotDelta.isRecompileAll()) {
+            List<String> deletedPaths = new ArrayList<>();
+            for (NodeSource source : filter(flat(srcSnapshotDelta.getDeleted(), srcSnapshotDelta.getModified()), s -> find(compilers, compiler -> compiler.canCompile(s)) != null)) {
+              // source paths are assumed to be relative to source roots, so under the output root the directory structure is the same
+              String path = source.toString();
+              if (storageManager.getOutputBuilder().deleteEntry(path)) {
+                deletedPaths.add(path);
+              }
             }
+            logDeletedPaths(context, deletedPaths);
           }
-
-          logDeletedPaths(context, deletedPaths);
 
           for (CompilerRunner runner : compilers) {
             List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
@@ -152,8 +156,10 @@ public class BazelIncBuilder {
         }
 
         if (!diagnostic.hasErrors()) {
-          // delete outputs corresponding to deleted or recompiled sources
-          cleanCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), storageManager.getOutputBuilder());
+          if (!srcSnapshotDelta.isRecompileAll()) {
+            // delete outputs corresponding to deleted or recompiled sources
+            cleanCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), outSink);
+          }
 
           for (CompilerRunner runner : roundCompilers) {
             List<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
@@ -246,7 +252,7 @@ public class BazelIncBuilder {
     }
   }
 
-  private static void cleanCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, ZipOutputBuilder outputBuilder) {
+  private static void cleanCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, OutputSink outSink) {
     for (Iterable<@NotNull NodeSource> sourceGroup : List.of(snapshotDelta.getDeleted(), snapshotDelta.getModified())) {
       if (isEmpty(sourceGroup)) {
         continue;
@@ -255,7 +261,7 @@ public class BazelIncBuilder {
       List<String> deletedPaths = new ArrayList<>();
       for (Node<?, ?> node : filter(flat(map(sourceGroup, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
         String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
-        if (outputBuilder.deleteEntry(outputPath)) {
+        if (outSink.deletePath(outputPath)) {
           deletedPaths.add(outputPath);
         }
       }
