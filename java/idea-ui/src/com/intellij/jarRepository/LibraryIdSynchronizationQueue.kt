@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.util.Computable
-import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
