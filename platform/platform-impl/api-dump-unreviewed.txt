@@ -5732,19 +5732,6 @@ com.intellij.openapi.actionSystem.AnActionExtensionProvider
 - a:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - a:update(com.intellij.openapi.actionSystem.AnActionEvent):V
-a:com.intellij.openapi.actionSystem.ComputableActionGroup
-- com.intellij.openapi.actionSystem.ActionGroup
-- com.intellij.openapi.project.DumbAware
-- p:<init>():V
-- p:<init>(Z):V
-- pa:createChildrenProvider(com.intellij.openapi.actionSystem.ActionManager):com.intellij.psi.util.CachedValueProvider
-- f:getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-a:com.intellij.openapi.actionSystem.ComputableActionGroup$Simple
-- com.intellij.openapi.actionSystem.ComputableActionGroup
-- p:<init>():V
-- p:<init>(Z):V
-- pa:computeChildren(com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
-- pf:createChildrenProvider(com.intellij.openapi.actionSystem.ActionManager):com.intellij.psi.util.CachedValueProvider
 c:com.intellij.openapi.actionSystem.ExtendableAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>(com.intellij.openapi.extensions.ExtensionPointName):V
