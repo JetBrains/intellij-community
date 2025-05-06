@@ -169,6 +169,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="MPS-37563"
+                  value="${basedir}/patches/MPS-37563.patch"/>
+        <echo message="Applying ${MPS-37563}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${MPS-37563}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${MPS-37563}"/>
+        </exec>
+
         <property name="MPS-38534"
                   value="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
         <echo message="Applying ${MPS-38534}"/>
