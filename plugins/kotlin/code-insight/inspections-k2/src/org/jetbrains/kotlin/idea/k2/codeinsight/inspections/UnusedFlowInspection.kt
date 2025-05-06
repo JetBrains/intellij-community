@@ -67,6 +67,8 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         if (element is KtOperationReferenceExpression) return false
         // Assignment operations do use the value, so we can skip this case
         if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ) return false
+        // These are not expressions
+        if (element is KtLabelReferenceExpression || element.parentOfType<KtValueArgumentName>(withSelf = true) != null) return false
         // If the flow is being returned directly, it is being used
         if (element.isBeingReturned()) return false
         if (element.isInImportDirective() || element.parentOfType<KtPackageDirective>() != null) return false

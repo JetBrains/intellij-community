@@ -5954,6 +5954,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/ifUsed.kt");
         }
 
+        @TestMetadata("labeledReturn.kt")
+        public void testLabeledReturn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/labeledReturn.kt");
+        }
+
         @TestMetadata("nestedUnused.kt")
         public void testNestedUnused() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/nestedUnused.kt");
@@ -6012,6 +6017,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("summed.kt")
         public void testSummed() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/summed.kt");
+        }
+
+        @TestMetadata("superConstructorCall.kt")
+        public void testSuperConstructorCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/superConstructorCall.kt");
         }
 
         @TestMetadata("unusedExpression.kt")

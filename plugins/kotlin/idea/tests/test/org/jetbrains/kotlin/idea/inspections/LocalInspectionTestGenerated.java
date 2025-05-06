@@ -4348,6 +4348,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/ifUsed.kt");
             }
 
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/unusedFlow/labeledReturn.kt");
+            }
+
             @TestMetadata("nestedUnused.kt")
             public void testNestedUnused() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/nestedUnused.kt");
@@ -4406,6 +4411,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("summed.kt")
             public void testSummed() throws Exception {
                 runTest("testData/inspectionsLocal/coroutines/unusedFlow/summed.kt");
+            }
+
+            @TestMetadata("superConstructorCall.kt")
+            public void testSuperConstructorCall() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/unusedFlow/superConstructorCall.kt");
             }
 
             @TestMetadata("unusedExpression.kt")
