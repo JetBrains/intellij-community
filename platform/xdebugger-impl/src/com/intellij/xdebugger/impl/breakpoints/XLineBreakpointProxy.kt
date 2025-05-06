@@ -9,18 +9,15 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface XLineBreakpointProxy : XBreakpointProxy {
+interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
   override val type: XLineBreakpointTypeProxy
 
   fun isTemporary(): Boolean
   fun setTemporary(isTemporary: Boolean)
 
-  fun getFile(): VirtualFile?
-  fun getLine(): Int
   fun setFileUrl(url: String)
   fun getFileUrl(): String
   fun setLine(line: Int)
-  fun getHighlightRange(): TextRange?
 
   fun updatePosition()
 

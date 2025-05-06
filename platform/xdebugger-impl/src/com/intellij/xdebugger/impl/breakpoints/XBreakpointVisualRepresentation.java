@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutorService;
 @ApiStatus.Internal
 public class XBreakpointVisualRepresentation {
   private static final Logger LOG = Logger.getInstance(XBreakpointVisualRepresentation.class);
-  private final XLineBreakpointProxy myBreakpoint;
+  private final XLightLineBreakpointProxy myBreakpoint;
   static final ExecutorService redrawInlaysExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
   private final Project myProject;
@@ -53,7 +53,7 @@ public class XBreakpointVisualRepresentation {
 
   @ApiStatus.Internal
   public XBreakpointVisualRepresentation(
-    XLineBreakpointProxy xBreakpoint,
+    XLightLineBreakpointProxy xBreakpoint,
     boolean isEnabled,
     XBreakpointManagerProxy breakpointManagerProxy
   ) {
@@ -247,15 +247,19 @@ public class XBreakpointVisualRepresentation {
         if (canMoveTo(line, file)) {
           XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
           XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
-          if (isCopyAction(actionId) && myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+          // TODO IJPL-185322 implement DnD for light breakpoints?
+          if (!(myBreakpoint instanceof XLineBreakpointProxy breakpoint)) {
+            return false;
+          }
+          if (isCopyAction(actionId) && breakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
             // TODO IJPL-185322 support copy through gutter DnD
             breakpointManager.copyLineBreakpoint(monolithBreakpointProxy.getBreakpoint(), file.getUrl(), line);
           }
           else {
-            myBreakpoint.setFileUrl(file.getUrl());
-            myBreakpoint.setLine(line);
+            breakpoint.setFileUrl(file.getUrl());
+            breakpoint.setLine(line);
             XDebugSessionImpl session = debuggerManager.getCurrentSession();
-            if (session != null && myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+            if (session != null && breakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
               // TODO IJPL-185322 support active breakpoint update on DnD
               session.checkActiveNonLineBreakpointOnRemoval(monolithBreakpointProxy.getBreakpoint());
             }
@@ -267,7 +271,10 @@ public class XBreakpointVisualRepresentation {
 
       @Override
       public void remove() {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
+        // TODO IJPL-185322 implement DnD remove for light breakpoints?
+        if (myBreakpoint instanceof XLineBreakpointProxy proxy) {
+          XDebuggerUtilImpl.removeBreakpointWithConfirmation(proxy);
+        }
       }
 
       @Override

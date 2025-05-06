@@ -226,7 +226,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     })
   }
 
-  fun queueBreakpointUpdateCallback(breakpoint: XLineBreakpointProxy, callback: Runnable) {
+  fun queueBreakpointUpdateCallback(breakpoint: XLightLineBreakpointProxy, callback: Runnable) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         callback.run()
