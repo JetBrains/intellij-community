@@ -6,111 +6,87 @@ import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid
 import com.intellij.openapi.util.Condition
 import org.jetbrains.annotations.ApiStatus
 
+private data class ActionPopupOptionsImpl(
+  val showNumbers: Boolean = false,
+  val useAlphaAsNumbers: Boolean = false,
+  val showDisabledActions: Boolean = false,
+  val honorActionMnemonics: Boolean = false,
+  val maxRowCount: Int = -1,
+  val autoSelection: Boolean = false,
+  val preselectCondition: Condition<in AnAction>? = null,
+  val defaultIndex: Int = -1,
+)
+
 class ActionPopupOptions private constructor(
-  private val showNumbers: Boolean,
-  private val useAlphaAsNumbers: Boolean,
-  private val showDisabledActions: Boolean,
-  private val honorActionMnemonics: Boolean,
-  private val maxRowCount: Int,
-  private val autoSelection: Boolean,
-  private val preselectCondition: Condition<in AnAction>?,
-  private val defaultIndex: Int,
+  private val options: ActionPopupOptionsImpl,
 ) {
   @ApiStatus.Internal
   fun showNumbers(): Boolean {
-    return showNumbers
+    return options.showNumbers
   }
 
   @ApiStatus.Internal
   fun useAlphaAsNumbers(): Boolean {
-    return useAlphaAsNumbers
+    return options.useAlphaAsNumbers
   }
 
   @ApiStatus.Internal
   fun showDisabledActions(): Boolean {
-    return showDisabledActions
+    return options.showDisabledActions
   }
 
   @ApiStatus.Internal
   fun honorActionMnemonics(): Boolean {
-    return honorActionMnemonics
+    return options.honorActionMnemonics
   }
 
   @ApiStatus.Internal
   fun getMaxRowCount(): Int {
-    return maxRowCount
+    return options.maxRowCount
   }
 
   @ApiStatus.Internal
   fun autoSelectionEnabled(): Boolean {
-    return autoSelection
+    return options.autoSelection
   }
 
   @ApiStatus.Internal
   fun getPreselectCondition(): Condition<in AnAction>? {
-    return preselectCondition
+    return options.preselectCondition
   }
 
   @ApiStatus.Internal
   fun getDefaultIndex(): Int {
-    return defaultIndex
+    return options.defaultIndex
   }
 
   companion object {
     @JvmStatic
     fun empty(): ActionPopupOptions {
-      return ActionPopupOptions(
-        showNumbers = false,
-        useAlphaAsNumbers = false,
-        showDisabledActions = false,
-        honorActionMnemonics = false,
-        maxRowCount = -1,
-        autoSelection = false,
-        preselectCondition = null,
-        defaultIndex = -1
-      )
+      return ActionPopupOptionsImpl()
+        .asOption()
     }
 
     @JvmStatic
     fun showDisabled(): ActionPopupOptions {
-      return ActionPopupOptions(
-        showNumbers = false,
-        useAlphaAsNumbers = false,
+      return ActionPopupOptionsImpl(
         showDisabledActions = true,
-        honorActionMnemonics = false,
-        maxRowCount = -1,
-        autoSelection = false,
-        preselectCondition = null,
-        defaultIndex = -1
-      )
+      ).asOption()
     }
 
     @JvmStatic
     fun honorMnemonics(): ActionPopupOptions {
-      return ActionPopupOptions(
-        showNumbers = false,
-        useAlphaAsNumbers = false,
-        showDisabledActions = false,
+      return ActionPopupOptionsImpl(
         honorActionMnemonics = true,
-        maxRowCount = -1,
-        autoSelection = false,
-        preselectCondition = null,
-        defaultIndex = -1
-      )
+      ).asOption()
     }
 
     @JvmStatic
     fun mnemonicsAndDisabled(): ActionPopupOptions {
-      return ActionPopupOptions(
-        showNumbers = false,
-        useAlphaAsNumbers = false,
+      return ActionPopupOptionsImpl(
         showDisabledActions = true,
         honorActionMnemonics = true,
-        maxRowCount = -1,
-        autoSelection = false,
-        preselectCondition = null,
-        defaultIndex = -1
-      )
+      ).asOption()
     }
 
     @JvmStatic
@@ -120,16 +96,12 @@ class ActionPopupOptions private constructor(
       autoSelection: Boolean,
       preselectCondition: Condition<in AnAction>?,
     ): ActionPopupOptions {
-      return ActionPopupOptions(
-        showNumbers = false,
-        useAlphaAsNumbers = false,
+      return ActionPopupOptionsImpl(
         showDisabledActions = showDisabledActions,
         honorActionMnemonics = enableMnemonics,
-        maxRowCount = -1,
         autoSelection = autoSelection,
         preselectCondition = preselectCondition,
-        defaultIndex = -1
-      )
+      ).asOption()
     }
 
     @JvmStatic
@@ -142,16 +114,15 @@ class ActionPopupOptions private constructor(
       preselectCondition: Condition<in AnAction>?,
       defaultOptionIndex: Int,
     ): ActionPopupOptions {
-      return ActionPopupOptions(
+      return ActionPopupOptionsImpl(
         showNumbers = showNumbers,
         useAlphaAsNumbers = useAlphaAsNumbers,
         showDisabledActions = showDisabledActions,
         honorActionMnemonics = honorActionMnemonics,
-        maxRowCount = -1,
         autoSelection = autoSelectionEnabled,
         preselectCondition = preselectCondition,
         defaultIndex = defaultOptionIndex
-      )
+      ).asOption()
     }
 
     @ApiStatus.Internal
@@ -160,6 +131,7 @@ class ActionPopupOptions private constructor(
       options: ActionPopupOptions,
       items: List<PopupFactoryImpl.ActionItem>,
     ): ActionPopupOptions {
+      val options = options.options
       val enableMnemonics = options.showNumbers ||
                             options.honorActionMnemonics && PopupFactoryImpl.anyMnemonicsIn(items)
 
@@ -184,16 +156,14 @@ class ActionPopupOptions private constructor(
       maxRowCount: Int,
       preselectCondition: Condition<in AnAction>?,
     ): ActionPopupOptions {
-      return ActionPopupOptions(
+      return ActionPopupOptionsImpl(
         showNumbers = aid == ActionSelectionAid.ALPHA_NUMBERING || aid == ActionSelectionAid.NUMBERING,
         useAlphaAsNumbers = aid == ActionSelectionAid.ALPHA_NUMBERING,
         showDisabledActions = showDisabledActions,
         honorActionMnemonics = aid == ActionSelectionAid.MNEMONICS,
         maxRowCount = maxRowCount,
-        autoSelection = false,
         preselectCondition = preselectCondition,
-        defaultIndex = -1
-      )
+      ).asOption()
     }
 
     @JvmStatic
@@ -206,7 +176,7 @@ class ActionPopupOptions private constructor(
       autoSelection: Boolean,
       preselectCondition: Condition<in AnAction>?,
     ): ActionPopupOptions {
-      return ActionPopupOptions(
+      return ActionPopupOptionsImpl(
         showNumbers = showNumbers,
         useAlphaAsNumbers = useAlphaAsNumbers,
         showDisabledActions = showDisabledActions,
@@ -214,8 +184,9 @@ class ActionPopupOptions private constructor(
         maxRowCount = maxRowCount,
         autoSelection = autoSelection,
         preselectCondition = preselectCondition,
-        defaultIndex = -1
-      )
+      ).asOption()
     }
+
+    private fun ActionPopupOptionsImpl.asOption(): ActionPopupOptions = ActionPopupOptions(this)
   }
 }
