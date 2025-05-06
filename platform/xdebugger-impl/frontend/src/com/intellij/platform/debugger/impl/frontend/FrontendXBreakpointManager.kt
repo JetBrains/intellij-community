@@ -9,20 +9,27 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.xdebugger.impl.rpc.XLineBreakpointInstalledResponse
+import com.intellij.xdebugger.impl.toRequest
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentMap
 
 internal class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
@@ -87,6 +94,19 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     previousBreakpoint?.dispose()
     breakpointsChanged.tryEmit(Unit)
     return newBreakpoint
+  }
+
+  override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+    return cs.async {
+      val lightBreakpoint = FrontendXLightLineBreakpoint(project, this@async, type, installationInfo, this@FrontendXBreakpointManager)
+      val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(false))
+      val breakpointDto = (response as? XLineBreakpointInstalledResponse)?.breakpoint ?: return@async null
+
+      withContext(Dispatchers.EDT) {
+        lightBreakpoint.dispose()
+        addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+      }
+    }
   }
 
   private fun removeBreakpointsLocally(breakpointsToRemove: Collection<XBreakpointId>) {

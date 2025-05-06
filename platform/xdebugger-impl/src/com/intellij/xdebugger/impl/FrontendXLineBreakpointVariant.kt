@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
@@ -28,7 +29,8 @@ internal interface FrontendXLineBreakpointVariant {
   val useAsInlineVariant: Boolean
 }
 
-internal data class XLineBreakpointInstallationInfo(
+@ApiStatus.Internal
+data class XLineBreakpointInstallationInfo(
   val types: List<XLineBreakpointTypeProxy>,
   val position: XSourcePosition,
   val isTemporary: Boolean,
@@ -36,10 +38,11 @@ internal data class XLineBreakpointInstallationInfo(
   val condition: String?,
   private val canRemove: Boolean,
 ) {
-  fun canRemoveBreakpoint() = canRemove && !isTemporary
+  fun canRemoveBreakpoint(): Boolean = canRemove && !isTemporary
 }
 
-private fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean) = XLineBreakpointInstallationRequest(
+@ApiStatus.Internal
+fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean): XLineBreakpointInstallationRequest = XLineBreakpointInstallationRequest(
   types.map { XBreakpointTypeId(it.id) },
   position.toRpc(),
   isTemporary,

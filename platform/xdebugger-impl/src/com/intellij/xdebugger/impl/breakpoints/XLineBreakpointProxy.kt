@@ -23,9 +23,6 @@ interface XLineBreakpointProxy : XBreakpointProxy, XLightLineBreakpointProxy {
 
   fun getHighlighter(): RangeHighlighter?
 
-  @RequiresBackgroundThread
-  fun doUpdateUI(callOnUpdate: () -> Unit = {})
-
 
   @Suppress("DEPRECATION")
   class Monolith @Deprecated("Use breakpoint.asProxy() instead") internal constructor(

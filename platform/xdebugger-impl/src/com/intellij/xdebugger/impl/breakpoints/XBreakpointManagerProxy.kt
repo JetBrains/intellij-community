@@ -8,8 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<XBreakpointManagerProxy>()
@@ -45,6 +48,8 @@ interface XBreakpointManagerProxy {
     findBreakpointsAtLine(type, file, line).firstOrNull()
 
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
+
+  fun addLightBreakpoint(type: XLineBreakpointTypeProxy, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -142,6 +147,11 @@ interface XBreakpointManagerProxy {
       return breakpointManager.findBreakpointsAtLine(breakpointType, file, line)
         .filterIsInstance<XLineBreakpointImpl<*>>()
         .map { it.asProxy() }
+    }
+
+    override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+      // TODO IJPL-185322 do we need to implement it for monolith?
+      return CompletableDeferred(value = null)
     }
   }
 }

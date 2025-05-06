@@ -202,7 +202,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     }
   }
 
-  fun breakpointChanged(breakpoint: XLineBreakpointProxy) {
+  fun breakpointChanged(breakpoint: XLightLineBreakpointProxy) {
     if (EDT.isCurrentThreadEdt()) {
       updateBreakpointNow(breakpoint)
     }
@@ -235,12 +235,12 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   // Skip waiting 300ms in myBreakpointsUpdateQueue (good for sync updates like enable/disable or create new breakpoint)
-  private fun updateBreakpointNow(breakpoint: XLineBreakpointProxy) {
+  private fun updateBreakpointNow(breakpoint: XLightLineBreakpointProxy) {
     queueBreakpointUpdate(breakpoint)
     breakpointUpdateQueue.sendFlush()
   }
 
-  private fun queueBreakpointUpdate(breakpoint: XLineBreakpointProxy, callOnUpdate: Runnable? = null) {
+  private fun queueBreakpointUpdate(breakpoint: XLightLineBreakpointProxy, callOnUpdate: Runnable? = null) {
     breakpointUpdateQueue.queue(object : Update(breakpoint) {
       override fun run() {
         breakpoint.doUpdateUI {

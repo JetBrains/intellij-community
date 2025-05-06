@@ -19,7 +19,7 @@ final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     // But we disable it in the old mode just for ease of regressions debugging.
     if (!Registry.is(INLINE_BREAKPOINTS_KEY)) return marks;
 
-    var breakpointCount = ContainerUtil.count(marks, m -> m instanceof CommonBreakpointGutterIconRenderer);
+    var breakpointCount = ContainerUtil.count(marks, m -> m instanceof BreakpointGutterIconRenderer);
     if (breakpointCount <= 1) {
       return marks;
     }
