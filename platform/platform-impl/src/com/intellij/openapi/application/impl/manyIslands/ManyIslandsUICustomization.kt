@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
+import com.intellij.ui.tabs.impl.TabPainterAdapter
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
@@ -33,6 +34,8 @@ internal class ManyIslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  private val tabPainterAdapter = ManyIslandsTabPainterAdapter()
+
   override val toolWindowUIDecorator: ToolWindowUIDecorator
     get() {
       if (isManyIslandsEnabled) {
@@ -52,6 +55,14 @@ internal class ManyIslandsUICustomization : InternalUICustomization() {
       ManyIslandsRoundedBorder.createEditorBorder(component)
     }
   }
+
+  override val editorTabPainterAdapter: TabPainterAdapter
+    get() {
+      if (isManyIslandsEnabled) {
+        return tabPainterAdapter
+      }
+      return super.editorTabPainterAdapter
+    }
 
   override fun getCustomMainBackgroundColor(): Color? {
     if (isManyIslandsEnabled) {
