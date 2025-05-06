@@ -84,8 +84,8 @@ internal fun computeBreakpointProxy(
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
       val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-      if (editor != null && readAction { breakpointManager.canAddLightBreakpoint(editor, info) }) {
-        val breakpoint = breakpointManager.addLightBreakpoint(editor, info).await()
+      if (editor != null && readAction { breakpointManager.canToggleLightBreakpoint(editor, info) }) {
+        val breakpoint = breakpointManager.toggleLightBreakpoint(editor, info).await()
         result.complete(breakpoint)
         return@launch
       }

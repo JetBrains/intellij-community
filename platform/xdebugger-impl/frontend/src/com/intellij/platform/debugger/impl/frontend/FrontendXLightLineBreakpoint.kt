@@ -79,7 +79,6 @@ internal class FrontendXLightLineBreakpoint(
     private val lightBreakpoint: FrontendXLightLineBreakpoint,
   ) : CommonBreakpointGutterIconRenderer() {
 
-
     override fun equals(obj: Any?): Boolean {
       return obj is FrontendXLightBreakpointGutterIconRenderer
              && lightBreakpoint == obj.lightBreakpoint

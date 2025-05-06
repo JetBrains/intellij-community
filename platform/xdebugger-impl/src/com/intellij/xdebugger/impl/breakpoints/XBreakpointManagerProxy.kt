@@ -53,9 +53,9 @@ interface XBreakpointManagerProxy {
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
 
   @RequiresReadLock
-  fun canAddLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean
+  fun canToggleLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean
 
-  fun addLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?>
+  fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -155,11 +155,11 @@ interface XBreakpointManagerProxy {
         .map { it.asProxy() }
     }
 
-    override fun canAddLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean {
+    override fun canToggleLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean {
       return false
     }
 
-    override fun addLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+    override fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
       return toggleAndReturnLineBreakpointProxy(
         breakpointManager.project, installationInfo.types,
         installationInfo.position, false, installationInfo.isTemporary, editor, installationInfo.canRemoveBreakpoint(), installationInfo.isTemporary, installationInfo.condition
