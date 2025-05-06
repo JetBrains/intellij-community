@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.pom.java.LanguageLevel;
@@ -376,7 +377,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   private static <R, T> R suspendAllAndEvaluate(@NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
                                                 @NotNull Function<? super T, ? extends R> processor,
                                                 @NotNull EvaluationContext evaluationContext) throws EvaluateException {
-    LOG.error("Retries exhausted, applying suspend-all evaluation");
+    if (Registry.is("debugger.collectible.value.retries.error", true)) {
+      LOG.error("Retries exhausted, applying suspend-all evaluation");
+    }
     VirtualMachineProxyImpl virtualMachineProxy = ((EvaluationContextImpl)evaluationContext).getSuspendContext().getVirtualMachineProxy();
     virtualMachineProxy.suspend();
     try {

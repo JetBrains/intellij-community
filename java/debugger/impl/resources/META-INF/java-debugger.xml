@@ -194,6 +194,8 @@
                  description="Provide evaluatable context on Pause"/>
     <registryKey key="debugger.evaluate.on.pause.timeout.ms" defaultValue="500"
                  description="Maximum duration (in ms) of obtaining an evaluatable context for a Pause"/>
+    <registryKey key="debugger.collectible.value.retries.error" defaultValue="true"
+                 description="Drop an error if there were too many debugger collectible value retries"/>
   </extensions>
 
   <actions>
