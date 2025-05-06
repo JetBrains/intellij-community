@@ -45,7 +45,7 @@ internal class SaveImageAction : DumbAwareAction() {
         catch (e: IOException) {
           logger.warn("Failed to save image", e)
         }
-        ScientificImageActionsCollector.logSaveAsImageInvoked(this@SaveImageAction, selectedFormat)
+        ScientificImageActionsCollector.logSaveAsImageInvoked(selectedFormat)
       }
     }
   }
