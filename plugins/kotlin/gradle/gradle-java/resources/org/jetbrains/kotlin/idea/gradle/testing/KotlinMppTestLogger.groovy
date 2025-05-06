@@ -1,8 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 import groovy.xml.MarkupBuilder
+import org.gradle.api.tasks.testing.TestDescriptor
+import org.gradle.api.tasks.testing.TestListener
+import org.gradle.api.tasks.testing.TestOutputEvent
+import org.gradle.api.tasks.testing.TestOutputListener
+import org.gradle.api.tasks.testing.TestResult
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal
-import org.gradle.api.tasks.testing.*
 
 class KotlinMppTestLogger {
     static def configureTestEventLogging(def task) {
@@ -57,7 +60,7 @@ class KotlinMppTestLogger {
                 if (testResult) {
                     def errorMsg = escapeCdata(testResult.exception?.message ?: '')
                     def stackTrace = escapeCdata(getStackTrace(testResult.exception))
-                    result(resultType: testResult.resultType ?: '', startTime: testResult.getStartTimeMillis, endTime: testResult.getEndTimeMillis) {
+                    result(resultType: testResult.resultType ?: '', startTime: testResult.startTime, endTime: testResult.endTime) {
                         def exception = testResult.exception
                         if (exception?.message?.trim()) xml.mkp.yieldUnescaped("<errorMsg>$errorMsg</errorMsg>")
                         if (exception) xml.mkp.yieldUnescaped("<stackTrace>$stackTrace</stackTrace>")
