@@ -5,8 +5,10 @@ import java.io.Serializable
 
 interface ComposeResourcesModel : Serializable {
   val customComposeResourcesDirs: Map<String, String>
+  val isPublicResClass: Boolean
 }
 
 data class ComposeResourcesModelImpl(
   override val customComposeResourcesDirs: Map<String, String> = emptyMap(),
+  override val isPublicResClass: Boolean = false,
 ) : ComposeResourcesModel
