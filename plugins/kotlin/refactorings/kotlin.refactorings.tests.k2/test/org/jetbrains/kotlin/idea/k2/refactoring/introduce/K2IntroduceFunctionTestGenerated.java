@@ -1904,6 +1904,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/classObject.kt");
             }
 
+            @TestMetadata("dataClassCopy.kt")
+            public void testDataClassCopy() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/dataClassCopy.kt");
+            }
+
             @TestMetadata("differentReceivers.kt")
             public void testDifferentReceivers() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/differentReceivers.kt");

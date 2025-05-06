@@ -392,6 +392,10 @@ private fun getReferencedClassifierSymbol(
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>,
     partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>?
 ): KaClassifierSymbol? {
+    if (partiallyAppliedSymbol?.symbol is KaNamedFunctionSymbol && originalDeclaration is KtConstructor<*>) {
+        // dataClass.copy(): do not replace with call to constructor
+        return null
+    }
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.symbol
     ?: (originalDeclaration as? PsiMember)?.callableSymbol) ?: return null
     return when (referencedSymbol) {
