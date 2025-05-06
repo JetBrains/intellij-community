@@ -293,7 +293,11 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionTestBase(), E
       """)
   }
 
-  fun testFalseNegative() {
+  /**
+   * The following test is ignored because it fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
+   */
+  @Suppress("unused")
+  fun ignoredTestFalseNegative() {
     doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
