@@ -10,14 +10,9 @@ interface UsagePresentationProvider {
   companion object {
     private val EP_NAME = ExtensionPointName<UsagePresentationProvider>("com.intellij.usagePresentationProvider")
 
+    @JvmStatic
     fun getPresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
-      for (extension in EP_NAME.extensionList) {
-        val presentation = extension.getUsagePresentation(usageInfo, project, scope)
-        if (presentation != null) {
-          return presentation
-        }
-      }
-      return null
+      return EP_NAME.computeSafeIfAny { extension -> extension.getUsagePresentation(usageInfo, project, scope)}
     }
   }
   fun getUsagePresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation?

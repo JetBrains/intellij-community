@@ -2,12 +2,9 @@
 package com.intellij.find.impl
 
 import com.intellij.find.FindModel
-import com.intellij.lang.findUsages.LanguageFindUsages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
-import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
@@ -17,36 +14,32 @@ import javax.swing.table.TableCellRenderer
 @ApiStatus.Internal
 open class FindInProjectExecutor {
 
-    companion object {
-        fun getInstance(): FindInProjectExecutor {
-            return ApplicationManager.getApplication().getService(FindInProjectExecutor::class.java)
-        }
+  companion object {
+    fun getInstance(): FindInProjectExecutor {
+      return ApplicationManager.getApplication().getService(FindInProjectExecutor::class.java)
     }
+  }
 
-    open fun createTableCellRenderer(): TableCellRenderer? {
-        return null
+  open fun createTableCellRenderer(): TableCellRenderer? {
+    return null
+  }
+
+  open fun findUsages(
+    project: Project,
+    progressIndicator: ProgressIndicatorEx,
+    presentation: FindUsagesProcessPresentation,
+    findModel: FindModel,
+    previousUsages: Set<UsageInfoAdapter>,
+    onResult: (UsageInfoAdapter) -> Boolean,
+    onFinish: () -> Unit?,
+  ) {
+    val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfo2UsageAdapter)?.file }.toSet()
+    FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
+      val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
+      usage.presentation.icon // cache icon
+
+      onResult(usage)
     }
-
-    open fun findUsages(
-      project: Project,
-      progressIndicator: ProgressIndicatorEx,
-      presentation: FindUsagesProcessPresentation,
-      findModel: FindModel,
-      previousUsages: Set<UsageInfoAdapter>,
-      onResult: (UsageInfoAdapter, Int?, Int?) -> Boolean,
-      onFinish:() -> Unit?
-    ) {
-      val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfo2UsageAdapter)?.file }.toSet()
-        FindInProjectUtil.findUsages(findModel, project, presentation, filesToScanInitially) { info ->
-            val usage = UsageInfo2UsageAdapter.CONVERTER.`fun`(info) as UsageInfoAdapter
-            usage.presentation.icon // cache icon
-
-            onResult.invokeWithDefault(usage)
-        }
-      onFinish()
-    }
-
-  protected fun ((UsageInfoAdapter, Int?, Int?) -> Boolean).invokeWithDefault(usage: UsageInfoAdapter): Boolean {
-    return this(usage, null, null)
+    onFinish()
   }
 }

@@ -1112,14 +1112,12 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       @Override
       public void stop() {
         super.stop();
-        if (!FindKey.INSTANCE.isEnabled()) {
-          onStop(System.identityHashCode(this));
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
-              reset();
-            }
-          });
-        }
+        onStop(System.identityHashCode(this));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
+            reset();
+          }
+        });
       }
     };
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
@@ -1147,7 +1145,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
 
     AtomicInteger resultsCount = new AtomicInteger();
-    AtomicInteger resultsFilesCount = new AtomicInteger();
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
 
     Project project = myProject;
@@ -1160,39 +1157,21 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ).wrapProgress(indicator).executeSynchronously();
 
         FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
-        ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
         ConcurrentHashMap<String, Reference<FindPopupItem>> fileToRecentItemRef = new ConcurrentHashMap<>();
 
-        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, (usage, usageCount, fileCount)-> {
+        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, (usage)-> {
           if (isCancelled()) {
             onStop(hash);
             return false;
           }
 
-          int resCount = resultsCount.get();
-          if (usageCount == null) {
-            resCount = resultsCount.incrementAndGet();
-          } else if (resCount < usageCount){
-            resultsCount.set(usageCount);
-            resCount = usageCount;
-          }
+          int resCount = resultsCount.incrementAndGet();
 
           if (resCount >= ShowUsagesAction.getUsagesPageSize()) {
             onStop(hash);
             return false;
           }
 
-          if (!FindKey.INSTANCE.isEnabled() || fileCount == null) {
-            String file = lastUsageFileRef.get();
-            String usageFile = PathUtil.toSystemIndependentName(usage.getPath());
-            if (!usageFile.equals(file)) {
-              resultsFilesCount.incrementAndGet();
-              lastUsageFileRef.set(usageFile);
-            }
-          }
-          else if (fileCount > resultsFilesCount.get()) {
-            resultsFilesCount.set(fileCount);
-          }
           FindPopupItem recentItem = SoftReference.dereference(fileToRecentItemRef.get(usage.getPath()));
           FindPopupItem newItem;
           boolean merged = !myHelper.isReplaceState() && recentItem != null && recentItem.getUsage().merge(usage);
@@ -1201,7 +1180,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
               ((UsageInfo2UsageAdapter)usage).updateCachedPresentation();
             }
 
-            UsagePresentation usagePresentation = UsagePresentationProvider.Companion.getPresentation(usage, project, scope);
+            UsagePresentation usagePresentation = UsagePresentationProvider.getPresentation(usage, project, scope);
             newItem = new FindPopupItem(usage, usagePresentation);
           }
           else {
@@ -1210,7 +1189,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             if (recentItemUsage instanceof UsageInfo2UsageAdapter) {
               ((UsageInfo2UsageAdapter)recentItemUsage).updateCachedPresentation();
             }
-            UsagePresentation recentUsagePresentation = UsagePresentationProvider.Companion.getPresentation(recentItemUsage, project, scope);
+            UsagePresentation recentUsagePresentation = UsagePresentationProvider.getPresentation(recentItemUsage, project, scope);
             newItem = recentItem.withPresentation(recentUsagePresentation);
           }
           fileToRecentItemRef.put(usage.getPath(), new WeakReference<>(newItem));
@@ -1239,7 +1218,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
             int occurrences = resultsCount.get();
-            int filesWithOccurrences = resultsFilesCount.get();
+            int filesWithOccurrences = fileToRecentItemRef.size();
             myCodePreviewComponent.setVisible(occurrences > 0);
             myReplaceAllButton.setEnabled(occurrences > 0);
             myReplaceSelectedButton.setEnabled(occurrences > 0);
@@ -1263,9 +1242,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
           return true;
         }, () -> {
-          if (FindKey.INSTANCE.isEnabled()) {
             onFinish();
-          }
           return null;
         });
       }
@@ -1284,18 +1261,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       @Override
       public void onFinished() {
-        if (!FindKey.INSTANCE.isEnabled()) {
-          onFinish();
-        }
+        onFinish();
       }
 
       public void onFinish() {
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (FindKey.INSTANCE.isEnabled()) {
-            if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
-              reset();
-            }
-          }
           if (!isCancelled()) {
             boolean isEmpty = resultsCount.get() == 0;
             if (isEmpty) {
@@ -1473,9 +1443,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private void onStart(int hash) {
-    if (FindKey.INSTANCE.isEnabled()) {
-      reset();
-    }
     myNeedReset.set(true);
     myLoadingHash = hash;
     header.loadingIcon.setIcon(AnimatedIcon.Default.INSTANCE);

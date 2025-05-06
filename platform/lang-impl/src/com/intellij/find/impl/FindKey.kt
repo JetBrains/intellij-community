@@ -4,5 +4,7 @@ package com.intellij.find.impl
 import com.intellij.openapi.util.registry.Registry
 
 object FindKey {
-  val isEnabled: Boolean = Registry.`is`("find.in.files.split")
+  val isEnabled: Boolean
+    @JvmStatic
+    get() = Registry.`is`("find.in.files.split")
 }

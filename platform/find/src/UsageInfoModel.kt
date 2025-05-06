@@ -28,9 +28,10 @@ class UsageInfoModel(val project: Project, private val model: FindInFilesResult,
 
   override fun getMergedInfosAsync(): CompletableFuture<Array<UsageInfo>> {
     val virtualFile = mergedModel.fileId.virtualFile() ?: return CompletableFuture.completedFuture(emptyArray())
+    val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return CompletableFuture.completedFuture(emptyArray())
     val usageInfos = mergedUsages.map {
       UsageInfo(
-        PsiManager.getInstance(project).findFile(virtualFile) ?: return CompletableFuture.completedFuture(emptyArray()),
+        psiFile,
         it.originalOffset, it.originalOffset + it.originalLength
       )
     }.toTypedArray()
@@ -58,7 +59,7 @@ class UsageInfoModel(val project: Project, private val model: FindInFilesResult,
     openFileDescriptor.navigate(requestFocus)
    }
 
-  override fun getPath(): String = mergedModel.path
+  override fun getPath(): String = mergedModel.presentablePath
 
   override fun getLine(): Int = mergedModel.line
 
@@ -85,6 +86,7 @@ class UsageInfoModel(val project: Project, private val model: FindInFilesResult,
 
   override fun merge(mergeableUsage: MergeableUsage): Boolean {
     if (mergeableUsage !is UsageInfoModel) return false
+    if (path != mergeableUsage.path || line != mergeableUsage.line) return false
     if (mergeableUsage.mergedModel.merged) {
       mergedUsages.add(mergeableUsage.mergedModel)
       return true
