@@ -6,6 +6,8 @@ import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -27,6 +29,8 @@ import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.popup.ActionPopupOptions
+import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
@@ -44,6 +48,7 @@ import java.awt.event.HierarchyEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Function
 import java.util.function.Predicate
+import java.util.function.Supplier
 import javax.swing.*
 
 private const val MAX_RECENT_COUNT = 100
@@ -60,8 +65,7 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
 class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
-    val step = createStep(createActionGroup(event), event.dataContext, widget)
+    val step = createStep(createActionGroup(event), event.dataContext)
     return event.project?.let { createPopup(it = it, step = step) }
   }
 
@@ -120,7 +124,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.putClientProperty(LEFT_ICONS_KEY, icons)
   }
 
-  private fun createPopup(it: Project, step: ListPopupStep<Any>): ListPopup {
+  private fun createPopup(it: Project, step: ListPopupStep<PopupFactoryImpl.ActionItem>): ListPopup {
     val widgetRenderer = ProjectWidgetRenderer()
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
@@ -175,9 +179,12 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     return result
   }
 
-  private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: JComponent?): ListPopupStep<Any> {
-    return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, true,
-                                                          null, widget, false, 0, false)
+  private fun createStep(actionGroup: ActionGroup, context: DataContext): ListPopupStep<PopupFactoryImpl.ActionItem> {
+    val presentationFactory = PresentationFactory()
+    val asyncDataContext: DataContext = Utils.createAsyncDataContext(context)
+    val options = ActionPopupOptions.showDisabled()
+    return ActionPopupStep.createActionsStep(null, actionGroup, asyncDataContext, ActionPlaces.PROJECT_WIDGET_POPUP, presentationFactory,
+                                             Supplier { asyncDataContext }, options)
   }
 }
 
