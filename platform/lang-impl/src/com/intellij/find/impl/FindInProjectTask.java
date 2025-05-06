@@ -450,13 +450,10 @@ final class FindInProjectTask {
 
   /**
    * @return true if there is at least one reliable searcher ({@link FindInProjectSearchEngine.FindInProjectSearcher#isReliable()}),
-   * false otherwise.
+   * false otherwise. I.e. return true if everything could be found by _some_ searcher, or
+   * false if there is something outside all searchers
    */
   private boolean hasReliableSearchers() {
-    //TODO RC: why we access TrigramTextSearchService explicitly here, if we can do the same
-    //         inside IdeaIndexBasedFindInProjectSearchEngine.isReliable() there it is much more
-    //         logical to access trigram index configuration?
-    if (!TrigramTextSearchService.useIndexingSearchExtensions()) return false;
     return ContainerUtil.find(mySearchers, s -> s.isReliable()) != null;
   }
 

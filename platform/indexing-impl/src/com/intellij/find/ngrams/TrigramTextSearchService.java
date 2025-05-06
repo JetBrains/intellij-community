@@ -54,6 +54,10 @@ public final class TrigramTextSearchService implements TextSearchService {
 
   /** @return true if search by index available */
   public static boolean useIndexingSearchExtensions() {
+    //TODO RC: it's unclear that is .useIndexingSearchExtensions() meaning here: it is either 'use _any_ indexing
+    //         extension/engine at all', or 'use trigram indexing engine specifically' -- currently there is only
+    //         one indexing extension (=searcher) available, so effectively there is no difference between these
+    //         two cases now -- but it could be in future
     return USE_INDEX_FOR_SEARCH;
   }
 }
