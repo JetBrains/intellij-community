@@ -4,15 +4,20 @@ package com.intellij.xdebugger.impl.breakpoints
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl.toggleAndReturnLineBreakpoint
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.toggleLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<XBreakpointManagerProxy>()
@@ -49,7 +54,7 @@ interface XBreakpointManagerProxy {
 
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
 
-  fun addLightBreakpoint(type: XLineBreakpointTypeProxy, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?>
+  fun addLightBreakpoint(type: XLineBreakpointTypeProxy, editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?>
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -149,9 +154,11 @@ interface XBreakpointManagerProxy {
         .map { it.asProxy() }
     }
 
-    override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
-      // TODO IJPL-185322 do we need to implement it for monolith?
-      return CompletableDeferred(value = null)
+    override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+      return toggleAndReturnLineBreakpointProxy(
+        breakpointManager.project, installationInfo.types,
+        installationInfo.position, false, installationInfo.isTemporary, editor, installationInfo.canRemoveBreakpoint(), installationInfo.isTemporary, installationInfo.condition
+      ).asDeferred()
     }
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.frontend
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -96,7 +97,7 @@ internal class FrontendXBreakpointManager(private val project: Project, private 
     return newBreakpoint
   }
 
-  override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
+  override fun addLightBreakpoint(type: XLineBreakpointTypeProxy, editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
     return cs.async {
       val lightBreakpoint = FrontendXLightLineBreakpoint(project, this@async, type, installationInfo, this@FrontendXBreakpointManager)
       val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), installationInfo.toRequest(false))
