@@ -420,8 +420,8 @@ class CodeInliner(
         val ownerDeclaration = parameter.ownerDeclaration
         if (ownerDeclaration !is KtNamedFunction || !ownerDeclaration.hasModifier(KtTokens.INLINE_KEYWORD)) return
         val isJumpPossible = lambdaArgumentExpression.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)
-        val visitor = if (isJumpPossible) NonLocalJumpVisitor(lambdaArgumentExpression) else PsiElementVisitor.EMPTY_VISITOR
-        lambdaArgumentExpression.accept(visitor)
+        if (!isJumpPossible) return
+        lambdaArgumentExpression.accept(NonLocalJumpVisitor(lambdaArgumentExpression))
     }
 
     override fun KtDeclaration.valueParameters(): List<KtParameter> = (this as? KtDeclarationWithBody)?.valueParameters ?: emptyList()
