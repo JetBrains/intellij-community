@@ -13,6 +13,7 @@ import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamCo
 import com.intellij.platform.plugins.parser.impl.ReadModuleContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.UsefulTestCase

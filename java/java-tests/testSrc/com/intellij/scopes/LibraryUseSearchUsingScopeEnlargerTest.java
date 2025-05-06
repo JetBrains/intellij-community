@@ -5,13 +5,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
-import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,7 +43,7 @@ public class LibraryUseSearchUsingScopeEnlargerTest extends JavaCodeInsightFixtu
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
+    Disposer.register(getTestRootDisposable(), DynamicPluginTestUtilsKt.loadExtensionWithText(
       "<useScopeEnlarger implementation=\"com.intellij.scopes.LibraryUseSearchUsingScopeEnlargerTest$LibraryUseScopeEnlarger\"/>",
       "com.intellij"));
     //bug? Test seems to use stale data.

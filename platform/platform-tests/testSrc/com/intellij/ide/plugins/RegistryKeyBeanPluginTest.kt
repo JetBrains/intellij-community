@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.util.registry.RegistryKeyDescriptor
+import com.intellij.platform.testFramework.PluginBuilder
+import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Ksuid

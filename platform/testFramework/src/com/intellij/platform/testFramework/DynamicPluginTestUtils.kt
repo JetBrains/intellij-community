@@ -1,19 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("DynamicPluginsTestUtil")
-@file:Suppress("UsePropertyAccessSyntax")
-package com.intellij.ide.plugins
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.testFramework
 
+import com.intellij.ide.plugins.DynamicPlugins
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginInitializationContext
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.loadDescriptorFromFileOrDirInTests
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.assertions.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
 import java.nio.file.Path
 
 @JvmOverloads
-internal fun loadAndInitDescriptorInTest(
+fun loadAndInitDescriptorInTest(
   dir: Path,
   isBundled: Boolean = false,
   disabledPlugins: Set<String> = emptySet(),
@@ -59,7 +63,7 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
   }
 }
 
-internal fun loadPluginWithText(
+fun loadPluginWithText(
   pluginBuilder: PluginBuilder,
   path: Path,
   disabledPlugins: Set<String> = emptySet(),
@@ -86,7 +90,7 @@ internal fun loadPluginWithText(
   }
 }
 
-internal fun loadAndInitDescriptorInTest(
+fun loadAndInitDescriptorInTest(
   pluginBuilder: PluginBuilder,
   rootPath: Path,
   disabledPlugins: Set<String> = emptySet(),
@@ -106,7 +110,7 @@ internal fun loadAndInitDescriptorInTest(
   )
 }
 
-internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
+fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
   rootDescriptor.pluginClassLoader = classLoader
   for (dependency in rootDescriptor.dependencies) {
     dependency.subDescriptor?.let {
@@ -115,7 +119,7 @@ internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPlugin
   }
 }
 
-internal fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boolean {
+fun unloadAndUninstallPlugin(descriptor: IdeaPluginDescriptorImpl): Boolean {
   return DynamicPlugins.unloadPlugin(
     descriptor,
     DynamicPlugins.UnloadPluginOptions(disable = false),

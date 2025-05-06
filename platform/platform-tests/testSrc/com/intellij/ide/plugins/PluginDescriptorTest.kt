@@ -3,6 +3,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.testFramework.PluginBuilder
+import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath

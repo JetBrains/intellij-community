@@ -40,6 +40,11 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.testFramework.PluginBuilder
+import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
+import com.intellij.platform.testFramework.loadExtensionWithText
+import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
+import com.intellij.platform.testFramework.unloadAndUninstallPlugin
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
@@ -86,7 +91,7 @@ class DynamicPluginsTest {
     pluginBuilder: PluginBuilder,
     disabledPlugins: Set<String> = emptySet(),
   ): Disposable {
-    return loadPluginWithText(
+    return com.intellij.platform.testFramework.loadPluginWithText(
       pluginBuilder = pluginBuilder,
       path = rootPath.resolve(Ksuid.generate()),
       disabledPlugins = disabledPlugins,
@@ -811,7 +816,8 @@ class DynamicPluginsTest {
 
   private fun loadPluginWithOptionalDependency(pluginDescriptor: PluginBuilder,
                                                optionalDependencyDescriptor: PluginBuilder,
-                                               dependsOn: PluginBuilder): Disposable {
+                                               dependsOn: PluginBuilder
+  ): Disposable {
     pluginDescriptor.depends(dependsOn.id, optionalDependencyDescriptor)
     return loadPluginWithText(pluginDescriptor)
   }

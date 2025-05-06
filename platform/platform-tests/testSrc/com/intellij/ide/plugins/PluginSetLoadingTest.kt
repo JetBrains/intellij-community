@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
+import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
 import org.assertj.core.api.Assertions.assertThat

@@ -5,7 +5,7 @@ import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
-import com.intellij.ide.plugins.PluginBuilder
+import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService

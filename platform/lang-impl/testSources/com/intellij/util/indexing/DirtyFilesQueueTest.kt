@@ -4,7 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.loadExtensionWithText
+import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher

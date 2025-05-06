@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
-import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -748,7 +748,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     String text = "<virtualFileSystem implementationClass=\"" +
                   TracingJarFileSystemTestWrapper.class.getName() +
                   "\" key=\"jar-wrapper\" physical=\"true\"/>";
-    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginTestUtilsKt.loadExtensionWithText(text, "com.intellij"));
 
     try {
       File generationDir = tempDirectory.newDirectory("gen");
@@ -795,7 +795,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     String text = "<virtualFileSystem implementationClass=\"" +
                   TracingJarFileSystemTestWrapper.class.getName() +
                   "\" key=\"jar-wrapper\" physical=\"true\"/>";
-    Disposable disposable = runInEdtAndGet(() -> DynamicPluginsTestUtil.loadExtensionWithText(text, "com.intellij"));
+    Disposable disposable = runInEdtAndGet(() -> DynamicPluginTestUtilsKt.loadExtensionWithText(text, "com.intellij"));
 
     try {
       File generationDir = tempDirectory.newDirectory("gen");

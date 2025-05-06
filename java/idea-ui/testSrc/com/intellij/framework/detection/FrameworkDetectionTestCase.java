@@ -6,10 +6,10 @@ import com.intellij.facet.mock.MockFacetDetector;
 import com.intellij.facet.mock.MockSubFacetDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionManager;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
-import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.testFramework.DynamicPluginTestUtilsKt;
 
 import java.util.List;
 
@@ -19,11 +19,11 @@ public abstract class FrameworkDetectionTestCase extends FacetTestCase {
     super.setUp();
     if (!"dynamicDetector".equals(getTestName(true))) {
       //todo we can get rid of this ugly check by converting facet tests to JUnit4 and using test rules to enable facet detection
-      Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
+      Disposer.register(getTestRootDisposable(), DynamicPluginTestUtilsKt.loadExtensionWithText(
         "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
         "com.intellij"));
 
-      Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
+      Disposer.register(getTestRootDisposable(), DynamicPluginTestUtilsKt.loadExtensionWithText(
         "<framework.detector implementation=\"" + MockSubFacetDetector.class.getName() + "\"/>",
         "com.intellij"));
     }
