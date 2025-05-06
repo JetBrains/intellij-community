@@ -137,7 +137,7 @@ public class EditorSearchSession implements SearchSession,
       boolean myIsReplace = myFindModel.isReplaceState();
 
       @Override
-      public void findModelChanged(FindModel findModel1) {
+      public void findModelChanged(@NotNull FindModel findModel1) {
         if (myReentrantLock) return;
         try {
           myReentrantLock = true;

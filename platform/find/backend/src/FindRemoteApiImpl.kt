@@ -6,19 +6,21 @@ import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.getPresentableFilePath
 import com.intellij.ide.ui.colors.rpcId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.platform.find.FindInProjectModel
 import com.intellij.platform.find.FindInFilesResult
 import com.intellij.platform.find.FindRemoteApi
 import com.intellij.platform.find.RdSimpleTextAttributes
 import com.intellij.platform.find.RdTextChunk
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usages.FindUsagesProcessPresentation
-import com.intellij.usages.TextChunk
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageViewPresentation
 import fleet.multiplatform.shims.ConcurrentHashMap
@@ -26,51 +28,41 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.NotNull
-import java.awt.Font
 import java.util.concurrent.atomic.AtomicInteger
 
+val LOG: Logger = logger<FindRemoteApiImpl>()
+
 class FindRemoteApiImpl : FindRemoteApi {
-  override suspend fun findByModel(model: FindInProjectModel): Flow<FindInFilesResult> {
+  override suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult> {
     return channelFlow {
       coroutineScope {
         //TODO rewrite find function without using progress indicator and presentation
         val progressIndicator = EmptyProgressIndicator()
         val presentation = FindUsagesProcessPresentation(UsageViewPresentation())
-        val findModel = FindModel().apply {
-          stringToFind = model.stringToFind
-          isWholeWordsOnly = model.isWholeWordsOnly
-          isRegularExpressions = model.isRegularExpressions
-          isCaseSensitive = model.isCaseSensitive
-          isProjectScope = model.isProjectScope
-          fileFilter = model.fileFilter
-          moduleName = model.moduleName
-          directoryName = model.directoryName
-          isWithSubdirectories = model.isWithSubdirectories
-          searchContext = FindModel.SearchContext.valueOf(model.searchContext)
-          isCustomScope = model.isCustomScope
-          //customScope = model.customScopeId.getScope
-          isReplaceState = model.isReplaceState
-        }
 
         val isReplaceState = findModel.isReplaceState
         val previousResultMap: ConcurrentHashMap<String, UsageInfo2UsageAdapter> = ConcurrentHashMap()
         val maxUsages = ShowUsagesAction.getUsagesPageSize()
         val usagesCount = AtomicInteger()
 
-        val files = mutableSetOf<String>()
-        val project = model.projectId.findProject()
-        val filesToScanInitially = model.filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
+        val project = projectId.findProjectOrNull()
+        if (project == null) {
+          LOG.warn("Project not found for id ${projectId}")
+          return@coroutineScope
+        }
+        val filesToScanInitially = filesToScanInitially.mapNotNull { it.virtualFile() }.toSet()
         val scope = FindInProjectUtil.getGlobalSearchScope(project, findModel)
         FindInProjectUtil.findUsages(findModel, project, progressIndicator, presentation, filesToScanInitially) { usageInfo ->
           val virtualFile = usageInfo.virtualFile
           if (virtualFile == null)
             return@findUsages true
 
-          val usagesCountRes = usagesCount.incrementAndGet()
+          val usageNum = usagesCount.incrementAndGet()
+          if (usageNum > maxUsages) {
+            return@findUsages false
+          }
 
           val adapter = UsageInfo2UsageAdapter(usageInfo).also { it.updateCachedPresentation() }
-          files.add(adapter.path)
           val previousItem: UsageInfo2UsageAdapter? = previousResultMap[adapter.path]
           val originalOffset = adapter.navigationOffset
           val originalLength = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset
@@ -79,7 +71,7 @@ class FindRemoteApiImpl : FindRemoteApi {
           previousResultMap[adapter.path] = adapter
 
           val textChunks = adapter.text.map {
-            val attributes = createSimpleTextAttributes(it)
+            val attributes = it.simpleAttributesIgnoreBackground.toModel()
             RdTextChunk(it.text, attributes)
           }
           val bgColor = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile)?.rpcId()
@@ -93,35 +85,18 @@ class FindRemoteApiImpl : FindRemoteApi {
             length = adapter.navigationRange.endOffset - adapter.navigationRange.startOffset,
             originalLength = originalLength,
             fileId = virtualFile.rpcId(),
-            path = virtualFile.path,
             presentablePath = presentablePath,
             merged = merged,
             backgroundColor = bgColor,
-            usagesCount = usagesCountRes,
-            fileCount = files.size,
           )
-
           launch {
             send(result)
           }
-          usagesCount.get() < maxUsages
+          usagesCount.get() <= maxUsages
         }
       }
     }
   }
-}
-
-private fun createSimpleTextAttributes(textChunk: @NotNull TextChunk): RdSimpleTextAttributes {
-  var at = textChunk.simpleAttributesIgnoreBackground
-  if (at.fontStyle == Font.BOLD) {
-    at = SimpleTextAttributes(
-      null, at.fgColor, at.waveColor,
-      at.style and SimpleTextAttributes.STYLE_BOLD.inv() or
-        SimpleTextAttributes.STYLE_SEARCH_MATCH
-    )
-  }
-
-  return at.toModel()
 }
 
 fun SimpleTextAttributes.toModel(): RdSimpleTextAttributes {

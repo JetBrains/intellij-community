@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.find
 
+import com.intellij.find.FindModel
 import com.intellij.ide.ui.colors.ColorId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.markup.EffectType
@@ -22,7 +23,7 @@ import java.awt.Color
 @Rpc
 interface FindRemoteApi : RemoteApi<Unit> {
 
-  suspend fun findByModel(model: FindInProjectModel): Flow<FindInFilesResult>
+  suspend fun findByModel(findModel: FindModel, projectId: ProjectId, filesToScanInitially: List<VirtualFileId>): Flow<FindInFilesResult>
 
   companion object {
     @JvmStatic
@@ -33,29 +34,6 @@ interface FindRemoteApi : RemoteApi<Unit> {
 }
 
 @Serializable
-data class FindInProjectModel (
-  val projectId: ProjectId,
-  val stringToFind: String,
-  val isWholeWordsOnly: Boolean,
-  val isRegularExpressions: Boolean,
-  val isCaseSensitive: Boolean,
-  val isMultiline: Boolean,
-  val isPreserveCase: Boolean,
-  val isProjectScope: Boolean,
-  val isCustomScope: Boolean,
-  val isMultipleFiles: Boolean,
-  val isReplaceState: Boolean,
-  val isPromptOnReplace: Boolean,
-  val fileFilter: String?,
-  val moduleName: String?,
-  val directoryName: String?,
-  val isWithSubdirectories: Boolean,
-  val searchContext: String,
-  val scopeId: Int?,
-  val filesToScanInitially: List<VirtualFileId>
-)
-
-@Serializable
 data class FindInFilesResult(
   val presentation: List<RdTextChunk>,
   val line: Int,
@@ -64,18 +42,15 @@ data class FindInFilesResult(
   val length: Int,
   val originalLength: Int,
   val fileId: VirtualFileId,
-  val path: String,
   @param:NlsSafe val presentablePath: String,
   val merged: Boolean,
   val backgroundColor: ColorId?,
-  val usagesCount: Int,
-  val fileCount: Int,
 )
 
 @Serializable
-data class RdTextChunk (
+data class RdTextChunk(
   val text: @Nls String,
-  val attributes: RdSimpleTextAttributes
+  val attributes: RdSimpleTextAttributes,
 ) {
   fun toTextChunk(): TextChunk {
     val textAttributes = attributes.toInstance().toTextAttributes()
@@ -87,11 +62,11 @@ data class RdTextChunk (
 }
 
 @Serializable
-data class RdSimpleTextAttributes (
+data class RdSimpleTextAttributes(
   val fgColor: Int? = null,
   val bgColor: Int? = null,
   val waveColor: Int? = null,
-  val style: Int = 0
+  val style: Int = 0,
 ) {
   fun toInstance(): SimpleTextAttributes {
     return SimpleTextAttributes(

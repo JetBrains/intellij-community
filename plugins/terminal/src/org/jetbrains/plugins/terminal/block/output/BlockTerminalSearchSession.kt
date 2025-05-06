@@ -64,7 +64,7 @@ class BlockTerminalSearchSession(
     model.addObserver(object : FindModelObserver {
       private var preventRecursion = false
 
-      override fun findModelChanged(findModel: FindModel?) {
+      override fun findModelChanged(findModel: FindModel) {
         if (!preventRecursion) {
           try {
             preventRecursion = true

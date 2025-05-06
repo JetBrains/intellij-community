@@ -194,7 +194,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   @ApiStatus.Experimental
-  protected boolean isCopyableDataEqual(@NotNull UserDataHolderBase other) {
+  public boolean isCopyableDataEqual(@NotNull UserDataHolderBase other) {
     return Objects.equals(getUserData(COPYABLE_USER_MAP_KEY), other.getUserData(COPYABLE_USER_MAP_KEY));
   }
 
