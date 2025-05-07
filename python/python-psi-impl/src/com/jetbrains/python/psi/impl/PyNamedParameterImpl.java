@@ -132,11 +132,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @Override
-  public @NotNull String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
-    return PyCallableParameterImpl.psi(this).getPresentableText(includeDefaultValue, context);
-  }
-
-  @Override
   public @Nullable PyType getArgumentType(@NotNull TypeEvalContext context) {
     return PyCallableParameterImpl.psi(this).getArgumentType(context);
   }
