@@ -348,7 +348,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   }
 
   public void testImplicitClassDeclarationContext() {
-    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java (Implicitly declared classes)");
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("psvm", "Java//Implicitly declared classes");
     IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), ()->{
       assertFalse(isApplicable("class Foo { <caret>xxx }", template));
       assertFalse(isApplicable("class Foo { <caret>xxx String[] foo(String[] bar) {} }", template));

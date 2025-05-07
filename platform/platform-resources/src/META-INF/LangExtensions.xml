@@ -569,6 +569,8 @@
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"
                              id="editing.templates"
                              key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
+    <registryKey defaultValue="true" description="Use subfolders for live template setttings" key="live.templates.separated.group"
+                 restartRequired="false"/>
     <search.optionContributor implementation="com.intellij.codeInsight.template.impl.TemplateSearchableOptionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
     <documentationProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateDocumentationProvider"/>

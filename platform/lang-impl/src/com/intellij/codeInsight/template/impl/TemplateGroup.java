@@ -3,12 +3,14 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class TemplateGroup extends CompoundScheme<TemplateImpl> {
+  static final String PATH_SEPARATOR = "//";
   private final String myReplace;
 
   private boolean isModified = true;
@@ -36,6 +38,11 @@ public final class TemplateGroup extends CompoundScheme<TemplateImpl> {
 
   public boolean containsTemplate(final @NotNull @NlsSafe String key, final @Nullable @NonNls String id) {
     return ContainerUtil.or(getElements(), template -> key.equals(template.getKey()) || id != null && id.equals(template.getId()));
+  }
+
+  String[] getPath() {
+    if(!Registry.is("live.templates.separated.group", false)) return new String[]{getName()};
+    return getName().split(PATH_SEPARATOR);
   }
 
   @Override

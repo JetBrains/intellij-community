@@ -31,6 +31,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +45,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.Queue;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
+import static com.intellij.codeInsight.template.impl.TemplateGroup.PATH_SEPARATOR;
 
 public class TemplateListPanel extends JPanel implements Disposable {
   private static final String NO_SELECTION = "NoSelection";
@@ -72,6 +75,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private CheckboxTree myTree;
   private final List<TemplateGroup> myTemplateGroups = new ArrayList<>();
+  private final Map<String, TemplateGroup> myTemplateGroupsFullName = new HashMap<>();
   private final TemplateExpandShortcutPanel myExpandByDefaultPanel = new TemplateExpandShortcutPanel(CodeInsightBundle.message("templates.dialog.shortcut.chooser.label"));
 
   private CheckedTreeNode myTreeRoot = new CheckedTreeNode(null);
@@ -206,7 +210,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     List<TemplateGroup> originalGroups = getSortedGroups(templateSettings);
     List<TemplateGroup> newGroups = getTemplateGroups();
 
-    if (!ContainerUtil.map2Set(originalGroups, TemplateGroup::getName).equals(ContainerUtil.map2Set(newGroups, TemplateGroup::getName))) {
+    if (!ContainerUtil.map2Set(ContainerUtil.filter(originalGroups, group -> !group.getElements().isEmpty()), TemplateGroup::getName)
+      .equals(ContainerUtil.map2Set(ContainerUtil.filter(newGroups, group -> !group.getElements().isEmpty()), TemplateGroup::getName))) {
       return true;
     }
 
@@ -344,7 +349,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     for (TemplateImpl template : map.keySet()) {
       DefaultMutableTreeNode oldTemplateNode = map.get(template);
 
-      TemplateGroup oldGroup = getTemplateGroup(template.getGroupName());
+      TemplateGroup oldGroup = getTemplateGroupFromTree(template.getGroupName());
       if (oldGroup != null) {
         oldGroup.removeElement(template);
       }
@@ -367,6 +372,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     return null;
 
+  }
+
+
+  private @Nullable TemplateGroup getTemplateGroupFromTree(@NonNls String name) {
+    return myTemplateGroupsFullName.get(name);
   }
 
   private @Nullable TemplateGroup getTemplateGroup(final String groupName) {
@@ -429,8 +439,23 @@ public class TemplateListPanel extends JPanel implements Disposable {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
       if (o instanceof TemplateGroup) {
-        myTemplateGroups.remove(o);
-        removeNodeFromParent(node);
+        Queue<DefaultMutableTreeNode> queue = new ArrayDeque<>();
+        queue.add(node);
+        while (!queue.isEmpty()) {
+          DefaultMutableTreeNode currentNode = queue.poll();
+          if (currentNode.getUserObject() instanceof TemplateGroup currentGroup) {
+            myTemplateGroups.remove(currentGroup);
+            myTemplateGroupsFullName.remove(currentGroup.getName());
+            removeNodeFromParent(currentNode);
+            for (Iterator<TreeNode> it = currentNode.children().asIterator(); it.hasNext(); ) {
+              TreeNode child = it.next();
+              if (child instanceof DefaultMutableTreeNode childMutableTreeNode &&
+                  childMutableTreeNode.getUserObject() instanceof TemplateGroup) {
+                queue.add(childMutableTreeNode);
+              }
+            }
+          }
+        }
       } else if (o instanceof TemplateImpl template) {
         TemplateGroup templateGroup = getTemplateGroup(template.getGroupName());
         if (templateGroup != null) {
@@ -471,8 +496,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
             getTextRenderer().append(" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
-        else if (value instanceof TemplateGroup) {
-          getTextRenderer().append(((TemplateGroup)value).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        else if (value instanceof TemplateGroup group) {
+          String[] path = group.getPath();
+          getTextRenderer().append(path[path.length - 1], SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
     }, myTreeRoot, this);
@@ -638,7 +664,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
                            CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null));
         if (newName != null) {
           TemplateGroup newGroup = new TemplateGroup(newName);
-          setSelectedNode(insertNewGroup(newGroup));
+          setSelectedNode(insertNewGroup(myTreeRoot, newGroup));
         }
       }
     });
@@ -660,6 +686,19 @@ public class TemplateListPanel extends JPanel implements Disposable {
       public void update(@NotNull AnActionEvent e) {
         final TemplateGroup templateGroup = getSingleSelectedGroup();
         boolean enabled = templateGroup != null;
+        if (enabled) {
+          DefaultMutableTreeNode group = findGroup(myTreeRoot, templateGroup.getPath());
+          if (group != null) {
+            for (Iterator<TreeNode> it = group.children().asIterator(); it.hasNext(); ) {
+              TreeNode child = it.next();
+              if (child instanceof DefaultMutableTreeNode childMutableTreeNode &&
+                  childMutableTreeNode.getUserObject() instanceof TemplateGroup) {
+                enabled = false;
+                break;
+              }
+            }
+          }
+        }
         e.getPresentation().setEnabledAndVisible(enabled);
       }
 
@@ -843,13 +882,15 @@ public class TemplateListPanel extends JPanel implements Disposable {
     final TemplateGroup templateGroup = getSingleSelectedGroup();
     if (templateGroup == null) return;
 
-    final String oldName = templateGroup.getName();
+    String[] path = templateGroup.getPath();
+    final String oldName = path[path.length - 1];
     String newName = Messages.showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
                                               CodeInsightBundle.message("dialog.title.rename"), null, oldName,
                                               new TemplateGroupInputValidator(oldName));
 
     if (newName != null && !newName.equals(oldName)) {
-      templateGroup.setName(newName);
+      path[path.length - 1] = newName;
+      templateGroup.setName(String.join(PATH_SEPARATOR, path));
       ((DefaultTreeModel)myTree.getModel()).nodeChanged(getNode(getSingleSelectedIndex()));
     }
   }
@@ -881,36 +922,93 @@ public class TemplateListPanel extends JPanel implements Disposable {
     TemplateGroup newGroup = getTemplateGroup(template.getGroupName());
     if (newGroup == null) {
       newGroup = new TemplateGroup(template.getGroupName());
-      insertNewGroup(newGroup);
+      insertNewGroup(myTreeRoot, newGroup);
     }
     newGroup.addElement(template);
 
     CheckedTreeNode node = new CheckedTreeNode(template);
     node.setChecked(!template.isDeactivated());
-    for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)myTreeRoot.getFirstChild();
-         child != null;
-         child = (DefaultMutableTreeNode)myTreeRoot.getChildAfter(child)) {
-      if (((TemplateGroup)child.getUserObject()).getName().equals(template.getGroupName())) {
-        int index = getIndexToInsert (child, template.getKey());
-        child.insert(node, index);
-        ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
-        setSelectedNode(node);
-      }
+    DefaultMutableTreeNode child = findGroup(myTreeRoot, newGroup.getPath());
+    if (child != null) {
+      int index = getIndexToInsert(child, template.getKey(), false);
+      child.insert(node, index);
+      ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(child, new int[]{index});
+      setSelectedNode(node);
     }
     return node;
   }
 
-  private DefaultMutableTreeNode insertNewGroup(final TemplateGroup newGroup) {
-    myTemplateGroups.add(newGroup);
-
-    int index = getIndexToInsert(myTreeRoot, newGroup.getName());
-    DefaultMutableTreeNode groupNode = new CheckedTreeNode(newGroup);
-    myTreeRoot.insert(groupNode, index);
-    ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(myTreeRoot, new int[]{index});
-    return groupNode;
+  private static @Nullable DefaultMutableTreeNode findGroup(@NotNull DefaultMutableTreeNode parent,
+                                                            @NotNull String groupName) {
+    if (!parent.children().hasMoreElements()) return null;
+    for (DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getFirstChild();
+         child != null;
+         child = (DefaultMutableTreeNode)parent.getChildAfter(child)) {
+      if (child.getUserObject() instanceof TemplateGroup templateGroup &&
+          templateGroup.getName().equals(groupName)) {
+        return child;
+      }
+    }
+    return null;
   }
 
-  private static int getIndexToInsert(DefaultMutableTreeNode parent, String key) {
+  private static @Nullable DefaultMutableTreeNode findGroup(@NotNull DefaultMutableTreeNode parent,
+                                                            String @NotNull [] path) {
+    DefaultMutableTreeNode currentParent = parent;
+    String currentPath = "";
+    for (int i = 0; i < path.length; i++) {
+      String next = path[i];
+      if (i == 0) {
+        currentPath = next;
+      }
+      else {
+        currentPath = currentPath + PATH_SEPARATOR + next;
+      }
+      currentParent = findGroup(currentParent, currentPath);
+      if (currentParent == null) return null;
+    }
+    return currentParent;
+  }
+
+  private DefaultMutableTreeNode insertNewGroup(@NotNull DefaultMutableTreeNode parent,
+                                                @NotNull final TemplateGroup newGroup) {
+    myTemplateGroups.add(newGroup);
+    myTemplateGroupsFullName.put(newGroup.getName(), newGroup);
+    DefaultMutableTreeNode currentParent = parent;
+    String[] path = newGroup.getPath();
+    String fullName = "";
+    for (int i = 0; i < path.length; i++) {
+      String currentGroupName = path[i];
+      if (i == 0) {
+        fullName = currentGroupName;
+      }
+      else {
+        fullName = fullName + PATH_SEPARATOR + currentGroupName;
+      }
+      DefaultMutableTreeNode group = findGroup(currentParent, fullName);
+      if (group != null) {
+        currentParent = group;
+        continue;
+      }
+      TemplateGroup nextGroup;
+      if (i + 1 == path.length) {
+        nextGroup = newGroup;
+      }
+      else {
+        nextGroup = new TemplateGroup(fullName);
+        nextGroup.setModified(false);
+      }
+      myTemplateGroupsFullName.put(nextGroup.getName(), newGroup);
+      int index = getIndexToInsert(currentParent, nextGroup.getName(), true);
+      CheckedTreeNode groupNode = new CheckedTreeNode(nextGroup);
+      currentParent.insert(groupNode, index);
+      ((DefaultTreeModel)myTree.getModel()).nodesWereInserted(currentParent, new int[]{index});
+      currentParent = groupNode;
+    }
+    return currentParent;
+  }
+
+  private static int getIndexToInsert(DefaultMutableTreeNode parent, String key, boolean group) {
     if (parent.getChildCount() == 0) return 0;
 
     int res = 0;
@@ -918,6 +1016,9 @@ public class TemplateListPanel extends JPanel implements Disposable {
          child != null;
          child = (DefaultMutableTreeNode)parent.getChildAfter(child)) {
       Object o = child.getUserObject();
+      if (group && !(o instanceof TemplateGroup)) {
+        return res;
+      }
       String key1 = o instanceof TemplateImpl ? ((TemplateImpl)o).getKey() : ((TemplateGroup)o).getName();
       if (key1.compareToIgnoreCase(key) > 0) return res;
       res++;
@@ -940,15 +1041,14 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private void initTemplates(List<? extends TemplateGroup> groups, String lastSelectedGroup, String lastSelectedKey) {
     myTreeRoot.removeAllChildren();
     myTemplateGroups.clear();
+    myTemplateGroupsFullName.clear();
     mutatorHelper.clear();
     for (TemplateGroup group : groups) {
-      myTemplateGroups.add(mutatorHelper.copy(group));
-    }
-
-    for (TemplateGroup group : myTemplateGroups) {
-      CheckedTreeNode groupNode = new CheckedTreeNode(group);
-      addTemplateNodes(group, groupNode);
-      myTreeRoot.add(groupNode);
+      TemplateGroup copy = mutatorHelper.copy(group);
+      DefaultMutableTreeNode node = insertNewGroup(myTreeRoot, copy);
+      if (node instanceof CheckedTreeNode treeNode) {
+        addTemplateNodes(copy, treeNode);
+      }
     }
     fireStructureChange();
 
