@@ -24,9 +24,6 @@ class PluginSet internal constructor(
    */
   fun getEnabledModules(): List<IdeaPluginDescriptorImpl> = enabledModules
 
-  val allModulesSorted: List<IdeaPluginDescriptorImpl>
-    get() = sortedModulesWithDependencies.modules
-
   internal fun getSortedDependencies(moduleDescriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
     return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
   }
