@@ -30,8 +30,6 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.flow.MutableStateFlow;
-import kotlinx.coroutines.flow.StateFlow;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,7 +45,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.util.progress.CancellationUtil.withLockMaybeCancellable;
-import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
 import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeLineBreakpointProxy;
 
@@ -60,7 +57,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private final MultiMap<XBreakpointType, XBreakpointBase<?, ?, ?>> myBreakpoints = MultiMap.createLinkedSet();
   private final Map<XBreakpointType, Set<XBreakpointBase<?, ?, ?>>> myDefaultBreakpoints = new LinkedHashMap<>();
   private final Map<XBreakpointType, BreakpointState> myBreakpointsDefaults = new LinkedHashMap<>();
-  private final MutableStateFlow<Set<XBreakpointBase<?, ?, ?>>> myAllBreakpoints = createMutableStateFlow(new LinkedHashSet<>());
+  private final Set<XBreakpointBase<?, ?, ?>> myAllBreakpoints = new LinkedHashSet<>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new ConcurrentHashMap<>();
   private volatile XBreakpointsDialogState myBreakpointsDialogSettings;
   private final XLineBreakpointManager myLineBreakpointManager;
@@ -208,9 +205,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
           BreakpointsUsageCollector.reportNewBreakpoint(breakpoint, type, getDebuggerManager().getCurrentSession() != null);
         }
       }
-      Set<XBreakpointBase<?, ?, ?>> updatedBreakpoints = new LinkedHashSet<>(myAllBreakpoints.getValue());
-      updatedBreakpoints.add(breakpoint);
-      myAllBreakpoints.setValue(updatedBreakpoints);
+      myAllBreakpoints.add(breakpoint);
       if (breakpoint instanceof XLineBreakpointImpl) {
         myLineBreakpointManager.registerBreakpoint(asProxy((XLineBreakpointImpl)breakpoint), initUI);
       }
@@ -230,7 +225,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   private boolean isRegistered(XBreakpoint<?> breakpoint) {
-    return withLockMaybeCancellable(myLock, () -> myAllBreakpoints.getValue().contains(breakpoint));
+    return withLockMaybeCancellable(myLock, () -> myAllBreakpoints.contains(breakpoint));
   }
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
@@ -258,7 +253,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   public void removeAllBreakpoints() {
-    withLockMaybeCancellable(myLock, () -> List.copyOf(myAllBreakpoints.getValue()).forEach(this::doRemoveBreakpoint));
+    withLockMaybeCancellable(myLock, () -> List.copyOf(myAllBreakpoints).forEach(this::doRemoveBreakpoint));
   }
 
   @SuppressWarnings("unused")
@@ -295,9 +290,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       else {
         myBreakpoints.remove(type, breakpointBase);
       }
-      Set<XBreakpointBase<?, ?, ?>> updatedBreakpoints = new LinkedHashSet<>(myAllBreakpoints.getValue());
-      updatedBreakpoints.remove(breakpointBase);
-      myAllBreakpoints.setValue(updatedBreakpoints);
+      myAllBreakpoints.remove(breakpointBase);
       if (breakpointBase instanceof XLineBreakpointImpl) {
         myLineBreakpointManager.unregisterBreakpoint(asProxy((XLineBreakpointImpl<?>)breakpointBase));
       }
@@ -356,7 +349,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Override
   public XBreakpointBase<?,?,?> @NotNull [] getAllBreakpoints() {
-    return withLockMaybeCancellable(myLock, () -> myAllBreakpoints.getValue().toArray(new XBreakpointBase[0]));
+    return withLockMaybeCancellable(myLock, () -> myAllBreakpoints.toArray(new XBreakpointBase[0]));
   }
 
   @Override
@@ -538,7 +531,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       withLockMaybeCancellable(myLock, () -> {
         myBreakpointsDialogSettings = state.getBreakpointsDialogProperties();
 
-        myAllBreakpoints.setValue(new LinkedHashSet<>());
+        myAllBreakpoints.clear();
         myDefaultBreakpoints.clear();
         myBreakpointsDefaults.clear();
 
@@ -613,7 +606,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   public Set<String> getAllGroups() {
     return withLockMaybeCancellable(myLock, () ->
-      StreamEx.of(myAllBreakpoints.getValue()).map(XBreakpointBase::getGroup).nonNull().toSet());
+      StreamEx.of(myAllBreakpoints).map(XBreakpointBase::getGroup).nonNull().toSet());
   }
 
   public String getDefaultGroup() {
