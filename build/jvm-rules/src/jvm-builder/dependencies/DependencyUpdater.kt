@@ -19,7 +19,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.h2.mvstore.MVMap
@@ -27,7 +26,6 @@ import org.h2.mvstore.type.ByteArrayDataType
 import org.jetbrains.bazel.jvm.mvStore.ModernStringDataType
 import org.jetbrains.bazel.jvm.mvStore.MvStoreMapFactory
 import org.jetbrains.bazel.jvm.worker.impl.markAffectedFilesDirty
-import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.bazel.jvm.util.toLinkedSet
@@ -35,6 +33,7 @@ import org.jetbrains.bazel.jvm.worker.core.BazelCompileContext
 import org.jetbrains.bazel.jvm.worker.core.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.worker.core.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.worker.core.BazelStampStorage
+import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Delta
 import org.jetbrains.jps.dependency.Graph
@@ -54,7 +53,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.collections.contentEquals
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 
 // for now, ADDED or DELETED not possible - in configureClasspath we compute DEPENDENCY_PATH_LIST,
 // so, if a dependency list is changed, then we perform rebuild
@@ -88,8 +86,8 @@ internal suspend fun checkDependencies(
 
   val changedOrAdded = MutableObjectList<DependencyDescriptor>()
   val dataManager = context.projectDescriptor.dataManager
-  val usedAbiDir = dataManager.dataPaths.dataStorageDir.resolve("used-abi")
-  val filesToCopy = MutableObjectList<Pair<Path, Path>>()
+  val usedAbiDir = dataManager.dataPaths.dataStorageDir
+  val filesToCopy = MutableObjectList<FileTask>()
 
   val isRebuild = context.scope.isRebuild
   if (isRebuild) {
@@ -100,8 +98,12 @@ internal suspend fun checkDependencies(
       val digest = requireNotNull(dependencyFileToDigest.get(file)) { "cannot find actual digest for $file" }
       val relativePath = relativizer.toRelative(file, RelativePathType.SOURCE)
       toAdd.add(relativePath to digest)
-      filesToCopy.add(file to usedAbiDir.resolve(computeCacheName(relativePath)))
+      filesToCopy.add(FileTask(originalFile = file, linkFile = usedAbiDir.resolve(computeCacheName(relativePath, digest)), toDelete = null))
     }
+    asyncTaskScope.launch {
+      copyUsedAbi(usedAbiDir = usedAbiDir, filesToCopy = filesToCopy, isRebuild = false)
+    }
+
     initMap(dataManager.containerFactory.mvstoreMapFactory, toAdd)
   }
   else {
@@ -113,24 +115,34 @@ internal suspend fun checkDependencies(
       relativizer = relativizer,
       trackableDependencyFiles = trackableDependencyFiles,
     ) { descriptor, relativePath, state ->
-      require(state != DependencyState.DELETED)
-
       changedOrAdded.add(descriptor)
-      val newFile = descriptor.file
-      val oldFile = usedAbiDir.resolve(computeCacheName(relativePath))
-      filesToCopy.add(newFile to oldFile)
-      val result = dependencyAnalyzer.computeForChanged(
-        dependencyDescriptor = descriptor,
-        oldFile = oldFile,
-        newFile = newFile,
-        fileBazelDigestHash = Hashing.xxh3_64().hashBytesToLong(descriptor.digest),
-      )
-      changedOrAddedNodes.putAll(result.first)
-      deletedNodes.putAll(result.second)
+      val oldDigest = descriptor.oldDigest
+      if (oldDigest != null) {
+        val newFile = descriptor.file
+        val newDigest = descriptor.digest!!
+        val cachedOldFile = usedAbiDir.resolve(computeCacheName(relativePath, oldDigest))
+        filesToCopy.add(FileTask(
+          originalFile = newFile,
+          linkFile = usedAbiDir.resolve(computeCacheName(relativePath, newDigest)),
+          toDelete = cachedOldFile,
+        ))
+        val result = dependencyAnalyzer.computeForChanged(
+          dependencyDescriptor = descriptor,
+          oldFile = cachedOldFile,
+          newFile = newFile,
+          fileBazelDigestHash = Hashing.xxh3_64().hashBytesToLong(newDigest),
+        )
+        changedOrAddedNodes.putAll(result.first)
+        deletedNodes.putAll(result.second)
+      }
     }
 
     if (changedOrAddedNodes.isEmpty() && deletedNodes.isEmpty()) {
       return
+    }
+
+    asyncTaskScope.launch {
+      copyUsedAbi(usedAbiDir = usedAbiDir, filesToCopy = filesToCopy, isRebuild = true)
     }
 
     markAffectedByLibChange(
@@ -146,22 +158,23 @@ internal suspend fun checkDependencies(
       span = span,
     )
   }
-
-  asyncTaskScope.launch {
-    copyUsedAbi(usedAbiDir, filesToCopy, isRebuild)
-  }
 }
 
-private suspend fun copyUsedAbi(usedAbiDir: Path?, filesToCopy: MutableObjectList<Pair<Path, Path>>, isRebuild: Boolean) {
+private data class FileTask(
+  @JvmField val originalFile: Path,
+  @JvmField val linkFile: Path,
+  @JvmField val toDelete: Path?,
+)
+
+private suspend fun copyUsedAbi(usedAbiDir: Path?, filesToCopy: MutableObjectList<FileTask>, isRebuild: Boolean) {
   try {
     withContext(Dispatchers.IO.limitedParallelism(8) + NonCancellable) {
-      Files.createDirectories(usedAbiDir)
-      filesToCopy.forEach { (newFile, oldFile) ->
+      filesToCopy.forEach { item ->
         launch {
-          if (!isRebuild) {
-            Files.deleteIfExists(oldFile)
+          if (item.toDelete != null) {
+            Files.deleteIfExists(item.toDelete)
           }
-          Files.createLink(oldFile, newFile)
+          Files.createLink(item.linkFile, item.originalFile)
         }
       }
     }
@@ -366,7 +379,7 @@ private class AbiDeltaImpl(
   override fun associate(node: Node<*, *>, sources: Iterable<NodeSource>) = throw UnsupportedOperationException()
 }
 
-private fun computeCacheName(relativePath: String): String {
+private fun computeCacheName(relativePath: String, fileBazelDigestHash: ByteArray): String {
   // get the last two path segments
   var slashIndex = relativePath.lastIndexOf('/')
   relativePath.lastIndexOf('/', startIndex = slashIndex - 1).also { index ->
@@ -375,8 +388,9 @@ private fun computeCacheName(relativePath: String): String {
     }
   }
 
-  return relativePath.substring(slashIndex + 1, relativePath.length - 4).replace('/', '_') + '-' +
-    java.lang.Long.toUnsignedString(Hashing.xxh3_64().hashBytesToLong(relativePath.toByteArray()), Character.MAX_RADIX) +
+  // use a "z-" prefix to ensure that in the directory view it is listed last in a one group and denote from ordinal jar files
+  return "z-" + relativePath.substring(slashIndex + 1, relativePath.length - 4).replace('/', '_') + '-' +
+    longToString(Hashing.xxh3_64().hashStream().putByteArray(relativePath.toByteArray()).putByteArray(fileBazelDigestHash).asLong) +
     ".jar"
 }
 
@@ -399,9 +413,10 @@ internal class AbiJarSource(
   }
 
   override fun toString(): String {
-    return java.lang.Long.toUnsignedString(fileBazelDigestHash, Character.MAX_RADIX) + '-' +
-      java.lang.Long.toUnsignedString(innerPathHash, Character.MAX_RADIX)
+    return longToString(fileBazelDigestHash) + '-' + longToString(innerPathHash)
   }
 
   override fun hashCode(): Int = 31 * fileBazelDigestHash.toInt() + innerPathHash.toInt()
 }
+
+private fun longToString(value: Long): String? = java.lang.Long.toUnsignedString(value, Character.MAX_RADIX)

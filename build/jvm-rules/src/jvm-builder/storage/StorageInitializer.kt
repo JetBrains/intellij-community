@@ -77,9 +77,9 @@ private class BazelBuildDataPaths(private val dir: Path) : BuildDataPaths {
 
   override fun getTargetsDataRoot(): Path = dir
 
-  override fun getTargetTypeDataRootDir(targetType: BuildTargetType<*>): Path = dir.resolve(targetType.typeId)
+  override fun getTargetTypeDataRootDir(targetType: BuildTargetType<*>): Path = dir
 
-  override fun getTargetDataRootDir(target: BuildTarget<*>): Path = dir.resolve(target.targetType.typeId)
+  override fun getTargetDataRootDir(target: BuildTarget<*>): Path = dir
 
   override fun getTargetDataRoot(targetType: BuildTargetType<*>, targetId: String): Path = dir
 }

@@ -12,7 +12,6 @@ import com.intellij.util.lang.ZipFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
-import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
 import org.jetbrains.bazel.jvm.util.emptySet
 import org.jetbrains.bazel.jvm.util.orEmpty
 import org.jetbrains.bazel.jvm.worker.core.output.ABI_IC_NODE_FORMAT_VERSION
@@ -20,6 +19,7 @@ import org.jetbrains.bazel.jvm.worker.core.output.NODE_INDEX_FILENAME
 import org.jetbrains.bazel.jvm.worker.core.output.NodeIndex
 import org.jetbrains.bazel.jvm.worker.core.output.NodeIndexEntry
 import org.jetbrains.bazel.jvm.worker.core.output.readNodeIndex
+import org.jetbrains.bazel.jvm.worker.state.DependencyDescriptor
 import org.jetbrains.jps.dependency.java.JvmClass
 import org.jetbrains.jps.dependency.storage.ByteBufferGraphDataInput
 import java.nio.ByteOrder

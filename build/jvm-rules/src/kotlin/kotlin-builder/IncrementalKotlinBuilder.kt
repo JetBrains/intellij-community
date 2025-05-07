@@ -591,7 +591,7 @@ private suspend fun doCompileModuleChunk(
 
   val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, services, messageCollector)
   @Suppress("RemoveRedundantQualifierName")
-  if (org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR == exitCode) {
+  if (exitCode == org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR) {
     messageCollector.report(CompilerMessageSeverity.ERROR, "Compiler terminated with internal error")
   }
 
