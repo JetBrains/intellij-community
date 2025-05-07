@@ -29,9 +29,15 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JLabel
 import javax.swing.UIManager
 
+/**
+ * PyCharm doesn't provide any API for package management for external plugins.
+ * The closest thing is [PythonPackageManager], although it is also subject to change
+ */
+@ApiStatus.Internal
 object PyPackageInstallUtils {
   fun offeredPackageForNotFoundModule(project: Project, sdk: Sdk, moduleName: String): String? {
     val shouldToInstall = checkShouldToInstall(project, sdk, moduleName)
