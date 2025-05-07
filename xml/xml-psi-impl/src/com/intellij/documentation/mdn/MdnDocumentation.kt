@@ -26,7 +26,6 @@ import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolsBundle
-import com.intellij.xml.psi.XmlPsiBundle
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -225,15 +224,15 @@ class MdnSymbolDocumentationAdapter(override val name: String,
         doc.compatibility!!.entries.forEach { (id, map) ->
           val actualId = if (id == defaultBcdContext) "browser_compatibility" else id
           val bundleKey = "mdn.documentation.section.compat.$actualId"
-          val sectionName: String = if (actualId.startsWith("support_of_") && !XmlPsiBundle.hasKey(bundleKey)) {
-            XmlPsiBundle.message("mdn.documentation.section.compat.support_of", actualId.substring("support_of_".length))
+          val sectionName: String = if (actualId.startsWith("support_of_") && !MdnBundle.hasKey(bundleKey)) {
+            MdnBundle.message("mdn.documentation.section.compat.support_of", actualId.substring("support_of_".length))
           }
           else {
-            XmlPsiBundle.message(bundleKey)
+            MdnBundle.message(bundleKey)
           }
           result[sectionName] = map.entries
             .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
-            .ifBlank { XmlPsiBundle.message("mdn.documentation.section.compat.supported_by.none") }
+            .ifBlank { MdnBundle.message("mdn.documentation.section.compat.supported_by.none") }
         }
       }
       doc.status?.asSequence()
@@ -329,11 +328,11 @@ data class MdnJsSymbolDocumentation(override val url: String?,
     get() {
       val result = mutableMapOf<String, String>()
       parameters?.takeIf { it.isNotEmpty() }?.let {
-        result.put(XmlPsiBundle.message("mdn.documentation.section.parameters"), buildSubSection(it))
+        result.put(MdnBundle.message("mdn.documentation.section.parameters"), buildSubSection(it))
       }
-      returns?.let { result.put(XmlPsiBundle.message("mdn.documentation.section.returns"), it) }
+      returns?.let { result.put(MdnBundle.message("mdn.documentation.section.returns"), it) }
       throws?.takeIf { it.isNotEmpty() }?.let {
-        result.put(XmlPsiBundle.message("mdn.documentation.section.throws"), buildSubSection(it))
+        result.put(MdnBundle.message("mdn.documentation.section.throws"), buildSubSection(it))
       }
       return result
     }
@@ -349,7 +348,7 @@ data class MdnCssBasicSymbolDocumentation(override val url: String?,
     get() {
       val result = mutableMapOf<String, String>()
       formalSyntax?.takeIf { it.isNotEmpty() }?.let {
-        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+        result.put(MdnBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
       }
       return result
     }
@@ -366,7 +365,7 @@ data class MdnCssAtRuleSymbolDocumentation(override val url: String?,
     get() {
       val result = mutableMapOf<String, String>()
       formalSyntax?.takeIf { it.isNotEmpty() }?.let {
-        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+        result.put(MdnBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
       }
       return result
     }
@@ -383,10 +382,10 @@ data class MdnCssPropertySymbolDocumentation(override val url: String?,
     get() {
       val result = mutableMapOf<String, String>()
       formalSyntax?.takeIf { it.isNotEmpty() }?.let {
-        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+        result.put(MdnBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
       }
       values?.takeIf { it.isNotEmpty() }?.let {
-        result.put(XmlPsiBundle.message("mdn.documentation.section.values"), buildSubSection(values))
+        result.put(MdnBundle.message("mdn.documentation.section.values"), buildSubSection(values))
       }
       return result
     }

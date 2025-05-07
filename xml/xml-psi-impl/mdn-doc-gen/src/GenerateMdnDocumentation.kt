@@ -43,59 +43,8 @@ val htmlSpecialMappings = mapOf(
  * When adding a known property here, ensure that there is appropriate key in XmlPsiBundle.
  */
 const val defaultBcdContext = "\$default_context"
-val knownBcdIds = setOf(
-  defaultBcdContext,
-  "flex_context",
-  "grid_context",
-  "multicol_context",
-  "paged_context",
-  "supported_for_width_and_other_sizing_properties",
-  "supported_in_grid_layout",
 
-  // CSS values support - by default not translated
-  "support_of_multi-keyword_values", // translated
-  "support_of_flow-root",
-  "support_of_grid",
-  "support_of_flex",
-  "support_of_ruby_values", //translated
-  "support_of_table_values", //translated
-  "support_of_inline-table",
-  "support_of_inline-grid",
-  "support_of_inline-flex",
-  "support_of_inline-block",
-  "support_of_WOFF", //translated
-  "support_of_WOFF_2", //translated
-  "support_of_-webkit-resizer",
-  "support_of_-webkit-scrollbar",
-  "support_of_-webkit-scrollbar-button",
-  "support_of_-webkit-scrollbar-corner",
-  "support_of_-webkit-scrollbar-thumb",
-  "support_of_-webkit-scrollbar-track",
-  "support_of_-webkit-scrollbar-track-piece",
-  "support_of_color-mix",
-  "support_of_interpolation_color_space",
-  "support_of_hue_interpolation_method",
-  "support_of_fit-content",
-  "support_of_fit-content_function",
-  "support_of_hsl",
-  "support_of_hwb",
-  "support_of_lch",
-  "support_of_oklch",
-
-  //JS - by default not translated
-  "support_of_compressedTexImage2D",
-  "support_of_compressedTexImage3D",
-  "support_of_texParameterf",
-  "support_of_texParameteri",
-  "2d_context",
-  "3d_context",
-  "bitmaprenderer_context",
-  "webgl2_context",
-  "webgl_context",
-  "webgpu_context"
-)
-
-val jsRuntimesMap = MdnJavaScriptRuntime.values().associateBy { it.mdnId }
+val jsRuntimesMap = MdnJavaScriptRuntime.entries.associateBy { it.mdnId }
 
 val BROWSER_COMPAT_DATA_PATH = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/browser-compat-data.json"
 val MDN_CONTENT_ROOT = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/mdn-content/files"
@@ -103,7 +52,8 @@ val YARI_BUILD_PATH = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/md
 const val BUILT_LANG = "en-us"
 const val WEB_DOCS = "docs/web"
 const val MDN_DOCS_URL_PREFIX = "\$MDN_URL\$"
-const val OUTPUT_DIR = "xml/xml-psi-impl/gen/com/intellij/documentation/mdn/"
+const val OUTPUT_DIR = "xml/xml-psi-impl/resources-gen/com/intellij/documentation/mdn/"
+const val BUNDLE_OUTPUT_DIR = "xml/xml-psi-impl/resources-gen/messages/"
 
 const val SEE_REFERENCE = "\$SEE_REFERENCE\$"
 val seePattern = Regex("<p>See <a href=\"/$BUILT_LANG/$WEB_DOCS/([a-z0-9_\\-/]+)(#[a-z]+)?\"><code>[a-z0-9_\\-]+</code></a>\\.</p>",
@@ -120,6 +70,8 @@ val jsWebApiNameFilter: (String) -> Boolean = { name ->
   && (!name.contains("_") || name.endsWith("_static"))
   && name != "index"
 }
+
+val bcdIdDescriptions = mutableMapOf<String, String>()
 
 /* It's so much easier to run a test, than to setup the whole IJ environment */
 class GenerateMdnDocumentation : BasePlatformTestCase() {
@@ -183,6 +135,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     FileUtil.writeToFile(Path.of(PathManager.getCommunityHomePath(), OUTPUT_DIR, "${MdnApiNamespace.WebApi.name}-index.json").toFile(),
                          GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create()
                            .toJson(index))
+    updateBcdDescriptions()
   }
 
   fun testGenJsGlobalObjects() {
@@ -234,6 +187,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                            .registerTypeAdapter(Map::class.java, CompatibilityMapSerializer())
                            .create()
                            .toJson(additionalMetadata() + data))
+    updateBcdDescriptions()
   }
 
   private fun <T : Any> extractInformationSimple(bcdPath: String, mdnPath: String,
@@ -993,20 +947,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
           ?.takeIf { map -> map.values.any { it == null || it.isNotEmpty() } }
           ?.filterValues { it != null }
           ?.let {
+            val bcdId = if (id != defaultBcdContext) getBcdId(id) else id
+            if (bcdId != defaultBcdContext) {
+              val description = data.compat.description
+              if (description != null) {
+                bcdIdDescriptions.putIfAbsent(bcdId, description)
+              }
+            }
+
             @Suppress("UNCHECKED_CAST")
-            Pair(if (id != defaultBcdContext) getBcdId(id) else id,
-                 it.toMap(TreeMap()) as Map<MdnJavaScriptRuntime, String>)
+            Pair(bcdId, it.toMap(TreeMap()) as Map<MdnJavaScriptRuntime, String>)
           }
       }
       .toMap(TreeMap())
       .takeIf { it.isNotEmpty() }
-      ?.let {
-        it.forEach { (id, _) ->
-          if (!knownBcdIds.contains(id)) throw AssertionError(
-            "Unknown BCD id: $id. Add id to the list and possibly add readable caption to Xml bundle (mdn.documentation.section.compat.* strings).")
-        }
-        it
-      }
 
   private fun getBcdId(id: String): String =
     id.takeLastWhile { it != '.' }.let {
@@ -1108,6 +1062,25 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   private fun File.toMdnUrl(): String =
     toString().removePrefix(getMdnDir("").toString())
+
+  private fun updateBcdDescriptions() {
+    val bundleFile = Path.of(PathManager.getCommunityHomePath(), BUNDLE_OUTPUT_DIR, "MdnBundle.properties").toFile()
+    val contents = FileUtil.loadLines(bundleFile)
+
+    val existingProperties = contents.asSequence()
+      .filter { it.startsWith("mdn.documentation.section.compat.")}
+      .map { it.substring("mdn.documentation.section.compat.".length).substringBefore("=") }
+      .toSet()
+
+    bcdIdDescriptions
+      .filter { it.key !in existingProperties }
+      .ifEmpty { return }
+      .forEach { (id, description) ->
+        contents.add("mdn.documentation.section.compat.$id=$description")
+      }
+
+    FileUtil.writeToFile(bundleFile, contents.joinToString("\n"));
+  }
 
   private inner class CssElementInfo(docDir: File) {
 
@@ -1255,8 +1228,11 @@ private fun RawProse.appendOtherSections(indexDataProseValues: List<JsonObject>)
       content,
       if (try_it_section != null) {
         val iframeEnd = try_it_section.indexOf("</iframe>")
-        if (iframeEnd < 0) throw RuntimeException("Cannot find iframe end - $try_it_section")
-        try_it_section.substring(iframeEnd + "</iframe>".length).trim()
+                          .takeIf { it > 0 }?.let { it + "</iframe>".length }
+                        ?: try_it_section.indexOf("</interactive-example>")
+                          .takeIf { it > 0 }?.let { it + "</interactive-example>".length }
+        if (iframeEnd == null) throw RuntimeException("Cannot find iframe or interactive-example end - $try_it_section")
+        try_it_section.substring(iframeEnd).trim()
       }
       else "",
       description_section?.trim() ?: ""
@@ -1283,10 +1259,13 @@ private fun String.patchProse(): String =
     .replace("&apos;", "'")
     .replace("&quot;", "\"")
     .replace("&nbsp;", " ")
+    .replace("&ldquo","“")
+    .replace("&rdquo","”")
+    .replace("&hellip","…")
     .replace(Regex("<p>\\s+"), "<p>")
     .replace(Regex("(^<p>\\s*)|(\\s*</p>)|(\\s*<img[^>]*>)|(\\s*<figure\\s*class=\"table-container\">\\s*</figure>\\s*)"), "")
     .also { fixedProse ->
-      Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
+      Regex("&(?!lt|gt|amp|shy)[a-z]*;").find(fixedProse)?.let {
         throw Exception("Unknown entity found in prose: ${it.value}")
       }
     }
