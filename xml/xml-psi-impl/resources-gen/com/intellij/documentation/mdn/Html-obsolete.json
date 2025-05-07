@@ -8,7 +8,67 @@
     "url": "https://github.com/mdn/content"
   },
   "lang": "en-us",
-  "attrs": {},
+  "attrs": {
+    "autocomplete": {
+      "url": "$MDN_URL$/web/html/attributes/autocomplete",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "14",
+        "ChromeAndroid": "",
+        "Edge": "79",
+        "Firefox": "4",
+        "Opera": "12.1",
+        "Safari": "6",
+        "SafariIOS": "6"
+      },
+      "doc": "The HTML <code>autocomplete</code> attribute lets web developers specify what if any permission the <a href=\"$MDN_URL$/Glossary/User_agent\">user agent</a> has to provide automated assistance in filling out form field values, as well as guidance to the browser as to the type of information expected in the field.\n<p>It is available on <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a> elements that take a text or numeric value as input, <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> elements, <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a> elements, and <a href=\"$MDN_URL$/Web/HTML/Element/form\"><code>&lt;form&gt;</code></a> elements.\n<p>The source of the suggested values is generally up to the browser; typically values come from past values entered by the user, but they may also come from pre-configured values. For instance, a browser might let the user save their name, address, phone number, and email addresses for autocomplete purposes. Perhaps the browser offers the ability to save encrypted credit card information, for autocompletion following an authentication procedure.\n<p>If an <a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Element/textarea\"><code>&lt;textarea&gt;</code></a> element has no <code>autocomplete</code> attribute, then browsers use the <code>autocomplete</code> attribute of the element's form owner, which is either the <a href=\"$MDN_URL$/Web/HTML/Element/form\"><code>&lt;form&gt;</code></a> element that the element is a descendant of, or the <code>&lt;form&gt;</code> whose <code>id</code> is specified by the <a href=\"$MDN_URL$/Web/HTML/Element/input#form\"><code>form</code></a> attribute of the element (see the <code>&lt;form&gt;</code> <a href=\"$MDN_URL$/Web/HTML/Element/form#autocomplete\"><code>autocomplete</code></a> attribute).\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> In order to provide autocompletion, user-agents might require <code>&lt;input&gt;</code>/<code>&lt;select&gt;</code>/<code>&lt;textarea&gt;</code> elements to:\n<ol>\n<li>Have a <code>name</code> and/or <code>id</code> attribute</li>\n<li>Be descendants of a <code>&lt;form&gt;</code> element</li>\n<li>The form to have a <a href=\"$MDN_URL$/Web/HTML/Element/input/submit\">submit</a> button</li>\n</ol>\n</div>"
+    },
+    "contextmenu": {
+      "url": "$MDN_URL$/web/html/global_attributes/contextmenu",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>contextmenu</code></strong> <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">global attribute</a> is the <a href=\"$MDN_URL$/Web/HTML/Global_attributes/id\"><strong>id</strong></a> of a <a href=\"$MDN_URL$/Web/HTML/Element/menu\"><code>&lt;menu&gt;</code></a> to use as the contextual menu for this element.\n<p>A <em>context menu</em> is a menu that appears upon user interaction, such as a right-click. HTML now allows us to customize this menu. Here are some implementation examples, including nested menus."
+    },
+    "itemid": {
+      "url": "$MDN_URL$/web/html/global_attributes/itemid",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "The <strong><code>itemid</code></strong> <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">global attribute</a> provides microdata in the form of a unique, global identifier of an item.\n<p>An <code>itemid</code> attribute can only be specified for an element that has both <a href=\"$MDN_URL$/Web/HTML/Global_attributes/itemscope\"><code>itemscope</code></a> and <a href=\"$MDN_URL$/Web/HTML/Global_attributes/itemtype\"><code>itemtype</code></a> attributes. Also, <code>itemid</code> can only be specified on elements that possess an <code>itemscope</code> attribute whose corresponding <code>itemtype</code> refers to or defines a vocabulary that supports global identifiers.\n<p>The exact meaning of an <code>itemtype</code>'s global identifier is provided by the definition of that identifier within the specified vocabulary. The vocabulary defines whether several items with the same global identifier can coexist and, if so, how items with the same identifier are handled.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <a href=\"$MDN_URL$/Glossary/WHATWG\">WHATWG</a> definition specifies that an <code>itemid</code> must be a <a href=\"$MDN_URL$/Glossary/URL\">URL</a>. However, the following example correctly illustrates that a <a href=\"$MDN_URL$/Glossary/URN\">URN</a> may also be used. This inconsistency may reflect the incomplete nature of the Microdata specification.\n</div>"
+    },
+    "itemprop": {
+      "url": "$MDN_URL$/web/html/global_attributes/itemprop",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "The <strong><code>itemprop</code></strong> <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">global attribute</a> is used to add properties to an item. Every HTML element can have an <code>itemprop</code> attribute specified, and an <code>itemprop</code> consists of a name-value pair. Each name-value pair is called a <strong>property</strong>, and a group of one or more properties forms an <strong>item</strong>. Property values are either a string or a URL and can be associated with a very wide range of elements including <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/embed\"><code>&lt;embed&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/iframe\"><code>&lt;iframe&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/img\"><code>&lt;img&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/link\"><code>&lt;link&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/object\"><code>&lt;object&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/source\"><code>&lt;source&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/track\"><code>&lt;track&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/video\"><code>&lt;video&gt;</code></a>."
+    },
+    "itemref": {
+      "url": "$MDN_URL$/web/html/global_attributes/itemref",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "Properties that are not descendants of an element with the <a href=\"$MDN_URL$/Web/HTML/Global_attributes/itemscope\"><code>itemscope</code></a> attribute can be associated with an item using the <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">global attribute</a> <strong><code>itemref</code></strong>.\n<p><code>itemref</code> provides a list of element IDs (not <code>itemid</code>s) elsewhere in the document, with additional properties\n<p>The <code>itemref</code> attribute can only be specified on elements that have an <code>itemscope</code> attribute specified.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> The <code>itemref</code> attribute is not part of the microdata data model. It is merely a syntactic construct to aid authors in adding annotations to pages where the data to be annotated does not follow a convenient tree structure. For example, it allows authors to mark up data in a table so that each column defines a separate item while keeping the properties in the cells.\n</div>"
+    },
+    "itemscope": {
+      "url": "$MDN_URL$/web/html/global_attributes/itemscope",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "<strong><code>itemscope</code></strong> is a boolean <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">global attribute</a> that defines the scope of associated metadata. Specifying the <strong><code>itemscope</code></strong> attribute for an element creates a new item, which results in a number of name-value pairs that are associated with the element.\n<p>A related attribute, <a href=\"$MDN_URL$/Web/HTML/Global_attributes/itemtype\"><code>itemtype</code></a>, is used to specify the valid URL of a vocabulary (such as <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a>) that describes the item and its properties context. In each of the following examples, the vocabulary is from <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a>.\n<p>Every HTML element may have an <code>itemscope</code> attribute specified. An <code>itemscope</code> element that does not have an associated <code>itemtype</code> must have an associated <code>itemref</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Find more about <code>itemtype</code> attributes at <a href=\"https://schema.org/Thing\" class=\"external\" target=\"_blank\">https://schema.org/Thing</a>\n</div>"
+    },
+    "itemtype": {
+      "url": "$MDN_URL$/web/html/global_attributes/itemtype",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "The <a href=\"$MDN_URL$/Web/HTML/Global_attributes\">global attribute</a> <strong><code>itemtype</code></strong> specifies the URL of the vocabulary that will be used to define <code>itemprop</code>'s (item properties) in the data structure.\n<p><a href=\"$MDN_URL$/Web/HTML/Global_attributes/itemscope\"><code>itemscope</code></a> is used to set the scope of where in the data structure the vocabulary set by <code>itemtype</code> will be active.\n<p>Google and other major search engines support the <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a> vocabulary for structured data. This vocabulary defines a standard set of type names and property names. For example, <code>MusicEvent</code> indicates a concert performance, with <a href=\"https://schema.org/startDate\" class=\"external\" target=\"_blank\"><code>startDate</code></a> and <a href=\"https://schema.org/location\" class=\"external\" target=\"_blank\"><code>location</code></a> properties specifying the concert's key details. In this case, <a href=\"https://schema.org/MusicEvent\" class=\"external\" target=\"_blank\"><code>MusicEvent</code></a> would be the URL used by <code>itemtype</code>, with <code>startDate</code> and location as <code>itemprop</code>'s which <a href=\"https://schema.org/MusicEvent\" class=\"external\" target=\"_blank\"><code>MusicEvent</code></a> defines.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> More about <code>itemtype</code> attributes can be found at <a href=\"https://schema.org/Thing\" class=\"external\" target=\"_blank\">https://schema.org/Thing</a>\n</div>\n<ul>\n<li>The <strong>itemtype</strong> attribute must have a value that is an unordered set of unique tokens which are case-sensitive, each is a valid and absolute URL, and all defined to use the same vocabulary. The attribute's value must have at least one token.</li>\n<li>The item types must all be types defined in applicable specifications (such as <a href=\"https://schema.org/\" class=\"external\" target=\"_blank\">schema.org</a>), and must all be defined to use the same vocabulary.</li>\n<li>The itemtype attribute can only be specified on elements which have an itemscope attribute specified.</li>\n<li>The itemid attribute can only be specified on elements which have both an itemscope attribute and an itemtype attribute specified. They must only be specified on elements with an itemscope attribute, whose itemtype attribute specifies a vocabulary not supporting global identifiers for items, as defined by that vocabulary's specification.</li>\n<li>The exact meaning of a global identifier is determined by the vocabulary's specification. It is left to such specifications to define whether multiple items of the same global identifier (whether on the same page or different pages) are allowed to exist, and what processing rules for that vocabulary are, with respect to handling the case of multiple items with the same ID.</li>\n</ul>"
+    }
+  },
   "tags": {
     "applet": {
       "status": [
@@ -197,6 +257,21 @@
             "Safari": "4",
             "SafariIOS": "3.2"
           }
+        },
+        "tabindex": {
+          "url": "$MDN_URL$/web/html/element/area#tabindex",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "",
+            "Opera": "15",
+            "Safari": "3.1",
+            "SafariIOS": "2"
+          }
         }
       }
     },
@@ -205,8 +280,7 @@
         "StandardTrack",
         "Obsolete"
       ],
-      "compatibility": {
-      },
+      "compatibility": {},
       "doc": "The <strong><code>&lt;basefont&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets a default font face, size, and color for the other elements which are descended from its parent element. With this set, the font's size can then be varied relative to the base size using the <a href=\"$MDN_URL$/Web/HTML/Element/font\"><code>&lt;font&gt;</code></a> element.</p>\n<p>You should not use this element; instead, you should use CSS properties such as <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a>, and <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> to change the font configuration for an element and its contents.</p>",
       "attrs": {
         "color": {
@@ -224,8 +298,7 @@
       "status": [
         "Obsolete"
       ],
-      "compatibility": {
-      },
+      "compatibility": {},
       "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>&lt;bgsound&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets up a sound file to play in the background while the page is used; use <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> instead.</p>\n<div class=\"note notecard\">\n<p><strong>Do not use this! </strong>In order to embed audio in a Web page, you should be using the <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> element.</p>\n</div>",
       "attrs": {
         "balance": {
@@ -249,6 +322,149 @@
       "compatibility": {},
       "doc": "The <strong><code>&lt;blink&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is a non-standard element which causes the enclosed text to flash slowly.</p>\n<div class=\"warning notecard\">Do not use this element as it is <strong>obsolete</strong> and is bad design practice. Blinking text is frowned upon by several accessibility standards and the CSS specification allows browsers to ignore the <code>&lt;blink&gt;</code> element.</div>"
     },
+    "body": {
+      "doc": "",
+      "attrs": {
+        "onafterprint": {
+          "url": "$MDN_URL$/web/html/element/body#onafterprint",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call after the user has printed the document."
+        },
+        "onbeforeprint": {
+          "url": "$MDN_URL$/web/html/element/body#onbeforeprint",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the user requests printing of the document."
+        },
+        "onbeforeunload": {
+          "url": "$MDN_URL$/web/html/element/body#onbeforeunload",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document is about to be unloaded."
+        },
+        "onblur": {
+          "url": "$MDN_URL$/web/html/element/body#onblur",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document loses focus."
+        },
+        "onerror": {
+          "url": "$MDN_URL$/web/html/element/body#onerror",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document fails to load properly."
+        },
+        "onfocus": {
+          "url": "$MDN_URL$/web/html/element/body#onfocus",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document receives focus."
+        },
+        "onhashchange": {
+          "url": "$MDN_URL$/web/html/element/body#onhashchange",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the fragment identifier part (starting with the hash (<code>'#'</code>) character) of the document's current address has changed."
+        },
+        "onlanguagechange": {
+          "url": "$MDN_URL$/web/html/element/body#onlanguagechange",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the preferred languages changed."
+        },
+        "onload": {
+          "url": "$MDN_URL$/web/html/element/body#onload",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document has finished loading."
+        },
+        "onmessage": {
+          "url": "$MDN_URL$/web/html/element/body#onmessage",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document has received a message."
+        },
+        "onoffline": {
+          "url": "$MDN_URL$/web/html/element/body#onoffline",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when network communication has failed."
+        },
+        "ononline": {
+          "url": "$MDN_URL$/web/html/element/body#ononline",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when network communication has been restored."
+        },
+        "onpopstate": {
+          "url": "$MDN_URL$/web/html/element/body#onpopstate",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the user has navigated session history."
+        },
+        "onredo": {
+          "url": "$MDN_URL$/web/html/element/body#onredo",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the user has moved forward in undo transaction history."
+        },
+        "onresize": {
+          "url": "$MDN_URL$/web/html/element/body#onresize",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document has been resized."
+        },
+        "onstorage": {
+          "url": "$MDN_URL$/web/html/element/body#onstorage",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the storage area has changed."
+        },
+        "onundo": {
+          "url": "$MDN_URL$/web/html/element/body#onundo",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the user has moved backward in undo transaction history."
+        },
+        "onunload": {
+          "url": "$MDN_URL$/web/html/element/body#onunload",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "Function to call when the document is going away."
+        }
+      }
+    },
+    "button": {
+      "doc": "",
+      "attrs": {
+        "autocomplete": {
+          "url": "$MDN_URL$/web/html/element/button#autocomplete",
+          "compatibility": {
+            "Firefox": "4"
+          },
+          "doc": "This attribute on a <a href=\"$MDN_URL$/Web/HTML/Element/button\" aria-current=\"page\"><code>&lt;button&gt;</code></a> is nonstandard and Firefox-specific. Unlike other browsers, <a href=\"https://stackoverflow.com/questions/5985839/bug-with-firefox-disabled-attribute-of-input-not-resetting-when-refreshing\" class=\"external\" target=\"_blank\">Firefox persists the dynamic disabled state</a> of a <a href=\"$MDN_URL$/Web/HTML/Element/button\" aria-current=\"page\"><code>&lt;button&gt;</code></a> across page loads. Setting <code>autocomplete=\"off\"</code> on the button disables this feature; see <a href=\"https://bugzil.la/654072\" class=\"external\" target=\"_blank\">Firefox bug 654072</a>."
+        }
+      }
+    },
     "content": {
       "status": [
         "Obsolete"
@@ -265,6 +481,88 @@
       "attrs": {
         "select": {
           "doc": "A comma-separated list of selectors. These have the same syntax as CSS selectors. They select the content to insert in place of the\n<code>&lt;content&gt;</code>\nelement."
+        }
+      }
+    },
+    "dd": {
+      "doc": "",
+      "attrs": {
+        "nowrap": {
+          "url": "$MDN_URL$/web/html/element/dd#nowrap",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "",
+            "Opera": "15",
+            "Safari": "4",
+            "SafariIOS": "3.2"
+          },
+          "doc": "If the value of this attribute is set to <code>yes</code>, the definition text will not wrap. The default value is <code>no</code>."
+        }
+      }
+    },
+    "html": {
+      "doc": "",
+      "attrs": {
+        "manifest": {
+          "url": "$MDN_URL$/web/html/element/html#manifest",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "Specifies the <a href=\"$MDN_URL$/Glossary/URI\">URI</a> of a resource manifest indicating resources that should be cached locally."
+        }
+      }
+    },
+    "image": {
+      "url": "$MDN_URL$/web/html/element/image",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "",
+        "ChromeAndroid": "",
+        "Edge": "79",
+        "Firefox": "",
+        "Opera": "15",
+        "Safari": "",
+        "SafariIOS": ""
+      },
+      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;image&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is an ancient and poorly supported precursor to the <a href=\"$MDN_URL$/Web/HTML/Element/img\"><code>&lt;img&gt;</code></a> element.\n<strong>It should not be used</strong>.\n<p>Some browsers will attempt to automatically convert this into an <a href=\"$MDN_URL$/Web/HTML/Element/img\"><code>&lt;img&gt;</code></a> element, and may succeed if the <a href=\"$MDN_URL$/Web/HTML/Element/img#src\"><code>src</code></a> attribute is specified as well."
+    },
+    "img": {
+      "doc": "",
+      "attrs": {
+        "onerror": {
+          "url": "$MDN_URL$/web/html/element/img#onerror",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "79",
+            "Firefox": "51",
+            "Opera": "15",
+            "Safari": "",
+            "SafariIOS": ""
+          }
+        }
+      }
+    },
+    "input": {
+      "doc": "",
+      "attrs": {
+        "autocorrect": {
+          "url": "$MDN_URL$/web/html/element/input#autocorrect",
+          "status": [
+            "Obsolete"
+          ],
+          "doc": "A string indicating whether autocorrect is\n<code>on</code>\nor\n<code>off</code>\n.\n<strong>Safari only.</strong><p>(Safari only). A string which indicates whether to activate automatic correction while the user is editing this field. Permitted values are:\n<dl>\n<dt id=\"on\"><a href=\"#on\"><code>on</code></a></dt>\n<dd>\n<p>Enable automatic correction of typos, as well as processing of text substitutions if any are configured.\n</dd>\n<dt id=\"off\"><a href=\"#off\"><code>off</code></a></dt>\n<dd>\n<p>Disable automatic correction and text substitutions.\n</dd>\n</dl>"
         }
       }
     },
@@ -304,6 +602,31 @@
         },
         "name": {
           "doc": "The name of the control, which is submitted with the form data."
+        }
+      }
+    },
+    "link": {
+      "doc": "",
+      "attrs": {
+        "methods": {
+          "url": "$MDN_URL$/web/html/element/link#methods",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "The value of this attribute provides information about the functions that might be performed on an object.\nThe values generally are given by the HTTP protocol when it is used, but it might (for similar reasons as for the <strong>title</strong> attribute) be useful to include advisory information in advance in the link.\nFor example, the browser might choose a different rendering of a link as a function of the methods specified;\nsomething that is searchable might get a different icon, or an outside link might render with an indication of leaving the current site.\nThis attribute is not well understood nor supported, even by the defining browser, Internet Explorer 4."
+        }
+      }
+    },
+    "menu": {
+      "doc": "",
+      "attrs": {
+        "label": {
+          "url": "$MDN_URL$/web/html/element/menu#label",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {}
         }
       }
     },
@@ -390,6 +713,81 @@
         }
       }
     },
+    "object": {
+      "doc": "",
+      "attrs": {
+        "tabindex": {
+          "url": "$MDN_URL$/web/html/element/object#tabindex",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "",
+            "Opera": "15",
+            "Safari": "3.1",
+            "SafariIOS": "2"
+          }
+        }
+      }
+    },
+    "portal": {
+      "url": "$MDN_URL$/web/html/element/portal",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>&lt;portal&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element enables the embedding of another HTML page into the current one for the purposes of allowing smoother navigation into new pages.\n<p>A <code>&lt;portal&gt;</code> is similar to an <code>&lt;iframe&gt;</code>. An <code>&lt;iframe&gt;</code> allows a separate <a href=\"$MDN_URL$/Glossary/Browsing_context\">browsing context</a> to be embedded. However, the embedded content of a <code>&lt;portal&gt;</code> is more limited than that of an <code>&lt;iframe&gt;</code>. It cannot be interacted with, and therefore is not suitable for embedding widgets into a document. Instead, the <code>&lt;portal&gt;</code> acts as a preview of the content of another page. It can be navigated into therefore allowing for seamless transition to the embedded content.",
+      "details": {
+        "Implicit ARIA role": "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Roles/button_role\">button</a>\n",
+        "DOM interface": "<a class=\"page-not-created\"  ><code>HTMLPortalElement</code></a>\n"
+      },
+      "attrs": {
+        "referrerpolicy": {
+          "url": "$MDN_URL$/web/html/element/portal#referrerpolicy",
+          "doc": "Sets the <a href=\"$MDN_URL$/Web/HTTP/Headers/Referrer-Policy\">referrer policy</a> to use when requesting the page at the URL given as the value of the <code>src</code> attribute."
+        },
+        "src": {
+          "url": "$MDN_URL$/web/html/element/portal#src",
+          "doc": "The URL of the page to embed."
+        }
+      }
+    },
+    "pre": {
+      "doc": "",
+      "attrs": {
+        "cols": {
+          "url": "$MDN_URL$/web/html/element/pre#cols",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {},
+          "doc": "Contains the <em>preferred</em> count of characters that a line should have. It was a non-standard synonym of <a href=\"#width\"><code>width</code></a>. To achieve such an effect, use CSS <a href=\"$MDN_URL$/Web/CSS/width\"><code>width</code></a> instead."
+        }
+      }
+    },
+    "script": {
+      "doc": "",
+      "attrs": {
+        "text": {
+          "url": "$MDN_URL$/web/html/element/script#text",
+          "status": [
+            "Obsolete"
+          ],
+          "compatibility": {
+            "Chrome": "",
+            "ChromeAndroid": "",
+            "Edge": "",
+            "Firefox": "",
+            "Opera": "15",
+            "Safari": "4",
+            "SafariIOS": "3.2"
+          }
+        }
+      }
+    },
     "shadow": {
       "status": [
         "Obsolete"
@@ -428,18 +826,7 @@
           "doc": "This attribute can be used for defining width of spacer in pixels when type is\n<code>block</code>\n."
         }
       }
-    },
-    "button": {
-      "doc": "",
-      "attrs":{
-        "autocomplete": {
-          "url": "$MDN_URL$/web/html/element/button#autocomplete",
-          "compatibility": {
-            "Firefox": "4"
-          },
-          "doc": "This attribute on a <a href=\"$MDN_URL$/Web/HTML/Element/button\" aria-current=\"page\"><code>&lt;button&gt;</code></a> is nonstandard and Firefox-specific. Unlike other browsers, <a href=\"https://stackoverflow.com/questions/5985839/bug-with-firefox-disabled-attribute-of-input-not-resetting-when-refreshing\" class=\"external\" target=\"_blank\">Firefox persists the dynamic disabled state</a> of a <a href=\"$MDN_URL$/Web/HTML/Element/button\" aria-current=\"page\"><code>&lt;button&gt;</code></a> across page loads. Setting <code>autocomplete=\"off\"</code> on the button disables this feature; see <a href=\"https://bugzil.la/654072\" class=\"external\" target=\"_blank\">Firefox bug 654072</a>."
-        }
-      }
     }
-  }
+  },
+  "tagAliases": {}
 }
