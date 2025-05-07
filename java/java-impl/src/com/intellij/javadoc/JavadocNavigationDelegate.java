@@ -79,7 +79,7 @@ public final class JavadocNavigationDelegate extends EditorNavigationDelegateAda
   }
   
   public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    final Document document = editor.getDocument();
+    final Document document = psiFile.getFileDocument();
     final CaretModel caretModel = editor.getCaretModel();
     final int offset = caretModel.getOffset();
 

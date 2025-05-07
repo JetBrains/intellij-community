@@ -81,12 +81,13 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     if (!referenceProblems.isEmpty()) {
       fixReferenceProblems(ContainerUtil.flatten(referenceProblems.values()), project);
     }
+    Document document = file.getFileDocument();
     if (!commonProblems.isEmpty()) {
-      fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), comment, editor.getDocument(), project);
+      fixCommonProblems(ContainerUtil.flatten(commonProblems.values()), comment, document, project);
     }
 
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    ensureContentOrdered(docComment, editor.getDocument());
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    ensureContentOrdered(docComment, document);
     locateCaret(docComment, editor, file);
   }
 
@@ -294,7 +295,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
   }
 
   private static void locateCaret(@NotNull PsiDocComment comment, @NotNull Editor editor, @NotNull PsiFile file) {
-    Document document = editor.getDocument();
+    Document document = file.getFileDocument();
     int lineToNavigate = -1;
     for (PsiDocTag tag : comment.getTags()) {
       PsiElement nameElement = tag.getNameElement();
