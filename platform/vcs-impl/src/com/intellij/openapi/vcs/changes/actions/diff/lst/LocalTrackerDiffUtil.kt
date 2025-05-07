@@ -146,7 +146,7 @@ object LocalTrackerDiffUtil {
     val lineOffsets2 = LineOffsetsUtil.create(diffData.localText)
 
     val linesRanges = ranges.map { Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
-    val areVCSBoundedActionsDisabled = textDiffProvider.areVCSBoundedActionsDisabled()
+    val areVCSBoundedActionsDisabled = textDiffProvider.noFitnessForParticularPurposePromised()
     val newFragments = textDiffProvider.compare(diffData.vcsText, diffData.localText, linesRanges, indicator)!!
 
     val toggleableLineRanges = mutableListOf<ToggleableLineRange>()

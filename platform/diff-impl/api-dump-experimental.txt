@@ -163,6 +163,9 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - com.intellij.diff.tools.combined.CombinedDiffBlock
 - a:setSelected(Z):V
 - updateBorder(Z):V
+e:com.intellij.diff.tools.util.base.IgnorePolicy
+- java.lang.Enum
+- *sf:IGNORE_LANGUAGE_SPECIFIC_CHANGES:com.intellij.diff.tools.util.base.IgnorePolicy
 *:com.intellij.diff.util.CombinedDiffToggle
 - *sf:Companion:com.intellij.diff.util.CombinedDiffToggle$Companion
 - s:getDEFAULT():com.intellij.diff.util.CombinedDiffToggle

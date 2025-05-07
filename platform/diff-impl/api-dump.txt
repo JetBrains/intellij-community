@@ -1404,7 +1404,6 @@ e:com.intellij.diff.tools.util.base.IgnorePolicy
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:FORMATTING:com.intellij.diff.tools.util.base.IgnorePolicy
-- sf:IGNORE_LANGUAGE_SPECIFIC_CHANGES:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:IGNORE_WHITESPACES:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:IGNORE_WHITESPACES_CHUNKS:com.intellij.diff.tools.util.base.IgnorePolicy
 - sf:TRIM_WHITESPACES:com.intellij.diff.tools.util.base.IgnorePolicy
@@ -1737,10 +1736,10 @@ c:com.intellij.diff.tools.util.text.SimpleThreesideTextDiffProvider
 - <init>(com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors,java.lang.Runnable,com.intellij.openapi.Disposable):V
 - compare(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 com.intellij.diff.tools.util.text.TwosideTextDiffProvider
-- areVCSBoundedActionsDisabled():Z
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,java.util.List,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - isHighlightingDisabled():Z
+- noFitnessForParticularPurposePromised():Z
 com.intellij.diff.tools.util.text.TwosideTextDiffProvider$NoIgnore
 - com.intellij.diff.tools.util.text.TwosideTextDiffProvider
 - a:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator):java.util.List

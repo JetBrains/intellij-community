@@ -37,13 +37,21 @@ public interface TwosideTextDiffProvider extends TextDiffProvider {
 
 
   /**
-   * Some of the diff window actions rely on the default diff algorithm, for example, commiting only the part of the file.
-   * Such actions might not be suitable in cases when a custom diff algorithm is used, e.g. during semantic merge.
+   * Some custom diff algorithms may not be suitable for general use.
+   * <p/>
+   * If true, then callers CANNOT assume that returned fragments conform to any otherwise common constraints.
+   * That's it:
+   * <ul>
+   * <li>The 'Range' argument may be ignored</li>
+   * <li>The 'ComparisonPolicy' argument may be ignored</li>
+   * <li>The resulting fragments may be UNSORTABLE (with movement detection applied)</li>
+   * <li>The resulting fragments may OVERLAP (with multiple-copy detection applied)</li>
+   * </ul>
    *
    * @see com.intellij.openapi.vcs.changes.actions.diff.lst.SimpleLocalChangeListDiffViewer
-   * @return true if such actions should be disabled for the current context, false otherwise.
+   * @see com.intellij.diff.tools.util.base.IgnorePolicy#IGNORE_LANGUAGE_SPECIFIC_CHANGES
    */
-  default boolean areVCSBoundedActionsDisabled() {
+  default boolean noFitnessForParticularPurposePromised() {
     return false;
   }
 

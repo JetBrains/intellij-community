@@ -518,7 +518,7 @@ class SimpleLocalChangeListDiffViewer(context: DiffContext,
 
     private inner class MyGutterMouseListener(private val mySide: Side) : MouseAdapter() {
       override fun mouseMoved(e: MouseEvent) {
-        if (!isAllowExcludeChangesFromCommit || myTextDiffProvider.areVCSBoundedActionsDisabled()) {
+        if (!isAllowExcludeChangesFromCommit || myTextDiffProvider.noFitnessForParticularPurposePromised()) {
           destroyHoverHighlighter()
           return
         }

@@ -3,6 +3,7 @@ package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.openapi.diff.DiffBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -13,7 +14,7 @@ public enum IgnorePolicy {
   IGNORE_WHITESPACES("option.ignore.policy.whitespaces"),
   IGNORE_WHITESPACES_CHUNKS("option.ignore.policy.whitespaces.empty.lines"),
   FORMATTING("option.ignore.policy.formatting"),
-  IGNORE_LANGUAGE_SPECIFIC_CHANGES("option.ignore.policy.language.specific.changes");
+  @ApiStatus.Experimental IGNORE_LANGUAGE_SPECIFIC_CHANGES("option.ignore.policy.language.specific.changes");
 
   private final @NotNull String myTextKey;
 

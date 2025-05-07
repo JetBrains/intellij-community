@@ -28,7 +28,7 @@ public abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase i
   }
 
   @Override
-  public boolean areVCSBoundedActionsDisabled() {
+  public boolean noFitnessForParticularPurposePromised() {
     return getIgnorePolicy() == IgnorePolicy.IGNORE_LANGUAGE_SPECIFIC_CHANGES;
   }
 

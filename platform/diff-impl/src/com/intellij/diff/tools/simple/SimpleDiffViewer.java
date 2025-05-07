@@ -44,7 +44,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
@@ -170,7 +172,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   public @NotNull FoldingModelSupport.Settings getFoldingModelSettings() {
-    return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+    FoldingModelSupport.Settings settings = TextDiffViewerUtil.getFoldingModelSettings(myContext);
+    if (myTextDiffProvider.noFitnessForParticularPurposePromised()) {
+      return new FoldingModelSupport.Settings(TextDiffSettingsHolder.CONTEXT_RANGE_MODES[TextDiffSettingsHolder.CONTEXT_RANGE_MODES.length - 1], true);
+    }
+    return settings;
   }
 
   public @NotNull FoldingModelSupport getFoldingModel() {
@@ -179,7 +185,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @ApiStatus.Internal
   public boolean needAlignChanges() {
-    if (!aligningViewModeSupported) return false;
+    if (!aligningViewModeSupported || myTextDiffProvider.noFitnessForParticularPurposePromised()) return false;
     return myAlignedDiffModel.needAlignChanges();
   }
 
@@ -253,9 +259,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       myModel.setChanges(ContainerUtil.notNullize(changes), isContentsEqual);
-      myAlignedDiffModel.realignChanges();
 
-      updateVCSBoundedSettings();
+      if (needAlignChanges()) {
+        myAlignedDiffModel.realignChanges();
+      }
 
       //maybe readaction
       WriteIntentReadAction.run((Runnable)() -> myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings()));
@@ -265,15 +272,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       myContentPanel.repaintDivider();
       myStatusPanel.update();
     };
-  }
-
-  private void updateVCSBoundedSettings() {
-    if (myTextDiffProvider.areVCSBoundedActionsDisabled()) {
-      TextDiffSettingsHolder.TextDiffSettings settings = getTextSettings();
-      settings.setExpandByDefault(true);
-      settings.setEnableSyncScroll(false);
-      settings.setEnableAligningChangesMode(false);
-    }
   }
 
   protected @NotNull Runnable applyNotification(final @Nullable JComponent notification) {
@@ -393,7 +391,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   public boolean isAligningViewModeSupported() {
-    return aligningViewModeSupported && !myTextDiffProvider.areVCSBoundedActionsDisabled();
+    return aligningViewModeSupported && !myTextDiffProvider.noFitnessForParticularPurposePromised();
   }
 
   //
@@ -657,7 +655,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (e.getPresentation().isVisible() && myTextDiffProvider.areVCSBoundedActionsDisabled()) {
+      if (e.getPresentation().isVisible() && myTextDiffProvider.noFitnessForParticularPurposePromised()) {
         e.getPresentation().setVisible(false);
       }
     }
@@ -671,7 +669,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (e.getPresentation().isVisible() && myTextDiffProvider.areVCSBoundedActionsDisabled()) {
+      if (e.getPresentation().isVisible() && myTextDiffProvider.noFitnessForParticularPurposePromised()) {
         e.getPresentation().setVisible(false);
       }
     }
@@ -737,6 +735,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private class MySyncScrollable extends BaseSyncScrollable {
     @Override
     public boolean isSyncScrollEnabled() {
+      if (myTextDiffProvider.noFitnessForParticularPurposePromised()) return false;
       return getTextSettings().isEnableSyncScroll() || getTextSettings().isEnableAligningChangesMode();
     }
 
