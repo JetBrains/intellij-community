@@ -273,7 +273,6 @@ internal open class FrontendXBreakpointProxy(
   }
 
   override fun getGutterIconRenderer(): GutterIconRenderer? {
-    // TODO IJPL-185322
     return null
   }
 

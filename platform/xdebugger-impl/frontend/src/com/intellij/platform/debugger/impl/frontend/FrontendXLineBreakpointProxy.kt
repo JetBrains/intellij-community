@@ -5,6 +5,7 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.markup.GutterDraggableObject
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -141,6 +142,10 @@ internal class FrontendXLineBreakpointProxy(
     if (useFeLineBreakpointProxy()) {
       visualRepresentation.doUpdateUI(callOnUpdate)
     }
+  }
+
+  override fun getGutterIconRenderer(): GutterIconRenderer? {
+    return visualRepresentation.highlighter?.gutterIconRenderer
   }
 
   private fun updateLineBreakpointState(update: (XLineBreakpointInfo) -> XLineBreakpointInfo) {
