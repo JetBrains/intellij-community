@@ -18,7 +18,6 @@ import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import java.util.concurrent.CancellationException
 
 @ApiStatus.Experimental
@@ -47,7 +46,9 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(
   operation: suspend (() -> Result<T>),
 ): Result<T> {
   try {
-    val result = operation.invoke()
+    val result = withContext(Dispatchers.IO) {
+      operation.invoke()
+    }
     result.exceptionOrNull()?.let { throw it }
     return result
   }
