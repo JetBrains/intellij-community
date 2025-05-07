@@ -11,7 +11,7 @@ interface UsagePresentationProvider {
     private val EP_NAME = ExtensionPointName<UsagePresentationProvider>("com.intellij.usagePresentationProvider")
 
     @JvmStatic
-    fun getPresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope): UsagePresentation? {
+    fun getPresentation(usageInfo: UsageInfoAdapter, project: Project, scope: GlobalSearchScope = GlobalSearchScope.projectScope(project)): UsagePresentation? {
       return EP_NAME.computeSafeIfAny { extension -> extension.getUsagePresentation(usageInfo, project, scope)}
     }
   }

@@ -5,6 +5,7 @@ import com.intellij.find.FindModel
 import com.intellij.find.impl.FindExecutor
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.usages.UsageInfoAdapter
@@ -18,8 +19,11 @@ class FindExecutorImpl(val coroutineScope: CoroutineScope): FindExecutor {
 
       //TODO provide custom scope and search context (it's not serializable in FindModel)
       FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() }).collect { findResult ->
-        val usage = UsageInfoModel(project, findResult, coroutineScope)
+        val usage = readAction {
+           UsageInfoModel(project, findResult, coroutineScope)
+        }
         onResult(usage)
+
       }
       onFinish()
     }

@@ -7,6 +7,7 @@ import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.getPresentableFilePath
 import com.intellij.ide.ui.SerializableTextChunk
 import com.intellij.ide.ui.colors.rpcId
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
@@ -83,6 +84,8 @@ class FindRemoteApiImpl : FindRemoteApi {
             fileId = virtualFile.rpcId(),
             presentablePath = presentablePath,
             backgroundColor = bgColor,
+            tooltipText = adapter.tooltipText,
+            iconId = adapter.icon?.rpcId(),
           )
           launch {
             send(result)
