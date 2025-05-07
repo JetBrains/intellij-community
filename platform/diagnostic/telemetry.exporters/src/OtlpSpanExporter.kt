@@ -40,9 +40,11 @@ class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
     }
   }
 
-  suspend fun exportBackendData(receivedBytes: ByteArray) {
-    runCatching {
-      httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
-    }.getOrLogException(thisLogger())
+  companion object {
+    suspend fun exportBackendData(traceUrl: String, receivedBytes: ByteArray) {
+      runCatching {
+        httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
+      }.getOrLogException(thisLogger())
+    }
   }
 }
