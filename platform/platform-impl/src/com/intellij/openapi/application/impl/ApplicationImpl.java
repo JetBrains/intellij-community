@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -873,8 +874,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
 
     if (hasUnsafeBgTasks && ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      getLogger().error("Headless application has been completed but background tasks are still running! Application will be terminated." +
-                        "\nThread dump:\n" + ThreadDumper.dumpThreadsToString());
+      getLogger().error("Headless application has been completed but background tasks are still running! Application will be terminated.",
+                        new Attachment("stacktrace.txt", ThreadDumper.dumpThreadsToString()));
       return true;
     }
 
