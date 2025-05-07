@@ -170,6 +170,7 @@ private fun mergeWithGlobal(tag: MdnHtmlAttributeDocumentation, global: MdnHtmlA
       tag.url,
       tag.status ?: global.status,
       tag.compatibility ?: global.compatibility,
+      tag.baseline ?: global.baseline,
       tag.doc ?: global.doc
     )
   } ?: tag
@@ -275,6 +276,7 @@ interface MdnRawSymbolDocumentation {
   val url: String?
   val status: Set<MdnApiStatus>?
   val compatibility: CompatibilityMap?
+  val baseline: BaselineData?
   val doc: String?
   val sections: Map<String, String> get() = emptyMap()
 }
@@ -284,6 +286,18 @@ sealed interface MdnDocumentation {
   val author: MdnNameWithUrl
   val lang: String
 }
+
+enum class BaselineLevel {
+  NONE,
+  LOW,
+  HIGH
+}
+
+data class BaselineData(
+  val level: BaselineLevel,
+  val lowDate: String?,
+  val highDate: String?,
+)
 
 data class MdnNameWithUrl(
   val name: String,
@@ -330,6 +344,7 @@ data class MdnHtmlElementDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String,
   val details: Map<String, String>?,
   val attrs: Map<String, MdnHtmlAttributeDocumentation>?,
@@ -340,6 +355,7 @@ data class MdnHtmlAttributeDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String?,
   val details: Map<String, String>? = null,
 ) : MdnRawSymbolDocumentation {
@@ -352,6 +368,7 @@ data class MdnDomEventDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String?,
 ) : MdnRawSymbolDocumentation
 
@@ -360,6 +377,7 @@ data class MdnJsSymbolDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String?,
   val parameters: Map<String, String>?,
   val returns: String?,
@@ -384,6 +402,7 @@ data class MdnCssBasicSymbolDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String?,
   val formalSyntax: String?,
 ) : MdnRawSymbolDocumentation {
@@ -402,6 +421,7 @@ data class MdnCssAtRuleSymbolDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String?,
   val properties: Map<String, MdnCssPropertySymbolDocumentation>?,
   val formalSyntax: String?,
@@ -421,6 +441,7 @@ data class MdnCssPropertySymbolDocumentation(
   override val status: Set<MdnApiStatus>?,
   @JsonDeserialize(using = CompatibilityMapDeserializer::class)
   override val compatibility: CompatibilityMap?,
+  override val baseline: BaselineData?,
   override val doc: String?,
   val formalSyntax: String?,
   val values: Map<String, String>?,
@@ -460,6 +481,7 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
   ChromeAndroid(displayName = "Chrome Android", mdnId = "chrome_android", firstVersion = "18"),
   Edge(firstVersion = "12"),
   Firefox,
+  FirefoxAndroid(displayName = "Firefox Android", mdnId = "firefox_android"),
   Opera,
   Safari,
   SafariIOS(displayName = "Safari iOS", mdnId = "safari_ios"),
