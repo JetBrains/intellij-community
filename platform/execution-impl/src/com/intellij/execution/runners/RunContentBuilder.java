@@ -402,6 +402,7 @@ public final class RunContentBuilder extends RunTab {
       this(runConfigurationBase.isShowConsoleOnStdOut(), runConfigurationBase.isShowConsoleOnStdErr(), project, executor, runContentDescriptor, ui);
     }
 
+    @ApiStatus.Internal
     public ConsoleToFrontListener(boolean showConsoleOnStdOut, boolean showConsoleOnStdErr,
                                   @NotNull Project project,
                                   @NotNull Executor executor,
