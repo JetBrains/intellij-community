@@ -21,7 +21,7 @@ import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
   private val config: Config,
-  private val datasetContext: DatasetContext
+  private val datasetContext: DatasetContext,
 ) {
 
   companion object {
@@ -41,7 +41,7 @@ class ActionsInterpretationHandler(
     LOG.info("Computing of sessions count took $computingTime ms")
     val interpretationConfig = config.interpret
     val logsSaver = createLogsSaver(workspace)
-    val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit)
+    val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit, interpretationConfig.strictSessionsLimit)
     val filter =
       if (interpretationConfig.sessionProbability < 1)
         RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)

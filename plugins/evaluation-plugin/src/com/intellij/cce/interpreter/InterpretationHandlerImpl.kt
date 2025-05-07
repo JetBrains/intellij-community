@@ -12,7 +12,9 @@ import java.util.*
 class InterpretationHandlerImpl(
   private val indicator: Progress,
   private val sessionsCount: Int,
-  private val sessionsLimit: Int?) : InterpretationHandler {
+  private val sessionsLimit: Int?,
+  private val strictSessionsLimit: Boolean?,
+) : InterpretationHandler {
   private companion object {
     val LOG = Logger.getInstance(InterpretationHandlerImpl::class.java)
   }
@@ -55,6 +57,9 @@ class InterpretationHandlerImpl(
     }
     return false
   }
+
+  override fun isStrictLimitExceeded(): Boolean =
+    if (strictSessionsLimit == true) isLimitExceeded() else false
 
   private fun updateProgress(path: String, fileSessionsLeft: Int) {
     val actualSessionsCount = sessionsLimit ?: sessionsCount

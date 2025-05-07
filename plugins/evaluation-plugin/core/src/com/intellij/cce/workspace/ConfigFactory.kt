@@ -127,6 +127,7 @@ object ConfigFactory {
     if (map == null) return
     map.getIfExists<Double?>("experimentGroup")?.let { builder.experimentGroup = it.toInt() }
     map.getIfExists<Double?>("sessionsLimit")?.let { builder.sessionsLimit = it.toInt() }
+    map.getIfExists<Boolean?>("strictSessionsLimit")?.let { builder.strictSessionsLimit = it }
     map.getIfExists<Double?>("filesLimit")?.let { builder.filesLimit = it.toInt() }
     map.getIfExists<Double?>("sessionProbability")?.let { builder.sessionProbability = it }
     map.getIfExists<Double?>("sessionSeed")?.let { builder.sessionSeed = it.toLong() }
