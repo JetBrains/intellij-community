@@ -10,6 +10,8 @@ import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
@@ -37,5 +39,9 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata {
     return DefaultUiPluginManagerController.loadUpdateMetadata(xmlId, ideCompatibleUpdate)
+  }
+
+  override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+    return DefaultUiPluginManagerController.loadPluginReviews(pluginId, page)
   }
 }

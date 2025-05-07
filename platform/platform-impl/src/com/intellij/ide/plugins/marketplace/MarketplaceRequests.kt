@@ -852,14 +852,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   @RequiresReadLockAbsence
   fun loadPluginReviews(pluginUiModel: PluginUiModel, page: Int): List<PluginReviewComment>? {
     try {
-      return HttpRequests
-        .request(MarketplaceUrls.getPluginReviewsUrl(pluginUiModel.pluginId, page))
-        .setHeadersViaTuner()
-        .productNameAsUserAgent()
-        .throwStatusCodeException(false)
-        .connect {
-          objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
-        }
+      return UiPluginManager.getInstance().loadPluginReviews(pluginUiModel, page)
     }
     catch (e: IOException) {
       LOG.warn(e)

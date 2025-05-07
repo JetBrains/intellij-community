@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManagerController
 import com.intellij.openapi.components.Service
@@ -42,6 +43,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator?): IntellijUpdateMetadata {
     return awaitForResult { PluginManagerApi.getInstance().loadMetadata(xmlId, ideCompatibleUpdate) }
+  }
+
+  override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+    return awaitForResult { PluginManagerApi.getInstance().loadPluginReviews(pluginId, page) }
   }
 
   @Deprecated("Test method ")

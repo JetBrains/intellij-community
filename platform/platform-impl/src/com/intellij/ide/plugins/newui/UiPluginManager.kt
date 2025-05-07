@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -40,6 +41,10 @@ class UiPluginManager {
 
   fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): IntellijUpdateMetadata {
     return getController().loadUpdateMetadata(xmlId, ideCompatibleUpdate, indicator)
+  }
+
+  fun loadPluginReviews(model: PluginUiModel, page: Int): List<PluginReviewComment>? {
+    return getController().loadPluginReviews(model.pluginId, page)
   }
 
   fun getController(): UiPluginManagerController {

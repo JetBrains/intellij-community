@@ -5,6 +5,8 @@ import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -21,6 +23,7 @@ interface PluginManagerApi: RemoteApi<Unit> {
   suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
   suspend fun isPluginDisabled(pluginId: PluginId): Boolean
   suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata
+  suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

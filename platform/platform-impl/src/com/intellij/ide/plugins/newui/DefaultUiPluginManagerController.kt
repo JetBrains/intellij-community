@@ -11,14 +11,19 @@ import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.setHeadersViaTuner
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.HttpRequests
+import java.io.IOException
 import java.nio.file.Paths
+import kotlin.jvm.Throws
 
 @ApiStatus.Internal
 object DefaultUiPluginManagerController : UiPluginManagerController {
@@ -65,6 +70,20 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     ) {
       objectMapper.readValue(it, IntellijUpdateMetadata::class.java)
     }
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  @Throws(IOException::class)
+  override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+    return HttpRequests
+      .request(MarketplaceUrls.getPluginReviewsUrl(pluginId, page))
+      .setHeadersViaTuner()
+      .productNameAsUserAgent()
+      .throwStatusCodeException(false)
+      .connect {
+        objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
+      }
   }
 }
 
