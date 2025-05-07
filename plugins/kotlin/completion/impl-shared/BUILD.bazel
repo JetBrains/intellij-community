@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-analysis-api",
+    "@lib//:guava",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
