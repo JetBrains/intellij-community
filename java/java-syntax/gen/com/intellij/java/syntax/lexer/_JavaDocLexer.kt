@@ -1058,7 +1058,7 @@ companion object {
           // fall through
           63 -> break
           21 -> {
-            return JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN;
+            return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH;
             }
           // fall through
           64 -> break

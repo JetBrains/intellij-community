@@ -13,7 +13,7 @@ PsiJavaFile:SeeTag18.java
         PsiElement(DOC_TAG_VALUE_ELEMENT)
           PsiJavaModuleReference
             PsiDocToken:DOC_TAG_VALUE_TOKEN('java.base')
-          PsiDocToken:DOC_TAG_VALUE_DIV_TOKEN('/')
+          PsiDocToken:DOC_TAG_VALUE_SLASH('/')
           PsiElement(DOC_METHOD_OR_FIELD_REF)
             PsiElement(DOC_REFERENCE_HOLDER)
               PsiJavaCodeReferenceElement:java.util.ArrayList

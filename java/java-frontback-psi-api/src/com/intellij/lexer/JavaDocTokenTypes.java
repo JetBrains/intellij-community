@@ -68,7 +68,7 @@ public final class JavaDocTokenTypes implements JavaDocCommentTokenTypes {
 
   @Override
   public IElementType tagValueDiv() {
-    return JavaDocTokenType.DOC_TAG_VALUE_DIV_TOKEN;
+    return JavaDocTokenType.DOC_TAG_VALUE_SLASH;
   }
 
   @Override

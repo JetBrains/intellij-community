@@ -2,7 +2,6 @@
 package com.intellij.java.syntax.element
 
 import com.intellij.platform.syntax.SyntaxElementType
-import kotlin.jvm.JvmField
 
 /**
  * @see com.intellij.psi.JavaDocTokenType
@@ -28,7 +27,7 @@ object JavaDocSyntaxTokenType {
   @JvmField val DOC_TAG_ATTRIBUTE_VALUE: SyntaxElementType = SyntaxElementType("DOC_TAG_ATTRIBUTE_VALUE")
   @JvmField val DOC_TAG_VALUE_LT: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_LT")
   @JvmField val DOC_TAG_VALUE_GT: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_GT")
-  @JvmField val DOC_TAG_VALUE_DIV_TOKEN: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_DIV_TOKEN")
+  @JvmField val DOC_TAG_VALUE_SLASH: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_SLASH")
   @JvmField val DOC_TAG_VALUE_SHARP_TOKEN: SyntaxElementType = SyntaxElementType("DOC_TAG_VALUE_SHARP_TOKEN")
 
   // Additional tokens for java 23 markdown

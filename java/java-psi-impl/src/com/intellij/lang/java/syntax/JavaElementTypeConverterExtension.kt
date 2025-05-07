@@ -309,7 +309,7 @@ class JavaElementTypeConverterExtension : ElementTypeConverterFactory {
     JavaDocSyntaxTokenType.DOC_TAG_ATTRIBUTE_VALUE to JavaDocTokenType.DOC_TAG_ATTRIBUTE_VALUE,
     JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT to JavaDocTokenType.DOC_TAG_VALUE_LT,
     JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT to JavaDocTokenType.DOC_TAG_VALUE_GT,
-    JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN to JavaDocTokenType.DOC_TAG_VALUE_DIV_TOKEN,
+    JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH to JavaDocTokenType.DOC_TAG_VALUE_SLASH,
     JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN to JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
     JavaDocSyntaxTokenType.DOC_CODE_FENCE to JavaDocTokenType.DOC_CODE_FENCE,
     JavaDocSyntaxTokenType.DOC_RBRACKET to JavaDocTokenType.DOC_RBRACKET,

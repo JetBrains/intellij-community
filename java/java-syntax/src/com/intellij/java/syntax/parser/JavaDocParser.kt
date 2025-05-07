@@ -515,7 +515,7 @@ class JavaDocParser(
     refStart: SyntaxTreeBuilder.Marker,
   ): SyntaxTreeBuilder.Marker? {
     builder.advanceLexer()
-    if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN) {
+    if (getTokenType() === JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH) {
       refStart.rollbackTo()
       val containerRef = builder.mark()
       val moduleRef = builder.mark()
@@ -627,7 +627,7 @@ class JavaDocParser(
 private val TAG_VALUES_SET: SyntaxElementTypeSet = syntaxElementTypeSetOf(
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA, JavaDocSyntaxTokenType.DOC_TAG_VALUE_DOT,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN,
-  JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN, JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
+  JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH, JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_LT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_GT, JavaDocSyntaxTokenType.DOC_TAG_VALUE_COLON,
   JavaDocSyntaxTokenType.DOC_TAG_VALUE_QUOTE
 )

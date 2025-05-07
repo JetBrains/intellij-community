@@ -2,9 +2,6 @@ package com.intellij.java.syntax.lexer;
 
 import com.intellij.java.syntax.element.JavaDocSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementType;
-import com.intellij.platform.syntax.util.lexer.FlexLexer
-import kotlin.jvm.JvmField
-import kotlin.jvm.JvmStatic
 
 @Suppress("ALL")
 %%
@@ -101,7 +98,7 @@ LEADING_TOKEN_MARKDOWN="///"
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> ({ALPHA}|[_0-9\."$"\[\]])+ { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_TOKEN; }
 <DOC_TAG_VALUE> [\(] { yybegin(DOC_TAG_VALUE_IN_PAREN); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_LPAREN; }
 <DOC_TAG_VALUE_IN_PAREN> [\)] { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_VALUE_RPAREN; }
-<DOC_TAG_VALUE> [/] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_DIV_TOKEN; }
+<DOC_TAG_VALUE> [/] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH; }
 <DOC_TAG_VALUE> [#] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SHARP_TOKEN; }
 <DOC_TAG_VALUE, DOC_TAG_VALUE_IN_PAREN> [,] { return JavaDocSyntaxTokenType.DOC_TAG_VALUE_COMMA; }
 <DOC_TAG_VALUE_IN_PAREN> {WHITE_DOC_SPACE_CHAR}+ { return JavaDocSyntaxTokenType.DOC_SPACE; }
