@@ -34,15 +34,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   private val runAllCells
     get() = x("//div[@myicon='runAll.svg']")
 
-  override val editorComponent: EditorComponentImpl
-    get() = when {
-      data.xpath.contains("EditorCompositePanel") -> driver.cast(
-        editor(topLevelEditorSearchPattern).component,
-        EditorComponentImpl::class
-      )
-      else -> super.editorComponent
-    }
-
   fun addCodeCell(): Unit = addCellBelow.click()
 
   fun addCodeCell(text: String) {
