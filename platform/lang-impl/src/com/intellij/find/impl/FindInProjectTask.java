@@ -485,10 +485,6 @@ final class FindInProjectTask {
         resultFiles.add(file);
       }
     }
-    //TODO RC: move it to IdeaIndexBasedFindInProjectSearchEngine
-    if (!TrigramTextSearchService.useIndexingSearchExtensions()) {
-      return resultFiles;
-    }
     for (FindInProjectSearcher searcher : searchers) {
       Collection<VirtualFile> virtualFiles = searcher.searchForOccurrences();
       for (VirtualFile file : virtualFiles) {

@@ -67,6 +67,10 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
     @Override
     public @NotNull Collection<VirtualFile> searchForOccurrences() {
+      if (!TrigramTextSearchService.useIndexingSearchExtensions()) {
+        return Collections.emptyList();
+      }
+
       return ReadAction
         .nonBlocking(this::doSearchForOccurrences)
         .withDocumentsCommitted(project)
