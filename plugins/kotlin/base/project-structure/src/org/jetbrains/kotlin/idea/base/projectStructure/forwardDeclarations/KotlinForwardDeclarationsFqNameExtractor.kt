@@ -7,11 +7,11 @@ import org.jetbrains.kotlin.name.FqName
 import java.util.Properties
 
 /**
- * Utility functions for grouping K/N forward declarations from a native manifest properties or a [KLib].
+ * Utility functions for grouping K/N forward declarations from a native manifest properties or a [KLibRoot].
  * Grouped declaration [FqName]s share the same package and so the same [org.jetbrains.kotlin.name.NativeForwardDeclarationKind].
  */
 internal object KotlinForwardDeclarationsFqNameExtractor {
-    fun getGroupedForwardDeclarations(klib: KLib): Map<FqName, List<FqName>> {
+    fun getGroupedForwardDeclarations(klib: KLibRoot): Map<FqName, List<FqName>> {
         val fqNames = getForwardDeclarationFqNames(klib)
         return groupByPackage(fqNames)
     }
@@ -21,14 +21,14 @@ internal object KotlinForwardDeclarationsFqNameExtractor {
         return groupByPackage(fqNames)
     }
 
-    fun getPackageFqNames(klib: KLib): List<FqName> {
+    fun getPackageFqNames(klib: KLibRoot): List<FqName> {
         return getGroupedForwardDeclarations(klib).keys.toList()
     }
 
     internal fun groupByPackage(declarations: List<FqName>): Map<FqName, List<FqName>> =
         declarations.filterNot { it.isRoot }.groupBy(FqName::parent)
 
-    private fun getForwardDeclarationFqNames(klib: KLib): List<FqName> {
+    private fun getForwardDeclarationFqNames(klib: KLibRoot): List<FqName> {
         return getForwardDeclarationFqNames(klib.resolvedKotlinLibrary.manifestProperties)
     }
 

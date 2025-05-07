@@ -30,7 +30,7 @@ private val LOG = logger<KotlinForwardDeclarationsFileGenerator>()
  * [KotlinForwardDeclarationsModelChangeService] service responsible for launching the generation.
  */
 internal object KotlinForwardDeclarationsFileGenerator {
-    fun generateForwardDeclarationFiles(library: KLib): Path? {
+    fun generateForwardDeclarationFiles(library: KLibRoot): Path? {
         val groupedClasses = KotlinForwardDeclarationsFqNameExtractor.getGroupedForwardDeclarations(library).ifEmpty { return null }
         return generateForwardDeclarationsForFqNames(groupedClasses, library.libraryRoot)
     }

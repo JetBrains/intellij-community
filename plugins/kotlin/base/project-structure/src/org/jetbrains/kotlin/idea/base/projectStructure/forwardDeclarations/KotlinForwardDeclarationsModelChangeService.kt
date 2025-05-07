@@ -43,7 +43,7 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
 
                 val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return@collect }
 
-                val nativeKlibs: Map<LibraryEntity, KLib> =
+                val nativeKlibs: Map<LibraryEntity, KLibRoot> =
                     libraryChanges.toNativeKLibs(event.storageAfter).ifEmpty { return@collect }
                 val workspaceModel = WorkspaceModel.getInstance(project)
                 val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibs)
@@ -73,7 +73,7 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
 
     private fun createEntityStorageChanges(
         workspaceModel: WorkspaceModel,
-        nativeKlibs: Map<LibraryEntity, KLib>
+        nativeKlibs: Map<LibraryEntity, KLibRoot>
     ): Map<LibraryEntity, KotlinForwardDeclarationsWorkspaceEntity.Builder> {
         val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
         return buildMap {
@@ -93,7 +93,7 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
 
     private fun List<EntityChange<LibraryEntity>>.toNativeKLibs(
         storageAfter: ImmutableEntityStorage
-    ): Map<LibraryEntity, KLib> {
+    ): Map<LibraryEntity, KLibRoot> {
         val libraryEntityChanges = this
         return buildMap {
             for (entityChange in libraryEntityChanges) {
@@ -103,7 +103,7 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
 
                 for (classRoot in nativeRootsAfterChange) {
                     val path = PathUtil.getLocalPath(classRoot) ?: continue
-                    put(newLibraryEntity, KLib(library, path))
+                    put(newLibraryEntity, KLibRoot(library, path))
                 }
             }
         }

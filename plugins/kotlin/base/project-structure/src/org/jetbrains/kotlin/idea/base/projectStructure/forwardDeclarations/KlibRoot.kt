@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
 import org.jetbrains.kotlin.library.resolveSingleFileKlib
 
-internal data class KLib(
+internal data class KLibRoot(
     val library: LibraryEx,
     val libraryRoot: String,
 ) {
@@ -22,4 +22,4 @@ internal data class KLib(
     }
 }
 
-private val LOG = logger<KLib>()
+private val LOG = logger<KLibRoot>()
