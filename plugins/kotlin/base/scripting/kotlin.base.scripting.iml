@@ -71,22 +71,19 @@
     <orderEntry type="module" module-name="kotlin.scripting" />
     <orderEntry type="module-library" exported="">
       <library name="amper.dependency.resolution.kotlin.base.scripting" type="repository">
-        <properties maven-id="org.jetbrains.amper:dependency-resolution:0.7.0-dev-2678">
+        <properties maven-id="org.jetbrains.amper:dependency-resolution:0.7.0-dev-2763">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678.jar">
-              <sha256sum>16047f49ff3960e4b29ca613eb09685484c20d8f105c4ed59b5a2ed1cb5e7f06</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763.jar">
+              <sha256sum>e07129c97d9f369f38f4b7908bac932fc34ccdba3a4a738d79f7f418592afaab</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678.jar">
-              <sha256sum>852c4fe4d73514ac88358f1e9cb9709f5e3dbd75b2374a278d1002132ba0423b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763.jar">
+              <sha256sum>002bf7d295aae9a7ef3166b7e066e00956369e5626714647afe1c5705fb26bbe</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar">
-              <sha256sum>a12578dde1ba00bd9b816d388a0b879928d00bab3c83c240f7013bf4196c579a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763.jar">
+              <sha256sum>6b762f54c05c5b820da3ae6db43e82ee342701d3cacf9ed8dfe0ea10909f0412</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678.jar">
-              <sha256sum>a01977ce7cae056f2ced5787780ed66f3a32a8f86789e2c0c3807ae7cf6d46c9</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678.jar">
-              <sha256sum>21c7012670116bf3cf30823bf69f9af3ec5bfd84d47aa8b1c6491824b52ac3c5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763.jar">
+              <sha256sum>e3037ae8f918d6d1733d7e40194d7e84373f2e9452660256a95c23252637de96</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar">
               <sha256sum>06b644a2b65fbf798f49fb7666d718f1123ee98ef7199edcbe23e8aaa4300c51</sha256sum>
@@ -113,27 +110,26 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2678/dependency-resolution-0.7.0-dev-2678-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2678/concurrency-0.7.0-dev-2678-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2678/nio-filechannels-0.7.0-dev-2678-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2678/telemetry-0.7.0-dev-2678-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution/0.7.0-dev-2763/dependency-resolution-0.7.0-dev-2763-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency/0.7.0-dev-2763/concurrency-0.7.0-dev-2763-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/nio-filechannels/0.7.0-dev-2763/nio-filechannels-0.7.0-dev-2763-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/telemetry/0.7.0-dev-2763/telemetry-0.7.0-dev-2763-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.9.9/maven-artifact-3.9.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" exported="" name="slf4j-api" level="project" />
   </component>
 </module>
