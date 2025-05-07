@@ -72,7 +72,6 @@
   "tags": {
     "applet": {
       "status": [
-        "StandardTrack",
         "Obsolete"
       ],
       "compatibility": {
@@ -89,7 +88,6 @@
       "attrs": {
         "align": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -99,7 +97,6 @@
         },
         "alt": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -109,7 +106,6 @@
         },
         "archive": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -119,7 +115,6 @@
         },
         "code": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -129,7 +124,6 @@
         },
         "codebase": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -139,7 +133,6 @@
         },
         "datafld": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -149,7 +142,6 @@
         },
         "datasrc": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -159,7 +151,6 @@
         },
         "height": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -169,7 +160,6 @@
         },
         "hspace": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -179,7 +169,6 @@
         },
         "mayscript": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -189,7 +178,6 @@
         },
         "name": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -199,7 +187,6 @@
         },
         "object": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -209,7 +196,6 @@
         },
         "src": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -219,7 +205,6 @@
         },
         "vspace": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -229,7 +214,6 @@
         },
         "width": {
           "status": [
-            "StandardTrack",
             "Obsolete"
           ],
           "compatibility": {
@@ -245,8 +229,7 @@
         "accesskey": {
           "url": "$MDN_URL$/web/html/element/area#accesskey",
           "status": [
-            "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Chrome": "",
@@ -277,7 +260,6 @@
     },
     "basefont": {
       "status": [
-        "StandardTrack",
         "Obsolete"
       ],
       "compatibility": {},
@@ -568,7 +550,6 @@
     },
     "keygen": {
       "status": [
-        "StandardTrack",
         "Obsolete"
       ],
       "compatibility": {
