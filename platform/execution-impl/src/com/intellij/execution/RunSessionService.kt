@@ -6,8 +6,7 @@ import com.intellij.execution.rpc.RunSessionId
 import com.intellij.execution.rpc.RunSessionEvent
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.project.ProjectId
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +18,11 @@ interface RunSessionService {
   fun createRunSessionEventsFlow(projectId: ProjectId): Flow<RunSessionEvent>
 
   companion object {
+    internal val EP_NAME = ExtensionPointName.create<RunSessionService>("com.intellij.execution.impl.runSessionService")
+
     @JvmStatic
-    fun getInstance(project: Project): RunSessionService = project.service<RunSessionService>()
+    fun getInstance(): RunSessionService? {
+      return EP_NAME.extensionList.firstOrNull()
+    }
   }
 }

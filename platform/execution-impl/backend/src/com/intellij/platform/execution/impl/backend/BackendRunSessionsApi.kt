@@ -7,17 +7,16 @@ import com.intellij.execution.rpc.RunSessionId
 import com.intellij.execution.rpc.RunSessionsApi
 import com.intellij.execution.rpc.RunSessionEvent
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
 import kotlinx.coroutines.flow.Flow
 
 
 internal class BackendRunSessionsApi : RunSessionsApi {
 
   override suspend fun events(projectId: ProjectId): Flow<RunSessionEvent> {
-    return RunSessionService.getInstance(projectId.findProject()).createRunSessionEventsFlow(projectId)
+    return RunSessionService.getInstance()?.createRunSessionEventsFlow(projectId) ?: error("No RunSessionService")
   }
 
   override suspend fun getSession(projectId: ProjectId, runTabId: RunSessionId): RunSession? {
-    return RunSessionService.getInstance(projectId.findProject()).getRunSession(runTabId)
+    return RunSessionService.getInstance()?.getRunSession(runTabId) ?: error("No RunSessionService")
   }
 }

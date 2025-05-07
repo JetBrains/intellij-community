@@ -352,7 +352,10 @@ public final class RunContentBuilder extends RunTab {
     if (isSplitRun() && AppModeAssertions.isBackend() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
       RunContentDescriptor descriptor = buildHiddenDescriptor(reuseContent);
       registerDescriptor(reuseContent, descriptor);
-      RunSessionService.getInstance(myProject).storeRunSession(myEnvironment, descriptor);
+      RunSessionService runSessionService = RunSessionService.getInstance();
+      if (runSessionService != null) {
+        runSessionService.storeRunSession(myEnvironment, descriptor);
+      }
       return descriptor;
     }
 

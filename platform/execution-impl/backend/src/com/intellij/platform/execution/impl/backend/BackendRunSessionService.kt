@@ -9,7 +9,8 @@ import com.intellij.execution.rpc.RunSessionEvent.SessionStarted
 import com.intellij.execution.rpc.toDto
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
@@ -22,12 +23,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class BackendRunSessionService(val project: Project, val cs: CoroutineScope) : RunSessionService {
+class BackendRunSessionService() : RunSessionService {
 
   private val runEventFlow = MutableSharedFlow<RunSessionEvent>(extraBufferCapacity = Channel.UNLIMITED)
 
   override fun storeRunSession(executorEnvironment: ExecutionEnvironment, descriptor: RunContentDescriptor) {
-    cs.launch {
+    service<BackendRunSessionServiceCoroutineScope>().launch { cs ->
       val runSession = RunSession(
         executorEnvironment.toDto(cs),
         createProcessHandlerDto(cs, descriptor.processHandler!!)
@@ -44,6 +45,16 @@ class BackendRunSessionService(val project: Project, val cs: CoroutineScope) : R
 
   override fun createRunSessionEventsFlow(projectId: ProjectId): Flow<RunSessionEvent> {
     return runEventFlow
+  }
+}
+
+@ApiStatus.Internal
+@Service
+class BackendRunSessionServiceCoroutineScope(val cs: CoroutineScope) {
+  fun launch(consumer: suspend (CoroutineScope) -> Unit) {
+    cs.launch {
+      consumer.invoke(cs)
+    }
   }
 }
 
