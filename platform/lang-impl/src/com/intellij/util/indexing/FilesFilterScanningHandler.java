@@ -16,7 +16,7 @@ public interface FilesFilterScanningHandler {
 
   default void scanningCompleted(@NotNull Project project) {
     setProjectFilterIsInvalidated(project, false);
-    ProjectIndexableFilesFilterHealthCheck healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck.class);
+    ProjectIndexableFilesFilterHealthCheck healthCheck = project.isDisposed() ? null : project.getService(ProjectIndexableFilesFilterHealthCheck.class);
     if (healthCheck != null) {
       healthCheck.launchHealthCheck();
     }
