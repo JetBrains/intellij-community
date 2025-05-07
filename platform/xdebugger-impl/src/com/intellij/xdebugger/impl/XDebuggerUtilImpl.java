@@ -322,7 +322,16 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     @Nullable String condition
   ) {
     var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isConditional, condition, canRemove);
-    if (areInlineBreakpointsEnabled(position.getFile())) {
+    return toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn);
+  }
+
+  public static @NotNull CompletableFuture<@Nullable XLineBreakpointProxy> toggleAndReturnLineBreakpointProxy(
+    @NotNull Project project,
+    @Nullable Editor editor,
+    @NotNull XLineBreakpointInstallationInfo breakpointInfo,
+    boolean selectVariantByPositionColumn
+  ) {
+    if (areInlineBreakpointsEnabled(breakpointInfo.getPosition().getFile())) {
       return processInlineBreakpoints(project, editor, breakpointInfo, selectVariantByPositionColumn);
     }
     else {

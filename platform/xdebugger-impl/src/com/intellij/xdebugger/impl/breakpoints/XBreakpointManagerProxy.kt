@@ -160,10 +160,7 @@ interface XBreakpointManagerProxy {
     }
 
     override fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
-      return toggleAndReturnLineBreakpointProxy(
-        breakpointManager.project, installationInfo.types,
-        installationInfo.position, false, installationInfo.isTemporary, editor, installationInfo.canRemoveBreakpoint(), installationInfo.isTemporary, installationInfo.condition
-      ).asDeferred()
+      return toggleAndReturnLineBreakpointProxy(breakpointManager.project, editor, installationInfo, false).asDeferred()
     }
   }
 }
