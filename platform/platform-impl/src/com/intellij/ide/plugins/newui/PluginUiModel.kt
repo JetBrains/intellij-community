@@ -121,7 +121,7 @@ interface PluginUiModel {
 }
 
 @ApiStatus.Internal
-fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
+private fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
   if (this is PluginUiModelAdapter) return pluginDescriptor
   throw IllegalStateException("PluginUiModelAdapter expected")
 }

@@ -123,7 +123,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
     ): List<PluginNode> {
-      return loadLastCompatiblePluginModels(pluginIds, buildNumber, throwExceptions).mapNotNull { it.getPluginDescriptor() as? PluginNode }
+      return loadLastCompatiblePluginModels(pluginIds, buildNumber, throwExceptions).mapNotNull { it.getDescriptor() as? PluginNode }
     }
 
     @RequiresBackgroundThread
@@ -278,7 +278,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ideCompatibleUpdate: IdeCompatibleUpdate,
       indicator: ProgressIndicator? = null,
     ) : PluginNode {
-      return loadPluginModel(xmlId, ideCompatibleUpdate, indicator).getPluginDescriptor() as PluginNode
+      return loadPluginModel(xmlId, ideCompatibleUpdate, indicator).getDescriptor() as PluginNode
     }
 
     fun loadPluginModel(
@@ -507,7 +507,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   @Deprecated("Compatibility method for external usages. Use executePluginSearch")
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int): List<PluginNode> {
-    return executePluginSearch(query, count).map { it.getPluginDescriptor() as PluginNode }
+    return executePluginSearch(query, count).map { it.getDescriptor() as PluginNode }
   }
 
   @Throws(IOException::class)
@@ -518,7 +518,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   @Deprecated("Compatibility method for external usages. Use executePluginSearch")
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): List<PluginNode> {
-    return executePluginSearch(query, count, includeUpgradeToCommercialIde).map { it.getPluginDescriptor() as PluginNode }
+    return executePluginSearch(query, count, includeUpgradeToCommercialIde).map { it.getDescriptor() as PluginNode }
   }
 
   @Throws(IOException::class)
@@ -643,7 +643,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     pluginNode: PluginNode,
     indicator: ProgressIndicator? = null,
   ): PluginNode? {
-    return loadPluginDetails(PluginUiModelAdapter(pluginNode), indicator)?.getPluginDescriptor() as? PluginNode
+    return loadPluginDetails(PluginUiModelAdapter(pluginNode), indicator)?.getDescriptor() as? PluginNode
   }
 
   @RequiresBackgroundThread
@@ -711,7 +711,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
   ): PluginNode? {
-    return getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)?.getPluginDescriptor() as? PluginNode
+    return getLastCompatiblePluginUpdateModel(pluginId, buildNumber, indicator)?.getDescriptor() as? PluginNode
   }
 
   @RequiresBackgroundThread

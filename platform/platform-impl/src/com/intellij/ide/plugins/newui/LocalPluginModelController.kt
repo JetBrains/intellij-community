@@ -113,8 +113,8 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
   }
 
   override fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
-    val existingNode = existingModel.getPluginDescriptor() as? PluginNode ?: return null
-    val marketPlaceNode = targetModel.getPluginDescriptor() as? PluginNode ?: return null
+    val existingNode = existingModel.getDescriptor() as? PluginNode ?: return null
+    val marketPlaceNode = targetModel.getDescriptor() as? PluginNode ?: return null
     if (!existingNode.suggestedFeatures.isEmpty()) {
       marketPlaceNode.suggestedFeatures = existingNode.suggestedFeatures
     }
@@ -140,7 +140,7 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
   }
 
   override fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment> {
-    return marketplaceRequests.loadPluginReviews(targetModel.getPluginDescriptor() as PluginNode, page) ?: emptyList()
+    return marketplaceRequests.loadPluginReviews(targetModel.getDescriptor() as PluginNode, page) ?: emptyList()
   }
 
   override fun isLoaded(pluginUiModel: PluginUiModel): Boolean {
@@ -160,7 +160,7 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
   }
 
   override fun fetchDependecyNames(targetModel: PluginUiModel): PluginUiModel? {
-    val resultNode = targetModel.getPluginDescriptor() as? PluginNode ?: return null
+    val resultNode = targetModel.getDescriptor() as? PluginNode ?: return null
     resultNode.dependencyNames = resultNode.dependencies.asSequence()
       .filter { !it.isOptional }
       .map(IdeaPluginDependency::pluginId)
