@@ -35,7 +35,7 @@ class BackendRunSessionService() : RunSessionService {
       )
 
       val runSessionId = runSession.storeGlobally(cs)
-      runEventFlow.emit(SessionStarted(runSessionId))
+      runEventFlow.emit(SessionStarted(runSessionId, runSession))
     }
   }
 

@@ -33,7 +33,7 @@ interface RunSessionsApi : RemoteApi<Unit> {
 sealed interface RunSessionEvent {
 
   @Serializable
-  class SessionStarted(val runTabId: RunSessionId) : RunSessionEvent
+  class SessionStarted(val runTabId: RunSessionId, val runSession: RunSession) : RunSessionEvent
 
 }
 

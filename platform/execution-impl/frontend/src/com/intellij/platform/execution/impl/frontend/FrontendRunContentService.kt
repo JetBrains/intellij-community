@@ -44,7 +44,7 @@ internal class FrontendRunContentService(private val project: Project, private v
 
       eventFlow.collect {
         if (it is RunSessionEvent.SessionStarted) {
-          val runSession = RunSessionsApi.getInstance().getSession(project.projectId(), it.runTabId) ?: return@collect
+          val runSession = it.runSession
 
           val globalSearchScope = ExecutionSearchScopes.executionScope(project, null)
 
