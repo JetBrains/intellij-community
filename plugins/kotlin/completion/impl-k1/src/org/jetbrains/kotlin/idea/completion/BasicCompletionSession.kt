@@ -10,23 +10,23 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.openapi.module.Module
 import com.intellij.platform.ml.impl.turboComplete.CompletionKind
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorConsumer
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorWithArtifact
-import com.intellij.psi.*
-import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService
+import org.jetbrains.kotlin.idea.completion.implCommon.OperatorNameCompletion
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
@@ -339,7 +339,7 @@ class BasicCompletionSession(
                 prefix.isEmpty() ||
                         callTypeAndReceiver.receiver != null ||
                         CodeInsightSettings.getInstance().completionCaseSensitive == CodeInsightSettings.NONE
-                -> {
+                    -> {
                     listOf(descriptorKindFilter)
                 }
 
@@ -825,20 +825,20 @@ class BasicCompletionSession(
         override val descriptorKindFilter: DescriptorKindFilter? get() = null
 
         fun isApplicable(): Boolean {
-            if (nameExpression == null || nameExpression != expression) return false
-            val func = position.getParentOfType<KtNamedFunction>(strict = false) ?: return false
-            val funcNameIdentifier = func.nameIdentifier ?: return false
-            val identifierInNameExpression = nameExpression.nextLeaf {
-                it is LeafPsiElement && it.elementType == KtTokens.IDENTIFIER
-            } ?: return false
-
-            if (!func.hasModifier(KtTokens.OPERATOR_KEYWORD) || identifierInNameExpression != funcNameIdentifier) return false
-            val originalFunc = toFromOriginalFileMapper.toOriginalFile(func) ?: return false
-            return !originalFunc.isTopLevel || (originalFunc.isExtensionDeclaration())
+            return OperatorNameCompletion.isPositionApplicable(
+                nameExpression = nameExpression,
+                expression = expression,
+                position = position,
+                originalFunctionProvider = toFromOriginalFileMapper::toOriginalFile
+            )
         }
 
         override fun fillResultSet() {
-            OperatorNameCompletion.doComplete(collector, descriptorNameFilter)
+            val lookupElements = OperatorNameCompletion.getApplicableOperators(descriptorNameFilter).map {
+                val lookupElement = LookupElementBuilder.create(it)
+                OperatorNameCompletion.decorateLookupElement(lookupElement, it)
+            }
+            collector.addElements(lookupElements)
         }
     }
 

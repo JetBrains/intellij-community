@@ -56,6 +56,8 @@ internal object Completions {
             }
 
             is KotlinTypeNameReferencePositionContext -> {
+                FirOperatorNameCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
                 val allowClassifiersAndPackagesForPossibleExtensionCallables =
                     !positionContext.hasNoExplicitReceiver()
                             || parameters.invocationCount > 0

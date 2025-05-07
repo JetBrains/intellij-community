@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinCallableLookupObject
+import org.jetbrains.kotlin.idea.completion.lookups.factories.OperatorNameLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.PackagePartLookupObject
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -21,6 +22,7 @@ internal object KindWeigher {
     private enum class Weight {
         RETURN_KEYWORD_AT_HIGHLY_LIKELY_POSITION,
         NULL_KEYWORD_AT_HIGHLY_LIKELY_POSITION,
+        OPERATOR_NAME,
         ENUM_MEMBER,
         CALLABLE,
         KEYWORD,
@@ -65,6 +67,7 @@ internal object KindWeigher {
                 is PackagePartLookupObject -> Weight.PACKAGES
                 is KotlinCallableLookupObject -> Weight.CALLABLE
                 is NamedArgumentLookupObject -> Weight.NAMED_ARGUMENT
+                is OperatorNameLookupObject -> Weight.OPERATOR_NAME
                 else -> Weight.DEFAULT
             }
         }

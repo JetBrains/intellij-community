@@ -6,7 +6,6 @@ operator fun Some.<caret>() {
 
 }
 
-// IGNORE_K2
 // EXIST: {"lookupString":"compareTo","typeText":"< > <= >="}
 // EXIST: {"lookupString":"contains","typeText":"in !in"}
 // EXIST: {"lookupString":"dec","typeText":"--"}
@@ -35,4 +34,3 @@ operator fun Some.<caret>() {
 // EXIST: {"lookupString":"timesAssign","typeText":"*="}
 // EXIST: {"lookupString":"unaryMinus","typeText":"-"}
 // EXIST: {"lookupString":"unaryPlus","typeText":"+"}
-// NOTHING_ELSE
