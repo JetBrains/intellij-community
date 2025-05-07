@@ -1,10 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
+import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
+import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
@@ -128,7 +132,23 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             }
         }
 
-        return null
+        return getMetaAnnotated(element, fqNames)
+    }
+
+    private fun getMetaAnnotated(element: KtAnnotated, fqNames: Set<String>): KtAnnotationEntry? {
+        val psiModifierListOwner: PsiModifierListOwner = when (element) {
+            is KtClassOrObject -> element.toLightClass()
+            is KtFunction -> LightClassUtil.getLightClassMethod(element)
+            is KtProperty -> LightClassUtil.getLightClassPropertyMethods(element).getter
+            is KtParameter -> LightClassUtil.getLightClassPropertyMethods(element).getter
+            else -> null
+        } ?: return null
+
+        if (MetaAnnotationUtil.isMetaAnnotated(psiModifierListOwner, fqNames)) {
+            return element.annotationEntries.firstOrNull()
+        } else {
+            return null
+        }
     }
 
     protected fun findAnnotatedFunction(classOrObject: KtClassOrObject?, fqNames: Set<String>): KtNamedFunction? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
@@ -60,6 +60,7 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         myFixture.addClass("package org.junit.platform.commons.annotation; public @interface Testable{}")
         myFixture.addClass("package org.junit.jupiter.api; import org.junit.platform.commons.annotation.Testable; @Testable public @interface Test {}")
         myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}")
+        myFixture.addClass("package org.junit.jupiter.api; public @interface BeforeEach {}")
     }
 
     fun testAvailableInsideAnonymous() {
@@ -305,5 +306,96 @@ class DemoTest {
 }""")
         val ktFunction = PsiTreeUtil.getParentOfType(myFixture.elementAtCaret, KtFunction::class.java, false)
         assertTrue(UnusedDeclarationInspection().isEntryPoint(ktFunction!!.toLightMethods()[0]))
+    }
+
+    fun testMethodWithTestAnnotation() {
+        val file = myFixture.configureByText(
+            "MyTest.kt", """
+            class MyTest {
+                @org.junit.jupiter.api.Test
+                @Retention(AnnotationRetention.RUNTIME)
+                annotation class TestAnnotation
+
+                @TestAnnotation
+                fun `dispatch <caret>thread`() {}
+            }
+            """.trimIndent()
+        )
+
+        val gutters = myFixture.findGuttersAtCaret()
+        Assert.assertTrue("Test method with meta-annotation should have a gutter icon", gutters.isNotEmpty())
+
+        val element = file.findElementAt(myFixture.caretOffset)!!
+        val location = PsiLocation(element)
+        val context = ConfigurationContext.createEmptyContextForLocation(location)
+        val contexts = context.configurationsFromContext
+
+        Assert.assertEquals(1, contexts?.size ?: 0)
+        val fromContext = contexts?.get(0)
+        Assert.assertTrue(fromContext?.configuration is JUnitConfiguration)
+        val configuration = fromContext?.configuration as JUnitConfiguration
+
+        Assert.assertEquals("MyTest.dispatch thread", configuration.name)
+
+        val testObject = configuration.persistentData.TEST_OBJECT
+        Assert.assertEquals(
+            "Method should be suggested to run, but $testObject was used instead",
+            JUnitConfiguration.TEST_METHOD,
+            testObject
+        )
+
+        Assert.assertNotNull(JunitKotlinTestFrameworkProvider.getInstance().getJavaTestEntity(element, checkMethod = true))
+    }
+
+    fun testMethodWithTestAnnotationAndBeforeEach() {
+        myFixture.addClass("""
+            package c;
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.RetentionPolicy;
+
+            @org.junit.jupiter.api.Test
+            @Retention(RetentionPolicy.RUNTIME)
+            public @interface TestAnnotation {
+            }
+        """)
+
+        val file = myFixture.configureByText(
+            "MyTest.kt", """
+
+            import c.TestAnnotation
+            import org.junit.jupiter.api.BeforeEach
+
+            class MyTest {          
+                @BeforeEach
+                fun cleanEDTQueue() {}
+
+                @TestAnnotation
+                fun `dispatch <caret>thread`() {}
+            }
+            """.trimIndent()
+        )
+
+        val gutters = myFixture.findGuttersAtCaret()
+        Assert.assertTrue("Test method with meta-annotation should have a gutter icon", gutters.isNotEmpty())
+
+        val element = file.findElementAt(myFixture.caretOffset)!!
+        val location = PsiLocation(element)
+        val context = ConfigurationContext.createEmptyContextForLocation(location)
+        val contexts = context.configurationsFromContext
+
+        Assert.assertEquals(1, contexts?.size ?: 0)
+        val fromContext = contexts?.get(0)
+        Assert.assertTrue(fromContext?.configuration is JUnitConfiguration)
+        val configuration = fromContext?.configuration as JUnitConfiguration
+
+        Assert.assertEquals("MyTest.dispatch thread", configuration.name)
+
+        val testObject = configuration.persistentData.TEST_OBJECT
+        Assert.assertEquals(
+            "Method should be suggested to run, but $testObject was used instead",
+            JUnitConfiguration.TEST_METHOD,
+            testObject
+        )
+        Assert.assertNotNull(JunitKotlinTestFrameworkProvider.getInstance().getJavaTestEntity(element, checkMethod = true))
     }
 }
