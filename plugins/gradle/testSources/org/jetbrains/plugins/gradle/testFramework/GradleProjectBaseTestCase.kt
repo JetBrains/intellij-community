@@ -36,7 +36,7 @@ abstract class GradleProjectBaseTestCase {
     )
   }
 
-  open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
+  fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
     runAll(
       {
         _gradleVersion = gradleVersion

@@ -4,17 +4,12 @@ package org.jetbrains.plugins.gradle.testFramework.util
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
-import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import org.jetbrains.plugins.gradle.util.whenExternalSystemEventReceived
-import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskOutputAdded
-import org.junit.jupiter.api.Assertions
 
 class ExternalSystemExecutionTracer {
-
-  var status: OperationExecutionStatus? = null
 
   val stdout: MutableList<String> = ArrayList()
   val stderr: MutableList<String> = ArrayList()
@@ -56,10 +51,6 @@ class ExternalSystemExecutionTracer {
           messages.add(buildEvent)
         }
       }
-
-    }
-    whenExternalSystemTaskFinished(parentDisposable) { _, status ->
-      this.status = status
     }
   }
 
@@ -79,31 +70,4 @@ class ExternalSystemExecutionTracer {
   }
 
   enum class PrintOutputMode { NEVER, ALWAYS, ON_EXCEPTION }
-
-  companion object {
-
-    inline fun <R> assertExecutionStatusIsSuccess(action: () -> R): R {
-      val tracer = ExternalSystemExecutionTracer()
-      val result = tracer.traceExecution(PrintOutputMode.ON_EXCEPTION, action)
-      val status = tracer.status
-      if (status != OperationExecutionStatus.Success) {
-        tracer.printExecutionOutput()
-      }
-      if (status is OperationExecutionStatus.Failure) {
-        throw AssertionError("Execution failed, but shouldn't", status.cause)
-      }
-      Assertions.assertEquals(OperationExecutionStatus.Success, status)
-      return result
-    }
-
-    inline fun <R> printExecutionOutputOnException(action: () -> R): R {
-      return ExternalSystemExecutionTracer()
-        .traceExecution(PrintOutputMode.ON_EXCEPTION, action)
-    }
-
-    inline fun <R> printExecutionOutput(action: () -> R): R {
-      return ExternalSystemExecutionTracer()
-        .traceExecution(PrintOutputMode.ALWAYS, action)
-    }
-  }
 }

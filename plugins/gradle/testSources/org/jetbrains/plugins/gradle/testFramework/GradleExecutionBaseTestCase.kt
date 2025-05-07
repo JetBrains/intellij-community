@@ -8,7 +8,6 @@ import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAss
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.testFramework.utils.vfs.deleteRecursively
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionEnvironmentFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionOutputFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleExecutionTestFixture
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionE
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionOutputFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.util.buildView
-import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.junit.jupiter.api.AfterEach
 
 @GradleProjectTestApplication
@@ -95,12 +93,6 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
   private fun cleanupProjectBuildDirectory() {
     runWriteActionAndWait {
       projectRoot.deleteRecursively("build")
-    }
-  }
-
-  override fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-    super.test(gradleVersion, fixtureBuilder) {
-      ExternalSystemExecutionTracer.printExecutionOutputOnException(test)
     }
   }
 
