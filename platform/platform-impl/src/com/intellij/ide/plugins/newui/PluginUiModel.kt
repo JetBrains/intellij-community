@@ -41,10 +41,9 @@ interface PluginUiModel {
   val source: PluginSource
   val dependencies: List<PluginDependencyModel>
   val dependencyNames: Collection<String>?
-  val suggestedFeatures: Collection<String>
-
   @get:NlsSafe
   val vendor: String?
+
   @get:NlsSafe
   val organization: String?
   @get:NlsSafe
@@ -58,10 +57,9 @@ interface PluginUiModel {
   val releaseVersion: Int
   @get:NlsSafe
   val displayCategory: String?
-
-  val reviewComments: ReviewsPageContainer?
   @get:NlsSafe
   var forumUrl: String?
+
   @get:NlsSafe
   var licenseUrl: String?
   @get:NlsSafe
@@ -70,21 +68,23 @@ interface PluginUiModel {
   var documentationUrl: String?
   @get:NlsSafe
   var sourceCodeUrl: String?
-
   @get:NlsSafe
   var reportPluginUrl: String?
   @get:NlsSafe
   var verifiedName: String?
-  var isVerified: Boolean
 
+  var isVerified: Boolean
   var isTrader: Boolean
+  var reviewComments: ReviewsPageContainer?
   var screenShots: List<String>?
+
   var externalPluginIdForScreenShots: String?
   var externalPluginId: String?
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
   var date: Long
+  var suggestedFeatures: Collection<String>
 
 
   var isEnabled: Boolean

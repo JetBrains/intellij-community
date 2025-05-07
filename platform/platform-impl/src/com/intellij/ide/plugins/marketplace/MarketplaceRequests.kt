@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
 import com.intellij.ide.plugins.newui.Tags
-import com.intellij.ide.plugins.newui.getPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationManager
@@ -866,10 +865,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun loadPluginReviews(pluginNode: PluginNode, page: Int): List<PluginReviewComment>? {
+  fun loadPluginReviews(pluginUiModel: PluginUiModel, page: Int): List<PluginReviewComment>? {
     try {
       return HttpRequests
-        .request(MarketplaceUrls.getPluginReviewsUrl(pluginNode.pluginId, page))
+        .request(MarketplaceUrls.getPluginReviewsUrl(pluginUiModel.pluginId, page))
         .setHeadersViaTuner()
         .productNameAsUserAgent()
         .throwStatusCodeException(false)

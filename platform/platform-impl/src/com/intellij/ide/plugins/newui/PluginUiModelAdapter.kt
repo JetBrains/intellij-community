@@ -2,11 +2,13 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PageContainer
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.api.ReviewsPageContainer
+import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.util.SystemInfoRt
@@ -56,11 +58,9 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.dependencies.map { PluginDependencyModel(it.pluginId, it.isOptional) }
   override val dependencyNames: Collection<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.dependencyNames else null
-  override val suggestedFeatures: Collection<String>
-    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedFeatures else emptyList()
-
   override val vendor: String?
     get() = pluginDescriptor.vendor
+
   override val organization: String?
     get() = pluginDescriptor.organization
   override val changeNotes: String?
@@ -75,15 +75,6 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.releaseVersion
   override val displayCategory: String?
     get() = pluginDescriptor.displayCategory
-  override val reviewComments: ReviewsPageContainer?
-    get() {
-      if (pluginDescriptor is PluginNode) {
-        val nodeReviewComments = pluginDescriptor.reviewComments ?: return null
-        return ReviewsPageContainer.fromPageContainer(nodeReviewComments)
-      }
-      return null
-    }
-
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
     set(value) {
@@ -98,6 +89,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.licenseUrl = value
       }
     }
+
   override var bugtrackerUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.bugtrackerUrl else null
     set(value) {
@@ -119,6 +111,13 @@ class PluginUiModelAdapter(
         pluginDescriptor.sourceCodeUrl = value
       }
     }
+  override var suggestedFeatures: Collection<String>
+    get() = if (pluginDescriptor is PluginNode) pluginDescriptor.suggestedFeatures else emptyList()
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        pluginDescriptor.suggestedFeatures = value
+      }
+    }
   override var reportPluginUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.reportPluginUrl else null
     set(value) {
@@ -126,7 +125,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.reportPluginUrl = value
       }
     }
-
   override var verifiedName: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.verifiedName else null
     set(value) {
@@ -134,6 +132,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.verifiedName = value
       }
     }
+
   override var isVerified: Boolean
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.isVerified else false
     set(value) {
@@ -148,7 +147,6 @@ class PluginUiModelAdapter(
         pluginDescriptor.isTrader = value
       }
     }
-
   override var screenShots: List<String>?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.screenShots else null
     set(value) {
@@ -156,6 +154,25 @@ class PluginUiModelAdapter(
         pluginDescriptor.setScreenShots(value)
       }
     }
+  override var reviewComments: ReviewsPageContainer?
+    get() {
+      if (pluginDescriptor is PluginNode) {
+        val nodeReviewComments = pluginDescriptor.reviewComments ?: return null
+        return ReviewsPageContainer.fromPageContainer(nodeReviewComments)
+      }
+      return null
+    }
+    set(value) {
+      if (pluginDescriptor is PluginNode) {
+        if (value == null) {
+          pluginDescriptor.setReviewComments(PageContainer(0, 0))
+          return
+        }
+        val container = PageContainer(value.myPageSize, value.myCurrentPage, value.items)
+        pluginDescriptor.setReviewComments(container)
+      }
+    }
+
   override var externalPluginIdForScreenShots: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.externalPluginIdForScreenShots else null
     set(value) {

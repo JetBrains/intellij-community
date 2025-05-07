@@ -10,13 +10,9 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagerCore.findPlugin
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
-import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginCardOpened
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginHomepage
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginReviewNoteUrl
@@ -215,29 +211,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       editorPane.addHyperlinkListener(HelpIdAwareLinkListener.getInstance())
 
       return editorPane
-    }
-
-    @JvmStatic
-    fun loadAllPluginDetails(
-      marketplace: MarketplaceRequests,
-      node: PluginNode,
-      resultNode: PluginNode,
-    ) {
-      if (!node.suggestedFeatures.isEmpty()) {
-        resultNode.suggestedFeatures = node.suggestedFeatures
-      }
-
-      val metadata = marketplace.loadPluginMetadata(node)
-      if (metadata != null) {
-        if (metadata.screenshots != null) {
-          resultNode.setScreenShots(metadata.screenshots)
-          resultNode.externalPluginIdForScreenShots = node.externalPluginId
-        }
-        metadata.toPluginNode(resultNode)
-      }
-
-      loadReviews(marketplace, node, resultNode)
-      loadDependencyNames(marketplace, resultNode)
     }
   }
 
@@ -683,7 +656,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
             val loadedModel = pluginModel.loadPluginDetails(pluginUiModel)
             if (loadedModel != null) {
               coroutineContext.ensureActive()
-              pluginModel.loadAllPluginDetails(pluginUiModel,loadedModel)
+              pluginModel.loadAllPluginDetails(pluginUiModel, loadedModel)
               component.pluginModel = loadedModel
             }
           }
@@ -1448,29 +1421,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
-}
-
-private fun loadReviews(marketplace: MarketplaceRequests, node: PluginNode, resultNode: PluginNode) {
-  val reviewComments = PageContainer<PluginReviewComment>(20, 0)
-  marketplace.loadPluginReviews(node, reviewComments.nextPage)?.let {
-    reviewComments.addItems(it)
-  }
-  resultNode.setReviewComments(reviewComments)
-}
-
-private fun loadDependencyNames(marketplace: MarketplaceRequests, resultNode: PluginNode) {
-  resultNode.dependencyNames = resultNode.dependencies.asSequence()
-    .filter { !it.isOptional }
-    .map(IdeaPluginDependency::pluginId)
-    .filter { isNotPlatformAlias(it) }
-    .map { pluginId ->
-      findPlugin(pluginId)?.let {
-        return@map it.name
-      }
-
-      marketplace.getLastCompatiblePluginUpdate(pluginId)?.name ?: pluginId.idString
-    }
-    .toList()
 }
 
 internal fun isNotPlatformAlias(pluginId: PluginId): Boolean {

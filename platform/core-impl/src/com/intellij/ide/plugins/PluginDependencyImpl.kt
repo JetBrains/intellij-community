@@ -2,8 +2,10 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 
-internal class PluginDependencyImpl internal constructor(
+@ApiStatus.Internal
+class PluginDependencyImpl(
   override val pluginId: PluginId,
   override val configFile: String?,
   override val isOptional: Boolean,

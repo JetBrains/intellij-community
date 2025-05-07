@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -113,19 +114,18 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
   }
 
   override fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
-    val existingNode = existingModel.getDescriptor() as? PluginNode ?: return null
-    val marketPlaceNode = targetModel.getDescriptor() as? PluginNode ?: return null
-    if (!existingNode.suggestedFeatures.isEmpty()) {
-      marketPlaceNode.suggestedFeatures = existingNode.suggestedFeatures
+    if (!existingModel.suggestedFeatures.isEmpty()) {
+      targetModel.suggestedFeatures = existingModel.suggestedFeatures
     }
 
-    val metadata = marketplaceRequests.loadPluginMetadata(existingNode)
+    val externalPluginId = existingModel.externalPluginId ?: return null
+    val metadata = marketplaceRequests.loadPluginMetadata(externalPluginId)
     if (metadata != null) {
       if (metadata.screenshots != null) {
-        marketPlaceNode.setScreenShots(metadata.screenshots)
-        marketPlaceNode.externalPluginIdForScreenShots = existingNode.externalPluginId
+        targetModel.screenShots = metadata.screenshots
+        targetModel.externalPluginIdForScreenShots = externalPluginId
       }
-      metadata.toPluginNode(marketPlaceNode)
+      metadata.toPluginUiModel(targetModel)
     }
     fetchReviews(targetModel)
     fetchDependecyNames(targetModel)
@@ -133,14 +133,14 @@ class LocalPluginModelController(private val localPluginModel: MyPluginModel) : 
   }
 
   override fun fetchReviews(targetModel: PluginUiModel): PluginUiModel? {
-    val reviewComments = PageContainer<PluginReviewComment>(20, 0)
-    reviewComments.addItems(loadPluginReviews(targetModel, reviewComments.nextPage))
-    (targetModel.getDescriptor() as PluginNode).setReviewComments(reviewComments)
+    val reviewComments = ReviewsPageContainer(20, 0)
+    reviewComments.addItems(loadPluginReviews(targetModel, reviewComments.getNextPage()))
+    targetModel.reviewComments = reviewComments
     return targetModel
   }
 
   override fun loadPluginReviews(targetModel: PluginUiModel, page: Int): List<PluginReviewComment> {
-    return marketplaceRequests.loadPluginReviews(targetModel.getDescriptor() as PluginNode, page) ?: emptyList()
+    return marketplaceRequests.loadPluginReviews(targetModel, page) ?: emptyList()
   }
 
   override fun isLoaded(pluginUiModel: PluginUiModel): Boolean {

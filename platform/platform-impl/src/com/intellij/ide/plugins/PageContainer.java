@@ -22,6 +22,12 @@ public final class PageContainer<T> {
     myCurrentPage = firstPage;
   }
 
+  public PageContainer(int pageSize, int firstPage, List<T> items) {
+    myPageSize = pageSize;
+    myCurrentPage = firstPage;
+    myItems.addAll(items);
+  }
+
   public @NotNull List<T> getItems() {
     return myItems;
   }
