@@ -26,8 +26,7 @@ import java.util.Set;
 public final class BasicJavaDocParser {
   private static final TokenSet TAG_VALUES_SET = TokenSet.create(
     JavaDocTokenType.DOC_TAG_VALUE_TOKEN, JavaDocTokenType.DOC_TAG_VALUE_COMMA, JavaDocTokenType.DOC_TAG_VALUE_DOT,
-    JavaDocTokenType.DOC_TAG_VALUE_LPAREN, JavaDocTokenType.DOC_TAG_VALUE_RPAREN,
-    JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN, JavaDocTokenType.DOC_TAG_VALUE_SLASH,
+    JavaDocTokenType.DOC_TAG_VALUE_LPAREN, JavaDocTokenType.DOC_TAG_VALUE_RPAREN, JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
     JavaDocTokenType.DOC_TAG_VALUE_LT, JavaDocTokenType.DOC_TAG_VALUE_GT, JavaDocTokenType.DOC_TAG_VALUE_COLON,
     JavaDocTokenType.DOC_TAG_VALUE_QUOTE
   );
