@@ -97,6 +97,30 @@ public class PyHtmlTemplateInjectionTest extends PyTestCase {
                          """);
   }
 
+  // PY-80860
+  public void testPythonInsideTemplatePartInHtml() {
+    doTestNoInjection("""
+                         value = "Hello, World!"
+                         template = t"<div><h1>{<caret>value}</h1></div>"
+                         """);
+    doTestHtmlInjected("""
+                         value = "Hello, World!"
+                         template = t"<caret><div><h1>{value}</h1></div>"
+                         """);
+  }
+
+  // PY-80860
+  public void testPythonInsideNestedInjections() {
+    doTestNoInjection("""
+                        value = "Hello, World!"
+                        template = t"<div><h1>{t'<div><h2>{t'<div><h3>{<caret>value}</h3></div>'}</h2></div>'}</h1></div>"
+                        """);
+    doTestHtmlInjected("""
+                         value = "Hello, World!"
+                        template = t"<div><h1>{t'<div><h2>{t'<div><caret><h3>{value}</h3></div>'}</h2></div>'}</h1></div>"
+                         """);
+  }
+
   private void doTestNoInjection(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
