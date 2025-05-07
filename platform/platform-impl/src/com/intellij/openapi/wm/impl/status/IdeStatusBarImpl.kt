@@ -301,7 +301,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
       addWidget(widget, Position.LEFT, LoadingOrder.ANY)
     }
   }
