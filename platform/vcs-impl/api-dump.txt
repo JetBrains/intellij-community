@@ -4988,7 +4988,6 @@ a:com.intellij.vcs.commit.NonModalCommitPanel
 - com.intellij.vcs.commit.CommitAuthorTracker
 - com.intellij.vcs.commit.NonModalCommitWorkflowUi
 - sf:Companion:com.intellij.vcs.commit.NonModalCommitPanel$Companion
-- p:bottomPanel:javax.swing.JPanel
 - <init>(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitActionsPanel,com.intellij.vcs.commit.CommitAuthorComponent):V
 - b:<init>(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitActionsPanel,com.intellij.vcs.commit.CommitAuthorComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - addCommitAuthorListener(com.intellij.vcs.commit.CommitAuthorListener,com.intellij.openapi.Disposable):V
@@ -4998,7 +4997,7 @@ a:com.intellij.vcs.commit.NonModalCommitPanel
 - dispose():V
 - endBeforeCommitChecks(com.intellij.vcs.commit.CommitChecksResult):V
 - pf:fireInclusionChanged():V
-- pf:getBottomPanel():javax.swing.JPanel
+- pf:getBottomPanel():com.intellij.ui.components.JBPanel
 - pf:getCenterPanel():com.intellij.util.ui.components.BorderLayoutPanel
 - f:getCommitActionsPanel():com.intellij.vcs.commit.CommitActionsPanel
 - getCommitAuthor():com.intellij.vcs.log.VcsUser
@@ -5014,7 +5013,6 @@ a:com.intellij.vcs.commit.NonModalCommitPanel
 - f:getToolbar():com.intellij.openapi.actionSystem.ActionToolbar
 - globalSchemeChange(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - isDefaultCommitActionEnabled():Z
-- pf:setBottomPanel(javax.swing.JPanel):V
 - setCommitAuthor(com.intellij.vcs.log.VcsUser):V
 - setCommitAuthorDate(java.util.Date):V
 - setCustomCommitActions(java.util.List):V

@@ -29,9 +29,7 @@ import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcsUtil.VcsUIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.Color
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
 import javax.swing.border.Border
@@ -52,14 +50,6 @@ abstract class NonModalCommitPanel(
   private var needUpdateCommitOptionsUi = false
 
   private val mainPanel: BorderLayoutPanel = object : BorderLayoutPanel(), UiDataProvider {
-    override fun updateUI() {
-      super.updateUI()
-
-      if (this@NonModalCommitPanel::bottomPanel.isInitialized) {
-        bottomPanel.background = getButtonPanelBackground()
-      }
-    }
-
     override fun uiDataSnapshot(sink: DataSink) {
       DataSink.uiDataSnapshot(sink, commitMessage)
       uiDataSnapshotFromProviders(sink)
@@ -68,8 +58,7 @@ abstract class NonModalCommitPanel(
 
   protected val centerPanel = JBUI.Panels.simplePanel()
 
-  @Suppress("JoinDeclarationAndAssignment", "UNNECESSARY_LATEINIT") // used in super constructor.
-  protected lateinit var bottomPanel: JPanel
+  protected val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0))
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {
@@ -86,8 +75,6 @@ abstract class NonModalCommitPanel(
   protected val statusComponent: CommitStatusPanel
 
   init {
-    bottomPanel = JBPanel<JBPanel<*>>(VerticalLayout(0))
-
     commitActionsPanel.apply {
       border = getButtonPanelBorder()
 
@@ -108,7 +95,6 @@ abstract class NonModalCommitPanel(
     mainPanel.addToCenter(centerPanel)
     mainPanel.withPreferredHeight(85)
     commitMessage.editorField.setDisposedWith(this)
-    bottomPanel.background = getButtonPanelBackground()
 
     InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(mainPanel)
   }
@@ -152,10 +138,6 @@ abstract class NonModalCommitPanel(
   private fun getButtonPanelBorder(): Border {
     @Suppress("UseDPIAwareBorders")
     return EmptyBorder(0, scale(3), (scale(6) - commitActionsPanel.getBottomInset()).coerceAtLeast(0), 0)
-  }
-
-  private fun getButtonPanelBackground(): Color? {
-    return commitMessage.editorField.getEditor(true)?.backgroundColor
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext) {
