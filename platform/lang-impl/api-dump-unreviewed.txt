@@ -11740,16 +11740,6 @@ a:com.intellij.ide.util.gotoByName.FilteringGotoByModel
 com.intellij.ide.util.gotoByName.GotoActionAliasMatcher
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - matchAction(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ide.util.gotoByName.MatchMode
-f:com.intellij.ide.util.gotoByName.GotoActionItemProvider
-- com.intellij.ide.util.gotoByName.ChooseByNameWeightedItemProvider
-- <init>(com.intellij.ide.util.gotoByName.GotoActionModel):V
-- clearIntentions():V
-- s:createActionWrapper(com.intellij.openapi.actionSystem.AnAction,com.intellij.ide.util.gotoByName.GroupMapping,com.intellij.ide.util.gotoByName.MatchMode,com.intellij.ide.util.gotoByName.GotoActionModel):com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
-- filterElements(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
-- filterElements(java.lang.String,java.util.function.Predicate):Z
-- filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
-- filterNames(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String[],java.lang.String):java.util.List
-- processActions(java.lang.String,java.util.function.Predicate,java.util.Set):Z
 f:com.intellij.ide.util.gotoByName.GotoActionModel
 - com.intellij.ide.util.gotoByName.ChooseByNameModel
 - com.intellij.openapi.project.DumbAware
