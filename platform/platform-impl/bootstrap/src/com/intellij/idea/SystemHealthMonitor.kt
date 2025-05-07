@@ -141,13 +141,14 @@ internal object SystemHealthMonitor {
     }
 
     LOG.info("${CpuArch.CURRENT} appears to be emulated")
-    if (SystemInfo.isMac && CpuArch.isIntel64()) {
+    if (CpuArch.isIntel64()) {
       val downloadAction = ExternalProductResourceUrls.getInstance().downloadPageUrl?.let { downloadPageUrl ->
-        NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
+        NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.arch.mismatch.download")) {
           BrowserUtil.browse(downloadPageUrl.toExternalForm())
         }
       }
-      showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
+      val key = if (SystemInfo.isMac) "bundled.jre.arch.mismatch.mac" else "bundled.jre.arch.mismatch.win"
+      showNotification(key, suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
     }
   }
 
