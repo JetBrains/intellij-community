@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -71,6 +72,26 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     protected val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
+
+    // Prefix matcher that only matches if the completion item starts with the prefix.
+    private val startOnlyMatcher by lazy {  BetterPrefixMatcher(prefixMatcher, Int.MIN_VALUE) }
+    private val startOnlyNameFilter: (Name) -> Boolean =
+        { name -> !name.isSpecial && startOnlyMatcher.prefixMatches(name.identifier) }
+
+    /**
+     * Returns the name filter that should be used for index lookups.
+     * If the prefix is less than 3 characters, we do not use the regular [scopeNameFilter] as it will
+     * match occurrences anywhere in the name, which might yield too many results.
+     * For other cases (unless the user invokes completion multiple times), this function will return
+     * the [startOnlyNameFilter] that requires a match at the start of the lookup item's lookup strings.
+     */
+    internal fun getIndexNameFilter(): (Name) -> Boolean {
+        return if (parameters.invocationCount >= 2 || sink.prefixMatcher.prefix.length > 2) {
+            scopeNameFilter
+        } else {
+            startOnlyNameFilter
+        }
+    }
 
     context(KaSession)
     protected fun createCallableLookupElements(

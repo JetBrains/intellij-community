@@ -154,7 +154,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 positionContext = positionContext,
                 parameters = parameters,
                 symbolProvider = symbolFromIndexProvider,
-                scopeNameFilter = scopeNameFilter,
+                scopeNameFilter = getIndexNameFilter(),
                 visibilityChecker = visibilityChecker,
             ).filterNot { it in availableFromScope }
                 .filterIsInstance<KaNamedSymbol>()

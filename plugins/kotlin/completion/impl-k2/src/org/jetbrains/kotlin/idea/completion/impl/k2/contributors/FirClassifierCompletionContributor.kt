@@ -158,7 +158,7 @@ internal open class FirClassifierCompletionContributor(
                 positionContext = positionContext,
                 parameters = parameters,
                 symbolProvider = symbolFromIndexProvider,
-                scopeNameFilter = scopeNameFilter,
+                scopeNameFilter = getIndexNameFilter(),
                 visibilityChecker = visibilityChecker,
             ).filter { it !in availableFromScope && filterClassifiers(it) }
                 .flatMap { classifierSymbol ->
