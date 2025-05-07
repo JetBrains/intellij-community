@@ -58,7 +58,9 @@ import java.net.ConnectException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import kotlin.time.Duration.Companion.minutes
 
@@ -80,14 +82,18 @@ private object ProjectLoadedService {
   var scriptStarted = false
 
   @JvmField
-  var screenshotJob: kotlinx.coroutines.Job? = null
+  val screenshotJobs: MutableSet<kotlinx.coroutines.Job> = ConcurrentHashMap.newKeySet()
 
   fun registerScreenshotTaking(folder: String, coroutineScope: CoroutineScope) {
-    screenshotJob = coroutineScope.launch {
+    val job = coroutineScope.launch {
       while (true) {
         delay(1.minutes)
         takeScreenshotOfAllWindows(folder)
       }
+    }
+    screenshotJobs += job
+    job.invokeOnCompletion {
+      screenshotJobs -= job
     }
   }
 }
@@ -257,7 +263,7 @@ class ProjectLoaded : ApplicationInitializedListener {
     }
 
     override fun appClosing() {
-      ProjectLoadedService.screenshotJob?.cancel()
+      ProjectLoadedService.screenshotJobs.forEach { it.cancel() }
       PerformanceTestSpan.endSpan()
       reportErrorsFromMessagePool()
     }

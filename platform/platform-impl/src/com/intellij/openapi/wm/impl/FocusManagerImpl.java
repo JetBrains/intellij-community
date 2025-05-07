@@ -43,8 +43,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
-  private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakValueMap();
-  private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakValueMap();
+  private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakKeyWeakValueMap();
+  private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakKeyWeakValueMap();
 
   private DataContext myRunContext;
 

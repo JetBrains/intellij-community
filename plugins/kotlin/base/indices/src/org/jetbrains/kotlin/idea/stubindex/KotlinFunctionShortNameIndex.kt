@@ -19,4 +19,8 @@ class KotlinFunctionShortNameIndex internal constructor() : StringStubIndexExten
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
         return Helper[key, project, scope]
     }
+
+    override fun getVersion(): Int = super.getVersion() + 1
+
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 }

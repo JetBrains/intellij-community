@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.DistractionFreeModeController;
@@ -89,7 +88,6 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -130,8 +128,6 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -180,6 +176,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
 
+  private final @NotNull EditorCaretRepaintService caretRepaintService = EditorCaretRepaintService.getInstance();
+
   private static final Integer SCROLL_PANE_LAYER = 0;
   private static final Integer STICKY_PANEL_LAYER = 200;
   private static final Integer VERTICAL_SCROLLBAR_LAYER = 250;
@@ -207,7 +205,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final List<EditorMouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<EditorMouseMotionListener> myMouseMotionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final @NotNull CaretCursor myCaretCursor;
+  final @NotNull CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
   private final @NotNull SettingsImpl mySettings;
@@ -246,8 +244,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull CaretModelImpl myCaretModel;
   private final @NotNull SoftWrapModelImpl mySoftWrapModel;
   private final @NotNull InlayModelImpl myInlayModel;
-
-  private static final @NotNull RepaintCursorCommand ourCaretBlinkingCommand = new RepaintCursorCommand();
 
   @MouseSelectionState
   private int myMouseSelectionState;
@@ -360,10 +356,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final ImmediatePainter myImmediatePainter;
 
   private final List<IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>>> myLineExtensionPainters = new SmartList<>();
-
-  static {
-    ourCaretBlinkingCommand.start();
-  }
 
   private volatile int myExpectedCaretOffset = -1;
 
@@ -1077,9 +1069,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySoftWrapModel.reinitSettings();
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
-    ourCaretBlinkingCommand.setBlinkCaret(mySettings.isBlinkCaret());
-    ourCaretBlinkingCommand.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
-    ourCaretBlinkingCommand.start();
+    caretRepaintService.setBlinking(mySettings.isBlinkCaret());
+    caretRepaintService.setBlinkPeriod(mySettings.getCaretBlinkPeriod());
+    caretRepaintService.restart();
 
     myView.reinitSettings();
     if (myAdView != null) myAdView.reinitSettings();
@@ -1194,9 +1186,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void clearCaretThread() {
-    synchronized (ourCaretBlinkingCommand) {
-      if (ourCaretBlinkingCommand.myEditor == this) {
-        ourCaretBlinkingCommand.myEditor = null;
+    synchronized (caretRepaintService) {
+      if (caretRepaintService.getEditor() == this) {
+        caretRepaintService.setEditor(null);
       }
     }
   }
@@ -1629,9 +1621,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @TestOnly
   public void setCaretActive() {
-    synchronized (ourCaretBlinkingCommand) {
-      ourCaretBlinkingCommand.myEditor = this;
-      ourCaretBlinkingCommand.start();
+    synchronized (caretRepaintService) {
+      caretRepaintService.setEditor(this);
+      caretRepaintService.restart();
     }
   }
 
@@ -3110,57 +3102,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
-  private static final class RepaintCursorCommand implements ContextAwareRunnable {
-    private long mySleepTime = 500;
-    private boolean myIsBlinkCaret = true;
-    private @Nullable EditorImpl myEditor;
-    private ScheduledFuture<?> mySchedulerHandle;
-
-    void start() {
-      if (mySchedulerHandle != null) {
-        mySchedulerHandle.cancel(false);
-      }
-      if (myEditor != null) {
-        mySchedulerHandle = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this, mySleepTime, mySleepTime,
-                                                                                                     TimeUnit.MILLISECONDS);
-      }
-    }
-
-    private void setBlinkPeriod(int blinkPeriod) {
-      mySleepTime = Math.max(blinkPeriod, 10);
-    }
-
-    private void setBlinkCaret(boolean value) {
-      myIsBlinkCaret = value;
-    }
-
-    @Override
-    public void run() {
-      EditorImpl editor = myEditor;
-      if (editor != null) {
-        CaretCursor activeCursor = editor.myCaretCursor;
-
-        long time = System.currentTimeMillis();
-        time -= activeCursor.myStartTime;
-
-        if (time > mySleepTime) {
-          boolean toRepaint = true;
-          if (myIsBlinkCaret) {
-            activeCursor.myIsShown = !activeCursor.myIsShown;
-          }
-          else {
-            toRepaint = !activeCursor.myIsShown;
-            activeCursor.myIsShown = true;
-          }
-
-          if (toRepaint) {
-            activeCursor.repaint();
-          }
-        }
-      }
-    }
-  }
-
   void updateCaretCursor() {
     myUpdateCursor = true;
     if (myCaretCursor.myIsShown) {
@@ -3313,24 +3254,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void activate() {
       boolean blink = mySettings.isBlinkCaret();
       int blinkPeriod = mySettings.getCaretBlinkPeriod();
-      synchronized (ourCaretBlinkingCommand) {
-        ourCaretBlinkingCommand.myEditor = EditorImpl.this;
-        ourCaretBlinkingCommand.setBlinkCaret(blink);
-        ourCaretBlinkingCommand.setBlinkPeriod(blinkPeriod);
+      synchronized (caretRepaintService) {
+        caretRepaintService.setEditor(EditorImpl.this);
+        caretRepaintService.setBlinking(blink);
+        caretRepaintService.setBlinkPeriod(blinkPeriod);
         myIsShown = true;
-        ourCaretBlinkingCommand.start();
+        caretRepaintService.restart();
       }
     }
 
     public boolean isActive() {
-      synchronized (ourCaretBlinkingCommand) {
+      synchronized (caretRepaintService) {
         return myIsShown;
       }
     }
 
+    void setActive(boolean isActive) {
+      synchronized (caretRepaintService) {
+        myIsShown = isActive;
+      }
+    }
+
     private void passivate() {
-      synchronized (ourCaretBlinkingCommand) {
+      synchronized (caretRepaintService) {
         myIsShown = false;
+      }
+    }
+
+    long getStartTime() {
+      synchronized (caretRepaintService) {
+        return myStartTime;
       }
     }
 
@@ -3339,7 +3292,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLocations = locations;
     }
 
-    private void repaint() {
+    void repaint() {
       myView.repaintCarets();
     }
 

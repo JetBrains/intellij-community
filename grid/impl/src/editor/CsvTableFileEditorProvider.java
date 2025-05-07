@@ -15,9 +15,9 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serialization.SerializationException;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +85,7 @@ public final class CsvTableFileEditorProvider extends WeighedFileEditorProvider 
 
   @Override
   public @NotNull FileEditorPolicy getPolicy() {
-    if (Registry.is("csv.open.as.tables.by.default", false)) {
+    if (PlatformUtils.isPyCharm() || PlatformUtils.isDataSpell()) {
       return FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR;
     }
     else {
