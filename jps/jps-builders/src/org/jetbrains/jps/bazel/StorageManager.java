@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.bazel;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.bazel.impl.AbiJarBuilder;
@@ -9,13 +10,21 @@ import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.dependency.impl.PersistentMVStoreMapletFactory;
+import org.jetbrains.jps.javac.Iterators;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.javac.Iterators.collect;
@@ -26,6 +35,7 @@ public class StorageManager implements Closeable {
   private GraphConfiguration myGraphConfig;
   private ZipOutputBuilderImpl myOutputBuilder;
   private AbiJarBuilder myAbiOutputBuilder;
+  private InstrumentationClassFinder myInstrumentationClassFinder;
 
   public StorageManager(BuildContext context) {
     myContext = context;
@@ -35,7 +45,7 @@ public class StorageManager implements Closeable {
     close();
     Path output = myContext.getOutputZip();
     Path abiOutput = myContext.getAbiOutputZip();
-    Path srcSnapshot = DataPaths.getConfigStateStoreFile(myContext);
+    Path srcSnapshotStore = DataPaths.getConfigStateStoreFile(myContext);
 
     BuildProcessLogger logger = myContext.getBuildLogger();
     if (logger.isEnabled() && !myContext.isRebuild()) {
@@ -53,7 +63,7 @@ public class StorageManager implements Closeable {
     if (abiOutput != null) {
       Files.deleteIfExists(abiOutput);
     }
-    Files.deleteIfExists(srcSnapshot);
+    Files.deleteIfExists(srcSnapshotStore);
     Files.deleteIfExists(DataPaths.getDepGraphStoreFile(myContext));
 
     cleanDependenciesBackupDir(myContext);
@@ -98,10 +108,25 @@ public class StorageManager implements Closeable {
     if (builder == null) {
       Path abiOutputPath = myContext.getAbiOutputZip();
       if (abiOutputPath != null) {
-        myAbiOutputBuilder = builder = new AbiJarBuilder(abiOutputPath);
+        myAbiOutputBuilder = builder = new AbiJarBuilder(abiOutputPath, getInstrumentationClassFinder());
       }
     }
     return builder;
+  }
+
+  public @NotNull InstrumentationClassFinder getInstrumentationClassFinder() throws MalformedURLException {
+    InstrumentationClassFinder finder = myInstrumentationClassFinder;
+    if (finder == null) {
+      myInstrumentationClassFinder = finder = createInstrumentationClassFinder(path -> {
+        try {
+          return getOutputBuilder().getContent(path);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
+    return finder;
   }
 
   public DependencyGraph getGraph() throws IOException {
@@ -132,6 +157,36 @@ public class StorageManager implements Closeable {
     catch (Throwable e) {
       myContext.report(Message.create(null, e));
     }
+  }
+
+  private InstrumentationClassFinder createInstrumentationClassFinder(Function<String, byte[]> outputContentLookup) throws MalformedURLException {
+    final URL jrt = tryGetJrtURL();
+    List<URL> platformCp = jrt != null? List.of(jrt) : List.of();
+    final List<URL> urls = new ArrayList<>();
+    for (Path path : Iterators.map(myContext.getBinaryDependencies().getElements(), myContext.getPathMapper()::toPath)) {
+      urls.add(path.toUri().toURL());
+    }
+    return new InstrumentationClassFinder(platformCp.toArray(URL[]::new), urls.toArray(URL[]::new)) {
+      @Override
+      protected InputStream lookupClassBeforeClasspath(String internalClassName) {
+        final byte[] content = outputContentLookup.apply(internalClassName);
+        return content != null? new ByteArrayInputStream(content) : null;
+      }
+    };
+  }
+
+  private static URL tryGetJrtURL() {
+    final String home = System.getProperty("java.home");
+    Path jrtFsPath = Path.of(home).normalize().resolve("lib").resolve("jrt-fs.jar");
+    if (Files.isRegularFile(jrtFsPath)) {
+      // this is a modular jdk where platform classes are stored in a jrt-fs image
+      try {
+        return InstrumentationClassFinder.createJDKPlatformUrl(home);
+      }
+      catch (MalformedURLException ignored) {
+      }
+    }
+    return null;
   }
 
 }

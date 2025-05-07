@@ -3,6 +3,7 @@ package org.jetbrains.jps.bazel.impl;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -20,9 +21,16 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
   private final Map<String, Long> myPackageIndex = new TreeMap<>(); // directoryEntryName -> digestOf(content entries)
   private boolean myPackageIndexChanged;
   private boolean myShouldStoreIndex;
+  @Nullable
+  private final InstrumentationClassFinder myClassFinder;
 
   public AbiJarBuilder(Path outputZip) throws IOException {
+    this(outputZip, null);
+  }
+
+  public AbiJarBuilder(Path outputZip, @Nullable InstrumentationClassFinder classFinder) throws IOException {
     super(outputZip);
+    myClassFinder = classFinder;
     byte[] content = getContent(PACKAGE_INDEX_STORAGE_ENTRY_NAME);
     if (content != null) {
       readPackageIndex(content, myPackageIndex);
@@ -86,9 +94,12 @@ public class AbiJarBuilder extends ZipOutputBuilderImpl {
   }
 
   private byte @Nullable [] filterAbiJarContent(byte[] content) {
+    if (myClassFinder == null) {
+      return content; // no instrumentation, if class finder is not specified
+    }
     // todo: check content and instrument it before adding
     // todo: for java use JavaAbiClassVisitor, for kotlin-generated classes use KotlinAnnotationVisitor, abiMetadataProcessor
-    return content;
+    return JavaAbiClassFilter.filter(content, myClassFinder);
   }
 
   @Override
