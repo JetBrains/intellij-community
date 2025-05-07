@@ -79,7 +79,6 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   }
 
   suspend fun filterElementsSuspend(
-    scope: CoroutineScope,
     presentationProvider: suspend (AnAction) -> Presentation,
     pattern: String,
     consumer: suspend (MatchedValue) -> Boolean,
@@ -90,15 +89,15 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
     val actionIds = (actionManager as ActionManagerImpl).actionIds
 
-    scope.runFilterJobs(presentationProvider, pattern, consumer, actionIds).forEach { it.join() }
+    runFilterJobs(presentationProvider, pattern, consumer, actionIds)
   }
 
-  private fun CoroutineScope.runFilterJobs(
+  private suspend fun runFilterJobs(
     presentationProvider: suspend (AnAction) -> Presentation,
     pattern: String,
     consumer: suspend (MatchedValue) -> Boolean,
     actionIds: Set<String>
-  ): List<Job> {
+  ) = coroutineScope {
     val abbreviationsJob = processAbbreviations(pattern, presentationProvider, consumer)
 
     val nonMatchedIdsChannel = Channel<String>(capacity = Channel.UNLIMITED)
@@ -107,8 +106,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
     val topHitsJob = processTopHits(pattern, presentationProvider, consumer, unmatchedStubsJob)
     val intentionsJob = processIntentions(pattern, presentationProvider, consumer, topHitsJob)
-    val processOptionsJob = processOptions(pattern, presentationProvider, consumer, intentionsJob)
-    return listOf(abbreviationsJob, matchedStubsJob, unmatchedStubsJob, topHitsJob, intentionsJob, processOptionsJob)
+    processOptions(pattern, presentationProvider, consumer, intentionsJob)
   }
 
   private fun CoroutineScope.processAbbreviations(pattern: String,
