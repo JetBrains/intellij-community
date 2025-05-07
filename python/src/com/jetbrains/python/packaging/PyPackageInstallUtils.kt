@@ -60,13 +60,13 @@ object PyPackageInstallUtils {
   }
 
 
-  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String) {
+  suspend fun confirmAndInstall(project: Project, sdk: Sdk, packageName: String, versionSpec: String? = null) {
     val isConfirmed = withContext(Dispatchers.EDT) {
       confirmInstall(project, packageName)
     }
     if (!isConfirmed)
       return
-    val result = installPackage(project, sdk, packageName, true)
+    val result = installPackage(project, sdk, packageName, true, versionSpec = versionSpec)
     result.getOrThrow()
   }
 
@@ -156,13 +156,13 @@ object PyPackageInstallUtils {
   }
 
 
-  fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint) {
+  fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint, versionSpec: String? = null) {
     PyPackageCoroutine.launch(project) {
       runPackagingOperationOrShowErrorDialog(pythonSdk, PyBundle.message("python.new.project.install.failed.title", packageName),
                                              packageName) {
         val loadBalloon = showBalloon(point, PyBundle.message("python.packaging.installing.package", packageName), BalloonStyle.INFO)
         try {
-          confirmAndInstall(project, pythonSdk, packageName)
+          confirmAndInstall(project, pythonSdk, packageName, versionSpec = versionSpec)
           loadBalloon.hide()
           PyPackagesUsageCollector.installPackageFromConsole.log(project)
           showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), BalloonStyle.SUCCESS)
