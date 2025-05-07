@@ -88,29 +88,45 @@ public final class JavaDocUtil {
       context = context.getNavigationElement();
     }
 
-    int poundIndex = refText.indexOf('#');
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    if (poundIndex < 0) {
-      PsiClass aClass = findClassFromRef(manager, facade, refText, context);
 
+    String refTextCorrected = refText;
+    if (refText.contains("/")) {
+      // Module link
+      if (refText.endsWith("/")) {
+        PsiJavaModule module = findModuleFromRef(manager, facade, StringUtil.trimEnd(refText, '/'));
+        if (module != null) {
+          return useNavigationElement ? module.getNavigationElement() : module;
+        }
+      }
+      // Not a module link: remove the module part
+      int slashIndex = refText.indexOf('/');
+      if (slashIndex < refText.length() - 1) refTextCorrected = refText.substring(refText.indexOf('/') + 1);
+    }
+
+    int poundIndex = refTextCorrected.indexOf('#');
+    if (poundIndex < 0) {
+      PsiClass aClass = findClassFromRef(manager, facade, refTextCorrected, context);
       if (aClass != null) {
         return useNavigationElement ? aClass.getNavigationElement() : aClass;
       }
-      PsiPackage aPackage = facade.findPackage(refText);
-      if (aPackage!=null) return aPackage;
+      PsiPackage aPackage = facade.findPackage(refTextCorrected);
+      if (aPackage != null) {
+        return aPackage;
+      }
       return null;
     }
     else {
-      String classRef = refText.substring(0, poundIndex).trim();
+      String classRef = refTextCorrected.substring(0, poundIndex).trim();
       if (!classRef.isEmpty()) {
         PsiClass aClass = findClassFromRef(manager, facade, classRef, context);
 
         if (aClass == null) return null;
-        PsiElement member = findReferencedMember(aClass, refText.substring(poundIndex + 1), context);
+        PsiElement member = findReferencedMember(aClass, refTextCorrected.substring(poundIndex + 1), context);
         return useNavigationElement && member != null ? member.getNavigationElement() : member;
       }
       else {
-        String memberRefText = refText.substring(1);
+        String memberRefText = refTextCorrected.substring(1);
         PsiElement scope = context;
         while (scope != null && !(scope instanceof PsiFile)) {
           if (scope instanceof PsiClass) {
@@ -141,6 +157,13 @@ public final class JavaDocUtil {
       aClass = aPackage == null ? null : ArrayUtil.getFirstElement(aPackage.findClassByShortName(refText, projectScope));
     }
     return aClass;
+  }
+
+  private static PsiJavaModule findModuleFromRef(@NotNull PsiManager manager,
+                                                 @NotNull JavaPsiFacade facade,
+                                                 @NotNull String refText) {
+    GlobalSearchScope projectScope = GlobalSearchScope.allScope(manager.getProject());
+    return facade.findModules(refText, projectScope).stream().findFirst().orElse(null);
   }
 
   private static @Nullable PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
