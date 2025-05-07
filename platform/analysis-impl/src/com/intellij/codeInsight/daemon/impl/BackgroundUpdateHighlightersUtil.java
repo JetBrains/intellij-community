@@ -130,8 +130,7 @@ public final class BackgroundUpdateHighlightersUtil {
         return true;
       });
       for (HighlightInfo info : infosToCreateHighlightersFor) {
-        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, (MarkupModelEx)markup, toReuse, range2markerCache, severityRegistrar,
-                                    session);
+        createOrReuseHighlighterFor(info, document, group, psiFile, (MarkupModelEx)markup, toReuse, range2markerCache, severityRegistrar, session);
       }
       boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
       ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, shouldClean, toReuse);
@@ -198,7 +197,7 @@ public final class BackgroundUpdateHighlightersUtil {
       });
       for (HighlightInfo info : infosToCreateHighlightersFor) {
         assert !info.isFromInspection() && !info.isFromAnnotator() && !info.isFromHighlightVisitor() && !info.isInjectionRelated(): info; // all these types are handled in GHP/LHP separately
-        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, recycler, range2markerCache, severityRegistrar, session);
+        createOrReuseHighlighterFor(info, document, group, psiFile, markup, recycler, range2markerCache, severityRegistrar, session);
       }
       ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()), recycler);
       changed[0] |= !recycler.isEmpty();
@@ -227,16 +226,15 @@ public final class BackgroundUpdateHighlightersUtil {
   }
 
   @Deprecated
-  static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
-                                          @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
-                                          @NotNull Document document,
-                                          int group,
-                                          @NotNull PsiFile psiFile,
-                                          @NotNull MarkupModelEx markup,
-                                          @NotNull HighlighterRecycler recycler,
-                                          @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                          @NotNull SeverityRegistrar severityRegistrar,
-                                          @NotNull HighlightingSession session) {
+  private static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
+                                                  @NotNull Document document,
+                                                  int group,
+                                                  @NotNull PsiFile psiFile,
+                                                  @NotNull MarkupModelEx markup,
+                                                  @NotNull HighlighterRecycler recycler,
+                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                                  @NotNull SeverityRegistrar severityRegistrar,
+                                                  @NotNull HighlightingSession session) {
     assert !info.isFileLevelAnnotation();
     long finalInfoRange = getRangeToCreateHighlighter(info, document);
     if (finalInfoRange == -1) {
@@ -250,6 +248,7 @@ public final class BackgroundUpdateHighlightersUtil {
 
     CodeInsightContext context = session.getCodeInsightContext();
 
+    EditorColorsScheme colorsScheme = session.getColorsScheme(); // if null, the global scheme will be used
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes);
