@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -87,7 +86,7 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 ?.takeUnless { it.isEmpty }
 
             val fqName = importingStrategy.fqName
-                .applyIf(shortenCommand == null) { withRootPrefixIfNeeded() }
+                .withRootPrefixIfNeeded()
 
             context.insertAndShortenReferencesInStringUsingTemporarySuffix(
                 string = fqName.render(),
