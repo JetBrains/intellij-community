@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.*
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtil
 import com.jetbrains.rd.framework.RdId
@@ -113,8 +112,14 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
   val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
   val modifiableModel = library.modifiableModel
   val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(baseClass))
-  val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
+  var classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
   assertNotNull("Cannot find $classesPathUrl", classesRootVirtualFile)
+
+  if (classesRootVirtualFile!!.isFile && classesRootVirtualFile.extension == "jar") {
+    classesRootVirtualFile = JarFileSystem.getInstance().getJarRootForLocalFile(classesRootVirtualFile)
+    assertNotNull("Cannot convert $classesPathUrl to a jar VirtualFile", classesRootVirtualFile)
+  }
+
   VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
   modifiableModel.addDependency(classesRootVirtualFile!!)
   modifiableModel.commit()
@@ -124,14 +129,21 @@ private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libra
   val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
   val modifiableModel = library.modifiableModel
 
-  val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
-  val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)?.parent
-  VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
-  assertNotNull("Cannot find $classesPathUrl", classesRootVirtualFile)
+  val classpathFolderVirtualFile: VirtualFile?
 
-  val classpathFolderVirtualFile = classesRootVirtualFile?.children?.find { it.name == classpathFolder }
+  val mapping = PathManager.getArchivedCompiledClassesMapping()
+  if (mapping != null) {
+    val jar = mapping["production/$classpathFolder"] ?: error("No jar found for $classpathFolder production classes")
+    classpathFolderVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.pathToUrl(jar))
+    assertNotNull("Cannot find $classpathFolder in production classes jars. Possibly, project was partially compiled", classpathFolderVirtualFile)
+  }
+  else {
+    val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+    val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
+    classpathFolderVirtualFile = classesRootVirtualFile?.parent?.children?.find { it.name == classpathFolder }
+    assertNotNull("Cannot find $classpathFolder in $classesRootVirtualFile. Possibly, project was partially compiled", classpathFolderVirtualFile)
+  }
   VfsUtil.markDirtyAndRefresh(false, true, true, classpathFolderVirtualFile)
-  assertNotNull("Cannot find $classpathFolder", classpathFolderVirtualFile)
   modifiableModel.addDependency(classpathFolderVirtualFile!!)
   modifiableModel.commit()
 }
