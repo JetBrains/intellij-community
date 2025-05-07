@@ -7,6 +7,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionTestCase
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.TestInlineCompletionLogs.firstSessionLog
 import com.intellij.codeInsight.inline.completion.logs.TestInlineCompletionLogs.noSessionLogs
 import com.intellij.codeInsight.inline.completion.logs.TestInlineCompletionLogs.singleSessionLog
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
@@ -44,7 +45,7 @@ internal class InlineCompletionSessionLogsTest : InlineCompletionTestCase() {
           emit(InlineCompletionGrayTextElement(completion))
         }
       }
-      val singleSessionLog = singleSessionLog {
+      val singleSessionLog = firstSessionLog {
         callInlineCompletion()
         provider.computeNextElement()
         delay()

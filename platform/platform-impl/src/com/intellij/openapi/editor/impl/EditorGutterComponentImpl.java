@@ -1806,6 +1806,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     return myEditor.getSettings().isLineNumbersAfterIcons();
   }
 
+  boolean isGapAfterIconsShown() {
+    return isLineMarkersShown() && !isLineNumbersAfterIcons();
+  }
+
   boolean areIconsShown() {
     return myEditor.getSettings().areGutterIconsShown();
   }
@@ -2416,7 +2420,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.getX() > getWhitespaceSeparatorOffset()) {
+    int offset = ExperimentalUI.isNewUI() ? getWidth() : getWhitespaceSeparatorOffset();
+    if (e.getX() > offset) {
       return null;
     }
     ActiveGutterRenderer[] gutterRenderer = {null};

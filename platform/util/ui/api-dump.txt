@@ -569,9 +569,11 @@ f:com.intellij.icons.AllIcons$General
 - sf:QuestionDialog:javax.swing.Icon
 - sf:ReaderMode:javax.swing.Icon
 - sf:Refresh:javax.swing.Icon
+- sf:RefreshAuto:javax.swing.Icon
 - sf:Remove:javax.swing.Icon
 - sf:Reset:javax.swing.Icon
 - sf:RunWithCoverage:javax.swing.Icon
+- sf:SelectIn:javax.swing.Icon
 - sf:SeparatorH:javax.swing.Icon
 - sf:Settings:javax.swing.Icon
 - sf:Show:javax.swing.Icon

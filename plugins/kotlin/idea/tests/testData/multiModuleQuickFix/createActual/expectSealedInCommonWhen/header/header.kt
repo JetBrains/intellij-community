@@ -4,7 +4,7 @@
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
-// IGNORE_K2
+
 
 expect sealed class CommonSealedClass()
 class SInheritor1 : CommonSealedClass()

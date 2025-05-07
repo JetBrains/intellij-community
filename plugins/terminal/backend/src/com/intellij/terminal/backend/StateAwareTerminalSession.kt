@@ -7,6 +7,7 @@ import com.intellij.terminal.session.dto.toDto
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flattenConcat
 import kotlinx.coroutines.flow.flowOf
@@ -32,23 +33,17 @@ internal class StateAwareTerminalSession(private val delegate: TerminalSession) 
   init {
     // Create a Non-AWT thread document to be able to update it without switching to EDT and Write Action.
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
-    val lockFreeChangesApplier = object : TerminalDocumentChangesApplier {
-      override fun applyChange(action: () -> Unit) {
-        action()
-      }
-    }
-
     val outputDocument = DocumentImpl("", true)
-    outputModel = TerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength(), lockFreeChangesApplier)
+    outputModel = TerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
 
     val alternateBufferDocument = DocumentImpl("", true)
-    alternateBufferModel = TerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0, lockFreeChangesApplier)
+    alternateBufferModel = TerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
 
     blocksModel = TerminalBlocksModelImpl(outputDocument)
   }
 
-  override suspend fun sendInputEvent(event: TerminalInputEvent) {
-    delegate.sendInputEvent(event)
+  override suspend fun getInputChannel(): SendChannel<TerminalInputEvent> {
+    return delegate.getInputChannel()
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
@@ -64,6 +59,9 @@ internal class StateAwareTerminalSession(private val delegate: TerminalSession) 
 
     return flowOf(initialStateEventFlow, modelsAwareFlow).flattenConcat()
   }
+
+  override val isClosed: Boolean
+    get() = delegate.isClosed
 
   private fun doHandleEvents(events: List<TerminalOutputEvent>) {
     for (event in events) {

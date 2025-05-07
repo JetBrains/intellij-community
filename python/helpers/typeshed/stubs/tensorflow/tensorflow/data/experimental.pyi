@@ -1,9 +1,9 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import TypeVar
-from typing_extensions import Final
+from typing import Final, TypeVar
 
-from tensorflow import Tensor, _TensorCompatible
+from tensorflow import Tensor
+from tensorflow._aliases import TensorCompatible
 from tensorflow.data import Dataset
 
 AUTOTUNE: Final = -1
@@ -26,7 +26,7 @@ def enable_debug_mode() -> None: ...
 def cardinality(dataset: Dataset[object]) -> Tensor: ...
 def sample_from_datasets(
     datasets: Sequence[Dataset[_T1]],
-    weights: _TensorCompatible | None = None,
+    weights: TensorCompatible | None = None,
     seed: int | None = None,
     stop_on_empty_dataset: bool = False,
 ) -> Dataset[_T1]: ...

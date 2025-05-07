@@ -674,18 +674,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         final PyDecoratorList decoratorList = method.getDecoratorList();
         if (decoratorList != null) {
           for (PyDecorator deco : decoratorList.getDecorators()) {
+            TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+            List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(deco, context);
+            for (PyKnownDecorator knownDecorator : knownDecorators) {
+              if (knownDecorator.isMutableProperty()) {
+                getter = new Maybe<>(method);
+                setter = new Maybe<>(method);
+                deleter = new Maybe<>(method);
+                break;
+              }
+
+              if (knownDecorator.isProperty()) {
+                getter = new Maybe<>(method);
+                break;
+              }
+            }
+
             final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
-              String decoName = qname.toString();
-              for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getExtensionList()) {
-                final String knownName = provider.toKnownDecorator(decoName);
-                if (knownName != null) {
-                  decoName = knownName;
-                }
-              }
-              if (PyNames.PROPERTY.equals(decoName) ||
-                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
-                  qname.matches(decoratorName, PyNames.GETTER)) {
+              if (qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<>(method);
               }
               else if (qname.matches(decoratorName, PyNames.SETTER)) {

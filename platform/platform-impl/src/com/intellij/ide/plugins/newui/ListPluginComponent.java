@@ -114,7 +114,7 @@ public final class ListPluginComponent extends JPanel {
     myMarketplace = marketplace;
     PluginId pluginId = plugin.getPluginId();
     boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
-                         ? !"com.intellij.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
+                         ? !"com.jetbrains.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
                          : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
@@ -473,6 +473,11 @@ public final class ListPluginComponent extends JPanel {
         setTagTooltip(IdeBundle.message("label.text.plugin.eap.license.not.required"));
         return;
       }
+
+      if (myPlugin.isLicenseOptional()) {
+        return; // do not show "No License" for Freemium plugins
+      }
+
       licensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false);
     }
     else {
@@ -1617,7 +1622,7 @@ public final class ListPluginComponent extends JPanel {
           description.add(IdeBundle.message("plugins.configurable.list.component.accessible.description.install.available"));
         }
         else if (!myInstallButton.isEnabled() && !isDefaultText) {
-          // Install button contains status text when it's disabled and its text is not default.
+          // Install button contains status text when it is disabled and its text is not default.
           // Disabled buttons are not focusable, so this information can be missed by screen reader users.
           description.add(myInstallButton.getText());
         }

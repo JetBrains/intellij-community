@@ -7,11 +7,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionFix
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionInspection
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE_TO
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.JOIN_TO
@@ -28,9 +25,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.TO_MAP
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -173,7 +168,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         if (conversion.replacement != ASSOCIATE && !isAssociateTo) return null
         if (expression !is KtDotQualifiedExpression) return null
         val (associateFunction, problemHighlightType) =
-            ReplaceAssociateFunctionInspection.Util.getAssociateFunctionAndProblemHighlightType(expression) ?: return null
+            AssociateFunctionUtil.getAssociateFunctionAndProblemHighlightType(expression) ?: return null
         if (problemHighlightType == ProblemHighlightType.INFORMATION) return null
         if (associateFunction != AssociateFunction.ASSOCIATE_WITH && associateFunction != AssociateFunction.ASSOCIATE_BY) return null
         return associateFunction to associateFunction.name(isAssociateTo)

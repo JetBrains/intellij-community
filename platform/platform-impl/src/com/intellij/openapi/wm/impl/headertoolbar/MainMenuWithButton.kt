@@ -42,6 +42,7 @@ class MainMenuWithButton(
       .row(resizable = true)
       .cell(component = toolbarMainMenu, resizableColumn = true)
       .cell(component = mainMenuButton.button)
+    supportKeyNavigationToFullMenu()
   }
 
   private val toolbarInsetsConst = 20
@@ -129,6 +130,28 @@ class MainMenuWithButton(
 
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
 
+  private fun supportKeyNavigationToFullMenu() {
+    val selectionManager = MenuSelectionManager.defaultManager()
+    val listener: (ChangeEvent) -> Unit = {
+      val path = selectionManager.selectedPath
+      if (path.size > 0 && path[0] === toolbarMainMenu) {
+        val map = frame.rootPane.actionMap
+        addAction(map, "selectChild")
+        addAction(map, "selectParent")
+      }
+    }
+    selectionManager.addChangeListener(listener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      selectionManager.removeChangeListener(listener)
+    }
+  }
+
+  private fun addAction(map: ActionMap, name: String) {
+    val action = map.get(name)
+    if (action is Action && action !is MenuNavigationAction) {
+      map.put(name, MenuNavigationAction(name, action, mainMenuButton, toolbarMainMenu))
+    }
+  }
 }
 
 @ApiStatus.Internal
@@ -213,5 +236,38 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBa
       return false
     }
     return true
+  }
+}
+
+internal class MenuNavigationAction(
+  @NlsSafe val name: String,
+  val action: Action,
+  val mainMenuButton: MainMenuButton,
+  val toolbarMainMenu: MergedMainMenu,
+) : AbstractAction(name) {
+
+  override fun actionPerformed(e: ActionEvent) {
+    val path = MenuSelectionManager.defaultManager().selectedPath
+    if (path.size > 0 && path[0] === toolbarMainMenu) {
+      if (name == "selectParent") {
+        if (path.size == 4 && path[1] === toolbarMainMenu.getMenu(0)) {
+          if (mainMenuButton.expandableMenu?.isEnabled() == true) {
+            mainMenuButton.expandableMenu!!.switchState(itemInd = mainMenuButton.expandableMenu!!.ideMenu.rootMenuItems.lastIndex)
+          }
+          else {
+            mainMenuButton.showPopup(ActionToolbar.getDataContextFor(mainMenuButton.button))
+          }
+          return
+        }
+      }
+      else if (path.size > 3 && path[1] === toolbarMainMenu.rootMenuItems.last()) {
+        val element = path.last()
+        if (element is ActionMenu && element.itemCount == 0 || element is ActionMenuItem) {
+          mainMenuButton.button.click()
+          return
+        }
+      }
+    }
+    action.actionPerformed(e)
   }
 }

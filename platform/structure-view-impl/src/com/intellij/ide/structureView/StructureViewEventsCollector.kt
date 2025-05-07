@@ -8,6 +8,9 @@ import com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeEleme
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -42,12 +45,24 @@ object StructureViewEventsCollector: CounterUsagesCollector() {
 
   fun logBuildStructure(viewDescriptor: StructureViewDescriptor) {
     val tab = viewDescriptor.title?.let { StructureViewTab.ofTitle(it) } ?: return
-    BUILD_STRUCTURE.log(tab, getModelClass(viewDescriptor))
+    ReadAction
+      .nonBlocking<Class<*>?> {
+        getModelClass(viewDescriptor)
+      }
+      .finishOnUiThread(ModalityState.any()) {
+        BUILD_STRUCTURE.log(tab, it)
+      }.submit(AppExecutorUtil.getAppScheduledExecutorService())
   }
 
   fun logTabSelected(viewDescriptor: StructureViewDescriptor) {
     val tab = viewDescriptor.title?.let { StructureViewTab.ofTitle(it) } ?: return
-    TAB_SELECTED.log(tab, getModelClass(viewDescriptor))
+    ReadAction
+      .nonBlocking<Class<*>?> {
+        getModelClass(viewDescriptor)
+      }
+      .finishOnUiThread(ModalityState.any()) {
+        TAB_SELECTED.log(tab, it)
+      }.submit(AppExecutorUtil.getAppScheduledExecutorService())
   }
 
   fun logNavigate(modelClass: Class<*>) {

@@ -171,7 +171,6 @@ class InlineCompletionSession private constructor(
     private val LOG = thisLogger()
     private val INLINE_COMPLETION_SESSION = Key.create<InlineCompletionSession>("inline.completion.session")
 
-    @RequiresEdt
     fun getOrNull(editor: Editor): InlineCompletionSession? = editor.getUserData(INLINE_COMPLETION_SESSION)
 
     @RequiresEdt

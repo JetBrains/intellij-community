@@ -6,14 +6,65 @@ import com.intellij.ide.impl.TrustedPathsSettings
 import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.util.ThreeState
+import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
-@ApiStatus.Internal
 object TrustedProjects {
-  fun isProjectTrusted(locatedProject: LocatedProject): Boolean = getProjectTrustedState(locatedProject) == ThreeState.YES
 
+  @JvmStatic
+  fun isProjectTrusted(project: Project): Boolean {
+    return isProjectTrusted(TrustedProjectsLocator.locateProject(project))
+  }
+
+  @JvmStatic
+  fun setProjectTrusted(project: Project, isTrusted: Boolean) {
+    setProjectTrusted(TrustedProjectsLocator.locateProject(project), isTrusted)
+  }
+
+  @ApiStatus.Internal
+  fun getProjectTrustedState(project: Project): ThreeState {
+    return getProjectTrustedState(TrustedProjectsLocator.locateProject(project))
+  }
+
+  @JvmStatic
+  fun isProjectTrusted(path: Path): Boolean {
+    return isProjectTrusted(path, project = null)
+  }
+
+  @JvmStatic
+  fun setProjectTrusted(path: Path, isTrusted: Boolean) {
+    setProjectTrusted(path, project = null, isTrusted)
+  }
+
+  @ApiStatus.Internal
+  fun getProjectTrustedState(path: Path): ThreeState {
+    return getProjectTrustedState(path, project = null)
+  }
+
+  @JvmStatic
+  fun isProjectTrusted(path: Path, project: Project?): Boolean {
+    return isProjectTrusted(TrustedProjectsLocator.locateProject(path, project))
+  }
+
+  @JvmStatic
+  fun setProjectTrusted(path: Path, project: Project?, isTrusted: Boolean) {
+    setProjectTrusted(TrustedProjectsLocator.locateProject(path, project), isTrusted)
+  }
+
+  @ApiStatus.Internal
+  fun getProjectTrustedState(path: Path, project: Project?): ThreeState {
+    return getProjectTrustedState(TrustedProjectsLocator.locateProject(path, project))
+  }
+
+  @ApiStatus.Internal
+  fun isProjectTrusted(locatedProject: LocatedProject): Boolean {
+    return getProjectTrustedState(locatedProject) == ThreeState.YES
+  }
+
+  @ApiStatus.Internal
   fun getProjectTrustedState(locatedProject: LocatedProject): ThreeState {
     val explicitTrustedState = TrustedPaths.getInstance().getProjectTrustedState(locatedProject)
     return when {
@@ -28,13 +79,14 @@ object TrustedProjects {
     }
   }
 
+  @ApiStatus.Internal
   fun setProjectTrusted(locatedProject: LocatedProject, isTrusted: Boolean) {
     val trustedPaths = TrustedPaths.getInstance()
     val oldState = trustedPaths.getProjectTrustedState(locatedProject)
     trustedPaths.setProjectTrustedState(locatedProject, isTrusted)
     val newState = trustedPaths.getProjectTrustedState(locatedProject)
     if (oldState != newState) {
-      val syncPublisher = ApplicationManager.getApplication().messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
+      val syncPublisher = application.messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
       when (isTrusted) {
         true -> syncPublisher.onProjectTrusted(locatedProject)
         else -> syncPublisher.onProjectUntrusted(locatedProject)
@@ -43,12 +95,26 @@ object TrustedProjects {
   }
 
   /**
-   * Checks that IDEA is loaded with safe environment. In this mode, trusted checks aren't needed at all.
+   * Checks that IDEA is loaded with a safe environment.
+   * Therefore, the trusted check isn't needed in this mode.
+   * I.e., all projects are automatically trusted in this mode.
    */
+  @ApiStatus.Internal
   fun isTrustedCheckDisabled(): Boolean {
-    val app = ApplicationManager.getApplication()
-    return app.isUnitTestMode || app.isHeadlessEnvironment || java.lang.Boolean.getBoolean("idea.trust.all.projects")
+    if (java.lang.Boolean.getBoolean("idea.trust.all.projects")) {
+      return true
+    }
+    val isHeadlessMode = application.isUnitTestMode || application.isHeadlessEnvironment
+    if (isHeadlessMode && System.getProperty("idea.trust.headless.disabled", "true").toBoolean()) {
+      return true
+    }
+    return false
   }
 
-  private fun isTrustedCheckDisabledForProduct(): Boolean = isTrustedCheckDisabled() || java.lang.Boolean.getBoolean("idea.trust.disabled")
+  private fun isTrustedCheckDisabledForProduct(): Boolean {
+    if (java.lang.Boolean.getBoolean("idea.trust.disabled")) {
+      return true
+    }
+    return isTrustedCheckDisabled()
+  }
 }

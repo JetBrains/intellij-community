@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -28,7 +29,6 @@ import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.Throws
 
 // FIXME: still some missing transforms?
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
@@ -57,6 +57,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   suspend fun resolveProject(
+    filesToResolve: List<VirtualFile>,
     pomToDependencyHash: Map<VirtualFile, String?>,
     pomDependencies: Map<VirtualFile, Set<File>>,
     explicitProfiles: MavenExplicitProfiles,
@@ -83,7 +84,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
     val serverWorkspaceMap = convertWorkspaceMap(workspaceMap)
 
+    val toResolve = filesToResolve.mapNotNull { file -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
     val request = ProjectResolutionRequest(
+      toResolve,
       pomHashMap,
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,

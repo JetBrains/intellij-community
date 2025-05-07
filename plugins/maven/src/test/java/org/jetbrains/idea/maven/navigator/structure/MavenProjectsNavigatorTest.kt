@@ -246,6 +246,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <modules>
                          <module>m</module>
                        </modules>

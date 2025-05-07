@@ -30,7 +30,8 @@ class TerminalSessionModelImpl : TerminalSessionModel {
       isAutoNewLine = false,
       isAltSendsEscape = true,
       isBracketedPasteMode = false,
-      windowTitle = ""
+      windowTitle = "",
+      isShellIntegrationEnabled = false,
     )
   }
 }

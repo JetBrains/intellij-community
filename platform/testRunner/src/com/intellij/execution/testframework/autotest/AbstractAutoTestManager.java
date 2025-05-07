@@ -155,7 +155,8 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     return ContainerUtil.exists(RunContentManager.getInstance(myProject).getAllDescriptors(), this::isAutoTestEnabled);
   }
 
-  boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
+  @ApiStatus.Internal
+  public boolean isAutoTestEnabled(@NotNull RunContentDescriptor descriptor) {
     ExecutionEnvironment environment = getCurrentEnvironment(descriptor);
     return environment != null && myEnabledRunProfiles.contains(environment.getRunProfile());
   }

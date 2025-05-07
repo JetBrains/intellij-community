@@ -23,13 +23,13 @@ class ReturnFromParameterizedNullMarked {
         return <warning descr="'null' is returned by the method declared as @NullMarked">null</warning>;
       }
     };
-    Callable<R> callable2 = () -> null;
+    Callable<R> callable2 = () -> <warning descr="'null' is returned by the method declared as @NullMarked">null</warning>;
     R r = new Callable<R>() {
       @Override
       public R call() throws Exception {
         return <warning descr="'null' is returned by the method declared as @NullMarked">null</warning>;
       }
     }.call();
-    R r2 = ((Callable<R>) () -> null).call();
+    R r2 = ((Callable<R>) () -> <warning descr="Function may return null, but it's not allowed here">null</warning>).call();
   }
 }

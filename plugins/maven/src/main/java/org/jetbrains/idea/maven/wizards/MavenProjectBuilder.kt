@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
@@ -176,7 +177,10 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
     tree.addManagedFilesWithProfiles(parameters.myFiles!!, MavenExplicitProfiles.NONE)
 
     runBlockingMaybeCancellable {
-      tree.updateAll(false, generalSettings, process.indicator)
+      val mavenEmbedderWrappers = projectOrDefault.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+      mavenEmbedderWrappers.use {
+        tree.updateAll(false, generalSettings, mavenEmbedderWrappers, process.indicator)
+      }
     }
 
     parameters.myMavenProjectTree = tree

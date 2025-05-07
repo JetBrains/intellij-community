@@ -1318,7 +1318,7 @@ public final class TableResultView extends JBTableWithResizableCells
   private boolean shouldDisplayValueEditor(int row, int column) {
     var tableModel = getModel();
     var cellValue = tableModel.getValueAt(row, column);
-    return cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded();
+    return (cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) || (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded());
   }
 
   private void showValueEditor(EventObject e) {
@@ -2777,11 +2777,15 @@ public final class TableResultView extends JBTableWithResizableCells
     return myStatisticsHeader;
   }
 
-  public void setStatisticsPanelMode(StatisticsPanelMode panelMode) {
+  public void setStatisticsPanelMode(StatisticsPanelMode newPanelMode) {
+    StatisticsPanelMode previousPanelMode = getStatisticsPanelMode();
     if (myStatisticsHeader != null) {
-      myStatisticsHeader.setStatisticsPanelMode(panelMode);
+      myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
+
+      if (previousPanelMode != null) {
+        myColumnLayout.resetLayout();
+      }
     }
-    myColumnLayout.resetLayout();
   }
 
   public StatisticsPanelMode getStatisticsPanelMode() {

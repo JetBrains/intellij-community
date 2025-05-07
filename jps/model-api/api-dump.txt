@@ -102,6 +102,9 @@ org.jetbrains.jps.model.JpsNamedElement
 - org.jetbrains.jps.model.JpsElement
 - a:getName():java.lang.String
 - a:setName(java.lang.String):V
+org.jetbrains.jps.model.JpsNamedElementCollection
+- org.jetbrains.jps.model.JpsElementCollection
+- a:findChild(java.lang.String):org.jetbrains.jps.model.JpsNamedElement
 org.jetbrains.jps.model.JpsProject
 - org.jetbrains.jps.model.JpsCompositeElement
 - org.jetbrains.jps.model.JpsReferenceableElement
@@ -254,6 +257,7 @@ a:org.jetbrains.jps.model.ex.JpsExElementFactory
 - a:createCollection(org.jetbrains.jps.model.JpsElementChildRole):org.jetbrains.jps.model.JpsElementCollection
 - a:createContainer(org.jetbrains.jps.model.ex.JpsCompositeElementBase):org.jetbrains.jps.model.ex.JpsElementContainerEx
 - a:createContainerCopy(org.jetbrains.jps.model.ex.JpsElementContainerEx,org.jetbrains.jps.model.ex.JpsCompositeElementBase):org.jetbrains.jps.model.ex.JpsElementContainerEx
+- a:createNamedElementCollection(org.jetbrains.jps.model.JpsElementChildRole):org.jetbrains.jps.model.JpsNamedElementCollection
 - s:getInstance():org.jetbrains.jps.model.ex.JpsExElementFactory
 a:org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 - org.jetbrains.jps.model.ex.JpsCompositeElementBase
@@ -262,6 +266,13 @@ a:org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 - p:<init>(org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase):V
 - getName():java.lang.String
 - setName(java.lang.String):V
+f:org.jetbrains.jps.model.ex.JpsNamedElementCollectionRole
+- org.jetbrains.jps.model.ex.JpsElementChildRoleBase
+- org.jetbrains.jps.model.JpsElementCreator
+- create():org.jetbrains.jps.model.JpsNamedElementCollection
+- s:create(org.jetbrains.jps.model.JpsElementChildRole):org.jetbrains.jps.model.ex.JpsNamedElementCollectionRole
+- equals(java.lang.Object):Z
+- hashCode():I
 a:org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 - <init>():V
 - a:createMatcher(java.lang.String):com.intellij.openapi.fileTypes.FileNameMatcher

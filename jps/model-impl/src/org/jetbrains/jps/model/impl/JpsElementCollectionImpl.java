@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
+public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
   private final Map<E, E> myCopyToOriginal;
   private final JpsElementChildRole<E> myChildRole;
@@ -21,7 +21,7 @@ public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsEle
     myCopyToOriginal = null;
   }
 
-  private JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
+  protected JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
     myChildRole = original.myChildRole;
     myElements = new ArrayList<>(original.myElements.size());
     myCopyToOriginal = new HashMap<>(original.myElements.size());

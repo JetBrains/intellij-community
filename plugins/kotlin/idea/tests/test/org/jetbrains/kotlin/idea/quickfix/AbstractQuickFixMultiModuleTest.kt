@@ -64,6 +64,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
+    protected open val actionPrefix: String? = null
+
     private fun doQuickFixTest(dirPath: String) {
         KotlinTestHelpers.registerChooserInterceptor(testRootDisposable)
 
@@ -79,7 +81,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         project.executeCommand("") {
             var expectedErrorMessage = ""
             try {
-                val actionHint = ActionHint.parse(actionFile, actionFileText)
+                val actionHint = ActionHint.parse(actionFile, actionFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
                 val text = actionHint.expectedText
 
                 val actionShouldBeAvailable = actionHint.shouldPresent()

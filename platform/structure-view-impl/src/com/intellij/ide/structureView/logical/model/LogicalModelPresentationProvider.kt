@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ClassExtension
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 
 /**
  * Adds additional features for common PresentationProvider
@@ -30,6 +31,8 @@ abstract class LogicalModelPresentationProvider<T>: PresentationProvider<T>() {
 
   open fun getColoredText(t: T): List<PresentableNodeDescriptor.ColoredFragment> = emptyList()
 
-  open fun handleClick(t: T, fragmentIndex: Int): Boolean = false
+  open fun handleClick(t: T, fragmentIndex: Int): CompletableFuture<Boolean> {
+    return CompletableFuture.completedFuture(false)
+  }
 
 }

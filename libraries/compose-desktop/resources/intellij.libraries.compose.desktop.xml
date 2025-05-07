@@ -1,5 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.libraries.skiko" />
-  </dependencies>
-</idea-plugin>

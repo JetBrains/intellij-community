@@ -1,5 +1,4 @@
 // FILE: build.gradle.kts
-// IGNORE_K1
 // Library source has the original copyright marker
 // "EXPECTED-NAVIGATION-SUBSTRING": "Copyright 2009 the original author or authors."
 

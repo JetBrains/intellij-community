@@ -139,7 +139,7 @@ public final class ProblemDescriptorUtil {
 
     if ((flags & TRIM_AT_TREE_END) != 0) {
       if (XmlStringUtil.isWrappedInHtml(message)) {
-        message = StringUtil.removeHtmlTags(message, true);
+        message = StringUtil.removeHtmlTags(message, true).replace('\n', ' ');
       }
 
       final int endIndex = message.indexOf("#treeend");

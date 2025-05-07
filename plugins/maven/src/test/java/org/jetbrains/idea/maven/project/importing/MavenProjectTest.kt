@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenPlugin
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
@@ -682,13 +683,11 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
 
     val repositories = projectsManager.getRemoteRepositories()
-    val embeddersManager = projectsManager.embeddersManager
-    val mavenEmbedderWrapper = embeddersManager.getEmbedder(
-      MavenEmbeddersManager.FOR_POST_PROCESSING,
-      MavenUtil.getBaseDir(projectPom).toString())
-
-    val repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
-    embeddersManager.release(mavenEmbedderWrapper)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val repoIds = mavenEmbedderWrappers.use {
+      val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(MavenUtil.getBaseDir(projectPom).toString())
+      mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
+    }
 
     val project = MavenProjectsManager.getInstance(project).findProject(projectPom)
     assertNotNull(project)

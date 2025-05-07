@@ -19,6 +19,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodAnalyzerKt;
@@ -96,6 +97,10 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
               if (variables.length != 1) continue;
               PsiVariable output = variables[0];
               if (SideEffectsVisitor.hasSideEffectOrSimilarUseOutside(range, output)) continue;
+              PsiTypeElement typeElement = output.getTypeElement();
+              if (typeElement == null || (typeElement.isInferredType() && !PsiTypesUtil.isDenotableType(output.getType(), output))) {
+                continue;
+              }
 
               List<PsiVariable> inputVariables = wrapper.getInputVariables(fragment, range, variables);
               if (inputVariables.size() > maxParameters) continue;

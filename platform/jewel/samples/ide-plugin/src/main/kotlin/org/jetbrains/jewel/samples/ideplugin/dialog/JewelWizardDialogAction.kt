@@ -13,9 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -30,11 +28,6 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Typography
 
 internal class JewelWizardDialogAction : DumbAwareAction() {
-    init {
-        ApplicationManager.getApplication()
-            .invokeLater({ initializeComposeMainDispatcherChecker() }, ModalityState.any())
-    }
-
     override fun actionPerformed(event: AnActionEvent) {
         val project = checkNotNull(event.project) { "Project not available" }
         val scope = project.service<ProjectScopeProviderService>().scope

@@ -98,8 +98,17 @@ class OverridesCompletionLookupElementDecorator(
         val tailComments = dummyMemberChildren.toList().takeLastWhile(::isCommentOrWhiteSpace).map(::createCommentOrWhiteSpace)
 
         val prototype = generateMember()
-        context.copyRetainedAnnotations(from = prototype.modifierList!!, to = modifierList)
-        prototype.modifierList!!.replace(modifierList)
+        val prototypeModifierList = prototype.modifierList!!
+        prototypeModifierList.contextReceiverList?.let { receiverList ->
+            val anchor = modifierList.firstChild
+            when (val sibling = receiverList.nextSibling) {
+                is PsiWhiteSpace -> modifierList.addRangeBefore(receiverList, sibling, anchor)
+                else -> modifierList.addBefore(receiverList, anchor)
+            }
+        }
+        context.copyRetainedAnnotations(from = prototypeModifierList, to = modifierList)
+
+        prototypeModifierList.replace(modifierList)
         val insertedMember = dummyMember.replaced(prototype)
         if (isSuspend) insertedMember.addModifier(KtTokens.SUSPEND_KEYWORD)
 

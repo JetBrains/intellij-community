@@ -1,19 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.application.options.EditorFontsConstants
+import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSystemInfo
+import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.FontComboBox
+import com.intellij.ui.FontInfoRenderer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
@@ -22,17 +31,23 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selectedValueIs
+import com.intellij.util.execution.ParametersListUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
-import org.jetbrains.plugins.terminal.TerminalUtil.detectShells
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
+import kotlin.ranges.coerceIn
 
-internal const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
+@ApiStatus.Internal
+const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
 
 internal class TerminalOptionsConfigurable(private val project: Project) : BoundSearchableConfigurable(
   displayName = IdeBundle.message("configurable.TerminalOptionsConfigurable.display.name"),
@@ -46,15 +61,14 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
     return panel {
       lateinit var terminalEngineComboBox: ComboBox<TerminalEngine>
-      val environmentVarsButton = EnvironmentVariablesTextFieldWithBrowseButton()
 
       panel {
         row {
-          val values = if (TerminalUtil.getGenOneTerminalVisibilityValue() == true
+          val values = if (TerminalUtil.isGenOneTerminalOptionVisible()
                            // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                            // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                            // show this option as well to avoid the errors.
-                           || TerminalEngine.getValue() == TerminalEngine.NEW_TERMINAL) {
+                           || optionsProvider.terminalEngine == TerminalEngine.NEW_TERMINAL) {
             listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC, TerminalEngine.NEW_TERMINAL)
           }
           else listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC)
@@ -69,9 +83,15 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           terminalEngineComboBox = comboBox(values, renderer)
             .label(message("settings.terminal.engine"))
             .bindItem(
-              getter = { TerminalEngine.getValue() },
-              setter = { it?.let { TerminalEngine.setValue(it) } }
-            ).component
+              getter = { optionsProvider.terminalEngine },
+              setter = {
+                val oldEngine = optionsProvider.terminalEngine
+                val newEngine = it!!
+                optionsProvider.terminalEngine = newEngine
+                askForFeedbackIfReworkedTerminalDisabled(project, oldEngine, newEngine)
+              }
+            )
+            .component
         }
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {
@@ -108,7 +128,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .align(AlignX.FILL)
         }
         row(message("settings.environment.variables")) {
-          cell(environmentVarsButton)
+          cell(EnvironmentVariablesTextFieldWithBrowseButton())
             .bind(
               componentGet = { component -> component.data },
               componentSet = { component, data -> component.data = data },
@@ -118,13 +138,67 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
       }
 
+      group(message("settings.terminal.font.settings")) {
+        var fontSettings = TerminalFontOptions.getInstance().getSettings()
+        row(message("settings.font.name")) {
+          cell(fontComboBox())
+            .bind(
+              componentGet = { comboBox -> comboBox.fontName },
+              componentSet = {comboBox, value -> comboBox.fontName = value },
+              MutableProperty(
+                getter = { fontSettings.fontFamily },
+                setter = { fontSettings = fontSettings.copy(fontFamily = it) },
+              ).toNullableProperty()
+            )
+        }
+
+        row {
+          textField()
+            .label(message("settings.font.size"))
+            .columns(4)
+            .bindText(
+              getter = { fontSettings.fontSize.fontSizeToString() },
+              setter = { fontSettings = fontSettings.copy(fontSize = it.parseFontSize()) },
+            )
+          textField()
+            .label(message("settings.line.height"))
+            .columns(4)
+            .bindText(
+              getter = { fontSettings.lineSpacing.spacingToString() },
+              setter = { fontSettings = fontSettings.copy(lineSpacing = it.parseSpacing()) },
+            )
+          textField()
+            .label(message("settings.column.width"))
+            .columns(4)
+            .bindText(
+              getter = { fontSettings.columnSpacing.spacingToString() },
+              setter = { fontSettings = fontSettings.copy(columnSpacing = it.parseSpacing()) },
+            )
+        }
+
+        onApply {
+          TerminalFontOptions.getInstance().setSettings(fontSettings)
+        }
+      }
+
       group(message("settings.terminal.application.settings")) {
         row(message("settings.shell.path")) {
           cell(textFieldWithHistoryWithBrowseButton(
             project,
             FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
             historyProvider = {
-              detectShells(environmentVarsButton.envs)
+              // Use shells detector directly because this code is executed on backend.
+              // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
+              TerminalShellsDetector.detectShells().map { shellInfo ->
+                val filteredOptions = shellInfo.options.filter {
+                  // Do not show login and interactive options in the UI.
+                  // They anyway will be substituted implicitly in the shell starting logic.
+                  // So, there is no need to specify them in the settings.
+                  it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+                }
+                val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+                ParametersListUtil.join(shellCommand)
+              }
             },
           )).setupDefaultValue({ childComponent.textEditor }, projectOptionsProvider.defaultShellPath())
             .bindText(projectOptionsProvider::shellPath)
@@ -135,6 +209,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindText(optionsProvider::tabName)
             .align(AlignX.FILL)
         }
+
         row {
           checkBox(message("settings.show.separators.between.blocks"))
             .bindSelected(blockTerminalOptions::showSeparatorsBetweenBlocks)
@@ -153,8 +228,16 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .bindSelected(optionsProvider::mouseReporting)
         }
         row {
+          checkBox(ApplicationBundle.message("advanced.setting.terminal.escape.moves.focus.to.editor"))
+            .bindSelected(
+              getter = { AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor") },
+              setter = { AdvancedSettings.setBoolean("terminal.escape.moves.focus.to.editor", it) },
+            )
+        }
+        row {
           checkBox(message("settings.copy.to.clipboard.on.selection"))
             .bindSelected(optionsProvider::copyOnSelection)
+            .visible(isMac(project) || isWindows(project))
         }
         row {
           checkBox(message("settings.paste.on.middle.mouse.button.click"))
@@ -175,7 +258,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.use.option.as.meta.key.label"))
             .bindSelected(optionsProvider::useOptionAsMetaKey)
-            .visible(SystemInfo.isMac)
+            .visible(isMac(project))
         }
         panel {
           configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })
@@ -251,5 +334,56 @@ private fun getChangedValueColor(): Color {
 private fun findColorByKey(vararg colorKeys: String): Color =
   colorKeys.firstNotNullOfOrNull { UIManager.getColor(it) } ?:
   throw IllegalStateException("Can't find color for keys " + colorKeys.contentToString())
+
+private fun fontComboBox(): FontComboBox = FontComboBox().apply {
+  renderer = object : FontInfoRenderer() {
+    override fun isEditorFont(): Boolean = true
+  }
+  isMonospacedOnly = true
+}
+
+private fun Float.fontSizeToString(): String = formatWithOneDecimalDigit()
+
+private fun String.parseFontSize(): Float =
+  try {
+    toFloat().coerceIn(EditorFontsConstants.getMinEditorFontSize().toFloat()..EditorFontsConstants.getMaxEditorFontSize().toFloat())
+  }
+  catch (_: Exception) {
+    EditorFontsConstants.getDefaultEditorFontSize().toFloat()
+  }
+
+private fun Float.spacingToString(): String = formatWithOneDecimalDigit()
+
+private fun Float.formatWithOneDecimalDigit(): String = String.format(Locale.ROOT, "%.1f", this)
+
+// We only have getMin/MaxEditorLineSpacing(), and nothing for column spacing,
+// but using the same values for column spacing seems reasonable.
+private fun String.parseSpacing(): Float =
+  try {
+    toFloat().coerceIn(EditorFontsConstants.getMinEditorLineSpacing()..EditorFontsConstants.getMaxEditorLineSpacing())
+  }
+  catch (_: Exception) {
+    1.0f
+  }
+
+/**
+ * [TerminalOptionsConfigurable] is created on backend under local [ClientId].
+ * But some options need to be shown depending on client OS.
+ * So, it is a hack to check the client OS from the configurable code.
+ */
+private fun isMac(project: Project): Boolean {
+  return getClientSystemInfo(project)?.macClient ?: SystemInfo.isMac
+}
+
+private fun isWindows(project: Project): Boolean {
+  return getClientSystemInfo(project)?.windowsClient ?: SystemInfo.isWindows
+}
+
+private fun getClientSystemInfo(project: Project): ClientSystemInfo? {
+  val clientId = project.sessions(ClientKind.CONTROLLER).singleOrNull()?.clientId ?: return null
+  return ClientId.withExplicitClientId(clientId) {
+    ClientSystemInfo.getInstance()
+  }
+}
 
 private val LOG = logger<TerminalOptionsConfigurable>()

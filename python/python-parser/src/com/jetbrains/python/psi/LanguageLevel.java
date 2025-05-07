@@ -64,7 +64,8 @@ public enum LanguageLevel {
   PYTHON310(310),
   PYTHON311(311),
   PYTHON312(312),
-  PYTHON313(313);
+  PYTHON313(313),
+  PYTHON314(314);
 
   public static final Comparator<LanguageLevel> VERSION_COMPARATOR = (first, second) -> {
     return first == second ? 0 : first.isOlderThan(second) ? -1 : 1;
@@ -197,6 +198,9 @@ public enum LanguageLevel {
       }
       if (pythonVersionOutput.startsWith("3.13")) {
         return PYTHON313;
+      }
+      if (pythonVersionOutput.startsWith("3.14")) {
+        return PYTHON314;
       }
       return DEFAULT3;
     }

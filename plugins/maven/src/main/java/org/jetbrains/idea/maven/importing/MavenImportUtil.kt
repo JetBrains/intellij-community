@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
@@ -34,17 +35,24 @@ import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
-import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.MavenProject.ProcMode
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenDistribution
+import org.jetbrains.idea.maven.server.MavenServerSettings
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
+import org.jetbrains.idea.maven.utils.MavenEelUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.PrefixStringEncoder
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.function.Supplier
+import kotlin.io.path.absolutePathString
 
 @ApiStatus.Internal
 object MavenImportUtil {
@@ -672,4 +680,72 @@ object MavenImportUtil {
   private fun MavenProject.findCompilerPlugin(): MavenPlugin? {
     return findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
   }
+
+  internal fun guessExistingEmbedderDir(project: Project, multiModuleProjectDirectory: String): String {
+    var dir: String? = multiModuleProjectDirectory
+    if (dir!!.isBlank()) {
+      MavenLog.LOG.warn("Maven project directory is blank. Using project base path")
+      dir = project.getBasePath()
+    }
+    if (null == dir || dir.isBlank()) {
+      MavenLog.LOG.warn("Maven project directory is blank. Using tmp dir")
+      dir = System.getProperty("java.io.tmpdir")
+    }
+    val originalPath = Path.of(dir).toAbsolutePath()
+    var path: Path? = originalPath
+    while (null != path && !Files.exists(path)) {
+      MavenLog.LOG.warn(String.format("Maven project %s directory does not exist. Using parent", path))
+      path = path.parent
+    }
+    if (null == path) {
+      MavenLog.LOG.warn("Could not determine maven project directory: $multiModuleProjectDirectory")
+      return originalPath.toString()
+    }
+    return path.toString()
+  }
+
+  internal fun convertSettings(
+    project: Project,
+    settings: MavenGeneralSettings,
+    mavenDistribution: MavenDistribution,
+  ): MavenServerSettings {
+    val transformer = RemotePathTransformerFactory.createForProject(project)
+    val result = MavenServerSettings()
+    result.loggingLevel = settings.outputLevel.level
+    result.isOffline = settings.isWorkOffline
+    result.isUpdateSnapshots = settings.isAlwaysUpdateSnapshots
+
+    val remotePath = transformer.toRemotePath(mavenDistribution.mavenHome.toString())
+    result.mavenHomePath = remotePath
+
+    val userSettings = MavenEelUtil.getUserSettings(project, settings.userSettingsFile, settings.mavenConfig)
+    val userSettingsPath = userSettings.toAbsolutePath().toString()
+    result.userSettingsPath = transformer.toRemotePath(userSettingsPath)
+
+    val localRepository = MavenEelUtil.getLocalRepo(project,
+                                                    settings.localRepository,
+                                                    MavenInSpecificPath(mavenDistribution.mavenHome),
+                                                    settings.userSettingsFile,
+                                                    settings.mavenConfig)
+      .toAbsolutePath().toString()
+
+    result.localRepositoryPath = transformer.toRemotePath(localRepository)
+    val file = getGlobalConfigFromMavenConfig(settings) ?: MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome)
+    result.globalSettingsPath = transformer.toRemotePath(file.absolutePathString())
+
+    var sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).projectSdk)
+    if (sdkPath != null) {
+      sdkPath = transformer.toRemotePath(sdkPath)
+    }
+    result.projectJdk = sdkPath
+
+    return result
+  }
+
+  private fun getGlobalConfigFromMavenConfig(settings: MavenGeneralSettings): Path? {
+    val mavenConfig = settings.mavenConfig ?: return null
+    val filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS) ?: return null
+    return Path.of(filePath)
+  }
+
 }

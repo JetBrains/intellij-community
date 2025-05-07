@@ -12,6 +12,7 @@ import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -45,8 +46,6 @@ internal open class TerminalEventsHandlerImpl(
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
     }
-
-    scrollingModel?.scrollToCursor(force = true)
 
     if (ignoreNextKeyTypedEvent) {
       e.consume()
@@ -91,10 +90,12 @@ internal open class TerminalEventsHandlerImpl(
       val code = encodingManager.getCode(keyCode, e.modifiers)
       if (code != null) {
         terminalInput.sendBytes(code)
-        // TODO
-        //if (settings.scrollToBottomOnTyping() && TerminalPanel.isCodeThatScrolls(keyCode)) {
-        //  scrollToBottom()
-        //}
+        if (isCodeThatScrolls(keyCode)) {
+          scrollingModel?.scrollToCursor(force = true)
+        }
+        if (keyCode == KeyEvent.VK_ENTER) {
+          TerminalUsageLocalStorage.getInstance().recordEnterKeyPressed()
+        }
         return true
       }
       if (isAltPressedOnly(e) && Character.isDefined(keyChar) && settings.altSendsEscape()) {
@@ -125,10 +126,9 @@ internal open class TerminalEventsHandlerImpl(
       return false
     }
     terminalInput.sendString(keyChar.toString())
-    // TODO
-    //if (settings.scrollToBottomOnTyping()) {
-    //scrollToBottom()
-    //}
+
+    scrollingModel?.scrollToCursor(force = true)
+
     return true
   }
 
@@ -138,6 +138,21 @@ internal open class TerminalEventsHandlerImpl(
            && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
            && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
            && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
+  }
+
+  private fun isCodeThatScrolls(keycode: Int): Boolean {
+    return keycode == KeyEvent.VK_UP ||
+           keycode == KeyEvent.VK_DOWN ||
+           keycode == KeyEvent.VK_LEFT ||
+           keycode == KeyEvent.VK_RIGHT ||
+           keycode == KeyEvent.VK_BACK_SPACE ||
+           keycode == KeyEvent.VK_INSERT ||
+           keycode == KeyEvent.VK_DELETE ||
+           keycode == KeyEvent.VK_ENTER ||
+           keycode == KeyEvent.VK_HOME ||
+           keycode == KeyEvent.VK_END ||
+           keycode == KeyEvent.VK_PAGE_UP ||
+           keycode == KeyEvent.VK_PAGE_DOWN
   }
 
   private fun simpleMapKeyCodeToChar(e: KeyEvent): Char {

@@ -131,6 +131,12 @@ public interface JBAccountInfoService {
    */
   @NotNull CompletableFuture<@NotNull LicenseListResult> issueTrialLicense(@NotNull String productCode, @NotNull List<String> consentOptions);
 
+
+  /**
+   * Simulates the process of issuing a trial license for a specified product without performing any actual changes.
+   */
+  @NotNull CompletableFuture<@NotNull LicenseListResult> dryRunIssueTrialLicense(@NotNull String productCode);
+
   /**
    * Records the accepted version of the specified EUA document, and responds whether a newer version of the document is available.
    * <p>

@@ -53,17 +53,7 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
     };
   }
 
-  static class NullCheckParameter {
-    int myIndex;
-    boolean myNull;
-    boolean myReturnsParameter;
-
-    NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
-      myIndex = index;
-      myNull = aNull;
-      myReturnsParameter = returnsParameter;
-    }
-
+  record NullCheckParameter(int myIndex, boolean myNull, boolean myReturnsParameter) {
     static @Nullable NullCheckParameter fromCall(PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null || method.isConstructor()) return null;
@@ -75,9 +65,9 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
       ContractReturnValue firstReturn = contract.getReturnValue();
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
       if (condition == null) return null;
-      if (firstReturn instanceof ParameterReturnValue) {
+      if (firstReturn instanceof ParameterReturnValue parameterReturnValue) {
         // first contract is like "!null -> param1"; ignore other contracts
-        int index = ((ParameterReturnValue)firstReturn).getParameterNumber();
+        int index = parameterReturnValue.getParameterNumber();
         int nullIndex = condition.getNullCheckedArgument(false).orElse(-1);
         if (nullIndex != index) return null;
         return new NullCheckParameter(nullIndex, false, true);
@@ -96,11 +86,17 @@ public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspe
       boolean returnsParameter = false;
       if (contracts.size() == 2) {
         ContractReturnValue returnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
-        if (returnValue instanceof ParameterReturnValue && ((ParameterReturnValue)returnValue).getParameterNumber() == nullIndex) {
+        if (returnValue instanceof ParameterReturnValue result && result.getParameterNumber() == nullIndex) {
           returnsParameter = true;
         } else {
           return null;
         }
+      }
+      if (!returnsParameter && !PsiTypes.voidType().equals(method.getReturnType())) {
+        // Method returns something that differs from the parameter: it's not a simple null-check method.
+        // If its result is nevertheless not used, then it's a job of IgnoreResultOfCallInspection to 
+        // report it.
+        return null;
       }
       return new NullCheckParameter(nullIndex, isNull, returnsParameter);
     }

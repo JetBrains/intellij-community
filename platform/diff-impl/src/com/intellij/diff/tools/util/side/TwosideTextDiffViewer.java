@@ -25,6 +25,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -265,7 +266,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   public @Nullable Navigatable getNavigatable() {
     Side side = getCurrentSide();
 
-    LineCol position = LineCol.fromCaret(getEditor(side));
+    EditorEx editor = getEditor(side);
+    LineCol position = ReadAction.compute(() -> LineCol.fromCaret(editor));
     Navigatable navigatable = getContent(side).getNavigatable(position);
     if (navigatable != null) return navigatable;
 

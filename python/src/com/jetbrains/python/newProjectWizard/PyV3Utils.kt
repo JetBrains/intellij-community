@@ -18,9 +18,13 @@ suspend fun installPackages(project: Project, sdk: Sdk, vararg packages: String)
   return supervisorScope { // Not install other packages if one failed
     for (packageName in packages) {
       val packageSpecification = PythonSimplePackageSpecification(packageName, null, null)
-      packageManager.installPackage(packageSpecification, emptyList<String>()).onFailure { return@supervisorScope Result.failure(it) }
+      packageManager.installPackage(packageSpecification, emptyList<String>(), withBackgroundProgress = false).onFailure {
+        return@supervisorScope Result.failure(it)
+      }
+
     }
     return@supervisorScope Result.success(Unit)
+
   }
 }
 

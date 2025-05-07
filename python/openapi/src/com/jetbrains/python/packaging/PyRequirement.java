@@ -50,6 +50,7 @@ public interface PyRequirement {
   @Nullable
   PyPackage match(@NotNull Collection<? extends PyPackage> packages);
 
+  boolean match(@NotNull PyPackage packageName);
 
   default boolean isEditable() {
     if (getInstallOptions().isEmpty()) return false;

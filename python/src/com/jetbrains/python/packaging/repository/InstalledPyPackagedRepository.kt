@@ -3,4 +3,4 @@ package com.jetbrains.python.packaging.repository
 
 import com.jetbrains.python.PyBundle
 
-class InstalledPyPackagedRepository : PyPackageRepository(PyBundle.message("python.toolwindow.packages.installed.label"), "", "") {}
+class InstalledPyPackagedRepository : PyPackageRepository(PyBundle.message("python.toolwindow.packages.installed.label"), null, null)

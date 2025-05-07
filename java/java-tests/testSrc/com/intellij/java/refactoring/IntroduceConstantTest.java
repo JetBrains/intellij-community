@@ -4,11 +4,14 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
@@ -16,9 +19,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
+
 @TestDataPath("$CONTENT_ROOT/testData")
 public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/introduceConstant/";
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21_ANNOTATED;
+  }
 
   @NotNull
   @Override
@@ -49,7 +59,7 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
 
   public void testNonStaticContainerForCompileTimeConstant2() { doTest(); }
   public void testStaticFieldInAnonymous() { doTest(); }
-  public void testStaticFieldInAnonymousJava8() { doTest(); }
+  public void testStaticFieldInAnonymousJava8() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest()); }
 
   private void doTest(boolean makeEnumConstant) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -87,6 +97,10 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testAnnotationDescription() {
+    doTest();
+  }
+  
+  public void testNoExternalTypeAnnotations() {
     doTest();
   }
 

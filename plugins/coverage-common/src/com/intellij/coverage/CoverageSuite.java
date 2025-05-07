@@ -63,7 +63,7 @@ public interface CoverageSuite extends JDOMExternalizable {
   void setCoverageData(final ProjectData projectData);
 
   /**
-   * Reinit coverage data cache with {@link CoverageRunner#loadCoverageData(File, CoverageSuite)}.
+   * Reinit coverage data cache with {@link CoverageRunner#loadCoverageDataWithReporting(File, CoverageSuite)}.
    */
   @ApiStatus.Internal
   default void restoreCoverageData() {

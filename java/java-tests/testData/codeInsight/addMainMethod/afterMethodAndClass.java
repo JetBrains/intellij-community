@@ -10,5 +10,5 @@ class A {
 
 }
 
-public void main() {
+void main() {
 }

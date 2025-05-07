@@ -21,7 +21,7 @@ close(f)
 r = Resource()
 close(r)
 
-# There must be a warning "Expected type 'SupportsClose', got 'Type[Resource]' instead".
+# There must be a warning "Expected type 'SupportsClose', got 'type[Resource]' instead".
 # To fix this in PyTypeChecker.match(PyCallableType, PyCallableType, MatchContext) should be added checking named, optional and star params, not only positional ones.
 # close(Resource)
 

@@ -41,6 +41,7 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.filter
+import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -156,9 +157,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   ) {
     coroutineScope {
       withKernel {
-        subscribeToTaskCancellation(taskInfo, taskContext)
-        subscribeToTaskSuspensionChanges(taskInfo, taskSuspender)
-        subscribeToTaskUpdates(taskInfo, pipe)
+        tryWithEntities(taskInfo) {
+          subscribeToTaskCancellation(taskInfo, taskContext)
+          subscribeToTaskSuspensionChanges(taskInfo, taskSuspender)
+          subscribeToTaskUpdates(taskInfo, pipe)
+        }
       }
     }
   }

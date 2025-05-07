@@ -3,6 +3,7 @@
 package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,9 +18,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,12 +40,12 @@ import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Typography
-import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
+import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 import org.jetbrains.skiko.OS
@@ -92,7 +92,14 @@ public fun Scrollbars(
             ColumnWithScrollbar(style, Modifier.height(200.dp).weight(1f))
         }
 
-        HorizontalScrollbarContent(style, Modifier.fillMaxWidth())
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            HorizontalScrollbarContent(style, Modifier.weight(1f).fillMaxHeight())
+            AlignedContentExample(style, Modifier.weight(1f).fillMaxHeight())
+        }
     }
 }
 
@@ -176,13 +183,12 @@ private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
         Text("Column", fontSize = 18.sp)
         Spacer(Modifier.height(8.dp))
 
-        Box(Modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)) {
-            val scrollState = rememberScrollState()
+        VerticallyScrollableContainer(
+            modifier = Modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+            style = style,
+        ) {
             Column(
-                modifier =
-                    Modifier.background(JewelTheme.textAreaStyle.colors.background)
-                        .verticalScroll(scrollState)
-                        .align(Alignment.CenterStart)
+                modifier = Modifier.background(JewelTheme.textAreaStyle.colors.background).align(Alignment.CenterStart)
             ) {
                 LIST_ITEMS.forEachIndexed { index, line ->
                     Text(
@@ -197,27 +203,73 @@ private fun ColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
                     }
                 }
             }
-            VerticalScrollbar(scrollState = scrollState, modifier = Modifier.align(Alignment.CenterEnd), style = style)
         }
     }
 }
 
 @Composable
 private fun HorizontalScrollbarContent(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
-    HorizontallyScrollableContainer(
-        modifier = modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
-        style = scrollbarStyle,
-    ) {
-        Column(
+    Column(modifier) {
+        Text("Column", fontSize = 18.sp)
+        Spacer(Modifier.height(8.dp))
+
+        HorizontallyScrollableContainer(
             modifier =
-                Modifier.fillMaxHeight()
-                    .background(JewelTheme.textAreaStyle.colors.background)
-                    .padding(bottom = scrollbarContentSafePadding(scrollbarStyle))
-                    .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                Modifier.fillMaxSize().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+            style = scrollbarStyle,
         ) {
-            val oneLineIpsum = LOREM_IPSUM.replace('\n', ' ')
-            repeat(4) { Text(oneLineIpsum) }
+            Column(
+                modifier =
+                    Modifier.fillMaxHeight()
+                        .background(JewelTheme.textAreaStyle.colors.background)
+                        .padding(bottom = scrollbarContentSafePadding(scrollbarStyle))
+                        .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val oneLineIpsum = LOREM_IPSUM.replace('\n', ' ')
+                repeat(4) { Text(oneLineIpsum) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlignedContentExample(scrollbarStyle: ScrollbarStyle, modifier: Modifier) {
+    Column(modifier) {
+        Text("Column", fontSize = 18.sp)
+        Spacer(Modifier.height(8.dp))
+
+        VerticallyScrollableContainer(
+            style = scrollbarStyle,
+            modifier =
+                Modifier.fillMaxWidth().border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+        ) {
+            val shape = RoundedCornerShape(4.dp)
+            Column(
+                modifier =
+                    Modifier.align(Alignment.Center)
+                        .background(
+                            color =
+                                if (JewelTheme.isDark) {
+                                    JewelTheme.colorPalette.gray(1)
+                                } else {
+                                    JewelTheme.colorPalette.gray(14)
+                                },
+                            shape,
+                        )
+                        .border(1.dp, JewelTheme.colorPalette.blue(2), shape)
+                        .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text("First Row")
+                Text("Second Row")
+                Text("Third Row")
+                Text("Fourth Row")
+                Text("Fifth Row")
+                Text("Sixth Row")
+                Text("Seventh Row")
+            }
         }
     }
 }

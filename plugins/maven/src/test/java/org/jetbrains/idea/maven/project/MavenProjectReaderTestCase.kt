@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
 
-abstract class MavenProjectReaderTestCase : MavenTestCase() {
+abstract class MavenProjectReaderTestCase : MavenMultiVersionImportingTestCase() {
   protected suspend fun readProject(file: VirtualFile, vararg profiles: String): MavenModel {
     val readResult = readProject(file, NullProjectLocator(), *profiles)
     assertProblems(readResult)
@@ -17,7 +18,17 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected suspend fun readProject(file: VirtualFile,
                                     locator: MavenProjectReaderProjectLocator,
                                     vararg profiles: String): MavenProjectReaderResult {
-    val result = MavenProjectReader(project).readProjectAsync(mavenGeneralSettings, file, MavenExplicitProfiles(listOf(*profiles)), locator)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val reader = MavenProjectReader(project, mavenEmbedderWrappers, mavenGeneralSettings, MavenExplicitProfiles(listOf(*profiles)), locator)
+    val result = mavenEmbedderWrappers.use { reader.readProjectAsync(file) }
+    return result
+  }
+
+  protected suspend fun evaluateEffectivePom(file: VirtualFile): String? {
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val result = mavenEmbedderWrappers.use {
+      mavenEmbedderWrappers.getEmbedder(projectPath).evaluateEffectivePom(file, emptyList(), emptyList())
+    }
     return result
   }
 

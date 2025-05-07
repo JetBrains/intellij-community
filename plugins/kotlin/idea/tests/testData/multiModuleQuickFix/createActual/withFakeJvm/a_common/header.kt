@@ -1,4 +1,5 @@
 // "Add missing actual declarations" "true"
-// IGNORE_K2
+// K2_ACTION: "Create actual in 'a_JVM'" "true"
+// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinNoActualForExpectInspection
 
 expect fun <caret>foo(arg: Int): String

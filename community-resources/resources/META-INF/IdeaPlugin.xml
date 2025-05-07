@@ -10,6 +10,7 @@
   <module value="com.intellij.platform.ide.provisioner"/>
 
   <content>
+    <module name="intellij.debugger.streams.core"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>

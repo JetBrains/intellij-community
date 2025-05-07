@@ -1,6 +1,6 @@
 // "Add missing actual members" "true"
 // DISABLE_ERRORS
-// IGNORE_K2
+
 
 actual class <caret>WithPrimaryConstructor {
     fun bar(x: String) {}

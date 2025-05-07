@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.stubs
 
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -33,7 +34,7 @@ class PyFunctoolsWrapsDecoratorStub(val wrapped: String) : PyCustomDecoratorStub
   companion object {
     fun create(psi: PyDecorator): PyFunctoolsWrapsDecoratorStub? {
       val qName = psi.qualifiedName ?: return null
-      if (!PyKnownDecoratorUtil.asKnownDecorators(qName).contains(PyKnownDecoratorUtil.KnownDecorator.FUNCTOOLS_WRAPS)) return null
+      if (!PyKnownDecoratorUtil.asKnownDecorators(qName).contains(PyKnownDecorator.FUNCTOOLS_WRAPS)) return null
       val wrappedExpr = psi.argumentList?.getValueExpressionForParam(PyKnownDecoratorUtil.FunctoolsWrapsParameters.WRAPPED) as? PyReferenceExpression
       val wrappedExprQName = wrappedExpr?.asQualifiedName() ?: return null
       return PyFunctoolsWrapsDecoratorStub(wrappedExprQName.toString())

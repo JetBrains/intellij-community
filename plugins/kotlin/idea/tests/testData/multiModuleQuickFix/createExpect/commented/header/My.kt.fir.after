@@ -1,0 +1,12 @@
+// My: to be implemented
+// DISABLE_ERRORS
+
+expect class <selection><caret></selection>My {
+    fun foo(param: String): Int
+    fun String.bar(y: Double): Boolean
+    fun baz()
+    val isGood: Boolean
+    var status: Int
+
+    constructor(flag: Boolean)
+}

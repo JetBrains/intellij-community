@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.compose.JBComposePanel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
@@ -30,6 +29,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -60,7 +60,7 @@ internal class MarkdownComposePanel(
   private val scrollToLineFlow = MutableSharedFlow<Int>(replay = 1)
 
   private val panelComponent by lazy {
-    JBComposePanel {
+    JewelComposePanel {
       // TODO temporary styling, we will likely need our own in the future for JCEF-like rendering
       MarkdownPanel()
     }

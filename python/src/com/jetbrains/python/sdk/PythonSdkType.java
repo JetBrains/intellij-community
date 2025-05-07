@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
@@ -347,14 +348,20 @@ public final class PythonSdkType extends SdkType {
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (ownerComponent != null) {
-        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
-      }
-      else {
-        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
-      }
-    });
+    if (PlatformUtils.isQodana()) {
+      Project project = ContainerUtil.getFirstItem(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
+      projectRef.set(project);
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (ownerComponent != null) {
+          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
+        }
+        else {
+          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+        }
+      });
+    }
     PythonSdkUpdater.updateOrShowError(sdk, projectRef.get(), ownerComponent);
   }
 

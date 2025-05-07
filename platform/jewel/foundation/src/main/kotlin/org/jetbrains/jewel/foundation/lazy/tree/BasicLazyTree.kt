@@ -22,6 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
@@ -111,14 +116,13 @@ public fun <T> BasicLazyTree(
 
     SelectableLazyColumn(
         modifier = modifier,
-        state = treeState.delegate,
         selectionMode = selectionMode,
-        keyActions = keyActions,
-        pointerEventActions = pointerEventScopedActions,
+        state = treeState.delegate,
         onSelectedIndexesChange = {
             onSelectionChange(it.map { element -> flattenedTree[element] as Tree.Element<T> })
         },
-        interactionSource = remember { MutableInteractionSource() },
+        keyActions = keyActions,
+        pointerEventActions = pointerEventScopedActions,
     ) {
         itemsIndexed(items = flattenedTree, key = { _, item -> item.id }, contentType = { _, item -> item.data }) {
             index,
@@ -158,9 +162,29 @@ public fun <T> BasicLazyTree(
                         )
                         .padding(elementContentPadding)
                         .padding(start = (element.depth * indentSize.value).dp)
+                        .semantics(mergeDescendants = true) {
+                            // Only set expansion state in content description for nodes
+                            if (element is Tree.Element.Node) {
+                                contentDescription = if (element.id in treeState.openNodes) "expanded" else "collapsed"
+                            }
+
+                            selected = element.id in treeState.delegate.selectedKeys
+                            focused = treeState.delegate.lastActiveItemIndex == index
+
+                            stateDescription =
+                                if (
+                                    treeState.delegate.isKeyboardNavigating &&
+                                        treeState.delegate.lastActiveItemIndex == index
+                                ) {
+                                    "current item"
+                                } else {
+                                    ""
+                                }
+                        }
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                            val item = flattenedTree[index] as Tree.Element<T>
                             (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)?.notifyItemClicked(
-                                item = flattenedTree[index] as Tree.Element<T>,
+                                item = item,
                                 scope = scope,
                                 doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
                                 onElementClick = onElementClick,
@@ -307,7 +331,6 @@ private fun Tree.Element<*>.flattenTree(state: TreeState): MutableList<Tree.Elem
             open(true)
             children?.forEach { child -> orderedChildren.addAll(child.flattenTree(state)) }
         }
-
         is Tree.Element.Leaf<*> -> {
             orderedChildren.add(this)
         }

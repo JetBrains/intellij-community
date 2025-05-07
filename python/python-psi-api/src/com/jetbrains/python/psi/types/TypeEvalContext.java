@@ -7,16 +7,18 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyTypedElement;
+import com.intellij.util.containers.CollectionFactory;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,8 +45,8 @@ public final class TypeEvalContext {
 
   private final ThreadLocal<ProcessingContext> myProcessingContext = ThreadLocal.withInitial(ProcessingContext::new);
 
-  private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
-  private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
+  private final Map<PyTypedElement, PyType> myEvaluated = CollectionFactory.createConcurrentSoftValueMap();
+  private final Map<PyCallable, PyType> myEvaluatedReturn = CollectionFactory.createConcurrentSoftValueMap();
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
@@ -173,18 +175,15 @@ public final class TypeEvalContext {
       Pair.create(element, this),
       false,
       () -> {
-        synchronized (myEvaluated) {
-          if (myEvaluated.containsKey(element)) {
-            final PyType type = myEvaluated.get(element);
-            assertValid(type, element);
-            return type;
-          }
+        PyType cachedType = myEvaluated.get(element);
+        if (cachedType != null) {
+          assertValid(cachedType, element);
+          return cachedType == PyNullType.INSTANCE ? null : cachedType;
         }
-        final PyType type = element.getType(this, Key.INSTANCE);
+
+        PyType type = element.getType(this, Key.INSTANCE);
         assertValid(type, element);
-        synchronized (myEvaluated) {
-          myEvaluated.put(element, type);
-        }
+        myEvaluated.put(element, type == null ? PyNullType.INSTANCE : type);
         return type;
       }
     );
@@ -195,18 +194,14 @@ public final class TypeEvalContext {
       Pair.create(callable, this),
       false,
       () -> {
-        synchronized (myEvaluatedReturn) {
-          if (myEvaluatedReturn.containsKey(callable)) {
-            final PyType type = myEvaluatedReturn.get(callable);
-            assertValid(type, callable);
-            return type;
-          }
+        PyType cachedType = myEvaluatedReturn.get(callable);
+        if (cachedType != null) {
+          assertValid(cachedType, callable);
+          return cachedType == PyNullType.INSTANCE ? null : cachedType;
         }
-        final PyType type = callable.getReturnType(this, Key.INSTANCE);
+        PyType type = callable.getReturnType(this, Key.INSTANCE);
         assertValid(type, callable);
-        synchronized (myEvaluatedReturn) {
-          myEvaluatedReturn.put(callable, type);
-        }
+        myEvaluatedReturn.put(callable, type == null ? PyNullType.INSTANCE : type);
         return type;
       }
     );
@@ -277,5 +272,38 @@ public final class TypeEvalContext {
     else {
       return getContextFile(context);
     }
+  }
+
+  private static class PyNullType implements PyType {
+    private PyNullType() {}
+
+    @Override
+    public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                      @Nullable PyExpression location,
+                                                                      @NotNull AccessDirection direction,
+                                                                      @NotNull PyResolveContext resolveContext) {
+      return List.of();
+    }
+
+    @Override
+    public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+
+    @Override
+    public @Nullable String getName() {
+      return "null";
+    }
+
+    @Override
+    public boolean isBuiltin() {
+      return false;
+    }
+
+    @Override
+    public void assertValid(String message) {
+    }
+
+    private static final PyNullType INSTANCE = new PyNullType();
   }
 }

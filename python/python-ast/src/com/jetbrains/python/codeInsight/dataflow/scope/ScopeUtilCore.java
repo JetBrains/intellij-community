@@ -39,7 +39,7 @@ public final class ScopeUtilCore {
         AstScopeOwner firstOwner = stub.getParentStubOfType(AstScopeOwner.class);
         AstScopeOwner nextOwner;
         if (firstOwner != null && !(firstOwner instanceof PsiFile)) {
-          StubElement<?> firstOwnerStub = ((StubBasedPsiElementBase<?>)firstOwner).getStub();
+          StubElement<?> firstOwnerStub = ((StubBasedPsiElementBase<?>)firstOwner).getGreenStub();
           assert firstOwnerStub != null;
           nextOwner = firstOwnerStub.getParentStubOfType(AstScopeOwner.class);
         }

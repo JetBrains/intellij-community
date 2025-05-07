@@ -2,9 +2,12 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -26,6 +29,7 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 class WebSymbolsQueryExecutorImpl(
+  override val location: PsiElement?,
   rootScope: List<WebSymbolsScope>,
   override val namesProvider: WebSymbolNamesProvider,
   override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
@@ -34,19 +38,24 @@ class WebSymbolsQueryExecutorImpl(
 ) : WebSymbolsQueryExecutor {
 
   private val rootScope: List<WebSymbolsScope> = initializeCompoundScopes(rootScope)
+  private var nestingLevel: Int = 0
+
+  override var keepUnresolvedTopLevelReferences: Boolean = false
 
   override fun hashCode(): Int =
-    Objects.hash(rootScope, context, namesProvider, resultsCustomizer)
+    Objects.hash(location, rootScope, context, namesProvider, resultsCustomizer)
 
   override fun equals(other: Any?): Boolean =
     other === this ||
     other is WebSymbolsQueryExecutorImpl
+    && other.location == location
     && other.context == context
     && other.rootScope == rootScope
     && other.namesProvider == namesProvider
     && other.resultsCustomizer == resultsCustomizer
 
   override fun createPointer(): Pointer<WebSymbolsQueryExecutor> {
+    val locationPtr = this.location?.createSmartPointer()
     val namesProviderPtr = this.namesProvider.createPointer()
     val context = this.context
     val allowResolve = this.allowResolve
@@ -63,7 +72,8 @@ class WebSymbolsQueryExecutorImpl(
 
       val scope = scopePtr.dereference()
                   ?: return@Pointer null
-      WebSymbolsQueryExecutorImpl(rootScope, namesProvider, scope, context, allowResolve)
+      val location = locationPtr?.let { it.dereference() ?: return@Pointer null }
+      WebSymbolsQueryExecutorImpl(location, rootScope, namesProvider, scope, context, allowResolve)
     }
   }
 
@@ -101,7 +111,7 @@ class WebSymbolsQueryExecutorImpl(
     if (rules.isEmpty())
       this
     else
-      WebSymbolsQueryExecutorImpl(rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
+      WebSymbolsQueryExecutorImpl(location, rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
   override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope>): Boolean {
     return buildQueryScope(scope).any { it.isExclusiveFor(qualifiedKind) }
@@ -110,6 +120,7 @@ class WebSymbolsQueryExecutorImpl(
   private fun initializeCompoundScopes(rootScope: List<WebSymbolsScope>): List<WebSymbolsScope> {
     if (rootScope.any { it is WebSymbolsCompoundScope }) {
       val compoundScopeQueryExecutor = WebSymbolsQueryExecutorImpl(
+        location,
         rootScope.filter { it !is WebSymbolsCompoundScope },
         namesProvider, resultsCustomizer, context, allowResolve
       )
@@ -152,9 +163,18 @@ class WebSymbolsQueryExecutorImpl(
         .asSequence()
         .flatMap { scope ->
           ProgressManager.checkCanceled()
-          scope.getMatchingSymbols(qualifiedName, params, Stack(finalContext))
+          val prev = keepUnresolvedTopLevelReferences
+          keepUnresolvedTopLevelReferences = false
+          try {
+            scope.getMatchingSymbols(qualifiedName, params, Stack(finalContext))
+          } finally {
+            keepUnresolvedTopLevelReferences = prev
+          }
         }
-        .filter { it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null) }
+        .filter {
+          keepUnresolvedTopLevelReferences
+          || it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null)
+        }
         .distinct()
         .toList()
         .customizeMatches(params.strictScope, qualifiedName)
@@ -278,21 +298,38 @@ class WebSymbolsQueryExecutorImpl(
     val scope = buildQueryScope(additionalScope)
     return RecursionManager.doPreventingRecursion(Pair(path, params.virtualSymbols), false) {
       val contextQueryParams = WebSymbolsNameMatchQueryParams.create(this, true, false)
-      var i = 0
-      while (i < path.size - 1) {
-        val qName = path[i++]
-        if (qName.name.isEmpty()) return@doPreventingRecursion emptyList()
-        val scopeSymbols = scope
-          .takeLastUntilExclusiveScopeFor(qName.qualifiedKind)
-          .flatMap {
-            it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+      val publisher = if (nestingLevel++ == 0)
+        ApplicationManager.getApplication().messageBus.syncPublisher(WebSymbolsQueryExecutorListener.TOPIC)
+      else
+        null
+      publisher?.beforeQuery(params)
+      try {
+        var i = 0
+        while (i < path.size - 1) {
+          val qName = path[i++]
+          if (qName.name.isEmpty()) return@doPreventingRecursion emptyList()
+          val scopeSymbols = scope
+            .takeLastUntilExclusiveScopeFor(qName.qualifiedKind)
+            .flatMap {
+              val prev = keepUnresolvedTopLevelReferences
+              keepUnresolvedTopLevelReferences = false
+              try {
+                it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+              } finally {
+                keepUnresolvedTopLevelReferences = prev
+              }
+            }
+          scopeSymbols.flatMapTo(scope) {
+            it.queryScope
           }
-        scopeSymbols.flatMapTo(scope) {
-          it.queryScope
         }
+        val lastSection = path.last()
+        finalProcessor(scope, lastSection, params)
       }
-      val lastSection = path.last()
-      finalProcessor(scope, lastSection, params)
+      finally {
+        publisher?.afterQuery(params)
+        nestingLevel--
+      }
     } ?: run {
       thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
                         "Root scope: " + rootScope.map {

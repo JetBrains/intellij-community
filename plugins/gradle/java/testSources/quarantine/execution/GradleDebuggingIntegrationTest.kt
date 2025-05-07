@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.quarantine.execution
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.execution.GradleDebuggingIntegrationTestCase
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -324,5 +325,44 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":module:printArgs", moduleArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:printArgs", compositeArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile)
+  }
+
+  @Test
+  fun `test tasks debugging for test task`() {
+    val jUnitTestAnnotationClass = when (isJunit5Supported(currentGradleVersion)) {
+      true -> "org.junit.jupiter.api.Test"
+      else -> "org.junit.Test"
+    }
+    createProjectSubFile("src/test/java/TestCase.java", """
+      |import java.io.BufferedWriter;
+      |import java.io.FileWriter;
+      |import java.io.IOException;
+      |import java.lang.management.ManagementFactory;
+      |import java.lang.management.RuntimeMXBean;
+      |import java.util.List;
+      |
+      |public class TestCase {
+      |
+      |  @$jUnitTestAnnotationClass
+      |  public void test() {
+      |    RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+      |    List<String> jvmArgs = runtimeMxBean.getInputArguments();
+      |
+      |    try (BufferedWriter os = new BufferedWriter(new FileWriter("args.txt", false))) {
+      |      os.write(jvmArgs.toString());
+      |    } catch (IOException e) {
+      |      throw new RuntimeException(e);
+      |    }
+      |  }
+      |}
+    """.trimMargin())
+
+    importProject {
+      withJavaPlugin()
+      withJUnit()
+    }
+
+    executeRunConfiguration(":test")
+    assertDebugJvmArgs(":test", File(projectPath, "args.txt"))
   }
 }

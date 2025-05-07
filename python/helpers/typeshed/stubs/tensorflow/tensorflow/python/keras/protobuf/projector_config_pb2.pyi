@@ -5,21 +5,18 @@ This file is a copy of the TensorBoard ProjectorConfig proto.
 Keep this file in sync with the source proto definition at
 https://github.com/tensorflow/tensorboard/blob/master/tensorboard/plugins/projector/projector_config.proto
 """
+
 import builtins
 import collections.abc
+import typing
+
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
 import google.protobuf.message
-import sys
-
-if sys.version_info >= (3, 8):
-    import typing as typing_extensions
-else:
-    import typing_extensions
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-@typing_extensions.final
+@typing.final
 class SpriteMetadata(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -29,17 +26,18 @@ class SpriteMetadata(google.protobuf.message.Message):
     @property
     def single_image_dim(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
         """[width, height] of a single image in the sprite."""
+
     def __init__(
         self,
         *,
         image_path: builtins.str | None = ...,
         single_image_dim: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["image_path", b"image_path", "single_image_dim", b"single_image_dim"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["image_path", b"image_path", "single_image_dim", b"single_image_dim"]) -> None: ...
 
 global___SpriteMetadata = SpriteMetadata
 
-@typing_extensions.final
+@typing.final
 class EmbeddingInfo(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -52,17 +50,18 @@ class EmbeddingInfo(google.protobuf.message.Message):
     tensor_name: builtins.str
     metadata_path: builtins.str
     bookmarks_path: builtins.str
+    tensor_path: builtins.str
+    """Path to the TSV file holding the tensor values. If missing, the tensor
+    is assumed to be stored in the model checkpoint.
+    """
     @property
     def tensor_shape(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]:
         """Shape of the 2D tensor [N x D]. If missing, it will be inferred from the
         model checkpoint.
         """
+
     @property
     def sprite(self) -> global___SpriteMetadata: ...
-    tensor_path: builtins.str
-    """Path to the TSV file holding the tensor values. If missing, the tensor
-    is assumed to be stored in the model checkpoint.
-    """
     def __init__(
         self,
         *,
@@ -73,12 +72,12 @@ class EmbeddingInfo(google.protobuf.message.Message):
         sprite: global___SpriteMetadata | None = ...,
         tensor_path: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing_extensions.Literal["sprite", b"sprite"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["bookmarks_path", b"bookmarks_path", "metadata_path", b"metadata_path", "sprite", b"sprite", "tensor_name", b"tensor_name", "tensor_path", b"tensor_path", "tensor_shape", b"tensor_shape"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["sprite", b"sprite"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["bookmarks_path", b"bookmarks_path", "metadata_path", b"metadata_path", "sprite", b"sprite", "tensor_name", b"tensor_name", "tensor_path", b"tensor_path", "tensor_shape", b"tensor_shape"]) -> None: ...
 
 global___EmbeddingInfo = EmbeddingInfo
 
-@typing_extensions.final
+@typing.final
 class ProjectorConfig(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -87,12 +86,12 @@ class ProjectorConfig(google.protobuf.message.Message):
     MODEL_CHECKPOINT_DIR_FIELD_NUMBER: builtins.int
     model_checkpoint_path: builtins.str
     """Path to the checkpoint file. Use either this or model_checkpoint_dir."""
-    @property
-    def embeddings(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___EmbeddingInfo]: ...
     model_checkpoint_dir: builtins.str
     """Path to the checkpoint directory. The directory will be scanned for the
     latest checkpoint file.
     """
+    @property
+    def embeddings(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___EmbeddingInfo]: ...
     def __init__(
         self,
         *,
@@ -100,6 +99,6 @@ class ProjectorConfig(google.protobuf.message.Message):
         embeddings: collections.abc.Iterable[global___EmbeddingInfo] | None = ...,
         model_checkpoint_dir: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["embeddings", b"embeddings", "model_checkpoint_dir", b"model_checkpoint_dir", "model_checkpoint_path", b"model_checkpoint_path"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["embeddings", b"embeddings", "model_checkpoint_dir", b"model_checkpoint_dir", "model_checkpoint_path", b"model_checkpoint_path"]) -> None: ...
 
 global___ProjectorConfig = ProjectorConfig

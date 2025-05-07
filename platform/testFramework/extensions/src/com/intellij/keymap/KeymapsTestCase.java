@@ -118,6 +118,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift F6",                 "RenameElement", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
       {"shift F7",                 "PreviousDiff", "SmartStepInto"},
       {"shift DOWN",               "EditorDownWithSelection", "JupyterExpandSelectionToCellBelowCommandModeAction"},
+      {"shift PAGE_DOWN",          "EditorPageDownWithSelection", "Terminal.PageDown"},
+      {"shift PAGE_UP",            "EditorPageUpWithSelection", "Terminal.PageUp"},
       {"shift INSERT",             "$Paste", "Terminal.Paste"},
       {"shift LEFT",               "EditorLeftWithSelection", "JupyterExpandSelectionToCellAboveCommandModeAction"},
       {"shift M",                  "Graph.AlignNodes.Middle", "JupyterNotebookMergeSelectedCellsCommandModeAction"},

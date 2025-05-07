@@ -358,7 +358,7 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
 
               def __init__(self):
                   <warning descr="Already declared name could not be redefined as 'Final'">self.a</warning>: Final[int] = 2
-                  self.b = "2"
+                  <warning descr="'b' is 'Final' and could not be reassigned">self.b</warning> = "2"
                   <warning descr="Either instance attribute or class attribute could be type hinted as 'Final'">self.c</warning>: Final[int] = 2""")
     );
   }
@@ -397,12 +397,12 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                                a: Final[int] = 1
 
                                def __init__(self):
-                                   self.a = 2
-                                   self.a += 2
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 2
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 2
 
                                def method(self):
-                                   self.a = 3
-                                   self.a += 3
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> = 3
+                                   <warning descr="'a' is 'Final' and could not be reassigned">self.a</warning> += 3
 
                                @classmethod
                                def cls_method(cls):

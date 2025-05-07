@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,7 +44,6 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.trigger
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.NioFiles
@@ -59,6 +61,10 @@ open class MavenModuleBuilderHelper(
   private val myPropertiesToCreateByArtifact: Map<String, String>?,
   protected val myCommandName: @NlsContexts.Command String?,
 ) {
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   open fun configure(project: Project, root: VirtualFile, isInteractive: Boolean) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT)
 
@@ -116,7 +122,7 @@ open class MavenModuleBuilderHelper(
     MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
-    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    val cs = project.service<CoroutineService>().coroutineScope
     cs.launch {
       // execute when current dialog is closed (e.g. Project Structure)
       withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {

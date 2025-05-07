@@ -1,16 +1,16 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.terminal.session.TerminalClearBufferEvent
-import com.intellij.terminal.session.TerminalResizeEvent
-import com.intellij.terminal.session.TerminalSession
-import com.intellij.terminal.session.TerminalWriteBytesEvent
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
@@ -19,16 +19,47 @@ import java.util.concurrent.CompletableFuture
 internal class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
-  private val coroutineScope: CoroutineScope,
+  coroutineScope: CoroutineScope,
 ) {
   companion object {
     val KEY: DataKey<TerminalInput> = DataKey.Companion.create("TerminalInput")
+
+    private val LOG = logger<TerminalInput>()
   }
 
   /**
-   * Use this dispatcher to ensure that events are sent in the same order as methods in this class were called.
+   * Use this channel to buffer the input events before we get the actual channel from the backend.
    */
-  private val synchronousDispatcher = Dispatchers.Default.limitedParallelism(1)
+  private val bufferChannel = Channel<TerminalInputEvent>(capacity = 10000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
+    coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
+      terminalSessionFuture.await().getInputChannel()
+    }
+
+  init {
+    val job = coroutineScope.launch {
+      val targetChannel = inputChannelDeferred.await()
+
+      try {
+        for (event in bufferChannel) {
+          targetChannel.send(event)
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (_: ClosedSendChannelException) {
+        LOG.warn("Failed to send the event because input channel is closed")
+      }
+      catch (t: Throwable) {
+        LOG.error("Error while sending input event", t)
+      }
+    }
+    job.invokeOnCompletion {
+      bufferChannel.close()
+    }
+  }
 
   fun sendString(data: String) {
     // TODO: should there always be UTF8?
@@ -45,34 +76,28 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    withTerminalSession { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent(data))
-    }
+    sendEvent(TerminalWriteBytesEvent(data))
   }
 
   fun sendClearBuffer() {
-    withTerminalSession { session ->
-      session.sendInputEvent(TerminalClearBufferEvent)
-    }
+    sendEvent(TerminalClearBufferEvent)
   }
 
   /**
    * Note that resize events sent before the terminal session is initialized will be ignored.
    */
   fun sendResize(newSize: TermSize) {
-    val session = terminalSessionFuture.getNow(null) ?: return
-    coroutineScope.launch(synchronousDispatcher) {
-      session.sendInputEvent(TerminalResizeEvent(newSize.toDto()))
-    }
+    terminalSessionFuture.getNow(null) ?: return
+    sendEvent(TerminalResizeEvent(newSize.toDto()))
   }
 
-  private fun withTerminalSession(block: suspend (TerminalSession) -> Unit) {
-    terminalSessionFuture.thenAccept { session ->
-      if (session != null) {
-        coroutineScope.launch(synchronousDispatcher) {
-          block(session)
-        }
-      }
+  private fun sendEvent(event: TerminalInputEvent) {
+    val result = bufferChannel.trySend(event)
+    if (result.isClosed) {
+      LOG.warn("Terminal input channel is closed, $event won't be sent", result.exceptionOrNull())
+    }
+    else if (result.isFailure) {
+      LOG.error("Failed to send input event: $event", result.exceptionOrNull())
     }
   }
 }

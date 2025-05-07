@@ -270,6 +270,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentPropertyTypeFixFactory)
         registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentReturnTypeFixFactory)
         registerFactory(AddMemberToSupertypeFixFactory.addMemberToSupertypeFixFactory)
+        registerFactory(RenameParameterToMatchOverriddenMethodFixFactory.renameParameterToMatchOverriddenMethod)
     }
 
     /**
@@ -526,6 +527,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddConsistentCopyVisibilityAnnotationFixFactories.warningFixFactory)
 
         registerFactory(ActualWithoutExpectFactory.fixFactory)
+        registerPsiQuickFixes(KaFirDiagnostic.ActualWithoutExpect::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(ACTUAL_KEYWORD))
+        registerFactory(NoActualClassMemberForExpectedClassFactory.fixFactory)
+        registerPsiQuickFixes(KaFirDiagnostic.ActualMissing::class, AddModifierFix.createFactory(ACTUAL_KEYWORD))
 
         registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)

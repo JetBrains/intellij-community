@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -720,7 +721,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   private static @NotNull Icon getPromoIcon() {
-    // todo it can be different in PyCharm Pro
+    if (PlatformUtils.isPyCharm()) return AllIcons.Ultimate.PycharmLock;
+
     return AllIcons.Ultimate.Lock;
   }
 

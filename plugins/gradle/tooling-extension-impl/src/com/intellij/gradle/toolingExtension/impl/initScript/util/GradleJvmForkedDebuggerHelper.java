@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.initScript.util;
 
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -26,7 +27,7 @@ public class GradleJvmForkedDebuggerHelper {
     if (GradleDebuggerUtil.isDebuggerEnabled()) {
       if (task instanceof Test) {
         ((Test)task).setMaxParallelForks(1);
-        ((Test)task).setForkEvery(0);
+        GradleTaskUtil.setTaskTestForkEvery(((Test)task), 0);
       }
 
       String processName = task.getPath();

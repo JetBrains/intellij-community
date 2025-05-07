@@ -49,6 +49,32 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.radioButtonStyle
 
+/**
+ * A radio button component that follows the standard visual styling with customizable appearance.
+ *
+ * Provides a selectable component that can be either selected or unselected, typically used as part of a group where
+ * only one option can be selected at a time. The radio button supports various states including enabled/disabled,
+ * focused, and hovered.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/radio-button.html)
+ *
+ * **Usage example:**
+ * [`RadioButtons.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/RadioButtons.kt)
+ *
+ * **Swing equivalent:**
+ * [`JRadioButton`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#radiobutton)
+ *
+ * @param selected The current state of the radio button
+ * @param onClick Called when the radio button is clicked
+ * @param modifier Modifier to be applied to the radio button
+ * @param enabled Controls the enabled state of the radio button. When false, the radio button cannot be interacted with
+ * @param outline The outline style to be applied to the radio button
+ * @param interactionSource Source of interactions for this radio button
+ * @param style The visual styling configuration for the radio button
+ * @param textStyle The typography style to be applied to the radio button's text content
+ * @param verticalAlignment The vertical alignment of the radio button relative to its text content
+ * @see javax.swing.JRadioButton
+ */
 @Composable
 public fun RadioButton(
     selected: Boolean,
@@ -75,6 +101,34 @@ public fun RadioButton(
     )
 }
 
+/**
+ * A radio button with accompanying text, following the standard visual styling with customizable appearance.
+ *
+ * Provides a horizontal layout combining a radio button with text content. The entire row is clickable, making it
+ * easier for users to interact with the radio button. This component is commonly used in forms, settings panels, and
+ * option lists where multiple options are mutually exclusive.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/radio-button.html)
+ *
+ * **Usage example:**
+ * [`RadioButtons.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/RadioButtons.kt)
+ *
+ * **Swing equivalent:**
+ * [`JRadioButton`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#radiobutton) with text
+ * constructor
+ *
+ * @param text The text to be displayed next to the radio button
+ * @param selected The current state of the radio button
+ * @param onClick Called when the radio button or row is clicked
+ * @param modifier Modifier to be applied to the entire row
+ * @param enabled Controls the enabled state of the radio button. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the radio button
+ * @param interactionSource Source of interactions for this radio button
+ * @param style The visual styling configuration for the radio button
+ * @param textStyle The typography style to be applied to the text content
+ * @param verticalAlignment The vertical alignment of the radio button relative to its text content
+ * @see javax.swing.JRadioButton
+ */
 @Composable
 public fun RadioButtonRow(
     text: String,
@@ -103,6 +157,34 @@ public fun RadioButtonRow(
     }
 }
 
+/**
+ * A radio button with customizable content, following the standard visual styling.
+ *
+ * Provides a horizontal layout combining a radio button with custom content. The entire row is clickable, making it
+ * easier for users to interact with the radio button. This variant allows for more complex content layouts than the
+ * simple text variant.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/radio-button.html)
+ *
+ * **Usage example:**
+ * [`RadioButtons.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/RadioButtons.kt)
+ *
+ * **Swing equivalent:**
+ * [`JRadioButton`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#radiobutton) with custom
+ * component layout
+ *
+ * @param selected The current state of the radio button
+ * @param onClick Called when the radio button or row is clicked
+ * @param modifier Modifier to be applied to the entire row
+ * @param enabled Controls the enabled state of the radio button. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the radio button
+ * @param interactionSource Source of interactions for this radio button
+ * @param style The visual styling configuration for the radio button
+ * @param textStyle The typography style to be applied to the content
+ * @param verticalAlignment The vertical alignment of the radio button relative to its content
+ * @param content The content to be displayed next to the radio button
+ * @see javax.swing.JRadioButton
+ */
 @Composable
 public fun RadioButtonRow(
     selected: Boolean,

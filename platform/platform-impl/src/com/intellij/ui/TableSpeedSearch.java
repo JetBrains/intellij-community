@@ -101,6 +101,12 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
     new MySelectAllAction(table, this).registerCustomShortcutSet(table, null);
   }
 
+  //It's overridden explicitly to remove the 'internal' mark from it. 
+  @Override
+  public void setFilteringMode(boolean filteringMode) {
+    super.setFilteringMode(filteringMode);
+  }
+
   @Override
   public void setupListeners() {
     super.setupListeners();

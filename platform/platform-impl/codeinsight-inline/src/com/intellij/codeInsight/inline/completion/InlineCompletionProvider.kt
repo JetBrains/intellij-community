@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -10,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Proposals provider for inline completion.
@@ -56,6 +58,16 @@ interface InlineCompletionProvider {
    */
   val providerPresentation: InlineCompletionProviderPresentation
     get() = InlineCompletionProviderPresentation.dummy(this)
+
+  /**
+   * Determines whether the provider supports the given editor type.
+   * By default, only the main editor is supported.
+   *
+   * @param editorType The type of the editor to check
+   * @return True if the provider supports the given editor type, false otherwise
+   */
+  @ApiStatus.Internal
+  fun isEditorTypeSupported(editorType: InlineCompletionEditorType): Boolean = editorType == InlineCompletionEditorType.MAIN_EDITOR
 
   /**
    * Retrieves an inline completion suggestion based on the provided request.

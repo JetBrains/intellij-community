@@ -179,8 +179,10 @@ fun interface TargetPresentationProvider<T: PsiElement> {
   fun getPresentation(element: T): TargetPresentation
 }
 
-abstract class TargetUpdaterTask(project: Project, @NlsContexts.ProgressTitle title: String):
-  BackgroundUpdaterTaskBase<ItemWithPresentation>(project, title, null) {
+abstract class TargetUpdaterTask(project: Project, @NlsContexts.ProgressTitle title: String, comparator: Comparator<ItemWithPresentation>?):
+  BackgroundUpdaterTaskBase<ItemWithPresentation>(project, title, comparator) {
+
+  constructor(project: Project, @NlsContexts.ProgressTitle title: String) : this(project, title, null)
 
   override fun createUsage(element: ItemWithPresentation): Usage? {
     return UsageInfo2UsageAdapter(UsageInfo(element.item as SmartPsiElementPointer<*>, null, false, false))

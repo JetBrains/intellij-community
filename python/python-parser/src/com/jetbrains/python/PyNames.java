@@ -109,6 +109,7 @@ public final @NonNls class PyNames {
   public static final String SETTER = "setter";
   public static final String DELETER = "deleter";
   public static final String GETTER = "getter";
+  public static final String CACHED_PROPERTY = "cached_property";
 
   public static final String ALL = "__all__";
   public static final String SLOTS = "__slots__";
@@ -186,6 +187,7 @@ public final @NonNls class PyNames {
   public static final String ROUND = "__round__";
   public static final String CLASS_GETITEM = "__class_getitem__";
   public static final String PREPARE = "__prepare__";
+  public static final String MATCH_ARGS = "__match_args__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -319,7 +321,7 @@ public final @NonNls class PyNames {
     Map.entry("__contains__", _self_item_descr),
     Map.entry("__copy__", _only_self_descr),
       //_BuiltinMethodsMap.entry("__debug__", _only_self_descr);
-    Map.entry("__deepcopy__", new BuiltinDescription("(self, memodict={})")),
+    Map.entry("__deepcopy__", new BuiltinDescription("(self, memo)")),
     Map.entry("__del__", _only_self_descr),
     Map.entry("__delete__", new BuiltinDescription("(self, instance)")),
     Map.entry("__delattr__", _self_item_descr),

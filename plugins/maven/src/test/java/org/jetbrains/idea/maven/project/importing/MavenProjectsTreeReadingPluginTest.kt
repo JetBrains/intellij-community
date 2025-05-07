@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenPluginResolver
 import org.junit.Test
 
@@ -32,22 +31,18 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
     tree.addListener(listener, getTestRootDisposable())
     updateAll(projectPom, child)
     val parentProject = tree.findProject(projectPom)!!
-    val embeddersManager = MavenEmbeddersManager(project)
-    try {
-      resolve(project,
-              parentProject,
-              mavenGeneralSettings,
-              embeddersManager)
-      val pluginResolver = MavenPluginResolver(tree)
-      val progressReporter = object : RawProgressReporter {}
-      pluginResolver.resolvePlugins(listOf(parentProject),
-                                    embeddersManager,
-                                    progressReporter,
-                                    MavenLogEventHandler)
-    }
-    finally {
-      embeddersManager.releaseInTests()
-    }
+
+    resolve(project,
+            parentProject,
+            mavenGeneralSettings
+    )
+    val pluginResolver = MavenPluginResolver(tree)
+    val progressReporter = object : RawProgressReporter {}
+    pluginResolver.resolvePlugins(listOf(parentProject),
+                                  mavenEmbedderWrappers,
+                                  progressReporter,
+                                  MavenLogEventHandler)
+
     assertEquals(
       log()
         .add("updated", "parent", "child")
@@ -55,7 +50,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
         .add("resolved", "parent")
         .add("plugins", "parent"),
       listener.log)
-    tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
+    tree.updateAll(false, mavenGeneralSettings, mavenEmbedderWrappers, rawProgressReporter)
     assertEquals(
       log()
         .add("updated", "parent", "child")

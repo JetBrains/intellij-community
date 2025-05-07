@@ -1,11 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.junit.Assert
 import org.junit.Test
 
 class MavenArtifactsBuilderTest {
+  private val builder by lazy {
+    runBlocking {
+      MavenArtifactsBuilder(
+        BuildContextImpl.createContext(
+          projectHome = ULTIMATE_HOME,
+          productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+          setupTracer = false,
+        )
+      )
+    }
+  }
+
   @Test
   fun `maven coordinates`() {
     checkCoordinates("intellij.xml", "com.jetbrains.intellij.xml", "xml")
@@ -24,7 +40,7 @@ class MavenArtifactsBuilderTest {
   }
 
   private fun checkCoordinates(moduleName: String, expectedGroupId: String, expectedArtifactId: String) {
-    val coordinates = MavenArtifactsBuilder.generateMavenCoordinates(moduleName, "snapshot")
+    val coordinates = builder.generateMavenCoordinates(moduleName, "snapshot")
     Assert.assertEquals("Incorrect groupId generated for $moduleName", expectedGroupId, coordinates.groupId)
     Assert.assertEquals("Incorrect artifactId generated for $moduleName", expectedArtifactId, coordinates.artifactId)
   }

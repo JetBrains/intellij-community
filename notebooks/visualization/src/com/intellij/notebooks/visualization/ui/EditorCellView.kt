@@ -10,6 +10,8 @@ import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellB
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
+import com.intellij.notebooks.visualization.ui.EditorCell.ExecutionStatus
+import com.intellij.notebooks.visualization.ui.cell.frame.EditorCellFrameManager
 import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
 import com.intellij.notebooks.visualization.ui.jupyterToolbars.NotebookCellActionsToolbarStateTracker
 import com.intellij.openapi.Disposable
@@ -32,7 +34,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
 import java.awt.Color
 import java.awt.Rectangle
-import java.time.ZonedDateTime
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
@@ -47,7 +48,7 @@ private val fallbackInputFactory = object : InputFactory {
 }
 
 class EditorCellView(
-  private val editor: EditorImpl,
+  val editor: EditorImpl,
   private val intervals: NotebookCellLines,
   var cell: EditorCell,
   private val cellInlayManager: NotebookCellInlayManager,
@@ -63,7 +64,7 @@ class EditorCellView(
   private val intervalPointer: NotebookIntervalPointer
     get() = cell.intervalPointer
 
-  private val interval: NotebookCellLines.Interval
+  val interval: NotebookCellLines.Interval
     get() = intervalPointer.get() ?: error("Invalid interval")
 
   private val cellHighlighters = mutableListOf<RangeHighlighter>()
@@ -73,10 +74,11 @@ class EditorCellView(
   var outputs: EditorCellOutputsView? = null
     private set
 
-  val myEditorCellFrameManager: EditorCellFrameManager? =
+  val cellFrameManager: EditorCellFrameManager? =
     if (interval.type == NotebookCellLines.CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border")) {
       EditorCellFrameManager(editor, this, NotebookCellLines.CellType.MARKDOWN)
-    } else if (interval.type == NotebookCellLines.CellType.CODE && Registry.`is`("jupyter.code.cells.border")) {
+    }
+    else if (Registry.`is`("jupyter.code.cells.border")) {
       EditorCellFrameManager(editor, this, NotebookCellLines.CellType.CODE)
     } else null
 
@@ -91,7 +93,7 @@ class EditorCellView(
       updateRunButtonVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
-      myEditorCellFrameManager?.updateCellFrameShow(value, mouseOver)
+      cellFrameManager?.updateCellFrameShow(value, mouseOver)
     }
 
   private var mouseOver = false
@@ -122,10 +124,9 @@ class EditorCellView(
     }
     this.selected = cell.selected.get()
     cell.executionStatus.afterChange(this) { execution ->
-      updateExecutionStatus(execution.count, execution.status, execution.startTime, execution.endTime)
+      updateExecutionStatus(execution)
     }
-    val executionStatus = cell.executionStatus.get()
-    updateExecutionStatus(executionStatus.count, executionStatus.status, executionStatus.startTime, executionStatus.endTime)
+    updateExecutionStatus(cell.executionStatus.get())
     editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) { backgroundColor ->
       updateCellHighlight(force = true)
     }
@@ -151,7 +152,7 @@ class EditorCellView(
     _controllers.forEach { controller ->
       disposeController(controller)
     }
-    myEditorCellFrameManager?.let { Disposer.dispose(it) }
+    cellFrameManager?.let { Disposer.dispose(it) }
     removeCellHighlight()
   }
 
@@ -190,7 +191,14 @@ class EditorCellView(
         .filter { it !is InputFactory }
       val controllersToDispose = _controllers.toMutableSet()
       _controllers = if (!editor.isDisposed) {
-        otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
+        otherFactories.mapNotNull { factory ->
+          val intervalIterator = intervals.intervals.listIterator(interval.ordinal)
+          val cellInlayController = failSafeCompute(factory, editor, _controllers, intervalIterator)
+          if (cellInlayController is Disposable) {
+            Disposer.register(this, cellInlayController)
+          }
+          cellInlayController
+        }
       }
       else {
         emptyList()
@@ -284,7 +292,7 @@ class EditorCellView(
     mouseOver = false
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
+    cellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
 
@@ -292,7 +300,7 @@ class EditorCellView(
     mouseOver = true
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
+    cellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
 
@@ -374,7 +382,7 @@ class EditorCellView(
     selected = value
     updateFolding()
     updateCellHighlight()
-    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
+    cellFrameManager?.updateCellFrameShow(selected, mouseOver)
   }
 
   private fun updateFolding() {
@@ -426,10 +434,8 @@ class EditorCellView(
     it.updateFrameVisibility(selected, interval, color)
   }
 
-  private fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
-    _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()
-      ?.updateExecutionStatus(executionCount, progressStatus, startTime, endTime)
-    input.runCellButton?.updateGutterAction(progressStatus)
+  private fun updateExecutionStatus(executionStatus: ExecutionStatus) {
+    input.runCellButton?.updateGutterAction(executionStatus.status)
   }
 
   fun addDropHighlightIfApplicable(): Unit? =

@@ -6,13 +6,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.compose.JBComposePanel
 import com.intellij.ui.PaintingParent.Wrapper
+import org.jetbrains.jewel.bridge.JewelComposePanel
 import java.awt.Dimension
 import javax.swing.JComponent
 
 private fun createComposeShowcaseComponent(): JComponent {
-  return JBComposePanel {
+  return JewelComposePanel {
     ComposeShowcase()
   }
 }

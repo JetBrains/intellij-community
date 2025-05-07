@@ -2,17 +2,17 @@
 package com.intellij.codeInsight.inline.completion.render
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
+import com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils.getFont
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionVolumetricTextBlockFactory.Companion.accumulatedWidthToInt
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.font.TextLayout
@@ -38,11 +38,11 @@ open class InlineCompletionLineRenderer(
 
   private var isDirty = false
 
-  var blocks: List<InlineCompletionRenderTextBlock> = formatTabs(initialBlocks)
+  var blocks: List<InlineCompletionRenderTextBlock> = format(initialBlocks)
     internal set(newBlocks) {
       ThreadingAssertions.assertEventDispatchThread()
       isDirty = true
-      field = newBlocks
+      field = format(newBlocks)
     }
 
   fun updateIfNeeded(inlay: Inlay<out InlineCompletionLineRenderer>) {
@@ -50,16 +50,17 @@ open class InlineCompletionLineRenderer(
     check(inlay.renderer === this)
     if (isDirty) {
       inlay.update()
+      isDirty = false
     }
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    val result = blocks.sumOf { block ->
-      val font = getFont(block.attributes, block.text)
-      val fontMetrics = editor.contentComponent.getFontMetrics(font)
-      fontMetrics.stringWidth(block.text)
+    val result = InlineCompletionVolumetricTextBlockFactory(editor).use { volumetricFactory ->
+      blocks.sumOf { block ->
+        if (block.text.isEmpty()) 0.0 else volumetricFactory.getVolumetric(block).widthInPixels
+      }
     }
-    return maxOf(1, result)
+    return maxOf(1, accumulatedWidthToInt(result))
   }
 
   protected open fun beforePaint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle) {}
@@ -82,7 +83,7 @@ open class InlineCompletionLineRenderer(
       if (block.text.isEmpty()) {
         continue
       }
-      g.font = getFont(block.attributes, block.text)
+      g.font = getFont(editor, block.text, block.attributes.fontType)
       val textLayout = TextLayout(block.text, g.font, g.fontRenderContext)
       val textWidth = textLayout.advance.toDouble()
       val textHeight = targetRegion.height.toDouble()
@@ -137,12 +138,7 @@ open class InlineCompletionLineRenderer(
     }
   }
 
-  private fun getFont(attributes: TextAttributes, text: String): Font {
-    val original = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(attributes.fontType))
-    return UIUtil.getFontWithFallbackIfNeeded(original, text)
-  }
-
-  private fun formatTabs(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
+  private fun format(blocks: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
     val tabSize = editor.settings.getTabSize(editor.project)
     return blocks.filter { it.text.isNotEmpty() }.map { it.copy(text = it.text.formatTabs(tabSize)) }
   }

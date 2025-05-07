@@ -30,7 +30,8 @@ a:org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase
 - p:<init>(java.lang.String,org.jetbrains.jps.model.JpsElementReference):V
 - p:<init>(org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase):V
 - asExternal(org.jetbrains.jps.model.JpsModel):org.jetbrains.jps.model.JpsElementReference
-- pa:getCollection(org.jetbrains.jps.model.JpsCompositeElement):org.jetbrains.jps.model.JpsElementCollection
+- p:getCollection(org.jetbrains.jps.model.JpsCompositeElement):org.jetbrains.jps.model.JpsElementCollection
+- p:getNamedElementCollection(org.jetbrains.jps.model.JpsCompositeElement):org.jetbrains.jps.model.JpsNamedElementCollection
 - getParentReference():org.jetbrains.jps.model.JpsElementReference
 - resolve():org.jetbrains.jps.model.JpsNamedElement
 - pa:resolve(org.jetbrains.jps.model.JpsNamedElement):org.jetbrains.jps.model.JpsNamedElement

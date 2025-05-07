@@ -57,5 +57,4 @@ class NotebookEditorUiComponent(data: ComponentData) : JEditorUiComponent(data) 
 
   val notebookTables
     get() = xx("//div[@class='TableResultView']", JTableUiComponent::class.java).list()
-
 }

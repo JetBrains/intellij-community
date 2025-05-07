@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -19,21 +18,18 @@ import org.jetbrains.jewel.ui.component.styling.SubmenuMetrics
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
-@Composable
 public fun MenuStyle.Companion.light(
     colors: MenuColors = MenuColors.light(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
 ): MenuStyle = MenuStyle(isDark = false, colors, metrics, icons)
 
-@Composable
 public fun MenuStyle.Companion.dark(
     colors: MenuColors = MenuColors.dark(),
     metrics: MenuMetrics = MenuMetrics.defaults(),
     icons: MenuIcons = MenuIcons.defaults(),
 ): MenuStyle = MenuStyle(isDark = true, colors, metrics, icons)
 
-@Composable
 public fun MenuColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     border: Color = IntUiLightTheme.colors.gray(9),
@@ -41,7 +37,6 @@ public fun MenuColors.Companion.light(
     itemColors: MenuItemColors = MenuItemColors.light(),
 ): MenuColors = MenuColors(background = background, border = border, shadow = shadow, itemColors = itemColors)
 
-@Composable
 public fun MenuColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     border: Color = IntUiDarkTheme.colors.gray(3),
@@ -49,7 +44,6 @@ public fun MenuColors.Companion.dark(
     itemColors: MenuItemColors = MenuItemColors.dark(),
 ): MenuColors = MenuColors(background = background, border = border, shadow = shadow, itemColors = itemColors)
 
-@Composable
 public fun MenuItemColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     backgroundDisabled: Color = IntUiLightTheme.colors.gray(14),
@@ -97,7 +91,6 @@ public fun MenuItemColors.Companion.light(
         separator = separator,
     )
 
-@Composable
 public fun MenuItemColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     backgroundDisabled: Color = IntUiDarkTheme.colors.gray(2),

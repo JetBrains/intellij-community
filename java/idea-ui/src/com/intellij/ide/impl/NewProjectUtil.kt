@@ -3,6 +3,7 @@ package com.intellij.ide.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
+import com.intellij.featureStatistics.fusCollectors.WslUsagesCollector
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
@@ -63,6 +64,7 @@ suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
 
   try {
     val projectFile = Path.of(wizard.newProjectFilePath)
+    WslUsagesCollector.beforeProjectCreated(projectFile)
     val newProject = createProjectFromWizardImpl(wizard = wizard, projectFile = projectFile, projectToClose = null)
     NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
   }

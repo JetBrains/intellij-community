@@ -38,7 +38,9 @@ class DecoratedEditor private constructor(
   override var mouseOverCell: EditorCellView? = null
     private set
 
-  override val editorPositionKeeper: NotebookPositionKeeper = NotebookPositionKeeper(editorImpl)
+  override val editorPositionKeeper: NotebookPositionKeeper = NotebookPositionKeeper(editorImpl).also {
+    Disposer.register(editorImpl.disposable, it)
+  }
 
   private val selectionModel = EditorCellSelectionModel(manager)
 

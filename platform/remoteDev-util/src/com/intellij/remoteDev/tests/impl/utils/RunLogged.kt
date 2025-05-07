@@ -2,6 +2,7 @@ package com.intellij.remoteDev.tests.impl.utils
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.remoteDev.tests.impl.RdctTestFrameworkLoggerCategory
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -27,6 +28,9 @@ suspend fun <T> runLogged(actionTitle: String, timeout: Duration? = null, action
         LOG.info("'$actionTitle': starting on ${Thread.currentThread()}")
         action()
       }
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Throwable) {
       LOG.warn("'$actionTitle': failed \n\t${e::class.simpleName}: '${e.message}'", e)

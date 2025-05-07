@@ -20,4 +20,6 @@ data class TerminalState(
   val isAltSendsEscape: Boolean,
   val isBracketedPasteMode: Boolean,
   val windowTitle: String,
+  /** Whether such events as command started/finished are supported by the shell integration */
+  val isShellIntegrationEnabled: Boolean,
 )

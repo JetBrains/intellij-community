@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.connectors
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.components.service
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.junit.Test
 import java.util.*
 
@@ -23,7 +24,7 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testResolveProjectsWithProfiles() = runBlocking {
     assumeVersionMoreThan("3.1.0")
-    val project = createProjectPom("""
+    val mavenProject = createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -64,12 +65,14 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
         </dependency>
       </dependencies>
       """.trimIndent())
-    val embedder = getEmbedder()
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val embedder = mavenEmbedderWrappers.getEmbedder(projectPath)
     val map = MavenWorkspaceMap()
     map.register(MavenId("test:m1:1"), m1.toNioPath().toFile())
     map.register(MavenId("test:m2:1"), m2.toNioPath().toFile())
-    map.register(MavenId("test:project:1"), project.toNioPath().toFile())
-    val executionResults = embedder.resolveProject(mapOf(project to null, m1 to null, m2 to null),
+    map.register(MavenId("test:project:1"), mavenProject.toNioPath().toFile())
+    val executionResults = embedder.resolveProject(listOf(mavenProject),
+                                                   mapOf(mavenProject to null, m1 to null, m2 to null),
                                                    mapOf(),
                                                    MavenExplicitProfiles(listOf("test"), emptyList()),
                                                    MockReporter(),
@@ -87,12 +90,6 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
     assertOrderedEquals(depsOfM2.map { it.mavenId.toString() }, "test:m1:1", "junit:junit:4.0")
 
   }
-
-  private suspend fun getConnector() =
-    MavenServerManager.getInstance().getConnector(project, projectPath.toString())
-
-  private suspend fun getEmbedder() =
-    MavenServerManager.getInstance().createEmbedder(project, true, projectPath.toString())
 }
 
 private class MockReporter : RawProgressReporter {

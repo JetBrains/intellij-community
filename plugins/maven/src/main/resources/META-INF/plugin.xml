@@ -108,7 +108,6 @@
     <projectService
       serviceInterface="org.jetbrains.idea.maven.server.MavenServerResultTransformer"
       serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>

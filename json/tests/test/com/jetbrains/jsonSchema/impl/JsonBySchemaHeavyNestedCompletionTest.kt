@@ -1,7 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
+import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthand
+import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthandAndCustomization
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
 import org.intellij.lang.annotations.Language
 import java.io.File
@@ -346,6 +349,48 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
       """.trimIndent())
   }
 
+  fun `test nested completion leads to expanding - single level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    settingWithEnabledShorthand
+      .appliedToJsonFile("""
+        {
+          "setting": "enabled"
+          val<caret>
+        }
+      """.trimIndent())
+      .completesTo("""
+        {
+          "setting": {
+            "enabled": true,
+            "value": "<caret>"
+          }
+        }
+      """.trimIndent())
+  }
+
+  fun `test nested completion leads to expanding - multiple level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    settingWithEnabledShorthandAndCustomization
+      .appliedToJsonFile("""
+        {
+          "setting": "enabled"
+          val<caret>
+        }
+      """.trimIndent())
+      .completesTo("""
+        {
+          "setting": {
+            "enabled": true,
+            "customization": {
+              "value": "<caret>"
+            }
+          }
+        }
+      """.trimIndent())
+  }
+
   private fun JsonSchemaAppliedToJsonSetup.completesTo(@Language("YAML") expectedResult: String) {
     workingFolder.resolve("Schema.json").createTemporarilyWithContent(schemaSetup.schemaJson) {
       workingFolder.resolve("test.json").createTemporarilyWithContent(json) {
@@ -394,30 +439,3 @@ private inline fun File.createTemporarilyWithContent(content: String, block: () 
     delete()
   }
 }
-
-
-val open1ThenOpen2Then3Schema
-  get() = assertThatSchema("""
-     {
-       "properties": {
-         "one": {
-           "properties": {
-             "two": {
-               "properties": {
-                 "three": {
-                   "type": "boolean"
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-   """.trimIndent())
-    .withConfiguration(
-      buildNestedCompletionsTree {
-        open("one") {
-          open("two")
-        }
-      }
-    )

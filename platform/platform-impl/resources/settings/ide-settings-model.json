@@ -8321,6 +8321,12 @@
           "mapTo": "ALWAYS_ENABLE_PHP_BACKGROUND_HIGHLIGHTING",
           "type": "Boolean",
           "javaType": "boolean"
+        },
+        {
+          "name": "always_enable_blade_template_highlighting",
+          "mapTo": "ALWAYS_ENABLE_BLADE_TEMPLATE_HIGHLIGHTING",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },

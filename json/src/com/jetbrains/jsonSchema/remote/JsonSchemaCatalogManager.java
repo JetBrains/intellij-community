@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Disposer;
@@ -31,8 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.PatternSyntaxException;
 
 public final class JsonSchemaCatalogManager {
+  private static final Logger LOG = Logger.getInstance(JsonSchemaCatalogManager.class);
+
   static final String DEFAULT_CATALOG = "http://schemastore.org/api/json/catalog.json";
   static final String DEFAULT_CATALOG_HTTPS = "https://schemastore.org/api/json/catalog.json";
   private static final Set<String> SCHEMA_URL_PREFIXES_WITH_TOO_MANY_VARIANTS = Set.of(
@@ -181,13 +185,21 @@ public final class JsonSchemaCatalogManager {
       path = Paths.get(filePath);
     }
     catch (InvalidPathException e) {
+      LOG.debug("Unable to process invalid path '" + filePath + "'", e);
       return null;
     }
+
     for (FileMatcher matcher : matchers) {
-      if (matcher.matches(path)) {
-        return matcher.myEntry.getUrl();
+      try {
+        if (matcher.matches(path)) {
+          return matcher.myEntry.getUrl();
+        }
+      }
+      catch (PatternSyntaxException pse) {
+        LOG.warn("Unable to process matches for path '" + path + "' with matcher URL '" + matcher.myEntry.getUrl() + "'", pse);
       }
     }
+
     return null;
   }
 

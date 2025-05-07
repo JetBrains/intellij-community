@@ -1,10 +1,10 @@
-<idea-plugin package="com.intellij.vcs.git.commit.modal">
-  <name>Git Modal Commit Interface</name>
+<idea-plugin>
+  <name>Modal Commit Interface</name>
   <id>intellij.git.commit.modal</id>
   <category>Version Controls</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    This plugin restores the modal commit option for JetBrains IDEs,
+    This plugin restores the modal commit option for Git and Mercurial in JetBrains IDEs,
     which was the default before the introduction of the non-modal commit window.
     <br/>
     If you prefer the traditional commit workflow, this plugin brings that functionality back
@@ -12,22 +12,19 @@
   ]]></description>
 
   <dependencies>
-    <plugin id="Git4Idea"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
   </dependencies>
 
-  <resource-bundle>messages.GitModalCommitBundle</resource-bundle>
-
-  <extensions defaultExtensionNs="Git4Idea">
-    <gitCommitModeProvider implementation="com.intellij.vcs.git.commit.modal.GitModalCommitModeProvider"/>
-  </extensions>
+  <resource-bundle>messages.ModalCommitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <advancedSetting id="git.non.modal.commit" default="false" groupKey="advanced.settings.git"/>
-    <vcsStartupActivity implementation="com.intellij.vcs.git.commit.modal.GitModalCommitToggler"/>
+    <advancedSetting id="git.non.modal.commit" default="false" groupKey="advanced.settings.vcs"/>
+    <vcsStartupActivity implementation="com.intellij.vcs.git.commit.modal.ModalCommitToggler"/>
+    <commitModeProvider implementation="com.intellij.vcs.git.commit.modal.ModalCommitModeProvider"/>
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.vcs.git.commit.modal.GitModalCommitSettingsListener"
+    <listener class="com.intellij.vcs.git.commit.modal.ModalCommitSettingsListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
 </idea-plugin>

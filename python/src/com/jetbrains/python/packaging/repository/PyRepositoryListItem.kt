@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.repository
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBTextField
@@ -10,6 +12,8 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -17,7 +21,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 @ApiStatus.Internal
-internal class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigurable<PyPackageRepository>(true, null) {
+internal class PyRepositoryListItem(val repository: PyPackageRepository, private val project: Project) : NamedConfigurable<PyPackageRepository>(true, null) {
   @NlsSafe
   private var currentName = repository.name!!
   private var password = repository.getPassword()
@@ -25,7 +29,7 @@ internal class PyRepositoryListItem(val repository: PyPackageRepository) : Named
   private val propertyGraph = PropertyGraph()
   private val urlProperty = propertyGraph.lazyProperty { repository.repositoryUrl ?: "" }
   private val loginProperty = propertyGraph.lazyProperty { repository.login ?: "" }
-  private val passwordProperty = propertyGraph.lazyProperty { repository.getPassword() ?: "" }
+  private val passwordProperty = propertyGraph.lazyProperty { getPassword(repository) }
   private val authorizationTypeProperty = propertyGraph.lazyProperty { repository.authorizationType }
 
   override fun getDisplayName(): String {
@@ -87,7 +91,7 @@ internal class PyRepositoryListItem(val repository: PyPackageRepository) : Named
           .bindText(urlProperty)
       }
       row(message("python.packaging.repository.form.authorization")) {
-        segmentedButton(PyPackageRepositoryAuthenticationType.values().toList()) { text = it.text }
+        segmentedButton(PyPackageRepositoryAuthenticationType.entries) { text = it.text }
           .bind(authorizationTypeProperty)
       }
       val row1 = row(message("python.packaging.repository.form.login")) {
@@ -95,7 +99,7 @@ internal class PyRepositoryListItem(val repository: PyPackageRepository) : Named
           .bindText(loginProperty)
       }.visible(repository.authorizationType != PyPackageRepositoryAuthenticationType.NONE)
       val row2 = row(message("python.packaging.repository.form.password")) {
-        passwordField().applyToComponent { text = repository.getPassword() }
+        passwordField().applyToComponent { text = getPassword(repository) }
           .apply { component.preferredSize = Dimension(250, component.preferredSize.height) }
           .bindText(passwordProperty)
       }.visible(repository.authorizationType != PyPackageRepositoryAuthenticationType.NONE)
@@ -108,5 +112,14 @@ internal class PyRepositoryListItem(val repository: PyPackageRepository) : Named
 
     mainPanel.add(repositoryForm, BorderLayout.CENTER)
     return mainPanel
+  }
+
+  private fun getPassword(repository: PyPackageRepository): String {
+    val toolWindowService = project.service<PyPackagingToolWindowService>()
+    var retrievedPassword: String? = null
+    toolWindowService.serviceScope.launch {
+      retrievedPassword = repository.getPassword()
+    }
+    return retrievedPassword ?: ""
   }
 }

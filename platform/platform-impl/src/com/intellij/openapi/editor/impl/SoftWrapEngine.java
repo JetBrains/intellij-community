@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Class that calculates soft wrap positions for a given text fragment and available visible width.
@@ -45,6 +46,7 @@ public final class SoftWrapEngine {
                         @NotNull SoftWrapsStorage storage,
                         @NotNull CachingSoftWrapDataMapper dataMapper,
                         @NotNull IncrementalCacheUpdateEvent event,
+                        @Nullable LineWrapPositionStrategy lineWrapStrategy,
                         int visibleWidth,
                         int relativeIndent) {
     myEditor = editor;
@@ -58,6 +60,7 @@ public final class SoftWrapEngine {
     mySoftWrapWidth = painter.getMinDrawingWidth(SoftWrapDrawingType.AFTER_SOFT_WRAP);
     myEvent = event;
     myRelativeIndent = relativeIndent;
+    myLineWrapPositionStrategy = lineWrapStrategy;
   }
 
   public void generate() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -10,7 +11,6 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenSourceGenerationConsole
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.server.MavenServerConnector
@@ -78,20 +78,19 @@ class MavenFolderResolver(private val project: Project) {
     }
 
     val goalResults: List<MavenGoalExecutionResult>
-    val embedder: MavenEmbedderWrapper = projectsManager.embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, baseDir)
-    try {
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    mavenEmbedderWrappers.use {
+      val embedder = mavenEmbedderWrappers.getEmbedder(baseDir)
       goalResults = embedder.executeGoal(requests, goal, progressReporter, console)
-      for (goalResult in goalResults) {
-        for (problem in goalResult.problems) {
-          val description = problem.description
-          if (null != description) {
-            console.addError(description)
-          }
+    }
+
+    for (goalResult in goalResults) {
+      for (problem in goalResult.problems) {
+        val description = problem.description
+        if (null != description) {
+          console.addError(description)
         }
       }
-    }
-    finally {
-      projectsManager.embeddersManager.release(embedder)
     }
 
     for (goalResult in goalResults) {

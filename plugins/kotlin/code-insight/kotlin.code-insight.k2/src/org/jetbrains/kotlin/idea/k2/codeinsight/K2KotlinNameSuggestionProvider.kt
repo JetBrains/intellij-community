@@ -27,7 +27,7 @@ internal class K2KotlinNameSuggestionProvider : KotlinNameSuggestionProvider() {
                 val type = callable.returnType
                 if (!type.isUnitType && !type.isPrimitive) {
                     with(KotlinNameSuggester()) {
-                        suggestTypeNames(type).toList()
+                        suggestTypeNames(type).filter { validator(it) }.toList()
                     }
                 } else emptyList()
             }

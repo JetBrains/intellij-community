@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class LocalTerminalStartCommandBuilder {
-  private static final String INTERACTIVE_CLI_OPTION = "-i";
+  public static final String INTERACTIVE_CLI_OPTION = "-i";
 
   public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
     List<String> shellCommand;

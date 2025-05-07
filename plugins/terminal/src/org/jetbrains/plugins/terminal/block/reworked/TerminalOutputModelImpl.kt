@@ -20,15 +20,11 @@ import kotlin.math.max
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
- *
- * Note that this implementation doesn't the write lock by default on [updateContent].
- * It is controlled by the passed [changesApplier], that wrap all document modifications.
  */
 @ApiStatus.Internal
 class TerminalOutputModelImpl(
   override val document: Document,
   private val maxOutputLength: Int,
-  private val changesApplier: TerminalDocumentChangesApplier,
 ) : TerminalOutputModel {
   private val mutableCursorOffsetState: MutableStateFlow<Int> = MutableStateFlow(0)
   override val cursorOffsetState: StateFlow<Int> = mutableCursorOffsetState.asStateFlow()
@@ -137,11 +133,7 @@ class TerminalOutputModelImpl(
 
     contentUpdateInProgress = true
     val changeStartOffset = try {
-      var result = 0
-      changesApplier.applyChange {
-        result = block()
-      }
-      result
+      block()
     }
     finally {
       contentUpdateInProgress = false

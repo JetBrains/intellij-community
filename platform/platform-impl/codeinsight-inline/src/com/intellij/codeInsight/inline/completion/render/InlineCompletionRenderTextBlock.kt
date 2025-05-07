@@ -21,3 +21,8 @@ data class InlineCompletionRenderTextBlock(
     require(text.none { it == '\n' || it == '\r' })
   }
 }
+
+internal data class VolumetricInlineCompletionTextBlock(
+  val block: InlineCompletionRenderTextBlock,
+  val widthInPixels: Double,
+)

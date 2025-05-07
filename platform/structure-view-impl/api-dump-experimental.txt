@@ -19,7 +19,7 @@
 - *sf:Companion:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
 - <init>():V
 - getColoredText(java.lang.Object):java.util.List
-- handleClick(java.lang.Object,I):Z
+- handleClick(java.lang.Object,I):java.util.concurrent.CompletableFuture
 - isAutoExpand(java.lang.Object):Z
 *f:com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider$Companion
 - f:getForObject(java.lang.Object):com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider

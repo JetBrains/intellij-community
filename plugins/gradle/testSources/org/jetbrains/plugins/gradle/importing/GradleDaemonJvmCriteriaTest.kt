@@ -14,14 +14,17 @@ class GradleDaemonJvmCriteriaTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("8.8+")
   fun testUpdatingDaemonJvmCriteria() {
-    importProject("")
+    createSettingsFile(settingsScript {
+      it.withFoojayPlugin()
+    })
+    importProject()
 
     val criteria = GradleDaemonJvmCriteria("17", JETBRAINS.asJvmVendor())
     GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, projectRoot.path, criteria)
       .get(1, TimeUnit.MINUTES)
 
-    val properties = GradleDaemonJvmPropertiesFile.getProperties(projectRoot.toNioPath())!!
-    assertEquals("17", properties.version?.value)
-    assertEquals("jetbrains", properties.vendor?.value)
+    val properties = GradleDaemonJvmPropertiesFile.getProperties(projectRoot.toNioPath())
+    assertNotNull(properties)
+    assertEquals(criteria, properties!!.criteria)
   }
 }

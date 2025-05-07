@@ -49,9 +49,6 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = Cancellation.forceNonCancellableSectionInClassInitializer {
-      NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
-    }
   }
 
   var ignoredPackages: MutableList<String> = mutableListOf()
@@ -66,6 +63,9 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   private class Visitor(private val ignoredPackages: MutableList<String>,
                         holder: ProblemsHolder,
                         session: LocalInspectionToolSession) : PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
+
+    private val BALLOON_NOTIFICATIONS
+      get() = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)

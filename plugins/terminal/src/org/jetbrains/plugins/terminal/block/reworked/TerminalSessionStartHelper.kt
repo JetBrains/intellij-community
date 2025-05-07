@@ -3,25 +3,21 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalPortForwardingId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
-import java.lang.Runnable
 import java.util.concurrent.CompletableFuture
 
 internal object TerminalSessionStartHelper {
@@ -80,21 +76,39 @@ internal object TerminalSessionStartHelper {
     options: ShellStartupOptions,
     sessionTab: TerminalSessionTab,
   ) {
-    terminalProjectScope(project).launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      val sessionId = if (sessionTab.sessionId != null) {
-        // Session is already started for this tab, reuse it
-        sessionTab.sessionId
-      }
-      else {
-        // Start new terminal session
-        val optionsWithSize = updateTerminalSizeFromWidget(options, widget)
-        withContext(Dispatchers.IO) {
-          startTerminalSessionForTab(project, optionsWithSize, sessionTab.id)
-        }
-      }
+    val job = terminalProjectScope(project).launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
+      doStartTerminalSession(project, widget, options, sessionTab)
+    }
+    Disposer.register(widget) {
+      job.cancel()
+    }
+  }
 
-      val session = FrontendTerminalSession(sessionId)
-      widget.connectToSession(session)
+  private suspend fun doStartTerminalSession(
+    project: Project,
+    widget: TerminalWidget,
+    options: ShellStartupOptions,
+    sessionTab: TerminalSessionTab,
+  ) {
+    val startedSessionTab = if (sessionTab.sessionId != null) {
+      // Session is already started for this tab, reuse it
+      sessionTab
+    }
+    else {
+      // Start new terminal session
+      val optionsWithSize = updateTerminalSizeFromWidget(options, widget)
+      withContext(Dispatchers.IO) {
+        startTerminalSessionForTab(project, optionsWithSize, sessionTab.id)
+      }
+    }
+
+    val sessionId = startedSessionTab.sessionId
+                    ?: error("Updated TerminalSessionTab does not contain sessionId after terminal session start")
+    val session = FrontendTerminalSession(sessionId)
+    widget.connectToSession(session)
+
+    if (startedSessionTab.portForwardingId != null) {
+      setupPortForwarding(project, startedSessionTab.portForwardingId, widget)
     }
   }
 
@@ -107,8 +121,15 @@ internal object TerminalSessionStartHelper {
     else options
   }
 
-  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionId {
+  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionTab {
     val api = TerminalTabsManagerApi.getInstance()
     return api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
+  }
+
+  private suspend fun setupPortForwarding(project: Project, id: TerminalPortForwardingId, widget: TerminalWidget) {
+    val component = TerminalPortForwardingUiProvider.getInstance(project).createComponent(id, disposable = widget)
+    if (component != null) {
+      widget.addNotification(component, disposable = widget)
+    }
   }
 }

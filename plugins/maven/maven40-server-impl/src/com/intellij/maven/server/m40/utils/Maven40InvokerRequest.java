@@ -6,8 +6,6 @@ import org.apache.maven.api.cli.extensions.CoreExtension;
 import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +13,7 @@ import java.util.Optional;
 
 public class Maven40InvokerRequest extends MavenInvokerRequest {
   public Maven40InvokerRequest(ParserRequest parserRequest,
+                               boolean parseFailed,
                                Path cwd,
                                Path installationDirectory,
                                Path userHomeDirectory,
@@ -22,14 +21,10 @@ public class Maven40InvokerRequest extends MavenInvokerRequest {
                                Map<String, String> systemProperties,
                                Path topDirectory,
                                Path rootDirectory,
-                               InputStream in,
-                               OutputStream out,
-                               OutputStream err,
                                List<CoreExtension> coreExtensions,
-                               List<String> jvmArguments,
                                MavenOptions options) {
-    super(parserRequest, cwd, installationDirectory, userHomeDirectory, userProperties, systemProperties, topDirectory, rootDirectory, in,
-          out, err, coreExtensions, jvmArguments, options);
+    super(parserRequest, parseFailed, cwd, installationDirectory, userHomeDirectory, userProperties, systemProperties, topDirectory,
+          rootDirectory, coreExtensions, options);
   }
 
   private boolean coreExtensionsDisabled = false;

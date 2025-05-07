@@ -669,11 +669,6 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createActual/function/");
         }
 
-        @TestMetadata("functionK2")
-        public void testFunctionK2() throws Exception {
-            runTest("testData/multiModuleQuickFix/createActual/functionK2/");
-        }
-
         @TestMetadata("functionSameFile")
         public void testFunctionSameFile() throws Exception {
             runTest("testData/multiModuleQuickFix/createActual/functionSameFile/");
@@ -722,11 +717,6 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("property")
         public void testProperty() throws Exception {
             runTest("testData/multiModuleQuickFix/createActual/property/");
-        }
-
-        @TestMetadata("propertyK2")
-        public void testPropertyK2() throws Exception {
-            runTest("testData/multiModuleQuickFix/createActual/propertyK2/");
         }
 
         @TestMetadata("sealed")
@@ -822,6 +812,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createExpect/annotation2/");
         }
 
+        @TestMetadata("annotation3")
+        public void testAnnotation3() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/annotation3/");
+        }
+
         @TestMetadata("class")
         public void testClass() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/class/");
@@ -850,6 +845,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("companion")
         public void testCompanion() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/companion/");
+        }
+
+        @TestMetadata("conflictingFunction")
+        public void testConflictingFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/conflictingFunction/");
         }
 
         @TestMetadata("createWithImport")
@@ -922,6 +922,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createExpect/function2/");
         }
 
+        @TestMetadata("functionAlreadyExists")
+        public void testFunctionAlreadyExists() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/functionAlreadyExists/");
+        }
+
         @TestMetadata("functionInInterface")
         public void testFunctionInInterface() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/functionInInterface/");
@@ -952,9 +957,24 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createExpect/inlineClass2/");
         }
 
+        @TestMetadata("inlineClass3")
+        public void testInlineClass3() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/inlineClass3/");
+        }
+
+        @TestMetadata("inlineClass4")
+        public void testInlineClass4() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/inlineClass4/");
+        }
+
         @TestMetadata("innerClassWithTypeParam")
         public void testInnerClassWithTypeParam() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam/");
+        }
+
+        @TestMetadata("innerClassWithTypeParam1")
+        public void testInnerClassWithTypeParam1() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam1/");
         }
 
         @TestMetadata("innerClassWithTypeParam2")
@@ -967,9 +987,24 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/createExpect/innerEnum/");
         }
 
+        @TestMetadata("innerEnum1")
+        public void testInnerEnum1() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/innerEnum1/");
+        }
+
+        @TestMetadata("internalFunction")
+        public void testInternalFunction() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/internalFunction/");
+        }
+
         @TestMetadata("memberFunctionAndNestedClass")
         public void testMemberFunctionAndNestedClass() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass/");
+        }
+
+        @TestMetadata("memberFunctionAndNestedClass1")
+        public void testMemberFunctionAndNestedClass1() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass1/");
         }
 
         @TestMetadata("nestedClass")

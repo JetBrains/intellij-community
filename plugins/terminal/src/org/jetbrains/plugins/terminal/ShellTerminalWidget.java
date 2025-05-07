@@ -173,6 +173,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
   }
 
+  @Override
   public boolean hasRunningCommands() throws IllegalStateException {
     TtyConnector connector = getTtyConnector();
     if (connector == null) return false;

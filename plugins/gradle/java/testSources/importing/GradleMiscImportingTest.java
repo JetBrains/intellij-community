@@ -193,6 +193,41 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
+  public void testCompilerArgumentsProvider() {
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .addPrefix("""
+                   class GStringArgumentProvider implements CommandLineArgumentProvider {
+                       @Input
+                       String value
+                   
+                       @Override
+                       Iterable<String> asArguments() {
+                           { return ["-DgString=${value}"] }
+                       }
+                   }
+                   
+                   class JavaStringArgumentProvider implements CommandLineArgumentProvider {
+                       @Input
+                       String value
+                   
+                       @Override
+                       Iterable<String> asArguments() {
+                           { return ["-Dstring=" + value] }
+                       }
+                   }
+                   """)
+      .configureTask("compileJava", "JavaCompile", task -> {
+        task.code("options.compilerArgumentProviders.add(new GStringArgumentProvider(value: \"Str1\"))");
+        task.code("options.compilerArgumentProviders.add(new JavaStringArgumentProvider(value: \"Str2\"))");
+      })
+    ));
+    importProject();
+
+    assertModuleCompilerArgumentsVersion("project.main", "-DgString=Str1", "-Dstring=Str2");
+  }
+
+  @Test
   public void testJdkName() throws Exception {
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));

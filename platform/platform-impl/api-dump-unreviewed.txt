@@ -2283,6 +2283,7 @@ a:com.intellij.ide.actions.SettingsEntryPointAction$UpdateAction
 - p:<init>(java.lang.String):V
 - isIdeUpdate():Z
 - isNewAction():Z
+- isPluginUpdate():Z
 - isRestartRequired():Z
 - markAsRead():V
 f:com.intellij.ide.actions.ShowContentAction
@@ -4136,6 +4137,14 @@ f:com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 - com.intellij.troubleshooting.TroubleInfoCollector
 - <init>():V
 - collectInfo(com.intellij.openapi.project.Project):java.lang.String
+f:com.intellij.ide.trustedProjects.TrustedProjects
+- sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjects
+- sf:isProjectTrusted(com.intellij.openapi.project.Project):Z
+- sf:isProjectTrusted(java.nio.file.Path):Z
+- sf:isProjectTrusted(java.nio.file.Path,com.intellij.openapi.project.Project):Z
+- sf:setProjectTrusted(com.intellij.openapi.project.Project,Z):V
+- sf:setProjectTrusted(java.nio.file.Path,com.intellij.openapi.project.Project,Z):V
+- sf:setProjectTrusted(java.nio.file.Path,Z):V
 f:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - f:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
@@ -7770,6 +7779,7 @@ f:com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager
 - com.intellij.diagnostic.Dumpable
 - dumpState():java.lang.String
 - getWidthProvider():com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider
+- setLineWrapPositionStrategy(com.intellij.openapi.editor.LineWrapPositionStrategy):V
 - setWidthProvider(com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider):V
 com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider
 - a:getVisibleAreaWidth():I
@@ -14258,6 +14268,7 @@ c:com.intellij.ui.TableSpeedSearch
 - p:isMatchingRow(I,java.lang.String):Z
 - p:isSpeedSearchEnabled():Z
 - p:selectElement(java.lang.Object,java.lang.String):V
+- setFilteringMode(Z):V
 - setupListeners():V
 a:com.intellij.ui.TableViewSpeedSearch
 - com.intellij.ui.SpeedSearchBase

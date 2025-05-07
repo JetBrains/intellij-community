@@ -68,7 +68,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
   ): MavenProjectChanges {
     val keepPreviousPlugins = keepPreviousArtifacts
@@ -82,7 +82,7 @@ class MavenProject(val file: VirtualFile) {
       readerResult.activatedProfiles,
       setOf(),
       readerResult.nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       false,
       keepPreviousPlugins,
@@ -103,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
     activatedProfiles: MavenExplicitProfiles,
     unresolvedArtifactIds: Set<MavenId>,
     nativeModelMap: Map<String, String>,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
     keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
@@ -116,7 +116,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles,
       unresolvedArtifactIds,
       nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       true,
       keepPreviousPlugins,
@@ -238,7 +238,7 @@ class MavenProject(val file: VirtualFile) {
     get() = myState.parentId
 
   val packaging: @NlsSafe String
-    get() = myState.packaging!!
+    get() = myState.packaging ?: ""
 
   val finalName: @NlsSafe String
     get() = myState.finalName!!
@@ -839,7 +839,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
       nativeModelMap: Map<String, String>,
-      settings: MavenGeneralSettings,
+      effectiveRepositoryPath: Path,
       keepPreviousArtifacts: Boolean,
       keepPreviousProfiles: Boolean,
       keepPreviousPlugins: Boolean,
@@ -906,7 +906,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveRepositoryPath.toFile(),
+        localRepository = effectiveRepositoryPath.toFile(),
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,
@@ -951,7 +951,9 @@ class MavenProject(val file: VirtualFile) {
     private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: String, fileExtension: String?): Map<String, String> {
       val extension = fileExtension ?: ""
       val result = LinkedHashMap<String, String>()
-      for (module in mavenModel.modules) {
+      val modules = mavenModel.modules
+      if (null == modules) return result
+      for (module in modules) {
         var name = module
         name = name.trim { it <= ' ' }
 
@@ -980,10 +982,10 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
-    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
-      if (profiles == null) return emptyList()
+    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Set<String> {
+      if (profiles == null) return emptySet()
 
-      val result: MutableSet<String> = HashSet(profiles.size)
+      val result = HashSet<String>(profiles.size)
       for (each in profiles) {
         result.add(each.id)
       }

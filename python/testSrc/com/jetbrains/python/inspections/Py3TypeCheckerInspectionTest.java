@@ -858,7 +858,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    from typing import Type
                    def foo(x: Type[int | str]):
                        pass
-                   foo(<warning descr="Expected type 'Type[int | str]', got 'UnionType' instead">int | str</warning>)""");
+                   foo(<warning descr="Expected type 'type[int | str]', got 'UnionType' instead">int | str</warning>)""");
   }
 
   // PY-44974
@@ -2479,7 +2479,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    t = Test()
                    t.member = "str"
                    t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">123</warning>
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'Type[list]' instead">list</warning>
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'type[list]' instead">list</warning>
                    """);
   }
 
@@ -2497,7 +2497,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    t = Test()
                    t.member = "str"
                    t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">123</warning>
-                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'Type[list]' instead">list</warning>
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'type[list]' instead">list</warning>
                    """);
   }
 

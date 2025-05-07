@@ -4,6 +4,7 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
+import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.webSymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
@@ -24,12 +25,14 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
   override fun getContext(position: PsiElement): XmlAttribute? =
     PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)
 
-  override fun addCompletions(parameters: CompletionParameters,
-                              result: CompletionResultSet,
-                              position: Int,
-                              name: String,
-                              queryExecutor: WebSymbolsQueryExecutor,
-                              context: XmlAttribute) {
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    result: CompletionResultSet,
+    position: Int,
+    name: String,
+    queryExecutor: WebSymbolsQueryExecutor,
+    context: XmlAttribute,
+  ) {
     val tag = context.parent ?: return
     val patchedResultSet = result.withPrefixMatcher(
       AsteriskAwarePrefixMatcher(result.prefixMatcher.cloneWithPrefix(name)))
@@ -71,10 +74,12 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
                                                                       queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
-            val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
-                          .asSingleSymbol() ?: return@withInsertHandlerAdded
-            val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
-            if (info.acceptsValue && !info.acceptsNoValue) {
+            val info = XmlTagInsertHandler.runWithTimeoutOrNull {
+              val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
+                            .asSingleSymbol() ?: return@runWithTimeoutOrNull null
+              WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
+            }
+            if (info != null && info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
             }
           }
@@ -95,6 +100,4 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
     }
 
   }
-
-
 }

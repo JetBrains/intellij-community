@@ -3,21 +3,21 @@
 package com.intellij.platform.compose
 
 import androidx.compose.runtime.Composable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import javax.swing.JComponent
 
 @Suppress("FunctionName")
 @Experimental
+@Deprecated(
+  "Use JewelComposePanel instead and make sure you also change the modules to the ones under intellij.platform.jewel.",
+            replaceWith = ReplaceWith(
+              "JewelComposePanel { content() }",
+              "org.jetbrains.jewel.bridge.JewelComposePanel"
+            )
+)
 fun JBComposePanel(
-  content: @Composable () -> Unit
+  content: @Composable () -> Unit,
 ): JComponent {
-  if (ApplicationManager.getApplication().isInternal) {
-    System.setProperty("compose.swing.render.on.graphics", Registry.stringValue("compose.swing.render.on.graphics"))
-  }
-  return JewelComposePanel { content() }.apply {
-    ComposeUiInspector(this)
-  }
+  return JewelComposePanel { content() }
 }

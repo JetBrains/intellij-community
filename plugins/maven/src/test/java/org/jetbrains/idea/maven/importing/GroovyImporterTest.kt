@@ -74,7 +74,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     val library = libraries[0]
     assertUnorderedPathsAreEqual(
       listOf(*library.getUrls(OrderRootType.CLASSES)),
-      listOf("jar://$repositoryPath/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
+      listOf("jar://$repositoryPathCanonical/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
   }
 
   @Test

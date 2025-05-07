@@ -24,7 +24,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "when",
         /* example = */ "when (expr) {}",
-        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { isSealedType(it) }),
+        /* selector = */ allExpressions(ValuedFilter, ExpressionTypeFilter { isSealedType(it) }),
         /* provider = */ provider
     )
 

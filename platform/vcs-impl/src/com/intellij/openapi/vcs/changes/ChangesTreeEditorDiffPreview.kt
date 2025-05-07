@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -65,7 +66,11 @@ abstract class ChangesTreeEditorDiffPreview(
 
   override fun handleEscapeKey() {
     closePreview()
-    returnFocusToTree()
+    // closing the diff preview editor schedules focus switch to "some" other editor in JBTabsImpl
+    // we can't disable that, so we have to manually override the focus
+    getApplication().invokeLater {
+      returnFocusToTree()
+    }
   }
 
   protected open fun returnFocusToTree() = Unit

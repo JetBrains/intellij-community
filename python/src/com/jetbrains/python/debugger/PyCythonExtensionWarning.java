@@ -8,7 +8,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.*;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -56,8 +59,18 @@ public final class PyCythonExtensionWarning {
                        PyBundle.message("debugger.cython.extension.speeds.up.python.debugging"),
                        NotificationType.INFORMATION);
     notification.setSuggestionType(true);
+    notification.setListener(NotificationListener.URL_OPENING_LISTENER);
+
     notification.addAction(createInstallAction(notification, project));
-    notification.addAction(createDocsAction());
+
+    notification.addAction(new NotificationAction(IdeBundle.message("label.dont.show")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.setDoNotAskFor(null);
+        notification.expire();
+      }
+    });
+    notification.configureDoNotAskOption("CythonDebuggerExtensionAvailable", PyBundle.message("compile.cython.extensions.notification"));
     notification.notify(project);
   }
 
@@ -68,16 +81,6 @@ public final class PyCythonExtensionWarning {
       public void actionPerformed(@NotNull AnActionEvent e) {
         compileCythonExtension(project);
         notification.expire();
-      }
-    };
-  }
-
-  private static AnAction createDocsAction() {
-    return new DumbAwareAction(PyBundle.message("compile.cython.extensions.help")) {
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        HelpManager.getInstance().invokeHelp("Cython_Speedups");
       }
     };
   }

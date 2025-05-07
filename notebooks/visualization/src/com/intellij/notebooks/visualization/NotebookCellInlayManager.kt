@@ -483,9 +483,9 @@ class UpdateContext(val force: Boolean = false) {
     if (!editor.isDisposed) {
       if (foldingOperations.isNotEmpty()) {
         val foldingModel = RemovalTrackingFoldingModel(editor.foldingModel as FoldingModelImpl)
-        foldingModel.runBatchFoldingOperation {
+        foldingModel.runBatchFoldingOperation({
           foldingOperations.forEach { it(foldingModel) }
-        }
+                                              }, true, false)
       }
       if (inlayOperations.isNotEmpty()) {
         val inlayModel = editor.inlayModel

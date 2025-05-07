@@ -13,6 +13,16 @@ public class PyMakeReturnsExplicitFixTest extends PyQuickFixTestCase {
     doQuickFixTest(PyInconsistentReturnsInspection.class, PyPsiBundle.message("QFIX.NAME.make.return.stmts.explicit"));
   }
 
+  // PY-80493
+  public void testContextManagerSuppressingException() {
+    doQuickFixTest(PyInconsistentReturnsInspection.class, PyPsiBundle.message("QFIX.NAME.make.return.stmts.explicit"));
+  }
+
+  // PY-80493
+  public void testContextManagerNotSuppressingException() {
+    doQuickFixTest(PyInconsistentReturnsInspection.class, PyPsiBundle.message("QFIX.NAME.make.return.stmts.explicit"));
+  }
+
   @Override
   protected void doQuickFixTest(final Class inspectionClass, final String hint) {
     final String testFileName = getTestName(true);

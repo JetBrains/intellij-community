@@ -2,12 +2,22 @@
 package com.jetbrains.python.ast;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+
+import static com.jetbrains.python.ast.PyAstElementKt.findChildByClass;
 
 @ApiStatus.Experimental
 public interface PyAstValuePattern extends PyAstPattern {
   @Override
   default boolean isIrrefutable() {
     return false;
+  }
+
+  @NotNull
+  default PyAstReferenceExpression getValue() {
+    return Objects.requireNonNull(findChildByClass(this, PyAstReferenceExpression.class));
   }
 
   @Override

@@ -7,10 +7,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
@@ -19,22 +22,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFileFactory
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.util.LocalTimeCounter
 import com.intellij.util.asDisposable
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.TerminalFontOptions
+import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
-import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
@@ -50,11 +52,12 @@ import kotlin.math.min
 internal class ReworkedTerminalView(
   private val project: Project,
   settings: JBTerminalSystemSettingsProviderBase,
-  sessionFuture: CompletableFuture<TerminalSession>,
+  private val sessionFuture: CompletableFuture<TerminalSession>,
 ) : TerminalContentView {
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
 
   private val sessionModel: TerminalSessionModel
+  private val blocksModel: TerminalBlocksModel
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
 
@@ -63,6 +66,7 @@ internal class ReworkedTerminalView(
 
   private val outputEditor: EditorEx
   private val alternateBufferEditor: EditorEx
+  private val scrollingModel: TerminalOutputScrollingModel
 
   private val terminalPanel: TerminalPanel
 
@@ -82,11 +86,7 @@ internal class ReworkedTerminalView(
     terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
-    val alternateBufferModel = TerminalOutputModelImpl(
-      alternateBufferEditor.document,
-      maxOutputLength = 0,
-      WriteActionTerminalDocumentChangesApplier()
-    )
+    val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
@@ -101,12 +101,10 @@ internal class ReworkedTerminalView(
     )
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
-    val outputModel = TerminalOutputModelImpl(
-      outputEditor.document,
-      maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength(),
-      WriteActionTerminalDocumentChangesApplier()
-    )
-    val scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
+    val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
+    scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
+    outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
+
     configureOutputEditor(
       project,
       editor = outputEditor,
@@ -122,7 +120,7 @@ internal class ReworkedTerminalView(
 
     terminalSearchController = TerminalSearchController(project)
 
-    val blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     controller = TerminalSessionController(
@@ -158,6 +156,14 @@ internal class ReworkedTerminalView(
     terminalInput.sendBytes(bytes)
   }
 
+  override fun isCommandRunning(): Boolean {
+    // Will work only if there is a shell integration.
+    // If there is no shell integration, then it is always false.
+    val session = sessionFuture.getNow(null) ?: return false
+    return blocksModel.blocks.last().outputStartOffset != -1
+           && !session.isClosed
+  }
+
   override fun getTerminalSize(): TermSize? {
     return getCurEditor().calculateTerminalSize()
   }
@@ -168,6 +174,23 @@ internal class ReworkedTerminalView(
 
   override fun isFocused(): Boolean {
     return component.hasFocus()
+  }
+
+  fun setTopComponent(component: JComponent, disposable: Disposable) {
+    val resizeListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        // Update scroll position on top component size change
+        // to always keep the cursor visible
+        scrollingModel.scrollToCursor(force = false)
+      }
+    }
+    component.addComponentListener(resizeListener)
+    terminalPanel.setTopComponent(component)
+
+    Disposer.register(disposable) {
+      component.removeComponentListener(resizeListener)
+      terminalPanel.remoteTopComponent(component)
+    }
   }
 
   private fun listenSearchController() {
@@ -185,14 +208,18 @@ internal class ReworkedTerminalView(
   private fun listenPanelSizeChanges() {
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
-        val newSize = getTerminalSize() ?: return
-        terminalInput.sendResize(newSize)
+        sendResizeEvent()
       }
     })
   }
 
+  private fun sendResizeEvent() {
+    val newSize = getTerminalSize() ?: return
+    terminalInput.sendResize(newSize)
+  }
+
   private fun listenAlternateBufferSwitch() {
-    coroutineScope.launch(Dispatchers.EDT + CoroutineName("Alternate buffer switch listener")) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Alternate buffer switch listener")) {
       var isAlternateScreenBuffer = false
       sessionModel.terminalState.collect { state ->
         if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
@@ -263,6 +290,8 @@ internal class ReworkedTerminalView(
       }
     ).install(parentDisposable)
 
+    CopyOnSelectionHandler.install(editor, settings)
+
     (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
   }
 
@@ -277,12 +306,11 @@ internal class ReworkedTerminalView(
   }
 
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
-    val document = createDocument()
-    val editor = createEditor(document, settings)
+    val document = DocumentImpl("", true)
+    val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
-    CopyOnSelectionHandler(settings).install(editor)
 
     Disposer.register(parentDisposable) {
       EditorFactory.getInstance().releaseEditor(editor)
@@ -291,8 +319,8 @@ internal class ReworkedTerminalView(
   }
 
   private fun createAlternateBufferEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
-    val document = createDocument()
-    val editor = createEditor(document, settings)
+    val document = DocumentImpl("", true)
+    val editor = createEditor(document, settings, parentDisposable)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.useTerminalDefaultBackground(parentDisposable = this)
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_NEVER
@@ -307,23 +335,26 @@ internal class ReworkedTerminalView(
   private fun createEditor(
     document: Document,
     settings: JBTerminalSystemSettingsProviderBase,
+    parentDisposable: Disposable,
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
-    result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
-    result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
-    return result
-  }
 
-  private fun createDocument(): Document {
-    val file = PsiFileFactory.getInstance(project).createFileFromText(
-      "terminal_output",
-      TerminalOutputFileType,
-      "",
-      LocalTimeCounter.currentTime(),
-      true,
-      true
-    )
-    return PsiDocumentManager.getInstance(project).getDocument(file)!!
+    result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
+    result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
+    result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
+
+    val fontSettingsListener = object : TerminalFontOptionsListener {
+      override fun fontOptionsChanged() {
+        result.applyFontSettings(settings)
+        result.reinitSettings()
+        if (result.component.isShowing) { // to avoid sending the resize event twice, for the regular and alternate buffer editors
+          sendResizeEvent()
+        }
+      }
+    }
+    TerminalFontOptions.getInstance().addListener(fontSettingsListener, parentDisposable)
+
+    return result
   }
 
   override fun dispose() {}
@@ -336,8 +367,12 @@ internal class ReworkedTerminalView(
     terminalPanel.addFocusListener(parentDisposable, listener)
   }
 
-  private inner class TerminalPanel(initialContent: Editor) : JBLayeredPane(), UiDataProvider {
+  private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider {
+    private val layeredPane = TerminalLayeredPane(initialContent)
     private var curEditor: Editor = initialContent
+
+    val preferredFocusableComponent: JComponent
+      get() = layeredPane.preferredFocusableComponent
 
     private val delegatingFocusListener = object : FocusListener {
       override fun focusGained(e: FocusEvent) {
@@ -350,30 +385,69 @@ internal class ReworkedTerminalView(
     }
 
     init {
-      setTerminalContent(initialContent)
-    }
-
-    val preferredFocusableComponent: JComponent
-      get() = curEditor.contentComponent
-
-    fun setTerminalContent(editor: Editor) {
-      val prevEditor = curEditor
-      @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
-      if (prevEditor != null) {
-        prevEditor.contentComponent.removeFocusListener(delegatingFocusListener)
-        remove(curEditor.component)
-      }
-      curEditor = editor
-      addToLayer(editor.component, DEFAULT_LAYER)
-      editor.contentComponent.addFocusListener(delegatingFocusListener)
-      revalidate()
-      repaint()
+      addToCenter(layeredPane)
+      updateFocusListeners(initialContent, initialContent)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
       sink[TerminalInput.KEY] = terminalInput
       sink[TerminalSearchController.KEY] = terminalSearchController
+    }
+
+    fun setTerminalContent(editor: Editor) {
+      layeredPane.setTerminalContent(editor)
+      updateFocusListeners(curEditor, editor)
+      curEditor = editor
+    }
+
+    fun installSearchComponent(component: SearchReplaceComponent) {
+      layeredPane.installSearchComponent(component)
+    }
+
+    fun removeSearchComponent(component: SearchReplaceComponent) {
+      layeredPane.removeSearchComponent(component)
+    }
+
+    fun setTopComponent(component: JComponent) {
+      addToTop(component)
+      revalidate()
+      repaint()
+    }
+
+    fun remoteTopComponent(component: JComponent) {
+      remove(component)
+      revalidate()
+      repaint()
+    }
+
+    private fun updateFocusListeners(prevEditor: Editor, newEditor: Editor) {
+      prevEditor.contentComponent.removeFocusListener(delegatingFocusListener)
+      newEditor.contentComponent.addFocusListener(delegatingFocusListener)
+    }
+  }
+
+  private class TerminalLayeredPane(initialContent: Editor) : JBLayeredPane() {
+    private var curEditor: Editor = initialContent
+
+    val preferredFocusableComponent: JComponent
+      get() = curEditor.contentComponent
+
+    init {
+      setTerminalContent(initialContent)
+    }
+
+    fun setTerminalContent(editor: Editor) {
+      val prevEditor = curEditor
+      @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
+      if (prevEditor != null) {
+        remove(curEditor.component)
+      }
+      curEditor = editor
+      addToLayer(editor.component, DEFAULT_LAYER)
+
+      revalidate()
+      repaint()
     }
 
     fun installSearchComponent(component: SearchReplaceComponent) {

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="jetbrains.dokka.cli" type="repository">
+        <properties maven-id="org.jetbrains.dokka:dokka-cli:2.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0.jar">
+              <sha256sum>5f70f358160b48ef9763b2ced4e96037f1bfc8d0122de692550ca320ab4b9f20</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-cli/2.0.0/dokka-cli-2.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="jetbrains.dokka.javadoc.plugin" type="repository">
+        <properties maven-id="org.jetbrains.dokka:javadoc-plugin:2.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/dokka/javadoc-plugin/2.0.0/javadoc-plugin-2.0.0.jar">
+              <sha256sum>41055e59e3f0a6e04b77557641b9a2db0311e99f81c5bc7b1fcc3409bb23d99b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0.jar">
+              <sha256sum>0411d1c38a1d100cbd346c6340c3c4b5f154a48a9c119ed11893d6fae94c91aa</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
+              <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/dokka/kotlin-as-java-plugin/2.0.0/kotlin-as-java-plugin-2.0.0.jar">
+              <sha256sum>3d8931b3c03f84edbf72f67348265205d819d327bb110043ab11d840d59bde41</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/soywiz/korlibs/korte/korte-jvm/4.0.10/korte-jvm-4.0.10.jar">
+              <sha256sum>b9b983817a80dbb5f9b599b508616115c1e8e1e3f1fccc301695f4530792690f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.9.1/kotlinx-html-jvm-0.9.1.jar">
+              <sha256sum>b68f39cd9ad7b46de0a0e77e7f5908d4e7661f3d0c85d2d9171543fcd5b156fb</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.dokka:analysis-markdown" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jsoup:jsoup" />
+            <dependency maven-id="com.fasterxml.jackson.module:jackson-module-kotlin" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/javadoc-plugin/2.0.0/javadoc-plugin-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/dokka-base/2.0.0/dokka-base-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/kotlin-as-java-plugin/2.0.0/kotlin-as-java-plugin-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/soywiz/korlibs/korte/korte-jvm/4.0.10/korte-jvm-4.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.9.1/kotlinx-html-jvm-0.9.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="jetbrains.dokka.analysis.kotlin.descriptors" type="repository">
+        <properties maven-id="org.jetbrains.dokka:analysis-kotlin-descriptors:2.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0.jar">
+              <sha256sum>829788c40891a2a3c4b9435cb9ec80d645560d926e9fbbd08ccc29e8e4f1eb7c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/dokka/analysis-kotlin-descriptors/2.0.0/analysis-kotlin-descriptors-2.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>

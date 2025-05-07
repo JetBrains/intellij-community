@@ -8,7 +8,6 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
-import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.annotations.TestOnly
@@ -95,7 +94,7 @@ class TestPythonPackageManagerService(val installedPackages: List<PythonPackage>
     return TestPythonPackageManager(project, sdk)
       .withPackageInstalled(installedPackages)
       .withPackageNames(installedPackages.map { it.name })
-      .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version),PyEmptyPackagePackageRepository))
+      .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version), TestPackageRepository(installedPackages.map { it.name }.toSet())))
   }
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {

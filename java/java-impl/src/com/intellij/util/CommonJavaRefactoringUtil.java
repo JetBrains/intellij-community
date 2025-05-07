@@ -67,15 +67,15 @@ public final class CommonJavaRefactoringUtil {
     return type;
   }
 
-  public static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
+  public static @Nullable PsiType getTypeByExpression(@Nullable PsiExpression expr, @NotNull final PsiElementFactory factory) {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiTypes.nullType().equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length > 0) {
         type = infos[0].getType();
-        if (type instanceof PsiPrimitiveType) {
+        if (type instanceof PsiPrimitiveType primitiveType) {
           type = infos.length > 1 && !(infos[1].getType() instanceof PsiPrimitiveType) ? infos[1].getType()
-                                                                                       : ((PsiPrimitiveType)type).getBoxedType(expr);
+                                                                                       : primitiveType.getBoxedType(expr);
         }
       }
       else {
@@ -83,7 +83,7 @@ public final class CommonJavaRefactoringUtil {
       }
     }
 
-    return type;
+    return type == null ? null : PsiTypesUtil.removeExternalAnnotations(type);
   }
 
   @Contract("null, _ -> null")
@@ -591,7 +591,7 @@ public final class CommonJavaRefactoringUtil {
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
     if (expectedTypes.length == 1 || (isFunctionalType || detectConjunct) && expectedTypes.length > 0 ) {
-      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
+      if (typeByExpression != null && ContainerUtil.exists(expectedTypes, typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
         return type;
       }
       type = expectedTypes[0].getType();

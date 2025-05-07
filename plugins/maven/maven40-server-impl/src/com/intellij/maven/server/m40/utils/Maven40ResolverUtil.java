@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
-import org.apache.maven.api.services.ModelBuilderException;
 import org.apache.maven.model.building.DefaultModelProblem;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelProblem;
@@ -25,10 +24,10 @@ public final class Maven40ResolverUtil {
       if (cause instanceof ModelBuildingException) {
         buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, ((ModelBuildingException)cause).getProblems(), null));
       }
-      else if (cause instanceof ModelBuilderException) {
+/*      else if (cause instanceof ModelBuilderException) {
         buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, MavenApiConverterUtil.convertFromApiProblems(
-          ((ModelBuilderException)cause).getProblems()), null));
-      }
+          ((ModelBuilderException)cause).getProblemCollector().problems().collect(Collectors.toList())), null));
+      }*/
       else {
         buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, Collections.singletonList(
           new DefaultModelProblem(cause.getMessage(), ModelProblem.Severity.FATAL, ModelProblem.Version.BASE, "", 0, 0, null, e)

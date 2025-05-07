@@ -422,6 +422,13 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
   
+  public void testOverriddenWithNullMarked() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture);
+    DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
   public void testNullableParameterOverride() {
     doTest();
   }

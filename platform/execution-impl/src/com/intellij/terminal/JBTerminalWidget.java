@@ -149,11 +149,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   public int getFontSize() {
-    return getSettingsProvider().getUiSettingsManager().getFontSize();
+    return Math.round(getSettingsProvider().getTerminalFontSize());
   }
 
   public float getFontSize2D() {
-    return getSettingsProvider().getUiSettingsManager().getFontSize2D();
+    return getSettingsProvider().getTerminalFontSize2D();
   }
 
   public void setFontSize(int fontSize) {
@@ -161,11 +161,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   }
 
   public void setFontSize(float fontSize) {
-    getSettingsProvider().getUiSettingsManager().setFontSize(fontSize);
+    getSettingsProvider().setTerminalFontSize(fontSize);
   }
 
   public void resetFontSize() {
-    getSettingsProvider().getUiSettingsManager().resetFontSize();
+    getSettingsProvider().resetTerminalFontSize();
   }
 
   public @Nullable ProcessTtyConnector getProcessTtyConnector() {
@@ -277,6 +277,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
 
   protected void setShellCommand(@Nullable List<String> command) {
     throw new RuntimeException("Should be called for ShellTerminalWidget only");
+  }
+
+  /**
+   * @throws IllegalStateException of it fails to determine whether the command is running or not.
+   */
+  protected boolean hasRunningCommands() throws IllegalStateException {
+    return false;
   }
 
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
@@ -399,6 +406,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       }
       catch (IOException e) {
         LOG.info("Cannot execute shell command: " + shellCommand);
+      }
+    }
+
+    @Override
+    public boolean isCommandRunning() {
+      try {
+        return widget().hasRunningCommands();
+      }
+      catch (IllegalStateException e) {
+        return true;
       }
     }
 

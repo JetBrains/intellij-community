@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -536,6 +536,11 @@ public abstract class IndexStorageLayoutProviderTestBase {
     @Override
     public int getVersion() {
       return VERSION;
+    }
+
+    @Override
+    public int shardlessVersion() {
+      return VERSION + (shardsCount() - 1) * 10;
     }
 
     @Override

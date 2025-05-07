@@ -64,9 +64,10 @@ internal object SystemHealthMonitor {
 
     checkCorruptedVmOptionsFile()
     checkIdeDirectories()
+    checkRuntimeArch()
 
     withContext(Dispatchers.IO) {
-      checkRuntime()
+      checkRuntimeVersion()
     }
 
     checkReservedCodeCacheSize()
@@ -135,7 +136,7 @@ internal object SystemHealthMonitor {
     }
   }
 
-  private suspend fun checkRuntime() {
+  private fun checkRuntimeArch() {
     if (!CpuArch.isEmulated()) {
       return
     }
@@ -149,8 +150,10 @@ internal object SystemHealthMonitor {
       }
       showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
     }
-    var jreHome = SystemProperties.getJavaHome()
+  }
 
+  private suspend fun checkRuntimeVersion() {
+    var jreHome = SystemProperties.getJavaHome()
     if (PathManager.isUnderHomeDirectory(jreHome) || isModernJBR()) {
       return
     }

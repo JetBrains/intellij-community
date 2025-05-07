@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -28,7 +27,6 @@ public object IntUiDefaultTabStyleFactory {
         scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripLight(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
-    @Composable
     public fun dark(
         colors: TabColors = TabColors.Default.dark(),
         metrics: TabMetrics = TabMetrics.defaults(),
@@ -42,7 +40,6 @@ public val TabStyle.Companion.Editor: IntUiEditorTabStyleFactory
     get() = IntUiEditorTabStyleFactory
 
 public object IntUiEditorTabStyleFactory {
-    @Composable
     public fun light(
         colors: TabColors = TabColors.Editor.light(),
         metrics: TabMetrics = TabMetrics.defaults(),
@@ -51,7 +48,6 @@ public object IntUiEditorTabStyleFactory {
         scrollbarStyle: ScrollbarStyle = ScrollbarStyle.tabStripLight(),
     ): TabStyle = TabStyle(colors, metrics, icons, contentAlpha, scrollbarStyle)
 
-    @Composable
     public fun dark(
         colors: TabColors = TabColors.Editor.dark(),
         metrics: TabMetrics = TabMetrics.defaults(),

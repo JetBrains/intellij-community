@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.*
@@ -180,6 +182,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
         <module>../m1</module>
       </modules>""".trimIndent())
     createModulePom("m1", """
+      <artifactId>m1</artifactId>
       <parent>
         <groupId>test</groupId>
         <artifactId>project1</artifactId>
@@ -279,7 +282,7 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                            return object : MavenServerConnectorImpl(project, jdk, vmOptions, null,
                                                                                                     mavenDistribution,
                                                                                                     multimoduleDirectory) {
-                                                             override fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+                                                             override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
                                                                settingsRef.set(settings)
                                                                throw UnsupportedOperationException()
                                                              }
@@ -290,7 +293,8 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
     assertThrows(UnsupportedOperationException::class.java) {
       runBlockingMaybeCancellable {
-        MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.path).getEmbedder()
+        val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+        mavenEmbedderWrappers.getEmbedder(projectRoot.path).getEmbedder()
       }
     }
     assertNotNull(settingsRef.get())

@@ -50,8 +50,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
-import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL;
-import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
@@ -128,10 +128,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     PARAM_SPEC, PARAM_SPEC_EXT,
     TYPE_VAR_TUPLE, TYPE_VAR_TUPLE_EXT
   );
-
-  public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager";
+public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager";
   public static final String ASYNC_CONTEXT_MANAGER = "contextlib.AbstractAsyncContextManager";
-
   public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
 
   public static final String UNPACK = "typing.Unpack";
@@ -189,7 +187,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
    * some synthetic values.
    */
   public static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
-    .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
+    .add(PyKnownDecorator.TYPING_OVERLOAD.getQualifiedName().toString())
     .add(ANY)
     .add(TYPE_VAR)
     .add(TYPE_VAR_EXT)
@@ -2052,6 +2050,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (classType == null) return null;
 
       final String qName = classType.getClassQName();
+      if (qName == null) return null;
       if (!SYNC_TYPES.contains(qName) && !ASYNC_TYPES.contains(qName)) return null;
       
       PyType yieldType = null;

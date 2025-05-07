@@ -196,7 +196,6 @@ public class TestStatusLine extends NonOpaquePanel {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);
-      myWarning.setVisible(!progressStatus_text.isEmpty());
     });
   }
 

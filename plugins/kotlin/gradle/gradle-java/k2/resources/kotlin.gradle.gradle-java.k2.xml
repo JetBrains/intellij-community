@@ -8,6 +8,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <editorNotificationProvider
             implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.K2IndexScriptDependenciesSourcesNotificationProvider"/>
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.gradleJava.k2.inspections.KotlinOptionsToCompilerOptionsInspection"
+                     shortName="KotlinOptionsToCompilerOptions"
+                     groupPathKey="group.path.kotlin.migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="DEPRECATED_ATTRIBUTES"
+                     key="inspection.kotlin.options.to.compiler.options.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

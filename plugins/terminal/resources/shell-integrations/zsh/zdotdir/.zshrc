@@ -11,7 +11,8 @@ fi
 # Correct it before sourcing the original .zshrc as user configuration may depend on it.
 HISTFILE="${JETBRAINS_INTELLIJ_ORIGINAL_ZDOTDIR:-$HOME}/.zsh_history"
 
-__jetbrains_intellij_source_original_zsh_file '.zshrc'
+JETBRAINS_INTELLIJ_ORIGINAL_FILENAME_TO_SOURCE='.zshrc'
+builtin source "$JETBRAINS_INTELLIJ_ZSH_DIR/zdotdir/source-original.zsh"
 
 # Restore original ZDOTDIR. Once ZDOTDIR is restored, further user configuration files are
 # sourced normally by Zsh. At this point, only .zlogin remains, so it's read directly by Zsh.
@@ -22,8 +23,6 @@ else
   # defaults ZDOTDIR to HOME
   builtin unset 'ZDOTDIR'
 fi
-
-builtin unset -f '__jetbrains_intellij_source_original_zsh_file'
 
 if [[ -f "${JETBRAINS_INTELLIJ_ZSH_DIR}/zsh-integration.zsh" ]]; then
   builtin source "${JETBRAINS_INTELLIJ_ZSH_DIR}/zsh-integration.zsh"

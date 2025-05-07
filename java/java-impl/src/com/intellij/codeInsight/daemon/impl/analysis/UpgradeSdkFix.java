@@ -52,7 +52,10 @@ public class UpgradeSdkFix implements IntentionAction {
       .newBuilder()
       .withProject(project)
       .withSdkTypeFilter(type -> type instanceof JavaSdkType)
-      .withSdkFilter(sdk -> JavaSdkVersionUtil.getJavaSdkVersion(sdk).isAtLeast(required))
+      .withSdkFilter(sdk -> {
+        final var version = JavaSdkVersionUtil.getJavaSdkVersion(sdk);
+        return version != null && version.isAtLeast(required);
+      })
       .updateSdkForFile(file)
       .onSdkSelected(sdk -> ApplicationManager.getApplication()
         .invokeLater(() -> new IncreaseLanguageLevelFix(myLevel)

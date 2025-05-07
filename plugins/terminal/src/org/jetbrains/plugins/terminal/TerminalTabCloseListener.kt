@@ -24,16 +24,17 @@ class TerminalTabCloseListener(val content: Content,
     if (content.getUserData(SILENT) == true) {
       return true
     }
+
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return true
-    val connector = widget.ttyConnector ?: return true
     try {
-      if (!TerminalUtil.hasRunningCommands(connector)) {
+      if (!widget.isCommandRunning()) {
         return true
       }
     }
     catch (e: Exception) {
       LOG.error(e)
     }
+
     val proxy = NopProcessHandler().apply { startNotify() }
     // don't show 'disconnect' button
     proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)

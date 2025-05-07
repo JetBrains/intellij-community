@@ -22,46 +22,12 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.awt.Component
 import javax.swing.Icon
 
-private const val KOTLIN_FATAL_ERROR_NOTIFICATION_PROPERTY = "kotlin.fatal.error.notification"
-private const val IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification"
-private const val DISABLED_VALUE = "disabled"
-private const val ENABLED_VALUE = "enabled"
-
 private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
 
 /**
- * We need to wrap `ITNReporter` for force showing of errors from Kotlin plugin even from a released version of IDEA.
+ * We need to wrap `ITNReporter` to distinguish K2 from K1 reports.
  */
 class KotlinReportSubmitter : ITNReporter() {
-    private val isIdeaAndKotlinRelease: Boolean by lazy {
-        // Disabled in a released version of IDEA and Android Studio
-        // Enabled in EAPs, Canary and Beta
-        val isReleaseLikeIdea = DISABLED_VALUE == System.getProperty(IDEA_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
-        isReleaseLikeIdea && KotlinIdePlugin.isRelease
-    }
-
-    override fun showErrorInRelease(event: IdeaLoggingEvent): Boolean {
-        if (isApplicationInternalMode()) {
-            // Reporting is always enabled for internal mode in the platform
-            return true
-        }
-
-        if (isUnitTestMode()) {
-            return true
-        }
-
-        val kotlinNotificationEnabled = DISABLED_VALUE != System.getProperty(KOTLIN_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
-        if (!kotlinNotificationEnabled) {
-            // Kotlin notifications are explicitly disabled
-            return false
-        }
-
-        if (!isIdeaAndKotlinRelease) {
-            return true
-        }
-
-        return true
-    }
 
     override fun submit(
         events: Array<IdeaLoggingEvent>,
@@ -92,14 +58,6 @@ class KotlinReportSubmitter : ITNReporter() {
         } else {
             // leave foreign events (Android Studio, etc.) intact
             event
-        }
-    }
-
-    fun showDialog(parent: Component?, @Nls message: String, @Nls title: String, options: Array<String>, defaultOptionIndex: Int, icon: Icon?): Int {
-        return if (parent != null) {
-            Messages.showDialog(parent, message, title, options, defaultOptionIndex, icon)
-        } else {
-            Messages.showDialog(message, title, options, defaultOptionIndex, icon)
         }
     }
 }

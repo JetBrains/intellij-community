@@ -199,7 +199,7 @@ fun isKotlinPlugin(pluginId: PluginId): Boolean =
 private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUGIN_IDS + listOf(
   "org.jetbrains.android",
   "androidx.compose.plugins.idea",
-  "com.intellij.kmm",
+  "com.jetbrains.kmm",
   "com.jetbrains.kotlin.ocswift",
 ))
 

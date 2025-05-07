@@ -95,4 +95,70 @@ public class ExtractMethodRecommender {
     d.setSeconds(56);
     System.out.println(d);
   }
+
+  String varAnonymousClass() {
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    var anon = new Runnable() {
+
+      String result;
+
+      public void run() {
+        result = "Hello";
+      }
+    };
+    anon.run();
+    anon.run();
+    return anon.result;
+  }
+
+  String varLocalClass() {
+    class Local implements Runnable {
+      String result;
+
+      public void run() {
+        result = "Hello";
+      }
+    }
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    var anon = new Local();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    return anon.result;
+  }
+
+  static class Nested implements Runnable {
+    String result;
+
+    public void run() {
+      result = "Hello";
+    }
+  }
+
+  String varNestedClass() {
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    <weak_warning descr="It's possible to extract method returning 'anon' from a long surrounding method">var anon = new Nested();</weak_warning>
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    return anon.result;
+  }
 }

@@ -22,7 +22,7 @@ public final class PlatformPrefix {
        we prefer AndroidStudio and fall back to Idea without adt-branding.
     "Rider", "GoLand", "CLion", "FleetBackend",
     null,
-    "AppCode", "SwiftTests",
+    "AppCode",
     "Python", "DataSpell", "PyCharmCore",
     "DataGrip",
     "Ruby",

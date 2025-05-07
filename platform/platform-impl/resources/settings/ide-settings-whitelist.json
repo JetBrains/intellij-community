@@ -138,8 +138,6 @@
     "com.intellij.kubernetes:app:KubernetesFoldingSettings.collapse_exec_actions",
     "com.intellij.kubernetes:app:KubernetesFoldingSettings.collapse_helm_values",
     "org.intellij.plugins.markdown:app:MarkdownCodeFoldingSettings.*",
-    "Docker:app:DockerSettings.dockerComposePath",
-    "Docker:app:DockerSettings.dockerPath",
     "Git4Idea:app:Git-Application-Settings.*",
     "hg4idea:app:HgGlobalSettings.myHgExecutable",
     "JavaScript:app:JSEditorOptions.*",

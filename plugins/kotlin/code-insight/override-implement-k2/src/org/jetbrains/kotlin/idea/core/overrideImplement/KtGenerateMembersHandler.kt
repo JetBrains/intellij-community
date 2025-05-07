@@ -373,6 +373,9 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
             typeRenderer = typeRenderer.with {
                 expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
             }
+
+            withoutLabel()
+
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE
             }
@@ -381,6 +384,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
                     keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD)
                 }
             }
+
             propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         }
     }

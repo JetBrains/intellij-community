@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -63,7 +65,9 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<RecentProjectsManager>()
@@ -126,6 +130,27 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  /**
+   * Fixes recent project paths after they were modified by Monolith IDE.
+   * See IJPL-179484 for details.
+   */
+  private fun transformFrontendPathIfNeeded(key: String): String {
+    LOG.runAndLogException {
+      val configDir = PathManager.getConfigDir()
+      val originalConfigDir = PathManager.getOriginalConfigDir()
+
+      val projectDir = key.toNioPathOrNull() ?: return key
+      if (projectDir.exists()) return key
+      if (!projectDir.startsWith(configDir)) return key
+
+      // `projectDir` is a valid path, leads to a non-existing location, inside the config folder
+      val relativeProjectDir = projectDir.relativeTo(configDir)
+      val fixedProjectDir = originalConfigDir.resolve(relativeProjectDir)
+      return FileUtilRt.toSystemIndependentName(fixedProjectDir.toString())
+    }
+    return key
+  }
+
   final override fun loadState(state: RecentProjectManagerState) {
     synchronized(stateLock) {
       this.state = state
@@ -133,6 +158,19 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
       for ((path, value) in state.additionalInfo) {
         checkForNonsenseBounds("com.intellij.ide.RecentProjectsManagerBase.loadState(path=$path)", value.frame?.bounds)
+      }
+
+      // Remote Development: Restore correct paths after monolith settings save
+      if (PlatformUtils.isJetBrainsClient()) {
+        val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
+        state.additionalInfo.forEach { key, value ->
+          newAdditionalInfo.put(transformFrontendPathIfNeeded(key), value)
+        }
+
+        if (newAdditionalInfo != state.additionalInfo) {
+          state.additionalInfo.clear()
+          state.additionalInfo.putAll(newAdditionalInfo)
+        }
       }
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete

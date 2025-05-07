@@ -9,6 +9,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.getHatchService
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.orLogException
@@ -48,7 +49,7 @@ internal class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
     val sdk = hatchVenv.createSdk(hatchService.getWorkingDirectoryPath(), module).orLogException(LOGGER)
     sdk
   }
-
+  @RequiresBackgroundThread
   override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createSdk(module)
 
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createSdk(module)

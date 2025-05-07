@@ -4,11 +4,13 @@ isort:skip_file
 TODO(b/247876220): Change package and java_package once we figure out how to
 migrate.
 """
+
 import builtins
-import google.protobuf.descriptor
-import google.protobuf.internal.enum_type_wrapper
 import sys
 import typing
+
+import google.protobuf.descriptor
+import google.protobuf.internal.enum_type_wrapper
 
 if sys.version_info >= (3, 10):
     import typing as typing_extensions

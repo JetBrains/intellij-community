@@ -61,7 +61,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
-    if (PySdkFromEnvironmentVariableConfigurator.getPycharmPythonPathProperty()?.isNotBlank() == true) {
+    if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
       return
     }
 

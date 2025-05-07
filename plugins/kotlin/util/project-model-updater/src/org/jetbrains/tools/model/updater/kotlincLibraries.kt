@@ -65,6 +65,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
 
         if (!isCommunity) {
             kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
+            kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
         }
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)

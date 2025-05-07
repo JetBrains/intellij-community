@@ -300,8 +300,29 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       builders.addAll(forModuleRootsFileBased((entry.key as ModuleBridge).moduleEntityId, entry.value))
     }
 
+    val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
+
     for (description in descriptions) {
-      builders.addAll(description.createBuilders())
+      when (description) {
+        is LibraryRootsDescription -> {
+          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
+            builders.addAll(description.createBuilders())
+          }
+        }
+        is LibraryUrlRootsDescription -> {
+          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
+            builders.addAll(description.createBuilders())
+          }
+        }
+        is SdkRootsDescription -> {
+          if (moduleDependencyIndex.hasDependencyOn(description.sdk.symbolicId)) {
+            builders.addAll(description.createBuilders())
+          }
+        }
+        else -> {
+          builders.addAll(description.createBuilders())
+        }
+      }
     }
 
     builders.addAll(ReincludedRootsUtil.createBuildersForReincludedFiles(project, reincludedRoots))
@@ -327,16 +348,20 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
         is EntityContentRootsCustomizedModuleAwareDescription<*> -> contentIterators.addAll(description.createIterators())
         is EntityGenericContentRootsDescription<*> -> contentIterators.addAll(description.createIterators())
         is LibraryRootsDescription -> {
-          description.createIterators(storage).forEach { iterator ->
-            if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-              externalIterators.add(iterator)
+          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
+            description.createIterators(storage).forEach { iterator ->
+              if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
+                externalIterators.add(iterator)
+              }
             }
           }
         }
         is LibraryUrlRootsDescription -> {
-          description.createIterators(storage).forEach { iterator ->
-            if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
-              externalIterators.add(iterator)
+          if (moduleDependencyIndex.hasDependencyOn(description.library.symbolicId)) {
+            description.createIterators(storage).forEach { iterator ->
+              if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
+                externalIterators.add(iterator)
+              }
             }
           }
         }

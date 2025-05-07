@@ -85,6 +85,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
     """)
 
     assertOrderedElementsAreEqual(projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile1"))
+
     updateProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=${httpServerFixtureForWrapper.url()}/profile2.zip\n")
     refreshFiles(listOf(wrapperProperties))

@@ -445,9 +445,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      SmartStepData stepData = editor.getUserData(SMART_STEP_INPLACE_DATA);
-      if (stepData != null) {
-        myPerform(editor, caret, dataContext, stepData);
+      if (hasSmartStepDebugData(editor)) {
+        myPerform(editor, caret, dataContext, editor.getUserData(SMART_STEP_INPLACE_DATA));
       }
       else {
         myOriginalHandler.execute(editor, caret, dataContext);
@@ -456,7 +455,11 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      return editor.getUserData(SMART_STEP_INPLACE_DATA) != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
+      return hasSmartStepDebugData(editor) || myOriginalHandler.isEnabled(editor, caret, dataContext);
+    }
+
+    protected boolean hasSmartStepDebugData(@NotNull Editor editor) {
+      return editor.getUserData(SMART_STEP_INPLACE_DATA) != null;
     }
 
     protected abstract void myPerform(@NotNull Editor editor,
@@ -538,8 +541,9 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static final class EnterHandler extends SmartStepEditorActionHandler {
-    EnterHandler(EditorActionHandler original) {
+  @ApiStatus.Internal
+  public static class EnterHandler extends SmartStepEditorActionHandler {
+    public EnterHandler(EditorActionHandler original) {
       super(original);
     }
 

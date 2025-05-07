@@ -1,13 +1,17 @@
 package com.jetbrains.python.packaging
 
 
-private val QUOTES_REGEX: Regex = Regex("^\"|\"$")
-private val SEPARATOR_REGEX: Regex = Regex("[-_.]+")
+fun normalizePackageName(packageName: String): String {
+  var name = packageName.trim()
+    .removePrefix("\"")
+    .removeSuffix("\"")
 
-/**
- * Normalizes a package name by removing quotes, replacing separators, and converting to lowercase.
- */
-fun normalizePackageName(name: String): String = name
-  .replace(QUOTES_REGEX, "")
-  .replace(SEPARATOR_REGEX, "-")
-  .lowercase()
+  // e.g. __future__
+  if (!name.startsWith("_")) {
+    name = name.replace('_', '-')
+  }
+
+  return name
+    .replace('.', '-')
+    .lowercase()
+}

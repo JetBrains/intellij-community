@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -13,19 +12,16 @@ import org.jetbrains.jewel.ui.component.styling.TextAreaColors
 import org.jetbrains.jewel.ui.component.styling.TextAreaMetrics
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 
-@Composable
 public fun TextAreaStyle.Companion.light(
     colors: TextAreaColors = TextAreaColors.light(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
 ): TextAreaStyle = TextAreaStyle(colors, metrics)
 
-@Composable
 public fun TextAreaStyle.Companion.dark(
     colors: TextAreaColors = TextAreaColors.dark(),
     metrics: TextAreaMetrics = TextAreaMetrics.defaults(),
 ): TextAreaStyle = TextAreaStyle(colors, metrics)
 
-@Composable
 public fun TextAreaColors.Companion.light(
     background: Color = IntUiLightTheme.colors.gray(14),
     backgroundDisabled: Color = Color.Unspecified,
@@ -73,7 +69,6 @@ public fun TextAreaColors.Companion.light(
         placeholder = placeholder,
     )
 
-@Composable
 public fun TextAreaColors.Companion.dark(
     background: Color = IntUiDarkTheme.colors.gray(2),
     backgroundDisabled: Color = Color.Unspecified,

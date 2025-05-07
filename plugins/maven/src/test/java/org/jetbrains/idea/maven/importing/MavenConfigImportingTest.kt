@@ -54,10 +54,14 @@ class MavenConfigImportingTest : MavenDomTestCase() {
     assertEquals("1", mavenProject!!.mavenId.version)
   }
 
+
   @Test
   fun testResolveConfigPropertiesInModules() = runBlocking {
+    assumeMaven3()
     assumeVersionMoreThan("3.3.1")
-    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1 -DmoduleName=m1")
+    createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, """
+      -Dver=1
+      -DmoduleName=m1""".trimIndent())
 
     createModulePom("m1", """
       <artifactId>${'$'}{moduleName}</artifactId>

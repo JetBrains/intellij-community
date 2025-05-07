@@ -6,6 +6,8 @@ import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.dokka.gradle.tasks.DokkaGenerateModuleTask
+import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.BaseKotlinCompile
 import java.lang.reflect.Field
@@ -47,6 +49,8 @@ extension.all item@{
         withType<BaseKotlinCompile> { dependsOn(task) }
         withType<Detekt> { dependsOn(task) }
         withType<DokkaTask> { dependsOn(task) }
+        withType<DokkaGenerateModuleTask> { dependsOn(task) }
+        withType<DokkaGeneratePublicationTask> { dependsOn(task) }
         withType<Jar> { dependsOn(task) }
     }
 }

@@ -14,6 +14,8 @@ import com.jetbrains.python.psi.PyReturnStatement
  * or none of them should. If any return statement returns an expression, any return statements where no value
  * is returned should explicitly state this as return None, and an explicit return statement should be present
  * at the end of the function (if reachable).
+ * 
+ * @see PyMakeReturnsExplicitFix for tests
  */
 class PyInconsistentReturnsInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

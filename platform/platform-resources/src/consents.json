@@ -17,7 +17,7 @@
     "consentId": "ai.data.collection.and.use.policy",
     "version": "1.0",
     "text": "To measure and improve integration with JetBrains AI, we can <a href=\"https://www.jetbrains.com/help/ai/data-collection-and-use-policy.html\">collect non-anonymous information</a> about its usage, which includes the full text of inputs sent by the IDE to the large language model and its responses, including source code snippets.",
-    "printableName": "JetBrains AI Data Collection and Use Policy",
+    "printableName": "Allow detailed data collection by JetBrains AI",
     "accepted": "false"
   }
 ]

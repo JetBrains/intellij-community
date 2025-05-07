@@ -271,9 +271,18 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
       final PyExpression[] nameAndType = ((PyTupleExpression)contained).getElements();
       final PyExpression name = ArrayUtil.getFirstElement(nameAndType);
-      if (nameAndType.length != 2 || !(name instanceof PyStringLiteralExpression)) return null;
+      if (nameAndType.length != 2) return null;
 
-      result.put(((PyStringLiteralExpression)name).getStringValue(), Optional.ofNullable(textIfPresent(nameAndType[1])));
+      String nameValue = null;
+      if (name instanceof PyStringLiteralExpression) {
+        nameValue = ((PyStringLiteralExpression)name).getStringValue();
+      }
+      else if (name instanceof PyReferenceExpression) {
+        nameValue = PyPsiUtils.strValue(PyResolveUtil.fullResolveLocally((PyReferenceExpression)name));
+      }
+      if (nameValue == null) return null;
+
+      result.put(nameValue, Optional.ofNullable(textIfPresent(nameAndType[1])));
     }
 
     return result;

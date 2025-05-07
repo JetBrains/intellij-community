@@ -15,6 +15,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.PyDataFlow;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -64,6 +65,9 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
       }
       // Ignore import subelements
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
+        return;
+      }
+      if (PyDataFlow.isUnreachable(node, myTypeEvalContext)) {
         return;
       }
       final String name = node.getReferencedName();
@@ -120,9 +124,6 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
-          return;
-        }
-        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node, myTypeEvalContext)) {
           return;
         }
         if (owner instanceof PyFile) {

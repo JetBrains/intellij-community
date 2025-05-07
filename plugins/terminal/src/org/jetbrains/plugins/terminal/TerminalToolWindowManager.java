@@ -16,7 +16,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +52,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
@@ -65,7 +63,6 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.block.BlockTerminalPromotionService;
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionStartHelper;
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
@@ -82,8 +79,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY;
 
 @Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
@@ -303,9 +298,19 @@ public final class TerminalToolWindowManager implements Disposable {
                                                    @Nullable @Nls String tabName,
                                                    boolean requestFocus,
                                                    boolean deferSessionStartUntilUiShown) {
+    return createNewSession(workingDirectory, tabName, null, requestFocus, deferSessionStartUntilUiShown);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull TerminalWidget createNewSession(@Nullable String workingDirectory,
+                                                  @Nullable @Nls String tabName,
+                                                  @Nullable List<String> shellCommand,
+                                                  boolean requestFocus,
+                                                  boolean deferSessionStartUntilUiShown) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
+    tabState.myShellCommand = shellCommand;
     return createNewSession(myTerminalRunner, tabState, null, requestFocus, deferSessionStartUntilUiShown);
   }
 
@@ -468,24 +473,6 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void onTerminalStarted() {
-        boolean shouldShowPromotion = runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion();
-        boolean blockTerminalSupported = terminalWidget instanceof ShellTerminalWidget shellWidget &&
-                                         isBlockTerminalSupported(shellWidget.getStartupOptions());
-        // Show the promotion only if the current runner allows it and block terminal can be used with the shell started now.
-        // And it is not the first launch of the IDE by the user.
-        if (shouldShowPromotion && blockTerminalSupported && !ConfigImportHelper.isNewUser()) {
-          BlockTerminalPromotionService.INSTANCE.showPromotionOnce(myProject, widget);
-        }
-      }
-
-      /** Checks whether new terminal can be used with the shell, started with the provided options */
-      private static boolean isBlockTerminalSupported(ShellStartupOptions options) {
-        if (options == null) return false;
-        List<String> command = options.getShellCommand();
-        String shellPath = ContainerUtil.getFirstItem(command);
-        if (shellPath == null) return false;
-        String shellName = PathUtil.getFileName(shellPath);
-        return LocalTerminalDirectRunner.isBlockTerminalSupported(shellName);
       }
 
       @Override
@@ -683,9 +670,8 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
     TerminalTabState state = new TerminalTabState();
-    VirtualFile parentDirectory = fileToOpen != null && !fileToOpen.isDirectory() ? fileToOpen.getParent() : fileToOpen;
-    if (parentDirectory != null) {
-      state.myWorkingDirectory = parentDirectory.getPath();
+    if (fileToOpen != null) {
+      state.myWorkingDirectory = fileToOpen.getPath();
     }
     createNewSession(myTerminalRunner, state);
   }
@@ -703,8 +689,7 @@ public final class TerminalToolWindowManager implements Disposable {
     if (provider != null &&
         ExperimentalUI.isNewUI() &&
         terminalRunner == myTerminalRunner &&
-        terminalRunner.isGenTwoTerminalEnabled() &&
-        !Registry.is(BLOCK_TERMINAL_REGISTRY)) {
+        terminalRunner.isGenTwoTerminalEnabled()) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
 
       Disposer.register(widget, new Disposable() {

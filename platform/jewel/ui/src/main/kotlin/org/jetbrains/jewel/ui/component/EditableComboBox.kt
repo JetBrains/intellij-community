@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -78,7 +79,7 @@ public fun EditableComboBox(
     textFieldState: TextFieldState,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
-    isEnabled: Boolean = true,
+    enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
@@ -95,9 +96,9 @@ public fun EditableComboBox(
     val textFieldInteractionSource = remember { MutableInteractionSource() }
     val textFieldFocusRequester = remember { FocusRequester() }
 
-    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = isEnabled)) }
+    var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = enabled)) }
 
-    remember(isEnabled) { comboBoxState = comboBoxState.copy(enabled = isEnabled) }
+    remember(enabled) { comboBoxState = comboBoxState.copy(enabled = enabled) }
 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
@@ -152,9 +153,9 @@ public fun EditableComboBox(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextField(
-                    isEnabled = isEnabled,
+                    enabled = enabled,
                     inputTextFieldState = textFieldState,
-                    isFocused = comboBoxState.isFocused,
+                    focused = comboBoxState.isFocused,
                     textFieldFocusRequester = textFieldFocusRequester,
                     style = style,
                     popupManager = popupManager,
@@ -165,11 +166,11 @@ public fun EditableComboBox(
                     onEnterPress = onEnterPress,
                     onFocusedChange = { comboBoxState = comboBoxState.copy(focused = it) },
                     onHoveredChange = { textFieldHovered = it },
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier.weight(1f),
                 )
 
                 Chevron(
-                    isEnabled = isEnabled,
+                    enabled = enabled,
                     style = style,
                     interactionSource = interactionSource,
                     onHoveredChange = { chevronHovered = it },
@@ -193,8 +194,9 @@ public fun EditableComboBox(
                 modifier =
                     popupModifier
                         .testTag("Jewel.ComboBox.Popup")
-                        .semantics { contentDescription = "Jewel.ComboBox.Popup" }
-                        .width(comboBoxWidth),
+                        .semantics { contentDescription = "Jewel.EditableComboBox.Popup" }
+                        .width(comboBoxWidth)
+                        .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
                 content = popupContent,
@@ -206,9 +208,9 @@ public fun EditableComboBox(
 @Composable
 private fun TextField(
     modifier: Modifier,
-    isEnabled: Boolean,
+    enabled: Boolean,
     inputTextFieldState: TextFieldState,
-    isFocused: Boolean,
+    focused: Boolean,
     textFieldFocusRequester: FocusRequester,
     style: ComboBoxStyle,
     popupManager: PopupManager,
@@ -220,8 +222,10 @@ private fun TextField(
     onFocusedChange: (Boolean) -> Unit,
     onHoveredChange: (Boolean) -> Unit,
 ) {
-    val textColor = if (isEnabled) style.colors.content else style.colors.borderDisabled
+    val textColor = if (enabled) style.colors.content else style.colors.borderDisabled
     val popupVisible by popupManager.isPopupVisible
+
+    if (focused) textFieldFocusRequester.requestFocus()
 
     BasicTextField(
         state = inputTextFieldState,
@@ -265,13 +269,13 @@ private fun TextField(
         textStyle = textStyle.copy(color = textColor),
         cursorBrush = SolidColor(style.colors.content),
         interactionSource = textFieldInteractionSource,
-        enabled = isEnabled,
+        enabled = enabled,
     )
 }
 
 @Composable
 private fun Chevron(
-    isEnabled: Boolean,
+    enabled: Boolean,
     style: ComboBoxStyle,
     interactionSource: MutableInteractionSource,
     onHoveredChange: (Boolean) -> Unit,
@@ -282,7 +286,7 @@ private fun Chevron(
         modifier =
             Modifier.testTag("Jewel.ComboBox.ChevronContainer")
                 .size(style.metrics.arrowAreaSize) // Fixed size
-                .thenIf(isEnabled) {
+                .thenIf(enabled) {
                     onHover { onHoveredChange(it) }
                         .pointerInput(interactionSource) {
                             detectPressAndCancel(onPress = onPressWhenEnabled, onCancel = onCancelPress)
@@ -298,8 +302,8 @@ private fun Chevron(
                         }
                 }
     ) {
-        val dividerColor = if (isEnabled) style.colors.border else style.colors.borderDisabled
-        val iconTint = if (isEnabled) Color.Unspecified else style.colors.contentDisabled
+        val dividerColor = if (enabled) style.colors.border else style.colors.borderDisabled
+        val iconTint = if (enabled) Color.Unspecified else style.colors.contentDisabled
         Divider(
             orientation = Orientation.Vertical,
             thickness = style.metrics.borderWidth,

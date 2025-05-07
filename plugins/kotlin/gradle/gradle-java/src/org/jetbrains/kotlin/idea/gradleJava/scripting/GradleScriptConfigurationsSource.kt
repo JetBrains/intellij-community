@@ -33,12 +33,14 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.adjustByDefinition
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.kotlin.tools.projectWizard.transformers.Predicate
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.util.PropertiesCollection
 
 internal class GradleScriptModel(
     override val virtualFile: VirtualFile,
@@ -113,7 +115,9 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
             val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
             val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
 
-            val definitionName = findScriptDefinition(project, VirtualFileScriptSource(scriptFile)).name
+            val definition = findScriptDefinition(project, VirtualFileScriptSource(scriptFile))
+            val definitionName = definition.name
+            val externalProjectPath = definition.compilationConfiguration[ScriptCompilationConfiguration.gradle.externalProjectPath]
 
             val definitionScriptModuleName = "$KOTLIN_SCRIPTS_MODULE_NAME.$definitionName"
             val locationName = scriptFile.relativeName(project).replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
@@ -141,7 +145,15 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
                 addAll(classes.map { updatedFactory.get(it, source) })
             }.sortedBy { it.library.name }
 
-            updatedStorage.addEntity(ModuleEntity("$definitionScriptModuleName.$locationName", allDependencies, source))
+            val moduleName = "$definitionScriptModuleName.$locationName"
+            updatedStorage addEntity ModuleEntity(moduleName, allDependencies, source) {
+                this.exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
+                    this.externalSystem = GradleConstants.SYSTEM_ID.id
+                    this.module = this@ModuleEntity
+                    this.rootProjectPath = "kotlin-scripts:$externalProjectPath"
+                    this.linkedProjectId = moduleName
+                }
+            }
         }
 
         return updatedStorage
@@ -272,3 +284,16 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
 
     data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)
 }
+
+interface GradleScriptCompilationConfigurationKeys
+
+open class GradleScriptCompilationConfigurationBuilder : PropertiesCollection.Builder(),
+                                                         GradleScriptCompilationConfigurationKeys {
+    companion object : GradleScriptCompilationConfigurationKeys
+}
+
+val ScriptCompilationConfigurationKeys.gradle: GradleScriptCompilationConfigurationBuilder
+    get() = GradleScriptCompilationConfigurationBuilder()
+
+val GradleScriptCompilationConfigurationKeys.externalProjectPath: PropertiesCollection.Key<String?> by PropertiesCollection.key()
+

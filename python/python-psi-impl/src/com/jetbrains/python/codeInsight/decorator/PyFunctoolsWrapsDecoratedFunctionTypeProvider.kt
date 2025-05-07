@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
@@ -35,7 +36,7 @@ class PyFunctoolsWrapsDecoratedFunctionTypeProvider : PyTypeProviderBase() {
   private fun resolveWrapped(function: PyFunction, context: TypeEvalContext): List<PsiElement> {
     val decorator = function.decoratorList?.decorators?.find {
       val qName = it.qualifiedName
-      qName != null && PyKnownDecoratorUtil.asKnownDecorators(qName).contains(PyKnownDecoratorUtil.KnownDecorator.FUNCTOOLS_WRAPS)
+      qName != null && PyKnownDecoratorUtil.asKnownDecorators(qName).contains(PyKnownDecorator.FUNCTOOLS_WRAPS)
     } ?: return emptyList()
     return StubAwareComputation.on(decorator)
       .withCustomStub { it.getCustomStub(PyFunctoolsWrapsDecoratorStub::class.java) }

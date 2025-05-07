@@ -976,6 +976,22 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-78964
+  public void testFunctionWithTryFinally() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                   def test() -> bool:
+                       try:
+                           pass
+                       finally:
+                           pass
+                   
+                       return True
+                   """)
+    );
+  }
+
   // PY-33500
   public void testImplicitGenericDunderCallCallOnTypedElement() {
     runWithLanguageLevel(
@@ -1203,7 +1219,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def some_fn(arg: B):
                                pass
 
-                           some_fn(<warning descr="Expected type 'B', got 'Type[B]' instead">B</warning>)""")
+                           some_fn(<warning descr="Expected type 'B', got 'type[B]' instead">B</warning>)""")
     );
   }
 

@@ -13,13 +13,17 @@ import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.text.nullize
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -34,10 +38,13 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+
+private const val JAVA_HOME_ENV_KEY = "JAVA_HOME"
 
 class MavenCommandLineSetup(private val project: Project,
                             private val name: @NlsSafe String,
@@ -100,11 +107,29 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun setupTargetJavaRuntime(runnerSettings: MavenRunnerSettings) {
-    when {
-      runnerSettings.jreName != MavenRunnerSettings.USE_PROJECT_JDK -> runnerSettings.jreName
-      defaultJavaRuntimeConfiguration?.homePath?.isNotBlank() == true -> defaultJavaRuntimeConfiguration.homePath
-      else -> null
-    }?.let { commandLine.addEnvironmentVariable("JAVA_HOME", it) }
+    val javaHomePath: String? =
+      when {
+        runnerSettings.jreName != MavenRunnerSettings.USE_PROJECT_JDK -> runnerSettings.jreName
+        defaultJavaRuntimeConfiguration?.homePath?.isNotBlank() == true -> defaultJavaRuntimeConfiguration.homePath
+        else -> null
+      } ?: runBlockingCancellable { calculateJavaHome() }
+    if (javaHomePath != null) {
+      commandLine.addEnvironmentVariable(JAVA_HOME_ENV_KEY, javaHomePath)
+    }
+  }
+
+  private suspend fun calculateJavaHome(): String? {
+    val descriptor = project.getEelDescriptor()
+    val eel = descriptor.upgrade()
+    val targetEnv = eel.exec.fetchLoginShellEnvVariables()
+    val targetJavaHome = targetEnv[JAVA_HOME_ENV_KEY]
+    if (targetJavaHome != null) {
+      return targetJavaHome
+    }
+    val jdk = ProjectRootManager.getInstance(project).getProjectSdk() ?: getJdkForImporter(project)
+    return jdk.homePath?.let { Path.of(it) }
+      ?.asEelPath()
+      ?.toString()
   }
 
   private fun setupMavenExtClassPath() {

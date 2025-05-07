@@ -106,6 +106,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return Registry.is("ide.tree.show.expand.with.single.click.setting", true);
   }
 
+  private static boolean isCollapseRecursively() {
+    //noinspection SimplifiableConditionalExpression // no, dear inspection, using || here does NOT make the code more readable
+    return ApplicationManager.getApplication() != null // could be null, e.g. in tests
+      ? AdvancedSettings.getBoolean("ide.tree.collapse.recursively")
+      : true;
+  }
+
   public Tree() {
     this(new DefaultMutableTreeNode());
   }
@@ -119,7 +126,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     // An ugly hijacking: SmartExpander can't access advanced settings by itself, so we use the Tree constructor
     // as a convenient place to put this code somewhere where it'll be surely executed by the time it's needed.
     // We also update this setting in com.intellij.ui.tree.RecursiveExpandSettingListener.
-    SmartExpander.setRecursiveCollapseEnabled(AdvancedSettings.getBoolean("ide.tree.collapse.recursively"));
+    SmartExpander.setRecursiveCollapseEnabled(isCollapseRecursively());
     expandImpl = new ExpandImpl();
     myEmptyText = new StatusText(this) {
       @Override
@@ -517,12 +524,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (!initialized) { // Base constructor call.
+      for (TreePath path : paths) {
+        super.expandPath(path);
+      }
+      return;
+    }
     expandImpl.expandPaths(paths);
   }
 
   @Override
   public void collapsePath(TreePath path) {
-    int row = AdvancedSettings.getBoolean("ide.tree.collapse.recursively") ? getRowForPath(path) : -1;
+    int row = isCollapseRecursively() ? getRowForPath(path) : -1;
     if (row < 0) {
       super.collapsePath(path);
     }
@@ -539,6 +552,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
+    if (!initialized) { // Base constructor call.
+      for (TreePath path : paths) {
+        super.collapsePath(path);
+      }
+      return;
+    }
     expandImpl.collapsePaths(paths);
   }
 
@@ -641,7 +660,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void fireTreeExpanded(@NotNull TreePath path) {
     Object[] listeners = listenerList.getListenerList();
-    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, bulkOperationsInProgress.get() > 0);
+    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, isBulkOperationInProgress());
     if (uiTreeExpansionListener != null) {
       uiTreeExpansionListener.treeExpanded(e);
     }
@@ -659,7 +678,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public void fireTreeCollapsed(@NotNull TreePath path) {
     Object[] listeners = listenerList.getListenerList();
-    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, bulkOperationsInProgress.get() > 0);
+    TreeExpansionEvent e = new TreeBulkExpansionEvent(this, path, isBulkOperationInProgress());
     if (uiTreeExpansionListener != null) {
       uiTreeExpansionListener.treeCollapsed(e);
     }
@@ -672,6 +691,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         ((TreeExpansionListener)listeners[i + 1]).treeCollapsed(e);
       }
     }
+  }
+
+  private boolean isBulkOperationInProgress() {
+    return initialized && bulkOperationsInProgress.get() > 0;
   }
 
   private void fireBulkExpandStarted() {
@@ -794,6 +817,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public @NotNull Set<TreePath> getExpandedPaths() {
+    if (!initialized) { // Called from a super constructor.
+      var rootPath = getRootPath();
+      if (rootPath == null || !super.isExpanded(rootPath)) return Collections.emptySet();
+      var result = new HashSet<TreePath>();
+      result.add(rootPath);
+      var more = super.getExpandedDescendants(rootPath);
+      if (more != null) {
+        while (more.hasMoreElements()) {
+          result.add(more.nextElement());
+        }
+      }
+      return result;
+    }
     return expandImpl.getExpandedPaths();
   }
 
@@ -819,6 +855,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public boolean hasBeenExpanded(TreePath path) {
+    if (!initialized) { // Called from a super constructor.
+      return super.hasBeenExpanded(path);
+    }
     return expandImpl.hasBeenExpanded(path);
   }
 
@@ -832,22 +871,36 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public boolean isExpanded(int row) {
+    if (!initialized) { // Called from the super() constructor.
+      return super.isExpanded(row);
+    }
     return expandImpl.isExpanded(row);
   }
 
   @Override
   protected void setExpandedState(TreePath path, boolean state) {
+    if (!initialized) { // Called from the super() constructor.
+      super.setExpandedState(path, state);
+      return;
+    }
     expandImpl.setExpandedState(path, state);
   }
 
   @Override
   protected Enumeration<TreePath> getDescendantToggledPaths(TreePath parent) {
+    if (!initialized) { // Called from the super() constructor.
+      return super.getDescendantToggledPaths(parent);
+    }
     return expandImpl.getDescendantToggledPaths(parent);
   }
 
   @Override
   protected void removeDescendantToggledPaths(Enumeration<TreePath> toRemove)
   {
+    if (!initialized) { // Called from the super() constructor.
+      super.removeDescendantToggledPaths(toRemove);
+      return;
+    }
     expandImpl.removeDescendantToggledPaths(toRemove);
   }
 
@@ -1307,12 +1360,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     private @Nullable CachedPresentationImpl cachedPresentation;
 
     private ExpandImpl() {
-      // Mimic what setModel() does when called from the super() constructor:
-      // if there's a model, it's not empty and the root is not a leaf, expand it.
-      var model = getModel();
       var rootPath = getRootPath();
-      if (model != null && rootPath != null && !model.isLeaf(rootPath.getLastPathComponent())) {
-        expandedState.put(rootPath, true);
+      if (rootPath != null) {
+        // Additionally, expand everything that was already expanded by base class constructors.
+        var toggled = Tree.super.getDescendantToggledPaths(rootPath);
+        if (toggled != null) {
+          while (toggled.hasMoreElements()) {
+            var toggledPath = toggled.nextElement();
+            // Put it regardless of whether it's true or false, because a non-null value is needed for hasBeenExpanded().
+            expandedState.put(toggledPath, Tree.super.isExpanded(toggledPath));
+          }
+        }
       }
       // Clean up whatever mess the super() constructor left in the superclass expandedState which we don't use.
       Tree.super.clearToggledPaths();

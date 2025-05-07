@@ -515,9 +515,12 @@ fun CodeInsightTestFixture.getParameterInfoAtCaret(): String? {
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     }
     return hintFixture.currentHintText
-      ?.removePrefix("<html>")
-      ?.removeSuffix("</html>")
-      ?.replace(Regex("</?span[^>]*>"), "")
+      ?.replace(Regex("</?span[^>]*>|</?html>"), "")
+      ?.replace(Regex("&#32;|&nbsp;"), " ")
+      ?.split('\n')
+      ?.filter { it != "-" }
+      ?.sorted()
+      ?.joinToString("\n-\n")
   } finally {
     Disposer.dispose(disposable)
   }

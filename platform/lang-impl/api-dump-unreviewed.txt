@@ -5107,6 +5107,7 @@ com.intellij.codeInsight.navigation.TargetPresentationProvider
 a:com.intellij.codeInsight.navigation.TargetUpdaterTask
 - com.intellij.openapi.progress.Task$Backgroundable
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Comparator):V
 - p:createUsage(com.intellij.codeInsight.navigation.ItemWithPresentation):com.intellij.usages.Usage
 - f:updateComponent(com.intellij.psi.PsiElement):Z
 f:com.intellij.codeInsight.navigation.UtilKt
@@ -6094,7 +6095,7 @@ f:com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection
 - <init>():V
 - <init>(Z,Z):V
 - b:<init>(Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,Z):com.intellij.codeInspection.ProblemDescriptor[]
+- buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z,com.intellij.codeInspection.LocalInspectionToolSession):com.intellij.psi.PsiElementVisitor
 - getDefaultLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
 - getOptionsPane():com.intellij.codeInspection.options.OptPane
 - isEnabledByDefault():Z

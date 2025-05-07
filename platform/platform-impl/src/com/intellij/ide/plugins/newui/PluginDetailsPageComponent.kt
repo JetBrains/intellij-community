@@ -1309,7 +1309,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       licensePanel.showBuyPluginWithText(
         message, false, false,
         { descriptor }, false,
-        !requiresCommercialIde // if the descriptor requires a commercial IDE, we do not show trial/price message
+        !requiresCommercialIde // if the descriptor requires a commercial IDE, we do not show the trial/price message
       )
     }
     else {
@@ -1321,11 +1321,17 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
       val stamp = instance.getConfirmationStamp(productCode)
       if (stamp == null) {
-        if (ApplicationManager.getApplication().isEAP) {
+        if (ApplicationManager.getApplication().isEAP && !java.lang.Boolean.getBoolean("eap.require.license")) {
           tagPanel!!.setFirstTagTooltip(IdeBundle.message("tooltip.license.not.required.for.eap.version"))
           licensePanel.hideWithChildren()
           return
         }
+
+        if (descriptor.isLicenseOptional()) {
+          licensePanel.hideWithChildren()
+          return; // do not show "No License" for Freemium plugins
+        }
+
         licensePanel.setText(IdeBundle.message("label.text.plugin.no.license"), true, false)
       }
       else {

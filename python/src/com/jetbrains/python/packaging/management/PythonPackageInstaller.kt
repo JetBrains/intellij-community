@@ -7,7 +7,9 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
 import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
 
@@ -28,7 +30,7 @@ class PythonPackagesInstaller {
           installWithoutRequirements(manager, indicator)
         }
         else {
-          installWithRequirements(manager, requirements, extraArgs, indicator)
+          installWithRequirements(manager, requirements, extraArgs)
         }
       }.exceptionOrNull()?.let {
         return ExecutionException(it)
@@ -45,25 +47,40 @@ class PythonPackagesInstaller {
       indicator.isIndeterminate = true
 
       val emptySpecification = PythonPackageSpecificationBase("", null, null, null)
-      manager.installPackage(emptySpecification, emptyList()).getOrElse {
-        return Result.failure(it)
-      }
-
-      return Result.success(Unit)
+      return manager.installPackage(emptySpecification, emptyList(), withBackgroundProgress = true).map { }
     }
 
     private suspend fun installWithRequirements(
       manager: PythonPackageManager,
       requirements: List<PyRequirement>,
       extraArgs: List<String>,
-      indicator: ProgressIndicator,
     ): Result<Unit> {
-      requirements.forEachIndexed { index, requirement ->
-        indicator.text = PyBundle.message("python.packaging.progress.text.installing.specific.package", requirement.presentableText)
-        updateProgress(indicator, index, requirements.size)
+      val specs = requirements.map { requirement ->
+         PythonSimplePackageSpecification(requirement.name, requirement.versionSpecs.firstOrNull()?.version, null)
+      }
+      return manager.installPackages(specs, extraArgs, withBackgroundProgress = true).map { }
+    }
 
-        val specification = PythonSimplePackageSpecification(requirement.name, requirement.versionSpecs.firstOrNull()?.version, null)
-        manager.installPackage(specification, extraArgs).onFailure {
+    @JvmStatic
+    fun uninstallPackages(project: Project, sdk: Sdk, packages: List<PyPackage>, indicator: ProgressIndicator): ExecutionException? {
+      runBlockingCancellable {
+        indicator.isIndeterminate = true
+
+        val manager = PythonPackageManager.forSdk(project, sdk)
+        val pythonPackages = packages.map { it.toPythonPackage() }
+
+        return@runBlockingCancellable uninstallPackagesProcess(manager, pythonPackages)
+      }.exceptionOrNull()?.let {
+        return ExecutionException(it)
+      }
+
+      return null
+    }
+
+
+    suspend fun uninstallPackagesProcess(manager: PythonPackageManager, packages: List<PythonPackage>): Result<Unit> {
+      for (pkg in packages) {
+        manager.uninstallPackage(pkg).onFailure {
           return Result.failure(it)
         }
       }
@@ -71,11 +88,6 @@ class PythonPackagesInstaller {
       return Result.success(Unit)
     }
 
-    private fun updateProgress(indicator: ProgressIndicator, index: Int, total: Int) {
-      indicator.isIndeterminate = index == 0
-      if (total > 0) {
-        indicator.fraction = index.toDouble() / total
-      }
-    }
+    private fun PyPackage.toPythonPackage(): PythonPackage = PythonPackage(this.name, this.version, false)
   }
 }

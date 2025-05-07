@@ -26,7 +26,7 @@ object PyCollectionTypeUtil {
   private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
     val elements = sequence.elements
     val analyzedElementsType = PyUnionType.union(
-      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { replaceLiteralWithItsClass(context.getType(it)) }
+      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { PyLiteralType.upcastLiteralToClass(context.getType(it)) }
     )
     return if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       PyUnionType.createWeakType(analyzedElementsType)
@@ -66,7 +66,7 @@ object PyCollectionTypeUtil {
       if (keyExpression !is PyStringLiteralExpression) {
         return null
       }
-      strKeysToValueTypes[keyExpression.stringValue] = Pair(element.value, replaceLiteralWithItsClass(valueType))
+      strKeysToValueTypes[keyExpression.stringValue] = Pair(element.value, PyLiteralType.upcastLiteralToClass(valueType))
     }
 
     return strKeysToValueTypes
@@ -82,8 +82,8 @@ object PyCollectionTypeUtil {
       .forEach {
         val type = context.getType(it)
         val (keyType, valueType) = getKeyValueType(type)
-        keyTypes.add(replaceLiteralWithItsClass(keyType))
-        valueTypes.add(replaceLiteralWithItsClass(valueType))
+        keyTypes.add(PyLiteralType.upcastLiteralToClass(keyType))
+        valueTypes.add(PyLiteralType.upcastLiteralToClass(valueType))
       }
 
     if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
@@ -106,14 +106,5 @@ object PyCollectionTypeUtil {
       }
     }
     return null to null
-  }
-
-  private fun replaceLiteralWithItsClass(type: PyType?): PyType? {
-    return when (type) {
-      is PyUnionType -> type.map(::replaceLiteralWithItsClass)
-      is PyLiteralStringType -> PyClassTypeImpl(type.cls, false)
-      is PyLiteralType -> PyClassTypeImpl(type.pyClass, false)
-      else -> type
-    }
   }
 }

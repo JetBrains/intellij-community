@@ -20,37 +20,41 @@ fun C2.ef2(): C2 = this
 context(c1: C1, c2: C2)
 val test: Int
     get() {
-        with(c1) { c2.f1() }
-        with(c2) { c1.f2() }
-        with(c1) { c2.f1() }.let { with(c2) { it.f2() } }.let { with(c1) { it.f1() } }.let { with(c2) { it.f2() } }
-        c1.c1
-        c2.c2
-
-        with (C1()) {
-            c2.f1()
-            with(c2) { f2() }
-            c2.f1().let { with(c2) { it.f2() } }.f1().let { with(c2) { it.f2() } }
-            c1
-            c2.c2
-        }
-
-        with (C2()) {
-            with(c1) { f1() }
-            c1.f2()
-            with(c1) { f1() }.f2().let { with(c1) { it.f1() } }.f2()
-            c1.c1
-            c2
-        }
-
-        with (C1()) {
-            with (C2()) {
+        with(c1) {
+            with(c2) {
                 f1()
                 f2()
                 f1().f2().f1().f2()
                 c1
                 c2
+
+                with(C1()) {
+                    f1()
+                    f2()
+                    f1().f2().f1().f2()
+                    c1
+                    c2
+                }
+
+                with(C2()) {
+                    f1()
+                    f2()
+                    f1().f2().f1().f2()
+                    c1
+                    c2
+                }
+
+                with(C1()) {
+                    with(C2()) {
+                        f1()
+                        f2()
+                        f1().f2().f1().f2()
+                        c1
+                        c2
+                    }
+                }
+
+                return 0
             }
         }
-
-        return 0
     }
