@@ -103,12 +103,6 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModChooseAction chooser) {
       return executeChooseInBatch(context, chooser);
     }
-    if (command instanceof ModChooseMember member) {
-      ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> ReadAction.nonBlocking(() -> member.nextCommand().apply(member.defaultSelection())).executeSynchronously(),
-        member.title(), true, context.project());
-      executeInBatch(context, nextCommand);
-    }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
         command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions ||
@@ -336,9 +330,6 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       else if (command instanceof ModEditOptions<?> target) {
         return getEditOptionsPreview(context, target);
-      }
-      else if (command instanceof ModChooseMember target) {
-        return getPreview(target.nextCommand().apply(target.defaultSelection()), context);
       }
       else if (command instanceof ModDisplayMessage message) {
         if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {

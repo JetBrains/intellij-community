@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
-import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,7 +12,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInspection.options.OptMultiSelector;
 import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
@@ -23,12 +21,10 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
-import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -70,7 +66,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -127,9 +122,6 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
     if (command instanceof ModChooseAction chooser) {
       return executeChoose(context, chooser, editor);
-    }
-    if (command instanceof ModChooseMember chooser) {
-      return executeChooseMember(context, chooser, editor);
     }
     if (command instanceof ModDisplayMessage message) {
       return executeMessage(project, message, editor);
@@ -252,36 +244,6 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     OptPaneUtils.editOptions(context.project(), container, options.title(), () -> {
       ModCommandExecutor.executeInteractively(context, options.title(), editor, () -> options.nextCommand().apply(container));
     });
-    return true;
-  }
-
-  private static boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
-    List<? extends OptMultiSelector.@NotNull OptElement> result;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      result = modChooser.defaultSelection();
-    }
-    else {
-      ClassMember[] members = ContainerUtil.map2Array(modChooser.elements(), ClassMember.EMPTY_ARRAY, ClassMember::from);
-      SelectionMode mode = modChooser.mode();
-      boolean allowEmptySelection = mode == SelectionMode.SINGLE_OR_EMPTY ||
-                                    mode == SelectionMode.MULTIPLE_OR_EMPTY;
-      boolean allowMultiSelection = mode == SelectionMode.MULTIPLE ||
-                                    mode == SelectionMode.MULTIPLE_OR_EMPTY;
-      MemberChooser<ClassMember> chooser = new MemberChooser<>(members, allowEmptySelection, allowMultiSelection, context.project());
-      ClassMember[] selected = IntStreamEx.ofIndices(modChooser.elements(), modChooser.defaultSelection()::contains)
-        .elements(members).toArray(ClassMember.EMPTY_ARRAY);
-      chooser.selectElements(selected);
-      chooser.setTitle(modChooser.title());
-      chooser.setCopyJavadocVisible(false);
-      ActionContextPointer pointer = new ActionContextPointer(context);
-      if (!chooser.showAndGet()) return false;
-      List<ClassMember> elements = chooser.getSelectedElements();
-      result = elements == null ? List.of() :
-               IntStreamEx.ofIndices(members, elements::contains).elements(modChooser.elements()).toList();
-      context = pointer.restoreAndCheck(editor);
-      if (context == null) return false;
-    }
-    ModCommandExecutor.executeInteractively(context, modChooser.title(), editor, () -> modChooser.nextCommand().apply(result));
     return true;
   }
 

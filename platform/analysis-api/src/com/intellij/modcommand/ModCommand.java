@@ -40,7 +40,7 @@ import java.util.function.Function;
  * Especially take a look at {@link #psiUpdate} methods which are helpful in most of the cases.
  */
 public sealed interface ModCommand
-  permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
+  permits ModChooseAction, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
           ModEditOptions, ModHighlight, ModMoveFile, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename,
           ModStartTemplate, ModUpdateFileText, ModUpdateReferences, ModUpdateSystemOptions {
 
@@ -394,17 +394,6 @@ public sealed interface ModCommand
                                                    @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
                                                    @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
                                                    @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
-    return new ModChooseMember(title, elements, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE, nextCommand);
-  }
-
-  /**
-   * A replacement for chooseMultipleMembers; not working yet
-   */
-  @ApiStatus.Internal
-  static @NotNull ModCommand chooseMultipleMembersNew(@NotNull @NlsContexts.PopupTitle String title,
-                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> elements,
-                                                   @NotNull List<? extends OptMultiSelector.@NotNull OptElement> defaultSelection,
-                                                   @NotNull Function<@NotNull List<? extends OptMultiSelector.@NotNull OptElement>, ? extends @NotNull ModCommand> nextCommand) {
     class MemberHolder implements OptionContainer {
       @SuppressWarnings("FieldMayBeFinal") 
       @NotNull List<? extends OptMultiSelector.@NotNull OptElement> myElements = new ArrayList<>(defaultSelection);
@@ -412,7 +401,7 @@ public sealed interface ModCommand
       @Override
       public @NotNull OptPane getOptionsPane() {
         return OptPane.pane(
-          new OptMultiSelector("myElements", elements, OptMultiSelector.SelectionMode.MULTIPLE)
+          OptPane.multiSelector("myElements", elements, OptMultiSelector.SelectionMode.MULTIPLE)
         );
       }
     }
