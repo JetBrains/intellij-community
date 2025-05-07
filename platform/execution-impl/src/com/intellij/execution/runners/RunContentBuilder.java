@@ -165,7 +165,7 @@ public final class RunContentBuilder extends RunTab {
       toolbar.addAll(updatedToolbar.getChildren(ActionManager.getInstance()));
     });
 
-    if (profile != null && profile instanceof RunConfigurationBase<?> runConfigurationBase) {
+    if (profile instanceof RunConfigurationBase<?> runConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
         ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener(runConfigurationBase.isShowConsoleOnStdOut(),
                                                                                       runConfigurationBase.isShowConsoleOnStdErr(),
