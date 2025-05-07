@@ -590,6 +590,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "convertStringTemplateToBuildStringMultiDollarPrefix", // K2-only
                     "convertToConcatenatedStringMultiDollarPrefix", // K2-only
                     "convertToStringTemplateInterpolationPrefix", // K2-only
+                    "addAnnotationUseSiteTarget/allTarget", // K2-only
                 )
             )
         }

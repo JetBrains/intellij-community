@@ -6238,6 +6238,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("allTargetVal.kt")
+        public void testAllTargetVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTarget/allTargetVal.kt");
+        }
+
+        @TestMetadata("allTargetVar.kt")
+        public void testAllTargetVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTarget/allTargetVar.kt");
+        }
+
         @TestMetadata("delegate.kt")
         public void testDelegate() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTarget/delegate.kt");
@@ -6265,6 +6275,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("allTargetInapplicableNoProperty.kt")
+        public void testAllTargetInapplicableNoProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/allTargetInapplicableNoProperty.kt");
+        }
+
+        @TestMetadata("allTargetVal.kt")
+        public void testAllTargetVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/allTargetVal.kt");
+        }
+
+        @TestMetadata("allTargetVar.kt")
+        public void testAllTargetVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addAnnotationUseSiteTargetForConstructorParameter/allTargetVar.kt");
         }
 
         @TestMetadata("constructorParameterAndFieldChange.kt")

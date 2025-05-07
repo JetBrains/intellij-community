@@ -9639,6 +9639,65 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     @TestMetadata("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget")
     public abstract static class AddAnnotationUseSiteTarget extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget")
+        public static class AllTarget extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("classVal.kt")
+            public void testClassVal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/classVal.kt");
+            }
+
+            @TestMetadata("classValNoBackingField.kt")
+            public void testClassValNoBackingField() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/classValNoBackingField.kt");
+            }
+
+            @TestMetadata("classVar.kt")
+            public void testClassVar() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/classVar.kt");
+            }
+
+            @TestMetadata("classVarNoBackingField.kt")
+            public void testClassVarNoBackingField() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/classVarNoBackingField.kt");
+            }
+
+            @TestMetadata("constructorVal.kt")
+            public void testConstructorVal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/constructorVal.kt");
+            }
+
+            @TestMetadata("constructorVar.kt")
+            public void testConstructorVar() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/constructorVar.kt");
+            }
+
+            @TestMetadata("delegatedProperty.kt")
+            public void testDelegatedProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/delegatedProperty.kt");
+            }
+
+            @TestMetadata("disabledFeature.kt")
+            public void testDisabledFeature() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/disabledFeature.kt");
+            }
+
+            @TestMetadata("extensionNoPropertyTarget.kt")
+            public void testExtensionNoPropertyTarget() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/allTarget/extensionNoPropertyTarget.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/intentions/addAnnotationUseSiteTarget/constructor")
         public abstract static class Constructor extends AbstractK2IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)

@@ -429,6 +429,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("allTargetVal.kt")
+        public void testAllTargetVal() throws Exception {
+            runTest("testData/quickfix/addAnnotationUseSiteTarget/allTargetVal.kt");
+        }
+
+        @TestMetadata("allTargetVar.kt")
+        public void testAllTargetVar() throws Exception {
+            runTest("testData/quickfix/addAnnotationUseSiteTarget/allTargetVar.kt");
+        }
+
         @TestMetadata("delegate.kt")
         public void testDelegate() throws Exception {
             runTest("testData/quickfix/addAnnotationUseSiteTarget/delegate.kt");

@@ -13,9 +13,11 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTargetInCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -37,12 +39,17 @@ object AddAnnotationUseSiteTargetUtils {
         val annotationShortName = this.shortName ?: return emptyList()
         val modifierList = getStrictParentOfType<KtModifierList>() ?: return emptyList()
         val annotated = modifierList.owner as? KtElement ?: return emptyList()
+        val allIfSupported: AnnotationUseSiteTarget? = ALL.takeIf {
+            languageVersionSettings.supportsFeature(LanguageFeature.AnnotationAllUseSiteTarget)
+        }
 
         val candidateTargets = when (annotated) {
             is KtParameter -> if (annotated.getStrictParentOfType<KtPrimaryConstructor>() != null) when (annotated.valOrVarKeyword?.node?.elementType) {
-                KtTokens.VAR_KEYWORD -> listOf(CONSTRUCTOR_PARAMETER, FIELD, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER)
+                KtTokens.VAR_KEYWORD -> listOfNotNull(
+                    CONSTRUCTOR_PARAMETER, FIELD, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER, allIfSupported
+                )
 
-                KtTokens.VAL_KEYWORD -> listOf(CONSTRUCTOR_PARAMETER, FIELD, PROPERTY, PROPERTY_GETTER)
+                KtTokens.VAL_KEYWORD -> listOfNotNull(CONSTRUCTOR_PARAMETER, FIELD, PROPERTY, PROPERTY_GETTER, allIfSupported)
 
                 else -> emptyList()
             }
@@ -54,11 +61,11 @@ object AddAnnotationUseSiteTargetUtils {
                 !annotated.isLocal -> {
                     val backingField = LightClassUtil.getLightClassPropertyMethods(annotated).backingField
                     if (annotated.isVar) {
-                        if (backingField != null) listOf(FIELD, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER)
-                        else listOf(PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER)
+                        if (backingField != null) listOfNotNull(FIELD, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER, allIfSupported)
+                        else listOfNotNull(PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER, allIfSupported)
                     } else {
-                        if (backingField != null) listOf(FIELD, PROPERTY, PROPERTY_GETTER)
-                        else listOf(PROPERTY, PROPERTY_GETTER)
+                        if (backingField != null) listOfNotNull(FIELD, PROPERTY, PROPERTY_GETTER, allIfSupported)
+                        else listOfNotNull(PROPERTY, PROPERTY_GETTER, allIfSupported)
                     }
                 }
 
@@ -79,7 +86,9 @@ object AddAnnotationUseSiteTargetUtils {
         }
 
         if (applicableTargets.isNotEmpty()) {
-            candidateTargets.removeIf { KotlinTarget.USE_SITE_MAPPING[it] !in applicableTargets }
+            candidateTargets.removeIf {
+                KotlinTarget.USE_SITE_MAPPING[it] !in applicableTargets && it != ALL
+            }
             if (candidateTargets.isEmpty()) return emptyList()
         }
 
