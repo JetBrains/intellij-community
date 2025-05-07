@@ -82,6 +82,9 @@ abstract class AbstractIrKotlinEvaluateExpressionInMppTest : AbstractIrKotlinEva
     private lateinit var perModuleLibraryOutputDirectory: File
     private lateinit var perModuleLibrarySourceDirectory: File
 
+    // These tests are configuring multi-moduling by themselves
+    override val useMultimoduleJvmConfiguration: Boolean get() = false
+
     override fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
         perModuleLibraryOutputDirectory = File(testAppDirectory, "perModuleLibs").apply { mkdirs() }
         perModuleLibrarySourceDirectory = File(testAppDirectory, "perModuleLibsSrc").apply { mkdirs() }

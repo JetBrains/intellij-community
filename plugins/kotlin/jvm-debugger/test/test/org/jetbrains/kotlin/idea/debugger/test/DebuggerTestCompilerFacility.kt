@@ -250,11 +250,10 @@ open class DebuggerTestCompilerFacility(
     }
 
     // Returns the qualified name of the main test class.
-    fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String {
+    internal fun analyzeAndFindMainClass(jvmKtFiles: List<KtFile>): String? {
         return runReadAction {
             val (languageVersionSettings, analysisResult) = analyzeSources(jvmKtFiles)
             findMainClass(analysisResult.bindingContext, languageVersionSettings, jvmKtFiles)?.asString()
-                ?: error("Cannot find main class name")
         }
     }
 

@@ -28,8 +28,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.MultiMap
@@ -56,7 +59,9 @@ import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
+import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -70,6 +75,8 @@ internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_SOURCES_DIR = "commonSrc"
 internal const val SCRIPT_SOURCES_DIR = "scripts"
 internal const val JVM_MODULE_NAME_START = "jvm"
+
+private const val MULTI_MODULES = "multiModules"
 
 abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                                           IgnorableTestCase,
@@ -160,7 +167,58 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
     open fun lambdasGenerationScheme() = JvmClosureGenerationScheme.CLASS
 
+    protected open val useMultimoduleJvmConfiguration = true
+
     protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
+        context = ConfigurationContext(
+            filesByModules = testFiles.groupBy(TestFileWithModule::module),
+            dependsOnEdges = MultiMap.create(),
+            workspaceModuleMap = mutableMapOf(),
+            librariesByModule = mutableMapOf()
+        )
+
+        if (context.filesByModules.size <= 1) {
+            return
+        }
+
+        for ((debuggerTestModule, _) in context.filesByModules) {
+            processDependenciesForDebuggerTestModule(debuggerTestModule)
+            createAndConfigureJvmModule(debuggerTestModule)
+        }
+
+        setUpExtraModuleDependenciesFromDependsOnEdges(context)
+
+        setUpJdk()
+    }
+
+    private fun createAndConfigureJvmModule(
+        debuggerTestModule: DebuggerTestModule,
+    ) {
+        val newWorkspaceModule = createModule(debuggerTestModule.name).also { context.workspaceModuleMap[debuggerTestModule] = it }
+
+        val commonModuleSrcPath = testModuleSrcPath(debuggerTestModule)
+        val commonModuleSrcFile = File(commonModuleSrcPath)
+        val commonModuleSrcDir = commonModuleSrcFile.also { it.mkdirs() }.refreshAndToVirtualFile()
+            ?: error("Can't find virtual file $commonModuleSrcPath for module ${debuggerTestModule.name}")
+
+        val targetPlatform = JvmPlatforms.jvm8
+
+        doWriteAction {
+            setupModuleRoots(newWorkspaceModule)
+            IdeaTestUtil.setModuleLanguageLevel(newWorkspaceModule, LanguageLevel.JDK_1_8)
+
+            PsiTestUtil.addSourceRoot(newWorkspaceModule, commonModuleSrcDir)
+
+            newWorkspaceModule.createFacet(
+                targetPlatform, false
+            )
+            attachLibraries(newWorkspaceModule)
+        }
+    }
+
+    private fun testModuleSrcPath(debuggerTestModule: DebuggerTestModule): String {
+        val commonModuleSrcPath = listOf(testAppPath, MULTI_MODULES, debuggerTestModule.name).joinToString(File.separator)
+        return commonModuleSrcPath
     }
 
     protected open fun createDebuggerTestCompilerFacility(
@@ -199,6 +257,26 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
 
+        val mainClassName = compileTestFiles(
+            testFiles,
+            jvmTarget,
+            languageVersion,
+            enabledLanguageFeatures,
+            jvmDefaultMode,
+            preferences
+        )
+
+        createBreakpointsAndRunTest(preferences, wholeFileContents, mainClassName, testFiles)
+    }
+
+    private fun compileTestProjectSimple(
+        testFiles: TestFiles,
+        jvmTarget: JvmTarget,
+        languageVersion: LanguageVersion,
+        enabledLanguageFeatures: List<LanguageFeature>,
+        jvmDefaultMode: JvmDefaultMode?,
+        preferences: DebuggerPreferences,
+    ): String {
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
             TestCompileConfiguration(
@@ -214,7 +292,153 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
         compileLibrariesAndTestSources(preferences, compilerFacility)
 
-        val mainClassName = getMainClassName(compilerFacility)
+        return getMainClassName(compilerFacility)
+    }
+
+    private fun compileTestModule(
+        debuggerTestModule: DebuggerTestModule,
+        wholeTestFiles: TestFiles,
+        jvmTarget: JvmTarget,
+        languageVersion: LanguageVersion,
+        enabledLanguageFeatures: List<LanguageFeature>,
+        jvmDefaultMode: JvmDefaultMode?,
+        preferences: DebuggerPreferences,
+        isFirstCompilation: Boolean,
+    ): String? {
+        val fileWithModules = context.filesByModules[debuggerTestModule] ?: error("Files for ${debuggerTestModule.name} not found")
+        val module = context.workspaceModuleMap[debuggerTestModule] ?: error("Module ${debuggerTestModule.name} not found")
+        val dependencies = context.dependsOnEdges[debuggerTestModule]
+
+        val testFiles = TestFiles(wholeTestFiles.originalFile, wholeTestFiles.wholeFile, fileWithModules)
+
+        val compilerFacility = createDebuggerTestCompilerFacility(
+            testFiles, jvmTarget,
+            TestCompileConfiguration(
+                lambdasGenerationScheme(),
+                languageVersion,
+                enabledLanguageFeatures,
+                useInlineScopes,
+                jvmDefaultMode,
+            )
+        )
+
+        updateIdeCompilerSettingsForEvaluator(languageVersion, enabledLanguageFeatures, compilerFacility.getCompilerPlugins())
+
+        // TODO: make better test library handling for multimodule tests
+        // Possible regression for KTIJ-25391 is not catching now (see the corresponding test)
+        if (isFirstCompilation) {
+            compileLibraries(preferences, compilerFacility)
+        }
+
+        val jvmSrcDir = File(testModuleSrcPath(debuggerTestModule))
+
+        val outputDirectory = getOutputDirectoryForModule(debuggerTestModule)
+
+        val dependencyOutputDirectories = dependencies.map { getOutputDirectoryForModule(it) }
+
+        compilerFacility.compileTestSourcesWithCli(
+            module, jvmSrcDir, commonSourcesOutputDirectory, scriptSourcesOutputDirectory,
+            outputDirectory, libraryOutputDirectory, dependencyOutputDirectories
+        )
+        val sourcesKtFilesForModule = compilerFacility.creatKtFiles(jvmSrcDir, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
+
+        return getMainClassNameOrNull(compilerFacility, sourcesKtFilesForModule.jvmKtFiles)
+    }
+
+    private fun getOutputDirectoryForModule(debuggerTestModule: DebuggerTestModule): File =
+        moduleOutputDir.resolve(MULTI_MODULES).resolve(debuggerTestModule.name).toFile()
+
+    private fun compileTestProjectMultimodule(
+        testFiles: TestFiles,
+        jvmTarget: JvmTarget,
+        languageVersion: LanguageVersion,
+        enabledLanguageFeatures: List<LanguageFeature>,
+        jvmDefaultMode: JvmDefaultMode?,
+        preferences: DebuggerPreferences,
+    ): String {
+        val processed = mutableSetOf<DebuggerTestModule>()
+
+        val debuggerTestModules = context.filesByModules.keys
+
+        var mainClassNameAndModule: Pair<String, DebuggerTestModule>? = null
+
+        var isFirstCompilation = true
+        while (processed.size < debuggerTestModules.size) {
+            for (debuggerTestModule in debuggerTestModules) {
+                if (debuggerTestModule.dependencies.all(processed::contains)) {
+                    processed += debuggerTestModule
+                    val possibleMainClassName = compileTestModule(
+                        debuggerTestModule,
+                        testFiles,
+                        jvmTarget,
+                        languageVersion,
+                        enabledLanguageFeatures,
+                        jvmDefaultMode,
+                        preferences,
+                        isFirstCompilation
+                    )
+                    isFirstCompilation = false
+
+                    if (possibleMainClassName != null) {
+                        if (mainClassNameAndModule != null) {
+                            error("More than one main class found: $mainClassNameAndModule, $possibleMainClassName")
+                        }
+                        mainClassNameAndModule = possibleMainClassName to debuggerTestModule
+                    }
+                }
+            }
+        }
+
+        for (debuggerTestModule in debuggerTestModules) {
+            val module = context.workspaceModuleMap[debuggerTestModule] ?: continue
+            for (root in module.sourceRoots) {
+                root.refresh(false, true)
+            }
+        }
+
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        return mainClassNameAndModule?.first ?: error("Cannot find a 'main()' function")
+    }
+
+    private fun compileTestFiles(
+        testFiles: TestFiles,
+        jvmTarget: JvmTarget,
+        languageVersion: LanguageVersion,
+        enabledLanguageFeatures: List<LanguageFeature>,
+        jvmDefaultMode: JvmDefaultMode?,
+        preferences: DebuggerPreferences
+    ): String {
+        return if (useMultimoduleJvmConfiguration &&
+            this@KotlinDescriptorTestCase::context.isInitialized &&
+            context.filesByModules.size > 1
+        ) {
+            compileTestProjectMultimodule(
+                testFiles,
+                jvmTarget,
+                languageVersion,
+                enabledLanguageFeatures,
+                jvmDefaultMode,
+                preferences,
+            )
+        } else {
+            compileTestProjectSimple(
+                testFiles,
+                jvmTarget,
+                languageVersion,
+                enabledLanguageFeatures,
+                jvmDefaultMode,
+                preferences,
+            )
+        }
+    }
+
+    private fun createBreakpointsAndRunTest(
+        preferences: DebuggerPreferences,
+        wholeFileContents: String,
+        mainClassName: String,
+        testFiles: TestFiles
+    ) {
         breakpointCreator = BreakpointCreator(
             project,
             ::systemLogger,
@@ -409,7 +633,16 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
         return super.createJavaParameters(mainClass).apply {
-            ModuleRootManager.getInstance(myModule).orderEntries.asSequence().filterIsInstance<LibraryOrderEntry>()
+            ModuleRootManager.getInstance(myModule).orderEntries
+            if (this@KotlinDescriptorTestCase::context.isInitialized) {
+                for (module in context.workspaceModuleMap.values) {
+                    ModuleRootManager.getInstance(module).orderEntries
+                }
+                val outputDirectories = context.workspaceModuleMap.keys.map { getOutputDirectoryForModule(it) }
+                for (output in outputDirectories) {
+                    classPath.add(output)
+                }
+            }
             classPath.add(TestKotlinArtifacts.kotlinStdlib)
             classPath.add(libraryOutputDirectory)
         }
