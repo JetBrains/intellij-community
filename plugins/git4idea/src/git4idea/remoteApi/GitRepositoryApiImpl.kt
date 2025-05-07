@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
-import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -9,23 +8,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.ref.GitReferenceName
-import com.intellij.vcs.git.shared.ref.GitReferencesSet
-import com.intellij.vcs.git.shared.repo.GitHash
-import com.intellij.vcs.git.shared.repo.GitOperationState
-import com.intellij.vcs.git.shared.repo.GitRepositoryState
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
-import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitDisposable
-import git4idea.GitStandardRemoteBranch
-import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
-import git4idea.branch.GitTagType
-import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
@@ -41,7 +30,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
     if (LOG.isDebugEnabled) {
       LOG.debug("Known repositories: $repositories")
     }
-    return repositories.map { convertToDto(it) }
+    return repositories.map { GitRepositoryToDtoConverter.convertToDto(it) }
   }
 
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
@@ -79,7 +68,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       if (repository.isDisposed) return
 
       sendDeletedEventOnDispose(repository)
-      val dto = convertToDto(repository)
+      val dto = GitRepositoryToDtoConverter.convertToDto(repository)
 
       if (LOG.isDebugEnabled) {
         val refsSet = dto.state.refs
@@ -100,7 +89,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
       LOG.debug("Updating state for ${repository.root}")
 
-      val repositoryState = convertRepositoryState(repository)
+      val repositoryState = GitRepositoryToDtoConverter.convertRepositoryState(repository)
       channel.trySend(GitRepositoryEvent.RepositoryStateUpdated(repository.rpcId, repositoryState))
     }
 
@@ -117,7 +106,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
       LOG.debug("Tags were loaded for ${repository.root}. Updating state")
 
-      val repositoryState = convertRepositoryState(repository)
+      val repositoryState = GitRepositoryToDtoConverter.convertRepositoryState(repository)
       channel.trySend(GitRepositoryEvent.TagsLoaded(repository.rpcId, repositoryState))
     }
 
@@ -128,11 +117,11 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
       val update = mutableMapOf<RepositoryId, GitFavoriteRefs>()
       if (repository != null) {
-        update[repository.rpcId] = collectFavorites(repository)
+        update[repository.rpcId] = GitRepositoryToDtoConverter.collectFavorites(repository)
       }
       else {
         getAllRepositories(project).forEach { repository ->
-          update[repository.rpcId] = collectFavorites(repository)
+          update[repository.rpcId] = GitRepositoryToDtoConverter.collectFavorites(repository)
         }
       }
 
@@ -153,48 +142,6 @@ class GitRepositoryApiImpl : GitRepositoryApi {
     val LOG = Logger.getInstance(GitRepositoryApiImpl::class.java)
 
     private fun getAllRepositories(project: Project): List<GitRepository> = GitRepositoryManager.getInstance(project).repositories
-
-    private fun convertToDto(repository: GitRepository): GitRepositoryDto {
-      return GitRepositoryDto(
-        repositoryId = repository.rpcId,
-        shortName = VcsUtil.getShortVcsRootName(repository.project, repository.root),
-        state = convertRepositoryState(repository),
-        favoriteRefs = collectFavorites(repository)
-      )
-    }
-
-    private fun convertRepositoryState(repository: GitRepository): GitRepositoryState {
-      val refsSet = GitReferencesSet(
-        repository.info.localBranchesWithHashes.keys,
-        repository.info.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
-        repository.tagHolder.getTags().keys,
-      )
-      return GitRepositoryState(
-        currentRef = GitCurrentRef.wrap(GitRefUtil.getCurrentReference(repository)),
-        revision = repository.currentRevision?.let { GitHash(it) },
-        refs = refsSet,
-        recentBranches = repository.branches.recentCheckoutBranches,
-        operationState = convertOperationState(repository)
-      )
-    }
-
-    private fun convertOperationState(repository: GitRepository): GitOperationState = when (repository.state) {
-      Repository.State.NORMAL -> GitOperationState.NORMAL
-      Repository.State.MERGING -> GitOperationState.MERGE
-      Repository.State.REBASING -> GitOperationState.REBASE
-      Repository.State.GRAFTING -> GitOperationState.CHERRY_PICK
-      Repository.State.REVERTING -> GitOperationState.REVERT
-      Repository.State.DETACHED -> GitOperationState.DETACHED_HEAD
-    }
-
-    private fun collectFavorites(repository: GitRepository): GitFavoriteRefs {
-      val branchManager = repository.project.service<GitBranchManager>()
-      return GitFavoriteRefs(
-        localBranches = branchManager.getFavoriteRefs(GitBranchType.LOCAL, repository),
-        remoteBranches = branchManager.getFavoriteRefs(GitBranchType.REMOTE, repository),
-        tags = branchManager.getFavoriteRefs(GitTagType, repository),
-      )
-    }
 
     private fun resolveRepositories(project: Project, repositoryIds: List<RepositoryId>): List<GitRepository> {
       val repositories = GitRepositoryManager.getInstance(project).repositories.associateBy { it.rpcId }

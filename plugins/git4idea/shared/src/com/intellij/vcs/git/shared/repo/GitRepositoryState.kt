@@ -6,6 +6,7 @@ import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitReferencesSet
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
+import git4idea.GitStandardRemoteBranch
 import git4idea.i18n.GitBundle
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -20,6 +21,10 @@ class GitRepositoryState(
   val refs: GitReferencesSet,
   val recentBranches: List<GitStandardLocalBranch>,
   val operationState: GitOperationState,
+  /**
+   * Maps short names of local branches to their upstream branches.
+   */
+  private val trackingInfo: Map<String, GitStandardRemoteBranch>,
 ) {
   private val currentBranchName: @NlsSafe String?
     get() = (currentRef as? GitCurrentRef.LocalBranch)?.branch?.name
@@ -37,6 +42,8 @@ class GitRepositoryState(
       GitOperationState.DETACHED_HEAD -> getDetachedHeadDisplayableText()
     }
   }
+
+  fun getTrackingInfo(branch: GitStandardLocalBranch): GitStandardRemoteBranch? = trackingInfo[branch.name]
 
   private fun getDetachedHeadDisplayableText(): @Nls String =
     if (currentRef is GitCurrentRef.Tag) currentRef.tag.name

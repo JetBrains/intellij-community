@@ -23,7 +23,6 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitTagType
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import icons.DvcsImplIcons
@@ -106,7 +105,7 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
       is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
       is GitBranchesTreeModel.RepositoryNode -> treeNode.repository.state.getDisplayableBranchText()
       is GitLocalBranch -> {
-        treeNode.getCommonTrackedBranch(treePopupStep.affectedRepositories)?.name
+        treeNode.getCommonTrackedBranch(treePopupStep.affectedRepositoriesFrontendModel)?.name
       }
       is GitTagType -> {
         if (treePopupStep.repositories.any { it.tagHolder.isLoading }) GitBundle.message("group.Git.Tags.loading.text")
@@ -116,11 +115,11 @@ internal class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupS
     }
   }
 
-  private fun GitLocalBranch.getCommonTrackedBranch(repositories: List<GitRepository>): GitRemoteBranch? {
+  private fun GitLocalBranch.getCommonTrackedBranch(repositories: List<GitRepositoryFrontendModel>): GitRemoteBranch? {
     var commonTrackedBranch: GitRemoteBranch? = null
 
     for (repository in repositories) {
-      val trackedBranch = findTrackedBranch(repository) ?: return null
+      val trackedBranch = repository.state.getTrackingInfo(this) ?: return null
 
       if (commonTrackedBranch == null) {
         commonTrackedBranch = trackedBranch
