@@ -32,7 +32,7 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
     /**
      * after the plugin is loaded, all descriptors are set
      */
-    override val descriptor: IdeaPluginDescriptorEx
+    override val descriptor: IdeaPluginDescriptorImpl
       get() = requireDescriptor()
 
     @TestOnly

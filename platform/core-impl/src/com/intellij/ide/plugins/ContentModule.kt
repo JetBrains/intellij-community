@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 interface ContentModule {
   val name: String
   val loadingRule: ModuleLoadingRule
-  val descriptor: IdeaPluginDescriptorEx
+  val descriptor: IdeaPluginDescriptorImpl
 }
