@@ -18,6 +18,7 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
+import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.settingsSync.core.SettingsSyncLocalSettings
 import com.intellij.settingsSync.core.SettingsSyncRemoteCommunicator
 import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
@@ -33,6 +34,10 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
   private val logger = logger<RemoteCommunicatorHolder>()
   const val DEFAULT_PROVIDER_CODE = "jba"
   const val DEFAULT_USER_ID = "jba"
+
+  init {
+    SettingsSyncEvents.getInstance().addListener(this)
+  }
 
   // pair userId:remoteCommunicator
   private val communicatorLazy = resettableLazy {
@@ -59,6 +64,12 @@ object RemoteCommunicatorHolder : SettingsSyncEventListener {
       return null
     }
     return provider.authService.getUserData(userId)
+  }
+
+  override fun enabledStateChanged(syncEnabled: Boolean) {
+    if (!syncEnabled) {
+      invalidateCommunicator()
+    }
   }
 
   override fun loginStateChanged() {
