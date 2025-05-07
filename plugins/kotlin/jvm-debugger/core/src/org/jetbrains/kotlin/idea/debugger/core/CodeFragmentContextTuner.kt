@@ -10,6 +10,8 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
 interface CodeFragmentContextTuner {
     fun tuneContextElement(element: PsiElement?): PsiElement?
@@ -64,6 +66,13 @@ internal class K2CodeFragmentContextTunerImpl : CodeFragmentContextTuner {
         var result = element.parents(withSelf = true)
             .filterIsInstance<KtElement>()
             .firstOrNull { editorTextProvider.isAcceptedAsCodeFragmentContext(it) }
+
+        // for val parameters from primary constructor, 
+        // we want to use whole class body as a context,
+        // so that all instance members are available
+        if (result is KtParameter && result.isPropertyParameter()) {
+            result = result.containingClassOrObject ?: result
+        }
 
         if (result is KtParameterList) {
             result = result.ownerFunction ?: result
