@@ -11,3 +11,7 @@ android/aswb
 build/dependencies/build/android-sdk/
 out/
 platform/sqlite/target
+
+# specifically ignore intellij.idea.community.main.iml marker file,
+# so Bazel execroot won't be detected as a community root
+intellij.idea.community.main.iml
