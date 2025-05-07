@@ -6,6 +6,7 @@
 
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>

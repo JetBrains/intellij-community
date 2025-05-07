@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.kernel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.kernel.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.inline.completion" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="RUNTIME" />
